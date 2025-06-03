@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+/* ------------------------------------------------------------
+   AUDIT LOG — AAA ADMIN CENTERED LAYOUT
+------------------------------------------------------------- */
+
+:root {
+  --parchment: #fbf0d9;
+  --parchment-dark: #f5e7c4;
+  --stone-bg: #2e2b27;
+  --stone-panel: #3b3631;
+  --ink: #eae0d5;
+  --gold: #bfa24b;
+  --accent: #6a5acd;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+/* Base */
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/auditlog.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main Centered Layout */
+.main-centered-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Customization Section */
+.alliance-customization-area {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 4px 12px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.alliance-customization-area h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+#custom-image-slot img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+#custom-text-slot {
+  font-size: 1.1rem;
+  color: var(--ink);
+  padding: 1rem;
+}
+
+/* Core Panel */
+.alliance-members-container {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 6px 14px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.alliance-members-container h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+.alliance-members-container p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #d8caa5;
+}
+
+/* Audit Table */
+.audit-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--stone-panel);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.audit-log-table th,
+.audit-log-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid var(--gold);
+  color: var(--ink);
+}
+
+.audit-log-table th {
+  background: var(--gold);
+  color: #1a1a1a;
+  font-family: 'Cinzel', serif;
+}
+
+.audit-log-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.audit-log-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Footer - handled globally */

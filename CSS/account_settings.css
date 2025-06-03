@@ -1,0 +1,152 @@
+@import url("./root_theme.css");
+
+/* ------------------------------------------------------------
+   ACCOUNT SETTINGS PAGE — FINAL PATCHED VERSION WITH CENTERED GRID
+------------------------------------------------------------- */
+
+body {
+  font-family: var(--font-primary);
+  background-image: url('../assets/account_settings.png');
+  background-size: cover;
+  background-attachment: fixed;
+  background-color: var(--stone-bg);
+  color: var(--parchment);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main Container */
+.main-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 2rem;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+/* Main Content Max Width Wrapper */
+.main-content {
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Settings Panel */
+.account-settings-container {
+  background-color: var(--parchment);
+  border: 4px solid var(--leather);
+  border-radius: 12px;
+  box-shadow: 8px 8px 15px var(--shadow);
+  color: var(--ink);
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.account-settings-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Typography */
+h2 {
+  font-family: var(--font-header);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--ink);
+  text-shadow: 1px 1px 2px var(--shadow);
+}
+h3 {
+  font-family: var(--font-header);
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink);
+}
+
+/* Form */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+form fieldset {
+  border: 2px solid var(--leather);
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  background: var(--parchment-dark);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+form legend {
+  font-family: var(--font-header);
+  font-size: 1.2rem;
+  color: var(--ink);
+  padding: 0 0.5rem;
+}
+label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  color: var(--ink);
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="color"],
+textarea {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  background-color: var(--parchment-dark);
+  color: var(--ink);
+  border: 2px solid var(--leather);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+textarea {
+  resize: vertical;
+}
+
+/* Submit Button */
+button[type="submit"] {
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-header);
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  width: 100%;
+  margin-top: 1rem;
+  cursor: pointer;
+}
+button[type="submit"]:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 1rem;
+  }
+  .main-content {
+    padding: 1rem;
+  }
+  .account-settings-container {
+    padding: 1rem;
+  }
+}

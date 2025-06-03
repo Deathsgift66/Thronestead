@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+/* ------------------------------------------------------------
+   ALLIANCE MEMBERS PAGE — FINAL AAA/SSS-GRADE CSS
+------------------------------------------------------------- */
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--stone-bg);
+}
+
+/* Centered Layout */
+.main-centered-container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Panel Container */
+.alliance-members-container {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Typography */
+h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+/* Controls */
+.search-sort-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-sort-controls input,
+.search-sort-controls select,
+.search-sort-controls button {
+  font-family: 'IM Fell English', serif;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  background: var(--stone-panel);
+  color: var(--ink);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.search-sort-controls button {
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+  border: 1px solid var(--gold);
+  cursor: pointer;
+}
+
+.search-sort-controls button:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* Table Container */
+.members-table-container {
+  overflow-x: auto;
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  background: var(--stone-panel);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+/* Table */
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.members-table th, .members-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid var(--gold);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.members-table th {
+  background-color: var(--gold);
+  color: #1e1e1e;
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+}
+
+.members-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Action Buttons */
+.members-table button {
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--gold);
+  padding: 0.3rem 0.6rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 0 0.1rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.members-table button:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-centered-container {
+    padding: 1rem;
+  }
+
+  .alliance-members-container {
+    padding: 1rem;
+  }
+
+  .search-sort-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .members-table th, .members-table td {
+    padding: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .members-table button {
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+  }
+}

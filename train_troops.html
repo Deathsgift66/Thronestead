@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  The Grand Muster Hall - Train Troops
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>The Grand Muster Hall | Kingmaker's Rise</title>
+  <meta name="description" content="Recruit and manage troops in The Grand Muster Hall of Kingmaker’s Rise — expand your army with elite forces." />
+  <meta name="keywords" content="Kingmaker's Rise, train troops, recruit, military, army management, muster hall" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/train_troops.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/train_troops.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/train_troops.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Train Troops Banner">
+  Kingmaker's Rise — The Grand Muster Hall
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Train Troops Interface">
+
+
+  <!-- Core Train Troops Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <h2>The Grand Muster Hall</h2>
+      <p>Recruit troops and expand your military might.</p>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+      <button id="toggleFilters" class="btn-fantasy">Toggle Filters</button>
+      <button id="toggleQueue" class="btn-fantasy">View Training Queue</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="troop-catalogue custom-scrollbar" id="troop-catalogue">
+        <!-- JS will populate -->
+      </div>
+
+      <div class="sidebar-panel custom-scrollbar" id="sidebar-panel">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Toggle Section -->
+    <div class="toggle-section">
+      <div id="training-queue" class="history-log custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+
+      <div id="training-history" class="history-log custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

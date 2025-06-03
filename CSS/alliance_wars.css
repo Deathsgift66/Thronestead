@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+/* ------------------------------------------------------------
+   ALLIANCE WARS — AAA CENTERED LAYOUT
+------------------------------------------------------------- */
+
+/* Variables */
+:root {
+  --parchment: #fbf0d9;
+  --parchment-dark: #f5e7c4;
+  --stone-bg: #2e2b27;
+  --stone-panel: #3b3631;
+  --ink: #eae0d5;
+  --gold: #bfa24b;
+  --accent: #6a5acd;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+/* Base */
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/alliancewars.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main Centered Layout */
+.main-centered-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Customization Section */
+.alliance-customization-area {
+  background: rgba(0, 0, 0, 0.45);  /* darker than typical alliance pages */
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 4px 12px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+
+.alliance-customization-area h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+#custom-image-slot img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+#custom-text-slot {
+  font-size: 1.1rem;
+  color: var(--ink);
+  padding: 1rem;
+}
+
+/* Core Panel */
+.alliance-members-container {
+  background: rgba(0, 0, 0, 0.55);  /* darker panel for war */
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 6px 14px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.alliance-members-container h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+.alliance-members-container p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #d8caa5; /* brighter parchment tone for better contrast */
+}
+
+
+/* War Cards Grid */
+#wars-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* War Card */
+.war-card {
+  background: var(--stone-panel);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.war-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px var(--shadow);
+}
+
+.war-card h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 1.5rem;
+}
+
+.war-card p {
+  font-family: 'IM Fell English', serif;
+  color: var(--ink);
+  margin: 0.5rem 0;
+}
+
+.war-card button {
+  background: var(--accent);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.war-card button:hover {
+  background: var(--gold);
+  color: black;
+}
+
+.war-card .progress-bar-container {
+  margin-top: 1rem;
+}
+
+.war-card progress {
+  width: 100%;
+  height: 1.5rem;
+  border-radius: 4px;
+}
+
+/* Footer - handled globally */

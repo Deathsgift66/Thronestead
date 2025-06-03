@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Seasonal Effects - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Seasonal Effects | Kingmaker's Rise</title>
+  <meta name="description" content="View and manage seasonal effects impacting your kingdom — adapt strategy and leverage advantages." />
+  <meta name="keywords" content="Kingmaker's Rise, seasonal effects, world events, strategy, kingdom impact" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/seasonal_effects.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/seasonal_effects.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/seasonal_effects.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Seasonal Effects Banner">
+  Kingmaker's Rise — Seasonal Effects
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Seasonal Effects Interface">
+
+
+  <!-- Core Seasonal Effects Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Seasonal Banner -->
+    <div class="seasonal-banner">
+      <h2>Current Seasonal Effects</h2>
+      <p>Adapt your strategy based on dynamic seasonal changes in the world of Kingmaker’s Rise.</p>
+    </div>
+
+    <!-- Active Modifiers -->
+    <div class="card">
+      <h3>Active Modifiers</h3>
+      <div id="active-modifiers" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Season Timer -->
+    <div class="card">
+      <h3>Season Timer</h3>
+      <div id="season-timer" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Forecast Wheel -->
+    <div class="card">
+      <h3>Forecast Wheel</h3>
+      <div id="forecast-wheel" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Lore Scroll -->
+    <div class="card">
+      <h3>Lore Scroll</h3>
+      <div id="lore-scroll" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Kingdom Impact -->
+    <div class="card">
+      <h3>Kingdom Impact</h3>
+      <div id="kingdom-impact" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Market Projections -->
+    <div class="card">
+      <h3>Market Projections</h3>
+      <div id="market-projections" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast-notification"></div>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

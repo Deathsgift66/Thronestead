@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Treaty Web - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Treaty Web | Kingmaker's Rise</title>
+  <meta name="description" content="Visualize and analyze the dynamic diplomatic Treaty Web of Kingmaker’s Rise — understand alliances and conflicts." />
+  <meta name="keywords" content="Kingmaker's Rise, treaty web, diplomacy, alliances, wars, conflicts, diplomacy center" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/treaty_web.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/treaty_web.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/treaty_web.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Treaty Web Banner">
+  Kingmaker's Rise — Treaty Web
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Treaty Web Interface">
+
+
+
+  <!-- Core Treaty Web Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Treaty Controls -->
+    <div class="treaty-controls">
+      <button id="refreshGraph" class="btn-fantasy">Refresh Graph</button>
+      <button id="toggleLegend" class="btn-fantasy">Toggle Legend</button>
+    </div>
+
+    <!-- Timeline Control -->
+    <div class="timeline-control">
+      <label for="timelineRange">Timeline:</label>
+      <input type="range" id="timelineRange" min="0" max="100" value="100" />
+    </div>
+
+    <!-- Treaty Web Container -->
+    <div class="treaty-web-container">
+      <div id="network" class="network-area">
+        <!-- Vis.js Network Graph renders here -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

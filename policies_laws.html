@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Policies & Laws - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Policies & Laws | Kingmaker's Rise</title>
+  <meta name="description" content="Manage your nation's policies and laws in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, policies, laws, nation management, kingdom settings" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/policies_laws.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/policies_laws.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/policies_laws.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Policies & Laws Banner">
+  Kingmaker's Rise — Policies & Laws
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Policies & Laws Interface">
+
+  <!-- Core Policies & Laws Panel -->
+  <section class="alliance-members-container">
+    <h2>Policies & Laws</h2>
+    <p>Set your kingdom's national policies and active laws to shape your strategy and bonuses.</p>
+
+    <!-- Policies Section -->
+    <div class="policy-options">
+      <!-- JS will populate policy cards -->
+    </div>
+
+    <!-- Laws Section -->
+    <div class="law-options">
+      <!-- JS will populate law cards -->
+    </div>
+
+    <!-- Summary Section -->
+    <div class="summary-preview">
+      <h3>Current Summary</h3>
+      <div id="summary-content">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

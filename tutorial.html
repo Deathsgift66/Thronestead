@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Tutorial - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Tutorial | Kingmaker's Rise</title>
+  <meta name="description" content="Learn how to play Kingmaker’s Rise — explore the tutorial and master kingdom strategy, diplomacy, and war." />
+  <meta name="keywords" content="Kingmaker's Rise, tutorial, how to play, guide, kingdom management, strategy, diplomacy, war" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/tutorial.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/tutorial.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/tutorial.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Tutorial Banner">
+  Kingmaker's Rise — Tutorial
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Tutorial Interface">
+
+ 
+  <!-- Core Tutorial Panel -->
+  <section class="alliance-members-container">
+
+    <div class="tutorial-scroll custom-scrollbar">
+      <!-- Tutorial Step 1 -->
+      <div class="tutorial-step">
+        <h3>Step 1: Establish Your Kingdom</h3>
+        <p>Create your kingdom name and ruler identity. This is your legacy in the world of Kingmaker’s Rise!</p>
+      </div>
+
+      <!-- Tutorial Step 2 -->
+      <div class="tutorial-step">
+        <h3>Step 2: Manage Resources</h3>
+        <p>Gather food, wood, stone, gold, and other critical resources to sustain your kingdom and armies.</p>
+      </div>
+
+      <!-- Tutorial Step 3 -->
+      <div class="tutorial-step">
+        <h3>Step 3: Construct Buildings</h3>
+        <p>Develop villages and cities with military, economic, and cultural buildings to strengthen your realm.</p>
+      </div>
+
+      <!-- Tutorial Step 4 -->
+      <div class="tutorial-step">
+        <h3>Step 4: Train Troops</h3>
+        <p>Recruit soldiers, knights, and siege weapons. Build an army capable of defending your lands and conquering rivals.</p>
+      </div>
+
+      <!-- Tutorial Step 5 -->
+      <div class="tutorial-step">
+        <h3>Step 5: Diplomacy & Alliances</h3>
+        <p>Forge alliances, sign treaties, and participate in the Treaty Web. Diplomacy can win wars before swords are drawn.</p>
+      </div>
+
+      <!-- Tutorial Step 6 -->
+      <div class="tutorial-step">
+        <h3>Step 6: Declare War</h3>
+        <p>Master combat tactics, understand troop types and counters, and lead your armies to victory in strategic wars.</p>
+      </div>
+
+      <!-- Tutorial Step 7 -->
+      <div class="tutorial-step">
+        <h3>Step 7: Expand Influence</h3>
+        <p>Influence the world stage with temples, laws, and world events. Shape the history of Kingmaker’s Rise.</p>
+      </div>
+
+      <!-- Tutorial Step 8 -->
+      <div class="tutorial-step">
+        <h3>Step 8: Participate in the Market</h3>
+        <p>Engage in the kingdom economy by buying and selling goods on the open market — manage trade, profit, and logistics.</p>
+      </div>
+
+      <!-- Tutorial Step 9 -->
+      <div class="tutorial-step">
+        <h3>Step 9: Monitor Notifications</h3>
+        <p>Stay informed with the Notifications system — track alliance updates, war events, diplomacy, and resource status.</p>
+      </div>
+
+      <!-- Tutorial Step 10 -->
+      <div class="tutorial-step">
+        <h3>Step 10: Master Your Kingdom</h3>
+        <p>Combine all systems: economy, military, diplomacy, law, faith, and war to become a true Kingmaker. Your legend begins!</p>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

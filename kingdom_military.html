@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Kingdom Military - Kingmaker’s Rise
+  Final PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Kingdom Military | Kingmaker's Rise</title>
+  <meta name="description" content="Manage your military forces, train troops, and view army strength in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, military, troops, training, army management, warfare" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/kingdom_military.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Kingdom Military | Kingmaker's Rise" />
+  <meta property="og:description" content="Manage your military forces, train troops, and view army strength in Kingmaker’s Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/kingdom_military.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Kingdom Military | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Train your troops and command your armies in Kingmaker’s Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/kingdom_military.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/kingdom_military.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Kingdom Military Banner">
+  Kingmaker's Rise — Kingdom Military
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Kingdom Military Interface">
+
+
+  <!-- Core Military Panel -->
+  <section class="alliance-members-container">
+    <h2>Military Forces</h2>
+    <p>Manage your trained units, available troop slots, and training queues.</p>
+
+    <!-- Your existing beautiful parchment-bg military management panel -->
+    <section class="parchment-bg p-4 rounded shadow">
+
+      <!-- Military Summary -->
+      <div class="golden-header text-center text-3xl mb-4">Military Summary</div>
+      <div id="military-summary" class="mb-6">
+        <!-- JS will populate -->
+      </div>
+
+      <!-- Recruitable Units -->
+      <div class="golden-header text-center text-2xl mb-4">Recruitable Units</div>
+      <div id="unit-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- JS will populate -->
+      </div>
+
+      <!-- Active Training Queue -->
+      <div class="golden-header text-center text-2xl mb-4 mt-8">Active Training Queue</div>
+      <div id="training-queue" class="mb-6">
+        <!-- JS will populate -->
+      </div>
+
+      <!-- Historical Training Log -->
+      <div class="golden-header text-center text-2xl mb-4 mt-8">Historical Training Log</div>
+      <div id="training-history" class="mb-6">
+        <!-- JS will populate -->
+      </div>
+
+    </section>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
+  </div>
+</footer>
+
+</body>
+</html>

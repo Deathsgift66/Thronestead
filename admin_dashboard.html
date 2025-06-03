@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Admin Dashboard - Kingmaker’s Rise 
+  Finalized: 5.26.25 
+  Author: Deathsgift66 
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Admin Dashboard | Kingmaker's Rise</title>
+  <meta name="description" content="Admin Dashboard for Kingmaker's Rise — View user metrics, suspicious activity, audit logs, and system tools." />
+  <meta name="keywords" content="Admin Panel, Kingmaker's Rise, Audit Logs, Flagged Users, Account Moderation, Admin Tools" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/admin_dashboard.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Admin Dashboard | Kingmaker's Rise" />
+  <meta property="og:description" content="Command your administrative forces with full access to users, reports, flags, and control tools." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/admin_dashboard_preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/admin_dashboard.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Admin Dashboard | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Full-featured admin panel for account alerts, logs, moderation, and real-time tools in Kingmaker's Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/admin_dashboard.css" />
+  <script defer type="module" src="Javascript/admin_dashboard.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+ <!-- Inject Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Admin Dashboard Banner">
+    Kingmaker's Rise – Admin Dashboard
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-container" aria-label="Admin Tools Panel">
+    <div class="container" id="admin-dashboard-content">
+      <h2>Command your administrative forces. Monitor, manage, and moderate in real time.</h2>
+
+      <!-- Game Statistics -->
+      <section class="dashboard-stats" aria-label="Game Metrics">
+        <h3>Game Statistics</h3>
+        <div class="stats">
+          <div class="stat-card">
+            <h4>Active Users</h4>
+            <p id="total-users">--</p>
+          </div>
+          <div class="stat-card">
+            <h4>Flagged Users</h4>
+            <p id="flagged-users">--</p>
+          </div>
+          <div class="stat-card">
+            <h4>Suspicious Activity</h4>
+            <p id="suspicious-activity">--</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Player Management -->
+      <section class="user-management" aria-label="Player Management Tools">
+        <h3>User Management</h3>
+        <input id="search-player" type="text" placeholder="Search by username" aria-label="Search Player" />
+        <select id="status-filter" aria-label="Filter by Status">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="banned">Banned</option>
+          <option value="frozen">Frozen</option>
+        </select>
+        <button id="search-btn">Search</button>
+        <div id="player-list" aria-live="polite"></div>
+      </section>
+
+      <!-- Event Tools -->
+      <section class="event-management" aria-label="Event Control Panel">
+        <h3>Event Tools</h3>
+        <button class="action-btn" id="create-event">Create New Event</button>
+      </section>
+
+      <!-- Audit Logs -->
+      <section class="audit-logs" aria-label="Audit Logs Section">
+        <h3>Audit Logs</h3>
+        <button id="load-logs-btn">Load Logs</button>
+        <div id="log-list" aria-live="polite"></div>
+      </section>
+
+      <!-- Account Alerts -->
+      <section class="account-alerts" aria-label="Account Alerts Section">
+        <h3>Account Alerts</h3>
+        <div id="alerts" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">Legal</a>
+    </div>
+  </footer>
+</body>
+</html>

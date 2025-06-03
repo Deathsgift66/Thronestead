@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Alliance Projects — Kingmaker's Rise
+  Refactored: 5.28.25 No Side Banners
+  Author: Deathsgift66
+-->
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alliance Projects | Kingmaker's Rise</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Manage and view all strategic alliance projects in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, alliance, projects, strategy, team, war" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="Alliance Projects | Kingmaker's Rise" />
+  <meta property="og:description" content="Strategically manage your alliance's projects and resources." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/alliance_projects.css" />
+
+  <!-- Scripts -->
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+  <script defer type="module" src="Javascript/alliance_projects.js"></script>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(html => { document.getElementById('navbar-container').innerHTML = html; });
+  </script>
+
+  <!-- Header -->
+  <header class="kr-top-banner" aria-label="Alliance Projects Banner">
+    Alliance Projects
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-container" aria-label="Alliance Project Management">
+    <div class="alliance-projects-container">
+      <h2>Manage and View Your Alliance Projects</h2>
+
+      <section class="projects-list" aria-label="Active Projects">
+        <h3>Active Projects</h3>
+        <div id="active-projects" class="projects-dashboard" aria-live="polite"></div>
+      </section>
+
+      <section class="project-actions" aria-label="Manage Projects">
+        <h3>Manage Projects</h3>
+        <button class="action-btn" id="start-new-project">Start New Project</button>
+        <button class="action-btn" id="view-all-projects">View All Projects</button>
+      </section>
+
+      <section class="project-contributions" aria-label="Project Contributions">
+        <h3>Project Contributions</h3>
+        <div id="project-contributors" class="contributors-panel" aria-live="polite"></div>
+      </section>
+
+      <section class="project-notifications" aria-label="Project Alerts">
+        <h3>Project Alerts</h3>
+        <div id="project-notifications" class="notifications-panel" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">More</a>
+    </div>
+  </footer>
+</body>
+
+</html>

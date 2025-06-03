@@ -1,0 +1,113 @@
+/* admin_alerts.css — Fully SSS-Grade Admin Visual Panel */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-container {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-alerts-container {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(3px);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.search-sort-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-sort-controls input,
+.search-sort-controls select,
+.search-sort-controls button {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid var(--gold);
+  background: var(--stone-panel);
+  color: var(--ink);
+  font-family: 'IM Fell English', serif;
+  border-radius: 6px;
+}
+
+.search-sort-controls button {
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.search-sort-controls button:hover {
+  background: var(--gold);
+  color: #000;
+}
+
+.kr-alerts-panel {
+  overflow-x: auto;
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  background: var(--stone-panel);
+  box-shadow: 0 4px 10px var(--shadow);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem;
+  text-align: left;
+  border: 1px solid var(--gold);
+}
+
+th {
+  background: var(--gold);
+  color: #1e1e1e;
+  font-family: 'Cinzel', serif;
+}
+
+tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.action-btn {
+  padding: 0.4rem 0.75rem;
+  border-radius: 5px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+}
+
+.flag-btn { background: var(--alert-yellow); color: black; }
+.freeze-btn { background: var(--alert-blue); color: white; }
+.ban-btn { background: var(--alert-red); color: white; }
+.dismiss-btn { background: #999; color: white; }
+
+.action-btn:hover {
+  opacity: 0.9;
+  box-shadow: 0 2px 6px var(--shadow);
+}

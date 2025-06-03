@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Login - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Login | Kingmaker's Rise</title>
+  <meta name="description" content="Enter the realm of Kingmaker’s Rise — login to your account and continue your legend." />
+  <meta name="keywords" content="Kingmaker's Rise, login, medieval strategy, kingdom, alliances" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/login.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Login | Kingmaker's Rise" />
+  <meta property="og:description" content="Enter the realm of Kingmaker’s Rise — login to your account and continue your legend." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/login.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/login.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/login.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+</head>
+
+<body>
+
+<!-- Full Screen Background -->
+<div class="background-overlay" aria-hidden="true"></div>
+
+<!-- Login Panel -->
+<div class="login-panel">
+
+  <h1 class="login-title">Kingmaker's Rise</h1>
+  <p class="login-subtitle">Enter the Realm</p>
+
+  <form id="login-form" class="login-form">
+    <input type="email" id="email" name="email" placeholder="Your Royal Email" required />
+    <input type="password" id="password" name="password" placeholder="Secret Passphrase" required />
+    <button type="submit" class="royal-button">Enter the Realm</button>
+  </form>
+
+  <div class="account-links">
+    <a href="signup.html">Create Account</a> | 
+    <a href="forgot_password.html">Forgot Password?</a>
+  </div>
+
+  <div id="message" class="message"></div>
+
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgot-password-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Forgot Password</h2>
+    <p>Enter your account email to receive a reset link.</p>
+    <input type="email" id="forgot-email" placeholder="Your Royal Email" required />
+    <button id="send-reset-btn" class="royal-button">Send Reset Link</button>
+    <div id="forgot-message" class="message"></div>
+    <button id="close-forgot-btn" class="royal-button">Close</button>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

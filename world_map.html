@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  World Map - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>World Map | Kingmaker's Rise</title>
+  <meta name="description" content="Explore and interact with the dynamic World Map of Kingmaker’s Rise — claim territory, manage kingdoms, and engage in war." />
+  <meta name="keywords" content="Kingmaker's Rise, world map, territory, strategy, kingdoms, war, diplomacy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/world_map.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/world_map.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/world_map.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="World Map Banner">
+  Kingmaker's Rise — World Map
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="World Map Interface">
+
+
+  <!-- Core Map Panel -->
+  <section class="alliance-members-container">
+
+    <!-- World Map Stage -->
+    <div id="map-stage"></div>
+
+    <!-- Map UI -->
+    <div class="map-ui">
+      <div class="map-controls">
+        <!-- Zoom, Pan, Filters — JS will populate -->
+      </div>
+      <div class="map-legend">
+        <!-- Legend content — JS will populate -->
+      </div>
+    </div>
+
+    <!-- Tile Modal -->
+    <div id="tile-modal" class="modal hidden">
+      <div class="modal-content">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

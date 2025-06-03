@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/play_background.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Centralized Layout */
+.main-container {
+  display: grid;
+  grid-template-columns: 1fr minmax(auto, 800px) 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+/* Projects Panel */
+.alliance-projects-container {
+  grid-column: 2;
+  max-width: 800px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(3px);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 10px var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 2rem;
+}
+
+/* Section Headers */
+h2, h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+}
+
+/* Buttons */
+.action-btn {
+  background: var(--accent);
+  border: 2px solid var(--gold);
+  color: white;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  padding: 0.75rem 1.25rem;
+  margin: 0.5rem 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.action-btn:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-container {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .alliance-projects-container {
+    grid-column: 1;
+    padding: 1rem;
+  }
+}

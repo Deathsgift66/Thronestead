@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+/* ------------------------------------------------------------
+   ALLIANCE HOME — AAA CENTERED GRID LAYOUT
+------------------------------------------------------------- */
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main Layout - Centered Grid */
+.alliance-home-container {
+  display: grid;
+  grid-template-columns: 1fr minmax(auto, 900px) 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.alliance-home-container > section {
+  grid-column: 2;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+/* Section Headings */
+section h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 2px #000;
+  margin-bottom: 1rem;
+}
+
+/* Overview Text */
+.alliance-details p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+/* Progress Bars */
+.project-bar {
+  margin-bottom: 1rem;
+  font-family: 'IM Fell English', serif;
+}
+.project-bar label {
+  display: inline-block;
+  margin-right: 1rem;
+  font-weight: bold;
+}
+
+/* Member Table */
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 2px 4px var(--shadow);
+}
+.members-table th, .members-table td {
+  border: 1px solid var(--gold);
+  padding: 0.5rem;
+  text-align: left;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.members-table th {
+  background-color: var(--gold);
+  color: #1e1e1e;
+  font-family: 'Cinzel', serif;
+}
+
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .alliance-home-container {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  .alliance-home-container > section {
+    grid-column: 1;
+    padding: 1rem;
+  }
+}

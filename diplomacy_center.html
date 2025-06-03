@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Diplomacy Center - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Diplomacy Center | Kingmaker's Rise</title>
+  <meta name="description" content="Manage treaties, alliances, and diplomatic relations in the Diplomacy Center of Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, diplomacy center, alliances, treaties, conflicts, politics, strategy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/diplomacy_center.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/diplomacy_center.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="../Javascript/diplomacy_center.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Diplomacy Center Banner">
+  Kingmaker's Rise — Diplomacy Center
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Diplomacy Center Interface">
+
+  <!-- Core Diplomacy Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Content Container -->
+    <div class="content-container">
+      <h2>Diplomacy Center</h2>
+      <p>Welcome to the Diplomacy Center page. Content coming soon!</p>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

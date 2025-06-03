@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Town Criers - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Town Criers | Kingmaker's Rise</title>
+  <meta name="description" content="Publish and view player-run newspapers and announcements in the Town Criers board of Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, town criers, newspapers, player announcements, roleplay, flavor" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/town_criers.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/town_criers.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/town_criers.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Town Criers Banner">
+  Kingmaker's Rise — Town Criers
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Town Criers Interface">
+
+
+
+  <!-- Core Town Criers Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-button active" data-tab="tab-board">Board Feed</button>
+      <button class="tab-button" data-tab="tab-your-scrolls">Your Scrolls</button>
+      <button class="tab-button" data-tab="tab-compose">Compose Scroll</button>
+    </div>
+
+    <!-- Board Feed -->
+    <div id="tab-board" class="tab-section active">
+      <h3>Town Crier Board</h3>
+      <div id="board-feed" class="scroll-list custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Your Scrolls -->
+    <div id="tab-your-scrolls" class="tab-section">
+      <h3>Your Scrolls</h3>
+      <div id="your-scrolls" class="scroll-list custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Compose Scroll -->
+    <div id="tab-compose" class="tab-section">
+      <h3>Compose New Scroll</h3>
+      <form id="compose-form">
+        <div class="form-group">
+          <label for="scroll-title">Title</label>
+          <input type="text" id="scroll-title" required />
+        </div>
+
+        <div class="form-group">
+          <label for="scroll-body">Body</label>
+          <textarea id="scroll-body" rows="6" required></textarea>
+        </div>
+
+        <button type="submit" class="btn-fantasy">Publish Scroll</button>
+      </form>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

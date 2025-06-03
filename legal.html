@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Legal - Kingmaker’s Rise
+  Final PRODUCTION VERSION — 5.30.25 (MATCHED TO CURRENT FILES)
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Legal | Kingmaker's Rise</title>
+  <meta name="description" content="Complete legal documents for Kingmaker’s Rise, including Privacy Policy, Terms of Service, EULA, and more." />
+  <meta name="keywords" content="Kingmaker's Rise, legal, privacy policy, terms of service, EULA, DPA, cookies, community guidelines" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/legal.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Legal | Kingmaker's Rise" />
+  <meta property="og:description" content="Complete legal documents for Kingmaker’s Rise, including Privacy Policy, Terms of Service, EULA, and more." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/legal.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Legal | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Complete legal documents for Kingmaker’s Rise, including Privacy Policy, Terms of Service, EULA, and more." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/legal.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Legal Banner">
+  Kingmaker's Rise — Legal
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Legal Interface">
+
+  <!-- Core Legal Panel -->
+  <section class="alliance-members-container">
+    <h2>Legal Documents</h2>
+    <p>View the complete legal documents for Kingmaker’s Rise. All players must comply with these terms to participate in the game.</p>
+
+    <div class="legal-card-grid">
+
+      <div class="legal-card">
+        <h3>Privacy Policy</h3>
+        <p>How we collect, use, and protect your data.</p>
+        <a href="Assets/legal/PrivacyPolicy.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>Terms of Service</h3>
+        <p>The rules governing the use of Kingmaker’s Rise.</p>
+        <a href="Assets/legal/TermsOfService.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>End User License Agreement (EULA)</h3>
+        <p>The licensing terms for using Kingmaker’s Rise.</p>
+        <a href="Assets/legal/EULA.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>Data Processing Addendum (DPA)</h3>
+        <p>Additional privacy terms for data processing and compliance.</p>
+        <a href="Assets/legal/KingmakersRise_DPA.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>Cookie Policy</h3>
+        <p>How we use cookies and tracking technologies.</p>
+        <a href="Assets/legal/CookiePolicy.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>Game Rules</h3>
+        <p>Core game rules for fair and balanced play.</p>
+        <a href="Assets/legal/GameRules.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>Refund Policy</h3>
+        <p>Our policy regarding refund requests and eligibility.</p>
+        <a href="Assets/legal/RefundPolicy.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>Terms of Sale</h3>
+        <p>Terms covering all in-game purchases and sales.</p>
+        <a href="Assets/legal/TermsOfSale.pdf" target="_blank">View Document</a>
+      </div>
+
+      <div class="legal-card">
+        <h3>Accessibility Statement</h3>
+        <p>Our commitment to accessibility for all players.</p>
+        <a href="Assets/legal/AccessibilityStatement.pdf" target="_blank">View Document</a>
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsOfService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
+  </div>
+</footer>
+
+</body>
+</html>

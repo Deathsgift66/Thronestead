@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+/* ------------------------------------------------------------
+   INDEX — HOMEPAGE SSS-TIER LAYOUT
+------------------------------------------------------------- */
+
+:root {
+  --parchment: #fbf0d9;
+  --parchment-dark: #f5e7c4;
+  --stone-bg: #2e2b27;
+  --stone-panel: #3b3631;
+  --ink: #eae0d5;
+  --gold: #bfa24b;
+  --accent: #6a5acd;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background-color: #1a1a1a;
+  background: url('../Assets/7.png')no-repeat center center fixed;
+  background-size: cover;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Hero Section */
+.hero-section {
+
+  color: var(--parchment);
+  text-align: center;
+  padding: 6rem 2rem;
+}
+
+.hero-content h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 5px var(--shadow);
+}
+
+.hero-content p {
+  font-size: 1.3rem;
+  margin-bottom: 2rem;
+}
+
+.cta-button {
+  background: var(--accent);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  text-decoration: none;
+  border: 1px solid var(--gold);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.cta-button:hover {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+/* Main Content */
+.main-centered-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.features-section, .lore-section, .cta-section {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 6px 14px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.features-section h2, .lore-section h2, .cta-section h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature-card {
+  background: var(--stone-panel);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.feature-card h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+  color: var(--ink);
+}
+
+.trailer-placeholder {
+  background: var(--stone-panel);
+  padding: 3rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px var(--shadow);
+  margin-top: 1.5rem;
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+
+/* Footer - matches site */

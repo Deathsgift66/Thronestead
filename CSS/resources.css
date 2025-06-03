@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+:root {
+  --parchment: #fbf0d9;
+  --parchment-dark: #f5e7c4;
+  --stone-bg: #2e2b27;
+  --stone-panel: #3b3631;
+  --ink: #eae0d5;
+  --gold: #bfa24b;
+  --accent: #6a5acd;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/resources_background.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-centered-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Customization Section */
+.alliance-customization-area {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 4px 12px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.alliance-customization-area h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+#custom-image-slot img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+#custom-text-slot {
+  font-size: 1.1rem;
+  color: var(--ink);
+  padding: 1rem;
+}
+
+/* Core Panel */
+.alliance-members-container {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 6px 14px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.resource-summary-box {
+  background: rgba(251, 240, 217, 0.95);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.resource-nexus {
+  background: rgba(251, 240, 217, 0.95);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.resource-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.resource-table {
+  background: rgba(245, 231, 196, 0.95);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 5px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: rgba(251, 240, 217, 0.95);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+}

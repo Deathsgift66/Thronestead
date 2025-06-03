@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Research Nexus - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Research Nexus | Kingmaker's Rise</title>
+  <meta name="description" content="Advance your kingdom’s technologies through the Research Nexus — unlock new bonuses and capabilities." />
+  <meta name="keywords" content="Kingmaker's Rise, research, technology, tech tree, kingdom progress" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/research.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/research.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/research.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Research Nexus Banner">
+  Kingmaker's Rise — Research Nexus
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Research Nexus Interface">
+
+
+  <!-- Core Research Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Active Research -->
+    <div class="research-nexus-panel">
+      <h3 class="panel-title">Active Research</h3>
+      <div id="active-research" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Tech Filters -->
+    <div class="research-nexus-panel">
+      <h3 class="panel-title">Technology Filters</h3>
+      <div id="tech-filters" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Tech Tree -->
+    <div class="research-nexus-panel">
+      <h3 class="panel-title">Technology Tree</h3>
+      <div id="tech-tree" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Tech Details -->
+    <div class="research-nexus-panel">
+      <h3 class="panel-title">Technology Details</h3>
+      <div id="tech-details" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Encyclopedia -->
+    <div class="research-nexus-panel">
+      <h3 class="panel-title">Encyclopedia</h3>
+      <div id="encyclopedia" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Completed Research -->
+    <div class="research-nexus-panel">
+      <h3 class="panel-title">Completed Research</h3>
+      <div id="completed-research" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast-container"></div>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

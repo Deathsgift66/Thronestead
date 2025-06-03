@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+:root {
+  --parchment: #fbf0d9;
+  --parchment-dark: #f5e7c4;
+  --stone-bg: #2e2b27;
+  --stone-panel: #3b3631;
+  --ink: #1e1208;
+  --gold: #bfa24b;
+  --accent: #6a5acd;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/profile_background.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-centered-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.alliance-members-container {
+  background: rgba(251, 240, 217, 0.85);
+  backdrop-filter: blur(3px);
+  border-radius: 16px;
+  border: 3px solid var(--gold);
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px; /* smaller width for profile */
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.profile-avatar img {
+  max-width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  box-shadow: 0 6px 12px var(--shadow);
+  margin-bottom: 1rem;
+}
+
+.profile-info h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.profile-info h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.profile-info p {
+  font-size: 1.1rem;
+  color: var(--ink);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+.profile-customization {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px var(--shadow);
+  padding: 1rem 1.5rem;
+  display: inline-block;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profile-customization:hover {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+
+.vip-badge {
+  display: inline-block;
+  background: var(--gold);
+  color: #1a1a1a;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--accent);
+  box-shadow: 0 4px 8px var(--shadow);
+  margin-top: 1rem;
+}
+
+.vip-badge.hidden {
+  display: none;
+}
+
+.profile-customization h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 5px;
+}
+

@@ -1,0 +1,208 @@
+//---------------------------------------
+// Admin Dashboard - Kingmaker's Rise - FINAL 6.2.25 AAA/SSS GRADE
+//---------------------------------------
+
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 🟢 Load Game-Wide Dashboard Stats
+async function loadDashboardStats() {
+  try {
+    const [users, flagged, audit] = await Promise.all([
+      supabase.from('users').select('id'),
+      supabase.from('account_alerts').select('id'),
+      supabase.from('audit_log').select('id'),
+    ]);
+
+    document.getElementById('total-users').textContent = users.data?.length ?? 0;
+    document.getElementById('flagged-users').textContent = flagged.data?.length ?? 0;
+    document.getElementById('suspicious-activity').textContent = audit.data?.length ?? 0;
+
+    console.log('✅ Dashboard stats loaded');
+  } catch (error) {
+    console.error('⚠️ Failed to load dashboard stats:', error);
+  }
+}
+
+// 🧑‍⚖️ Load Player List (with filters)
+async function loadPlayerList() {
+  const searchTerm = document.getElementById('search-player').value.toLowerCase();
+  const statusFilter = document.getElementById('status-filter').value;
+  const container = document.getElementById('player-list');
+  container.innerHTML = '<p>Loading players...</p>';
+
+  try {
+    const { data: players, error } = await supabase.from('users').select('*');
+    if (error) throw new Error('Failed to fetch players: ' + error.message);
+
+    const filtered = players.filter(player => {
+      const matchesName = player.username?.toLowerCase().includes(searchTerm);
+      const matchesStatus = !statusFilter || player.status === statusFilter;
+      return matchesName && matchesStatus;
+    });
+
+    container.innerHTML = '';
+    if (filtered.length === 0) {
+      container.innerHTML = '<p>No players found.</p>';
+      return;
+    }
+
+    filtered.forEach(player => {
+      const card = document.createElement('div');
+      card.className = 'player-card';
+      card.innerHTML = `
+        <p><strong>${player.username}</strong> (${player.id})</p>
+        <p>Status: ${player.status}</p>
+        <div class="player-actions">
+          <button onclick="flagUser('${player.id}')">Flag</button>
+          <button onclick="freezeUser('${player.id}')">Freeze</button>
+          <button onclick="banUser('${player.id}')">Ban</button>
+        </div>`;
+      container.appendChild(card);
+    });
+
+    console.log(`✅ Player list loaded (${filtered.length} players)`);
+
+  } catch (err) {
+    console.error('⚠️ Failed to load player list:', err);
+    container.innerHTML = '<p class="error-msg">Failed to fetch players.</p>';
+  }
+}
+
+// 📜 Load Audit Log History
+async function loadAuditLogs() {
+  const container = document.getElementById('log-list');
+  container.innerHTML = '<p>Loading logs...</p>';
+
+  try {
+    const { data: logs, error } = await supabase
+      .from('audit_log')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error('Failed to fetch audit logs: ' + error.message);
+
+    container.innerHTML = '';
+    if (logs.length === 0) {
+      container.innerHTML = '<p>No audit logs found.</p>';
+      return;
+    }
+
+    logs.forEach(log => {
+      const entry = document.createElement('div');
+      entry.className = 'log-card';
+      entry.innerHTML = `
+        <p><strong>${log.action}</strong> — ${log.details}</p>
+        <p class="log-time">${new Date(log.created_at).toLocaleString()}</p>`;
+      container.appendChild(entry);
+    });
+
+    console.log(`✅ Audit logs loaded (${logs.length} entries)`);
+
+  } catch (err) {
+    console.error('⚠️ Failed to load audit logs:', err);
+    container.innerHTML = '<p class="error-msg">Failed to fetch audit logs.</p>';
+  }
+}
+
+// 🚨 Load Recent Account Alerts
+async function loadAccountAlerts() {
+  const container = document.getElementById('alerts');
+  container.innerHTML = '<p>Loading alerts...</p>';
+
+  try {
+    const { data: alerts, error } = await supabase
+      .from('account_alerts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error('Failed to fetch alerts: ' + error.message);
+
+    container.innerHTML = '';
+    if (alerts.length === 0) {
+      container.innerHTML = '<p>No alerts found.</p>';
+      return;
+    }
+
+    alerts.forEach(alert => {
+      const item = document.createElement('div');
+      item.className = 'alert-item';
+      item.innerHTML = `
+        <p><strong>${alert.alert_type}</strong> — ${alert.player_username || 'Unknown'} (${alert.player_id})</p>
+        <p>${alert.description || 'No details provided.'}</p>
+        <p>${new Date(alert.created_at).toLocaleString()}</p>
+        <button onclick="showAlertDetails('${alert.id}')">Details</button>`;
+      container.appendChild(item);
+    });
+
+    console.log(`✅ Account alerts loaded (${alerts.length} alerts)`);
+
+  } catch (err) {
+    console.error('⚠️ Failed to load account alerts:', err);
+    container.innerHTML = '<p class="error-msg">Failed to fetch alerts.</p>';
+  }
+}
+
+// 🎯 Admin Action Functions
+window.flagUser = async function (userId) {
+  try {
+    console.log(`🚩 Flagging user ${userId}`);
+    await postAdminAction('/api/admin/flag', { player_id: userId });
+    alert('✅ User flagged.');
+  } catch (err) {
+    console.error('❌ Flag failed:', err);
+    alert('❌ Flag failed: ' + err.message);
+  }
+};
+
+window.freezeUser = async function (userId) {
+  try {
+    console.log(`❄️ Freezing user ${userId}`);
+    await postAdminAction('/api/admin/freeze', { player_id: userId });
+    alert('✅ User frozen.');
+  } catch (err) {
+    console.error('❌ Freeze failed:', err);
+    alert('❌ Freeze failed: ' + err.message);
+  }
+};
+
+window.banUser = async function (userId) {
+  try {
+    console.log(`🚫 Banning user ${userId}`);
+    await postAdminAction('/api/admin/ban', { player_id: userId });
+    alert('✅ User banned.');
+  } catch (err) {
+    console.error('❌ Ban failed:', err);
+    alert('❌ Ban failed: ' + err.message);
+  }
+};
+
+window.showAlertDetails = function (alertId) {
+  alert(`📋 Detailed view for Alert ID: ${alertId} will load here (future modal).`);
+};
+
+// Helper to POST to admin endpoints
+async function postAdminAction(endpoint, payload) {
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Server error: ${errText}`);
+  }
+}
+
+// 🧩 DOM Ready Hooks
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboardStats();
+  loadPlayerList();
+  loadAccountAlerts();
+
+  document.getElementById('search-btn').addEventListener('click', loadPlayerList);
+  document.getElementById('status-filter').addEventListener('change', loadPlayerList);
+  document.getElementById('load-logs-btn').addEventListener('click', loadAuditLogs);
+});

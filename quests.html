@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Kingdom Quests - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Kingdom Quests | Kingmaker's Rise</title>
+  <meta name="description" content="Manage and complete Kingdom Quests in Kingmaker’s Rise — progress through story-driven quests and earn rewards." />
+  <meta name="keywords" content="Kingmaker's Rise, kingdom quests, story quests, player progression, rewards" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/quests.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/quests.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/quests.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Kingdom Quests Banner">
+  Kingmaker's Rise — Kingdom Quests
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Kingdom Quests Interface">
+
+  <!-- Core Kingdom Quests Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <h2>Kingdom Quests</h2>
+      <p>Progress through story-driven quests and guide your kingdom’s rise to power.</p>
+    </div>
+
+    <!-- Quest Catalogue -->
+    <div class="section-panel">
+      <h3>Quest Catalogue</h3>
+      <div id="quest-catalogue" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Active Quests -->
+    <div class="section-panel">
+      <h3>Active Quests</h3>
+      <div id="active-quests" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <!-- Completed Quests -->
+    <div class="section-panel">
+      <h3>Completed Quests</h3>
+      <div id="completed-quests" class="custom-scrollbar">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

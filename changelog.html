@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Game Change Log - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Game Change Log | Kingmaker's Rise</title>
+  <meta name="description" content="View the official Game Change Log of Kingmaker’s Rise — track new features, updates, and improvements." />
+  <meta name="keywords" content="Kingmaker's Rise, change log, updates, new features, patch notes, game updates" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/changelog.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/changelog.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="../Javascript/changelog.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Changelog Banner">
+  Kingmaker's Rise — Game Change Log
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Change Log Interface">
+
+  <!-- Core Changelog Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Content Container -->
+    <div class="content-container">
+      <h2>Game Change Log</h2>
+      <p>Here you will find the official record of all game updates, features, and balance changes for Kingmaker’s Rise.</p>
+      
+      <!-- Change Log Entries -->
+      <div id="changelog-entries">
+        <!-- JS will populate change log entries dynamically -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

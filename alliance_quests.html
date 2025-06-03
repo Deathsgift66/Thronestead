@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Alliance Quests - Kingmaker’s Rise 
+  Rewritten AAA Version: 5.30.25 
+  Author: Deathsgift66 
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Alliance Quests | Kingmaker's Rise</title>
+  <meta name="description" content="Command your alliance through epic quests, lore-driven missions, and elite cooperative challenges." />
+  <meta name="keywords" content="Kingmaker's Rise, alliance management, quests, lore missions, medieval RPG" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/alliance_quests.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Alliance Quests | Kingmaker's Rise" />
+  <meta property="og:description" content="Track, contribute, and lead your alliance through medieval quests worthy of legends." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/alliance_quests.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Alliance Quests | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Track, contribute, and lead your alliance through medieval quests worthy of legends." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/alliance_quests.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="../Javascript/alliance_quests.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body class="quest-board-body">
+
+  <!-- Inject Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
+
+  <!-- Banner -->
+  <header class="kr-top-banner" aria-label="Alliance Quest Header">
+    ⚔ Alliance Quests Board ⚔
+  </header>
+
+  <!-- Main Centered Layout -->
+  <main class="main-centered-container" aria-label="Alliance Quest Management">
+
+    <!-- Quest Board Panel -->
+    <div class="quest-board-container">
+
+      <!-- Filters -->
+      <section class="quest-filters" aria-label="Quest Filters">
+        <button class="filter-tab active" data-filter="active" aria-pressed="true">Active</button>
+        <button class="filter-tab" data-filter="completed" aria-pressed="false">Completed</button>
+        <button class="filter-tab" data-filter="expired" aria-pressed="false">Expired</button>
+      </section>
+
+      <!-- Quest Board -->
+      <section id="quest-board" aria-labelledby="quest-board-heading" aria-live="polite">
+        <h2 id="quest-board-heading" class="visually-hidden">Available Quests</h2>
+        <p id="no-quests-message" class="info-message hidden">No quests found for this category.</p>
+      </section>
+
+      <!-- Actions -->
+      <section class="quest-actions" aria-label="Quest Action Buttons">
+        <button class="action-btn medieval-banner-btn" id="start-new-quest" title="Start a New Alliance Quest">
+          <span class="plus-icon">➕</span> Start New Quest
+        </button>
+      </section>
+
+    </div>
+
+    <!-- Hall of Heroes Panel -->
+    <div class="hall-of-heroes" aria-labelledby="hall-of-heroes-heading">
+      <h2 id="hall-of-heroes-heading">🏅 Hall of Heroes</h2>
+      <ul id="hero-list" aria-live="polite">
+        <li>Loading heroes...</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <!-- Quest Modal -->
+  <div id="quest-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-quest-title" aria-describedby="modal-quest-description" tabindex="-1">
+    <div class="modal-content">
+      <button class="close-button wax-seal-btn" aria-label="Close quest details" title="Close Quest Details"></button>
+      <h3 id="modal-quest-title" class="quest-title-modal"></h3>
+      <p class="quest-type-modal"></p>
+
+      <div class="modal-parchment-content">
+        <p id="modal-quest-description" class="quest-description"></p>
+
+        <div class="quest-details-section">
+          <h4>Required Contributions:</h4>
+          <ul id="modal-quest-contributions" class="reward-list">
+            <li>No specific contributions listed.</li>
+          </ul>
+        </div>
+
+        <div class="quest-details-section">
+          <h4>Rewards:</h4>
+          <ul id="modal-quest-rewards" class="reward-list">
+            <li>No rewards listed.</li>
+          </ul>
+        </div>
+
+        <p class="time-limit-display">Time Left: <span id="modal-time-left"></span></p>
+        <p id="modal-quest-leader-note" class="quest-leader-note-modal"></p>
+
+        <div class="modal-action-area">
+          <p id="role-check-message" class="role-check-message"></p>
+          <button class="action-btn medieval-banner-btn accept-quest-btn hidden" id="accept-quest-button" title="Accept This Quest">Accept Quest</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">and more</a>
+    </div>
+  </footer>
+
+</body>
+</html>

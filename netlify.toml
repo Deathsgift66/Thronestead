@@ -1,0 +1,14 @@
+# netlify.toml — FINAL AAA/SSS VERSION — 6.2.25
+# Kingmaker’s Rise — FrontEnd Production Deploy Config
+
+[build]
+  publish = "."
+  command = ""
+
+[context.production.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

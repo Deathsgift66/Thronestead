@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Overview - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Kingdom Overview | Kingmaker's Rise</title>
+  <meta name="description" content="View your kingdom overview including resources, military, and progress." />
+  <meta name="keywords" content="Kingmaker's Rise, overview, kingdom, summary, resources, military" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/overview.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/overview.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/overview.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Overview Banner">
+  Kingmaker's Rise — Kingdom Overview
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Overview Interface">
+
+  <!-- Core Overview Panel -->
+  <section class="alliance-members-container">
+    <h2>Kingdom Summary</h2>
+    <p>Overview of your kingdom's current status, resources, and progress.</p>
+
+    <!-- Overview Summary -->
+    <div class="overview-summary">
+      <!-- JS will populate summary -->
+    </div>
+
+    <!-- Overview Panels -->
+    <div class="overview-panels">
+      <!-- Example Panel Cards -->
+      <div class="panel-card">
+        <h3>Resources</h3>
+        <div id="overview-resources">
+          <!-- JS will populate -->
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Military</h3>
+        <div id="overview-military">
+          <!-- JS will populate -->
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Quests</h3>
+        <div id="overview-quests">
+          <!-- JS will populate -->
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

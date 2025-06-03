@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Trade Logs - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Trade Logs | Kingmaker's Rise</title>
+  <meta name="description" content="View and audit kingdom and alliance trade history in the Trade Logs of Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, trade logs, market history, transactions, transparency" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/trade_logs.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/trade_logs.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/trade_logs.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Trade Logs Banner">
+  Kingmaker's Rise — Trade Logs
+</header>
+
+<!-- Main Centered Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Trade Logs Interface">
+
+
+  <!-- Core Trade Logs Panel -->
+  <section class="alliance-members-container">
+
+    <!-- Tab Control -->
+    <div class="tab-control-bar">
+      <button class="tab-button active" data-tab="tab-global">Global Trades</button>
+      <button class="tab-button" data-tab="tab-kingdom">Your Trades</button>
+      <button class="tab-button" data-tab="tab-alliance">Alliance Trades</button>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="filter-toolbar">
+      <label for="dateRange">Date Range:</label>
+      <input type="date" id="startDate" />
+      <span>to</span>
+      <input type="date" id="endDate" />
+
+      <label for="resourceType">Resource:</label>
+      <select id="resourceType">
+        <option value="">All</option>
+        <!-- JS will populate -->
+      </select>
+
+      <button id="applyFilters" class="btn-fantasy">Apply Filters</button>
+    </div>
+
+    <!-- Ledger Table -->
+    <div class="ledger-table custom-scrollbar">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Seller</th>
+            <th>Buyer</th>
+            <th>Resource</th>
+            <th>Amount</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody id="ledger-table-body">
+          <!-- JS will populate -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="summary-section">
+      <h3>Summary Statistics</h3>
+      <div class="summary-grid">
+        <div>
+          <strong>Total Volume:</strong> <span id="total-volume">0</span>
+        </div>
+        <div>
+          <strong>Total Trades:</strong> <span id="total-trades">0</span>
+        </div>
+        <div>
+          <strong>Average Price:</strong> <span id="avg-price">0</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

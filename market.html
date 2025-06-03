@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Market - Kingmaker’s Rise
+  Final SSS-Tier PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Market | Kingmaker's Rise</title>
+  <meta name="description" content="Trade goods and resources on the player-driven market of Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, market, trade, economy, player-driven market, goods, resources" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/market.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Market | Kingmaker's Rise" />
+  <meta property="og:description" content="Trade goods and resources on the player-driven market of Kingmaker’s Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/market.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/market.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/market.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Market Banner">
+  Kingmaker's Rise — Market
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Market Interface">
+
+  <!-- Core Market Panel -->
+  <section class="alliance-members-container">
+    <h2>Market Center</h2>
+    <p>Trade goods and resources on the player-driven market. Listings are updated in real time and reflect current player supply and demand.</p>
+
+    <!-- Market Tabs -->
+    <div class="market-tabs">
+      <button class="tab active" data-tab="browse">Browse Listings</button>
+      <button class="tab" data-tab="myListings">My Listings</button>
+      <button class="tab" data-tab="history">Trade History</button>
+    </div>
+
+    <!-- Tab Panels -->
+    <div id="browse" class="tab-panel active">
+      <div id="market-filters" class="market-filters">
+        <!-- Example Filter Inputs -->
+        <input type="text" placeholder="Search Item..." />
+        <select>
+          <option value="">All Categories</option>
+          <option value="Resources">Resources</option>
+          <option value="Equipment">Equipment</option>
+          <option value="Misc">Misc</option>
+        </select>
+        <button class="royal-button">Apply Filters</button>
+      </div>
+
+      <div id="market-listings">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <div id="myListings" class="tab-panel">
+      <div id="my-listings">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+    <div id="history" class="tab-panel">
+      <div id="trade-history">
+        <!-- JS will populate -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

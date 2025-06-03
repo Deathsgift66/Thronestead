@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Audit Log - Kingmaker’s Rise
+  Updated AAA Version: 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Audit Log | Kingmaker's Rise</title>
+  <meta name="description" content="Track all significant administrative actions and changes in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, audit log, admin actions, admin management" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/audit_log.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Audit Log | Kingmaker's Rise" />
+  <meta property="og:description" content="Track all significant administrative actions and changes in Kingmaker's Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/audit_log.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Audit Log | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Track all significant administrative actions and changes in the game." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/audit_log.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/audit_log.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Inject Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Audit Log Banner">
+  Kingmaker's Rise – Audit Log
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Audit Log Interface">
+
+  <!-- Core Audit Panel -->
+  <section class="alliance-members-container">
+    <h2>Audit Log</h2>
+    <p>Track all significant administrative actions and changes in Kingmaker's Rise.</p>
+
+    <section class="log-entry-list" aria-label="Administrative Log Entries">
+      <table class="audit-log-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Action</th>
+            <th>Admin</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="audit-log-body" aria-live="polite">
+          <!-- Injected via JS -->
+        </tbody>
+      </table>
+    </section>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
+  </div>
+</footer>
+
+</body>
+</html>

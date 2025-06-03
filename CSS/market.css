@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+
+/* ------------------------------------------------------------
+   Market — SSS-Tier Economy Layout
+------------------------------------------------------------- */
+
+:root {
+  --parchment: #fbf0d9;
+  --parchment-dark: #f5e7c4;
+  --stone-bg: #2e2b27;
+  --stone-panel: #3b3631;
+  --ink: #eae0d5;
+  --gold: #bfa24b;
+  --accent: #6a5acd;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/market.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-centered-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Customization Section */
+.alliance-customization-area {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 4px 12px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.alliance-customization-area h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+#custom-image-slot img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+#custom-text-slot {
+  font-size: 1.1rem;
+  color: var(--ink);
+  padding: 1rem;
+}
+
+/* Core Panel */
+.alliance-members-container {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 6px 14px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.alliance-members-container h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+.alliance-members-container p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #d8caa5;
+}
+
+/* Market Tabs */
+.market-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.market-tabs .tab {
+  background: var(--accent);
+  color: white;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  margin: 0 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.market-tabs .tab:hover {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+.market-tabs .tab.active {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+/* Tab Panels */
+.tab-panel {
+  display: none;
+  background: var(--stone-panel);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Market Filters */
+.market-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.market-filters input,
+.market-filters select {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  background: var(--parchment-dark);
+  color: #1a1a1a;
+  font-size: 1rem;
+}
+
+.royal-button {
+  background: var(--accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.royal-button:hover {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+/* Footer - matches site */

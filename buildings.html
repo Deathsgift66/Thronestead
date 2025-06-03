@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Buildings - Kingmaker’s Rise
+  Final PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Buildings | Kingmaker's Rise</title>
+  <meta name="description" content="Manage your kingdom's buildings, upgrades, and infrastructure in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, buildings, upgrades, management, economy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/buildings.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Buildings | Kingmaker's Rise" />
+  <meta property="og:description" content="Manage your kingdom's buildings and upgrades in Kingmaker's Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/buildings.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Buildings | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Upgrade and manage your buildings in Kingmaker's Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="../CSS/buildings.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="../Javascript/buildings.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Buildings Banner">
+  Kingmaker's Rise — Buildings Management
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Buildings Interface">
+
+
+
+  <!-- Core Buildings Panel -->
+  <section class="alliance-members-container">
+    <h2>Buildings Management</h2>
+    <p>View, upgrade, and manage your kingdom's buildings and infrastructure.</p>
+
+    <!-- Buildings Table -->
+    <section class="buildings-table" aria-label="Buildings List">
+      <table id="buildingsTable">
+        <thead>
+          <tr>
+            <th>Building</th>
+            <th>Level</th>
+            <th>Production</th>
+            <th>Upkeep</th>
+            <th>Upgrade</th>
+          </tr>
+        </thead>
+        <tbody id="buildingsTableBody">
+          <!-- JS will populate -->
+        </tbody>
+      </table>
+    </section>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
+  </div>
+</footer>
+
+</body>
+</html>

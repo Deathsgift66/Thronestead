@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Admin Alerts – Kingmaker’s Rise
+  Finalized: 5.26.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Admin Alerts | Kingmaker’s Rise</title>
+  <meta name="description" content="Admin alert center for account monitoring and moderation." />
+  <meta name="keywords" content="Kingmaker's Rise, Admin Alerts, moderation, flagged accounts, security, RPG" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/admin_alerts.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Admin Alerts | Kingmaker’s Rise" />
+  <meta property="og:description" content="Monitor flagged accounts, suspicious behavior, and enforce realm-wide security policies." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/admin_alerts.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Admin Alerts | Kingmaker’s Rise" />
+  <meta name="twitter:description" content="Monitor and enforce account security from the Kingmaker’s Rise Admin Center." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Global & Page-Specific Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/admin_alerts.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
+
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+  <script type="module" defer src="Javascript/admin_alerts.js"></script>
+</head>
+
+<body style="background: url('assets/admin_alerts.png') no-repeat center center fixed; background-size: cover;">
+  <!-- Inject Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+  <!-- ✅ Page Banner -->
+  <header class="kr-top-banner" aria-label="Admin Alert Page Banner">
+    Kingmaker's Rise – Admin Alert Center
+  </header>
+
+  <!-- ✅ Main Content Panel -->
+  <main class="main-container" aria-label="Admin Alerts Dashboard">
+    <div class="admin-alerts-container">
+      <h2>Flagged Accounts & Suspicious Events</h2>
+
+      <!-- Filter Controls -->
+      <section class="search-sort-controls" aria-label="Admin Alert Filters">
+        <input type="text" id="filter-username" placeholder="Search by player name..." aria-label="Filter by player name" />
+        <select id="filter-type" aria-label="Select alert type">
+          <option value="">All Types</option>
+          <option value="multi_accounting">Multi-Accounting</option>
+          <option value="unusual_transaction">Unusual Transactions</option>
+          <option value="rapid_login_attempts">Rapid Login</option>
+          <option value="excessive_generation">Excessive Item Generation</option>
+          <option value="under_average_sale">Under-Average Sale</option>
+          <option value="unusual_login_location">Unusual Login Location</option>
+          <option value="unusual_chat_pattern">Unusual Chat Pattern</option>
+          <option value="rapid_progression">Rapid Progression</option>
+          <option value="high_player_reports">High Player Reports</option>
+        </select>
+        <input type="date" id="filter-date" aria-label="Select date" />
+        <button id="refresh-alerts">Refresh</button>
+        <button id="clear-filters">Clear</button>
+      </section>
+
+      <!-- Alert Results -->
+      <section class="kr-alerts-panel" aria-label="Alert Results Panel">
+        <div id="alerts-container" aria-live="polite">
+          <!-- JS Populates alerts here -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ✅ Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">Legal</a>
+    </div>
+  </footer>
+</body>
+</html>

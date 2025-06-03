@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  Battle Replay - Kingmaker’s Rise
+  Final PRODUCTION VERSION — 5.30.25
+  Author: Deathsgift66
+-->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Battle Replay | Kingmaker's Rise</title>
+  <meta name="description" content="Replay the battle step by step to review combat events in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, battle replay, combat events, battle review" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/battle_replay.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Battle Replay | Kingmaker's Rise" />
+  <meta property="og:description" content="Replay the battle and review the combat events in Kingmaker's Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/battle_replay.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Battle Replay | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Track and replay the battle events step-by-step." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/battle_replay.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/battle_replay.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Battle Replay Banner">
+  Kingmaker's Rise — Battle Replay
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Battle Replay Interface">
+
+
+  <!-- Core Replay Panel -->
+  <section class="alliance-members-container">
+    <h2>Battle Replay</h2>
+    <p>Review the battle events step by step as they happened.</p>
+
+    <!-- Replay Controls -->
+    <section class="replay-controls" aria-label="Replay Controls">
+      <button id="play-btn">Play</button>
+      <button id="pause-btn" disabled>Pause</button>
+      <button id="reset-btn">Reset</button>
+    </section>
+
+    <!-- Combat Timeline -->
+    <section class="battle-timeline" aria-label="Combat Timeline">
+      <h3>Combat Timeline</h3>
+      <ul id="timeline-list" aria-live="polite">
+        <!-- JS will populate this -->
+      </ul>
+    </section>
+
+    <!-- Battle Outcome -->
+    <section class="battle-outcome" aria-label="Battle Outcome Summary">
+      <h3>Battle Outcome</h3>
+      <p><strong>Status:</strong> <span id="battle-status">Loading...</span></p>
+      <p><strong>Winner:</strong> <span id="winner-name">Loading...</span></p>
+    </section>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
+  </div>
+</footer>
+
+</body>
+</html>

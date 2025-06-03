@@ -1,0 +1,255 @@
+/* ------------------------------------------------------------
+   GLOBAL ROOT THEME — KINGMAKER'S RISE
+   Master design system for all pages (UI, fonts, borders, colors)
+   Based on final layout (e.g., kingdom_military.html)
+------------------------------------------------------------- */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=IM+Fell+English+SC&display=swap');
+
+:root {
+  /* ------------------- COLOR SYSTEM ------------------- */
+  --parchment: #f8f1dc;
+  --parchment-dark: #e6d8b8;
+  --stone-bg: #2e2b27;
+  --stone-panel: #3b3631;
+  --leather: #8b4513;
+  --ink: #1e1208;
+  --gold: #d4af37;
+  --accent: #6a5acd;
+  --highlight: #d4b373;
+  --shadow: rgba(0, 0, 0, 0.6);
+  --overlay: rgba(0, 0, 0, 0.55);
+  --modal-bg: #fff8e1;
+  --panel-bg: rgba(255, 247, 220, 0.88);
+  --card-bg: rgba(80, 65, 50, 0.95);
+  --dark-panel: rgba(30, 25, 20, 0.9);
+  --med-panel: rgba(68, 56, 45, 0.9);
+  --banner-dark: #1a1a1a;
+
+  /* ------------------- TEXT COLORS ------------------- */
+  --text-on-dark: #f0e6d2;
+  --text-muted: #666;
+  --text-dark: #2f2f2f;
+  --text-body: var(--ink);
+  --text-heading: var(--gold);
+  --text-highlight: var(--highlight);
+
+  /* ------------------- STATUS COLORS ------------------- */
+  --success: #32cd32;
+  --error: #cc0000;
+  --danger: #b02a37;
+  --warning: #ffa500;
+  --info: #00bfff;
+  --low-morale: #ff4500;
+
+  --status-active: #4CAF50;
+  --status-expired: #F44336;
+  --status-fulfilled: #2196F3;
+  --status-private: #FFC107;
+
+  /* ------------------- FONT SYSTEM ------------------- */
+  --font-primary: 'Cinzel', serif;
+  --font-header: 'Cinzel Decorative', serif;
+  --font-body: 'IM Fell English', serif;
+  --font-secondary: 'MedievalSharp', cursive;
+
+  /* Font Sizes */
+  --font-xs: 0.8rem;
+  --font-sm: 1rem;
+  --font-md: 1.2rem;
+  --font-lg: 1.5rem;
+  --font-xl: 2rem;
+
+  /* ------------------- LAYOUT ------------------- */
+  --border-radius-small: 4px;
+  --border-radius-base: 8px;
+  --border-radius: 12px;
+  --padding-sm: 0.5rem;
+  --padding-md: 1rem;
+  --padding-lg: 2rem;
+  --gap-default: 1.5rem;
+
+  /* ------------------- BORDER & SHADOW ------------------- */
+  --border-color: var(--gold);
+  --border: 2px solid var(--border-color);
+  --card-border: 2px solid var(--leather);
+  --shadow-base: rgba(0, 0, 0, 0.15);
+  --shadow-strong: rgba(0, 0, 0, 0.3);
+  --box-shadow: 0 4px 10px var(--shadow-base);
+
+  /* ------------------- BUTTONS ------------------- */
+  --btn-bg: var(--accent);
+  --btn-hover-bg: var(--gold);
+  --btn-text: #fff;
+  --btn-hover-text: var(--ink);
+  --btn-border: 2px solid var(--gold);
+  --btn-radius: 10px;
+  --btn-padding: 0.5rem 1.25rem;
+
+  /* ------------------- FORMS ------------------- */
+  --input-bg: var(--stone-panel);
+  --input-text: var(--text-on-dark);
+  --input-border: 2px solid var(--gold);
+  --input-radius: 8px;
+  --input-padding: 0.5rem 1rem;
+
+  /* ------------------- TABLES ------------------- */
+  --table-bg: var(--panel-bg);
+  --table-header-bg: var(--gold);
+  --table-row-hover: var(--accent);
+  --table-padding: 0.75rem;
+  --table-radius: 6px;
+  --table-border: 1px solid var(--leather);
+
+  /* ------------------- Z-INDEX ------------------- */
+  --z-index-sticky: 1000;
+  --z-index-modal: 1100;
+  --z-index-tooltip: 1200;
+  --z-index-toast: 1400;
+
+  /* ------------------- TRANSITIONS ------------------- */
+  --transition-fast: 0.15s;
+  --transition-medium: 0.3s;
+  --transition-slow: 0.5s;
+}
+
+/* -----------------------------------------------
+   Typography Utility Classes
+------------------------------------------------ */
+.text-title {
+  font-family: var(--font-header);
+  font-size: var(--font-xl);
+  color: var(--text-heading);
+  text-shadow: 2px 2px var(--shadow);
+}
+.text-subtitle {
+  font-family: var(--font-header);
+  font-size: var(--font-lg);
+  color: var(--text-highlight);
+}
+.text-body {
+  font-family: var(--font-body);
+  font-size: var(--font-md);
+  color: var(--text-body);
+}
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* -----------------------------------------------
+   Panel Defaults
+------------------------------------------------ */
+.panel {
+  background: var(--panel-bg);
+  border: var(--card-border);
+  border-radius: var(--border-radius);
+  padding: var(--padding-md);
+  box-shadow: var(--box-shadow);
+  position: relative;
+}
+
+/* -----------------------------------------------
+   Button Base Class
+------------------------------------------------ */
+.btn {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: var(--btn-border);
+  border-radius: var(--btn-radius);
+  padding: var(--btn-padding);
+  font-family: var(--font-header);
+  cursor: pointer;
+  transition: background var(--transition-medium);
+}
+.btn:hover {
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+}
+
+/* -----------------------------------------------
+   Form Elements Base
+------------------------------------------------ */
+input,
+textarea,
+select {
+  background: var(--input-bg);
+  color: var(--input-text);
+  border: var(--input-border);
+  border-radius: var(--input-radius);
+  padding: var(--input-padding);
+  font-family: var(--font-body);
+  font-size: var(--font-md);
+}
+
+/* -----------------------------------------------
+   Table Style Base
+------------------------------------------------ */
+table {
+  background: var(--table-bg);
+  border-collapse: collapse;
+  border: var(--table-border);
+  width: 100%;
+}
+th, td {
+  padding: var(--table-padding);
+  border: var(--table-border);
+  color: var(--text-body);
+  font-family: var(--font-body);
+}
+th {
+  background: var(--table-header-bg);
+  color: var(--ink);
+  font-family: var(--font-header);
+}
+tr:hover {
+  background: var(--table-row-hover);
+  color: var(--ink);
+}
+
+/* -----------------------------------------------
+   Responsive & Utility
+------------------------------------------------ */
+.hidden { display: none !important; }
+.centered { text-align: center; justify-content: center; align-items: center; }
+.full-width { width: 100%; }
+.full-height { height: 100%; }
+.flex { display: flex; }
+.grid { display: grid; }
+.gap { gap: var(--gap-default); }
+p-1 { padding: var(--padding-sm); }
+p-2 { padding: var(--padding-md); }
+p-3 { padding: var(--padding-lg); }
+
+/* Banner */
+header.kr-top-banner {
+  text-align: center;
+  align-items: center;
+  align-content: center;
+  padding: 1rem 0;
+  font-size: 2rem;
+  background: var(--leather);
+  color: var(--gold);
+  border-bottom: 2px solid var(--gold);
+}
+
+/* -----------------------------------------------
+   Footer Styling (Universal)
+------------------------------------------------ */
+.site-footer {
+  text-align: center;
+  padding: var(--padding-md);
+  background: var(--stone-panel);
+  color: var(--text-on-dark);
+  font-family: var(--font-body);
+  border-top: 2px solid var(--gold);
+  box-shadow: 0 -2px 6px var(--shadow);
+  margin-top: auto;
+}
+.site-footer a {
+  margin: 0 0.5rem;
+  text-decoration: none;
+  color: var(--gold);
+}
+.site-footer a:hover {
+  text-decoration: underline;
+}
