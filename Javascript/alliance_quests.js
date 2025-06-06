@@ -1,4 +1,9 @@
-// alliance_quests.js — FINAL AAA/SSS GRADE — Fully Modal-Based Quest Board — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: alliance_quests.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

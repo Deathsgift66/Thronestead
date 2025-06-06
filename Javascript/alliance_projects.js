@@ -1,4 +1,9 @@
-// alliance_projects.js — FINAL AAA/SSS Modern Dashboard Version — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: alliance_projects.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 

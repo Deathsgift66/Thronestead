@@ -1,3 +1,9 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: legal.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // legal.js - Handles loading and dynamic interactions for legal page
 
 document.addEventListener("DOMContentLoaded", () => {

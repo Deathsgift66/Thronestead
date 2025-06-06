@@ -1,8 +1,12 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: account_settings.css
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 @import url("./root_theme.css");
 
-/* ------------------------------------------------------------
-   ACCOUNT SETTINGS PAGE — FINAL PATCHED VERSION WITH CENTERED GRID
-------------------------------------------------------------- */
+
 
 body {
   font-family: var(--font-primary);

@@ -1,3 +1,9 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: navDropdown.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // navDropdown.js — Multi-dropdown sticky support
 document.addEventListener("DOMContentLoaded", () => {
   const allDropdowns = document.querySelectorAll(".dropdown");
