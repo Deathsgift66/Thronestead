@@ -7,6 +7,7 @@ Author: Deathsgift66
 // Full dynamic Alliance Vault page
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { RESOURCE_TYPES } from './resourceTypes.js';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -84,7 +85,10 @@ async function loadDepositForm() {
   const container = document.getElementById("deposit-section");
   container.innerHTML = `
     <label for="deposit-resource">Resource:</label>
-    <input type="text" id="deposit-resource" placeholder="e.g. Gold" />
+    <input list="resource-options-deposit" id="deposit-resource" />
+    <datalist id="resource-options-deposit">
+      ${RESOURCE_TYPES.map(r => `<option value="${r}">`).join('')}
+    </datalist>
     <label for="deposit-amount">Amount:</label>
     <input type="number" id="deposit-amount" min="1" />
     <button class="action-btn" id="deposit-submit">Deposit</button>
@@ -121,7 +125,10 @@ async function loadWithdrawForm() {
   const container = document.getElementById("withdraw-section");
   container.innerHTML = `
     <label for="withdraw-resource">Resource:</label>
-    <input type="text" id="withdraw-resource" placeholder="e.g. Gold" />
+    <input list="resource-options-withdraw" id="withdraw-resource" />
+    <datalist id="resource-options-withdraw">
+      ${RESOURCE_TYPES.map(r => `<option value="${r}">`).join('')}
+    </datalist>
     <label for="withdraw-amount">Amount:</label>
     <input type="number" id="withdraw-amount" min="1" />
     <button class="action-btn" id="withdraw-submit">Withdraw</button>
