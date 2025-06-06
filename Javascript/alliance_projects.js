@@ -217,12 +217,12 @@ function renderNotifications(notifications) {
 
 // ✅ Button: Start New Project
 function startNewProject() {
-  alert('🚧 Start New Project — Feature coming soon!');
+  alert('🚧 Start New Project — feature under development.');
   // In full version: Open modal to select available projects
 }
 
 // ✅ Button: View All Projects
 function viewAllProjects() {
-  alert('🚧 View All Projects — Feature coming soon!');
+  alert('🚧 View All Projects — feature under development.');
   // In full version: Navigate to full Alliance Project Catalog page
 }

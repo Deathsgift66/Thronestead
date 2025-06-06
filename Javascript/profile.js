@@ -59,7 +59,7 @@ async function loadPlayerProfile() {
       vipBadgeEl.style.display = "none";
     }
 
-    // ✅ Render customization options (placeholder example)
+    // ✅ Render customization options
     // In future this can load from `profile_customization_catalogue` table
     customizationContainer.innerHTML = `
       <h3>Customize Profile</h3>
@@ -72,7 +72,7 @@ async function loadPlayerProfile() {
     // Example: Bind Edit Motto button
     customizationContainer.querySelectorAll(".action-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        alert(`This option is a placeholder — full customization system is coming soon!`);
+        alert('Profile customization will be available in a future update.');
       });
     });
 

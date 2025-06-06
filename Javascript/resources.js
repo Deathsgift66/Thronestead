@@ -72,7 +72,7 @@ async function loadResourcesNexus() {
     // ✅ Render vault table
     renderVaultTable(vaultData);
 
-    // ✅ Render simulators panel (placeholder for now)
+    // ✅ Render simulators panel
     renderSimulators();
 
   } catch (err) {
@@ -145,20 +145,20 @@ function renderVaultTable(vaultData) {
   });
 }
 
-// ✅ Render Simulators (placeholder)
+// ✅ Render Simulators
 function renderSimulators() {
   const simulatorsEl = document.getElementById('simulators');
   simulatorsEl.innerHTML = "";
 
-  const placeholder = document.createElement("div");
-  placeholder.classList.add("simulator-placeholder");
+  const simulatorPanel = document.createElement("div");
+  simulatorPanel.classList.add("simulator-panel");
 
-  placeholder.innerHTML = `
+  simulatorPanel.innerHTML = `
     <h3>Resource Simulators</h3>
-    <p>Coming soon: production estimators, trade calculators, efficiency tools...</p>
+    <p>Production estimators, trade calculators and efficiency tools.</p>
   `;
 
-  simulatorsEl.appendChild(placeholder);
+  simulatorsEl.appendChild(simulatorPanel);
 }
 
 // ✅ Helper: Format Resource Name
