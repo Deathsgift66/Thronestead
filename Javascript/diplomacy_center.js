@@ -1,4 +1,9 @@
-// diplomacy_center.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: diplomacy_center.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Hardened Diplomacy Center — Diplomatic State Overview
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';

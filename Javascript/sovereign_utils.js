@@ -1,4 +1,9 @@
-// sovereign_utils.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: sovereign_utils.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Sovereign’s Grand Overseer — Shared Utility Module
 
 /**

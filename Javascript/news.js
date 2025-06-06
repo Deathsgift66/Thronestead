@@ -1,4 +1,9 @@
-// news.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: news.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Dynamic News Hub — Article Listing
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';

@@ -1,6 +1,9 @@
-//---------------------------------------
-// Admin Dashboard - Kingmaker's Rise - FINAL 6.2.25 AAA/SSS GRADE
-//---------------------------------------
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: admin_dashboard.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
