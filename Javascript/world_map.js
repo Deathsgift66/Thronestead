@@ -1,3 +1,9 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: world_map.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // world_map.js — Tile-based world map engine for Kingmaker's Rise
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 

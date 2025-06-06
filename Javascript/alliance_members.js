@@ -1,4 +1,9 @@
-// alliance_members.js — FINAL 6.2.25 AAA/SSS GRADE
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: alliance_members.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 

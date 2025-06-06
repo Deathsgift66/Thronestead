@@ -1,4 +1,9 @@
-// index.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: index.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Hardened Landing Page — Dynamic CTA based on login state
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';

@@ -1,3 +1,9 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: navLoader.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // navLoader.js — Dynamically injects shared navbar
 document.addEventListener("DOMContentLoaded", async () => {
   const target = document.getElementById("kr-navbar-container");

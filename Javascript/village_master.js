@@ -1,4 +1,9 @@
-// village_master.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: village_master.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Sovereign’s Grand Overseer — Page Controller
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';

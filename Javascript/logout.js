@@ -1,3 +1,9 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: logout.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 async function logout() {
   try {
     await supabase.auth.signOut(); // End Supabase session

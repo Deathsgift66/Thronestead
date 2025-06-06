@@ -1,4 +1,9 @@
-// train_troops.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: train_troops.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Grand Muster Hall — Train Troops Page Controller
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';

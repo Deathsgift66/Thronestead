@@ -1,4 +1,9 @@
-// battle_resolution.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: battle_resolution.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Hardened Battle Resolution Page
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';

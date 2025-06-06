@@ -1,5 +1,9 @@
-// quest_alliance.js — FINAL AAA/SSS VERSION — 6.2.25
-// Alliance Quest Center — FINAL architecture
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: quest_alliance.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
