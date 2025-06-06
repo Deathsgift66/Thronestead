@@ -1,8 +1,12 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: audit_log.css
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
 
-/* ------------------------------------------------------------
-   AUDIT LOG — AAA ADMIN CENTERED LAYOUT
-------------------------------------------------------------- */
+
 
 :root {
   --parchment: #fbf0d9;

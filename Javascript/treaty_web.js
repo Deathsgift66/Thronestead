@@ -1,4 +1,9 @@
-// treaty_web.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: treaty_web.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Treaty Web Nexus Page Controller
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';

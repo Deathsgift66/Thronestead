@@ -1,26 +1,24 @@
-<!--
-Project Name: Kingmakers Rise Frontend
-File Name: news.html
-Date: June 2, 2025
-Author: Deathsgift66
--->
 <!DOCTYPE html>
 <html lang="en">
-
+<!--
+  Villages Overview - Player List
+  Final SSS-Tier PRODUCTION VERSION — 6.2.25
+  Author: Deathsgift66
+-->
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>News | Kingmaker's Rise</title>
-  <meta name="description" content="Explore player-run newspapers and the latest public news in the News Hub of Kingmaker’s Rise." />
-  <meta name="keywords" content="Kingmaker's Rise, news, player newspapers, public news, alliances, politics, diplomacy" />
+  <title>Villages | Kingmaker's Rise</title>
+  <meta name="description" content="View all your villages in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, villages, list" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/news.html" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/villages.html" />
 
   <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/news.css" />
+  <link rel="stylesheet" href="CSS/villages.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script defer type="module" src="Javascript/news.js"></script>
+  <script defer type="module" src="Javascript/villages.js"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
@@ -43,22 +41,19 @@ Author: Deathsgift66
 </script>
 
 <!-- Page Banner -->
-<header class="kr-top-banner" aria-label="News Banner">
-  Kingmaker's Rise — News Hub
+<header class="kr-top-banner" aria-label="Villages Banner">
+  Kingmaker's Rise — Your Villages
 </header>
 
 <!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="News Hub Interface">
+<main id="main-content" class="main-centered-container" aria-label="Villages Interface">
 
-  <!-- Core News Panel -->
+  <!-- Villages List -->
   <section class="alliance-members-container">
-
-    <!-- Content Container -->
-    <div class="content-container">
-      <h2>News</h2>
-      <p>Welcome to the News page. This will be the hub for player-run newspapers and public news.</p>
-    </div>
-
+    <h2>Your Villages</h2>
+    <ul id="village-list" class="village-list">
+      <!-- JS will populate -->
+    </ul>
   </section>
 
 </main>

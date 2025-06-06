@@ -1,3 +1,9 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: root_theme.css
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 /* ------------------------------------------------------------
    GLOBAL ROOT THEME — KINGMAKER'S RISE
    Master design system for all pages (UI, fonts, borders, colors)
@@ -216,9 +222,9 @@ tr:hover {
 .flex { display: flex; }
 .grid { display: grid; }
 .gap { gap: var(--gap-default); }
-p-1 { padding: var(--padding-sm); }
-p-2 { padding: var(--padding-md); }
-p-3 { padding: var(--padding-lg); }
+.p-1 { padding: var(--padding-sm); }
+.p-2 { padding: var(--padding-md); }
+.p-3 { padding: var(--padding-lg); }
 
 /* Banner */
 header.kr-top-banner {

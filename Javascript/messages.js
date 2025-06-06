@@ -1,4 +1,9 @@
-// messages.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: messages.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Unified Messaging System — Inbox + View + Compose
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -191,7 +196,6 @@ function setupCompose() {
         throw new Error("Recipient not found.");
       }
 
-      // ✅ Insert message — FINAL
       const { error: sendError } = await supabase
         .from("player_messages")
         .insert({

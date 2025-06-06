@@ -1,9 +1,12 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: kr_navbar.css
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 @import url("./root_theme.css");
 
-/* -----------------------------------------------
-   👑 SSS-GRADE NAVBAR — Kingmaker’s Rise
-   Sticky, mouse-safe dropdown, fully responsive
-------------------------------------------------- */
+
 
 .kr-navbar {
   position: relative;

@@ -1,0 +1,8 @@
+{
+  "name": "kingmakers-rise-frontend",
+  "version": "1.0.0",
+  "description": "Frontend assets for Kingmaker's Rise",
+  "scripts": {
+    "test": "echo \"No tests defined\""
+  }
+}

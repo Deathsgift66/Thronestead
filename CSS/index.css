@@ -1,8 +1,12 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: index.css
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
 
-/* ------------------------------------------------------------
-   INDEX — HOMEPAGE SSS-TIER LAYOUT
-------------------------------------------------------------- */
+
 
 :root {
   --parchment: #fbf0d9;
@@ -118,14 +122,5 @@ body {
   color: var(--parchment);
 }
 
-.trailer-placeholder {
-  background: var(--stone-panel);
-  padding: 3rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px var(--shadow);
-  margin-top: 1.5rem;
-  color: var(--ink);
-  font-size: 1.2rem;
-}
 
 /* Footer - matches site */

@@ -1,5 +1,9 @@
-// profile.js — FINAL AAA/SSS VERSION — 6.2.25
-// Player Profile & Customization — FINAL architecture
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: profile.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -59,7 +63,7 @@ async function loadPlayerProfile() {
       vipBadgeEl.style.display = "none";
     }
 
-    // ✅ Render customization options (placeholder example)
+    // ✅ Render customization options
     // In future this can load from `profile_customization_catalogue` table
     customizationContainer.innerHTML = `
       <h3>Customize Profile</h3>
@@ -72,7 +76,7 @@ async function loadPlayerProfile() {
     // Example: Bind Edit Motto button
     customizationContainer.querySelectorAll(".action-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        alert(`This option is a placeholder — full customization system is coming soon!`);
+        alert('Profile customization will be available in a future update.');
       });
     });
 

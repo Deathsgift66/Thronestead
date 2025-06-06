@@ -1,4 +1,9 @@
-// alliance_treaties.js — FINAL AAA/SSS VERSION — 6.2.25
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: alliance_treaties.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
 // Modern Card-Based Alliance Treaties Center
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -84,7 +89,7 @@ async function loadTreaties() {
 // ✅ View Treaty Details (Modal or Navigate)
 function viewTreatyDetails(treaty) {
   // For now, just an alert — you can replace with a modal
-  alert(`Treaty with ${treaty.alliance_name}\nType: ${treaty.type}\nStatus: ${treaty.status}\n\n(Modal coming soon!)`);
+  alert(`Treaty with ${treaty.alliance_name}\nType: ${treaty.type}\nStatus: ${treaty.status}\n\n(Modal under development)`);
 
   // Example: To open a modal in future
   // const modal = document.getElementById("treaty-modal");
