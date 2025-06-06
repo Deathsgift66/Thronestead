@@ -24,6 +24,7 @@ Auth is handled via **Supabase Client** → included in `supabaseClient.js`.
 
 - HTML5 + CSS3 + Javascript (ES Modules)
 - FastAPI backend (expected)
+- Node.js Express server for local development (placeholder API)
 - Supabase for auth + data
 - SPA-ready → Netlify optimized
 - No framework (Vanilla + Modules) → lean, fast
@@ -53,3 +54,4 @@ Pre-Alpha build — **feature-complete** FrontEnd.
 ---
 
 # 🚀 GLORY TO THE KINGDOM!
+\n### Local API Server\nRun `npm install` then `npm start` to launch a local server with placeholder API routes.
