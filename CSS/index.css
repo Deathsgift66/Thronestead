@@ -122,14 +122,5 @@ body {
   color: var(--parchment);
 }
 
-.trailer-placeholder {
-  background: var(--stone-panel);
-  padding: 3rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px var(--shadow);
-  margin-top: 1.5rem;
-  color: var(--ink);
-  font-size: 1.2rem;
-}
 
 /* Footer - matches site */

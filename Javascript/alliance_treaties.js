@@ -89,7 +89,7 @@ async function loadTreaties() {
 // ✅ View Treaty Details (Modal or Navigate)
 function viewTreatyDetails(treaty) {
   // For now, just an alert — you can replace with a modal
-  alert(`Treaty with ${treaty.alliance_name}\nType: ${treaty.type}\nStatus: ${treaty.status}\n\n(Modal coming soon!)`);
+  alert(`Treaty with ${treaty.alliance_name}\nType: ${treaty.type}\nStatus: ${treaty.status}\n\n(Modal under development)`);
 
   // Example: To open a modal in future
   // const modal = document.getElementById("treaty-modal");

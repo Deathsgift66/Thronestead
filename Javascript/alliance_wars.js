@@ -132,7 +132,7 @@ async function loadAllianceWars() {
 // ✅ View War Details (Modal or Navigate)
 function viewWarDetails(war) {
   // For now: simple alert (can replace with modal or navigation)
-  alert(`War vs ${war.opponent}\nType: ${war.type || "N/A"}\nStatus: ${war.status || war.result}\n\n(More details coming soon!)`);
+  alert(`War vs ${war.opponent}\nType: ${war.type || "N/A"}\nStatus: ${war.status || war.result}\n\n(More details available in future updates)`);
 
   // Example for modal:
   // const modal = document.getElementById("war-modal");
