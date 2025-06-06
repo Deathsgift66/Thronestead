@@ -584,3 +584,67 @@ CREATE POLICY modify_own_notifications ON notifications
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 CREATE POLICY access_own_audit_log ON audit_log
   FOR SELECT USING (auth.uid() = user_id);
+
+-- TILE BATTLE SYSTEM TABLES ---------------------------------------------------
+
+CREATE TYPE war_phase AS ENUM ('alert', 'planning', 'battle', 'completed');
+CREATE TYPE war_status AS ENUM ('active', 'completed');
+
+CREATE TABLE wars_tactical (
+    war_id SERIAL PRIMARY KEY,
+    attacker_kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    defender_kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    phase war_phase DEFAULT 'alert',
+    castle_hp INTEGER DEFAULT 1000,
+    battle_tick INTEGER DEFAULT 0,
+    war_status war_status DEFAULT 'active'
+);
+
+CREATE TABLE unit_movements (
+    movement_id SERIAL PRIMARY KEY,
+    war_id INTEGER REFERENCES wars_tactical(war_id),
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    unit_type TEXT,
+    quantity INTEGER,
+    position_x INTEGER,
+    position_y INTEGER,
+    stance TEXT,
+    movement_path JSONB,
+    target_priority JSONB,
+    patrol_zone JSONB,
+    fallback_point_x INTEGER,
+    fallback_point_y INTEGER,
+    withdraw_threshold_percent INTEGER,
+    morale FLOAT,
+    status TEXT
+);
+
+CREATE TABLE terrain_map (
+    terrain_id SERIAL PRIMARY KEY,
+    war_id INTEGER REFERENCES wars_tactical(war_id),
+    tile_map JSONB,
+    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE combat_logs (
+    combat_id SERIAL PRIMARY KEY,
+    war_id INTEGER REFERENCES wars_tactical(war_id),
+    tick_number INTEGER,
+    event_type TEXT,
+    attacker_unit_id INTEGER,
+    defender_unit_id INTEGER,
+    position_x INTEGER,
+    position_y INTEGER,
+    damage_dealt INTEGER,
+    morale_shift FLOAT,
+    notes TEXT,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE war_preplans (
+    preplan_id SERIAL PRIMARY KEY,
+    war_id INTEGER REFERENCES wars_tactical(war_id),
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    preplan_jsonb JSONB,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
