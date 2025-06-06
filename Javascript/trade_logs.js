@@ -2,12 +2,14 @@
 // Trade Logs Page Controller — FINAL architecture
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { RESOURCE_TYPES } from './resourceTypes.js';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
   initTabs();
   initFilters();
+  populateResourceOptions();
   await loadTradeLogs();
 });
 
@@ -37,6 +39,18 @@ function initFilters() {
   const applyFiltersBtn = document.getElementById('applyFilters');
   applyFiltersBtn.addEventListener('click', async () => {
     await loadTradeLogs();
+  });
+}
+
+// ✅ Populate Resource Options
+function populateResourceOptions() {
+  const selectEl = document.getElementById('resourceType');
+  if (!selectEl) return;
+  RESOURCE_TYPES.forEach(res => {
+    const opt = document.createElement('option');
+    opt.value = res;
+    opt.textContent = res;
+    selectEl.appendChild(opt);
   });
 }
 
