@@ -216,9 +216,9 @@ tr:hover {
 .flex { display: flex; }
 .grid { display: grid; }
 .gap { gap: var(--gap-default); }
-p-1 { padding: var(--padding-sm); }
-p-2 { padding: var(--padding-md); }
-p-3 { padding: var(--padding-lg); }
+.p-1 { padding: var(--padding-sm); }
+.p-2 { padding: var(--padding-md); }
+.p-3 { padding: var(--padding-lg); }
 
 /* Banner */
 header.kr-top-banner {
