@@ -2,7 +2,14 @@
   "name": "kingmakers-rise-frontend",
   "version": "1.0.0",
   "description": "Frontend assets for Kingmaker's Rise",
+  "private": true,
+  "author": "Deathsgift66",
+  "license": "Proprietary",
   "scripts": {
+    "serve": "http-server -a localhost -p 3000 -c-1",
     "test": "echo \"No tests defined\""
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
   }
 }
