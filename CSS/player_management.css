@@ -137,7 +137,7 @@ body {
 
 #player-table td {
   background: var(--stone-panel);
-  color: var(--ink);
+  color: var(--parchment);
 }
 
 /* Modal */

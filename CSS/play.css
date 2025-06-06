@@ -22,7 +22,7 @@ body {
   font-family: 'IM Fell English', serif;
   background: url('../Assets/play_background.png') no-repeat center center fixed;
   background-size: cover;
-  color: var(--ink);
+  color: var(--parchment);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -68,7 +68,7 @@ body {
 
 #custom-text-slot {
   font-size: 1.1rem;
-  color: var(--ink);
+  color: var(--parchment);
   padding: 1rem;
 }
 
@@ -133,7 +133,7 @@ body {
   visibility: hidden;
   width: 200px;
   background-color: var(--stone-panel);
-  color: var(--ink);
+  color: var(--parchment);
   text-align: center;
   border-radius: 8px;
   border: 1px solid var(--gold);

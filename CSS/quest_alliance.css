@@ -22,7 +22,7 @@ body {
   font-family: 'IM Fell English', serif;
   background: url('../Assets/alliance_quests_background.png') no-repeat center center fixed;
   background-size: cover;
-  color: var(--ink);
+  color: var(--parchment);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -68,7 +68,7 @@ body {
 
 #custom-text-slot {
   font-size: 1.1rem;
-  color: var(--ink);
+  color: var(--parchment);
   padding: 1rem;
 }
 
@@ -126,7 +126,7 @@ body {
   bottom: 1rem;
   right: 1rem;
   background: rgba(245, 231, 196, 0.95);
-  color: var(--ink);
+  color: var(--parchment);
   border: 2px solid var(--gold);
   border-radius: 10px;
   padding: 1rem;

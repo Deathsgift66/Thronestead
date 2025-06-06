@@ -24,7 +24,7 @@ body {
   font-family: 'IM Fell English', serif;
   background: url('../Assets/battleresolution.png') no-repeat center center fixed;
   background-size: cover;
-  color: var(--ink);
+  color: var(--parchment);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -70,7 +70,7 @@ body {
 
 #custom-text-slot {
   font-size: 1.1rem;
-  color: var(--ink);
+  color: var(--parchment);
   padding: 1rem;
 }
 
@@ -119,7 +119,7 @@ body {
 .battle-outcome p {
   margin: 0.5rem 0;
   font-size: 1.1rem;
-  color: var(--ink);
+  color: var(--parchment);
 }
 
 /* Combat Log Panel */
@@ -150,7 +150,7 @@ body {
   border-radius: 6px;
   box-shadow: 0 1px 4px var(--shadow);
   font-size: 1rem;
-  color: var(--ink);
+  color: var(--parchment);
 }
 
 /* Footer - handled globally */

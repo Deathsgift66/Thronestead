@@ -22,7 +22,7 @@ body {
   font-family: 'IM Fell English', serif;
   background: url('../Assets/trade_logs_background.png') no-repeat center center fixed;
   background-size: cover;
-  color: var(--ink);
+  color: var(--parchment);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -68,7 +68,7 @@ body {
 
 #custom-text-slot {
   font-size: 1.1rem;
-  color: var(--ink);
+  color: var(--parchment);
   padding: 1rem;
 }
 
