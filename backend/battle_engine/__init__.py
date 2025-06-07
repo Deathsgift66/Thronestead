@@ -10,6 +10,13 @@ from .engine import (
     TerrainType,
 )
 from .manager import WarManager, war_manager, run_combat_tick
+from .movement import (
+    process_unit_movement,
+    move_towards,
+    terrain_movement_modifier,
+    select_patrol_target,
+    update_unit_position,
+)
 
 __all__ = [
     "TerrainGenerator",
@@ -22,4 +29,9 @@ __all__ = [
     "WarManager",
     "war_manager",
     "run_combat_tick",
+    "process_unit_movement",
+    "move_towards",
+    "terrain_movement_modifier",
+    "select_patrol_target",
+    "update_unit_position",
 ]
