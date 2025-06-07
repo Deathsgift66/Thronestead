@@ -1,6 +1,8 @@
 # Progression System
 
-This subsystem tracks castle experience, nobles and knights. It uses a simple in-memory store in `backend/progression_service.py` for demo purposes.
+This subsystem tracks castle experience, nobles and knights. Progress is stored
+in PostgreSQL tables accessed through SQLAlchemy. The helper functions in
+`services/progression_service.py` aggregate troop slot bonuses for a kingdom.
 
 ## Castle Progression
 - Experience points are gained through various actions.
