@@ -2,7 +2,15 @@
 
 This subsystem tracks castle experience, nobles and knights. Progress is stored
 in PostgreSQL tables accessed through SQLAlchemy. The helper functions in
-`services/progression_service.py` aggregate troop slot bonuses for a kingdom.
+`services/progression_service.py` aggregate troop slot bonuses for a kingdom and
+provide reusable validation helpers.
+
+* `calculate_troop_slots(kid)` – aggregate base and bonus slots
+* `check_progression_requirements(kid, castle, nobles, knights)` – raise an
+  HTTP 403 error if the given kingdom does not meet the required castle level or
+  unit counts
+* `check_troop_slots(kid, troops_requested)` – raise an HTTP 400 error when a
+  troop training request would exceed the available slots
 
 ## Castle Progression
 - Experience points are gained through various actions.
