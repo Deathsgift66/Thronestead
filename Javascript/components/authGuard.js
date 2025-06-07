@@ -5,6 +5,7 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 import { supabase } from '../supabaseClient.js';
+import { fetchAndStorePlayerProgression, loadPlayerProgressionFromStorage } from '../progressionGlobal.js';
 
 const requireAdmin = false;
 const minVip = 0;
@@ -66,7 +67,7 @@ const requirePermission = null; // e.g. "manage_projects"
     }
 
     // Store for page use
-    window.user = {
+  window.user = {
       id: user.id,
       is_admin: userData.is_admin,
       vip_level: userData.vip_level,
@@ -74,6 +75,11 @@ const requirePermission = null; // e.g. "manage_projects"
       alliance_role: alliance?.alliance_role || null,
       permissions: alliance?.permissions || []
     };
+
+    loadPlayerProgressionFromStorage();
+    if (!window.playerProgression) {
+      await fetchAndStorePlayerProgression(user.id);
+    }
 
     const logoutBtn = document.getElementById("logout-btn");
     if (logoutBtn) {

@@ -7,6 +7,7 @@ Author: Deathsgift66
 // Kingdom Overview — Summary + Resources + Military + Quests
 
 import { supabase } from './supabaseClient.js';
+import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Validate session
@@ -14,6 +15,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!session) {
     window.location.href = "login.html";
     return;
+  }
+
+  loadPlayerProgressionFromStorage();
+  if (!window.playerProgression) {
+    await fetchAndStorePlayerProgression(session.user.id);
   }
 
   // ✅ Initial load
@@ -34,15 +40,19 @@ async function loadOverview() {
   questsContainer.innerHTML = "<p>Loading quests...</p>";
 
   try {
-    const res = await fetch("/api/kingdom/overview");
-    const data = await res.json();
+    const [kingdomRes, prog] = await Promise.all([
+      fetch('/api/kingdom/summary'),
+      Promise.resolve(window.playerProgression)
+    ]);
+    const data = await kingdomRes.json();
 
     // ✅ Summary Panel
     summaryContainer.innerHTML = `
-      <p><strong>Kingdom:</strong> ${escapeHTML(data.kingdom_name)}</p>
-      <p><strong>Owner:</strong> ${escapeHTML(data.owner_name)}</p>
-      <p><strong>VIP Tier:</strong> ${escapeHTML(data.vip_tier)}</p>
-      <p><strong>Relationship Status:</strong> ${escapeHTML(data.relationship_status)}</p>
+      <p><strong>Castle Level:</strong> ${prog.castleLevel}</p>
+      <p><strong>Max Villages:</strong> ${prog.maxVillages}</p>
+      <p><strong>Nobles:</strong> ${prog.availableNobles} / ${prog.totalNobles}</p>
+      <p><strong>Knights:</strong> ${prog.availableKnights} / ${prog.totalKnights}</p>
+      <p><strong>Troop Slots:</strong> ${prog.troopSlots.used} / ${prog.troopSlots.used + prog.troopSlots.available}</p>
     `;
 
     // ✅ Resources Panel
@@ -60,37 +70,20 @@ async function loadOverview() {
     }
 
     // ✅ Military Panel
-    militaryContainer.innerHTML = "";
-    if (data.military_summary && Object.keys(data.military_summary).length > 0) {
-      const list = document.createElement("ul");
-      for (const [unit, count] of Object.entries(data.military_summary)) {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${escapeHTML(unit)}:</strong> ${count}`;
-        list.appendChild(li);
-      }
-      militaryContainer.appendChild(list);
+    militaryContainer.innerHTML = ``;
+    if (data.troops) {
+      const p = document.createElement('p');
+      p.innerHTML = `<strong>Total Troops:</strong> ${data.troops.total}`;
+      const p2 = document.createElement('p');
+      p2.innerHTML = `<strong>Slots Used:</strong> ${data.troops.slots.used} / ${data.troops.slots.base}`;
+      militaryContainer.appendChild(p);
+      militaryContainer.appendChild(p2);
     } else {
       militaryContainer.innerHTML = "<p>No military data found.</p>";
     }
 
-    // ✅ Quests Panel
-    questsContainer.innerHTML = "";
-    if (data.quests && data.quests.length > 0) {
-      data.quests.forEach(quest => {
-        const card = document.createElement("div");
-        card.classList.add("quest-card");
-
-        card.innerHTML = `
-          <h4>${escapeHTML(quest.title)}</h4>
-          <p>Status: ${escapeHTML(quest.status)}</p>
-          <p>Progress: ${quest.progress}%</p>
-        `;
-
-        questsContainer.appendChild(card);
-      });
-    } else {
-      questsContainer.innerHTML = "<p>No active quests.</p>";
-    }
+    // ✅ Quests Panel (placeholder)
+    questsContainer.innerHTML = "<p>No active quests.</p>";
 
   } catch (err) {
     console.error("❌ Error loading overview:", err);
