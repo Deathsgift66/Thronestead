@@ -294,6 +294,9 @@ CREATE TABLE public.project_player_catalogue (
   description text,
   power_score integer DEFAULT 0,
   cost jsonb,
+  required_castle_level integer DEFAULT 0,
+  required_nobles integer DEFAULT 0,
+  required_knights integer DEFAULT 0,
   CONSTRAINT project_player_catalogue_pkey PRIMARY KEY (project_code)
 );
 CREATE TABLE public.projects_alliance (
@@ -347,6 +350,9 @@ CREATE TABLE public.quest_kingdom_catalogue (
   name text NOT NULL,
   description text,
   duration_hours integer,
+  required_castle_level integer DEFAULT 0,
+  required_nobles integer DEFAULT 0,
+  required_knights integer DEFAULT 0,
   CONSTRAINT quest_kingdom_catalogue_pkey PRIMARY KEY (quest_code)
 );
 CREATE TABLE public.quest_kingdom_tracking (
