@@ -115,7 +115,7 @@ async function loadRecruitableUnits() {
           await loadTrainingQueue();
         } catch (err) {
           console.error("❌ Error recruiting units:", err);
-          alert("Recruitment failed.");
+          alert(err.message || "Recruitment failed.");
         }
       });
     });

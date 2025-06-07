@@ -135,6 +135,14 @@ CREATE TABLE training_history (
     completed_at TIMESTAMP WITH TIME ZONE
 );
 
+-- MILITARY SLOTS ------------------------------------------------------------
+CREATE TABLE kingdom_troop_slots (
+    kingdom_id INTEGER PRIMARY KEY REFERENCES kingdoms(kingdom_id),
+    base_slots INTEGER DEFAULT 20,
+    used_slots INTEGER DEFAULT 0,
+    morale     INTEGER DEFAULT 100
+);
+
 -- TECHNOLOGY & RESEARCH -----------------------------------------------------
 CREATE TABLE tech_catalogue (
     tech_code        TEXT PRIMARY KEY,
