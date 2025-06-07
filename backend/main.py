@@ -24,6 +24,8 @@ from .routers import (
     buildings,
     progression_router,
     wars,
+    quests_router,
+    projects_router,
 )
 from .database import engine
 from .models import Base
@@ -57,4 +59,6 @@ app.include_router(leaderboard.router)
 app.include_router(buildings.router)
 app.include_router(progression_router.router)
 app.include_router(wars.router)
+app.include_router(quests_router.router)
+app.include_router(projects_router.router)
 

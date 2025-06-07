@@ -28,3 +28,12 @@ military_state = {
         "history": [],
     }
 }
+
+# Simplified castle progression tracking
+castle_progression_state = {
+    1: {
+        "castle_level": 1,
+        "nobles": 0,
+        "knights": 0,
+    }
+}

@@ -202,7 +202,10 @@ CREATE TABLE project_player_catalogue (
     name         TEXT NOT NULL,
     description  TEXT,
     power_score  INTEGER DEFAULT 0,
-    cost         JSONB
+    cost         JSONB,
+    required_castle_level INTEGER DEFAULT 0,
+    required_nobles INTEGER DEFAULT 0,
+    required_knights INTEGER DEFAULT 0
 );
 
 CREATE TABLE projects_player (
@@ -219,7 +222,10 @@ CREATE TABLE quest_kingdom_catalogue (
     quest_code     TEXT PRIMARY KEY,
     name           TEXT NOT NULL,
     description    TEXT,
-    duration_hours INTEGER
+    duration_hours INTEGER,
+    required_castle_level INTEGER DEFAULT 0,
+    required_nobles INTEGER DEFAULT 0,
+    required_knights INTEGER DEFAULT 0
 );
 
 CREATE TABLE quest_kingdom_tracking (
