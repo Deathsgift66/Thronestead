@@ -1,0 +1,388 @@
+from __future__ import annotations
+
+"""Full combat resolver processing kingdom and alliance wars."""
+
+from typing import Any, Dict, List
+
+from .movement import process_unit_movement
+from .vision import process_unit_vision
+
+try:
+    from ..db import db  # type: ignore
+except Exception:  # pragma: no cover - simple fallback
+    class _DummyDB:
+        def query(self, *args: Any, **kwargs: Any) -> List[Dict]:
+            return []
+
+        def execute(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+    db = _DummyDB()
+
+
+def process_unit_combat(
+    unit: Dict[str, Any],
+    all_units: List[Dict[str, Any]],
+    terrain: List[List[str]],
+    war_id: int,
+    tick: int,
+    war_type: str,
+) -> None:
+    """Resolve combat for ``unit`` against nearby enemies."""
+
+    unit_id = unit["movement_id"]
+    kingdom_id = unit["kingdom_id"]
+    pos_x = unit["position_x"]
+    pos_y = unit["position_y"]
+    quantity = unit.get("quantity", 0)
+
+    for other in all_units:
+        if other["kingdom_id"] == kingdom_id:
+            continue
+
+        distance = max(
+            abs(pos_x - other["position_x"]),
+            abs(pos_y - other["position_y"]),
+        )
+
+        if distance > 1:
+            continue
+
+        casualties = min(quantity, other.get("quantity", 0))
+        if casualties <= 0:
+            continue
+
+        remaining = max(0, other["quantity"] - casualties)
+        other["quantity"] = remaining
+
+        db.execute(
+            """
+            UPDATE unit_movements
+            SET quantity = %s, status = CASE WHEN %s = 0 THEN 'defeated' ELSE status END
+            WHERE movement_id = %s
+            """,
+            (remaining, remaining, other["movement_id"]),
+        )
+
+        db.execute(
+            """
+            INSERT INTO combat_logs (
+                war_id, tick_number, event_type, attacker_unit_id,
+                defender_unit_id, position_x, position_y, damage_dealt,
+                morale_shift, notes
+            )
+            VALUES (%s, %s, 'attack', %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                war_id,
+                tick,
+                unit_id,
+                other["movement_id"],
+                other["position_x"],
+                other["position_y"],
+                casualties,
+                0.0,
+                war_type,
+            ),
+        )
+
+
+# ============================================
+# COMBAT RESOLVER — FULL ENGINE SKELETON
+# ============================================
+
+def run_combat_tick() -> None:
+    """Process one combat tick for all active wars."""
+
+    # --- Process Kingdom Wars ---
+    active_kingdom_wars = db.query(
+        """
+        SELECT war_id, phase, castle_hp, battle_tick
+        FROM wars_tactical
+        WHERE phase = 'battle' AND war_status = 'active'
+        """
+    )
+
+    for war in active_kingdom_wars:
+        process_kingdom_war_tick(war)
+
+    # --- Process Alliance Wars ---
+    active_alliance_wars = db.query(
+        """
+        SELECT alliance_war_id, phase, castle_hp, battle_tick
+        FROM alliance_wars
+        WHERE phase = 'battle' AND war_status = 'active'
+        """
+    )
+
+    for awar in active_alliance_wars:
+        process_alliance_war_tick(awar)
+
+
+# ============================================
+# PROCESS KINGDOM WAR TICK
+# ============================================
+
+def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
+    war_id = war["war_id"]
+    tick = war["battle_tick"] + 1
+
+    print(f"Processing Kingdom War ID {war_id} — Tick {tick}")
+
+    units = db.query(
+        """
+        SELECT * FROM unit_movements
+        WHERE war_id = %s AND status = 'active'
+        """,
+        (war_id,),
+    )
+
+    terrain = db.query(
+        """
+        SELECT tile_map FROM terrain_map
+        WHERE war_id = %s
+        """,
+        (war_id,),
+    ).first()["tile_map"]
+
+    # --- MAIN LOOP ---
+    for unit in units:
+        process_unit_movement(unit, terrain)
+        process_unit_vision(unit, units, terrain)
+        process_unit_combat(unit, units, terrain, war_id, tick, "kingdom")
+
+    # --- UPDATE TICK ---
+    db.execute(
+        """
+        UPDATE wars_tactical
+        SET battle_tick = %s
+        WHERE war_id = %s
+        """,
+        (tick, war_id),
+    )
+
+    # --- CHECK VICTORY ---
+    check_victory_condition_kingdom(war_id)
+
+
+# ============================================
+# PROCESS ALLIANCE WAR TICK
+# ============================================
+
+def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
+    alliance_war_id = awar["alliance_war_id"]
+    tick = awar["battle_tick"] + 1
+
+    print(f"Processing Alliance War ID {alliance_war_id} — Tick {tick}")
+
+    participants = db.query(
+        """
+        SELECT kingdom_id FROM alliance_war_participants
+        WHERE alliance_war_id = %s
+        """,
+        (alliance_war_id,),
+    )
+
+    participant_kingdom_ids = [p["kingdom_id"] for p in participants]
+
+    units = db.query(
+        """
+        SELECT * FROM unit_movements
+        WHERE kingdom_id = ANY(%s) AND war_id IS NULL
+          AND status = 'active'
+        """,
+        (participant_kingdom_ids,),
+    )
+
+    terrain = db.query(
+        """
+        SELECT tile_map FROM terrain_map
+        WHERE war_id = %s
+        """,
+        (alliance_war_id,),
+    ).first()["tile_map"]
+
+    # --- MAIN LOOP ---
+    for unit in units:
+        process_unit_movement(unit, terrain)
+        process_unit_vision(unit, units, terrain)
+        process_unit_combat(unit, units, terrain, alliance_war_id, tick, "alliance")
+
+    # --- UPDATE TICK ---
+    db.execute(
+        """
+        UPDATE alliance_wars
+        SET battle_tick = %s
+        WHERE alliance_war_id = %s
+        """,
+        (tick, alliance_war_id),
+    )
+
+    # --- CHECK VICTORY ---
+    check_victory_condition_alliance(alliance_war_id)
+
+
+# ============================================
+# CHECK VICTORY — KINGDOM WAR
+# ============================================
+
+def check_victory_condition_kingdom(war_id: int) -> None:
+    war = db.query(
+        """
+        SELECT castle_hp, battle_tick FROM wars_tactical
+        WHERE war_id = %s
+        """,
+        (war_id,),
+    ).first()
+
+    if war["castle_hp"] <= 0:
+        print(f"Kingdom War {war_id} — ATTACKER WINS!")
+        db.execute(
+            """
+            UPDATE wars_tactical SET war_status = 'completed'
+            WHERE war_id = %s
+            """,
+            (war_id,),
+        )
+        db.execute(
+            """
+            INSERT INTO war_scores (war_id, victor) VALUES (%s, 'attacker')
+            """,
+            (war_id,),
+        )
+        insert_battle_resolution_log("kingdom", war_id, None, "attacker", war["battle_tick"])
+
+    elif war["battle_tick"] >= 12:
+        print(f"Kingdom War {war_id} — BATTLE ENDED AT TICK 12")
+        victor = determine_victor(war_id)
+        db.execute(
+            """
+            UPDATE wars_tactical SET war_status = 'completed'
+            WHERE war_id = %s
+            """,
+            (war_id,),
+        )
+        db.execute(
+            """
+            INSERT INTO war_scores (war_id, victor) VALUES (%s, %s)
+            """,
+            (war_id, victor),
+        )
+        insert_battle_resolution_log("kingdom", war_id, None, victor, war["battle_tick"])
+
+
+# ============================================
+# CHECK VICTORY — ALLIANCE WAR
+# ============================================
+
+def check_victory_condition_alliance(alliance_war_id: int) -> None:
+    awar = db.query(
+        """
+        SELECT castle_hp, battle_tick FROM alliance_wars
+        WHERE alliance_war_id = %s
+        """,
+        (alliance_war_id,),
+    ).first()
+
+    if awar["castle_hp"] <= 0:
+        print(f"Alliance War {alliance_war_id} — ATTACKER WINS!")
+        db.execute(
+            """
+            UPDATE alliance_wars SET war_status = 'completed'
+            WHERE alliance_war_id = %s
+            """,
+            (alliance_war_id,),
+        )
+        db.execute(
+            """
+            INSERT INTO alliance_war_scores (alliance_war_id, victor)
+            VALUES (%s, 'attacker')
+            ON CONFLICT (alliance_war_id) DO UPDATE
+            SET victor = 'attacker', last_updated = now()
+            """,
+            (alliance_war_id,),
+        )
+        insert_battle_resolution_log(
+            "alliance",
+            None,
+            alliance_war_id,
+            "attacker",
+            awar["battle_tick"],
+        )
+
+    elif awar["battle_tick"] >= 12:
+        print(f"Alliance War {alliance_war_id} — BATTLE ENDED AT TICK 12")
+        victor = determine_victor_alliance(alliance_war_id)
+        db.execute(
+            """
+            UPDATE alliance_wars SET war_status = 'completed'
+            WHERE alliance_war_id = %s
+            """,
+            (alliance_war_id,),
+        )
+        db.execute(
+            """
+            INSERT INTO alliance_war_scores (alliance_war_id, victor)
+            VALUES (%s, %s)
+            ON CONFLICT (alliance_war_id) DO UPDATE
+            SET victor = %s, last_updated = now()
+            """,
+            (alliance_war_id, victor, victor),
+        )
+        insert_battle_resolution_log(
+            "alliance",
+            None,
+            alliance_war_id,
+            victor,
+            awar["battle_tick"],
+        )
+
+
+# ============================================
+# DETERMINE VICTOR — EXAMPLE LOGIC
+# ============================================
+
+def determine_victor(war_id: int) -> str:
+    war = db.query(
+        "SELECT castle_hp FROM wars_tactical WHERE war_id = %s",
+        (war_id,),
+    ).first()
+    if war["castle_hp"] > 500:
+        return "defender"
+    return "attacker"
+
+
+def determine_victor_alliance(alliance_war_id: int) -> str:
+    awar = db.query(
+        "SELECT castle_hp FROM alliance_wars WHERE alliance_war_id = %s",
+        (alliance_war_id,),
+    ).first()
+    if awar["castle_hp"] > 500:
+        return "defender"
+    return "attacker"
+
+
+# ============================================
+# INSERT BATTLE RESOLUTION LOG
+# ============================================
+
+def insert_battle_resolution_log(
+    battle_type: str,
+    war_id: int | None,
+    alliance_war_id: int | None,
+    victor: str,
+    total_ticks: int,
+) -> None:
+    print(
+        f"Inserting Battle Resolution Log — {battle_type.upper()} WAR — Victor: {victor}"
+    )
+
+    db.execute(
+        """
+        INSERT INTO battle_resolution_logs
+        (battle_type, war_id, alliance_war_id, winner_side, total_ticks)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (battle_type, war_id, alliance_war_id, victor, total_ticks),
+    )
+

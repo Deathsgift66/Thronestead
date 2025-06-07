@@ -10,6 +10,7 @@ from .engine import (
     TerrainType,
 )
 from .manager import WarManager, war_manager, run_combat_tick
+from .resolver_full import run_combat_tick as run_full_combat_tick
 from .movement import (
     process_unit_movement,
     move_towards,
@@ -31,6 +32,7 @@ __all__ = [
     "WarManager",
     "war_manager",
     "run_combat_tick",
+    "run_full_combat_tick",
     "process_unit_movement",
     "move_towards",
     "terrain_movement_modifier",
