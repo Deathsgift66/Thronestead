@@ -11,7 +11,7 @@ import { supabase } from './supabaseClient.js';
 
 // DOM Elements
 const loginForm = document.getElementById('login-form');
-const emailInput = document.getElementById('email');
+const loginIdInput = document.getElementById('login-id');
 const passwordInput = document.getElementById('password');
 const loginButton = document.querySelector('.royal-button');
 const messageContainer = document.getElementById('message');
@@ -22,6 +22,11 @@ const modal = document.getElementById('forgot-password-modal');
 const closeBtn = document.getElementById('close-forgot-btn');
 const sendResetBtn = document.getElementById('send-reset-btn');
 const forgotMessage = document.getElementById('forgot-message');
+
+// Helper to check if string looks like an email
+function isEmail(str) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+}
 
 // Show message function
 function showMessage(type, text) {
@@ -39,13 +44,30 @@ loginForm.addEventListener('submit', async (e) => {
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
 
-  const email = emailInput.value.trim();
+  const identifier = loginIdInput.value.trim();
   const password = passwordInput.value;
+
+  let email = identifier;
+
+  if (!isEmail(identifier)) {
+    const { data: userData, error: userErr } = await supabase
+      .from('users')
+      .select('email')
+      .eq('username', identifier)
+      .single();
+    if (userErr || !userData) {
+      showMessage('error', 'User not found.');
+      loginButton.disabled = false;
+      loginButton.textContent = 'Enter the Realm';
+      return;
+    }
+    email = userData.email;
+  }
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
+      email,
+      password,
     });
 
     if (error) {
