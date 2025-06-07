@@ -14,8 +14,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const warId = parseInt(urlParams.get('war_id'), 10) || 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Battle Live Page Loaded');
-
   await loadTerrain();
   await loadUnits();
   await loadCombatLogs();
@@ -31,7 +29,6 @@ async function loadTerrain() {
   try {
     const response = await fetch(`/api/battle/terrain/${warId}`);
     const data = await response.json();
-    console.log('Terrain:', data.tile_map);
     renderBattleMap(data.tile_map);
   } catch (err) {
     console.error('Error loading terrain:', err);
@@ -45,7 +42,6 @@ async function loadUnits() {
   try {
     const response = await fetch(`/api/battle/units/${warId}`);
     const data = await response.json();
-    console.log('Units:', data.units);
     renderUnits(data.units);
   } catch (err) {
     console.error('Error loading units:', err);
@@ -59,7 +55,6 @@ async function loadCombatLogs() {
   try {
     const response = await fetch(`/api/battle/logs/${warId}`);
     const data = await response.json();
-    console.log('Combat Logs:', data.combat_logs);
     renderCombatLog(data.combat_logs);
   } catch (err) {
     console.error('Error loading combat logs:', err);
@@ -75,7 +70,6 @@ export async function triggerNextTick() {
       method: 'POST'
     });
     const data = await response.json();
-    console.log('Next Tick Triggered:', data.message);
     refreshBattle();
   } catch (err) {
     console.error('Error triggering next tick:', err);
@@ -83,19 +77,25 @@ export async function triggerNextTick() {
 }
 
 // =============================================
-// PLACEHOLDER RENDER FUNCTIONS
+// RENDER FUNCTIONS
 // =============================================
 function refreshBattle() {
   loadUnits();
   loadCombatLogs();
 }
 
+let currentMapColumns = 60;
+
 function renderBattleMap(tileMap) {
   const battleMap = document.getElementById('battle-map');
   battleMap.innerHTML = '';
 
-  for (let row = 0; row < 20; row++) {
-    for (let col = 0; col < 60; col++) {
+  const rows = tileMap.length;
+  currentMapColumns = tileMap[0]?.length || 0;
+  battleMap.style.gridTemplateColumns = `repeat(${currentMapColumns}, 1fr)`;
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < currentMapColumns; col++) {
       const tile = document.createElement('div');
       tile.className = 'tile';
       const type = tileMap[row][col];
@@ -117,7 +117,8 @@ function renderUnits(units) {
   }
 
   units.forEach(unit => {
-    const index = unit.position_y * 60 + unit.position_x;
+    const index = unit.position_y * currentMapColumns + unit.position_x;
+    if (!tiles[index]) return;
     const unitDiv = document.createElement('div');
     unitDiv.className = 'unit-icon';
     unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();

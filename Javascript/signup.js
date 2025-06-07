@@ -75,27 +75,25 @@ async function handleSignup() {
   };
 
   try {
-    // ✅ Simulate API Call — Replace with Supabase signUp when ready
-    // const { data, error } = await supabase.auth.signUp({
-    //   email: payload.email,
-    //   password: payload.password,
-    //   options: {
-    //     data: {
-    //       display_name: payload.display_name,
-    //       username: payload.username
-    //     }
-    //   }
-    // });
+    const { error } = await supabase.auth.signUp({
+      email: payload.email,
+      password: payload.password,
+      options: {
+        data: {
+          display_name: payload.display_name,
+          username: payload.username
+        }
+      }
+    });
 
-    // Temporary mock for now:
-    console.log("🚀 Submitting sign-up payload:", payload);
+    if (error) {
+      throw new Error(error.message);
+    }
+
     showToast("Sign-Up successful! Redirecting...");
-
-    // ✅ Simulate successful redirect
     setTimeout(() => {
       window.location.href = 'play.html';
     }, 1500);
-
   } catch (err) {
     console.error("❌ Sign-Up error:", err);
     showToast("Sign-Up failed. Please try again.");

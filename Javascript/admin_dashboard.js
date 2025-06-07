@@ -22,7 +22,6 @@ async function loadDashboardStats() {
     document.getElementById('flagged-users').textContent = flagged.data?.length ?? 0;
     document.getElementById('suspicious-activity').textContent = audit.data?.length ?? 0;
 
-    console.log('✅ Dashboard stats loaded');
   } catch (error) {
     console.error('⚠️ Failed to load dashboard stats:', error);
   }
@@ -65,7 +64,6 @@ async function loadPlayerList() {
       container.appendChild(card);
     });
 
-    console.log(`✅ Player list loaded (${filtered.length} players)`);
 
   } catch (err) {
     console.error('⚠️ Failed to load player list:', err);
@@ -101,7 +99,6 @@ async function loadAuditLogs() {
       container.appendChild(entry);
     });
 
-    console.log(`✅ Audit logs loaded (${logs.length} entries)`);
 
   } catch (err) {
     console.error('⚠️ Failed to load audit logs:', err);
@@ -139,7 +136,6 @@ async function loadAccountAlerts() {
       container.appendChild(item);
     });
 
-    console.log(`✅ Account alerts loaded (${alerts.length} alerts)`);
 
   } catch (err) {
     console.error('⚠️ Failed to load account alerts:', err);
@@ -150,7 +146,6 @@ async function loadAccountAlerts() {
 // 🎯 Admin Action Functions
 window.flagUser = async function (userId) {
   try {
-    console.log(`🚩 Flagging user ${userId}`);
     await postAdminAction('/api/admin/flag', { player_id: userId });
     alert('✅ User flagged.');
   } catch (err) {
@@ -161,7 +156,6 @@ window.flagUser = async function (userId) {
 
 window.freezeUser = async function (userId) {
   try {
-    console.log(`❄️ Freezing user ${userId}`);
     await postAdminAction('/api/admin/freeze', { player_id: userId });
     alert('✅ User frozen.');
   } catch (err) {
@@ -172,7 +166,6 @@ window.freezeUser = async function (userId) {
 
 window.banUser = async function (userId) {
   try {
-    console.log(`🚫 Banning user ${userId}`);
     await postAdminAction('/api/admin/ban', { player_id: userId });
     alert('✅ User banned.');
   } catch (err) {
