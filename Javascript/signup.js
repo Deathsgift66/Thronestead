@@ -74,7 +74,7 @@ async function handleSignup() {
   };
 
   try {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: payload.email,
       password: payload.password,
       options: {
@@ -88,6 +88,31 @@ async function handleSignup() {
     if (error) {
       throw new Error(error.message);
     }
+
+    const user = data.user;
+
+    // Insert into users profile table
+    const { error: userInsertErr } = await supabase
+      .from('users')
+      .insert({
+        user_id: user.id,
+        username: payload.username,
+        display_name: payload.display_name,
+        email: payload.email
+      });
+    if (userInsertErr) throw userInsertErr;
+
+    // Create a starter kingdom and resources
+    const { data: kingdomData, error: kingdomErr } = await supabase
+      .from('kingdoms')
+      .insert({ user_id: user.id, kingdom_name: `${payload.display_name}'s Realm` })
+      .select('kingdom_id')
+      .single();
+    if (kingdomErr) throw kingdomErr;
+
+    await supabase
+      .from('kingdom_resources')
+      .insert({ kingdom_id: kingdomData.kingdom_id });
 
     showToast("Sign-Up successful! Redirecting...");
     setTimeout(() => {
