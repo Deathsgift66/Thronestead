@@ -5,8 +5,7 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js already protects this page → no duplicate session check

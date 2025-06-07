@@ -6,9 +6,8 @@ Author: Deathsgift66
 */
 // Full dynamic Alliance Vault page
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { supabase } from './supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout

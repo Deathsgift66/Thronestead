@@ -5,10 +5,9 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { supabase } from './supabaseClient.js';
 
 // Initialize Supabase Client
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // DOM Elements
 const loginForm = document.getElementById('login-form');
