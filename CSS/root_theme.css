@@ -10,7 +10,7 @@ Author: Deathsgift66
    Based on final layout (e.g., kingdom_military.html)
 ------------------------------------------------------------- */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=IM+Fell+English+SC&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@700&family=IM+Fell+English&family=IM+Fell+English+SC&display=swap');
 
 :root {
   /* ------------------- COLOR SYSTEM ------------------- */
@@ -171,6 +171,10 @@ Author: Deathsgift66
   background: var(--btn-hover-bg);
   color: var(--btn-hover-text);
 }
+.btn:focus {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
+}
 
 /* -----------------------------------------------
    Form Elements Base
@@ -185,6 +189,12 @@ select {
   padding: var(--input-padding);
   font-family: var(--font-body);
   font-size: var(--font-md);
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
 }
 
 /* -----------------------------------------------
@@ -211,6 +221,10 @@ tr:hover {
   background: var(--table-row-hover);
   color: var(--ink);
 }
+a:focus {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
+}
 
 /* -----------------------------------------------
    Responsive & Utility
@@ -221,10 +235,6 @@ tr:hover {
 .full-height { height: 100%; }
 .flex { display: flex; }
 .grid { display: grid; }
-.gap { gap: var(--gap-default); }
-.p-1 { padding: var(--padding-sm); }
-.p-2 { padding: var(--padding-md); }
-.p-3 { padding: var(--padding-lg); }
 
 /* Banner */
 header.kr-top-banner {
@@ -256,6 +266,19 @@ header.kr-top-banner {
   text-decoration: none;
   color: var(--gold);
 }
+.site-footer a:focus {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
+}
 .site-footer a:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  header.kr-top-banner {
+    font-size: 1.5rem;
+  }
+  .btn {
+    padding: 0.5rem 1rem;
+  }
 }

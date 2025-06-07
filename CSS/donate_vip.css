@@ -4,20 +4,9 @@ File Name: donate_vip.css
 Date: June 2, 2025
 Author: Deathsgift66
 */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap');
+@import url("./root_theme.css");
 
 
-
-:root {
-  --parchment: #fbf0d9;
-  --parchment-dark: #f5e7c4;
-  --stone-bg: #2e2b27;
-  --stone-panel: #3b3631;
-  --ink: #eae0d5;
-  --gold: #bfa24b;
-  --accent: #6a5acd;
-  --shadow: rgba(0, 0, 0, 0.4);
-}
 
 body {
   margin: 0;
