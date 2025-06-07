@@ -137,3 +137,19 @@ class KingdomTroop(Base):
     unit_type = Column(String, ForeignKey('unit_stats.unit_type'), primary_key=True)
     quantity = Column(Integer, default=0)
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class Notification(Base):
+    """Player notifications."""
+
+    __tablename__ = 'notifications'
+
+    notification_id = Column(Integer, primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    title = Column(String)
+    message = Column(Text)
+    category = Column(String)
+    priority = Column(String)
+    link_action = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_read = Column(Boolean, default=False)
