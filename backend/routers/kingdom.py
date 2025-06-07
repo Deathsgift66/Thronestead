@@ -47,6 +47,27 @@ async def overview():
     return {"overview": "data"}
 
 
+@router.get("/summary")
+async def kingdom_summary():
+    state = get_state()
+    resources = {
+        "gold": 1000,
+        "food": 500,
+        "wood": 300,
+    }
+    return {
+        "resources": resources,
+        "troops": {
+            "total": state["used_slots"],
+            "slots": {
+                "base": state["base_slots"],
+                "used": state["used_slots"],
+                "available": max(0, state["base_slots"] - state["used_slots"]),
+            },
+        },
+    }
+
+
 @router.post("/start_research")
 async def start_research(payload: ResearchPayload):
     return {"message": "Research started", "research": payload.research}
