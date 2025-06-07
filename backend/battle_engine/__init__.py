@@ -18,6 +18,7 @@ from .movement import (
     update_unit_position,
 )
 from .targeting import select_target, get_counter_multiplier
+from .vision import process_unit_vision, terrain_vision_modifier
 
 __all__ = [
     "TerrainGenerator",
@@ -37,4 +38,6 @@ __all__ = [
     "update_unit_position",
     "select_target",
     "get_counter_multiplier",
+    "process_unit_vision",
+    "terrain_vision_modifier",
 ]
