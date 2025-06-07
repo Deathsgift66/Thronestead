@@ -1,0 +1,58 @@
+{
+  "info": {
+    "name": "Progression API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Castle Progression",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/progression/castle/progress",
+          "host": ["{{base_url}}"],
+          "path": ["api", "progression", "castle", "progress"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"xp_gain\": 50\n}"
+        }
+      }
+    },
+    {
+      "name": "Add Noble",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/progression/nobles",
+          "host": ["{{base_url}}"],
+          "path": ["api", "progression", "nobles"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Arthur\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Promote Knight",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/progression/knights/k1/promote",
+          "host": ["{{base_url}}"],
+          "path": ["api", "progression", "knights", "k1", "promote"]
+        }
+      }
+    }
+  ]
+}
