@@ -65,13 +65,21 @@ Author: Deathsgift66
 
   <!-- Battle Area -->
   <section class="battle-area" aria-label="Battlefield">
-    <div id="battle-map" aria-label="Battle Map">
-      <!-- Tiles + units rendered by JS -->
+    <div class="battle-container">
+      <div id="battle-map" class="battle-map" aria-label="Battle Map">
+        <!-- Tiles + units rendered by JS -->
+      </div>
+      <aside class="sidebar">
+        <div id="combat-log" class="combat-log" aria-label="Combat Log" aria-live="polite">
+          <strong>Combat Log:</strong>
+          <hr>
+        </div>
+        <div class="button-panel">
+          <button class="btn-fantasy" onclick="triggerNextTick()">Trigger Next Tick</button>
+          <button class="btn-fantasy" onclick="refreshBattle()">Refresh Battle Data</button>
+        </div>
+      </aside>
     </div>
-
-    <ul id="combat-log" aria-label="Combat Log" aria-live="polite">
-      <!-- Combat log lines injected by JS -->
-    </ul>
   </section>
 
 </main>
