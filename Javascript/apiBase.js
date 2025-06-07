@@ -2,6 +2,7 @@ const API_BASE_URL = window.API_BASE_URL || 'https://kingmakers-backend.onrender
 
 // Global public pages — bypass auth check
 const PUBLIC_PAGES = [
+  '', // root path
   'index.html',
   'signup.html',
   'signin.html',
