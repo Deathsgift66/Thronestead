@@ -20,6 +20,7 @@ records using Supabase row level security.
 ✅ Seasonal Effects → dynamic  
 ✅ GDPR / Legal Ready → legal.html + linked PDFs  
 ✅ Lighthouse / SEO optimized
+✅ Progression stages documented in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md)
 
 ---
 
