@@ -17,7 +17,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) logoutBtn.addEventListener('click', async () => {
       await supabase.auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     });
 
     await loadAllianceData(session.user.id);
