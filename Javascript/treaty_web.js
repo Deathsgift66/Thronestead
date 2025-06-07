@@ -6,10 +6,9 @@ Author: Deathsgift66
 */
 // Treaty Web Nexus Page Controller
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { supabase } from './supabaseClient.js';
 import { DataSet, Network } from 'https://cdn.jsdelivr.net/npm/vis-network/standalone/esm/vis-network.min.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let network = null;
 let allTreaties = [];

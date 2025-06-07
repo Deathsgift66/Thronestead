@@ -6,8 +6,7 @@ Author: Deathsgift66
 */
 // Hardened Admin Audit Log Page — with Supabase auth, loading, error handling, and formatting
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout

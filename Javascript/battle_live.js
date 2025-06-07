@@ -6,8 +6,7 @@ Author: Deathsgift66
 */
 // Live Battle Viewer — fetches terrain, units and combat logs
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from './supabaseClient.js';
 
 // Retrieve war_id from URL (?war_id=123)
 const urlParams = new URLSearchParams(window.location.search);
