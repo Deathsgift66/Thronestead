@@ -9,8 +9,9 @@ records using Supabase row level security.
 ## ✅ Features Implemented
 
 ✅ Dynamic Navbar (auth-aware)  
-✅ authGuard.js protection on restricted pages  
-✅ Alliance System → full suite  
+✅ authGuard.js protection on restricted pages
+✅ Global public page policy for index/login/signup/legal
+✅ Alliance System → full suite
 ✅ Military → full recruitment + war system  
 ✅ Market & Trade Center  
 ✅ Sovereign’s Grand Overseer (VIP 2 panel)  

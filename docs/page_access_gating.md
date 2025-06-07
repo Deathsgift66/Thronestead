@@ -2,6 +2,8 @@
 
 This document summarizes the progression restrictions enforced across key pages and APIs of **Kingmaker's Rise**. Use it as a quick reference when testing progression-related features.
 
+**Public Pages**: `index.html`, `signup.html`, `login.html`/`signin.html`, `legal.html` and its policy subpages. These do **not** require authentication. All other pages are protected by `authGuard.js`.
+
 | System / Page / API | Castle Level Required? | Nobles Required? | Knights Required? | Troop Slots Enforced? | Notes |
 | ----------------- | ---------------------- | ----------------- | ----------------- | -------------------- | ---------------------------- |
 | **overview.html** | Display only | Display only | Display only | Display only | Show full progression state |
