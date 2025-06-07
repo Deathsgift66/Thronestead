@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ...services.progression_service import calculate_troop_slots
+from services.progression_service import calculate_troop_slots
 
 router = APIRouter(prefix="/api/progression", tags=["progression"])
 
