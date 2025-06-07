@@ -6,6 +6,7 @@ Author: Deathsgift66
 */
 
 import { supabase } from './supabaseClient.js';
+import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
 // Initialize Supabase Client
 
@@ -74,6 +75,7 @@ loginForm.addEventListener('submit', async (e) => {
       showMessage('error', error.message);
     } else {
       showMessage('success', 'Login successful! Redirecting...');
+      await fetchAndStorePlayerProgression(data.user.id);
       setTimeout(() => {
         window.location.href = 'play.html';
       }, 1200);
