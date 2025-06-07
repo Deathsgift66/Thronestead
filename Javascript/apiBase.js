@@ -15,9 +15,10 @@ const PUBLIC_PAGES = [
 
 // Enforce authentication for all non-public pages
 document.addEventListener('DOMContentLoaded', async () => {
-  const currentPage = window.location.pathname.split('/').pop();
+  const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+  const isPublic = PUBLIC_PAGES.map(p => p.toLowerCase()).includes(currentPage);
 
-  if (!PUBLIC_PAGES.includes(currentPage)) {
+  if (!isPublic) {
     const { supabase } = await import('./supabaseClient.js');
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
