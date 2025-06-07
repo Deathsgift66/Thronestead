@@ -21,6 +21,7 @@ records using Supabase row level security.
 ✅ GDPR / Legal Ready → legal.html + linked PDFs  
 ✅ Lighthouse / SEO optimized
 ✅ Progression stages documented in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md)
+✅ Progression gating documented in [docs/page_access_gating.md](docs/page_access_gating.md)
 
 ---
 
