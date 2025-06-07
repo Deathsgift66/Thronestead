@@ -87,6 +87,11 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
     // Update Password if entered
     const newPassword = document.getElementById('new_password').value;
     if (newPassword) {
+      if (!validatePasswordComplexity(newPassword)) {
+        throw new Error(
+          "Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ, 0123456789, !@#$%^&*()_+-=[]{};':\"|<>?,./`~."
+        );
+      }
       const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
       if (pwError) throw new Error('Failed to update password: ' + pwError.message);
     }
@@ -118,4 +123,18 @@ if (logoutBtn) {
   });
 } else {
   console.warn('⚠️ Logout button not found in DOM');
+}
+
+// ✅ Helper: Password Complexity
+function validatePasswordComplexity(password) {
+  const lower = /[a-z]/;
+  const upper = /[A-Z]/;
+  const digit = /[0-9]/;
+  const special = /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]/;
+  return (
+    lower.test(password) &&
+    upper.test(password) &&
+    digit.test(password) &&
+    special.test(password)
+  );
 }
