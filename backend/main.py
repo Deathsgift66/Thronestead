@@ -22,7 +22,7 @@ from .routers import (
     diplomacy,
     leaderboard,
     buildings,
-    villages_router,
+    villages,
     wars,
 )
 from .database import engine
@@ -55,6 +55,6 @@ app.include_router(market.router)
 app.include_router(diplomacy.router)
 app.include_router(leaderboard.router)
 app.include_router(buildings.router)
-app.include_router(villages_router.router)
+app.include_router(villages.router)
 app.include_router(wars.router)
 
