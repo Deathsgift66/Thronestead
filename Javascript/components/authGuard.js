@@ -4,7 +4,7 @@ File Name: authGuard.js
 Date: June 2, 2025
 Author: Deathsgift66
 */
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 const requireAdmin = false;
 const minVip = 0;
