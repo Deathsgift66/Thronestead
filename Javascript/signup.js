@@ -55,6 +55,13 @@ async function handleSignup() {
     return;
   }
 
+  if (!validatePasswordComplexity(password)) {
+    showToast(
+      "Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ, 0123456789, !@#$%^&*()_+-=[]{};':\"|<>?,./`~."
+    );
+    return;
+  }
+
   if (password !== confirmPassword) {
     showToast("Passwords do not match.");
     return;
@@ -131,6 +138,20 @@ async function handleSignup() {
 function validateEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
+}
+
+// ✅ Helper: Password Complexity
+function validatePasswordComplexity(password) {
+  const lower = /[a-z]/;
+  const upper = /[A-Z]/;
+  const digit = /[0-9]/;
+  const special = /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]/;
+  return (
+    lower.test(password) &&
+    upper.test(password) &&
+    digit.test(password) &&
+    special.test(password)
+  );
 }
 
 // ✅ Helper: Toast
