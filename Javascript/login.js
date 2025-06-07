@@ -11,36 +11,56 @@ import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 // Initialize Supabase Client
 
 // DOM Elements
-const loginForm = document.getElementById('login-form');
-const loginIdInput = document.getElementById('login-id');
-const passwordInput = document.getElementById('password');
-const loginButton = document.querySelector('.royal-button');
-const messageContainer = document.getElementById('message');
+let loginForm;
+let loginIdInput;
+let passwordInput;
+let loginButton;
+let messageContainer;
 
 // Forgot Password Modal Elements
-const forgotLink = document.querySelector('.account-links a[href="forgot_password.html"]');
-const modal = document.getElementById('forgot-password-modal');
-const closeBtn = document.getElementById('close-forgot-btn');
-const sendResetBtn = document.getElementById('send-reset-btn');
-const forgotMessage = document.getElementById('forgot-message');
+let forgotLink;
+let modal;
+let closeBtn;
+let sendResetBtn;
+let forgotMessage;
 
-// Helper to check if string looks like an email
-function isEmail(str) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
-}
+document.addEventListener('DOMContentLoaded', () => {
+  loginForm = document.getElementById('login-form');
+  loginIdInput = document.getElementById('login-id');
+  passwordInput = document.getElementById('password');
+  loginButton = document.querySelector('#login-form .royal-button');
+  messageContainer = document.getElementById('message');
 
-// Show message function
-function showMessage(type, text) {
-  messageContainer.textContent = text;
-  messageContainer.className = `message show ${type}-message`;
-  setTimeout(() => {
-    messageContainer.classList.remove('show');
-    messageContainer.textContent = '';
-  }, 5000);
-}
+  forgotLink = document.querySelector('.account-links a[href="forgot_password.html"]');
+  modal = document.getElementById('forgot-password-modal');
+  closeBtn = document.getElementById('close-forgot-btn');
+  sendResetBtn = document.getElementById('send-reset-btn');
+  forgotMessage = document.getElementById('forgot-message');
 
-// Handle Login Submit
-loginForm.addEventListener('submit', async (e) => {
+  if (forgotLink) {
+    forgotLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      modal.classList.remove('hidden');
+      forgotMessage.textContent = ''; // Clear old messages
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function () {
+      modal.classList.add('hidden');
+    });
+  }
+
+  if (sendResetBtn) {
+    sendResetBtn.addEventListener('click', handleReset);
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLogin);
+  }
+});
+
+async function handleLogin(e) {
   e.preventDefault();
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
@@ -86,22 +106,9 @@ loginForm.addEventListener('submit', async (e) => {
     loginButton.disabled = false;
     loginButton.textContent = 'Enter the Realm';
   }
-});
+}
 
-// Intercept Forgot Password Link → open modal
-forgotLink.addEventListener('click', function (e) {
-  e.preventDefault();
-  modal.classList.remove('hidden');
-  forgotMessage.textContent = ''; // Clear old messages
-});
-
-// Close modal
-closeBtn.addEventListener('click', function () {
-  modal.classList.add('hidden');
-});
-
-// Send reset link
-sendResetBtn.addEventListener('click', async function () {
+async function handleReset() {
   const email = document.getElementById('forgot-email').value.trim();
 
   if (!email) {
@@ -128,4 +135,19 @@ sendResetBtn.addEventListener('click', async function () {
     sendResetBtn.disabled = false;
     sendResetBtn.textContent = 'Send Reset Link';
   }
-});
+}
+
+// Helper to check if string looks like an email
+function isEmail(str) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+}
+
+// Show message function
+function showMessage(type, text) {
+  messageContainer.textContent = text;
+  messageContainer.className = `message show ${type}-message`;
+  setTimeout(() => {
+    messageContainer.classList.remove('show');
+    messageContainer.textContent = '';
+  }, 5000);
+}
