@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ✅ Handle Sign-Up
 async function handleSignup() {
-  const displayNameEl = document.getElementById('displayName');
+  const kingdomNameEl = document.getElementById('kingdomName');
   const usernameEl = document.getElementById('username');
   const emailEl = document.getElementById('email');
   const passwordEl = document.getElementById('password');
@@ -27,7 +27,7 @@ async function handleSignup() {
   const toastEl = document.getElementById('toast');
 
   // ✅ Field Values
-  const displayName = displayNameEl.value.trim();
+  const kingdomName = kingdomNameEl.value.trim();
   const username = usernameEl.value.trim();
   const email = emailEl.value.trim();
   const password = passwordEl.value;
@@ -35,8 +35,8 @@ async function handleSignup() {
   const agreed = agreeLegalEl.checked;
 
   // ✅ Validation
-  if (!displayName || displayName.length < 3) {
-    showToast("Display Name must be at least 3 characters.");
+  if (!kingdomName || kingdomName.length < 3) {
+    showToast("Kingdom Name must be at least 3 characters.");
     return;
   }
 
@@ -67,7 +67,8 @@ async function handleSignup() {
 
   // ✅ Payload
   const payload = {
-    display_name: displayName,
+    display_name: kingdomName,
+    kingdom_name: kingdomName,
     username: username,
     email: email,
     password: password
@@ -98,6 +99,7 @@ async function handleSignup() {
         user_id: user.id,
         username: payload.username,
         display_name: payload.display_name,
+        kingdom_name: payload.kingdom_name,
         email: payload.email,
         setup_complete: false
       });
@@ -106,7 +108,7 @@ async function handleSignup() {
     // Create a starter kingdom and resources
     const { data: kingdomData, error: kingdomErr } = await supabase
       .from('kingdoms')
-      .insert({ user_id: user.id, kingdom_name: `${payload.display_name}'s Realm` })
+      .insert({ user_id: user.id, kingdom_name: payload.kingdom_name })
       .select('kingdom_id')
       .single();
     if (kingdomErr) throw kingdomErr;
