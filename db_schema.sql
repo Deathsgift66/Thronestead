@@ -141,7 +141,39 @@ CREATE TABLE kingdom_troop_slots (
     kingdom_id INTEGER PRIMARY KEY REFERENCES kingdoms(kingdom_id),
     base_slots INTEGER DEFAULT 20,
     used_slots INTEGER DEFAULT 0,
-    morale     INTEGER DEFAULT 100
+    morale     INTEGER DEFAULT 100,
+    castle_bonus_slots INTEGER DEFAULT 0,
+    noble_bonus_slots  INTEGER DEFAULT 0,
+    knight_bonus_slots INTEGER DEFAULT 0
+);
+
+-- CASTLE PROGRESSION ------------------------------------------------------
+CREATE TABLE kingdom_castle_progression (
+    kingdom_id    INTEGER PRIMARY KEY REFERENCES kingdoms(kingdom_id),
+    castle_level  INTEGER DEFAULT 1,
+    xp            INTEGER DEFAULT 0,
+    last_updated  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- NOBLES ------------------------------------------------------------------
+CREATE TABLE kingdom_nobles (
+    noble_id    SERIAL PRIMARY KEY,
+    kingdom_id  INTEGER REFERENCES kingdoms(kingdom_id),
+    noble_name  TEXT,
+    title       TEXT,
+    level       INTEGER DEFAULT 1,
+    experience  INTEGER DEFAULT 0,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- KNIGHTS -----------------------------------------------------------------
+CREATE TABLE kingdom_knights (
+    knight_id   SERIAL PRIMARY KEY,
+    kingdom_id  INTEGER REFERENCES kingdoms(kingdom_id),
+    knight_name TEXT,
+    level       INTEGER DEFAULT 1,
+    experience  INTEGER DEFAULT 0,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- TECHNOLOGY & RESEARCH -----------------------------------------------------

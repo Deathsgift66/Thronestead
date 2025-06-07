@@ -235,8 +235,43 @@ CREATE TABLE public.kingdom_troop_slots (
   base_slots integer DEFAULT 20,
   used_slots integer DEFAULT 0,
   morale integer DEFAULT 100,
+  castle_bonus_slots integer DEFAULT 0,
+  noble_bonus_slots integer DEFAULT 0,
+  knight_bonus_slots integer DEFAULT 0,
   CONSTRAINT kingdom_troop_slots_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdom_troop_slots_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
+
+CREATE TABLE public.kingdom_castle_progression (
+  kingdom_id integer NOT NULL,
+  castle_level integer DEFAULT 1,
+  xp integer DEFAULT 0,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_castle_progression_pkey PRIMARY KEY (kingdom_id),
+  CONSTRAINT kingdom_castle_progression_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
+
+CREATE TABLE public.kingdom_nobles (
+  noble_id integer NOT NULL DEFAULT nextval('kingdom_nobles_noble_id_seq'::regclass),
+  kingdom_id integer,
+  noble_name text,
+  title text,
+  level integer DEFAULT 1,
+  experience integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_nobles_pkey PRIMARY KEY (noble_id),
+  CONSTRAINT kingdom_nobles_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
+
+CREATE TABLE public.kingdom_knights (
+  knight_id integer NOT NULL DEFAULT nextval('kingdom_knights_knight_id_seq'::regclass),
+  kingdom_id integer,
+  knight_name text,
+  level integer DEFAULT 1,
+  experience integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_knights_pkey PRIMARY KEY (knight_id),
+  CONSTRAINT kingdom_knights_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
 CREATE TABLE public.kingdom_troops (
   kingdom_id integer NOT NULL,
