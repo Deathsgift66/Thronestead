@@ -1,37 +1,42 @@
 # Progression API Curl Examples
 
-## Castle Progression
+## Get Castle Level
 ```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"xp_gain": 50}' \
-  http://localhost:8000/api/progression/castle/progress
+curl -H "X-User-Id: <USER>" http://localhost:8000/api/progression/castle
 ```
 
-## Nobles Management
-### Add Noble
+## Upgrade Castle
 ```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Arthur"}' \
-  http://localhost:8000/api/progression/nobles
+curl -X POST -H "X-User-Id: <USER>" http://localhost:8000/api/progression/castle
 ```
 
-### Remove Noble
+## List Nobles
 ```bash
-curl -X DELETE http://localhost:8000/api/progression/nobles/Arthur
+curl -H "X-User-Id: <USER>" http://localhost:8000/api/progression/nobles
 ```
 
-## Knights Management
-### Add Knight
+## Assign Noble
 ```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"id": "k1", "rank": 1}' \
-  http://localhost:8000/api/progression/knights
+curl -X POST -H "X-User-Id: <USER>" \
+     -H "Content-Type: application/json" \
+     -d '{"noble_name": "Arthur"}' \
+     http://localhost:8000/api/progression/nobles
 ```
 
-### Promote Knight
+## List Knights
 ```bash
-curl -X POST http://localhost:8000/api/progression/knights/k1/promote
+curl -H "X-User-Id: <USER>" http://localhost:8000/api/progression/knights
+```
+
+## Assign Knight
+```bash
+curl -X POST -H "X-User-Id: <USER>" \
+     -H "Content-Type: application/json" \
+     -d '{"knight_name": "Lancelot"}' \
+     http://localhost:8000/api/progression/knights
+```
+
+## Refresh Totals
+```bash
+curl -X POST -H "X-User-Id: <USER>" http://localhost:8000/api/progression/refresh
 ```
