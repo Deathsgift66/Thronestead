@@ -15,7 +15,7 @@ async function logout() {
   localStorage.removeItem('authToken');
   document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
 
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 }
 
 const logoutBtn = document.getElementById('logout-btn');
