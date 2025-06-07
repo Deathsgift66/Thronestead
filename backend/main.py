@@ -23,6 +23,7 @@ from .routers import (
     leaderboard,
     buildings,
     progression_router,
+    villages_router,
     wars,
     quests_router,
     projects_router,
@@ -58,6 +59,7 @@ app.include_router(diplomacy.router)
 app.include_router(leaderboard.router)
 app.include_router(buildings.router)
 app.include_router(progression_router.router)
+app.include_router(villages_router.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)

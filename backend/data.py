@@ -37,3 +37,11 @@ castle_progression_state = {
         "knights": 0,
     }
 }
+
+# List of villages currently controlled by each kingdom
+kingdom_villages: dict[int, list[dict]] = {}
+
+# Basic mapping for how many villages a castle level supports
+def get_max_villages_allowed(castle_level: int) -> int:
+    """Return the number of villages allowed for the given castle level."""
+    return castle_level
