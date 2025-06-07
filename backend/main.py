@@ -1,7 +1,36 @@
 from fastapi import FastAPI
-from .routers import admin, alliance_members, alliance_projects, kingdom, conflicts, black_market, news, alliance_wars, notifications, battle, alliance_quests, changelog, kingdom_military, alliance_vault, audit_log, donate_vip, messages, player_management, market, diplomacy, leaderboard, buildings, wars
+from .routers import (
+    admin,
+    alliance_members,
+    alliance_projects,
+    kingdom,
+    conflicts,
+    black_market,
+    news,
+    alliance_wars,
+    notifications,
+    battle,
+    alliance_quests,
+    changelog,
+    kingdom_military,
+    alliance_vault,
+    audit_log,
+    donate_vip,
+    messages,
+    player_management,
+    market,
+    diplomacy,
+    leaderboard,
+    buildings,
+    wars,
+)
+from .database import engine
+from .models import Base
 
 app = FastAPI(title="Kingmaker's Rise API")
+
+# Ensure tables exist
+Base.metadata.create_all(bind=engine)
 
 app.include_router(alliance_members.router)
 app.include_router(admin.router)
