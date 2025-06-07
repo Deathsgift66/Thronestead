@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (error) throw new Error('Failed to load account data: ' + error.message);
 
-    console.log('✅ User loaded:', data);
 
     // Prefill Form
     document.getElementById('display_name').value = data.display_name || '';
@@ -77,7 +76,6 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
       use_play_background: document.getElementById('bg_toggle').checked
     };
 
-    console.log('🔄 Updating user with:', updates);
 
     const { error: updateError } = await supabase
       .from('users')
@@ -86,15 +84,12 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
 
     if (updateError) throw new Error('Failed to save changes: ' + updateError.message);
 
-    console.log('✅ Profile updated successfully');
 
     // Update Password if entered
     const newPassword = document.getElementById('new_password').value;
     if (newPassword) {
-      console.log('🔐 Attempting password update');
       const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
       if (pwError) throw new Error('Failed to update password: ' + pwError.message);
-      console.log('✅ Password updated');
     }
 
     // Final confirmation
@@ -116,7 +111,6 @@ if (logoutBtn) {
   logoutBtn.addEventListener('click', async () => {
     try {
       await supabase.auth.signOut();
-      console.log('🚪 Logged out');
       window.location.href = 'index.html';
     } catch (err) {
       console.error('❌ Logout failed:', err);

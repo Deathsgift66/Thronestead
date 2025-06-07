@@ -139,25 +139,21 @@ function attachActionHandlers() {
 
 // ✅ Action handlers (production-ready)
 async function flagPlayer(playerId, alertId) {
-  console.log(`🚩 Flagging player ${playerId} via alert ${alertId}`);
   await postAdminAction('/api/admin/flag', { player_id: playerId, alert_id: alertId });
   alert('✅ Player flagged.');
 }
 
 async function freezePlayer(playerId, alertId) {
-  console.log(`❄️ Freezing player ${playerId} via alert ${alertId}`);
   await postAdminAction('/api/admin/freeze', { player_id: playerId, alert_id: alertId });
   alert('✅ Player frozen.');
 }
 
 async function banPlayer(playerId, alertId) {
-  console.log(`🚫 Banning player ${playerId} via alert ${alertId}`);
   await postAdminAction('/api/admin/ban', { player_id: playerId, alert_id: alertId });
   alert('✅ Player banned.');
 }
 
 async function dismissAlert(alertId) {
-  console.log(`🗑️ Dismissing alert ${alertId}`);
   const { error } = await supabase.from('account_alerts').delete().eq('id', alertId);
   if (error) throw new Error('Dismiss failed: ' + error.message);
   alert('✅ Alert dismissed.');

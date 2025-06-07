@@ -78,7 +78,6 @@ async function loadAllianceData(userId) {
     await loadProjects(profile.alliance_id);
     await loadContributors(profile.alliance_id);
 
-    console.log('✅ Alliance data loaded');
 
   } catch (err) {
     console.error('❌ Error loading Alliance Data:', err);
@@ -112,7 +111,6 @@ async function loadVault(allianceId) {
     document.getElementById('fortification-level')?.textContent = vault.fortification_level ?? '--';
     document.getElementById('alliance-army-count')?.textContent = vault.army_count ?? '--';
 
-    console.log('✅ Vault loaded');
 
   } catch (err) {
     console.error('❌ Failed to load vault:', err);
@@ -147,7 +145,6 @@ async function loadMembers(allianceId) {
 
     document.getElementById('alliance-members-count')?.textContent = members.length;
 
-    console.log(`✅ Members loaded (${members.length})`);
 
   } catch (err) {
     console.error('❌ Failed to load members:', err);
@@ -176,7 +173,6 @@ async function loadProjects(allianceId) {
       container.appendChild(div);
     });
 
-    console.log(`✅ Projects loaded (${projects.length})`);
 
   } catch (err) {
     console.error('❌ Failed to load projects:', err);
@@ -206,7 +202,6 @@ async function loadContributors(allianceId) {
       container.appendChild(li);
     });
 
-    console.log('✅ Top contributors loaded');
 
   } catch (err) {
     console.error('❌ Failed to load contributors:', err);

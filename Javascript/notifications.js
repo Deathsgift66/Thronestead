@@ -115,7 +115,6 @@ async function markNotificationRead(notificationId) {
       throw new Error(result.error || "Failed to mark notification as read.");
     }
 
-    console.log("✅ Notification marked as read:", notificationId);
 
   } catch (err) {
     console.error("❌ Error marking notification as read:", err);

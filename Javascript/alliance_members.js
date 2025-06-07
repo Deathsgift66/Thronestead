@@ -65,7 +65,6 @@ async function fetchMembers() {
     const json = await res.json();
     members = json.members;
     renderMembers(members);
-    console.log(`✅ Loaded ${members.length} members`);
 
   } catch (err) {
     console.error('❌ Error loading members:', err);
