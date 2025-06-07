@@ -4,14 +4,13 @@ File Name: index.css
 Date: June 2, 2025
 Author: Deathsgift66
 */
-@import url("./root_theme.css");
 
 
 
 body {
   margin: 0;
-  font-family: 'IM Fell English', serif;
-  background-color: #1a1a1a;
+  font-family: var(--font-body);
+  background-color: var(--banner-dark);
   background: url('../Assets/7.png')no-repeat center center fixed;
   background-size: cover;
   color: var(--parchment);
@@ -29,7 +28,7 @@ body {
 }
 
 .hero-content h1 {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-header);
   font-size: 3rem;
   margin-bottom: 1rem;
   text-shadow: 2px 2px 5px var(--shadow);
@@ -42,10 +41,10 @@ body {
 
 .cta-button {
   background: var(--accent);
-  color: white;
+  color: var(--btn-text);
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-header);
   font-weight: bold;
   text-decoration: none;
   border: 1px solid var(--gold);
@@ -54,7 +53,11 @@ body {
 
 .cta-button:hover {
   background: var(--gold);
-  color: #1a1a1a;
+  color: var(--banner-dark);
+}
+.cta-button:focus {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
 }
 
 /* Main Content */
@@ -82,9 +85,9 @@ body {
 }
 
 .features-section h2, .lore-section h2, .cta-section h2 {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-header);
   color: var(--gold);
-  text-shadow: 1px 1px 3px black;
+  text-shadow: 1px 1px 3px var(--shadow);
   margin-bottom: 1rem;
 }
 
@@ -102,7 +105,7 @@ body {
 }
 
 .feature-card h3 {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-header);
   color: var(--gold);
   margin-bottom: 0.5rem;
 }
@@ -112,4 +115,12 @@ body {
 }
 
 
-/* Footer - matches site */
+@media (max-width: 600px) {
+  .hero-section {
+    padding: 4rem 1rem;
+  }
+
+  .hero-content h1 {
+    font-size: 2rem;
+  }
+}
