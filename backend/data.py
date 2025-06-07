@@ -28,3 +28,14 @@ military_state = {
         "history": [],
     }
 }
+
+# Simple kingdom progression and village tracking
+# In a real application this would be stored in the database.
+kingdom_villages_state = {
+    1: {
+        "castle_level": 1,
+        "max_villages_allowed": 1,
+        "nobles": 1,
+        "villages": [],
+    }
+}
