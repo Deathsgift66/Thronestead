@@ -520,6 +520,7 @@ CREATE TABLE public.users (
   alliance_role text,
   active_policy integer,
   active_laws ARRAY DEFAULT '{}'::integer[],
+  setup_complete boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (user_id)
 );

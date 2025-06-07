@@ -7,114 +7,109 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Validate session
+let currentUser = null;
+let kingdomId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = "login.html";
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = session.user;
+
+  const { data: profile, error } = await supabase
+    .from('users')
+    .select('setup_complete, kingdom_id, display_name')
+    .eq('user_id', currentUser.id)
+    .single();
+
+  if (error) {
+    console.error('❌ Error loading profile:', error);
+    showToast('Failed to load profile.');
     return;
   }
 
-  // ✅ Initial load
-  await loadDashboard();
+  kingdomId = profile.kingdom_id;
+
+  if (profile.setup_complete) {
+    window.location.href = 'overview.html';
+    return;
+  }
+
+  document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(profile.display_name)}!`;
+  bindEvents();
 });
 
-// ✅ Load Dashboard Data
-async function loadDashboard() {
-  const resourceContainer = document.getElementById("resource-overview");
-  const identityContainer = document.getElementById("identity-panel");
-  const activityContainer = document.getElementById("activity-feed");
-  const militaryContainer = document.getElementById("military-panel");
+function bindEvents() {
+  const createBtn = document.getElementById('create-village-btn');
+  const continueBtn = document.getElementById('continue-btn');
 
-  // Placeholders while loading
-  resourceContainer.innerHTML = "<p>Loading resources...</p>";
-  identityContainer.innerHTML = "<p>Loading identity...</p>";
-  activityContainer.innerHTML = "<p>Loading activity feed...</p>";
-  militaryContainer.innerHTML = "<p>Loading military summary...</p>";
+  createBtn.addEventListener('click', async () => {
+    const nameInput = document.getElementById('village-name-input');
+    const villageName = nameInput.value.trim();
 
-  try {
-    const res = await fetch("/api/kingdom/overview");
-    const data = await res.json();
-
-    // ✅ Resources Panel
-    resourceContainer.innerHTML = "";
-    if (data.resources && Object.keys(data.resources).length > 0) {
-      const list = document.createElement("ul");
-      for (const [resource, amount] of Object.entries(data.resources)) {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${escapeHTML(resource)}:</strong> ${amount}`;
-        list.appendChild(li);
-      }
-      resourceContainer.appendChild(list);
-    } else {
-      resourceContainer.innerHTML = "<p>No resources found.</p>";
+    if (villageName.length < 3) {
+      showToast('Village name must be at least 3 characters.');
+      return;
     }
 
-    // ✅ Identity Panel
-    identityContainer.innerHTML = `
-      <p><strong>Kingdom:</strong> ${escapeHTML(data.kingdom_name)}</p>
-      <p><strong>Ruler:</strong> ${escapeHTML(data.owner_name)}</p>
-      <p><strong>VIP Tier:</strong> ${escapeHTML(data.vip_tier)}</p>
-      <p><strong>Morale:</strong> ${data.morale}%</p>
-      <p><strong>Region:</strong> ${escapeHTML(data.region)}</p>
-    `;
+    createBtn.disabled = true;
 
-    // ✅ Activity Feed
-    activityContainer.innerHTML = "";
-    if (data.activity_feed && data.activity_feed.length > 0) {
-      const list = document.createElement("ul");
-      data.activity_feed.forEach(entry => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          [${formatDate(entry.timestamp)}] ${escapeHTML(entry.message)}
-        `;
-        list.appendChild(li);
-      });
-      activityContainer.appendChild(list);
-    } else {
-      activityContainer.innerHTML = "<p>No recent activity.</p>";
+    const { error } = await supabase
+      .from('villages')
+      .insert({ kingdom_id: kingdomId, village_name: villageName });
+
+    if (error) {
+      console.error('❌ Error creating village:', error);
+      showToast('Failed to create village.');
+      createBtn.disabled = false;
+      return;
     }
 
-    // ✅ Military Panel
-    militaryContainer.innerHTML = "";
-    if (data.military_summary && Object.keys(data.military_summary).length > 0) {
-      const list = document.createElement("ul");
-      for (const [unit, count] of Object.entries(data.military_summary)) {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${escapeHTML(unit)}:</strong> ${count}`;
-        list.appendChild(li);
-      }
-      militaryContainer.appendChild(list);
-    } else {
-      militaryContainer.innerHTML = "<p>No military units present.</p>";
+    showToast('Village created!');
+    document.getElementById('village-step').style.display = 'none';
+    document.getElementById('quest-step').style.display = 'block';
+    continueBtn.disabled = false;
+  });
+
+  continueBtn.addEventListener('click', async () => {
+    continueBtn.disabled = true;
+
+    const { error } = await supabase
+      .from('users')
+      .update({ setup_complete: true })
+      .eq('user_id', currentUser.id);
+
+    if (error) {
+      console.error('❌ Error updating profile:', error);
+      showToast('Failed to complete setup.');
+      continueBtn.disabled = false;
+      return;
     }
 
-  } catch (err) {
-    console.error("❌ Error loading dashboard:", err);
-    resourceContainer.innerHTML = "<p>Failed to load resources.</p>";
-    identityContainer.innerHTML = "<p>Failed to load identity.</p>";
-    activityContainer.innerHTML = "<p>Failed to load activity feed.</p>";
-    militaryContainer.innerHTML = "<p>Failed to load military summary.</p>";
-  }
-}
-
-// ✅ Date formatting
-function formatDate(ts) {
-  if (!ts) return "Unknown";
-  const date = new Date(ts);
-  return date.toLocaleString(undefined, {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit"
+    window.location.href = 'overview.html';
   });
 }
 
-// ✅ Basic HTML escape
+function showToast(msg) {
+  let toastEl = document.getElementById('toast');
+  if (!toastEl) {
+    toastEl = document.createElement('div');
+    toastEl.id = 'toast';
+    toastEl.className = 'toast-notification';
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 3000);
+}
+
 function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return str?.toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
