@@ -186,7 +186,7 @@ async function trainTroop(unitId) {
 
   } catch (err) {
     console.error("❌ Error training troop:", err);
-    showToast("Failed to train troop.");
+    showToast(err.message || "Failed to train troop.");
   }
 }
 

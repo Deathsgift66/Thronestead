@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+from ..data import military_state, recruitable_units
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
@@ -21,8 +23,18 @@ class TemplePayload(BaseModel):
 
 
 class TrainPayload(BaseModel):
-    troop_type: str
-    amount: int
+    unit_id: int
+    quantity: int
+
+
+def get_state():
+    return military_state.setdefault(1, {
+        "base_slots": 20,
+        "used_slots": 0,
+        "morale": 100,
+        "queue": [],
+        "history": [],
+    })
 
 
 @router.post("/start_project")
@@ -52,5 +64,23 @@ async def construct_temple(payload: TemplePayload):
 
 @router.post("/train_troop")
 async def train_troop(payload: TrainPayload):
-    return {"message": "Training queued", "troop_type": payload.troop_type}
+    state = get_state()
+
+    if payload.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Invalid quantity")
+
+    if state["used_slots"] + payload.quantity > state["base_slots"]:
+        raise HTTPException(status_code=400, detail="Not enough troop slots")
+
+    unit = next((u for u in recruitable_units if u["id"] == payload.unit_id), None)
+    if not unit:
+        raise HTTPException(status_code=404, detail="Unit not found")
+
+    state["used_slots"] += payload.quantity
+    state["queue"].append({
+        "unit_name": unit["name"],
+        "quantity": payload.quantity,
+    })
+
+    return {"message": "Training queued", "unit_id": payload.unit_id}
 
