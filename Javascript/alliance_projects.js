@@ -72,14 +72,14 @@ function renderProjects(projects) {
     card.className = 'project-card';
     card.innerHTML = `
       <h4>${project.name}</h4>
-      <p>Status: ${project.status}</p>
+      <p>Status: ${project.progress >= 100 ? 'Completed' : 'In Progress'}</p>
       <div class="progress-bar">
-        <progress value="${project.completion}" max="100"></progress>
-        <span>${project.completion}%</span>
+        <progress value="${project.progress}" max="100"></progress>
+        <span>${project.progress}%</span>
       </div>
       <div class="project-actions">
-        <button class="action-btn" data-action="start" data-id="${project.id}">▶️ Start</button>
-        <button class="action-btn" data-action="update" data-id="${project.id}">🔄 Update</button>
+        <button class="action-btn" data-action="start" data-id="${project.project_id}">▶️ Start</button>
+        <button class="action-btn" data-action="update" data-id="${project.project_id}">🔄 Update</button>
       </div>
     `;
     container.appendChild(card);
@@ -105,6 +105,8 @@ function attachProjectListeners() {
 // ✅ Start a Project
 async function startProject(projectId) {
   try {
+    if (!projectId) throw new Error('Invalid project');
+
     const res = await fetch('/api/alliance-projects/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -126,6 +128,8 @@ async function startProject(projectId) {
 // ✅ Update a Project
 async function updateProject(projectId) {
   try {
+    if (!projectId) throw new Error('Invalid project');
+
     const res = await fetch('/api/alliance-projects/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -174,7 +178,7 @@ function renderContributors(contributors) {
   const list = document.createElement('ul');
   contributors.forEach(contributor => {
     const li = document.createElement('li');
-    li.textContent = `${contributor.name}: ${contributor.contribution}`;
+    li.textContent = `${contributor.username}: ${contributor.contribution}`;
     list.appendChild(li);
   });
 
@@ -214,7 +218,7 @@ function renderNotifications(notifications) {
     div.innerHTML = `
       <p><strong>${note.title}</strong></p>
       <p>${note.message}</p>
-      <p class="timestamp">${new Date(note.timestamp).toLocaleString()}</p>
+      <p class="timestamp">${new Date(note.created_at).toLocaleString()}</p>
     `;
     container.appendChild(div);
   });
@@ -222,12 +226,12 @@ function renderNotifications(notifications) {
 
 // ✅ Button: Start New Project
 function startNewProject() {
-  alert('🚧 Start New Project — feature under development.');
+  alert('Start New Project feature coming soon.');
   // In full version: Open modal to select available projects
 }
 
 // ✅ Button: View All Projects
 function viewAllProjects() {
-  alert('🚧 View All Projects — feature under development.');
+  alert('View All Projects feature coming soon.');
   // In full version: Navigate to full Alliance Project Catalog page
 }
