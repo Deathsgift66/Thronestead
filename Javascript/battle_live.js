@@ -76,8 +76,7 @@ export async function triggerNextTick() {
     });
     const data = await response.json();
     console.log('Next Tick Triggered:', data.message);
-    await loadUnits();
-    await loadCombatLogs();
+    refreshBattle();
   } catch (err) {
     console.error('Error triggering next tick:', err);
   }
@@ -86,17 +85,53 @@ export async function triggerNextTick() {
 // =============================================
 // PLACEHOLDER RENDER FUNCTIONS
 // =============================================
+function refreshBattle() {
+  loadUnits();
+  loadCombatLogs();
+}
+
 function renderBattleMap(tileMap) {
-  // TODO: Implement your 20x60 grid rendering here
-  console.log('Render Battle Map — TODO', tileMap);
+  const battleMap = document.getElementById('battle-map');
+  battleMap.innerHTML = '';
+
+  for (let row = 0; row < 20; row++) {
+    for (let col = 0; col < 60; col++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      const type = tileMap[row][col];
+      if (type === 'forest') tile.style.backgroundColor = '#228B22';
+      else if (type === 'river') tile.style.backgroundColor = '#1E90FF';
+      else if (type === 'hill') tile.style.backgroundColor = '#8B4513';
+      else tile.style.backgroundColor = 'var(--stone-panel)';
+      battleMap.appendChild(tile);
+    }
+  }
 }
 
 function renderUnits(units) {
-  // TODO: Implement your unit rendering here
-  console.log('Render Units — TODO', units);
+  const battleMap = document.getElementById('battle-map');
+  const tiles = battleMap.children;
+
+  for (const tile of tiles) {
+    tile.innerHTML = '';
+  }
+
+  units.forEach(unit => {
+    const index = unit.position_y * 60 + unit.position_x;
+    const unitDiv = document.createElement('div');
+    unitDiv.className = 'unit-icon';
+    unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();
+    tiles[index].appendChild(unitDiv);
+  });
 }
 
 function renderCombatLog(logs) {
-  // TODO: Display combat logs in UI
-  console.log('Render Combat Log — TODO', logs);
+  const logDiv = document.getElementById('combat-log');
+  logDiv.innerHTML = '<strong>Combat Log:</strong><hr>';
+
+  logs.slice(-50).forEach(log => {
+    const line = document.createElement('div');
+    line.innerText = `[Tick ${log.tick_number}] ${log.event_type.toUpperCase()} — ${log.notes} (Damage: ${log.damage_dealt})`;
+    logDiv.appendChild(line);
+  });
 }
