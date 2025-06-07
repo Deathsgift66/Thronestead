@@ -17,6 +17,7 @@ from .movement import (
     select_patrol_target,
     update_unit_position,
 )
+from .targeting import select_target, get_counter_multiplier
 
 __all__ = [
     "TerrainGenerator",
@@ -34,4 +35,6 @@ __all__ = [
     "terrain_movement_modifier",
     "select_patrol_target",
     "update_unit_position",
+    "select_target",
+    "get_counter_multiplier",
 ]
