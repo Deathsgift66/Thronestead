@@ -157,3 +157,73 @@ body {
 .quest-alert {
   animation: quest-pulse 2s infinite;
 }
+
+/* Onboarding Styles */
+.onboarding-container {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.onboard-step {
+  margin-bottom: 1.5rem;
+}
+
+.onboard-step input {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  margin-right: 0.5rem;
+}
+
+.onboard-step button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  background: var(--gold);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.onboard-step button:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+#continue-btn {
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+#continue-btn:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+.toast-notification {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(245, 231, 196, 0.95);
+  color: var(--ink);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.toast-notification.show {
+  opacity: 1;
+}

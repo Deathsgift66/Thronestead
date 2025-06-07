@@ -98,7 +98,8 @@ async function handleSignup() {
         user_id: user.id,
         username: payload.username,
         display_name: payload.display_name,
-        email: payload.email
+        email: payload.email,
+        setup_complete: false
       });
     if (userInsertErr) throw userInsertErr;
 

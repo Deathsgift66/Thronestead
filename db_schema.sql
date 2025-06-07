@@ -22,6 +22,7 @@ CREATE TABLE users (
     alliance_role   TEXT,
     active_policy   INTEGER,
     active_laws     INTEGER[] DEFAULT '{}',
+    setup_complete  BOOLEAN DEFAULT FALSE,
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
