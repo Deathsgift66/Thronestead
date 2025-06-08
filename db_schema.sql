@@ -838,6 +838,14 @@ CREATE TABLE game_settings (
     updated_by UUID REFERENCES users(user_id)
 );
 
+-- VIP status tracking -------------------------------------------------------
+CREATE TABLE kingdom_vip_status (
+    user_id UUID PRIMARY KEY REFERENCES users(user_id),
+    vip_level INTEGER DEFAULT 0,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    founder BOOLEAN DEFAULT false
+);
+
 -- Kingdom History Log -------------------------------------------------------
 CREATE TABLE kingdom_history_log (
     log_id SERIAL PRIMARY KEY,
