@@ -19,13 +19,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  initTabs();
+
   // ✅ Initial load
   await loadVaultSummary();
   await loadCustomBoard();
   await loadDepositForm();
   await loadWithdrawForm();
   await loadVaultHistory();
+
+  document.getElementById('apply-trans-filter').addEventListener('click', async () => {
+    await loadVaultHistory();
+  });
 });
+
+// ✅ Tabs
+function initTabs() {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabSections = document.querySelectorAll('.tab-section');
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = btn.getAttribute('data-tab');
+
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabSections.forEach(section => section.classList.remove('active'));
+
+      btn.classList.add('active');
+      document.getElementById(target).classList.add('active');
+
+      if (target === 'tab-transactions') {
+        await loadVaultHistory();
+      }
+    });
+  });
+}
 
 // ✅ Load Vault Summary
 async function loadVaultSummary() {
@@ -104,10 +132,11 @@ async function loadDepositForm() {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const res = await fetch("/api/alliance-vault/deposit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resource, amount })
+        body: JSON.stringify({ resource, amount, user_id: user.id })
       });
       const result = await res.json();
       alert(result.message || "Deposit successful.");
@@ -145,10 +174,11 @@ async function loadWithdrawForm() {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const res = await fetch("/api/alliance-vault/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resource, amount })
+        body: JSON.stringify({ resource, amount, user_id: user.id })
       });
       const result = await res.json();
       alert(result.message || "Withdrawal successful.");
@@ -163,32 +193,37 @@ async function loadWithdrawForm() {
 
 // ✅ Load Vault History
 async function loadVaultHistory() {
-  const container = document.getElementById("vault-history");
-  container.innerHTML = "<p>Loading vault history...</p>";
+  const tbody = document.getElementById("vault-history");
+  tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
 
   try {
-    const res = await fetch("/api/alliance-vault/history");
+    const actionFilter = document.getElementById('filter-action').value;
+    const params = new URLSearchParams();
+    if (actionFilter) params.append('action', actionFilter);
+    const res = await fetch(`/api/alliance-vault/history?${params.toString()}`);
     const data = await res.json();
 
-    container.innerHTML = "";
+    tbody.innerHTML = "";
     if (!data.history || data.history.length === 0) {
-      container.innerHTML = "<p>No transaction history available.</p>";
+      tbody.innerHTML = `<tr><td colspan="6">No transactions found.</td></tr>`;
       return;
     }
 
-    const list = document.createElement("ul");
-    data.history.forEach(entry => {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <strong>${entry.timestamp}</strong> — ${entry.user} ${entry.action} ${entry.amount} ${entry.resource}
+    data.history.forEach(t => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${new Date(t.created_at).toLocaleString()}</td>
+        <td>${t.username || t.user_id || 'System'}</td>
+        <td>${t.action}</td>
+        <td>${t.resource_type}</td>
+        <td>${t.amount}</td>
+        <td>${t.notes || ''}</td>
       `;
-      list.appendChild(li);
+      tbody.appendChild(row);
     });
-
-    container.appendChild(list);
 
   } catch (err) {
     console.error("❌ Error loading vault history:", err);
-    container.innerHTML = "<p>Failed to load vault history.</p>";
+    tbody.innerHTML = `<tr><td colspan="6">Failed to load history.</td></tr>`;
   }
 }

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import AllianceVault
+from ..models import AllianceVault, AllianceVaultTransactionLog, User
 
 router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 
@@ -12,6 +12,7 @@ class VaultTransaction(BaseModel):
     alliance_id: int = 1
     resource: str
     amount: int
+    user_id: str | None = None
 
 
 @router.get("/summary")
@@ -45,6 +46,15 @@ def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
     if not hasattr(vault, payload.resource):
         raise HTTPException(status_code=400, detail="Invalid resource")
     setattr(vault, payload.resource, getattr(vault, payload.resource) + payload.amount)
+    log = AllianceVaultTransactionLog(
+        alliance_id=payload.alliance_id,
+        user_id=payload.user_id,
+        action='deposit',
+        resource_type=payload.resource,
+        amount=payload.amount,
+        notes='Player deposit'
+    )
+    db.add(log)
     db.commit()
     return {"message": "Deposited"}
 
@@ -58,11 +68,35 @@ def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
     if current < payload.amount:
         raise HTTPException(status_code=400, detail="Insufficient amount")
     setattr(vault, payload.resource, current - payload.amount)
+    log = AllianceVaultTransactionLog(
+        alliance_id=payload.alliance_id,
+        user_id=payload.user_id,
+        action='withdraw',
+        resource_type=payload.resource,
+        amount=payload.amount,
+        notes='Player withdrawal'
+    )
+    db.add(log)
     db.commit()
     return {"message": "Withdrawn"}
 
 
 @router.get("/history")
-async def history():
-    return {"history": []}
+def history(alliance_id: int = 1, action: str | None = None, page: int = 1, db: Session = Depends(get_db)):
+    query = db.query(AllianceVaultTransactionLog, User.username).join(User, AllianceVaultTransactionLog.user_id == User.user_id, isouter=True).filter(AllianceVaultTransactionLog.alliance_id == alliance_id)
+    if action:
+        query = query.filter(AllianceVaultTransactionLog.action == action)
+    records = query.order_by(AllianceVaultTransactionLog.created_at.desc()).offset((page-1)*50).limit(50).all()
+    result = []
+    for t, username in records:
+        result.append({
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+            "user_id": str(t.user_id) if t.user_id else None,
+            "username": username,
+            "action": t.action,
+            "resource_type": t.resource_type,
+            "amount": t.amount,
+            "notes": t.notes,
+        })
+    return {"history": result}
 
