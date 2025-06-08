@@ -783,3 +783,21 @@ CREATE TABLE game_settings (
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_by UUID REFERENCES users(user_id)
 );
+
+-- Kingdom History Log -------------------------------------------------------
+CREATE TABLE kingdom_history_log (
+    log_id SERIAL PRIMARY KEY,
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    event_type TEXT NOT NULL,
+    event_details TEXT NOT NULL,
+    event_date TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE kingdom_history_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY access_own_kingdom_history ON kingdom_history_log
+  FOR SELECT USING (
+    auth.uid() = (
+      SELECT user_id FROM kingdoms k
+      WHERE k.kingdom_id = kingdom_history_log.kingdom_id
+    )
+  );

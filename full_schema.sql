@@ -677,25 +677,3 @@ CREATE TABLE public.game_settings (
   updated_by uuid REFERENCES public.users(user_id)
 );
 
--- Kingdom Achievement Catalogue
-CREATE TABLE public.kingdom_achievement_catalogue (
-  achievement_code text PRIMARY KEY,
-  name text NOT NULL,
-  description text NOT NULL,
-  category text NOT NULL,
-  reward jsonb NOT NULL,
-  points integer DEFAULT 0,
-  is_hidden boolean DEFAULT false,
-  created_at timestamp with time zone DEFAULT now(),
-  last_updated timestamp with time zone DEFAULT now()
-);
-
--- Kingdom Achievements
-CREATE TABLE public.kingdom_achievements (
-  kingdom_id integer REFERENCES public.kingdoms(kingdom_id),
-  achievement_code text REFERENCES public.kingdom_achievement_catalogue(achievement_code),
-  awarded_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT kingdom_achievements_pkey PRIMARY KEY (kingdom_id, achievement_code)
-);
-
-CREATE INDEX kingdom_achievements_kingdom_id_idx ON public.kingdom_achievements(kingdom_id);
