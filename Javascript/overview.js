@@ -9,6 +9,8 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
+let currentUser = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Validate session
   const { data: { session } } = await supabase.auth.getSession();
@@ -16,6 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "login.html";
     return;
   }
+  currentUser = session.user;
 
   loadPlayerProgressionFromStorage();
   if (!window.playerProgression) {
@@ -48,12 +51,34 @@ async function loadOverview() {
 
     // ✅ Summary Panel
     summaryContainer.innerHTML = `
+      <p id="summary-region"></p>
       <p><strong>Castle Level:</strong> ${prog.castleLevel}</p>
       <p><strong>Max Villages:</strong> ${prog.maxVillages}</p>
       <p><strong>Nobles:</strong> ${prog.availableNobles} / ${prog.totalNobles}</p>
       <p><strong>Knights:</strong> ${prog.availableKnights} / ${prog.totalKnights}</p>
       <p><strong>Troop Slots:</strong> ${prog.troopSlots.used} / ${prog.troopSlots.used + prog.troopSlots.available}</p>
     `;
+
+    const regionEl = document.getElementById('summary-region');
+    try {
+      const { data: krec } = await supabase
+        .from('kingdoms')
+        .select('region')
+        .eq('user_id', currentUser.id)
+        .single();
+      let regionName = krec?.region || 'Unspecified';
+      if (regionName) {
+        const { data: rdata } = await supabase
+          .from('region_catalogue')
+          .select('name')
+          .eq('region_code', regionName)
+          .single();
+        regionName = rdata?.name || regionName;
+      }
+      if (regionEl) regionEl.innerHTML = `<strong>Region:</strong> ${escapeHTML(regionName)}`;
+    } catch (e) {
+      if (regionEl) regionEl.textContent = 'Region: --';
+    }
 
     // ✅ Resources Panel
     resourcesContainer.innerHTML = "";

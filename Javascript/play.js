@@ -9,6 +9,7 @@ import { supabase } from './supabaseClient.js';
 
 let currentUser = null;
 let kingdomId = null;
+const regionMap = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(currentUser.user_metadata.display_name)}!`;
   }
 
+  await loadRegions();
   bindEvents(profile);
 });
 
@@ -92,12 +94,23 @@ function bindEvents(profileExists) {
 
       kingdomId = kingdomData.kingdom_id;
 
+      const regionData = regionMap[region] || {};
+
       const { error: villageErr } = await supabase
         .from('villages')
         .insert({ kingdom_id: kingdomId, village_name: villageName });
       if (villageErr) throw villageErr;
 
-      await supabase.from('kingdom_resources').insert({ kingdom_id: kingdomId });
+      await supabase
+        .from('kingdom_resources')
+        .insert({ kingdom_id: kingdomId, ...(regionData.resource_bonus || {}) });
+
+      await supabase
+        .from('kingdom_troop_slots')
+        .insert({
+          kingdom_id: kingdomId,
+          base_slots: 20 + (regionData.troop_bonus || 0)
+        });
 
       await supabase
         .from('users')
@@ -136,4 +149,50 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+async function loadRegions() {
+  const regionEl = document.getElementById('region-select');
+  const infoEl = document.getElementById('region-info');
+  if (!regionEl) return;
+
+  const { data: regions, error } = await supabase
+    .from('region_catalogue')
+    .select('*');
+
+  if (error) {
+    console.error('Failed to load regions', error);
+    regionEl.innerHTML = '<option value="">Failed to load</option>';
+    return;
+  }
+
+  regionEl.innerHTML = '<option value="">Select Region</option>';
+  regions.forEach(r => {
+    regionMap[r.region_code] = r;
+    const opt = document.createElement('option');
+    opt.value = r.region_code;
+    opt.textContent = r.name || r.region_code;
+    regionEl.appendChild(opt);
+  });
+
+  regionEl.addEventListener('change', () => {
+    const code = regionEl.value;
+    infoEl.innerHTML = '';
+    if (!code) return;
+    const r = regionMap[code];
+    if (!r) return;
+    let html = '';
+    if (r.description) html += `<p>${escapeHTML(r.description)}</p>`;
+    if (r.resource_bonus && Object.keys(r.resource_bonus).length > 0) {
+      html += '<ul>';
+      for (const [res, amt] of Object.entries(r.resource_bonus)) {
+        html += `<li>${escapeHTML(res)}: +${amt}</li>`;
+      }
+      html += '</ul>';
+    }
+    if (r.troop_bonus) {
+      html += `<p>Troop Slots Bonus: ${r.troop_bonus}</p>`;
+    }
+    infoEl.innerHTML = html;
+  });
 }
