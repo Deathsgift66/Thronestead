@@ -30,6 +30,33 @@ except Exception:  # pragma: no cover - fallback when backend package missing
     global_game_settings = {}
 
 
+def get_active_alliance_treaties(db: Session, alliance_id: int) -> list[dict]:
+    """Return active treaties for the given alliance."""
+    try:
+        rows = db.execute(
+            text(
+                """
+                SELECT treaty_id, treaty_type, partner_alliance_id, signed_at
+                FROM alliance_treaties
+                WHERE (alliance_id = :aid OR partner_alliance_id = :aid)
+                  AND status = 'active'
+                ORDER BY signed_at DESC
+                """
+            ),
+            {"aid": alliance_id},
+        ).fetchall()
+        return [
+            {
+                "treaty_id": r[0],
+                "treaty_type": r[1],
+                "partner_alliance_id": r[2],
+                "signed_at": r[3],
+            }
+            for r in rows
+        ]
+    except Exception:
+        return []
+
 def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     """Calculate and return the total troop slots for a kingdom.
 

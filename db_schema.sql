@@ -326,6 +326,16 @@ CREATE TABLE projects_alliance (
     progress    INTEGER DEFAULT 0
 );
 
+-- Alliance Treaties
+CREATE TABLE alliance_treaties (
+    treaty_id SERIAL PRIMARY KEY,
+    alliance_id INTEGER REFERENCES alliances(alliance_id),
+    treaty_type TEXT,
+    partner_alliance_id INTEGER REFERENCES alliances(alliance_id),
+    status TEXT CHECK (status IN ('proposed','active','cancelled')) DEFAULT 'proposed',
+    signed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Alliance Quests
 CREATE TABLE quest_alliance_catalogue (
     quest_code     TEXT PRIMARY KEY,
