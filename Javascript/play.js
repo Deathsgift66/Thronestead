@@ -36,12 +36,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  const nameInput = document.getElementById('kingdom-name-input');
+
   if (profile) {
     kingdomId = profile.kingdom_id;
     document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(profile.display_name)}!`;
+    if (nameInput) nameInput.value = profile.display_name;
   } else {
     document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(currentUser.user_metadata.display_name)}!`;
+    if (nameInput) nameInput.value = currentUser.user_metadata.display_name;
   }
+
+  if (nameInput) nameInput.readOnly = true;
 
   await loadRegions();
   bindEvents(profile);
