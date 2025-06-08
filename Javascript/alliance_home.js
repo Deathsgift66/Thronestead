@@ -76,6 +76,7 @@ async function loadAllianceData(userId) {
     await loadMembers(profile.alliance_id);
     await loadProjects(profile.alliance_id);
     await loadContributors(profile.alliance_id);
+    await loadAchievements(profile.alliance_id);
 
 
   } catch (err) {
@@ -206,4 +207,47 @@ async function loadContributors(allianceId) {
     console.error('❌ Failed to load contributors:', err);
     if (container) container.innerHTML = '<p>Failed to load contributors.</p>';
   }
+}
+
+async function loadAchievements(allianceId) {
+  const list = document.getElementById('achievements-list');
+  if (list) list.innerHTML = '<li>Loading achievements...</li>';
+
+  try {
+    const { data, error } = await supabase
+      .from('alliance_achievements')
+      .select('awarded_at, alliance_achievement_catalogue(name, description)')
+      .eq('alliance_id', allianceId)
+      .order('awarded_at', { ascending: false });
+
+    if (error) throw new Error('Failed to load achievements: ' + error.message);
+
+    list.innerHTML = '';
+
+    if (!data || data.length === 0) {
+      list.innerHTML = '<li>No achievements earned yet.</li>';
+      return;
+    }
+
+    data.forEach(row => {
+      const li = document.createElement('li');
+      const ach = row.alliance_achievement_catalogue;
+      li.innerHTML = `<strong>${escapeHTML(ach.name)}</strong> - ${escapeHTML(ach.description)} (${new Date(row.awarded_at).toLocaleDateString()})`;
+      list.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error('❌ Failed to load achievements:', err);
+    if (list) list.innerHTML = '<li>Failed to load achievements.</li>';
+  }
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
