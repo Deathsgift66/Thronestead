@@ -122,7 +122,7 @@ function bindEvents(profileExists) {
       const regionData = regionMap[region] || {};
 
       const { error: villageErr } = await supabase
-        .from('villages')
+        .from('kingdom_villages')
         .insert({ kingdom_id: kingdomId, village_name: villageName });
       if (villageErr) throw villageErr;
 
