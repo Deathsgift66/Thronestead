@@ -114,6 +114,7 @@ CREATE TABLE public.alliances (
   level integer DEFAULT 1,
   motd text,
   banner text,
+  emblem_url text,
   created_at timestamp with time zone DEFAULT now(),
   military_score integer DEFAULT 0,
   economy_score integer DEFAULT 0,
