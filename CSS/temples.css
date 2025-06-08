@@ -82,6 +82,7 @@ body {
   box-shadow: 0 8px 16px var(--shadow);
   padding: 1.5rem;
   margin-bottom: 2rem;
+  color: var(--ink);
 }
 
 .temple-stat {
@@ -112,6 +113,7 @@ body {
   border: 2px solid var(--gold);
   border-radius: 10px;
   padding: 1rem;
+  color: var(--ink);
   margin-bottom: 1rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

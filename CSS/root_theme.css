@@ -152,6 +152,7 @@ Author: Deathsgift66
   padding: var(--padding-md);
   box-shadow: var(--box-shadow);
   position: relative;
+  color: var(--ink);
 }
 
 /* -----------------------------------------------

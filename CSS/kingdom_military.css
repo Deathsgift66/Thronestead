@@ -96,6 +96,7 @@ body {
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 6px 14px var(--shadow);
+  color: var(--ink);
 }
 
 /* Golden Header */

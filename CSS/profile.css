@@ -39,6 +39,7 @@ body {
   max-width: 600px; /* smaller width for profile */
   margin-bottom: 2rem;
   text-align: center;
+  color: var(--ink);
 }
 
 .profile-avatar img {

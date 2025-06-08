@@ -86,6 +86,7 @@ form fieldset {
   padding: 1rem 1.5rem;
   border-radius: 10px;
   background: var(--parchment-dark);
+  color: var(--ink);
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
