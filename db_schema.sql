@@ -250,9 +250,24 @@ CREATE TABLE project_player_catalogue (
     description  TEXT,
     power_score  INTEGER DEFAULT 0,
     cost         JSONB,
-    required_castle_level INTEGER DEFAULT 0,
-    required_nobles INTEGER DEFAULT 0,
-    required_knights INTEGER DEFAULT 0
+    modifiers    JSONB,
+    category     TEXT,
+    is_repeatable BOOLEAN DEFAULT FALSE,
+    prerequisites TEXT[],
+    unlocks      TEXT[],
+    build_time_seconds INTEGER,
+    project_duration_seconds INTEGER,
+    requires_kingdom_level INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    max_active_instances INTEGER,
+    required_tech TEXT[],
+    requires_region TEXT,
+    effect_summary TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    user_id UUID,
+    last_modified_by UUID
 );
 
 CREATE TABLE projects_player (
@@ -261,7 +276,17 @@ CREATE TABLE projects_player (
     project_code TEXT REFERENCES project_player_catalogue(project_code),
     power_score  INTEGER DEFAULT 0,
     starts_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    ends_at      TIMESTAMP WITH TIME ZONE
+    ends_at      TIMESTAMP WITH TIME ZONE,
+    build_state  TEXT DEFAULT 'building',
+    is_active    BOOLEAN DEFAULT TRUE,
+    started_by   UUID,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at   TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT projects_player_started_by_fkey FOREIGN KEY (started_by)
+        REFERENCES users(user_id) ON DELETE SET NULL,
+    CONSTRAINT projects_player_build_state_check CHECK (
+        build_state = ANY (ARRAY['queued','building','completed','expired'])
+    )
 );
 
 -- QUESTS --------------------------------------------------------------------
@@ -391,7 +416,16 @@ CREATE TABLE projects_alliance (
     project_id  SERIAL PRIMARY KEY,
     alliance_id INTEGER REFERENCES alliances(alliance_id),
     name        TEXT NOT NULL,
-    progress    INTEGER DEFAULT 0
+    project_key TEXT REFERENCES project_alliance_catalogue(project_code),
+    progress    INTEGER DEFAULT 0,
+    modifiers   JSONB DEFAULT '{}'::jsonb,
+    start_time  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    end_time    TIMESTAMP WITH TIME ZONE,
+    is_active   BOOLEAN DEFAULT FALSE,
+    build_state TEXT CHECK (build_state IN ('queued','building','completed','expired')) DEFAULT 'queued',
+    built_by    UUID REFERENCES users(user_id),
+    expires_at  TIMESTAMP WITH TIME ZONE,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Alliance Treaties

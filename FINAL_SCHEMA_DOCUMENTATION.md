@@ -45,6 +45,14 @@ Columns:
 - `requires_kingdom_level` — minimum kingdom level
 - `is_active` — whether the project is available
 - `max_active_instances` — max copies player can have active
+- `required_tech` — list of tech codes required to unlock
+- `requires_region` — optional region restriction
+- `effect_summary` — short tooltip text
+- `expires_at` — date when project becomes unavailable
+- `created_at` — audit timestamp when created
+- `last_updated` — audit timestamp of last edit
+- `user_id` — admin user who created the row
+- `last_modified_by` — admin who last modified the row
 
 ## Table: `public.project_alliance_catalogue`
 Master list of every Alliance Project. Actual projects in progress reference the catalogue via `project_code`.
@@ -67,6 +75,7 @@ Columns:
 - `is_active` — whether available to build
 - `max_active_instances` — cap on simultaneous active copies
 
+
 ## Table: `public.quest_alliance_catalogue`
 Master catalogue of alliance quests. Each row defines a quest that alliances can undertake.
 
@@ -84,3 +93,40 @@ Columns:
 - `is_active` — hide quest when false
 - `created_at` — timestamp when added
 - `last_updated` — timestamp when modified
+=======
+
+## Table: `public.projects_player`
+Runtime tracker of kingdom projects that players start. Each row represents one instance of a project launched from the catalogue.
+
+Columns:
+- `project_id` — serial primary key
+- `kingdom_id` — which kingdom owns the project
+- `project_code` — catalogue code of the project
+- `power_score` — contribution score used for rankings
+- `starts_at` — when construction began
+- `ends_at` — when the project completes (null = permanent)
+- `build_state` — state enum: `queued`, `building`, `completed`, `expired`
+- `is_active` — whether the modifiers are currently applied
+- `started_by` — user that initiated the build
+- `last_updated` — audit timestamp of last modification
+- `expires_at` — when temporary effects expire
+=======
+## Table: `public.projects_alliance`
+Stores each instance of an Alliance-level project that is queued, building, completed or expired.
+
+Columns:
+- `project_id` — primary key
+- `alliance_id` — owning alliance
+- `name` — project name
+- `project_key` — FK to `project_alliance_catalogue.project_code`
+- `progress` — build completion percent
+- `modifiers` — bonuses applied when active
+- `start_time` — build start time
+- `end_time` — scheduled completion
+- `is_active` — true while bonuses are active
+- `build_state` — `queued`, `building`, `completed` or `expired`
+- `built_by` — user who started the project
+- `expires_at` — when the effect wears off
+- `last_updated` — audit timestamp
+
+

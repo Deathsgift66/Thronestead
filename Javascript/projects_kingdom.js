@@ -60,7 +60,12 @@ async function loadProjects() {
     // ✅ Fetch project catalogue
     const { data: catalogueData, error: catalogueError } = await supabase
       .from('project_player_catalogue')
-      .select('*');
+      .select('*')
+      .eq('is_active', true);
+
+    const filteredCatalogue = (catalogueData || []).filter(
+      p => !p.expires_at || new Date(p.expires_at) > new Date()
+    );
 
     if (catalogueError) throw catalogueError;
 
@@ -81,7 +86,7 @@ async function loadProjects() {
 
     // ✅ Render available projects
     availableList.innerHTML = "";
-    catalogueData.forEach(project => {
+    filteredCatalogue.forEach(project => {
       const isActive = activeProjectCodes.includes(project.project_code);
       const canAfford = hasSufficientResources(resourcesData, project);
 
@@ -91,6 +96,11 @@ async function loadProjects() {
       card.innerHTML = `
         <h3>${escapeHTML(project.name)}</h3>
         <p>${escapeHTML(project.description)}</p>
+        <p class="category">${escapeHTML(project.category || "")}</p>
+        <p>${escapeHTML(project.effect_summary || "")}</p>
+        <p>Cost: ${formatCost(project.cost)}</p>
+        <p>Build Time: ${formatTime(project.build_time_seconds || 0)}</p>
+        ${project.project_duration_seconds ? `<p>Duration: ${formatTime(project.project_duration_seconds)}</p>` : ''}
         <p>Power Score: ${project.power_score}</p>
         <button class="action-btn start-project-btn" data-code="${project.project_code}" ${isActive || !canAfford ? "disabled" : ""}>
           ${isActive ? "Already Active" : canAfford ? "Start Project" : "Insufficient Resources"}
@@ -136,7 +146,7 @@ async function loadProjects() {
     }
 
     playerProjectsData.forEach(activeProject => {
-      const projectDef = catalogueData.find(p => p.project_code === activeProject.project_code);
+      const projectDef = filteredCatalogue.find(p => p.project_code === activeProject.project_code);
 
       const remainingTime = Math.max(0, Math.floor((new Date(activeProject.ends_at).getTime() - Date.now()) / 1000));
 
@@ -166,9 +176,16 @@ async function loadProjects() {
 
 // ✅ Check if player has enough resources
 function hasSufficientResources(resources, project) {
-  const costFields = Object.keys(resources).filter(key => project[key] > 0);
+  const costs = project.cost || {};
+  return Object.entries(costs).every(([res, amt]) => (resources[res] || 0) >= amt);
+}
 
-  return costFields.every(resource => resources[resource] >= project[resource]);
+// ✅ Format cost object
+function formatCost(cost) {
+  if (!cost) return 'None';
+  return Object.entries(cost)
+    .map(([res, amt]) => `${amt} ${escapeHTML(res)}`)
+    .join(', ');
 }
 
 // ✅ Start countdown timers

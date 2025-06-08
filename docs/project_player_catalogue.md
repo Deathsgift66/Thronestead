@@ -21,9 +21,14 @@ The `project_player_catalogue` table defines every kingdom level project availab
 | `requires_kingdom_level` | Minimum kingdom level required. |
 | `is_active` | Whether the project is available for players. |
 | `max_active_instances` | Maximum concurrent instances allowed. |
+| `required_tech` | Array of tech codes required to unlock. |
+| `requires_region` | Optional region restriction. |
+| `effect_summary` | Short tooltip text describing the effect. |
+| `expires_at` | When the project becomes unavailable. |
 | `created_at` | Row creation timestamp. |
 | `last_updated` | Timestamp of last edit. |
-| `user_id` | Admin user who created/edited the row. |
+| `user_id` | Admin user who created the row. |
+| `last_modified_by` | Admin who last modified this row. |
 
 ## Usage
 
@@ -33,7 +38,8 @@ Fetch active projects for display:
 ```sql
 SELECT *
 FROM public.project_player_catalogue
-WHERE is_active = true;
+WHERE is_active = true
+  AND (expires_at IS NULL OR expires_at > now());
 ```
 Show each project's name, description, category, cost, build time and requirements.
 

@@ -108,6 +108,34 @@ class AllianceVaultTransactionLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class ProjectPlayerCatalogue(Base):
+    __tablename__ = 'project_player_catalogue'
+
+    project_code = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(Text)
+    power_score = Column(Integer, default=0)
+    cost = Column(JSONB)
+    modifiers = Column(JSONB)
+    category = Column(String)
+    is_repeatable = Column(Boolean, default=False)
+    prerequisites = Column(JSONB)
+    unlocks = Column(JSONB)
+    build_time_seconds = Column(Integer)
+    project_duration_seconds = Column(Integer)
+    requires_kingdom_level = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    max_active_instances = Column(Integer)
+    required_tech = Column(JSONB)
+    requires_region = Column(String)
+    effect_summary = Column(Text)
+    expires_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    last_modified_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+
+
 class ProjectAllianceCatalogue(Base):
     __tablename__ = 'project_alliance_catalogue'
 
@@ -131,6 +159,26 @@ class ProjectAllianceCatalogue(Base):
     is_active = Column(Boolean, default=True)
     max_active_instances = Column(Integer)
     expires_at = Column(DateTime(timezone=True))
+
+
+class ProjectsAlliance(Base):
+    """Runtime state of Alliance-level projects."""
+
+    __tablename__ = 'projects_alliance'
+
+    project_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    name = Column(String, nullable=False)
+    project_key = Column(String, ForeignKey('project_alliance_catalogue.project_code'))
+    progress = Column(Integer, default=0)
+    modifiers = Column(JSONB, default={})
+    start_time = Column(DateTime(timezone=True), server_default=func.now())
+    end_time = Column(DateTime(timezone=True))
+    is_active = Column(Boolean, default=False)
+    build_state = Column(String)
+    built_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    expires_at = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class WarsTactical(Base):
