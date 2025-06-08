@@ -36,6 +36,7 @@ the records created during onboarding.
 ✅ Alliance war master record documented in [docs/alliance_wars.md](docs/alliance_wars.md)
 ✅ Kingdom resources usage documented in [docs/kingdom_resources.md](docs/kingdom_resources.md)
 ✅ Kingdom treaties documented in [docs/kingdom_treaties.md](docs/kingdom_treaties.md)
+✅ Kingdom troops table documented in [docs/kingdom_troops.md](docs/kingdom_troops.md)
 
 
 ---
