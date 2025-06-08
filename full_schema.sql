@@ -535,12 +535,18 @@ CREATE TABLE public.quest_kingdom_catalogue (
 CREATE TABLE public.quest_kingdom_tracking (
   kingdom_id integer NOT NULL,
   quest_code text NOT NULL,
-  status text CHECK (status = ANY (ARRAY['active'::text, 'completed'::text])),
+  status text CHECK (status = ANY (ARRAY['active'::text, 'completed'::text, 'cancelled'::text, 'expired'::text])),
   progress integer DEFAULT 0,
+  progress_details jsonb DEFAULT '{}'::jsonb,
   ends_at timestamp with time zone,
+  started_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  attempt_count integer DEFAULT 1,
+  started_by uuid,
   CONSTRAINT quest_kingdom_tracking_pkey PRIMARY KEY (kingdom_id, quest_code),
   CONSTRAINT quest_kingdom_tracking_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
-  CONSTRAINT quest_kingdom_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_kingdom_catalogue(quest_code)
+  CONSTRAINT quest_kingdom_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_kingdom_catalogue(quest_code),
+  CONSTRAINT quest_kingdom_tracking_started_by_fkey FOREIGN KEY (started_by) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.tech_catalogue (
   tech_code text NOT NULL,
