@@ -10,7 +10,6 @@ except Exception:  # pragma: no cover - fallback for test environments
 
 try:
     from backend.data import (
-        kingdom_villages,
         vip_levels,
         player_titles,
         prestige_scores,
@@ -20,7 +19,6 @@ try:
         global_game_settings,
     )
 except Exception:  # pragma: no cover - fallback when backend package missing
-    kingdom_villages = {}
     vip_levels = {}
     player_titles = {}
     prestige_scores = {}
@@ -326,7 +324,11 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
 
     # Village bonuses ---------------------------------------------------
     try:
-        village_count = len(kingdom_villages.get(kingdom_id, []))
+        rows = db.execute(
+            text("SELECT COUNT(*) FROM kingdom_villages WHERE kingdom_id = :kid"),
+            {"kid": kingdom_id},
+        ).fetchone()
+        village_count = rows[0] if rows else 0
         if village_count:
             _merge_modifiers(total, {"production_bonus": {"villages": village_count}})
     except Exception:

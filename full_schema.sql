@@ -301,6 +301,19 @@ CREATE TABLE public.kingdom_knights (
   CONSTRAINT kingdom_knights_pkey PRIMARY KEY (knight_id),
   CONSTRAINT kingdom_knights_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
+CREATE TABLE public.kingdom_villages (
+  village_id integer NOT NULL DEFAULT nextval('kingdom_villages_village_id_seq'::regclass),
+  kingdom_id integer REFERENCES public.kingdoms(kingdom_id),
+  village_name text,
+  village_type text,
+  created_at timestamp with time zone DEFAULT now(),
+  is_capital boolean DEFAULT false,
+  population integer DEFAULT 0,
+  defense_level integer DEFAULT 0,
+  prosperity integer DEFAULT 100,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_villages_pkey PRIMARY KEY (village_id)
+);
 CREATE TABLE public.kingdom_troops (
   kingdom_id integer NOT NULL,
   unit_type text NOT NULL,
