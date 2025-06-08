@@ -677,10 +677,3 @@ CREATE TABLE public.game_settings (
   updated_by uuid REFERENCES public.users(user_id)
 );
 
-CREATE TABLE public.kingdom_history_log (
-  log_id serial PRIMARY KEY,
-  kingdom_id integer REFERENCES public.kingdoms(kingdom_id),
-  event_type text NOT NULL,
-  event_details text NOT NULL,
-  event_date timestamp with time zone DEFAULT now()
-);
