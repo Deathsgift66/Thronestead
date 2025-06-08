@@ -1,28 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from .progression_router import get_user_id, get_kingdom_id
+from ..data import kingdom_villages, get_max_villages_allowed
 
-router = APIRouter(prefix="/api/villages", tags=["villages"])
-
-# Simple in-memory store of created villages until a dedicated table exists
-kingdom_villages: dict[int, list[dict]] = {}
-
-
-def get_max_villages_allowed(castle_level: int) -> int:
-    """Return the number of villages allowed for the given castle level."""
-    return castle_level
-
+router = APIRouter(prefix="/api/kingdom/villages", tags=["villages"])
 
 class VillagePayload(BaseModel):
     village_name: str
-    kingdom_id: int = 1
+    village_type: str = "economic"
+    kingdom_id: int | None = None
 
 
-@router.post("/create")
+@router.get("")
+async def list_villages(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """List villages for the player's kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    return {"villages": kingdom_villages.get(kid, [])}
+
+
+@router.post("")
 async def create_village(
     payload: VillagePayload,
     user_id: str = Depends(get_user_id),
@@ -52,6 +56,14 @@ async def create_village(
         raise HTTPException(status_code=403, detail="Not enough nobles")
 
     village_id = len(villages) + 1
-    villages.append({"village_id": village_id, "village_name": payload.village_name})
+    villages.append(
+        {
+            "village_id": village_id,
+            "village_name": payload.village_name,
+            "village_type": payload.village_type,
+            "created_at": datetime.utcnow().isoformat(),
+            "buildings": [],
+        }
+    )
 
     return {"message": "Village created", "village_id": village_id}

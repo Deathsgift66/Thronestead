@@ -1,0 +1,37 @@
+import { supabase } from './supabaseClient.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadSpies();
+  await loadMissions();
+});
+
+async function loadSpies() {
+  const infoEl = document.getElementById('spy-info');
+  infoEl.textContent = 'Loading...';
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch('/api/kingdom/spies', { headers: { 'X-User-ID': user.id } });
+    const data = await res.json();
+    infoEl.textContent = `Level ${data.level} | Spies: ${data.count}`;
+  } catch (e) {
+    infoEl.textContent = 'Failed to load spy info';
+  }
+}
+
+async function loadMissions() {
+  const listEl = document.getElementById('missions');
+  listEl.textContent = 'Loading missions...';
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch('/api/kingdom/spy_missions', { headers: { 'X-User-ID': user.id } });
+    const data = await res.json();
+    listEl.innerHTML = '';
+    (data.missions || []).forEach(m => {
+      const div = document.createElement('div');
+      div.textContent = `${m.mission} targeting ${m.target_id}`;
+      listEl.appendChild(div);
+    });
+  } catch (e) {
+    listEl.textContent = 'Failed to load missions';
+  }
+}

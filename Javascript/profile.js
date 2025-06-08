@@ -20,6 +20,8 @@ async function loadPlayerProfile() {
   const kingdomNameEl = document.getElementById("kingdom-name");
   const mottoEl = document.getElementById("player-motto");
   const vipBadgeEl = document.getElementById("vip-badge");
+  const prestigeEl = document.getElementById("prestige-score");
+  const titlesListEl = document.getElementById("titles-list");
   const customizationContainer = document.getElementById("profile-customization-content");
 
   // Placeholders while loading
@@ -54,12 +56,41 @@ async function loadPlayerProfile() {
     kingdomNameEl.textContent = data.kingdom_name || "Unnamed Kingdom";
     mottoEl.textContent = data.profile_bio || "No motto set.";
 
-    // ✅ VIP badge
-    if (data.vip_tier && data.vip_tier >= 1) {
-      vipBadgeEl.style.display = "inline-block";
-      vipBadgeEl.textContent = `VIP ${data.vip_tier}`;
-    } else {
-      vipBadgeEl.style.display = "none";
+    // ✅ VIP badge via API
+    try {
+      const vipRes = await fetch('/api/kingdom/vip_status', {
+        headers: { 'X-User-ID': user.id }
+      });
+      const vipData = await vipRes.json();
+      const lvl = vipData.vip_level || 0;
+      if (lvl > 0) {
+        vipBadgeEl.style.display = 'inline-block';
+        vipBadgeEl.textContent = `VIP ${lvl}`;
+      } else {
+        vipBadgeEl.style.display = 'none';
+      }
+    } catch (e) {
+      vipBadgeEl.style.display = 'none';
+    }
+
+    // Prestige and titles
+    try {
+      const [prestigeRes, titlesRes] = await Promise.all([
+        fetch('/api/kingdom/prestige', { headers: { 'X-User-ID': user.id } }),
+        fetch('/api/kingdom/titles', { headers: { 'X-User-ID': user.id } })
+      ]);
+      const prestigeData = await prestigeRes.json();
+      const titlesData = await titlesRes.json();
+      prestigeEl.textContent = `Prestige: ${prestigeData.prestige_score || 0}`;
+      titlesListEl.innerHTML = '';
+      (titlesData.titles || []).forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        titlesListEl.appendChild(li);
+      });
+    } catch (e) {
+      prestigeEl.textContent = 'Prestige: --';
+      titlesListEl.innerHTML = '';
     }
 
     // ✅ Render customization options

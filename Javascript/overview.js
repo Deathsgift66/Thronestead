@@ -55,6 +55,7 @@ async function loadOverview() {
     summaryContainer.innerHTML = `
       <p id="summary-region"></p>
       <p><strong>Castle Level:</strong> ${prog.castleLevel}</p>
+      <p id="vip-level"></p>
       <p><strong>Max Villages:</strong> ${prog.maxVillages}</p>
       <p><strong>Nobles:</strong> ${prog.availableNobles} / ${prog.totalNobles}</p>
       <p><strong>Knights:</strong> ${prog.availableKnights} / ${prog.totalKnights}</p>
@@ -80,6 +81,20 @@ async function loadOverview() {
       if (regionEl) regionEl.innerHTML = `<strong>Region:</strong> ${escapeHTML(regionName)}`;
     } catch (e) {
       if (regionEl) regionEl.textContent = 'Region: --';
+    }
+
+    // VIP Level
+    try {
+      const vipRes = await fetch('/api/kingdom/vip_status', {
+        headers: { 'X-User-ID': currentUser.id }
+      });
+      const vipData = await vipRes.json();
+      const vipEl = document.getElementById('vip-level');
+      const lvl = vipData.vip_level || 0;
+      if (vipEl) vipEl.innerHTML = `<strong>VIP:</strong> ${lvl}`;
+    } catch (e) {
+      const vipEl = document.getElementById('vip-level');
+      if (vipEl) vipEl.textContent = 'VIP: --';
     }
 
     // ✅ Resources Panel
