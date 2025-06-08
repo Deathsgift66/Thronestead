@@ -1,6 +1,12 @@
 # Alliance Project Catalogue
 
-The `project_alliance_catalogue` table defines every Alliance Project available in the game. It is static data maintained by admins and referenced whenever an alliance chooses a project to start.
+The `project_alliance_catalogue` table defines every Alliance Project available in the game. It acts as the master list that other tables reference whenever an alliance starts a project.
+
+### Purpose
+
+* Acts as a static catalogue managed by admins.
+* Each project describes how to unlock it, what it costs and what modifiers it provides.
+* Alliances reference a project via the `project_code` (sometimes called `project_key`).
 
 ## Table Structure
 
@@ -27,7 +33,34 @@ The `project_alliance_catalogue` table defines every Alliance Project available 
 | `max_active_instances` | Maximum active instances allowed. |
 | `expires_at` | Pre-set expiry date if applicable. |
 
+### Column breakdown
+
+* `project_id` – internal serial primary key.
+* `project_code` (or `project_key`) – stable external identifier used by other tables.
+* `project_name` – display name in the UI.
+* `description` – long description of the project.
+* `category` – grouping for the UI such as economic, military or diplomatic.
+* `required_tech` – list of tech codes required before starting.
+* `prerequisites` – list of other projects that must already be completed.
+* `resource_costs` – JSON object describing the alliance vault resources needed.
+* `build_time_seconds` – number of seconds the build queue runs.
+* `project_duration_seconds` – if set, how long the modifiers remain active.
+* `modifiers` – JSON payload of bonuses or effects granted when completed.
+* `requires_alliance_level` – minimum alliance level allowed to start.
+* `is_active` – indicates if the catalogue entry is currently buildable.
+* `is_repeatable` – whether a project can be built more than once.
+* `max_active_instances` – cap on simultaneous active copies.
+
 ## Usage
+
+### Integration workflow
+
+1. **Load catalogue** – `/alliance/projects` fetches rows where `is_active = true` and shows lock status based on `requires_alliance_level`.
+2. **Start project** – validate prerequisites and available resources, then insert into `projects_alliance` with `start_time`, `build_state` of `queued` and the user who initiated the build.
+3. **Track build** – periodically calculate `end_time = start_time + build_time_seconds` and move the row to `completed` when the timer ends.
+4. **Apply modifiers** – for completed rows marked active (and not expired) merge the `modifiers` JSON into alliance stats or caches.
+5. **Handle expiration** – if `project_duration_seconds` is not null compute an `expires_at` timestamp and mark the project `expired` after that time.
+6. **List history** – allow UI pages for active and expired projects using the same catalogue data for descriptions.
 
 ### Listing available projects
 
@@ -49,6 +82,8 @@ WHERE is_active = true
 When a project completes, merge the `modifiers` into the alliance or member stats. If `project_duration_seconds` is set, track an expiry time and remove the effects later.
 
 `is_repeatable` and `max_active_instances` should be enforced so that unique projects cannot be stacked beyond their limits.
+
+Typical modifiers include bonuses to training speed, additional vault capacity, attack or defense perks in wars, diplomatic bonuses or tax efficiencies.
 
 ## Best Practices
 
