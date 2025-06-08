@@ -61,10 +61,32 @@ alliance_treaties: dict[int, list[dict]] = {}
 kingdom_spies: dict[int, dict] = {}
 spy_missions: dict[int, list[dict]] = {}
 
-# Global settings
-global_game_settings = {
-    "war_tick_speed": 1,
-    "tax_rate": 0.1,
-    "vip_perks": {1: {"troop_bonus": {"vip": 1}}, 2: {"troop_bonus": {"vip": 2}}},
-    "event_modifiers": {},
-}
+# Global settings loaded from the database
+global_game_settings: dict[str, object] = {}
+
+try:  # pragma: no cover - SQLAlchemy optional in tests
+    from sqlalchemy import text
+    from .database import SessionLocal
+except Exception:  # pragma: no cover - fallback when deps missing
+    text = lambda q: q  # type: ignore
+    SessionLocal = None  # type: ignore
+
+
+def load_game_settings() -> None:
+    """Load active game settings from the database into memory."""
+    if not SessionLocal:
+        return
+    session = SessionLocal()
+    try:
+        rows = session.execute(
+            text(
+                "SELECT setting_key, setting_value FROM game_settings WHERE is_active = true"
+            )
+        ).fetchall()
+        global_game_settings.clear()
+        for key, value in rows:
+            global_game_settings[key] = value
+    except Exception:
+        pass
+    finally:
+        session.close()

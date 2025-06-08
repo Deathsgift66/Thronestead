@@ -36,11 +36,13 @@ from .routers import (
 )
 from .database import engine
 from .models import Base
+from .data import load_game_settings
 
 app = FastAPI(title="Kingmaker's Rise API")
 
 # Ensure tables exist
 Base.metadata.create_all(bind=engine)
+load_game_settings()
 
 app.include_router(alliance_members.router)
 app.include_router(admin.router)
