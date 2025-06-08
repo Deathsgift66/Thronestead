@@ -370,6 +370,12 @@ CREATE TABLE public.policies_laws_catalogue (
   name text NOT NULL,
   description text,
   effect_summary text,
+  category text,
+  modifiers jsonb DEFAULT '{}'::jsonb,
+  unlock_at_level integer DEFAULT 1,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT policies_laws_catalogue_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.project_player_catalogue (

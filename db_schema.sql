@@ -290,7 +290,13 @@ CREATE TABLE policies_laws_catalogue (
     type           TEXT CHECK (type IN ('policy','law')),
     name           TEXT NOT NULL,
     description    TEXT,
-    effect_summary TEXT
+    effect_summary TEXT,
+    category       TEXT,
+    modifiers      JSONB DEFAULT '{}'::jsonb,
+    unlock_at_level INTEGER DEFAULT 1,
+    is_active      BOOLEAN DEFAULT TRUE,
+    created_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ALLIANCES -----------------------------------------------------------------
