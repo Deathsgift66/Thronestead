@@ -67,9 +67,10 @@ CREATE TABLE public.alliance_war_participants (
   kingdom_id integer NOT NULL,
   role text CHECK (role = ANY (ARRAY['attacker'::text, 'defender'::text])),
   CONSTRAINT alliance_war_participants_pkey PRIMARY KEY (alliance_war_id, kingdom_id),
-  CONSTRAINT alliance_war_participants_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id),
+  CONSTRAINT alliance_war_participants_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id) ON DELETE CASCADE,
   CONSTRAINT alliance_war_participants_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
+CREATE INDEX alliance_war_participants_alliance_war_id_idx ON public.alliance_war_participants(alliance_war_id);
 CREATE TABLE public.alliance_war_preplans (
   preplan_id integer NOT NULL DEFAULT nextval('alliance_war_preplans_preplan_id_seq'::regclass),
   alliance_war_id integer,

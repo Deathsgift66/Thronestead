@@ -144,7 +144,12 @@ class AllianceWar(Base):
 
 class AllianceWarParticipant(Base):
     __tablename__ = 'alliance_war_participants'
-    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id'), primary_key=True)
+    alliance_war_id = Column(
+        Integer,
+        ForeignKey('alliance_wars.alliance_war_id', ondelete='CASCADE'),
+        primary_key=True,
+        index=True,
+    )
     kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'), primary_key=True)
     role = Column(String)
 

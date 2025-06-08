@@ -742,3 +742,13 @@ CREATE TABLE war_preplans (
     preplan_jsonb JSONB,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Alliance War Participants -------------------------------------------------
+CREATE TABLE alliance_war_participants (
+    alliance_war_id INTEGER REFERENCES alliance_wars(alliance_war_id) ON DELETE CASCADE,
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    role TEXT CHECK (role IN ('attacker','defender')),
+    PRIMARY KEY (alliance_war_id, kingdom_id)
+);
+
+CREATE INDEX alliance_war_participants_alliance_war_id_idx ON alliance_war_participants(alliance_war_id);
