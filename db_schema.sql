@@ -35,6 +35,15 @@ CREATE TABLE kingdoms (
     created_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE region_catalogue (
+    region_code TEXT PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    resource_bonus JSONB DEFAULT '{}'::jsonb,
+    troop_bonus INTEGER DEFAULT 0
+);
+
+
 CREATE TABLE kingdom_resources (
     kingdom_id INTEGER PRIMARY KEY REFERENCES kingdoms(kingdom_id),
     wood BIGINT DEFAULT 0,

@@ -16,10 +16,12 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     result = db.execute(
         text(
             """
-            SELECT base_slots, castle_bonus_slots, noble_bonus_slots,
-                   knight_bonus_slots
-            FROM kingdom_troop_slots
-            WHERE kingdom_id = :kid
+            SELECT kts.base_slots, kts.castle_bonus_slots, kts.noble_bonus_slots,
+                   kts.knight_bonus_slots, COALESCE(rc.troop_bonus, 0)
+            FROM kingdom_troop_slots kts
+            JOIN kingdoms k ON k.kingdom_id = kts.kingdom_id
+            LEFT JOIN region_catalogue rc ON rc.region_code = k.region
+            WHERE kts.kingdom_id = :kid
             """
         ),
         {"kid": kingdom_id},
@@ -28,9 +30,9 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     if not result:
         return 0
 
-    base_slots, castle_bonus, noble_bonus, knight_bonus = result
+    base_slots, castle_bonus, noble_bonus, knight_bonus, region_bonus = result
 
-    total_slots = base_slots + castle_bonus + noble_bonus + knight_bonus
+    total_slots = base_slots + castle_bonus + noble_bonus + knight_bonus + region_bonus
 
     return total_slots
 
