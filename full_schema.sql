@@ -384,9 +384,24 @@ CREATE TABLE public.project_player_catalogue (
   description text,
   power_score integer DEFAULT 0,
   cost jsonb,
-  required_castle_level integer DEFAULT 0,
-  required_nobles integer DEFAULT 0,
-  required_knights integer DEFAULT 0,
+  modifiers jsonb,
+  category text,
+  is_repeatable boolean DEFAULT false,
+  prerequisites text[],
+  unlocks text[],
+  build_time_seconds integer,
+  project_duration_seconds integer,
+  requires_kingdom_level integer,
+  is_active boolean DEFAULT true,
+  max_active_instances integer,
+  required_tech text[],
+  requires_region text,
+  effect_summary text,
+  expires_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  last_modified_by uuid,
   CONSTRAINT project_player_catalogue_pkey PRIMARY KEY (project_code)
 );
 CREATE TABLE public.project_alliance_catalogue (
@@ -415,11 +430,19 @@ CREATE TABLE public.project_alliance_catalogue (
 );
 CREATE TABLE public.projects_alliance (
   project_id integer NOT NULL DEFAULT nextval('projects_alliance_project_id_seq'::regclass),
-  alliance_id integer,
+  alliance_id integer REFERENCES public.alliances(alliance_id),
   name text NOT NULL,
+  project_key text REFERENCES public.project_alliance_catalogue(project_code),
   progress integer DEFAULT 0,
-  CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id),
-  CONSTRAINT projects_alliance_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
+  modifiers jsonb DEFAULT '{}'::jsonb,
+  start_time timestamp with time zone DEFAULT now(),
+  end_time timestamp with time zone,
+  is_active boolean DEFAULT false,
+  build_state text CHECK (build_state IN ('queued','building','completed','expired')) DEFAULT 'queued',
+  built_by uuid REFERENCES public.users(user_id),
+  expires_at timestamp with time zone,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id)
 );
 
 CREATE TABLE public.alliance_treaties (
