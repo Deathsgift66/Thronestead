@@ -171,7 +171,7 @@ async function loadRegions() {
     regionMap[r.region_code] = r;
     const opt = document.createElement('option');
     opt.value = r.region_code;
-    opt.textContent = r.name || r.region_code;
+    opt.textContent = r.region_name || r.name || r.region_code;
     regionEl.appendChild(opt);
   });
 
