@@ -81,6 +81,18 @@ function bindEvents(profileExists) {
     createBtn.disabled = true;
 
     try {
+      const { data: existing, error: existErr } = await supabase
+        .from('kingdoms')
+        .select('kingdom_id')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+      if (existErr) throw existErr;
+      if (existing) {
+        showToast('You already have a kingdom.');
+        createBtn.disabled = false;
+        return;
+      }
+
       if (!profileExists) {
         const { error: userErr } = await supabase.from('users').insert({
           user_id: currentUser.id,
