@@ -7,11 +7,14 @@ Author: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression, loadPlayerProgressionFromStorage } from '../progressionGlobal.js';
 
-const requireAdmin = false;
-const minVip = 0;
-const requireAlliance = false;
-const requireRole = null; // e.g. "officer", "leader"
-const requirePermission = null; // e.g. "manage_projects"
+// These values can be overridden by setting them on the global window object
+// before this script is loaded. This allows pages to enforce additional access
+// controls without modifying the guard itself.
+const requireAdmin = window.requireAdmin === true;
+const minVip = window.minVip || 0;
+const requireAlliance = window.requireAlliance || false;
+const requireRole = window.requireRole || null; // e.g. "officer", "leader"
+const requirePermission = window.requirePermission || null; // e.g. "manage_projects"
 
 (async () => {
   try {
@@ -75,6 +78,25 @@ const requirePermission = null; // e.g. "manage_projects"
       alliance_role: alliance?.alliance_role || null,
       permissions: alliance?.permissions || []
     };
+
+    // Hide any navbar items meant only for admins when the user isn't one.
+    if (!userData.is_admin) {
+      const hideAdminLinks = () => {
+        const adminEls = document.querySelectorAll('.admin-only');
+        if (adminEls.length) {
+          adminEls.forEach((el) => el.remove());
+          return true;
+        }
+        return false;
+      };
+      // Attempt immediately and also a few more times in case navbar loads late
+      if (!hideAdminLinks()) {
+        const interval = setInterval(() => {
+          if (hideAdminLinks()) clearInterval(interval);
+        }, 100);
+        setTimeout(() => clearInterval(interval), 3000);
+      }
+    }
 
     loadPlayerProgressionFromStorage();
     if (!window.playerProgression) {
