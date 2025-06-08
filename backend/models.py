@@ -20,6 +20,20 @@ class PlayerMessage(Base):
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
 
+
+class AllianceMember(Base):
+    """Represents membership information for alliances."""
+
+    __tablename__ = 'alliance_members'
+
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'), primary_key=True)
+    username = Column(String)
+    rank = Column(String)
+    contribution = Column(Integer, default=0)
+    status = Column(String)
+    crest = Column(String)
+
 class AllianceVault(Base):
     __tablename__ = 'alliance_vault'
     alliance_id = Column(Integer, primary_key=True)
