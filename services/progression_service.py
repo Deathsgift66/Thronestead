@@ -71,7 +71,7 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
                    kts.slots_from_tech,
                    kts.slots_from_projects,
                    kts.slots_from_events,
-                   COALESCE(rc.troop_bonus, 0)
+                   COALESCE((rc.troop_bonus ->> 'base_slots')::integer, 0)
             FROM kingdom_troop_slots kts
             JOIN kingdoms k ON k.kingdom_id = kts.kingdom_id
             LEFT JOIN region_catalogue rc ON rc.region_code = k.region
@@ -90,7 +90,7 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
         tech_bonus,
         project_bonus,
         event_bonus,
-        region_bonus,
+        region_slots,
     ) = result
 
     total_slots = (
@@ -99,7 +99,7 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
         + tech_bonus
         + project_bonus
         + event_bonus
-        + region_bonus
+        + region_slots
     )
 
     return total_slots
@@ -231,7 +231,7 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
                     total,
                     {
                         "resource_bonus": resources or {},
-                        "troop_bonus": {"base_slots": troop or 0},
+                        "troop_bonus": troop or {},
                     },
                 )
     except Exception:

@@ -333,6 +333,19 @@ CREATE TABLE public.kingdoms (
   CONSTRAINT kingdoms_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id),
   CONSTRAINT kingdoms_user_id_key UNIQUE (user_id)
 );
+
+CREATE TABLE public.region_catalogue (
+  region_code text PRIMARY KEY,
+  region_name text,
+  description text,
+  resource_bonus jsonb DEFAULT '{}',
+  troop_bonus jsonb DEFAULT '{}'
+);
+INSERT INTO public.region_catalogue (region_code, region_name, description, resource_bonus, troop_bonus) VALUES
+  ('north', 'Northlands', 'Cold and rugged with hardy people.', '{"wood":50}', '{"infantry_hp":2}'),
+  ('south', 'Southlands', 'Fertile fields and warm climate.', '{"food":100}', '{"cavalry_speed":1}'),
+  ('east', 'Eastreach', 'Rich trade routes and culture.', '{"gold":20}', '{"archer_damage":3}'),
+  ('west', 'Westvale', 'Frontier lands full of stone.', '{"stone":50}', '{}');
 CREATE TABLE public.notifications (
   notification_id integer NOT NULL DEFAULT nextval('notifications_notification_id_seq'::regclass),
   user_id uuid,

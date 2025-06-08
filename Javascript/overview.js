@@ -119,14 +119,15 @@ async function loadOverview() {
         .select('region')
         .eq('user_id', currentUser.id)
         .single();
-      let regionName = krec?.region || 'Unspecified';
-      if (regionName) {
+      let regionCode = krec?.region || 'Unspecified';
+      let regionName = regionCode;
+      if (regionCode) {
         const { data: rdata } = await supabase
           .from('region_catalogue')
-          .select('name')
-          .eq('region_code', regionName)
+          .select('region_name')
+          .eq('region_code', regionCode)
           .single();
-        regionName = rdata?.name || regionName;
+        regionName = rdata?.region_name || regionCode;
       }
       if (regionEl) regionEl.innerHTML = `<strong>Region:</strong> ${escapeHTML(regionName)}`;
     } catch (e) {
