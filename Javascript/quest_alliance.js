@@ -41,10 +41,22 @@ async function loadAllianceQuests() {
     const allianceId = userData.alliance_id;
     const allianceRole = userData.alliance_role;
 
+    const { data: allianceData, error: allianceError } = await supabase
+      .from('alliances')
+      .select('level')
+      .eq('alliance_id', allianceId)
+      .single();
+
+    if (allianceError) throw allianceError;
+
+    const allianceLevel = allianceData.level;
+
     // ✅ Fetch catalogue
     const { data: catalogueData, error: catalogueError } = await supabase
       .from('quest_alliance_catalogue')
-      .select('*');
+      .select('*')
+      .eq('is_active', true)
+      .lte('required_level', allianceLevel);
 
     if (catalogueError) throw catalogueError;
 
@@ -109,10 +121,19 @@ function renderQuestCatalogue(catalogue, allianceQuests, role) {
     const card = document.createElement("div");
     card.classList.add("quest-card");
 
+    const objectives = formatJsonList(quest.objectives);
+    const rewards = formatJsonList(quest.rewards);
+
     card.innerHTML = `
       <h3>${escapeHTML(quest.name)}</h3>
       <p>${escapeHTML(quest.description)}</p>
+      <p>Category: ${escapeHTML(quest.category || '')}</p>
+      <p><strong>Objectives:</strong></p>
+      <ul>${objectives}</ul>
+      <p><strong>Rewards:</strong></p>
+      <ul>${rewards}</ul>
       <p>Duration: ${quest.duration_hours}h</p>
+      <p>${quest.repeatable ? `Repeatable${quest.max_attempts ? ` (Max ${quest.max_attempts})` : ''}` : 'One-time'}</p>
       <button class="action-btn accept-quest-btn" data-code="${quest.quest_code}" ${isActive || !canStartQuest(role) ? "disabled" : ""}>
         ${isActive ? "Already Active" : canStartQuest(role) ? "Accept Quest" : "Insufficient Rank"}
       </button>
@@ -277,6 +298,28 @@ function showToast(msg) {
       document.body.removeChild(toast);
     }, 3000);
   }, 100);
+}
+
+// ✅ Helper: Format JSON object to list items
+function formatJsonList(data) {
+  if (!data) return '<li>None</li>';
+  try {
+    const obj = typeof data === 'string' ? JSON.parse(data) : data;
+    const items = [];
+    for (const [key, val] of Object.entries(obj)) {
+      if (typeof val === 'object') {
+        const inner = Object.entries(val)
+          .map(([k, v]) => `${escapeHTML(k)}: ${escapeHTML(String(v))}`)
+          .join(', ');
+        items.push(`<li>${escapeHTML(key)} — ${inner}</li>`);
+      } else {
+        items.push(`<li>${escapeHTML(key)}: ${escapeHTML(String(val))}</li>`);
+      }
+    }
+    return items.join('');
+  } catch (err) {
+    return `<li>${escapeHTML(String(data))}</li>`;
+  }
 }
 
 // ✅ Helper: Escape HTML
