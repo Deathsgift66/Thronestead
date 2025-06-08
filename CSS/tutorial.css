@@ -81,6 +81,7 @@ body {
   padding: 1.5rem;
   max-height: 600px;
   overflow-y: auto;
+  color: var(--ink);
 }
 
 .tutorial-step {

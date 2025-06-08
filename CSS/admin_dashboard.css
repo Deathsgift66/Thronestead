@@ -67,6 +67,7 @@ p {
   padding: 1rem;
   box-shadow: 2px 2px 6px var(--shadow);
   text-align: center;
+  color: var(--ink);
 }
 .stat-card p {
   font-size: 1.25rem;
@@ -81,6 +82,7 @@ p {
   padding: 1rem;
   margin-bottom: 1rem;
   box-shadow: 1px 1px 5px var(--shadow);
+  color: var(--ink);
 }
 .player-card .player-actions {
   margin-top: 0.5rem;
@@ -96,6 +98,7 @@ p {
   margin-bottom: 0.75rem;
   border-left: 4px solid var(--gold);
   box-shadow: 0 2px 4px var(--shadow);
+  color: var(--ink);
 }
 
 /* Alerts */
@@ -106,6 +109,7 @@ p {
   padding: 1rem;
   margin-bottom: 1rem;
   box-shadow: 2px 2px 5px var(--shadow);
+  color: var(--ink);
 }
 
 /* Buttons */

@@ -94,6 +94,7 @@ body {
   border-radius: 12px;
   box-shadow: 0 8px 16px var(--shadow);
   padding: 1.5rem;
+  color: var(--ink);
 }
 
 .network-area {
