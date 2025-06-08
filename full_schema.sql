@@ -499,8 +499,13 @@ CREATE TABLE public.quest_alliance_contributions (
   resource_type USER-DEFINED,
   amount integer,
   timestamp timestamp with time zone DEFAULT now(),
+  quest_code text,
+  user_id uuid,
+  contribution_type text DEFAULT 'resource',
   CONSTRAINT quest_alliance_contributions_pkey PRIMARY KEY (contribution_id),
-  CONSTRAINT quest_alliance_contributions_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
+  CONSTRAINT quest_alliance_contributions_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT quest_alliance_contributions_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_alliance_catalogue(quest_code),
+  CONSTRAINT quest_alliance_contributions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.quest_alliance_tracking (
   alliance_id integer NOT NULL,

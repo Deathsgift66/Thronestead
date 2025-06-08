@@ -130,3 +130,17 @@ Columns:
 - `last_updated` — audit timestamp
 
 
+## Table: `public.quest_alliance_contributions`
+Tracks every resource, item or event players contribute toward alliance quests. Used for progress tracking, leaderboards and audits.
+
+Columns:
+- `contribution_id` — serial primary key
+- `alliance_id` — owning alliance
+- `player_name` — display name when contributed
+- `resource_type` — resource or item type
+- `amount` — amount contributed
+- `timestamp` — when the contribution happened
+- `quest_code` — quest this contribution applies to
+- `user_id` — player UUID
+- `contribution_type` — contribution category such as `resource` or `item`
+
