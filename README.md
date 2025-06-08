@@ -4,6 +4,9 @@ Auth is handled via **Supabase Client** → included in `supabaseClient.js`.
 New sign-ups automatically create the associated profile and starter kingdom
 records using Supabase row level security.
 
+A unique constraint on `kingdoms.user_id` ensures each player can only
+own a single kingdom.
+
 See [docs/onboarding_setup.md](docs/onboarding_setup.md) for a breakdown of
 the records created during onboarding.
 

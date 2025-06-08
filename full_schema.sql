@@ -289,7 +289,8 @@ CREATE TABLE public.kingdoms (
   region text,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdoms_pkey PRIMARY KEY (kingdom_id),
-  CONSTRAINT kingdoms_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
+  CONSTRAINT kingdoms_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id),
+  CONSTRAINT kingdoms_user_id_key UNIQUE (user_id)
 );
 CREATE TABLE public.notifications (
   notification_id integer NOT NULL DEFAULT nextval('notifications_notification_id_seq'::regclass),
