@@ -18,7 +18,8 @@ the records created during onboarding.
 ✅ authGuard.js protection on restricted pages
 ✅ Global public page policy for index/login/signup/legal
 ✅ Alliance System → full suite
-✅ Military → full recruitment + war system  
+✅ Alliance Treaties diplomacy
+✅ Military → full recruitment + war system
 ✅ Market & Trade Center  
 ✅ Sovereign’s Grand Overseer (VIP 2 panel)  
 ✅ Dynamic World Map → zoom, pan, click  
