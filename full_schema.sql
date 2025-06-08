@@ -701,3 +701,11 @@ CREATE TABLE public.game_settings (
   updated_by uuid REFERENCES public.users(user_id)
 );
 
+-- VIP status tracking
+CREATE TABLE public.kingdom_vip_status (
+  user_id uuid PRIMARY KEY REFERENCES public.users(user_id),
+  vip_level integer DEFAULT 0,
+  expires_at timestamp with time zone,
+  founder boolean DEFAULT false
+);
+

@@ -1,11 +1,19 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from ..database import get_db
 from .progression_router import get_user_id
-from ..data import vip_levels
+from services.vip_status_service import get_vip_status
 
 router = APIRouter(prefix="/api/kingdom", tags=["vip"])
 
 @router.get("/vip_status")
-async def vip_status(user_id: str = Depends(get_user_id)):
-    level = vip_levels.get(user_id, 0)
-    return {"vip_level": level}
+def vip_status(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    record = get_vip_status(db, user_id)
+    if not record:
+        return {"vip_level": 0, "expires_at": None, "founder": False}
+    return record
 
