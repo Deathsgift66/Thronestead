@@ -370,6 +370,17 @@ CREATE TABLE public.alliance_treaties (
   CONSTRAINT alliance_treaties_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_treaties_partner_alliance_id_fkey FOREIGN KEY (partner_alliance_id) REFERENCES public.alliances(alliance_id)
 );
+CREATE TABLE public.kingdom_treaties (
+  treaty_id integer NOT NULL DEFAULT nextval('kingdom_treaties_treaty_id_seq'::regclass),
+  kingdom_id integer,
+  treaty_type text,
+  partner_kingdom_id integer,
+  status text CHECK (status IN ('proposed','active','cancelled')) DEFAULT 'proposed',
+  signed_at timestamp with time zone,
+  CONSTRAINT kingdom_treaties_pkey PRIMARY KEY (treaty_id),
+  CONSTRAINT kingdom_treaties_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_treaties_partner_kingdom_id_fkey FOREIGN KEY (partner_kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
 CREATE TABLE public.projects_player (
   project_id integer NOT NULL DEFAULT nextval('projects_player_project_id_seq'::regclass),
   kingdom_id integer,
