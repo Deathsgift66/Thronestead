@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
-from ..models import Alliance, ProjectAllianceCatalogue
+from ..models import Alliance, ProjectAllianceCatalogue, ProjectsAlliance
 
 router = APIRouter(prefix="/api/alliance-projects", tags=["alliance_projects"])
 
@@ -20,21 +20,28 @@ def list_projects(alliance_id: int = 1, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Alliance not found")
 
     rows = (
-        db.query(ProjectAllianceCatalogue)
-        .filter(ProjectAllianceCatalogue.is_active.is_(True))
-        .filter(ProjectAllianceCatalogue.requires_alliance_level <= alliance.level)
+        db.query(ProjectsAlliance)
+        .filter(ProjectsAlliance.alliance_id == alliance_id)
+        .filter(
+            (ProjectsAlliance.is_active.is_(True))
+            | (ProjectsAlliance.build_state.in_(["queued", "building"]))
+        )
+        .order_by(ProjectsAlliance.start_time.desc())
         .all()
     )
 
     return {
         "projects": [
             {
-                "project_code": r.project_code,
-                "project_name": r.project_name,
-                "description": r.description,
-                "effect_summary": r.effect_summary,
-                "resource_costs": r.resource_costs,
-                "build_time_seconds": r.build_time_seconds,
+                "project_id": r.project_id,
+                "name": r.name,
+                "project_key": r.project_key,
+                "progress": r.progress,
+                "build_state": r.build_state,
+                "start_time": r.start_time,
+                "end_time": r.end_time,
+                "expires_at": r.expires_at,
+                "built_by": r.built_by,
                 "modifiers": r.modifiers,
             }
             for r in rows

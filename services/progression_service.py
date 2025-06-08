@@ -287,16 +287,16 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         rows = db.execute(
             text(
                 """
-                SELECT pac.modifiers
+                SELECT pa.modifiers
                 FROM projects_alliance pa
-                JOIN project_alliance_catalogue pac
-                  ON pac.project_code = pa.name
                 WHERE pa.alliance_id IN (
                     SELECT alliance_id FROM alliance_members
                     WHERE user_id = (
                         SELECT user_id FROM kingdoms WHERE kingdom_id = :kid
                     )
                 )
+                  AND pa.is_active = true
+                  AND pa.build_state = 'completed'
                 """
             ),
             {"kid": kingdom_id},

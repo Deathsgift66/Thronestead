@@ -66,3 +66,21 @@ Columns:
 - `requires_alliance_level` — minimum alliance level
 - `is_active` — whether available to build
 - `max_active_instances` — cap on simultaneous active copies
+
+## Table: `public.projects_alliance`
+Stores each instance of an Alliance-level project that is queued, building, completed or expired.
+
+Columns:
+- `project_id` — primary key
+- `alliance_id` — owning alliance
+- `name` — project name
+- `project_key` — FK to `project_alliance_catalogue.project_code`
+- `progress` — build completion percent
+- `modifiers` — bonuses applied when active
+- `start_time` — build start time
+- `end_time` — scheduled completion
+- `is_active` — true while bonuses are active
+- `build_state` — `queued`, `building`, `completed` or `expired`
+- `built_by` — user who started the project
+- `expires_at` — when the effect wears off
+- `last_updated` — audit timestamp
