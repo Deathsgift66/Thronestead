@@ -66,3 +66,19 @@ Columns:
 - `requires_alliance_level` — minimum alliance level
 - `is_active` — whether available to build
 - `max_active_instances` — cap on simultaneous active copies
+
+## Table: `public.projects_player`
+Runtime tracker of kingdom projects that players start. Each row represents one instance of a project launched from the catalogue.
+
+Columns:
+- `project_id` — serial primary key
+- `kingdom_id` — which kingdom owns the project
+- `project_code` — catalogue code of the project
+- `power_score` — contribution score used for rankings
+- `starts_at` — when construction began
+- `ends_at` — when the project completes (null = permanent)
+- `build_state` — state enum: `queued`, `building`, `completed`, `expired`
+- `is_active` — whether the modifiers are currently applied
+- `started_by` — user that initiated the build
+- `last_updated` — audit timestamp of last modification
+- `expires_at` — when temporary effects expire
