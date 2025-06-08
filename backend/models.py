@@ -20,6 +20,28 @@ class PlayerMessage(Base):
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
 
+
+class Alliance(Base):
+    """Minimal alliance record used for foreign key relations."""
+
+    __tablename__ = 'alliances'
+
+    alliance_id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    leader = Column(String)
+    status = Column(String)
+    region = Column(String)
+    level = Column(Integer, default=1)
+    motd = Column(Text)
+    banner = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    military_score = Column(Integer, default=0)
+    economy_score = Column(Integer, default=0)
+    diplomacy_score = Column(Integer, default=0)
+    wars_count = Column(Integer, default=0)
+    treaties_count = Column(Integer, default=0)
+    projects_active = Column(Integer, default=0)
+
 class AllianceVault(Base):
     __tablename__ = 'alliance_vault'
     alliance_id = Column(Integer, primary_key=True)

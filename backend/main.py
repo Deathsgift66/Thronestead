@@ -3,6 +3,7 @@ from .routers import (
     admin,
     alliance_members,
     alliance_projects,
+    alliances,
     kingdom,
     conflicts,
     black_market,
@@ -44,6 +45,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(alliance_members.router)
 app.include_router(admin.router)
 app.include_router(alliance_projects.router)
+app.include_router(alliances.router)
 app.include_router(kingdom.router)
 app.include_router(conflicts.router)
 app.include_router(black_market.router)

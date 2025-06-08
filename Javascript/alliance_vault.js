@@ -45,7 +45,10 @@ async function loadVaultSummary() {
     Object.entries(data.totals).forEach(([resource, amount]) => {
       const div = document.createElement("div");
       div.classList.add("vault-resource-row");
-      div.innerHTML = `<strong>${resource}</strong>: ${amount}`;
+      const label = resource
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+      div.innerHTML = `<strong>${label}</strong>: ${amount}`;
       container.appendChild(div);
     });
 
