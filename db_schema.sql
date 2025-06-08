@@ -348,6 +348,16 @@ CREATE TABLE alliance_treaties (
     signed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Kingdom Treaties
+CREATE TABLE kingdom_treaties (
+    treaty_id SERIAL PRIMARY KEY,
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    treaty_type TEXT,
+    partner_kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    status TEXT CHECK (status IN ('proposed','active','cancelled')) DEFAULT 'proposed',
+    signed_at TIMESTAMP WITH TIME ZONE
+);
+
 -- Alliance Quests
 CREATE TABLE quest_alliance_catalogue (
     quest_code     TEXT PRIMARY KEY,
