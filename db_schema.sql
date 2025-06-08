@@ -358,6 +358,29 @@ CREATE TABLE alliance_vault (
     updated_at        TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE project_alliance_catalogue (
+    project_code TEXT PRIMARY KEY,
+    project_name TEXT NOT NULL,
+    description  TEXT,
+    category TEXT,
+    effect_summary TEXT,
+    is_repeatable BOOLEAN DEFAULT FALSE,
+    required_tech TEXT[],
+    prerequisites TEXT[],
+    unlocks TEXT[],
+    resource_costs JSONB,
+    build_time_seconds INTEGER,
+    project_duration_seconds INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    user_id UUID REFERENCES users(user_id),
+    modifiers JSONB,
+    requires_alliance_level INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    max_active_instances INTEGER,
+    expires_at TIMESTAMP WITH TIME ZONE
+);
+
 CREATE TABLE projects_alliance (
     project_id  SERIAL PRIMARY KEY,
     alliance_id INTEGER REFERENCES alliances(alliance_id),

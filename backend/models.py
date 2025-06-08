@@ -108,6 +108,31 @@ class AllianceVaultTransactionLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class ProjectAllianceCatalogue(Base):
+    __tablename__ = 'project_alliance_catalogue'
+
+    project_code = Column(String, primary_key=True)
+    project_name = Column(String, nullable=False)
+    description = Column(Text)
+    category = Column(String)
+    effect_summary = Column(Text)
+    is_repeatable = Column(Boolean, default=False)
+    required_tech = Column(JSONB)
+    prerequisites = Column(JSONB)
+    unlocks = Column(JSONB)
+    resource_costs = Column(JSONB)
+    build_time_seconds = Column(Integer)
+    project_duration_seconds = Column(Integer)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    modifiers = Column(JSONB)
+    requires_alliance_level = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    max_active_instances = Column(Integer)
+    expires_at = Column(DateTime(timezone=True))
+
+
 class WarsTactical(Base):
     __tablename__ = 'wars_tactical'
     war_id = Column(Integer, primary_key=True)
