@@ -1,7 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from datetime import datetime
+
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from ..data import military_state, recruitable_units
+from ..database import get_db
+from ..services.research_service import start_research as db_start_research
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
@@ -11,7 +16,7 @@ class ProjectPayload(BaseModel):
 
 
 class ResearchPayload(BaseModel):
-    research: str
+    tech_code: str
 
 
 class QuestPayload(BaseModel):
@@ -69,8 +74,21 @@ async def kingdom_summary():
 
 
 @router.post("/start_research")
-async def start_research(payload: ResearchPayload):
-    return {"message": "Research started", "research": payload.research}
+async def start_research(
+    payload: ResearchPayload,
+    db: Session = Depends(get_db),
+):
+    """Begin research on a technology for kingdom ``1`` (demo)."""
+    try:
+        ends_at = db_start_research(db, 1, payload.tech_code)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Tech not found")
+
+    return {
+        "message": "Research started",
+        "tech_code": payload.tech_code,
+        "ends_at": ends_at.isoformat(),
+    }
 
 
 @router.post("/accept_quest")
