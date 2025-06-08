@@ -773,6 +773,23 @@ CREATE TABLE alliance_war_preplans (
     preplan_jsonb JSONB NOT NULL,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Spies ---------------------------------------------------------------------
+CREATE TABLE kingdom_spies (
+    kingdom_id INTEGER PRIMARY KEY REFERENCES kingdoms(kingdom_id),
+    spy_level INTEGER DEFAULT 1,
+    spy_count INTEGER DEFAULT 0,
+    max_spy_capacity INTEGER DEFAULT 0,
+    spy_xp INTEGER DEFAULT 0,
+    spy_upkeep_gold INTEGER DEFAULT 0,
+    last_mission_at TIMESTAMP WITH TIME ZONE,
+    cooldown_seconds INTEGER DEFAULT 0,
+    spies_lost INTEGER DEFAULT 0,
+    missions_attempted INTEGER DEFAULT 0,
+    missions_successful INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 CREATE TABLE game_settings (
     setting_key TEXT PRIMARY KEY,
     setting_value JSONB,

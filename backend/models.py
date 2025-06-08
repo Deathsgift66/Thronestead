@@ -291,6 +291,26 @@ class BlackMarketListing(Base):
     quantity = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+
+class KingdomSpies(Base):
+    """Spy force tracking for each kingdom."""
+
+    __tablename__ = 'kingdom_spies'
+
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'), primary_key=True)
+    spy_level = Column(Integer, default=1)
+    spy_count = Column(Integer, default=0)
+    max_spy_capacity = Column(Integer, default=0)
+    spy_xp = Column(Integer, default=0)
+    spy_upkeep_gold = Column(Integer, default=0)
+    last_mission_at = Column(DateTime(timezone=True))
+    cooldown_seconds = Column(Integer, default=0)
+    spies_lost = Column(Integer, default=0)
+    missions_attempted = Column(Integer, default=0)
+    missions_successful = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
 class GameSetting(Base):
     __tablename__ = 'game_settings'
 

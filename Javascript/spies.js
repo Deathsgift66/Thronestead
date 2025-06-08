@@ -12,7 +12,15 @@ async function loadSpies() {
     const { data: { user } } = await supabase.auth.getUser();
     const res = await fetch('/api/kingdom/spies', { headers: { 'X-User-ID': user.id } });
     const data = await res.json();
-    infoEl.textContent = `Level ${data.level} | Spies: ${data.count}`;
+    infoEl.innerHTML = `
+      <div>Spy Level: ${data.spy_level}</div>
+      <div>Spies: ${data.spy_count} / ${data.max_spy_capacity}</div>
+      <div>Progress XP: ${data.spy_xp}</div>
+      <div>Upkeep: ${data.spy_upkeep_gold} gold/tick</div>
+      <div>Spies Lost: ${data.spies_lost}</div>
+      <div>Missions Attempted: ${data.missions_attempted}</div>
+      <div>Successful Missions: ${data.missions_successful}</div>
+    `;
   } catch (e) {
     infoEl.textContent = 'Failed to load spy info';
   }
