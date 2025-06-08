@@ -44,7 +44,7 @@ class Alliance(Base):
 
 class AllianceVault(Base):
     __tablename__ = 'alliance_vault'
-    alliance_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'), primary_key=True)
     wood = Column(BigInteger, default=0)
     stone = Column(BigInteger, default=0)
     iron_ore = Column(BigInteger, default=0)
