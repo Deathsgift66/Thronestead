@@ -4,6 +4,9 @@ Auth is handled via **Supabase Client** → included in `supabaseClient.js`.
 New sign-ups automatically create the associated profile and starter kingdom
 records using Supabase row level security.
 
+See [docs/onboarding_setup.md](docs/onboarding_setup.md) for a breakdown of
+the records created during onboarding.
+
 ---
 
 ## ✅ Features Implemented
