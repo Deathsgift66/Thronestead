@@ -80,6 +80,21 @@ section h2 {
   font-family: 'Cinzel', serif;
 }
 
+/* Achievements List */
+.alliance-achievements ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.alliance-achievements li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.alliance-achievements li:last-child {
+  border-bottom: none;
+}
+
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
