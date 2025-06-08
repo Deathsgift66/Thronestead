@@ -19,6 +19,8 @@ class DummyDB:
         q = str(query)
         params = params or {}
         if "FROM alliance_tax_policies" in q:
+            assert params.get("res") == "gold"
+            assert "is_active = true" in q
             return DummyResult((self.tax_rate,))
         if q.startswith("UPDATE alliance_vault"):
             self.vault["gold"] += params.get("amt", 0)
