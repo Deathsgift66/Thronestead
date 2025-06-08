@@ -35,12 +35,14 @@ async function loadOverview() {
   const resourcesContainer = document.getElementById("overview-resources");
   const militaryContainer = document.getElementById("overview-military");
   const questsContainer = document.getElementById("overview-quests");
+  const modifiersContainer = document.getElementById("overview-modifiers");
 
   // Placeholders while loading
   summaryContainer.innerHTML = "<p>Loading summary...</p>";
   resourcesContainer.innerHTML = "<p>Loading resources...</p>";
   militaryContainer.innerHTML = "<p>Loading military overview...</p>";
   questsContainer.innerHTML = "<p>Loading quests...</p>";
+  if (modifiersContainer) modifiersContainer.innerHTML = "<p>Loading modifiers...</p>";
 
   try {
     const [kingdomRes, prog] = await Promise.all([
@@ -96,15 +98,39 @@ async function loadOverview() {
 
     // ✅ Military Panel
     militaryContainer.innerHTML = ``;
-    if (data.troops) {
+  if (data.troops) {
       const p = document.createElement('p');
       p.innerHTML = `<strong>Total Troops:</strong> ${data.troops.total}`;
       const p2 = document.createElement('p');
       p2.innerHTML = `<strong>Slots Used:</strong> ${data.troops.slots.used} / ${data.troops.slots.base}`;
       militaryContainer.appendChild(p);
       militaryContainer.appendChild(p2);
-    } else {
+  } else {
       militaryContainer.innerHTML = "<p>No military data found.</p>";
+  }
+
+    // ✅ Modifiers Panel
+    if (modifiersContainer) {
+      try {
+        const res = await fetch('/api/progression/modifiers');
+        const mods = await res.json();
+        if (!res.ok) throw new Error('Failed');
+        modifiersContainer.innerHTML = '';
+        for (const [cat, vals] of Object.entries(mods)) {
+          const h4 = document.createElement('h4');
+          h4.textContent = cat.replace(/_/g, ' ');
+          modifiersContainer.appendChild(h4);
+          const ul = document.createElement('ul');
+          for (const [k,v] of Object.entries(vals)) {
+            const li = document.createElement('li');
+            li.textContent = `${k}: ${v}`;
+            ul.appendChild(li);
+          }
+          modifiersContainer.appendChild(ul);
+        }
+      } catch (e) {
+        modifiersContainer.innerHTML = '<p>Failed to load modifiers.</p>';
+      }
     }
 
     // ✅ Quests Panel (placeholder)
