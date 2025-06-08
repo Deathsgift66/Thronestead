@@ -34,6 +34,7 @@ the records created during onboarding.
 ✅ Alliance war pre-plan storage documented in [docs/alliance_war_preplans.md](docs/alliance_war_preplans.md)
 ✅ Alliance war participant list documented in [docs/alliance_war_participants.md](docs/alliance_war_participants.md)
 ✅ Alliance war master record documented in [docs/alliance_wars.md](docs/alliance_wars.md)
+✅ Kingdom resources usage documented in [docs/kingdom_resources.md](docs/kingdom_resources.md)
 
 
 ---
