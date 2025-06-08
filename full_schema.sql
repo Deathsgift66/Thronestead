@@ -389,6 +389,30 @@ CREATE TABLE public.project_player_catalogue (
   required_knights integer DEFAULT 0,
   CONSTRAINT project_player_catalogue_pkey PRIMARY KEY (project_code)
 );
+CREATE TABLE public.project_alliance_catalogue (
+  project_code text NOT NULL,
+  project_name text NOT NULL,
+  description text,
+  category text,
+  effect_summary text,
+  is_repeatable boolean DEFAULT false,
+  required_tech text[],
+  prerequisites text[],
+  unlocks text[],
+  resource_costs jsonb,
+  build_time_seconds integer,
+  project_duration_seconds integer,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  modifiers jsonb,
+  requires_alliance_level integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  max_active_instances integer,
+  expires_at timestamp with time zone,
+  CONSTRAINT project_alliance_catalogue_pkey PRIMARY KEY (project_code),
+  CONSTRAINT project_alliance_catalogue_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.projects_alliance (
   project_id integer NOT NULL DEFAULT nextval('projects_alliance_project_id_seq'::regclass),
   alliance_id integer,

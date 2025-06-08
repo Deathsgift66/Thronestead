@@ -37,6 +37,8 @@ the records created during onboarding.
 ✅ Kingdom resources usage documented in [docs/kingdom_resources.md](docs/kingdom_resources.md)
 ✅ Kingdom treaties documented in [docs/kingdom_treaties.md](docs/kingdom_treaties.md)
 
+✅ Alliance project catalogue documented in [docs/project_alliance_catalogue.md](docs/project_alliance_catalogue.md)
+
 ✅ VIP status system documented in [docs/vip_status.md](docs/vip_status.md)
 
 ✅ Kingdom troops table documented in [docs/kingdom_troops.md](docs/kingdom_troops.md)
