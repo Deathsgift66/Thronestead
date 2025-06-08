@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   await loadVillages();
 });
 
@@ -10,22 +10,10 @@ async function loadVillages() {
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('kingdom_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (profileError) throw profileError;
-
-    const { data: villages, error } = await supabase
-      .from('villages')
-      .select('village_id, village_name, population')
-      .eq('kingdom_id', profile.kingdom_id)
-      .order('village_name', { ascending: true });
-
-    if (error) throw error;
+    const res = await fetch('/api/kingdom/villages', {
+      headers: { 'X-User-ID': user.id }
+    });
+    const { villages } = await res.json();
 
     listEl.innerHTML = '';
 
@@ -33,12 +21,12 @@ async function loadVillages() {
       listEl.innerHTML = '<li>No villages found.</li>';
       return;
     }
-
     villages.forEach(village => {
       const li = document.createElement('li');
       li.innerHTML = `
-        <a href="village.html?village_id=${village.village_id}">${escapeHTML(village.village_name)}</a>
-        <span>Pop: ${village.population.toLocaleString()}</span>
+        <strong>${escapeHTML(village.village_name)}</strong> - ${escapeHTML(village.village_type)}
+        <em>${new Date(village.created_at).toLocaleDateString()}</em>
+        <span>Buildings: ${village.buildings.length}</span>
       `;
       listEl.appendChild(li);
     });

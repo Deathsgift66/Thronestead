@@ -24,6 +24,11 @@ from .routers import (
     buildings,
     progression_router,
     villages_router,
+    vip_status_router,
+    titles_router,
+    treaties_router,
+    spies_router,
+    settings_router,
     wars,
     quests_router,
     projects_router,
@@ -60,6 +65,11 @@ app.include_router(leaderboard.router)
 app.include_router(buildings.router)
 app.include_router(progression_router.router)
 app.include_router(villages_router.router)
+app.include_router(vip_status_router.router)
+app.include_router(titles_router.router)
+app.include_router(treaties_router.router)
+app.include_router(spies_router.router)
+app.include_router(settings_router.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)

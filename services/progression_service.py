@@ -8,6 +8,27 @@ except Exception:  # pragma: no cover - fallback for test environments
     text = lambda q: q
     Session = object
 
+try:
+    from backend.data import (
+        kingdom_villages,
+        vip_levels,
+        player_titles,
+        prestige_scores,
+        kingdom_treaties,
+        alliance_treaties,
+        kingdom_spies,
+        global_game_settings,
+    )
+except Exception:  # pragma: no cover - fallback when backend package missing
+    kingdom_villages = {}
+    vip_levels = {}
+    player_titles = {}
+    prestige_scores = {}
+    kingdom_treaties = {}
+    alliance_treaties = {}
+    kingdom_spies = {}
+    global_game_settings = {}
+
 
 def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     """Calculate and return the total troop slots for a kingdom.
@@ -228,6 +249,52 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         ).fetchall()
         for (mods,) in rows:
             _merge_modifiers(total, mods or {})
+    except Exception:
+        pass
+
+    # VIP perks ---------------------------------------------------------
+    try:
+        level = vip_levels.get(str(kingdom_id), vip_levels.get(kingdom_id, 0))
+        perks = global_game_settings.get("vip_perks", {}).get(level, {})
+        _merge_modifiers(total, perks)
+    except Exception:
+        pass
+
+    # Prestige bonuses --------------------------------------------------
+    try:
+        score = prestige_scores.get(str(kingdom_id), prestige_scores.get(kingdom_id, 0))
+        if score:
+            _merge_modifiers(total, {"combat_bonus": {"prestige": score // 100}})
+    except Exception:
+        pass
+
+    # Village bonuses ---------------------------------------------------
+    try:
+        village_count = len(kingdom_villages.get(kingdom_id, []))
+        if village_count:
+            _merge_modifiers(total, {"production_bonus": {"villages": village_count}})
+    except Exception:
+        pass
+
+    # Treaty modifiers --------------------------------------------------
+    try:
+        for treaty in kingdom_treaties.get(kingdom_id, []):
+            _merge_modifiers(total, treaty.get("modifiers", {}))
+    except Exception:
+        pass
+
+    # Spy effects -------------------------------------------------------
+    try:
+        spy = kingdom_spies.get(kingdom_id)
+        if spy:
+            _merge_modifiers(total, spy.get("modifiers", {}))
+    except Exception:
+        pass
+
+    # Global modifiers --------------------------------------------------
+    try:
+        if global_game_settings.get("event_modifiers"):
+            _merge_modifiers(total, global_game_settings["event_modifiers"])
     except Exception:
         pass
 

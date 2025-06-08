@@ -45,3 +45,26 @@ kingdom_villages: dict[int, list[dict]] = {}
 def get_max_villages_allowed(castle_level: int) -> int:
     """Return the number of villages allowed for the given castle level."""
     return castle_level
+
+# VIP levels per user_id
+vip_levels: dict[str, int] = {}
+
+# Titles and prestige tracking per user
+player_titles: dict[str, list[str]] = {}
+prestige_scores: dict[str, int] = {}
+
+# Treaty records
+kingdom_treaties: dict[int, list[dict]] = {}
+alliance_treaties: dict[int, list[dict]] = {}
+
+# Spy related data
+kingdom_spies: dict[int, dict] = {}
+spy_missions: dict[int, list[dict]] = {}
+
+# Global settings
+global_game_settings = {
+    "war_tick_speed": 1,
+    "tax_rate": 0.1,
+    "vip_perks": {1: {"troop_bonus": {"vip": 1}}, 2: {"troop_bonus": {"vip": 2}}},
+    "event_modifiers": {},
+}

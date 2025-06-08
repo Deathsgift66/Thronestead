@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from services.progression_service import calculate_troop_slots, get_total_modifiers
+from ..data import kingdom_villages, get_max_villages_allowed, military_state
 
 router = APIRouter(prefix="/api/progression", tags=["progression"])
 

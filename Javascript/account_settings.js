@@ -36,12 +36,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('notifications_opt_in').checked = !!data.notifications_opt_in;
     document.getElementById('bg_toggle').checked = !!data.use_play_background;
 
-    // VIP Status
-    const vipStatus = data.is_vip_2 ? 'VIP Tier II'
-                    : data.is_vip_1 ? 'VIP Tier I'
-                    : 'Not a VIP';
+    // VIP Status via API
+    const vipRes = await fetch('/api/kingdom/vip_status', {
+      headers: { 'X-User-ID': user.id }
+    });
+    const vipData = await vipRes.json();
     const vipElement = document.getElementById('vip-status');
-    vipElement.innerText = vipStatus;
+    const level = vipData.vip_level || 0;
+    vipElement.innerText = level > 0 ? `VIP ${level}` : 'Not a VIP';
     vipElement.title = 'Your current VIP status in Kingmaker\'s Rise';
 
   } catch (err) {
