@@ -27,7 +27,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .select("is_admin, vip_level")
+      .select("is_admin")
       .eq("user_id", user.id)
       .single();
 
@@ -36,13 +36,25 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       return (window.location.href = "play.html");
     }
 
-    // ADMIN/VIP
+    // ADMIN CHECK
     if (requireAdmin && userData.is_admin !== true) {
       alert("🚫 Admin only.");
       return (window.location.href = "overview.html");
     }
 
-    if (userData.vip_level < minVip) {
+    // Retrieve VIP level from API
+    let vipLevel = 0;
+    try {
+      const vipRes = await fetch('/api/kingdom/vip_status', {
+        headers: { 'X-User-ID': user.id }
+      });
+      const vipData = await vipRes.json();
+      vipLevel = vipData.vip_level || 0;
+    } catch (e) {
+      vipLevel = 0;
+    }
+
+    if (vipLevel < minVip) {
       alert(`🚫 VIP Tier ${minVip}+ required.`);
       return (window.location.href = "overview.html");
     }
@@ -73,10 +85,10 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
     }
 
     // Store for page use
-  window.user = {
+    window.user = {
       id: user.id,
       is_admin: userData.is_admin,
-      vip_level: userData.vip_level,
+      vip_level: vipLevel,
       alliance_id: alliance?.alliance_id || null,
       alliance_role: alliance?.alliance_role || null,
       permissions: alliance?.permissions || []
