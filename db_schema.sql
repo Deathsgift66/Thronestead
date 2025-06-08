@@ -164,7 +164,20 @@ CREATE TABLE kingdom_troop_slots (
     morale     INTEGER DEFAULT 100,
     castle_bonus_slots INTEGER DEFAULT 0,
     noble_bonus_slots  INTEGER DEFAULT 0,
-    knight_bonus_slots INTEGER DEFAULT 0
+    knight_bonus_slots INTEGER DEFAULT 0,
+    slots_from_buildings INTEGER DEFAULT 0,
+    slots_from_tech INTEGER DEFAULT 0,
+    slots_from_projects INTEGER DEFAULT 0,
+    slots_from_events INTEGER DEFAULT 0,
+    morale_bonus_buildings INTEGER DEFAULT 0,
+    morale_bonus_tech INTEGER DEFAULT 0,
+    morale_bonus_events INTEGER DEFAULT 0,
+    last_morale_update TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    morale_cooldown_seconds INTEGER DEFAULT 0,
+    last_in_combat_at TIMESTAMP WITH TIME ZONE,
+    currently_in_combat BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- CASTLE PROGRESSION ------------------------------------------------------
