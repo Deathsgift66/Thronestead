@@ -40,6 +40,8 @@ the records created during onboarding.
 ✅ VIP status system documented in [docs/vip_status.md](docs/vip_status.md)
 
 ✅ Kingdom troops table documented in [docs/kingdom_troops.md](docs/kingdom_troops.md)
+✅ Kingdoms master table documented in [docs/kingdoms.md](docs/kingdoms.md)
+✅ Final schema summary in [FINAL_SCHEMA_DOCUMENTATION.md](FINAL_SCHEMA_DOCUMENTATION.md)
 
 
 
