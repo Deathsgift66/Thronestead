@@ -39,9 +39,13 @@ async function loadKingdomQuests() {
     const kingdomId = userData.kingdom_id;
 
     // ✅ Load quest catalogue
+    const castleLevel = window.playerProgression?.castleLevel || 1;
+
     const { data: catalogueData, error: catalogueError } = await supabase
       .from('quest_kingdom_catalogue')
-      .select('*');
+      .select('*')
+      .eq('is_active', true)
+      .lte('required_level', castleLevel);
 
     if (catalogueError) throw catalogueError;
 
@@ -81,19 +85,32 @@ function renderQuestCatalogue(catalogue, tracking) {
   const activeQuestCodes = tracking
     .filter(q => q.status === "active")
     .map(q => q.quest_code);
+  const completedQuestCodes = tracking
+    .filter(q => q.status === "completed")
+    .map(q => q.quest_code);
 
   catalogue.forEach(quest => {
     const isActive = activeQuestCodes.includes(quest.quest_code);
+    const isCompleted = completedQuestCodes.includes(quest.quest_code);
 
     const card = document.createElement("div");
     card.classList.add("quest-card");
 
+    const objectives = formatJsonList(quest.objectives);
+    const rewards = formatJsonList(quest.rewards);
+
     card.innerHTML = `
       <h3>${escapeHTML(quest.name)}</h3>
       <p>${escapeHTML(quest.description)}</p>
+      <p>Category: ${escapeHTML(quest.category || '')}</p>
+      <p><strong>Objectives:</strong></p>
+      <ul>${objectives}</ul>
+      <p><strong>Rewards:</strong></p>
+      <ul>${rewards}</ul>
       <p>Duration: ${quest.duration_hours}h</p>
-      <button class="action-btn accept-quest-btn" data-code="${quest.quest_code}" ${isActive ? "disabled" : ""}>
-        ${isActive ? "Already Active" : "Accept Quest"}
+      <p>${quest.repeatable ? `Repeatable${quest.max_attempts ? ` (Max ${quest.max_attempts})` : ''}` : 'One-time'}</p>
+      <button class="action-btn accept-quest-btn" data-code="${quest.quest_code}" ${isActive || (!quest.repeatable && isCompleted) ? "disabled" : ""}>
+        ${isActive ? "Already Active" : (!quest.repeatable && isCompleted) ? "Completed" : "Accept Quest"}
       </button>
     `;
 
@@ -227,6 +244,28 @@ function showToast(msg) {
       document.body.removeChild(toast);
     }, 3000);
   }, 100);
+}
+
+// ✅ Helper: Format JSON object to list items
+function formatJsonList(data) {
+  if (!data) return '<li>None</li>';
+  try {
+    const obj = typeof data === 'string' ? JSON.parse(data) : data;
+    const items = [];
+    for (const [key, val] of Object.entries(obj)) {
+      if (typeof val === 'object') {
+        const inner = Object.entries(val)
+          .map(([k, v]) => `${escapeHTML(k)}: ${escapeHTML(String(v))}`)
+          .join(', ');
+        items.push(`<li>${escapeHTML(key)} — ${inner}</li>`);
+      } else {
+        items.push(`<li>${escapeHTML(key)}: ${escapeHTML(String(val))}</li>`);
+      }
+    }
+    return items.join('');
+  } catch (err) {
+    return `<li>${escapeHTML(String(data))}</li>`;
+  }
 }
 
 // ✅ Helper: Escape HTML
