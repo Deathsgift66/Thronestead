@@ -27,14 +27,15 @@ class DummyDB:
         self.queries = []
         self.rows = []
         self.row = None
+        self.tech_row = (1, [])
         self.commits = 0
 
     def execute(self, query, params=None):
         q = str(query).strip()
         self.queries.append((q, params))
-        if q.startswith("SELECT duration_hours"):
-            return DummyResult(row=(1,))
-        if q.startswith("SELECT tech_code"):
+        if "FROM tech_catalogue" in q:
+            return DummyResult(row=self.tech_row)
+        if "FROM kingdom_research_tracking" in q:
             return DummyResult(rows=self.rows)
         return DummyResult()
 
@@ -48,6 +49,14 @@ def test_start_research_inserts():
     assert any("INSERT INTO kingdom_research_tracking" in q for q, _ in db.queries)
     assert isinstance(ends_at, datetime)
     assert db.commits == 1
+
+
+def test_start_research_prereq_check():
+    db = DummyDB()
+    db.tech_row = (1, ["req1"])  # tech requires req1
+    db.rows = []  # no completed techs
+    with pytest.raises(ValueError):
+        start_research(db, 1, "tech_a")
 
 
 def test_complete_finished_updates():

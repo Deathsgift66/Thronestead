@@ -20,13 +20,31 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
     Returns the ``ends_at`` timestamp for convenience.
     """
     duration_row = db.execute(
-        text("SELECT duration_hours FROM tech_catalogue WHERE tech_code = :code"),
+        text(
+            "SELECT duration_hours, prerequisites FROM tech_catalogue "
+            "WHERE tech_code = :code AND is_active = true"
+        ),
         {"code": tech_code},
     ).fetchone()
     if not duration_row:
         raise ValueError("Tech not found")
 
-    duration_hours = duration_row[0] or 0
+    duration_hours, prereqs = duration_row
+    prereqs = prereqs or []
+
+    if prereqs:
+        rows = db.execute(
+            text(
+                "SELECT tech_code FROM kingdom_research_tracking "
+                "WHERE kingdom_id = :kid AND status = 'completed'"
+            ),
+            {"kid": kingdom_id},
+        ).fetchall()
+        completed = {r[0] for r in rows}
+        if not set(prereqs).issubset(completed):
+            raise ValueError("Missing prerequisites")
+
+    duration_hours = duration_hours or 0
     ends_at = datetime.utcnow() + timedelta(hours=duration_hours)
 
     db.execute(
