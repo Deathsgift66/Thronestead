@@ -31,7 +31,10 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       .eq("user_id", user.id)
       .single();
 
-    if (!userData || userError) return (window.location.href = "login.html");
+    if (!userData || userError) {
+      // New account without profile -> push to onboarding
+      return (window.location.href = "play.html");
+    }
 
     // ADMIN/VIP
     if (requireAdmin && userData.is_admin !== true) {
