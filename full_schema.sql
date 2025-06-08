@@ -89,7 +89,7 @@ CREATE TABLE public.alliance_war_scores (
   victor text CHECK (victor = ANY (ARRAY['attacker'::text, 'defender'::text, 'draw'::text])),
   last_updated timestamp without time zone DEFAULT now(),
   CONSTRAINT alliance_war_scores_pkey PRIMARY KEY (alliance_war_id),
-  CONSTRAINT alliance_war_scores_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
+  CONSTRAINT alliance_war_scores_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id) ON DELETE CASCADE
 );
 CREATE TABLE public.alliance_wars (
   alliance_war_id integer NOT NULL DEFAULT nextval('alliance_wars_alliance_war_id_seq'::regclass),

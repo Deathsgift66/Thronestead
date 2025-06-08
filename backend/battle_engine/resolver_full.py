@@ -241,8 +241,44 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
         (tick, alliance_war_id),
     )
 
+    update_alliance_war_score(alliance_war_id)
+
     # --- CHECK VICTORY ---
     check_victory_condition_alliance(alliance_war_id)
+
+
+def update_alliance_war_score(alliance_war_id: int) -> None:
+    """Update attacker and defender scores for the given alliance war."""
+
+    awar = db.query(
+        """
+        SELECT castle_hp FROM alliance_wars
+        WHERE alliance_war_id = %s
+        """,
+        (alliance_war_id,),
+    ).first()
+
+    if not awar:
+        return
+
+    attacker_score = 10000 - awar["castle_hp"]
+    defender_score = awar["castle_hp"]
+
+    db.execute(
+        """
+        INSERT INTO alliance_war_scores (alliance_war_id, attacker_score, defender_score)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (alliance_war_id) DO UPDATE
+        SET attacker_score = %s, defender_score = %s, last_updated = now()
+        """,
+        (
+            alliance_war_id,
+            attacker_score,
+            defender_score,
+            attacker_score,
+            defender_score,
+        ),
+    )
 
 
 # ============================================

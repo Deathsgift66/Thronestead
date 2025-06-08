@@ -198,7 +198,11 @@ class AllianceWarPreplan(Base):
 
 class AllianceWarScore(Base):
     __tablename__ = 'alliance_war_scores'
-    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id'), primary_key=True)
+    alliance_war_id = Column(
+        Integer,
+        ForeignKey('alliance_wars.alliance_war_id', ondelete='CASCADE'),
+        primary_key=True,
+    )
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
     victor = Column(String)
