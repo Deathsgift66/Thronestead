@@ -77,6 +77,25 @@ def collect_alliance_tax(
         },
     )
 
+    # Record in vault transaction log as a system deposit
+    db.execute(
+        text(
+            """
+            INSERT INTO alliance_vault_transaction_log (
+                alliance_id, user_id, action, resource_type, amount, notes
+            ) VALUES (
+                :aid, NULL, 'deposit', :res, :amt, :note
+            )
+            """
+        ),
+        {
+            "aid": alliance_id,
+            "res": resource_type,
+            "amt": tax_amount,
+            "note": f"Auto tax collection from {user_id}" if not notes else notes,
+        },
+    )
+
     db.commit()
 
     return earned_amount - tax_amount

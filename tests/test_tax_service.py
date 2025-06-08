@@ -14,6 +14,7 @@ class DummyDB:
         self.vault = {"gold": 0}
         self.tax_rate = 5
         self.records = []
+        self.vault_logs = []
 
     def execute(self, query, params=None):
         q = str(query)
@@ -37,6 +38,9 @@ class DummyDB:
                 }
             )
             return DummyResult()
+        if "INSERT INTO alliance_vault_transaction_log" in q:
+            self.vault_logs.append(params)
+            return DummyResult()
         return DummyResult()
 
     def commit(self):
@@ -50,3 +54,6 @@ def test_collect_alliance_tax():
     assert db.vault["gold"] == 50
     assert len(db.records) == 1
     assert db.records[0]["amount_collected"] == 50
+    assert len(db.vault_logs) == 1
+    assert db.vault_logs[0]["aid"] == 1
+    assert db.vault_logs[0]["amt"] == 50
