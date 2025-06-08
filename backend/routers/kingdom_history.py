@@ -15,18 +15,22 @@ class HistoryPayload(BaseModel):
 
 
 @router.get("")
+
 def kingdom_history(
     kingdom_id: int = Query(...),
     limit: int = 50,
     db: Session = Depends(get_db),
 ):
-    """Return kingdom history entries."""
-    logs = fetch_history(db, kingdom_id, limit)
-    return {"history": logs}
+codex/integrate-player-kingdom-history-log
+    """Return recent history for a kingdom."""
+    records = fetch_history(db, kingdom_id, limit)
+    return {"history": records}
+
 
 
 @router.post("")
 def create_history(payload: HistoryPayload, db: Session = Depends(get_db)):
-    """Insert a kingdom history log entry."""
+    """Insert a new history event."""
+
     log_event(db, payload.kingdom_id, payload.event_type, payload.event_details)
     return {"message": "logged"}

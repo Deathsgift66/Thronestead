@@ -16,10 +16,10 @@ def log_event(db: Session, kingdom_id: int, event_type: str, event_details: str)
         {"kid": kingdom_id, "etype": event_type, "details": event_details},
     )
     db.commit()
-
-
 def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
+
     """Fetch history log entries for a kingdom ordered by newest first."""
+
     rows = db.execute(
         text(
             "SELECT log_id, event_type, event_details, event_date "
