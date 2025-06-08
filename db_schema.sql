@@ -406,7 +406,16 @@ CREATE TABLE projects_alliance (
     project_id  SERIAL PRIMARY KEY,
     alliance_id INTEGER REFERENCES alliances(alliance_id),
     name        TEXT NOT NULL,
-    progress    INTEGER DEFAULT 0
+    project_key TEXT REFERENCES project_alliance_catalogue(project_code),
+    progress    INTEGER DEFAULT 0,
+    modifiers   JSONB DEFAULT '{}'::jsonb,
+    start_time  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    end_time    TIMESTAMP WITH TIME ZONE,
+    is_active   BOOLEAN DEFAULT FALSE,
+    build_state TEXT CHECK (build_state IN ('queued','building','completed','expired')) DEFAULT 'queued',
+    built_by    UUID REFERENCES users(user_id),
+    expires_at  TIMESTAMP WITH TIME ZONE,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Alliance Treaties

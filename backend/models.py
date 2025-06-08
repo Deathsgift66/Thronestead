@@ -161,6 +161,26 @@ class ProjectAllianceCatalogue(Base):
     expires_at = Column(DateTime(timezone=True))
 
 
+class ProjectsAlliance(Base):
+    """Runtime state of Alliance-level projects."""
+
+    __tablename__ = 'projects_alliance'
+
+    project_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    name = Column(String, nullable=False)
+    project_key = Column(String, ForeignKey('project_alliance_catalogue.project_code'))
+    progress = Column(Integer, default=0)
+    modifiers = Column(JSONB, default={})
+    start_time = Column(DateTime(timezone=True), server_default=func.now())
+    end_time = Column(DateTime(timezone=True))
+    is_active = Column(Boolean, default=False)
+    build_state = Column(String)
+    built_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    expires_at = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class WarsTactical(Base):
     __tablename__ = 'wars_tactical'
     war_id = Column(Integer, primary_key=True)

@@ -430,11 +430,19 @@ CREATE TABLE public.project_alliance_catalogue (
 );
 CREATE TABLE public.projects_alliance (
   project_id integer NOT NULL DEFAULT nextval('projects_alliance_project_id_seq'::regclass),
-  alliance_id integer,
+  alliance_id integer REFERENCES public.alliances(alliance_id),
   name text NOT NULL,
+  project_key text REFERENCES public.project_alliance_catalogue(project_code),
   progress integer DEFAULT 0,
-  CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id),
-  CONSTRAINT projects_alliance_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
+  modifiers jsonb DEFAULT '{}'::jsonb,
+  start_time timestamp with time zone DEFAULT now(),
+  end_time timestamp with time zone,
+  is_active boolean DEFAULT false,
+  build_state text CHECK (build_state IN ('queued','building','completed','expired')) DEFAULT 'queued',
+  built_by uuid REFERENCES public.users(user_id),
+  expires_at timestamp with time zone,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id)
 );
 
 CREATE TABLE public.alliance_treaties (
