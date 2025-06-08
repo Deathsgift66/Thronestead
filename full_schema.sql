@@ -513,9 +513,14 @@ CREATE TABLE public.quest_alliance_tracking (
   status text CHECK (status = ANY (ARRAY['active'::text, 'completed'::text])),
   progress integer DEFAULT 0,
   ends_at timestamp with time zone,
+  started_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  attempt_count integer DEFAULT 0,
+  started_by uuid,
   CONSTRAINT quest_alliance_tracking_pkey PRIMARY KEY (alliance_id, quest_code),
   CONSTRAINT quest_alliance_tracking_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
-  CONSTRAINT quest_alliance_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_alliance_catalogue(quest_code)
+  CONSTRAINT quest_alliance_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_alliance_catalogue(quest_code),
+  CONSTRAINT quest_alliance_tracking_started_by_fkey FOREIGN KEY (started_by) REFERENCES public.users(user_id) ON DELETE SET NULL
 );
 CREATE TABLE public.quest_kingdom_catalogue (
   quest_code text NOT NULL,

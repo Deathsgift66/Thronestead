@@ -144,3 +144,17 @@ Columns:
 - `user_id` — player UUID
 - `contribution_type` — contribution category such as `resource` or `item`
 
+## Table: `public.quest_alliance_tracking`
+Live state of alliance quests. Each row represents one quest instance for an alliance.
+
+Columns:
+- `alliance_id` — the alliance undertaking the quest
+- `quest_code` — quest identifier from the catalogue
+- `status` — `active` or `completed`
+- `progress` — current progress toward the goal
+- `ends_at` — when the quest expires
+- `started_at` — timestamp when started
+- `last_updated` — timestamp of last progress change
+- `attempt_count` — how many times the quest has been completed
+- `started_by` — user who started the quest
+
