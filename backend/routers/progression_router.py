@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 
 from ..database import get_db
-from services.progression_service import calculate_troop_slots
+from services.progression_service import calculate_troop_slots, get_total_modifiers
 
 router = APIRouter(prefix="/api/progression", tags=["progression"])
 
@@ -259,4 +259,14 @@ def progression_summary(user_id: str = Depends(get_user_id)):
             "available": max(0, mil["base_slots"] - used),
         },
     }
+
+
+@router.get("/modifiers")
+def get_modifiers(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return all active modifiers for the player's kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    return get_total_modifiers(db, kid)
 

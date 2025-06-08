@@ -14,6 +14,7 @@ from backend.progression_service import (
     nobles,
     knights,
 )
+from services.progression_service import get_total_modifiers
 
 
 def setup_function():
@@ -51,3 +52,31 @@ def test_knight_management():
 
     with pytest.raises(ValueError):
         promote_knight("missing")
+
+
+def test_get_total_modifiers_default():
+    class DummyResult:
+        def __init__(self, row=None, rows=None):
+            self._row = row
+            self._rows = rows or []
+
+        def fetchone(self):
+            return self._row
+
+        def fetchall(self):
+            return self._rows
+
+    class DummyDB:
+        def execute(self, *args, **kwargs):
+            return DummyResult()
+
+    db = DummyDB()
+    mods = get_total_modifiers(db, 1)
+    assert mods == {
+        "resource_bonus": {},
+        "troop_bonus": {},
+        "combat_bonus": {},
+        "defense_bonus": {},
+        "economic_bonus": {},
+        "production_bonus": {},
+    }

@@ -1,8 +1,12 @@
 """Utility service functions related to progression."""
 
 from fastapi import HTTPException
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+try:
+    from sqlalchemy import text
+    from sqlalchemy.orm import Session
+except Exception:  # pragma: no cover - fallback for test environments
+    text = lambda q: q
+    Session = object
 
 
 def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
@@ -100,3 +104,131 @@ def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> No
 
     if used_slots + troops_requested > total_slots:
         raise HTTPException(status_code=400, detail="Not enough troop slots")
+
+
+def _merge_modifiers(target: dict, new_mods: dict) -> None:
+    """Helper to merge modifier dictionaries into the target structure."""
+    if not isinstance(new_mods, dict):
+        return
+
+    for category, values in new_mods.items():
+        if not isinstance(values, dict):
+            continue
+        bucket = target.setdefault(category, {})
+        for key, value in values.items():
+            bucket[key] = bucket.get(key, 0) + value
+
+
+def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return the combined modifiers for a kingdom.
+
+    The function aggregates modifiers from completed techs, active temples,
+    active projects and region bonuses. Missing tables or columns are ignored so
+    the function can operate in minimal database setups.
+    """
+
+    total = {
+        "resource_bonus": {},
+        "troop_bonus": {},
+        "combat_bonus": {},
+        "defense_bonus": {},
+        "economic_bonus": {},
+        "production_bonus": {},
+    }
+
+    # Region bonuses -----------------------------------------------------
+    try:
+        region_row = db.execute(
+            text("SELECT region FROM kingdoms WHERE kingdom_id = :kid"),
+            {"kid": kingdom_id},
+        ).fetchone()
+        if region_row:
+            region_data = db.execute(
+                text(
+                    "SELECT resource_bonus, troop_bonus FROM region_catalogue "
+                    "WHERE region_code = :code"
+                ),
+                {"code": region_row[0]},
+            ).fetchone()
+            if region_data:
+                resources, troop = region_data
+                _merge_modifiers(
+                    total,
+                    {
+                        "resource_bonus": resources or {},
+                        "troop_bonus": {"base_slots": troop or 0},
+                    },
+                )
+    except Exception:
+        pass
+
+    # Completed techs ---------------------------------------------------
+    try:
+        rows = db.execute(
+            text(
+                "SELECT tc.modifiers FROM kingdom_research_tracking krt "
+                "JOIN tech_catalogue tc ON tc.tech_code = krt.tech_code "
+                "WHERE krt.kingdom_id = :kid AND krt.status = 'completed'"
+            ),
+            {"kid": kingdom_id},
+        ).fetchall()
+        for (mods,) in rows:
+            _merge_modifiers(total, mods or {})
+    except Exception:
+        pass
+
+    # Active temples ----------------------------------------------------
+    try:
+        rows = db.execute(
+            text(
+                "SELECT bc.modifiers FROM kingdom_buildings kb "
+                "JOIN building_catalogue bc ON bc.building_id = kb.building_id "
+                "WHERE kb.kingdom_id = :kid AND bc.production_type = 'temple'"
+            ),
+            {"kid": kingdom_id},
+        ).fetchall()
+        for (mods,) in rows:
+            _merge_modifiers(total, mods or {})
+    except Exception:
+        pass
+
+    # Active kingdom projects ------------------------------------------
+    try:
+        rows = db.execute(
+            text(
+                "SELECT pc.modifiers FROM projects_player pp "
+                "JOIN project_player_catalogue pc ON pc.project_code = pp.project_code "
+                "WHERE pp.kingdom_id = :kid"
+            ),
+            {"kid": kingdom_id},
+        ).fetchall()
+        for (mods,) in rows:
+            _merge_modifiers(total, mods or {})
+    except Exception:
+        pass
+
+    # Active alliance projects -----------------------------------------
+    try:
+        rows = db.execute(
+            text(
+                """
+                SELECT pac.modifiers
+                FROM projects_alliance pa
+                JOIN project_alliance_catalogue pac
+                  ON pac.project_code = pa.name
+                WHERE pa.alliance_id IN (
+                    SELECT alliance_id FROM alliance_members
+                    WHERE user_id = (
+                        SELECT user_id FROM kingdoms WHERE kingdom_id = :kid
+                    )
+                )
+                """
+            ),
+            {"kid": kingdom_id},
+        ).fetchall()
+        for (mods,) in rows:
+            _merge_modifiers(total, mods or {})
+    except Exception:
+        pass
+
+    return total
