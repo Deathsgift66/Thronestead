@@ -73,7 +73,13 @@ Author: Deathsgift66
   <!-- Core Vault Panel -->
   <section class="alliance-members-container">
     <h2>Alliance Vault</h2>
-    <p>Securely manage alliance resources — deposit, withdraw, and track alliance treasury history.</p>
+    <div class="tab-control-bar">
+      <button class="tab-button active" data-tab="tab-manage">Manage Vault</button>
+      <button class="tab-button" data-tab="tab-transactions">Transactions</button>
+    </div>
+
+    <div id="tab-manage" class="tab-section active">
+      <p>Securely manage alliance resources — deposit, withdraw, and track alliance treasury history.</p>
 
     <!-- Vault Summary -->
     <div class="vault-summary panel">
@@ -95,14 +101,41 @@ Author: Deathsgift66
         <!-- JS will populate withdraw form -->
       </div>
     </div>
+    </div> <!-- end tab-manage -->
 
-    <!-- Vault History -->
-    <div class="panel">
-      <h3 class="panel-title">Vault History</h3>
-      <div id="vault-history">
-        <!-- JS will populate vault transaction log -->
+    <div id="tab-transactions" class="tab-section">
+      <div class="panel">
+        <h3 class="panel-title">Vault Transactions</h3>
+        <div class="filter-toolbar">
+          <label for="filter-action">Filter:</label>
+          <select id="filter-action">
+            <option value="">All</option>
+            <option value="deposit">Deposits</option>
+            <option value="withdraw">Withdrawals</option>
+            <option value="transfer">Transfers</option>
+            <option value="trade">Trades</option>
+          </select>
+          <button id="apply-trans-filter" class="action-btn">Apply</button>
+        </div>
+        <div class="transaction-table custom-scrollbar">
+          <table>
+            <thead>
+              <tr>
+                <th>Date/Time</th>
+                <th>Player</th>
+                <th>Action</th>
+                <th>Resource</th>
+                <th>Amount</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="vault-history">
+              <!-- JS will populate vault transaction log -->
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </div> <!-- end tab-transactions -->
 
   </section>
 

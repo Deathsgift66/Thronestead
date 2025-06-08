@@ -69,6 +69,18 @@ class AllianceVault(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class AllianceVaultTransactionLog(Base):
+    __tablename__ = 'alliance_vault_transaction_log'
+    transaction_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    action = Column(String)
+    resource_type = Column(String)
+    amount = Column(BigInteger)
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class WarsTactical(Base):
     __tablename__ = 'wars_tactical'
     war_id = Column(Integer, primary_key=True)

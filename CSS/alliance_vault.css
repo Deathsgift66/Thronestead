@@ -111,3 +111,55 @@ body {
 .site-footer a:hover {
   color: var(--gold);
 }
+
+/* Transactions Tab */
+.tab-control-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tab-button {
+  background: var(--accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.tab-button:hover,
+.tab-button.active {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+.transaction-table {
+  background: rgba(251, 240, 217, 0.95);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.transaction-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transaction-table th,
+.transaction-table td {
+  border: 1px solid var(--gold);
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.tab-section { display: none; }
+.tab-section.active { display: block; }
