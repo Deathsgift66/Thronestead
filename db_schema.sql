@@ -462,6 +462,10 @@ CREATE TABLE quest_alliance_tracking (
     status      TEXT CHECK (status IN ('active','completed')),
     progress    INTEGER DEFAULT 0,
     ends_at     TIMESTAMP WITH TIME ZONE,
+    started_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    attempt_count INTEGER DEFAULT 0,
+    started_by  UUID REFERENCES users(user_id) ON DELETE SET NULL,
     PRIMARY KEY (alliance_id, quest_code)
 );
 
