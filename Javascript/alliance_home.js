@@ -62,7 +62,8 @@ async function loadAllianceData(userId) {
     document.getElementById('alliance-level')?.textContent = alliance.level ?? '--';
     document.getElementById('alliance-region')?.textContent = alliance.region ?? 'Unspecified';
     document.getElementById('alliance-motd')?.textContent = alliance.motd ?? 'No message set.';
-    document.getElementById('alliance-banner-img')?.setAttribute('src', alliance.banner || '../images/default-banner.png');
+    document.getElementById('alliance-banner-img')?.setAttribute('src', alliance.banner || 'Assets/banner.png');
+    document.getElementById('alliance-emblem-img')?.setAttribute('src', alliance.emblem_url || 'Assets/avatars/default_avatar_emperor.png');
 
     // Scores
     document.getElementById('military-score')?.textContent = alliance.military_score ?? '--';

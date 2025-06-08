@@ -265,6 +265,7 @@ CREATE TABLE alliances (
     level       INTEGER DEFAULT 1,
     motd        TEXT,
     banner      TEXT,
+    emblem_url  TEXT,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     military_score INTEGER DEFAULT 0,
     economy_score  INTEGER DEFAULT 0,
