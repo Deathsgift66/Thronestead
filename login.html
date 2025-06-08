@@ -40,6 +40,13 @@ Author: Deathsgift66
 
 <body>
 
+  <div id="navbar-container"></div>
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('navbar-container').innerHTML = html);
+  </script>
+
 <!-- Full Screen Background -->
 <div class="background-overlay" aria-hidden="true"></div>
 
