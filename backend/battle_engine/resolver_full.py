@@ -309,7 +309,17 @@ def check_victory_condition_kingdom(war_id: int) -> None:
             """,
             (war_id,),
         )
-        insert_battle_resolution_log("kingdom", war_id, None, "attacker", war["battle_tick"])
+        att_cas, def_cas = calculate_kingdom_war_casualties(war_id)
+        insert_battle_resolution_log(
+            "kingdom",
+            war_id,
+            None,
+            "attacker",
+            war["battle_tick"],
+            att_cas,
+            def_cas,
+            {},
+        )
 
     elif war["battle_tick"] >= 12:
         print(f"Kingdom War {war_id} — BATTLE ENDED AT TICK 12")
@@ -327,7 +337,17 @@ def check_victory_condition_kingdom(war_id: int) -> None:
             """,
             (war_id, victor),
         )
-        insert_battle_resolution_log("kingdom", war_id, None, victor, war["battle_tick"])
+        att_cas, def_cas = calculate_kingdom_war_casualties(war_id)
+        insert_battle_resolution_log(
+            "kingdom",
+            war_id,
+            None,
+            victor,
+            war["battle_tick"],
+            att_cas,
+            def_cas,
+            {},
+        )
 
 
 # ============================================
@@ -361,12 +381,16 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
             """,
             (alliance_war_id,),
         )
+        att_cas, def_cas = calculate_alliance_war_casualties(alliance_war_id)
         insert_battle_resolution_log(
             "alliance",
             None,
             alliance_war_id,
             "attacker",
             awar["battle_tick"],
+            att_cas,
+            def_cas,
+            {},
         )
 
     elif awar["battle_tick"] >= 12:
@@ -388,12 +412,16 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
             """,
             (alliance_war_id, victor, victor),
         )
+        att_cas, def_cas = calculate_alliance_war_casualties(alliance_war_id)
         insert_battle_resolution_log(
             "alliance",
             None,
             alliance_war_id,
             victor,
             awar["battle_tick"],
+            att_cas,
+            def_cas,
+            {},
         )
 
 
@@ -421,6 +449,99 @@ def determine_victor_alliance(alliance_war_id: int) -> str:
     return "attacker"
 
 
+def calculate_kingdom_war_casualties(war_id: int) -> tuple[int, int]:
+    """Return attacker and defender casualties for ``war_id``."""
+
+    info = db.query(
+        """
+        SELECT attacker_kingdom_id, defender_kingdom_id
+        FROM wars_tactical
+        WHERE war_id = %s
+        """,
+        (war_id,),
+    ).first()
+
+    if not info:
+        return 0, 0
+
+    attacker_id = info["attacker_kingdom_id"]
+    defender_id = info["defender_kingdom_id"]
+
+    att_row = db.query(
+        """
+        SELECT COALESCE(SUM(cl.damage_dealt), 0) AS dmg
+        FROM combat_logs cl
+        JOIN unit_movements um ON cl.defender_unit_id = um.movement_id
+        WHERE cl.war_id = %s AND um.kingdom_id = %s
+        """,
+        (war_id, attacker_id),
+    ).first()
+
+    def_row = db.query(
+        """
+        SELECT COALESCE(SUM(cl.damage_dealt), 0) AS dmg
+        FROM combat_logs cl
+        JOIN unit_movements um ON cl.defender_unit_id = um.movement_id
+        WHERE cl.war_id = %s AND um.kingdom_id = %s
+        """,
+        (war_id, defender_id),
+    ).first()
+
+    att_cas = att_row["dmg"] if att_row else 0
+    def_cas = def_row["dmg"] if def_row else 0
+    return int(att_cas or 0), int(def_cas or 0)
+
+
+def calculate_alliance_war_casualties(alliance_war_id: int) -> tuple[int, int]:
+    """Return attacker and defender casualties for an alliance war."""
+
+    attackers = db.query(
+        """
+        SELECT kingdom_id FROM alliance_war_participants
+        WHERE alliance_war_id = %s AND role = 'attacker'
+        """,
+        (alliance_war_id,),
+    )
+    defenders = db.query(
+        """
+        SELECT kingdom_id FROM alliance_war_participants
+        WHERE alliance_war_id = %s AND role = 'defender'
+        """,
+        (alliance_war_id,),
+    )
+
+    attacker_ids = [r["kingdom_id"] for r in attackers]
+    defender_ids = [r["kingdom_id"] for r in defenders]
+
+    att_total = 0
+    for kid in attacker_ids:
+        row = db.query(
+            """
+            SELECT COALESCE(SUM(l.damage_dealt), 0) AS dmg
+            FROM alliance_war_combat_logs l
+            JOIN unit_movements um ON l.defender_unit_id = um.movement_id
+            WHERE l.alliance_war_id = %s AND um.kingdom_id = %s
+            """,
+            (alliance_war_id, kid),
+        ).first()
+        att_total += int(row["dmg"] if row else 0)
+
+    def_total = 0
+    for kid in defender_ids:
+        row = db.query(
+            """
+            SELECT COALESCE(SUM(l.damage_dealt), 0) AS dmg
+            FROM alliance_war_combat_logs l
+            JOIN unit_movements um ON l.defender_unit_id = um.movement_id
+            WHERE l.alliance_war_id = %s AND um.kingdom_id = %s
+            """,
+            (alliance_war_id, kid),
+        ).first()
+        def_total += int(row["dmg"] if row else 0)
+
+    return att_total, def_total
+
+
 # ============================================
 # INSERT BATTLE RESOLUTION LOG
 # ============================================
@@ -431,17 +552,40 @@ def insert_battle_resolution_log(
     alliance_war_id: int | None,
     victor: str,
     total_ticks: int,
+    attacker_casualties: int = 0,
+    defender_casualties: int = 0,
+    loot_summary: dict | None = None,
 ) -> None:
+    """Persist final battle outcome in ``battle_resolution_logs``."""
+
+    loot_json = loot_summary or {}
+
     print(
         f"Inserting Battle Resolution Log — {battle_type.upper()} WAR — Victor: {victor}"
     )
 
     db.execute(
         """
-        INSERT INTO battle_resolution_logs
-        (battle_type, war_id, alliance_war_id, winner_side, total_ticks)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO battle_resolution_logs (
+            battle_type,
+            war_id,
+            alliance_war_id,
+            winner_side,
+            total_ticks,
+            attacker_casualties,
+            defender_casualties,
+            loot_summary
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """,
-        (battle_type, war_id, alliance_war_id, victor, total_ticks),
+        (
+            battle_type,
+            war_id,
+            alliance_war_id,
+            victor,
+            total_ticks,
+            attacker_casualties,
+            defender_casualties,
+            loot_json,
+        ),
     )
 
