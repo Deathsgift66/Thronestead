@@ -276,7 +276,17 @@ CREATE TABLE projects_player (
     project_code TEXT REFERENCES project_player_catalogue(project_code),
     power_score  INTEGER DEFAULT 0,
     starts_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    ends_at      TIMESTAMP WITH TIME ZONE
+    ends_at      TIMESTAMP WITH TIME ZONE,
+    build_state  TEXT DEFAULT 'building',
+    is_active    BOOLEAN DEFAULT TRUE,
+    started_by   UUID,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at   TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT projects_player_started_by_fkey FOREIGN KEY (started_by)
+        REFERENCES users(user_id) ON DELETE SET NULL,
+    CONSTRAINT projects_player_build_state_check CHECK (
+        build_state = ANY (ARRAY['queued','building','completed','expired'])
+    )
 );
 
 -- QUESTS --------------------------------------------------------------------

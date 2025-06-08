@@ -37,6 +37,7 @@ the records created during onboarding.
 ✅ Kingdom resources usage documented in [docs/kingdom_resources.md](docs/kingdom_resources.md)
 ✅ Kingdom treaties documented in [docs/kingdom_treaties.md](docs/kingdom_treaties.md)
 ✅ Kingdom projects catalogue documented in [docs/project_player_catalogue.md](docs/project_player_catalogue.md)
+✅ Player projects table documented in [docs/projects_player.md](docs/projects_player.md)
 ✅ Alliance project catalogue documented in [docs/project_alliance_catalogue.md](docs/project_alliance_catalogue.md)
 ✅ Alliance projects runtime table documented in [docs/projects_alliance.md](docs/projects_alliance.md)
 

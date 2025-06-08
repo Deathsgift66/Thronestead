@@ -474,9 +474,16 @@ CREATE TABLE public.projects_player (
   power_score integer DEFAULT 0,
   starts_at timestamp with time zone DEFAULT now(),
   ends_at timestamp with time zone,
+  build_state text DEFAULT 'building',
+  is_active boolean DEFAULT true,
+  started_by uuid,
+  last_updated timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
   CONSTRAINT projects_player_pkey PRIMARY KEY (project_id),
   CONSTRAINT projects_player_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
-  CONSTRAINT projects_player_project_code_fkey FOREIGN KEY (project_code) REFERENCES public.project_player_catalogue(project_code)
+  CONSTRAINT projects_player_project_code_fkey FOREIGN KEY (project_code) REFERENCES public.project_player_catalogue(project_code),
+  CONSTRAINT projects_player_started_by_fkey FOREIGN KEY (started_by) REFERENCES users(user_id) ON DELETE SET NULL,
+  CONSTRAINT projects_player_build_state_check CHECK (build_state = ANY (ARRAY['queued','building','completed','expired']))
 );
 CREATE TABLE public.quest_alliance_catalogue (
   quest_code text NOT NULL,
