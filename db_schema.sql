@@ -493,7 +493,10 @@ CREATE TABLE notifications (
     priority        TEXT,
     link_action     TEXT,
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    is_read         BOOLEAN DEFAULT FALSE
+    is_read         BOOLEAN DEFAULT FALSE,
+    expires_at      TIMESTAMP WITH TIME ZONE,
+    source_system   TEXT,
+    last_updated    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- AUDIT LOG -----------------------------------------------------------------
