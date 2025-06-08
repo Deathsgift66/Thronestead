@@ -46,8 +46,9 @@ async function loadInbox() {
     // ✅ JOIN with users table for sender name
     const { data, error } = await supabase
       .from("player_messages")
-      .select("message_id, message, sent_at, is_read, users(username)")
+      .select("message_id, subject, message, sent_at, is_read, users(username)")
       .eq("recipient_id", user.id)
+      .eq("deleted_by_recipient", false)
       .order("sent_at", { ascending: false })
       .limit(100);
 
@@ -70,7 +71,7 @@ async function loadInbox() {
             <span>From: ${escapeHTML(msg.users?.username || "Unknown")}</span>
             <span>${formatDate(msg.sent_at)}</span>
           </div>
-          <div class="message-subject">${escapeHTML(msg.message.substring(0, 50))}...</div>
+          <div class="message-subject">${escapeHTML((msg.subject || msg.message).substring(0, 50))}</div>
         </a>
       `;
 
@@ -94,7 +95,7 @@ async function loadMessageView(messageId) {
     // ✅ JOIN with users table for sender name
     const { data, error } = await supabase
       .from("player_messages")
-      .select("message_id, message, sent_at, is_read, user_id, users(username)")
+      .select("message_id, subject, message, sent_at, is_read, user_id, deleted_by_recipient, users(username)")
       .eq("message_id", messageId)
       .eq("recipient_id", user.id)
       .single();
@@ -115,6 +116,7 @@ async function loadMessageView(messageId) {
         <br>
         <strong>Date:</strong> ${formatDate(data.sent_at)}
       </div>
+      <h3>${escapeHTML(data.subject || '')}</h3>
       <div class="message-body">
         ${escapeHTML(data.message)}
       </div>
@@ -132,7 +134,7 @@ async function loadMessageView(messageId) {
       try {
         const { error: deleteError } = await supabase
           .from("player_messages")
-          .delete()
+          .update({ deleted_by_recipient: true })
           .eq("message_id", messageId)
           .eq("recipient_id", user.id);
 
@@ -174,6 +176,7 @@ function setupCompose() {
     e.preventDefault();
 
     const recipient = document.getElementById("recipient").value.trim();
+    const subject = document.getElementById("subject").value.trim();
     const messageContent = document.getElementById("message-content").value.trim();
 
     if (!recipient || !messageContent) {
@@ -200,6 +203,7 @@ function setupCompose() {
         .insert({
           recipient_id: recipientData.user_id,
           user_id: user.id,
+          subject: subject || null,
           message: messageContent,
           sent_at: new Date().toISOString(),
           is_read: false

@@ -9,6 +9,7 @@ router = APIRouter(prefix="/api/messages", tags=["messages"])
 
 class MessagePayload(BaseModel):
     recipient: str
+    subject: str | None = None
     content: str
     sender_id: str | None = None
 
@@ -21,6 +22,7 @@ def send_message(payload: MessagePayload, db: Session = Depends(get_db)):
     message = PlayerMessage(
         recipient_id=recipient.user_id,
         user_id=payload.sender_id,
+        subject=payload.subject,
         message=payload.content,
     )
     db.add(message)

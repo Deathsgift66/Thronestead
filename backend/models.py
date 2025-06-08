@@ -13,12 +13,17 @@ class User(Base):
 
 class PlayerMessage(Base):
     __tablename__ = 'player_messages'
+
     message_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
-    recipient_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id', ondelete="SET NULL"))
+    recipient_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id', ondelete="SET NULL"))
+    subject = Column(Text)
     message = Column(Text)
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
+    deleted_by_sender = Column(Boolean, default=False)
+    deleted_by_recipient = Column(Boolean, default=False)
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class Alliance(Base):

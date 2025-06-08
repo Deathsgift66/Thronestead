@@ -436,12 +436,16 @@ CREATE TABLE alliance_tax_policies (
 
 -- MESSAGING -----------------------------------------------------------------
 CREATE TABLE player_messages (
-    message_id   SERIAL PRIMARY KEY,
-    user_id      UUID REFERENCES users(user_id),
-    recipient_id UUID REFERENCES users(user_id),
-    message      TEXT,
-    sent_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    is_read      BOOLEAN DEFAULT FALSE
+    message_id           SERIAL PRIMARY KEY,
+    user_id              UUID REFERENCES users(user_id) ON DELETE SET NULL,
+    recipient_id         UUID REFERENCES users(user_id) ON DELETE SET NULL,
+    subject              TEXT,
+    message              TEXT,
+    sent_at              TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_read              BOOLEAN DEFAULT FALSE,
+    deleted_by_sender    BOOLEAN DEFAULT FALSE,
+    deleted_by_recipient BOOLEAN DEFAULT FALSE,
+    last_updated         TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- TRADE & MARKET ------------------------------------------------------------
