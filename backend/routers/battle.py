@@ -20,24 +20,40 @@ router = APIRouter(tags=["battle"])
 # In-memory store for demo purposes
 _manager = war_manager
 
+
 def _load_war_from_db(war_id: int, db: Session) -> WarState:
-    db_war = db.query(models.WarsTactical).filter(models.WarsTactical.war_id == war_id).first()
+    db_war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
     if not db_war:
         raise HTTPException(status_code=404, detail="War not found")
-    terrain_row = db.query(models.TerrainMap).filter(models.TerrainMap.war_id == war_id).first()
+    terrain_row = (
+        db.query(models.TerrainMap).filter(models.TerrainMap.war_id == war_id).first()
+    )
     terrain = terrain_row.tile_map if terrain_row else TerrainGenerator().generate()
-    war = WarState(war_id=db_war.war_id, tick=db_war.battle_tick, castle_hp=db_war.castle_hp, terrain=terrain)
-    movements = db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
+    war = WarState(
+        war_id=db_war.war_id,
+        tick=db_war.battle_tick,
+        castle_hp=db_war.castle_hp,
+        terrain=terrain,
+    )
+    movements = (
+        db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
+    )
     for mov in movements:
-        war.units.append(Unit(
-            unit_id=mov.movement_id,
-            kingdom_id=mov.kingdom_id,
-            unit_type=mov.unit_type,
-            quantity=mov.quantity,
-            x=mov.position_x,
-            y=mov.position_y,
-            stance=mov.stance,
-        ))
+        war.units.append(
+            Unit(
+                unit_id=mov.movement_id,
+                kingdom_id=mov.kingdom_id,
+                unit_type=mov.unit_type,
+                quantity=mov.quantity,
+                x=mov.position_x,
+                y=mov.position_y,
+                stance=mov.stance,
+            )
+        )
     return war
 
 
@@ -54,7 +70,11 @@ def run_tick(war_id: int, db: Session = Depends(get_db)):
     if not war:
         raise HTTPException(status_code=404, detail="war not active")
     logs = _manager.tick_handler.run_tick(war)
-    db_war = db.query(models.WarsTactical).filter(models.WarsTactical.war_id == war_id).first()
+    db_war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
     if db_war:
         db_war.castle_hp = war.castle_hp
         db_war.battle_tick = war.tick
@@ -65,8 +85,16 @@ def run_tick(war_id: int, db: Session = Depends(get_db)):
             event_type=log.get("event"),
             attacker_unit_id=log.get("attacker_id"),
             defender_unit_id=log.get("defender_id"),
-            position_x=log.get("pos", (None, None))[0] if isinstance(log.get("pos"), tuple) else log.get("position_x"),
-            position_y=log.get("pos", (None, None))[1] if isinstance(log.get("pos"), tuple) else log.get("position_y"),
+            position_x=(
+                log.get("pos", (None, None))[0]
+                if isinstance(log.get("pos"), tuple)
+                else log.get("position_x")
+            ),
+            position_y=(
+                log.get("pos", (None, None))[1]
+                if isinstance(log.get("pos"), tuple)
+                else log.get("position_y")
+            ),
             damage_dealt=log.get("damage"),
         )
         db.add(db_log)
@@ -75,9 +103,78 @@ def run_tick(war_id: int, db: Session = Depends(get_db)):
     return {"tick": war.tick, "castle_hp": war.castle_hp, "logs": logs}
 
 
+@router.post("/api/battle/next_tick")
+def next_tick(war_id: int, db: Session = Depends(get_db)):
+    """Trigger the next combat tick for a war (admin/debug)."""
+    return run_tick(war_id, db)
+
+
+@router.get("/api/battle/terrain/{war_id}")
+def get_battle_terrain(war_id: int, db: Session = Depends(get_db)):
+    """Return terrain tile map for the given war."""
+    terrain_row = (
+        db.query(models.TerrainMap).filter(models.TerrainMap.war_id == war_id).first()
+    )
+    if not terrain_row:
+        raise HTTPException(status_code=404, detail="terrain not found")
+    return {"tile_map": terrain_row.tile_map}
+
+
+@router.get("/api/battle/units/{war_id}")
+def get_battle_units(war_id: int, db: Session = Depends(get_db)):
+    """Return active unit movements for the given war."""
+    units = (
+        db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
+    )
+    return {
+        "units": [
+            {
+                "movement_id": u.movement_id,
+                "kingdom_id": u.kingdom_id,
+                "unit_type": u.unit_type,
+                "quantity": u.quantity,
+                "position_x": u.position_x,
+                "position_y": u.position_y,
+            }
+            for u in units
+        ]
+    }
+
+
+@router.get("/api/battle/logs/{war_id}")
+def get_combat_logs(war_id: int, db: Session = Depends(get_db)):
+    """Return combat logs for the given war ordered by tick."""
+    logs = (
+        db.query(models.CombatLog)
+        .filter(models.CombatLog.war_id == war_id)
+        .order_by(models.CombatLog.tick_number, models.CombatLog.combat_id)
+        .all()
+    )
+    return {
+        "combat_logs": [
+            {
+                "tick_number": l.tick_number,
+                "event_type": l.event_type,
+                "attacker_unit_id": l.attacker_unit_id,
+                "defender_unit_id": l.defender_unit_id,
+                "position_x": l.position_x,
+                "position_y": l.position_y,
+                "damage_dealt": l.damage_dealt,
+                "morale_shift": l.morale_shift,
+                "notes": l.notes,
+            }
+            for l in logs
+        ]
+    }
+
+
 @router.get("/api/battle-resolution/{war_id}")
 def battle_resolution(war_id: int, db: Session = Depends(get_db)):
-    res = db.query(models.BattleResolutionLog).filter(models.BattleResolutionLog.war_id == war_id).first()
+    res = (
+        db.query(models.BattleResolutionLog)
+        .filter(models.BattleResolutionLog.war_id == war_id)
+        .first()
+    )
     if not res:
         raise HTTPException(status_code=404, detail="resolution not found")
     return {
@@ -90,19 +187,26 @@ def battle_resolution(war_id: int, db: Session = Depends(get_db)):
 
 @router.get("/api/battle-replay/{war_id}")
 def battle_replay(war_id: int, db: Session = Depends(get_db)):
-    logs = db.query(models.CombatLog).filter(models.CombatLog.war_id == war_id).order_by(models.CombatLog.tick_number).all()
-    return {"logs": [
-        {
-            "tick": l.tick_number,
-            "event": l.event_type,
-            "attacker_unit_id": l.attacker_unit_id,
-            "defender_unit_id": l.defender_unit_id,
-            "position_x": l.position_x,
-            "position_y": l.position_y,
-            "damage_dealt": l.damage_dealt,
-        }
-        for l in logs
-    ]}
+    logs = (
+        db.query(models.CombatLog)
+        .filter(models.CombatLog.war_id == war_id)
+        .order_by(models.CombatLog.tick_number)
+        .all()
+    )
+    return {
+        "logs": [
+            {
+                "tick": l.tick_number,
+                "event": l.event_type,
+                "attacker_unit_id": l.attacker_unit_id,
+                "defender_unit_id": l.defender_unit_id,
+                "position_x": l.position_x,
+                "position_y": l.position_y,
+                "damage_dealt": l.damage_dealt,
+            }
+            for l in logs
+        ]
+    }
 
 
 @router.get("/api/alliance-battle-replay/{alliance_war_id}")
@@ -110,7 +214,10 @@ def alliance_battle_replay(alliance_war_id: int, db: Session = Depends(get_db)):
     logs = (
         db.query(models.AllianceWarCombatLog)
         .filter(models.AllianceWarCombatLog.alliance_war_id == alliance_war_id)
-        .order_by(models.AllianceWarCombatLog.tick_number, models.AllianceWarCombatLog.combat_id)
+        .order_by(
+            models.AllianceWarCombatLog.tick_number,
+            models.AllianceWarCombatLog.combat_id,
+        )
         .all()
     )
     return {

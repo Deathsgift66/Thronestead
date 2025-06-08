@@ -8,6 +8,9 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+const urlParams = new URLSearchParams(window.location.search);
+const warId = parseInt(urlParams.get('war_id'), 10) || 0;
+
 let currentStep = 0;
 let replayInterval = null;
 let timelineSteps = [];
@@ -62,7 +65,7 @@ async function loadBattleReplay() {
   rewardsSection.innerHTML = "<p>Loading rewards...</p>";
 
   try {
-    const res = await fetch("/api/battle-replay");
+    const res = await fetch(`/api/battle-replay/${warId}`);
     const data = await res.json();
 
     // Populate timeline

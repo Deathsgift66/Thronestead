@@ -65,7 +65,7 @@ async function loadCombatLogs() {
 // =============================================
 export async function triggerNextTick() {
   try {
-    const response = await fetch(`/api/battle/next_tick`, {
+    const response = await fetch(`/api/battle/next_tick?war_id=${warId}`, {
       method: 'POST'
     });
     const data = await response.json();
