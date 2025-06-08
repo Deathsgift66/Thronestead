@@ -431,3 +431,20 @@ class QuestAllianceContribution(Base):
     quest_code = Column(String, ForeignKey('quest_alliance_catalogue.quest_code'))
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
     contribution_type = Column(String, default='resource')
+
+
+class QuestKingdomTracking(Base):
+    """Tracks progress for kingdom quests."""
+
+    __tablename__ = 'quest_kingdom_tracking'
+
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'), primary_key=True)
+    quest_code = Column(String, ForeignKey('quest_kingdom_catalogue.quest_code'), primary_key=True)
+    status = Column(String)
+    progress = Column(Integer, default=0)
+    progress_details = Column(JSONB, default=dict)
+    ends_at = Column(DateTime(timezone=True))
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    attempt_count = Column(Integer, default=1)
+    started_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))

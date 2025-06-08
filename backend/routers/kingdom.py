@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from ..data import military_state, recruitable_units
 from ..database import get_db
 from ..services.research_service import start_research as db_start_research
+from ..services.kingdom_quest_service import start_quest as db_start_quest
+from .progression_router import get_user_id
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
@@ -20,7 +22,7 @@ class ResearchPayload(BaseModel):
 
 
 class QuestPayload(BaseModel):
-    quest_id: str
+    quest_code: str
 
 
 class TemplePayload(BaseModel):
@@ -92,8 +94,21 @@ async def start_research(
 
 
 @router.post("/accept_quest")
-async def accept_quest(payload: QuestPayload):
-    return {"message": "Quest accepted", "quest_id": payload.quest_id}
+async def accept_quest(
+    payload: QuestPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    try:
+        ends_at = db_start_quest(db, 1, payload.quest_code, user_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Quest not found")
+
+    return {
+        "message": "Quest accepted",
+        "quest_code": payload.quest_code,
+        "ends_at": ends_at.isoformat(),
+    }
 
 
 @router.post("/construct_temple")

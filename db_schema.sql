@@ -303,9 +303,14 @@ CREATE TABLE quest_kingdom_catalogue (
 CREATE TABLE quest_kingdom_tracking (
     kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
     quest_code TEXT REFERENCES quest_kingdom_catalogue(quest_code),
-    status     TEXT CHECK (status IN ('active','completed')),
+    status     TEXT CHECK (status IN ('active','completed','cancelled','expired')),
     progress   INTEGER DEFAULT 0,
+    progress_details JSONB DEFAULT '{}'::jsonb,
     ends_at    TIMESTAMP WITH TIME ZONE,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    attempt_count INTEGER DEFAULT 1,
+    started_by UUID REFERENCES users(user_id),
     PRIMARY KEY (kingdom_id, quest_code)
 );
 
