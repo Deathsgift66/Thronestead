@@ -152,7 +152,7 @@ class AllianceWarParticipant(Base):
 class AllianceWarCombatLog(Base):
     __tablename__ = 'alliance_war_combat_logs'
     combat_id = Column(Integer, primary_key=True)
-    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id'))
+    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id', ondelete='CASCADE'))
     tick_number = Column(Integer)
     event_type = Column(String)
     attacker_unit_id = Column(Integer)

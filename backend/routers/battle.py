@@ -103,3 +103,27 @@ def battle_replay(war_id: int, db: Session = Depends(get_db)):
         }
         for l in logs
     ]}
+
+
+@router.get("/api/alliance-battle-replay/{alliance_war_id}")
+def alliance_battle_replay(alliance_war_id: int, db: Session = Depends(get_db)):
+    logs = (
+        db.query(models.AllianceWarCombatLog)
+        .filter(models.AllianceWarCombatLog.alliance_war_id == alliance_war_id)
+        .order_by(models.AllianceWarCombatLog.tick_number, models.AllianceWarCombatLog.combat_id)
+        .all()
+    )
+    return {
+        "logs": [
+            {
+                "tick": l.tick_number,
+                "event": l.event_type,
+                "attacker_unit_id": l.attacker_unit_id,
+                "defender_unit_id": l.defender_unit_id,
+                "position_x": l.position_x,
+                "position_y": l.position_y,
+                "damage_dealt": l.damage_dealt,
+            }
+            for l in logs
+        ]
+    }
