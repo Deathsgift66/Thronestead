@@ -374,6 +374,17 @@ CREATE TABLE alliance_tax_collections (
     notes           TEXT
 );
 
+-- Alliance Tax Policies
+CREATE TABLE alliance_tax_policies (
+    alliance_id     INTEGER REFERENCES alliances(alliance_id),
+    resource_type   resource_type,
+    tax_rate_percent NUMERIC(5,2) DEFAULT 0,
+    is_active       BOOLEAN DEFAULT TRUE,
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by      UUID REFERENCES users(user_id),
+    PRIMARY KEY (alliance_id, resource_type)
+);
+
 -- MESSAGING -----------------------------------------------------------------
 CREATE TABLE player_messages (
     message_id   SERIAL PRIMARY KEY,

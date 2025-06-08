@@ -28,9 +28,11 @@ def collect_alliance_tax(
     rate_row = db.execute(
         text(
             "SELECT tax_rate_percent FROM alliance_tax_policies "
-            "WHERE alliance_id = :aid"
+            "WHERE alliance_id = :aid "
+            "AND resource_type = :res "
+            "AND is_active = true"
         ),
-        {"aid": alliance_id},
+        {"aid": alliance_id, "res": resource_type},
     ).fetchone()
 
     if not rate_row:
