@@ -22,33 +22,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     .from('users')
     .select('setup_complete, kingdom_id, display_name')
     .eq('user_id', currentUser.id)
-    .single();
+    .maybeSingle();
 
-  if (error) {
+  if (error && profile !== null) {
     console.error('❌ Error loading profile:', error);
     showToast('Failed to load profile.');
     return;
   }
 
-  kingdomId = profile.kingdom_id;
-
-  if (profile.setup_complete) {
+  if (profile && profile.setup_complete) {
     window.location.href = 'overview.html';
     return;
   }
 
-  document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(profile.display_name)}!`;
-  bindEvents();
+  if (profile) {
+    kingdomId = profile.kingdom_id;
+    document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(profile.display_name)}!`;
+  } else {
+    document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(currentUser.user_metadata.display_name)}!`;
+  }
+
+  bindEvents(profile);
 });
 
-function bindEvents() {
-  const createBtn = document.getElementById('create-village-btn');
-  const continueBtn = document.getElementById('continue-btn');
+function bindEvents(profileExists) {
+  const createBtn = document.getElementById('create-kingdom-btn');
 
   createBtn.addEventListener('click', async () => {
-    const nameInput = document.getElementById('village-name-input');
-    const villageName = nameInput.value.trim();
+    const kNameEl = document.getElementById('kingdom-name-input');
+    const regionEl = document.getElementById('region-select');
+    const villageEl = document.getElementById('village-name-input');
 
+    const kingdomName = kNameEl.value.trim();
+    const region = regionEl.value;
+    const villageName = villageEl.value.trim();
+
+    if (kingdomName.length < 3) {
+      showToast('Kingdom name must be at least 3 characters.');
+      return;
+    }
+    if (!region) {
+      showToast('Please select a region.');
+      return;
+    }
     if (villageName.length < 3) {
       showToast('Village name must be at least 3 characters.');
       return;
@@ -56,39 +72,47 @@ function bindEvents() {
 
     createBtn.disabled = true;
 
-    const { error } = await supabase
-      .from('villages')
-      .insert({ kingdom_id: kingdomId, village_name: villageName });
+    try {
+      if (!profileExists) {
+        const { error: userErr } = await supabase.from('users').insert({
+          user_id: currentUser.id,
+          username: currentUser.user_metadata.username,
+          display_name: currentUser.user_metadata.display_name,
+          email: currentUser.email
+        });
+        if (userErr && userErr.code !== '23505') throw userErr;
+      }
 
-    if (error) {
-      console.error('❌ Error creating village:', error);
-      showToast('Failed to create village.');
+      const { data: kingdomData, error: kErr } = await supabase
+        .from('kingdoms')
+        .insert({ user_id: currentUser.id, kingdom_name: kingdomName, region })
+        .select('kingdom_id')
+        .single();
+      if (kErr) throw kErr;
+
+      kingdomId = kingdomData.kingdom_id;
+
+      const { error: villageErr } = await supabase
+        .from('villages')
+        .insert({ kingdom_id: kingdomId, village_name: villageName });
+      if (villageErr) throw villageErr;
+
+      await supabase.from('kingdom_resources').insert({ kingdom_id: kingdomId });
+
+      await supabase
+        .from('users')
+        .update({ setup_complete: true, kingdom_id: kingdomId })
+        .eq('user_id', currentUser.id);
+
+      showToast('Kingdom created!');
+      setTimeout(() => {
+        window.location.href = 'overview.html';
+      }, 1500);
+    } catch (err) {
+      console.error('❌ Error creating kingdom:', err);
+      showToast('Failed to create kingdom.');
       createBtn.disabled = false;
-      return;
     }
-
-    showToast('Village created!');
-    document.getElementById('village-step').style.display = 'none';
-    document.getElementById('quest-step').style.display = 'block';
-    continueBtn.disabled = false;
-  });
-
-  continueBtn.addEventListener('click', async () => {
-    continueBtn.disabled = true;
-
-    const { error } = await supabase
-      .from('users')
-      .update({ setup_complete: true })
-      .eq('user_id', currentUser.id);
-
-    if (error) {
-      console.error('❌ Error updating profile:', error);
-      showToast('Failed to complete setup.');
-      continueBtn.disabled = false;
-      return;
-    }
-
-    window.location.href = 'overview.html';
   });
 }
 

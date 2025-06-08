@@ -59,18 +59,19 @@ Author: Deathsgift66
       <h2 id="greeting">Welcome!</h2>
       <p>Let's set up your realm and learn the basics.</p>
 
-      <div id="village-step" class="onboard-step">
-        <h3>Create Your First Village</h3>
-        <input type="text" id="village-name-input" placeholder="Village Name" />
-        <button id="create-village-btn">Create Village</button>
+      <div id="setup-step" class="onboard-step">
+        <h3>Kingdom Setup</h3>
+        <input type="text" id="kingdom-name-input" placeholder="Kingdom Name" />
+        <select id="region-select">
+          <option value="">Select Region</option>
+          <option value="North">North</option>
+          <option value="South">South</option>
+          <option value="East">East</option>
+          <option value="West">West</option>
+        </select>
+        <input type="text" id="village-name-input" placeholder="First Village Name" />
+        <button id="create-kingdom-btn">Create Kingdom</button>
       </div>
-
-      <div id="quest-step" class="onboard-step" style="display:none;">
-        <h3>Introduction Quests</h3>
-        <p>Visit the Quests page to begin the tutorial quests and learn the mechanics of Kingmaker's Rise.</p>
-      </div>
-
-      <button id="continue-btn" disabled>Continue</button>
     </section>
     <div id="toast" class="toast-notification"></div>
   </main>
