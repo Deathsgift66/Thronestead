@@ -48,7 +48,10 @@ async function loadResearchNexus() {
     // ✅ Load tech catalogue
     const { data: catalogueData, error: catalogueError } = await supabase
       .from('tech_catalogue')
-      .select('*');
+      .select('*')
+      .eq('is_active', true)
+      .order('tier', { ascending: true })
+      .order('name', { ascending: true });
 
     if (catalogueError) throw catalogueError;
 
@@ -119,12 +122,17 @@ function renderTechTree(catalogue, tracking) {
   catalogue.forEach(tech => {
     const isCompleted = tracking.some(t => t.tech_code === tech.tech_code && t.status === "completed");
     const isActive = tracking.some(t => t.tech_code === tech.tech_code && t.status === "active");
+    const completedCodes = tracking.filter(t => t.status === "completed").map(t => t.tech_code);
+    const prereqs = tech.prerequisites || [];
+    const isUnlocked = prereqs.every(p => completedCodes.includes(p));
 
     const node = document.createElement("div");
     node.classList.add("tech-node");
+    node.dataset.code = tech.tech_code;
 
     if (isCompleted) node.classList.add("completed");
     if (isActive) node.classList.add("active");
+    if (!isUnlocked && !isCompleted && !isActive) node.classList.add("locked");
 
     node.innerHTML = `
       <h4>${escapeHTML(tech.name)}</h4>
@@ -140,18 +148,22 @@ function renderTechTree(catalogue, tracking) {
 // ✅ Show Tech Details
 function showTechDetails(tech, isCompleted, isActive) {
   const detailsEl = document.getElementById('tech-details');
+  const completedCodes = Array.from(document.querySelectorAll('.tech-node.completed')).map(n => n.dataset.code);
+  const prereqs = tech.prerequisites || [];
+  const unlocked = prereqs.every(p => completedCodes.includes(p));
 
   detailsEl.innerHTML = `
     <h3>${escapeHTML(tech.name)}</h3>
     <p>${escapeHTML(tech.description)}</p>
     <p>Tier: ${tech.tier}</p>
     <p>Category: ${escapeHTML(tech.category)}</p>
-    <p>Status: ${isCompleted ? "Completed" : isActive ? "In Progress" : "Not Started"}</p>
+    <p>Status: ${isCompleted ? "Completed" : isActive ? "In Progress" : unlocked ? "Unlocked" : "Locked"}</p>
+    ${prereqs.length ? `<p>Prerequisites: ${prereqs.map(p => `<span class="prereq${completedCodes.includes(p) ? ' done' : ''}">${escapeHTML(p)}</span>`).join(', ')}</p>` : ''}
     <p>Duration: ${tech.duration_hours}h</p>
-    ${!isCompleted && !isActive ? `<button class="action-btn" id="start-research-btn">Start Research</button>` : ""}
+    ${!isCompleted && !isActive && unlocked ? `<button class="action-btn" id="start-research-btn">Start Research</button>` : ""}
   `;
 
-  if (!isCompleted && !isActive) {
+  if (!isCompleted && !isActive && unlocked) {
     document.getElementById('start-research-btn').addEventListener("click", async () => {
       if (!confirm(`Start research on "${tech.name}"?`)) return;
 
