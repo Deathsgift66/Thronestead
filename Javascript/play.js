@@ -146,7 +146,7 @@ function bindEvents(profileExists) {
         .from('kingdom_troop_slots')
         .insert({
           kingdom_id: kingdomId,
-          base_slots: 20 + (regionData.troop_bonus || 0)
+          base_slots: 20 + (regionData.troop_bonus?.base_slots || 0)
         });
 
       await supabase
@@ -208,7 +208,7 @@ async function loadRegions() {
     regionMap[r.region_code] = r;
     const opt = document.createElement('option');
     opt.value = r.region_code;
-    opt.textContent = r.region_name || r.name || r.region_code;
+    opt.textContent = r.region_name || r.region_code;
     regionEl.appendChild(opt);
   });
 
@@ -223,12 +223,16 @@ async function loadRegions() {
     if (r.resource_bonus && Object.keys(r.resource_bonus).length > 0) {
       html += '<ul>';
       for (const [res, amt] of Object.entries(r.resource_bonus)) {
-        html += `<li>${escapeHTML(res)}: +${amt}</li>`;
+        html += `<li>${escapeHTML(res)}: ${amt > 0 ? '+' : ''}${amt}%</li>`;
       }
       html += '</ul>';
     }
-    if (r.troop_bonus) {
-      html += `<p>Troop Slots Bonus: ${r.troop_bonus}</p>`;
+    if (r.troop_bonus && Object.keys(r.troop_bonus).length > 0) {
+      html += '<ul>';
+      for (const [stat, val] of Object.entries(r.troop_bonus)) {
+        html += `<li>${escapeHTML(stat)}: ${val > 0 ? '+' : ''}${val}%</li>`;
+      }
+      html += '</ul>';
     }
     infoEl.innerHTML = html;
   });

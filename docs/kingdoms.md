@@ -9,7 +9,7 @@ The `kingdoms` table stores the master record for every player kingdom in the ga
 | `kingdom_id` | Primary key, unique kingdom ID |
 | `user_id` | FK to `users.user_id` — owner of this kingdom |
 | `kingdom_name` | Player-chosen name of the kingdom |
-| `region` | Region of the world this kingdom belongs to |
+| `region` | Region code referencing `region_catalogue.region_code` |
 | `created_at` | When this kingdom was created |
 | `prestige_score` | Overall ranking score (used for leaderboards) |
 | `avatar_url` | URL to avatar image |

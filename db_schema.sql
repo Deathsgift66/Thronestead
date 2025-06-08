@@ -37,10 +37,10 @@ CREATE TABLE kingdoms (
 
 CREATE TABLE region_catalogue (
     region_code TEXT PRIMARY KEY,
-    name TEXT,
+    region_name TEXT,
     description TEXT,
     resource_bonus JSONB DEFAULT '{}'::jsonb,
-    troop_bonus INTEGER DEFAULT 0
+    troop_bonus JSONB DEFAULT '{}'::jsonb
 );
 
 
