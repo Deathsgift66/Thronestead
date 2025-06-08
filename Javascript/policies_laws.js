@@ -41,7 +41,9 @@ async function loadPoliciesAndLaws() {
     // ✅ Load catalog
     const { data: catalogData, error: catalogError } = await supabase
       .from('policies_laws_catalogue')
-      .select('*');
+      .select('*')
+      .eq('is_active', true)
+      .order('unlock_at_level', { ascending: true });
 
     if (catalogError) throw catalogError;
 
@@ -53,11 +55,13 @@ async function loadPoliciesAndLaws() {
     policyContainer.innerHTML = "";
     policies.forEach(policy => {
       const card = document.createElement("div");
-      card.classList.add("policy-law-card");
+      card.classList.add("policy-card");
 
       card.innerHTML = `
         <h3>${escapeHTML(policy.name)}</h3>
         <p>${escapeHTML(policy.description)}</p>
+        <p>Category: ${escapeHTML(policy.category || '')}</p>
+        <p>Requires Castle Level: ${policy.unlock_at_level}</p>
         <p>Effect: ${escapeHTML(policy.effect_summary)}</p>
         <button class="action-btn policy-select-btn" data-id="${policy.id}">Select Policy</button>
       `;
@@ -74,13 +78,15 @@ async function loadPoliciesAndLaws() {
     lawContainer.innerHTML = "";
     laws.forEach(law => {
       const card = document.createElement("div");
-      card.classList.add("policy-law-card");
+      card.classList.add("law-card");
 
       const isActive = activeLaws.includes(law.id);
 
       card.innerHTML = `
         <h3>${escapeHTML(law.name)}</h3>
         <p>${escapeHTML(law.description)}</p>
+        <p>Category: ${escapeHTML(law.category || '')}</p>
+        <p>Requires Castle Level: ${law.unlock_at_level}</p>
         <p>Effect: ${escapeHTML(law.effect_summary)}</p>
         <label>
           <input type="checkbox" class="law-toggle" data-id="${law.id}" ${isActive ? "checked" : ""}>
