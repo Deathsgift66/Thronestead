@@ -676,3 +676,4 @@ CREATE TABLE public.game_settings (
   last_updated timestamp with time zone DEFAULT now(),
   updated_by uuid REFERENCES public.users(user_id)
 );
+
