@@ -101,6 +101,19 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
     // Final confirmation
     alert('✅ Changes saved successfully!');
     document.getElementById('new_password').value = ''; // Clear password field
+    try {
+      await fetch('/api/audit-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          action: 'update_profile',
+          details: 'Updated account settings'
+        })
+      });
+    } catch (err) {
+      console.error('Audit log failed:', err);
+    }
   } catch (err) {
     console.error('❌ Error during save:', err);
     alert(err.message);

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import AllianceMember
+from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])
 
@@ -62,6 +63,12 @@ def join(payload: JoinPayload, db: Session = Depends(get_db)):
     )
     db.add(member)
     db.commit()
+    log_action(
+        db,
+        payload.user_id,
+        "join_alliance",
+        f"Joined Alliance ID {payload.alliance_id}",
+    )
     return {"message": "Joined"}
 
 
@@ -75,6 +82,12 @@ def leave(payload: MemberAction, db: Session = Depends(get_db)):
     if member:
         db.delete(member)
         db.commit()
+        log_action(
+            db,
+            payload.user_id,
+            "leave_alliance",
+            f"Left Alliance ID {payload.alliance_id}",
+        )
     return {"message": "Left"}
 
 

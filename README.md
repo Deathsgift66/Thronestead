@@ -24,8 +24,9 @@ the records created during onboarding.
 ✅ Sovereign’s Grand Overseer (VIP 2 panel)  
 ✅ Dynamic World Map → zoom, pan, click  
 ✅ Quests + Projects System  
-✅ Admin Dashboard → full logs + actions  
-✅ Seasonal Effects → dynamic  
+✅ Admin Dashboard → full logs + actions
+✅ Comprehensive audit log of player and admin activity
+✅ Seasonal Effects → dynamic
 ✅ GDPR / Legal Ready → legal.html + linked PDFs  
 ✅ Lighthouse / SEO optimized
 ✅ Progression stages documented in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md)

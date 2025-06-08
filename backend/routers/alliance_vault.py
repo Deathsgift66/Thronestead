@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import AllianceVault, AllianceVaultTransactionLog, User
+from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 
@@ -56,6 +57,12 @@ def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
     )
     db.add(log)
     db.commit()
+    log_action(
+        db,
+        payload.user_id,
+        "deposit_vault",
+        f"Deposited {payload.amount} {payload.resource} into Alliance Vault ID {payload.alliance_id}",
+    )
     return {"message": "Deposited"}
 
 
@@ -78,6 +85,12 @@ def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
     )
     db.add(log)
     db.commit()
+    log_action(
+        db,
+        payload.user_id,
+        "withdraw_vault",
+        f"Withdrew {payload.amount} {payload.resource} from Alliance Vault ID {payload.alliance_id}",
+    )
     return {"message": "Withdrawn"}
 
 
