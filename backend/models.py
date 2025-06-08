@@ -415,3 +415,19 @@ class KingdomHistoryLog(Base):
     event_type = Column(String)
     event_details = Column(Text)
     event_date = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class QuestAllianceContribution(Base):
+    """Transaction log of player contributions toward alliance quests."""
+
+    __tablename__ = 'quest_alliance_contributions'
+
+    contribution_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    player_name = Column(String)
+    resource_type = Column(String)
+    amount = Column(Integer)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    quest_code = Column(String, ForeignKey('quest_alliance_catalogue.quest_code'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    contribution_type = Column(String, default='resource')

@@ -471,7 +471,10 @@ CREATE TABLE quest_alliance_contributions (
     player_name     TEXT,
     resource_type   resource_type,
     amount          INTEGER,
-    timestamp       TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    timestamp       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    quest_code      TEXT REFERENCES quest_alliance_catalogue(quest_code),
+    user_id         UUID REFERENCES users(user_id),
+    contribution_type TEXT DEFAULT 'resource'
 );
 
 -- Alliance Tax Collections

@@ -40,6 +40,7 @@ the records created during onboarding.
 ✅ Player projects table documented in [docs/projects_player.md](docs/projects_player.md)
 ✅ Alliance project catalogue documented in [docs/project_alliance_catalogue.md](docs/project_alliance_catalogue.md)
 ✅ Alliance projects runtime table documented in [docs/projects_alliance.md](docs/projects_alliance.md)
+✅ Alliance quest contributions documented in [docs/quest_alliance_contributions.md](docs/quest_alliance_contributions.md)
 
 
 ✅ VIP status system documented in [docs/vip_status.md](docs/vip_status.md)
