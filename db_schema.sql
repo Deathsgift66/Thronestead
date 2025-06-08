@@ -209,6 +209,20 @@ CREATE TABLE kingdom_knights (
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- VILLAGES ---------------------------------------------------------------
+CREATE TABLE kingdom_villages (
+    village_id   SERIAL PRIMARY KEY,
+    kingdom_id   INTEGER REFERENCES kingdoms(kingdom_id),
+    village_name TEXT,
+    village_type TEXT,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    is_capital   BOOLEAN DEFAULT FALSE,
+    population   INTEGER DEFAULT 0,
+    defense_level INTEGER DEFAULT 0,
+    prosperity   INTEGER DEFAULT 100,
+    last_updated TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- TECHNOLOGY & RESEARCH -----------------------------------------------------
 CREATE TABLE tech_catalogue (
     tech_code        TEXT PRIMARY KEY,
