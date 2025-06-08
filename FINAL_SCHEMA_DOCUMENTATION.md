@@ -45,6 +45,14 @@ Columns:
 - `requires_kingdom_level` — minimum kingdom level
 - `is_active` — whether the project is available
 - `max_active_instances` — max copies player can have active
+- `required_tech` — list of tech codes required to unlock
+- `requires_region` — optional region restriction
+- `effect_summary` — short tooltip text
+- `expires_at` — date when project becomes unavailable
+- `created_at` — audit timestamp when created
+- `last_updated` — audit timestamp of last edit
+- `user_id` — admin user who created the row
+- `last_modified_by` — admin who last modified the row
 
 ## Table: `public.project_alliance_catalogue`
 Master list of every Alliance Project. Actual projects in progress reference the catalogue via `project_code`.
