@@ -31,6 +31,7 @@ the records created during onboarding.
 ✅ Progression stages documented in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md)
 ✅ Progression gating documented in [docs/page_access_gating.md](docs/page_access_gating.md)
 ✅ Alliance war pre-plan storage documented in [docs/alliance_war_preplans.md](docs/alliance_war_preplans.md)
+✅ Alliance war master record documented in [docs/alliance_wars.md](docs/alliance_wars.md)
 
 ---
 
