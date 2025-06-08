@@ -302,3 +302,15 @@ class GameSetting(Base):
     is_active = Column(Boolean, default=True)
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     updated_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+
+
+class KingdomHistoryLog(Base):
+    """Chronological history of important events for kingdoms."""
+
+    __tablename__ = 'kingdom_history_log'
+
+    log_id = Column(Integer, primary_key=True)
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
+    event_type = Column(String)
+    event_details = Column(Text)
+    event_date = Column(DateTime(timezone=True), server_default=func.now())
