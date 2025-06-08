@@ -666,3 +666,13 @@ CREATE TABLE public.alliance_tax_policies (
   CONSTRAINT alliance_tax_policies_pkey PRIMARY KEY (alliance_id, resource_type)
 );
 
+CREATE TABLE public.game_settings (
+  setting_key text PRIMARY KEY,
+  setting_value jsonb,
+  setting_type text,
+  description text,
+  default_value jsonb,
+  is_active boolean DEFAULT true,
+  last_updated timestamp with time zone DEFAULT now(),
+  updated_by uuid REFERENCES public.users(user_id)
+);

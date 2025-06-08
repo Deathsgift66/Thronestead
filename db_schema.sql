@@ -773,3 +773,13 @@ CREATE TABLE alliance_war_preplans (
     preplan_jsonb JSONB NOT NULL,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+CREATE TABLE game_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value JSONB,
+    setting_type TEXT,
+    description TEXT,
+    default_value JSONB,
+    is_active BOOLEAN DEFAULT true,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by UUID REFERENCES users(user_id)
+);

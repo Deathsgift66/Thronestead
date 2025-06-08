@@ -290,3 +290,15 @@ class BlackMarketListing(Base):
     price = Column(Numeric)
     quantity = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class GameSetting(Base):
+    __tablename__ = 'game_settings'
+
+    setting_key = Column(String, primary_key=True)
+    setting_value = Column(JSONB)
+    setting_type = Column(String)
+    description = Column(Text)
+    default_value = Column(JSONB)
+    is_active = Column(Boolean, default=True)
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
