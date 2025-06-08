@@ -77,9 +77,11 @@ CREATE TABLE public.alliance_war_preplans (
   preplan_jsonb jsonb NOT NULL,
   last_updated timestamp without time zone DEFAULT now(),
   CONSTRAINT alliance_war_preplans_pkey PRIMARY KEY (preplan_id),
-  CONSTRAINT alliance_war_preplans_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id),
+  CONSTRAINT alliance_war_preplans_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id) ON DELETE CASCADE,
   CONSTRAINT alliance_war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
+CREATE INDEX alliance_war_preplans_alliance_war_id_idx ON public.alliance_war_preplans(alliance_war_id);
+CREATE UNIQUE INDEX alliance_war_preplans_unique_idx ON public.alliance_war_preplans(alliance_war_id, kingdom_id);
 CREATE TABLE public.alliance_war_scores (
   alliance_war_id integer NOT NULL,
   attacker_score integer DEFAULT 0,
