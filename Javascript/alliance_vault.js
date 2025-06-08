@@ -94,7 +94,8 @@ async function loadDepositForm() {
   `;
 
   document.getElementById("deposit-submit").addEventListener("click", async () => {
-    const resource = document.getElementById("deposit-resource").value.trim();
+    const raw = document.getElementById("deposit-resource").value.trim();
+    const resource = raw.toLowerCase().replace(/ /g, "_");
     const amount = parseInt(document.getElementById("deposit-amount").value);
 
     if (!resource || !amount || amount <= 0) {
@@ -134,7 +135,8 @@ async function loadWithdrawForm() {
   `;
 
   document.getElementById("withdraw-submit").addEventListener("click", async () => {
-    const resource = document.getElementById("withdraw-resource").value.trim();
+    const raw = document.getElementById("withdraw-resource").value.trim();
+    const resource = raw.toLowerCase().replace(/ /g, "_");
     const amount = parseInt(document.getElementById("withdraw-amount").value);
 
     if (!resource || !amount || amount <= 0) {
