@@ -353,12 +353,16 @@ CREATE TABLE public.player_messages (
   message_id integer NOT NULL DEFAULT nextval('player_messages_message_id_seq'::regclass),
   user_id uuid,
   recipient_id uuid,
+  subject text,
   message text,
   sent_at timestamp with time zone DEFAULT now(),
   is_read boolean DEFAULT false,
+  deleted_by_sender boolean DEFAULT false,
+  deleted_by_recipient boolean DEFAULT false,
+  last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT player_messages_pkey PRIMARY KEY (message_id),
-  CONSTRAINT player_messages_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id),
-  CONSTRAINT player_messages_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public.users(user_id)
+  CONSTRAINT player_messages_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE SET NULL,
+  CONSTRAINT player_messages_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public.users(user_id) ON DELETE SET NULL
 );
 CREATE TABLE public.policies_laws_catalogue (
   id integer NOT NULL DEFAULT nextval('policies_laws_catalogue_id_seq'::regclass),
