@@ -909,6 +909,17 @@ CREATE TABLE kingdom_spies (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Spy Missions --------------------------------------------------------------
+CREATE TABLE spy_missions (
+    mission_id SERIAL PRIMARY KEY,
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    mission_type TEXT NOT NULL,
+    target_id INTEGER,
+    status TEXT DEFAULT 'active',
+    launched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE
+);
 CREATE TABLE game_settings (
     setting_key TEXT PRIMARY KEY,
     setting_value JSONB,

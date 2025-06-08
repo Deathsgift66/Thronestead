@@ -3,13 +3,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .progression_router import get_user_id, get_kingdom_id
-from ..data import spy_missions
 from services import spies_service
 
 router = APIRouter(prefix="/api/kingdom", tags=["spies"])
 
 class SpyMissionPayload(BaseModel):
-    mission: str
+    mission: str  # backward compat alias
+    mission_type: str | None = None
     target_id: int | None = None
 
 
@@ -40,13 +40,13 @@ async def launch_spy_mission(
 ):
     kid = get_kingdom_id(db, user_id)
     spies_service.start_mission(db, kid)
-    missions = spy_missions.setdefault(kid, [])
-    mission_id = len(missions) + 1
-    missions.append({"id": mission_id, "mission": payload.mission, "target_id": payload.target_id})
+    mtype = payload.mission_type or payload.mission
+    mission_id = spies_service.create_spy_mission(db, kid, mtype, payload.target_id)
     return {"message": "Mission launched", "mission_id": mission_id}
 
 @router.get("/spy_missions")
 async def list_spy_missions(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
-    return {"missions": spy_missions.get(kid, [])}
+    missions = spies_service.list_spy_missions(db, kid)
+    return {"missions": missions}
 
