@@ -36,6 +36,19 @@ records using Supabase row level security.
 
 ---
 
+## Database Setup
+
+The `full_schema.sql` file contains the complete table definitions used by the
+game. To initialize a local database run:
+
+```bash
+psql -f full_schema.sql
+```
+
+This will create all tables referenced by the frontend.
+
+---
+
 ## 📝 License
 
 Proprietary — Kingmaker’s Rise Project.  
