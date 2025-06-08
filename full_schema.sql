@@ -166,6 +166,17 @@ CREATE TABLE public.building_catalogue (
   production_rate integer,
   upkeep integer,
   build_cost jsonb,
+  modifiers jsonb,
+  category text,
+  build_time_seconds integer,
+  prerequisites jsonb,
+  max_level integer,
+  special_effects jsonb,
+  is_unique boolean DEFAULT false,
+  is_repeatable boolean DEFAULT false,
+  unlock_at_level integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT building_catalogue_pkey PRIMARY KEY (building_id)
 );
 CREATE TABLE public.combat_logs (
