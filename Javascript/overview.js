@@ -81,9 +81,10 @@ async function loadOverview() {
     const totalTroops = troopsData.reduce((sum, r) => sum + (r.quantity || 0), 0);
     const baseSlots =
       (slotRow.base_slots || 0) +
-      (slotRow.castle_bonus_slots || 0) +
-      (slotRow.noble_bonus_slots || 0) +
-      (slotRow.knight_bonus_slots || 0);
+      (slotRow.slots_from_buildings || 0) +
+      (slotRow.slots_from_tech || 0) +
+      (slotRow.slots_from_projects || 0) +
+      (slotRow.slots_from_events || 0);
     const usedSlots = slotRow.used_slots || 0;
 
     const data = {

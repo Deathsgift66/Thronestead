@@ -68,8 +68,12 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     result = db.execute(
         text(
             """
-            SELECT kts.base_slots, kts.castle_bonus_slots, kts.noble_bonus_slots,
-                   kts.knight_bonus_slots, COALESCE(rc.troop_bonus, 0)
+            SELECT kts.base_slots,
+                   kts.slots_from_buildings,
+                   kts.slots_from_tech,
+                   kts.slots_from_projects,
+                   kts.slots_from_events,
+                   COALESCE(rc.troop_bonus, 0)
             FROM kingdom_troop_slots kts
             JOIN kingdoms k ON k.kingdom_id = kts.kingdom_id
             LEFT JOIN region_catalogue rc ON rc.region_code = k.region
@@ -82,9 +86,23 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     if not result:
         return 0
 
-    base_slots, castle_bonus, noble_bonus, knight_bonus, region_bonus = result
+    (
+        base_slots,
+        building_bonus,
+        tech_bonus,
+        project_bonus,
+        event_bonus,
+        region_bonus,
+    ) = result
 
-    total_slots = base_slots + castle_bonus + noble_bonus + knight_bonus + region_bonus
+    total_slots = (
+        base_slots
+        + building_bonus
+        + tech_bonus
+        + project_bonus
+        + event_bonus
+        + region_bonus
+    )
 
     return total_slots
 
@@ -134,8 +152,12 @@ def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> No
     record = db.execute(
         text(
             """
-            SELECT base_slots, castle_bonus_slots, noble_bonus_slots,
-                   knight_bonus_slots, used_slots
+            SELECT base_slots,
+                   slots_from_buildings,
+                   slots_from_tech,
+                   slots_from_projects,
+                   slots_from_events,
+                   used_slots
             FROM kingdom_troop_slots
             WHERE kingdom_id = :kid
             """
@@ -147,8 +169,15 @@ def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> No
         total_slots = 0
         used_slots = 0
     else:
-        base, castle_bonus, noble_bonus, knight_bonus, used_slots = record
-        total_slots = base + castle_bonus + noble_bonus + knight_bonus
+        (
+            base,
+            build_bonus,
+            tech_bonus,
+            project_bonus,
+            event_bonus,
+            used_slots,
+        ) = record
+        total_slots = base + build_bonus + tech_bonus + project_bonus + event_bonus
 
     if used_slots + troops_requested > total_slots:
         raise HTTPException(status_code=400, detail="Not enough troop slots")

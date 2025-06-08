@@ -94,7 +94,7 @@ def upgrade_castle(
     )
     db.execute(
         text(
-            "UPDATE kingdom_troop_slots SET castle_bonus_slots = castle_bonus_slots + 1 WHERE kingdom_id = :kid"
+            "UPDATE kingdom_troop_slots SET slots_from_buildings = slots_from_buildings + 1 WHERE kingdom_id = :kid"
         ),
         {"kid": kid},
     )
@@ -153,7 +153,7 @@ def assign_noble(
     )
     db.execute(
         text(
-            "UPDATE kingdom_troop_slots SET noble_bonus_slots = :count WHERE kingdom_id = :kid"
+            "UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"
         ),
         {"count": count, "kid": kid},
     )
@@ -206,7 +206,7 @@ def assign_knight(
     )
     db.execute(
         text(
-            "UPDATE kingdom_troop_slots SET knight_bonus_slots = :bonus WHERE kingdom_id = :kid"
+            "UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"
         ),
         {"bonus": count * 2, "kid": kid},
     )
