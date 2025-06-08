@@ -1,4 +1,14 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, BigInteger, DateTime, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    Boolean,
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    Numeric,
+)
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 from .database import Base
@@ -67,6 +77,17 @@ class AllianceVault(Base):
     fortification_level = Column(Integer, default=0)
     army_count = Column(Integer, default=0)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AllianceTaxPolicy(Base):
+    __tablename__ = 'alliance_tax_policies'
+
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'), primary_key=True)
+    resource_type = Column(String, primary_key=True)
+    tax_rate_percent = Column(Numeric(5, 2), nullable=False)
+    is_active = Column(Boolean, default=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
 
 
 class WarsTactical(Base):

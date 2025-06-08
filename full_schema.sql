@@ -45,6 +45,18 @@ CREATE TABLE public.alliance_vault (
   CONSTRAINT alliance_vault_pkey PRIMARY KEY (alliance_id),
   CONSTRAINT alliance_vault_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
+
+CREATE TABLE public.alliance_tax_policies (
+  alliance_id integer NOT NULL,
+  resource_type USER-DEFINED NOT NULL,
+  tax_rate_percent numeric(5,2) NOT NULL,
+  is_active boolean DEFAULT true,
+  updated_at timestamp with time zone DEFAULT now(),
+  updated_by uuid,
+  CONSTRAINT alliance_tax_policies_pkey PRIMARY KEY (alliance_id, resource_type),
+  CONSTRAINT alliance_tax_policies_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT alliance_tax_policies_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.alliance_war_combat_logs (
   combat_id integer NOT NULL DEFAULT nextval('alliance_war_combat_logs_combat_id_seq'::regclass),
   alliance_war_id integer,

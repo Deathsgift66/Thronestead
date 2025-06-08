@@ -319,6 +319,16 @@ CREATE TABLE alliance_vault (
     updated_at        TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE alliance_tax_policies (
+    alliance_id     INTEGER REFERENCES alliances(alliance_id),
+    resource_type   resource_type,
+    tax_rate_percent NUMERIC(5,2) NOT NULL,
+    is_active       BOOLEAN DEFAULT TRUE,
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by      UUID REFERENCES users(user_id),
+    PRIMARY KEY (alliance_id, resource_type)
+);
+
 CREATE TABLE projects_alliance (
     project_id  SERIAL PRIMARY KEY,
     alliance_id INTEGER REFERENCES alliances(alliance_id),
@@ -610,6 +620,22 @@ CREATE POLICY access_own_alliance_contribs ON quest_alliance_contributions
     EXISTS (
       SELECT 1 FROM alliance_members m
       WHERE m.alliance_id = quest_alliance_contributions.alliance_id
+        AND m.user_id = auth.uid()
+    )
+  );
+
+ALTER TABLE alliance_tax_policies ENABLE ROW LEVEL SECURITY;
+CREATE POLICY access_own_alliance_tax_policies ON alliance_tax_policies
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM alliance_members m
+      WHERE m.alliance_id = alliance_tax_policies.alliance_id
+        AND m.user_id = auth.uid()
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM alliance_members m
+      WHERE m.alliance_id = alliance_tax_policies.alliance_id
         AND m.user_id = auth.uid()
     )
   );
