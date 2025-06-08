@@ -37,6 +37,8 @@ the records created during onboarding.
 ✅ Kingdom resources usage documented in [docs/kingdom_resources.md](docs/kingdom_resources.md)
 ✅ Kingdom treaties documented in [docs/kingdom_treaties.md](docs/kingdom_treaties.md)
 ✅ Kingdom troops table documented in [docs/kingdom_troops.md](docs/kingdom_troops.md)
+✅ Kingdoms master table documented in [docs/kingdoms.md](docs/kingdoms.md)
+✅ Final schema summary in [FINAL_SCHEMA_DOCUMENTATION.md](FINAL_SCHEMA_DOCUMENTATION.md)
 
 
 ---
