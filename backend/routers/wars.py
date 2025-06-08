@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from .progression_router import get_user_id, get_kingdom_id
+from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/wars", tags=["wars"])
 
@@ -26,5 +27,6 @@ async def declare_war(
     ).fetchone()[0]
     if knights == 0:
         raise HTTPException(status_code=403, detail="No knights available")
+    log_action(db, user_id, "start_war", f"Declared war on {payload.target}")
     return {"message": "War declared", "target": payload.target}
 

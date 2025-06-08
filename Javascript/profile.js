@@ -95,7 +95,7 @@ async function loadPlayerProfile() {
 
     // ✅ Render customization options
     // In future this can load from `profile_customization_catalogue` table
-    customizationContainer.innerHTML = `
+  customizationContainer.innerHTML = `
       <h3>Customize Profile</h3>
       <button class="action-btn">Change Avatar</button>
       <button class="action-btn">Change Banner</button>
@@ -110,6 +110,8 @@ async function loadPlayerProfile() {
       });
     });
 
+    await loadRecentActions(user.id);
+
   } catch (err) {
     console.error("❌ Error loading profile:", err);
     playerNameEl.textContent = "Failed to load.";
@@ -117,4 +119,52 @@ async function loadPlayerProfile() {
     mottoEl.textContent = "Failed to load.";
     customizationContainer.innerHTML = "<p>Failed to load customization options.</p>";
   }
+}
+
+async function loadRecentActions(userId) {
+  const tbody = document.getElementById('recent-log-body');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="3">Loading...</td></tr>`;
+
+  try {
+    const res = await fetch(`/api/audit-log?user_id=${encodeURIComponent(userId)}&limit=10`);
+    const data = await res.json();
+    tbody.innerHTML = '';
+    if (!data.logs || data.logs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3">No recent activity.</td></tr>`;
+      return;
+    }
+    data.logs.forEach(log => {
+      const row = document.createElement('tr');
+      const time = log.created_at || log.time;
+      row.innerHTML = `
+        <td>${formatTimestamp(time)}</td>
+        <td>${escapeHTML(log.action)}</td>
+        <td>${escapeHTML(log.details)}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Error loading recent actions:', err);
+    tbody.innerHTML = `<tr><td colspan="3">Failed to load.</td></tr>`;
+  }
+}
+
+function formatTimestamp(timestamp) {
+  if (!timestamp) return 'Unknown';
+  const date = new Date(timestamp);
+  return date.toLocaleString(undefined, {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
