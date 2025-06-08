@@ -34,6 +34,24 @@ class AllianceVault(Base):
     clay = Column(BigInteger, default=0)
     flax = Column(BigInteger, default=0)
     tools = Column(BigInteger, default=0)
+    wood_planks = Column(BigInteger, default=0)
+    refined_stone = Column(BigInteger, default=0)
+    iron_ingots = Column(BigInteger, default=0)
+    charcoal = Column(BigInteger, default=0)
+    leather = Column(BigInteger, default=0)
+    arrows = Column(BigInteger, default=0)
+    swords = Column(BigInteger, default=0)
+    axes = Column(BigInteger, default=0)
+    shields = Column(BigInteger, default=0)
+    armour = Column(BigInteger, default=0)
+    wagon = Column(BigInteger, default=0)
+    siege_weapons = Column(BigInteger, default=0)
+    jewelry = Column(BigInteger, default=0)
+    spear = Column(BigInteger, default=0)
+    horses = Column(BigInteger, default=0)
+    pitchforks = Column(BigInteger, default=0)
+    fortification_level = Column(Integer, default=0)
+    army_count = Column(Integer, default=0)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
@@ -83,6 +101,60 @@ class CombatLog(Base):
     morale_shift = Column(Integer)
     notes = Column(Text)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AllianceWar(Base):
+    __tablename__ = 'alliance_wars'
+    alliance_war_id = Column(Integer, primary_key=True)
+    attacker_alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    defender_alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    phase = Column(String)
+    castle_hp = Column(Integer, default=10000)
+    battle_tick = Column(Integer, default=0)
+    war_status = Column(String)
+    start_date = Column(DateTime(timezone=True), server_default=func.now())
+    end_date = Column(DateTime(timezone=True))
+
+
+class AllianceWarParticipant(Base):
+    __tablename__ = 'alliance_war_participants'
+    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id'), primary_key=True)
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'), primary_key=True)
+    role = Column(String)
+
+
+class AllianceWarCombatLog(Base):
+    __tablename__ = 'alliance_war_combat_logs'
+    combat_id = Column(Integer, primary_key=True)
+    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id'))
+    tick_number = Column(Integer)
+    event_type = Column(String)
+    attacker_unit_id = Column(Integer)
+    defender_unit_id = Column(Integer)
+    position_x = Column(Integer)
+    position_y = Column(Integer)
+    damage_dealt = Column(Integer, default=0)
+    morale_shift = Column(Integer, default=0)
+    notes = Column(Text)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AllianceWarPreplan(Base):
+    __tablename__ = 'alliance_war_preplans'
+    preplan_id = Column(Integer, primary_key=True)
+    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id'))
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
+    preplan_jsonb = Column(JSONB)
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AllianceWarScore(Base):
+    __tablename__ = 'alliance_war_scores'
+    alliance_war_id = Column(Integer, ForeignKey('alliance_wars.alliance_war_id'), primary_key=True)
+    attacker_score = Column(Integer, default=0)
+    defender_score = Column(Integer, default=0)
+    victor = Column(String)
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class BattleResolutionLog(Base):
