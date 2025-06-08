@@ -45,11 +45,60 @@ async function loadOverview() {
   if (modifiersContainer) modifiersContainer.innerHTML = "<p>Loading modifiers...</p>";
 
   try {
-    const [kingdomRes, prog] = await Promise.all([
-      fetch('/api/kingdom/summary'),
+    const [{ data: { user } }, prog] = await Promise.all([
+      supabase.auth.getUser(),
       Promise.resolve(window.playerProgression)
     ]);
-    const data = await kingdomRes.json();
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('kingdom_id')
+      .eq('user_id', user.id)
+      .single();
+    if (userError) throw userError;
+    const kingdomId = userData.kingdom_id;
+
+    const { data: resRow, error: resErr } = await supabase
+      .from('kingdom_resources')
+      .select('*')
+      .eq('kingdom_id', kingdomId)
+      .single();
+    if (resErr) throw resErr;
+
+    const { data: slotRow, error: slotErr } = await supabase
+      .from('kingdom_troop_slots')
+      .select('*')
+      .eq('kingdom_id', kingdomId)
+      .single();
+    if (slotErr) throw slotErr;
+
+    const { data: troopsData, error: troopsErr } = await supabase
+      .from('kingdom_troops')
+      .select('quantity')
+      .eq('kingdom_id', kingdomId);
+    if (troopsErr) throw troopsErr;
+
+    const totalTroops = troopsData.reduce((sum, r) => sum + (r.quantity || 0), 0);
+    const baseSlots =
+      (slotRow.base_slots || 0) +
+      (slotRow.castle_bonus_slots || 0) +
+      (slotRow.noble_bonus_slots || 0) +
+      (slotRow.knight_bonus_slots || 0);
+    const usedSlots = slotRow.used_slots || 0;
+
+    const data = {
+      resources: Object.fromEntries(
+        Object.entries(resRow || {}).filter(([k]) => k !== 'kingdom_id')
+      ),
+      troops: {
+        total: totalTroops,
+        slots: {
+          base: baseSlots,
+          used: usedSlots,
+          available: Math.max(0, baseSlots - usedSlots)
+        }
+      }
+    };
 
     // ✅ Summary Panel
     summaryContainer.innerHTML = `
