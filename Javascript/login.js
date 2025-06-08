@@ -94,8 +94,43 @@ async function handleLogin(e) {
     if (error) {
       showMessage('error', error.message);
     } else {
+      const user = data.user;
+
+      // On first login, create profile and starter kingdom
+      const { data: profile } = await supabase
+        .from('users')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!profile) {
+        const { error: insertProfileErr } = await supabase
+          .from('users')
+          .insert({
+            user_id: user.id,
+            username: user.user_metadata.username,
+            display_name: user.user_metadata.display_name,
+            email: user.email,
+            setup_complete: false
+          });
+
+        if (!insertProfileErr) {
+          const { data: kingdomData, error: kingdomErr } = await supabase
+            .from('kingdoms')
+            .insert({ user_id: user.id, kingdom_name: user.user_metadata.display_name })
+            .select('kingdom_id')
+            .single();
+
+          if (!kingdomErr) {
+            await supabase
+              .from('kingdom_resources')
+              .insert({ kingdom_id: kingdomData.kingdom_id });
+          }
+        }
+      }
+
       showMessage('success', 'Login successful! Redirecting...');
-      await fetchAndStorePlayerProgression(data.user.id);
+      await fetchAndStorePlayerProgression(user.id);
       setTimeout(() => {
         window.location.href = 'play.html';
       }, 1200);
