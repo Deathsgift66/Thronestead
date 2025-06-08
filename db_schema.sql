@@ -250,9 +250,24 @@ CREATE TABLE project_player_catalogue (
     description  TEXT,
     power_score  INTEGER DEFAULT 0,
     cost         JSONB,
-    required_castle_level INTEGER DEFAULT 0,
-    required_nobles INTEGER DEFAULT 0,
-    required_knights INTEGER DEFAULT 0
+    modifiers    JSONB,
+    category     TEXT,
+    is_repeatable BOOLEAN DEFAULT FALSE,
+    prerequisites TEXT[],
+    unlocks      TEXT[],
+    build_time_seconds INTEGER,
+    project_duration_seconds INTEGER,
+    requires_kingdom_level INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    max_active_instances INTEGER,
+    required_tech TEXT[],
+    requires_region TEXT,
+    effect_summary TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    user_id UUID,
+    last_modified_by UUID
 );
 
 CREATE TABLE projects_player (
