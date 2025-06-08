@@ -1,0 +1,17 @@
+.kingdom-achievements ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.kingdom-achievements li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.kingdom-achievements li:last-child {
+  border-bottom: none;
+}
+
+.kingdom-achievements li.locked {
+  opacity: 0.5;
+}
