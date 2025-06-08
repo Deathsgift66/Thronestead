@@ -51,6 +51,17 @@ section h2 {
   font-size: 1.1rem;
 }
 
+.alliance-visuals {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.alliance-visuals img {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+}
+
 /* Progress Bars */
 .project-bar {
   margin-bottom: 1rem;
