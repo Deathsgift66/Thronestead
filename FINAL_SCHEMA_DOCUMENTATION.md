@@ -76,6 +76,25 @@ Columns:
 - `max_active_instances` — cap on simultaneous active copies
 
 
+## Table: `public.quest_alliance_catalogue`
+Master catalogue of alliance quests. Each row defines a quest that alliances can undertake.
+
+Columns:
+- `quest_code` — primary key identifier
+- `name` — quest name
+- `description` — long description
+- `duration_hours` — quest duration in hours
+- `category` — quest category (combat, economic, etc.)
+- `objectives` — jsonb defining required objectives
+- `rewards` — jsonb describing rewards
+- `required_level` — minimum alliance level
+- `repeatable` — if true the quest may be repeated
+- `max_attempts` — limit on attempts when repeatable
+- `is_active` — hide quest when false
+- `created_at` — timestamp when added
+- `last_updated` — timestamp when modified
+=======
+
 ## Table: `public.projects_player`
 Runtime tracker of kingdom projects that players start. Each row represents one instance of a project launched from the catalogue.
 
@@ -109,4 +128,5 @@ Columns:
 - `built_by` — user who started the project
 - `expires_at` — when the effect wears off
 - `last_updated` — audit timestamp
+
 
