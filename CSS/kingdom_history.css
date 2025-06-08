@@ -1,0 +1,50 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: kingdom_history.css
+Date: June 2, 2025
+Author: Deathsgift66
+*/
+@import url('./root_theme.css');
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/history_bg.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--parchment);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-centered-container {
+  width: auto;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.history-item {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.history-item .date {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  margin-bottom: 0.25rem;
+}
