@@ -96,3 +96,55 @@ def record_losses(db: Session, kingdom_id: int, loss: int) -> None:
         {"loss": loss, "kid": kingdom_id},
     )
     db.commit()
+
+
+def create_spy_mission(
+    db: Session, kingdom_id: int, mission_type: str, target_id: int | None
+) -> int:
+    """Insert a new spy mission row and return its ID."""
+    row = db.execute(
+        text(
+            """
+            INSERT INTO spy_missions (kingdom_id, mission_type, target_id, status)
+            VALUES (:kid, :type, :tid, 'active')
+            RETURNING mission_id
+            """
+        ),
+        {"kid": kingdom_id, "type": mission_type, "tid": target_id},
+    ).fetchone()
+    db.commit()
+    return int(row[0])
+
+
+def list_spy_missions(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
+    """Return recent spy missions for a kingdom."""
+    rows = db.execute(
+        text(
+            """
+            SELECT mission_id, kingdom_id, mission_type, target_id, status,
+                   launched_at, completed_at
+              FROM spy_missions
+             WHERE kingdom_id = :kid
+             ORDER BY launched_at DESC
+             LIMIT :lim
+            """
+        ),
+        {"kid": kingdom_id, "lim": limit},
+    ).fetchall()
+    return [dict(r._mapping) for r in rows]
+
+
+def update_mission_status(db: Session, mission_id: int, status: str) -> None:
+    """Mark a mission complete with the given status."""
+    db.execute(
+        text(
+            """
+            UPDATE spy_missions
+               SET status = :st,
+                   completed_at = NOW()
+             WHERE mission_id = :mid
+            """
+        ),
+        {"st": status, "mid": mission_id},
+    )
+    db.commit()

@@ -392,6 +392,20 @@ class KingdomSpies(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+
+class SpyMission(Base):
+    """Active and completed spy missions."""
+
+    __tablename__ = 'spy_missions'
+
+    mission_id = Column(Integer, primary_key=True)
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
+    mission_type = Column(String)
+    target_id = Column(Integer)
+    status = Column(String, default='active')
+    launched_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True))
+
 class GameSetting(Base):
     __tablename__ = 'game_settings'
 

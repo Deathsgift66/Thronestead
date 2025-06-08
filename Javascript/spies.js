@@ -36,7 +36,8 @@ async function loadMissions() {
     listEl.innerHTML = '';
     (data.missions || []).forEach(m => {
       const div = document.createElement('div');
-      div.textContent = `${m.mission} targeting ${m.target_id}`;
+      const type = m.mission_type || m.mission;
+      div.textContent = `${type} targeting ${m.target_id} - ${m.status}`;
       listEl.appendChild(div);
     });
   } catch (e) {
