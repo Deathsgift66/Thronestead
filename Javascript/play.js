@@ -80,14 +80,33 @@ function bindEvents(profileExists) {
           user_id: currentUser.id,
           username: currentUser.user_metadata.username,
           display_name: currentUser.user_metadata.display_name,
-          email: currentUser.email
+          kingdom_name: kingdomName,
+          email: currentUser.email,
+          profile_bio: '',
+          profile_picture_url: '',
+          region,
+          kingdom_id: null,
+          alliance_id: null,
+          alliance_role: null,
+          active_policy: null,
+          active_laws: [],
+          is_admin: false,
+          is_banned: false,
+          is_deleted: false,
+          setup_complete: false
         });
         if (userErr && userErr.code !== '23505') throw userErr;
       }
 
       const { data: kingdomData, error: kErr } = await supabase
         .from('kingdoms')
-        .insert({ user_id: currentUser.id, kingdom_name: kingdomName, region })
+        .insert({
+          user_id: currentUser.id,
+          kingdom_name: kingdomName,
+          region,
+          prestige_score: 0,
+          avatar_url: ''
+        })
         .select('kingdom_id')
         .single();
       if (kErr) throw kErr;
