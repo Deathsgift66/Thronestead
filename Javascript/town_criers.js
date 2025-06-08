@@ -144,7 +144,7 @@ async function submitScroll() {
 
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('display_name')
+      .select('kingdom_name')
       .eq('user_id', user.id)
       .single();
 
@@ -152,7 +152,7 @@ async function submitScroll() {
 
     const payload = {
       author_id: user.id,
-      author_display_name: profile.display_name,
+      author_display_name: profile.kingdom_name,
       title: title,
       body: body
     };

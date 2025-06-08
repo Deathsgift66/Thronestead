@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // Prefill Form
-    document.getElementById('display_name').value = data.display_name || '';
     document.getElementById('kingdom_name').value = data.kingdom_name || '';
+    document.getElementById('username').value = data.username || '';
     document.getElementById('profile_bio').value = data.profile_bio || '';
     document.getElementById('email').value = user.email;
     document.getElementById('kingdom_banner').value = data.kingdom_banner || '';
@@ -67,8 +67,9 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
     if (!user) throw new Error('Unauthorized');
 
     const updates = {
-      display_name: document.getElementById('display_name').value,
+      display_name: document.getElementById('kingdom_name').value,
       kingdom_name: document.getElementById('kingdom_name').value,
+      username: document.getElementById('username').value,
       profile_bio: document.getElementById('profile_bio').value,
       kingdom_banner: document.getElementById('kingdom_banner').value,
       avatar_icon: document.getElementById('avatar_icon').value,
@@ -82,6 +83,15 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
       .from('users')
       .update(updates)
       .eq('user_id', user.id);
+
+    if (!updateError) {
+      await supabase.auth.updateUser({
+        data: {
+          display_name: updates.kingdom_name,
+          username: updates.username
+        }
+      });
+    }
 
     if (updateError) throw new Error('Failed to save changes: ' + updateError.message);
 
