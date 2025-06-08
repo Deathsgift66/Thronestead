@@ -343,6 +343,9 @@ CREATE TABLE public.notifications (
   link_action text,
   created_at timestamp with time zone DEFAULT now(),
   is_read boolean DEFAULT false,
+  expires_at timestamp with time zone,
+  source_system text,
+  last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT notifications_pkey PRIMARY KEY (notification_id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
 from ..database import get_db
 from ..models import Notification
@@ -26,7 +27,11 @@ def list_notifications(
     rows = (
         db.query(Notification)
         .filter(Notification.user_id == user_id)
-        .order_by(Notification.created_at.desc())
+        .filter(
+            (Notification.expires_at.is_(None))
+            | (Notification.expires_at > func.now())
+        )
+        .order_by(Notification.is_read.asc(), Notification.created_at.desc())
         .all()
     )
     return {
@@ -40,6 +45,9 @@ def list_notifications(
                 "link_action": r.link_action,
                 "created_at": r.created_at,
                 "is_read": r.is_read,
+                "expires_at": r.expires_at,
+                "source_system": r.source_system,
+                "last_updated": r.last_updated,
             }
             for r in rows
         ]
@@ -61,6 +69,7 @@ def mark_read(
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found")
     notif.is_read = True
+    notif.last_updated = func.now()
     db.commit()
     return {"message": "Marked read", "id": payload.notification_id}
 
@@ -71,7 +80,7 @@ def mark_all_read(
     db: Session = Depends(get_db),
 ):
     db.query(Notification).filter(Notification.user_id == user_id).update(
-        {"is_read": True}
+        {"is_read": True, "last_updated": func.now()}
     )
     db.commit()
     return {"message": "All marked read"}
@@ -85,4 +94,15 @@ def clear_all(
     db.query(Notification).filter(Notification.user_id == user_id).delete()
     db.commit()
     return {"message": "All cleared"}
+
+
+@router.post("/cleanup_expired")
+def cleanup_expired(db: Session = Depends(get_db)):
+    deleted = (
+        db.query(Notification)
+        .filter(Notification.expires_at.is_not(None), Notification.expires_at < func.now())
+        .delete()
+    )
+    db.commit()
+    return {"deleted": deleted}
 
