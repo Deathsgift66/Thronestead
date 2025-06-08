@@ -753,3 +753,11 @@ CREATE TABLE war_preplans (
     preplan_jsonb JSONB,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE TABLE alliance_war_preplans (
+    preplan_id SERIAL PRIMARY KEY,
+    alliance_war_id INTEGER REFERENCES alliance_wars(alliance_war_id) ON DELETE CASCADE,
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    preplan_jsonb JSONB NOT NULL,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
