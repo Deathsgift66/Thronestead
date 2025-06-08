@@ -64,27 +64,50 @@ def process_unit_combat(
             (remaining, remaining, other["movement_id"]),
         )
 
-        db.execute(
-            """
-            INSERT INTO combat_logs (
-                war_id, tick_number, event_type, attacker_unit_id,
-                defender_unit_id, position_x, position_y, damage_dealt,
-                morale_shift, notes
+        if war_type == "alliance":
+            db.execute(
+                """
+                INSERT INTO alliance_war_combat_logs (
+                    alliance_war_id, tick_number, event_type, attacker_unit_id,
+                    defender_unit_id, position_x, position_y, damage_dealt,
+                    morale_shift, notes
+                )
+                VALUES (%s, %s, 'attack', %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    war_id,
+                    tick,
+                    unit_id,
+                    other["movement_id"],
+                    other["position_x"],
+                    other["position_y"],
+                    casualties,
+                    0.0,
+                    "alliance",
+                ),
             )
-            VALUES (%s, %s, 'attack', %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                war_id,
-                tick,
-                unit_id,
-                other["movement_id"],
-                other["position_x"],
-                other["position_y"],
-                casualties,
-                0.0,
-                war_type,
-            ),
-        )
+        else:
+            db.execute(
+                """
+                INSERT INTO combat_logs (
+                    war_id, tick_number, event_type, attacker_unit_id,
+                    defender_unit_id, position_x, position_y, damage_dealt,
+                    morale_shift, notes
+                )
+                VALUES (%s, %s, 'attack', %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    war_id,
+                    tick,
+                    unit_id,
+                    other["movement_id"],
+                    other["position_x"],
+                    other["position_y"],
+                    casualties,
+                    0.0,
+                    war_type,
+                ),
+            )
 
 
 # ============================================

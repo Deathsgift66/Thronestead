@@ -59,8 +59,9 @@ CREATE TABLE public.alliance_war_combat_logs (
   notes text,
   timestamp timestamp without time zone DEFAULT now(),
   CONSTRAINT alliance_war_combat_logs_pkey PRIMARY KEY (combat_id),
-  CONSTRAINT alliance_war_combat_logs_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
+  CONSTRAINT alliance_war_combat_logs_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id) ON DELETE CASCADE
 );
+CREATE INDEX alliance_war_combat_logs_alliance_war_id_idx ON public.alliance_war_combat_logs(alliance_war_id);
 CREATE TABLE public.alliance_war_participants (
   alliance_war_id integer NOT NULL,
   kingdom_id integer NOT NULL,
