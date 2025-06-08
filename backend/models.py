@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, BigInteger, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Boolean, BigInteger, DateTime, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 from .database import Base
@@ -277,3 +277,16 @@ class Notification(Base):
     link_action = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
+
+
+class BlackMarketListing(Base):
+    """Active player listings on the Black Market."""
+
+    __tablename__ = 'black_market_listings'
+
+    listing_id = Column(Integer, primary_key=True)
+    seller_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    item = Column(String)
+    price = Column(Numeric)
+    quantity = Column(Integer)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -1,25 +1,101 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..models import BlackMarketListing, User
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market"])
 
 
-class MarketAction(BaseModel):
-    item_id: str
-    quantity: int | None = None
+class ListingPayload(BaseModel):
+    seller_id: str
+    item: str
+    price: float
+    quantity: int
+
+
+class BuyPayload(BaseModel):
+    listing_id: int
+    quantity: int
+
+
+class CancelPayload(BaseModel):
+    listing_id: int
+    seller_id: str
 
 
 @router.get("")
-async def get_market():
-    return {"listings": []}
-
-
-@router.post("/buy")
-async def buy_item(payload: MarketAction):
-    return {"message": "Purchase complete", "item_id": payload.item_id}
+def get_market(db: Session = Depends(get_db)):
+    rows = (
+        db.query(BlackMarketListing, User.username.label("seller"))
+        .join(User, User.user_id == BlackMarketListing.seller_id)
+        .order_by(BlackMarketListing.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    listings = [
+        {
+            "id": r.BlackMarketListing.listing_id,
+            "item": r.BlackMarketListing.item,
+            "price": float(r.BlackMarketListing.price),
+            "quantity": r.BlackMarketListing.quantity,
+            "seller": r.seller,
+        }
+        for r in rows
+    ]
+    return {"listings": listings}
 
 
 @router.post("/place")
-async def place_item(payload: MarketAction):
-    return {"message": "Listing placed", "item_id": payload.item_id}
+def place_item(payload: ListingPayload, db: Session = Depends(get_db)):
+    listing = BlackMarketListing(
+        seller_id=payload.seller_id,
+        item=payload.item,
+        price=payload.price,
+        quantity=payload.quantity,
+    )
+    db.add(listing)
+    db.commit()
+    db.refresh(listing)
+    return {"message": "Listing created", "listing_id": listing.listing_id}
 
+
+@router.post("/buy")
+def buy_item(payload: BuyPayload, db: Session = Depends(get_db)):
+    listing = (
+        db.query(BlackMarketListing)
+        .filter(BlackMarketListing.listing_id == payload.listing_id)
+        .first()
+    )
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if payload.quantity > listing.quantity:
+        raise HTTPException(status_code=400, detail="Not enough quantity")
+
+    if payload.quantity < listing.quantity:
+        listing.quantity -= payload.quantity
+        db.commit()
+    else:
+        db.delete(listing)
+        db.commit()
+
+    return {"message": "Purchase complete", "listing_id": payload.listing_id}
+
+
+@router.post("/cancel")
+def cancel_listing(payload: CancelPayload, db: Session = Depends(get_db)):
+    listing = (
+        db.query(BlackMarketListing)
+        .filter(
+            BlackMarketListing.listing_id == payload.listing_id,
+            BlackMarketListing.seller_id == payload.seller_id,
+        )
+        .first()
+    )
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    db.delete(listing)
+    db.commit()
+    return {"message": "Listing cancelled", "listing_id": payload.listing_id}
