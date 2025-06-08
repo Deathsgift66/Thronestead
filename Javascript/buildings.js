@@ -71,48 +71,47 @@ async function loadBuildings() {
       return;
     }
 
-    // ✅ Preload building catalogue
-    const { data: catalogueData, error: catalogueError } = await supabase
-      .from('building_catalogue')
-      .select('*');
+    // ✅ Preload building catalogue via API
+    const catRes = await fetch('/api/buildings/catalogue');
+    const catJson = await catRes.json();
+    const catalogueData = catJson.buildings || [];
 
-    if (catalogueError) {
-      throw new Error("Failed to load building catalogue.");
-    }
-
-    // ✅ Build lookup map
+    // ✅ Build lookup maps
     const catalogueMap = {};
     catalogueData.forEach(b => {
       catalogueMap[b.building_id] = b;
     });
 
+    const kingdomMap = {};
+    buildingsData.forEach(b => {
+      kingdomMap[b.building_id] = b.level;
+    });
+
     // ✅ Populate table
     tbody.innerHTML = "";
 
-    buildingsData.forEach(building => {
-      const catalog = catalogueMap[building.building_id];
-
-      if (!catalog) return; // Skip unknown building
-
-      const production = catalog.production_rate ? `${catalog.production_rate * building.level} ${catalog.production_type}` : "N/A";
-      const upkeep = catalog.upkeep ? `${catalog.upkeep * building.level}` : "None";
+    catalogueData.forEach(catalog => {
+      const level = kingdomMap[catalog.building_id] || 0;
+      const production = catalog.production_rate ? `${catalog.production_rate * level} ${catalog.production_type}` : "N/A";
+      const upkeep = catalog.upkeep ? `${catalog.upkeep * level}` : "None";
+      const label = level === 0 ? "Build" : "Upgrade";
 
       const row = document.createElement("tr");
 
       row.innerHTML = `
         <td>${escapeHTML(catalog.building_name)}</td>
-        <td>${building.level}</td>
+        <td>${level}</td>
         <td>${production}</td>
         <td>${upkeep}</td>
         <td>
-          <button class="action-btn upgrade-btn" data-building-id="${building.building_id}">Upgrade</button>
+          <button class="action-btn upgrade-btn" data-building-id="${catalog.building_id}">${label}</button>
         </td>
       `;
 
       tbody.appendChild(row);
     });
 
-    // ✅ Bind Upgrade buttons
+    // ✅ Bind Build/Upgrade buttons
     document.querySelectorAll(".upgrade-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const buildingId = btn.dataset["buildingId"];
