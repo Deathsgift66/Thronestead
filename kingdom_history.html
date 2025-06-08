@@ -1,0 +1,82 @@
+<!--
+Project Name: Kingmakers Rise Frontend
+File Name: kingdom_history.html
+Date: June 2, 2025
+Author: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Kingdom History | Kingmaker's Rise</title>
+  <meta name="description" content="Review your kingdom's story and major events in Kingmaker's Rise." />
+  <meta property="og:title" content="Kingdom History | Kingmaker's Rise" />
+  <meta property="og:description" content="Review your kingdom's story and major events in Kingmaker's Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/kingdom_history.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Kingdom History | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Review your kingdom's story and major events in Kingmaker's Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta name="keywords" content="Kingmaker's Rise, kingdom history, log, events" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/kingdom_history.html" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/kingdom_history.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/kingdom_history.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch('navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Kingdom History Banner">
+  Kingmaker's Rise — Kingdom History
+</header>
+
+<!-- Main Centered Layout -->
+<main class="main-centered-container" aria-label="Kingdom History Interface">
+
+  <!-- History Panel -->
+  <section class="alliance-members-container">
+    <h2>Kingdom History</h2>
+    <p>A chronological record of your kingdom's major events.</p>
+    <ul id="history-list" class="history-list">
+      <!-- JS populates -->
+    </ul>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="legal.html">View Legal Documents</a>
+  </div>
+</footer>
+
+</body>
+</html>

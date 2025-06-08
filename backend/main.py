@@ -33,6 +33,7 @@ from .routers import (
     wars,
     quests_router,
     projects_router,
+    kingdom_history,
 )
 from .database import engine
 from .models import Base
@@ -77,4 +78,5 @@ app.include_router(settings_router.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)
+app.include_router(kingdom_history.router)
 
