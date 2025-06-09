@@ -178,3 +178,13 @@ Columns:
 - `is_active` — whether the map can be reused
 - `map_source` — how the map was generated (`auto-generated`, `imported`, etc.)
 - `map_features` — JSON of global modifiers used by the battle engine
+
+## Table: `public.unit_counters`
+Defines counter relationships between unit types. Used by the battle engine to apply damage multipliers when one unit type is strong against another.
+
+Columns:
+- `unit_type` — attacking unit type
+- `countered_unit_type` — target unit being countered
+- `effectiveness_multiplier` — multiplier applied in combat
+- `source` — origin of the rule (`base`, `tech`, `event`)
+- `notes` — optional conditions or restrictions
