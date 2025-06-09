@@ -548,7 +548,11 @@ CREATE TABLE trade_logs (
     buyer_alliance_id  INTEGER,
     seller_alliance_id INTEGER,
     buyer_name         TEXT,
-    seller_name        TEXT
+    seller_name        TEXT,
+    trade_type         TEXT,
+    trade_status       TEXT DEFAULT 'completed',
+    initiated_by_system BOOLEAN DEFAULT FALSE,
+    last_updated       TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE black_market_listings (

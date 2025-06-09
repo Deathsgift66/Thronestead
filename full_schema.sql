@@ -598,6 +598,10 @@ CREATE TABLE public.trade_logs (
   seller_alliance_id integer,
   buyer_name text,
   seller_name text,
+  trade_type text,
+  trade_status text DEFAULT 'completed',
+  initiated_by_system boolean DEFAULT false,
+  last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT trade_logs_pkey PRIMARY KEY (trade_id),
   CONSTRAINT trade_logs_buyer_id_fkey FOREIGN KEY (buyer_id) REFERENCES public.users(user_id),
   CONSTRAINT trade_logs_seller_id_fkey FOREIGN KEY (seller_id) REFERENCES public.users(user_id)
