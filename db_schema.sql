@@ -144,7 +144,15 @@ CREATE TABLE training_queue (
     unit_id          INTEGER REFERENCES training_catalog(unit_id),
     unit_name        TEXT,
     quantity         INTEGER NOT NULL,
-    training_ends_at TIMESTAMP WITH TIME ZONE
+    training_ends_at TIMESTAMP WITH TIME ZONE,
+    started_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    status           TEXT DEFAULT 'queued',
+    training_speed_modifier NUMERIC DEFAULT 1.0,
+    xp_per_unit      INTEGER DEFAULT 0,
+    modifiers_applied JSONB DEFAULT '{}'::jsonb,
+    initiated_by     UUID REFERENCES users(user_id),
+    priority         INTEGER DEFAULT 1,
+    last_updated     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE training_history (
