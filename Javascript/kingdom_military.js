@@ -164,7 +164,7 @@ async function loadTrainingHistory() {
   container.innerHTML = "<p>Loading training history...</p>";
 
   try {
-    const res = await fetch("/api/kingdom_military/history");
+    const res = await fetch("/api/training-history?kingdom_id=1&limit=50");
     const data = await res.json();
 
     container.innerHTML = "";
@@ -178,7 +178,7 @@ async function loadTrainingHistory() {
 
     data.history.forEach(entry => {
       const li = document.createElement("li");
-      li.textContent = `${escapeHTML(entry.unit_name)} x${entry.quantity} — Completed: ${formatTimestamp(entry.completed_at)}`;
+      li.textContent = `[${formatTimestamp(entry.completed_at)}] Trained ${entry.quantity} ${escapeHTML(entry.unit_name)} (source: ${entry.source})`;
       list.appendChild(li);
     });
 

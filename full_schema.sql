@@ -643,6 +643,11 @@ CREATE TABLE public.training_history (
   unit_name text,
   quantity integer NOT NULL,
   completed_at timestamp with time zone,
+  source text,
+  initiated_at timestamp with time zone,
+  trained_by uuid,
+  xp_awarded integer DEFAULT 0,
+  modifiers_applied jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT training_history_pkey PRIMARY KEY (history_id),
   CONSTRAINT training_history_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT training_history_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES public.training_catalog(unit_id)
