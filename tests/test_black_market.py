@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base
-from backend.models import BlackMarketListing, User
+from backend.models import BlackMarketListing, TradeLog, User
 from backend.routers.black_market import (
     ListingPayload,
     BuyPayload,
@@ -50,12 +50,16 @@ def test_black_market_flow():
     market = get_market(db)
     assert market["listings"][0]["id"] == listing_id
 
-    buy_item(BuyPayload(listing_id=listing_id, quantity=3), db)
+    buy_item(BuyPayload(listing_id=listing_id, quantity=3, buyer_id=seller_id), db)
     listing = db.query(BlackMarketListing).get(listing_id)
     assert listing.quantity == 2
+    tlog = db.query(TradeLog).first()
+    assert tlog.quantity == 3 and tlog.trade_type == "black_market"
 
-    buy_item(BuyPayload(listing_id=listing_id, quantity=2), db)
+    buy_item(BuyPayload(listing_id=listing_id, quantity=2, buyer_id=seller_id), db)
     assert db.query(BlackMarketListing).get(listing_id) is None
+    tlog2 = db.query(TradeLog).order_by(TradeLog.trade_id.desc()).first()
+    assert tlog2.quantity == 2 and tlog2.trade_type == "black_market"
 
     res2 = place_item(
         ListingPayload(seller_id=seller_id, item="gems", price=5.0, quantity=1),

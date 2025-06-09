@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import BlackMarketListing, User
+from services.trade_log_service import record_trade
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market"])
 
@@ -18,6 +19,7 @@ class ListingPayload(BaseModel):
 class BuyPayload(BaseModel):
     listing_id: int
     quantity: int
+    buyer_id: str
 
 
 class CancelPayload(BaseModel):
@@ -79,6 +81,20 @@ def buy_item(payload: BuyPayload, db: Session = Depends(get_db)):
     else:
         db.delete(listing)
         db.commit()
+
+    record_trade(
+        db,
+        resource=listing.item,
+        quantity=payload.quantity,
+        unit_price=float(listing.price),
+        buyer_id=payload.buyer_id,
+        seller_id=str(listing.seller_id),
+        buyer_alliance_id=None,
+        seller_alliance_id=None,
+        buyer_name=None,
+        seller_name=None,
+        trade_type="black_market",
+    )
 
     return {"message": "Purchase complete", "listing_id": payload.listing_id}
 
