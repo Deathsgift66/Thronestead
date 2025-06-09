@@ -173,3 +173,8 @@ Columns:
 - `generated_by` — user/admin who generated the map
 - `map_name` — optional display name
 - `last_updated` — audit timestamp
+- `map_type` — type of battle (`battlefield`, `siege`, `skirmish`, etc.)
+- `tile_schema_version` — version of the tile JSON format
+- `is_active` — whether the map can be reused
+- `map_source` — how the map was generated (`auto-generated`, `imported`, etc.)
+- `map_features` — JSON of global modifiers used by the battle engine
