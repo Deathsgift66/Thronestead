@@ -236,6 +236,21 @@ CREATE TABLE kingdom_villages (
     last_updated TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE village_buildings (
+    village_id INTEGER REFERENCES kingdom_villages(village_id),
+    building_id INTEGER REFERENCES building_catalogue(building_id),
+    level INTEGER DEFAULT 0,
+    construction_started_at TIMESTAMPTZ,
+    construction_ends_at TIMESTAMPTZ,
+    is_under_construction BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_updated TIMESTAMPTZ DEFAULT NOW(),
+    constructed_by UUID,
+    active_modifiers JSONB DEFAULT '{}'::jsonb,
+    construction_status TEXT DEFAULT 'idle' CHECK (construction_status IN ('idle','queued','under_construction','paused','complete')),
+    PRIMARY KEY (village_id, building_id)
+);
+
 -- TECHNOLOGY & RESEARCH -----------------------------------------------------
 CREATE TABLE tech_catalogue (
     tech_code        TEXT PRIMARY KEY,
@@ -653,6 +668,23 @@ CREATE POLICY access_own_buildings ON kingdom_buildings
     auth.uid() = (
       SELECT user_id FROM kingdoms k
       WHERE k.kingdom_id = kingdom_buildings.kingdom_id
+    )
+  );
+
+-- Village buildings
+ALTER TABLE village_buildings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY access_own_village_buildings ON village_buildings
+  FOR ALL USING (
+    auth.uid() = (
+      SELECT user_id FROM kingdoms k
+      JOIN kingdom_villages v ON v.kingdom_id = k.kingdom_id
+      WHERE v.village_id = village_buildings.village_id
+    )
+  ) WITH CHECK (
+    auth.uid() = (
+      SELECT user_id FROM kingdoms k
+      JOIN kingdom_villages v ON v.kingdom_id = k.kingdom_id
+      WHERE v.village_id = village_buildings.village_id
     )
   );
 
