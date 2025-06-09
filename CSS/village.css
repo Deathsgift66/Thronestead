@@ -115,7 +115,8 @@ body {
 .building-list,
 .military-stats,
 .queue-list,
-.event-log {
+.event-log,
+.modifier-list {
   display: grid;
   gap: 1rem;
 }

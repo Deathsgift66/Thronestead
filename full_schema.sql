@@ -871,3 +871,19 @@ CREATE TABLE public.kingdom_vip_status (
   founder boolean DEFAULT false
 );
 
+CREATE TABLE public.village_modifiers (
+  modifier_id serial PRIMARY KEY,
+  village_id integer REFERENCES public.kingdom_villages(village_id),
+  resource_bonus jsonb DEFAULT '{}',
+  troop_bonus jsonb DEFAULT '{}',
+  construction_speed_bonus integer DEFAULT 0,
+  defense_bonus integer DEFAULT 0,
+  trade_bonus integer DEFAULT 0,
+  source text,
+  stacking_rules jsonb DEFAULT '{}',
+  expires_at timestamp with time zone,
+  applied_by uuid REFERENCES public.users(user_id),
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now()
+);
+

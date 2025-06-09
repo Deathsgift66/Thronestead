@@ -257,6 +257,25 @@ Columns:
 - `active_modifiers` — JSON of buffs or debuffs applied
 - `construction_status` — `idle`, `queued`, `under_construction`, `paused`, `complete`
 
+
+## Table: `public.village_modifiers`
+Tracks temporary or permanent bonuses applied to individual villages.
+
+Columns:
+- `modifier_id` — primary key
+- `village_id` — FK to `kingdom_villages.village_id`
+- `resource_bonus` — jsonb resource boosts
+- `troop_bonus` — jsonb combat bonuses
+- `construction_speed_bonus` — build speed percentage
+- `defense_bonus` — defensive bonus value
+- `trade_bonus` — trade efficiency boost
+- `source` — origin of the modifier
+- `stacking_rules` — jsonb stacking rules
+- `expires_at` — when the effect ends (null for permanent)
+- `applied_by` — user that triggered the bonus
+- `created_at` — timestamp applied
+- `last_updated` — timestamp last changed
+=======
 ## Table: `public.training_catalog`
 Defines base training times and costs for every troop type.
 
