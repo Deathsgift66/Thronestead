@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, BigInteger, DateTime, ForeignKey, Numeric
+from sqlalchemy import Column, Integer, String, Text, Boolean, BigInteger, Date, Time, DateTime, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 from .database import Base
@@ -7,9 +7,25 @@ class User(Base):
     __tablename__ = 'users'
     user_id = Column(UUID(as_uuid=True), primary_key=True)
     username = Column(String, unique=True, nullable=False)
-    display_name = Column(String, nullable=False)
+    display_name = Column(String)
     email = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    kingdom_name = Column(String)
+    profile_bio = Column(Text)
+    profile_picture_url = Column(String)
+    region = Column(String)
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    alliance_role = Column(String)
+    active_policy = Column(Integer)
+    active_laws = Column(JSONB, default=list)
+    is_admin = Column(Boolean, default=False)
+    is_banned = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False)
+    setup_complete = Column(Boolean, default=False)
+    sign_up_date = Column(Date, server_default=func.current_date())
+    sign_up_time = Column(Time(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 class PlayerMessage(Base):
     __tablename__ = 'player_messages'

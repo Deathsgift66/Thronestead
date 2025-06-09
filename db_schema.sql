@@ -12,18 +12,27 @@ CREATE TYPE IF NOT EXISTS resource_type AS ENUM (
 
 -- USERS & ACCOUNTS -----------------------------------------------------------
 CREATE TABLE users (
-    user_id         UUID PRIMARY KEY,
-    username        TEXT UNIQUE NOT NULL,
-    display_name    TEXT NOT NULL,
-    email           TEXT UNIQUE NOT NULL,
-    password_hash   TEXT NOT NULL,
-    kingdom_id      INTEGER,
-    alliance_id     INTEGER,
-    alliance_role   TEXT,
-    active_policy   INTEGER,
-    active_laws     INTEGER[] DEFAULT '{}',
-    setup_complete  BOOLEAN DEFAULT FALSE,
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    user_id UUID PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    display_name TEXT,
+    kingdom_name TEXT,
+    email TEXT UNIQUE NOT NULL,
+    profile_bio TEXT,
+    profile_picture_url TEXT,
+    region TEXT,
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    alliance_id INTEGER REFERENCES alliances(alliance_id),
+    alliance_role TEXT,
+    active_policy INTEGER,
+    active_laws INTEGER[] DEFAULT '{}',
+    is_admin BOOLEAN DEFAULT FALSE,
+    is_banned BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    setup_complete BOOLEAN DEFAULT FALSE,
+    sign_up_date DATE DEFAULT CURRENT_DATE,
+    sign_up_time TIME WITH TIME ZONE DEFAULT CURRENT_TIME,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- KINGDOMS ------------------------------------------------------------------

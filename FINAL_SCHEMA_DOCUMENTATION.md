@@ -1,5 +1,31 @@
 # Final Schema Documentation
 
+## Table: `public.users`
+Central profile table linking Supabase auth to game data. Stores all user and kingdom ownership details.
+
+Columns:
+- `user_id` — Supabase UUID primary key
+- `username` — unique handle
+- `display_name` — optional display name
+- `kingdom_name` — official kingdom name
+- `email` — login email
+- `profile_bio` — optional profile text
+- `profile_picture_url` — avatar URL
+- `region` — starting region
+- `kingdom_id` — FK to player kingdom
+- `alliance_id` — FK if part of an alliance
+- `alliance_role` — member role
+- `active_policy` — selected policy
+- `active_laws` — array of law IDs
+- `is_admin` — admin flag
+- `is_banned` — ban flag
+- `is_deleted` — soft delete
+- `setup_complete` — onboarding finished
+- `sign_up_date` — date signed up
+- `sign_up_time` — time signed up
+- `created_at` — row creation
+- `updated_at` — last profile edit
+
 ## Table: `public.kingdoms`
 
 Master table for all player kingdoms. Stores identity, status, progression, alliance membership and ranking scores.
