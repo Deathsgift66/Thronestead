@@ -256,3 +256,40 @@ Columns:
 - `constructed_by` — user who initiated the construction
 - `active_modifiers` — JSON of buffs or debuffs applied
 - `construction_status` — `idle`, `queued`, `under_construction`, `paused`, `complete`
+
+## Table: `public.training_catalog`
+Defines base training times and costs for every troop type.
+
+Columns:
+- `unit_id` — serial primary key
+- `unit_name` — name of the unit
+- `tier` — tech tier or level
+- `training_time` — time in seconds to train one unit
+- `cost_wood` — wood required
+- `cost_stone` — stone required
+- `cost_iron_ore` — iron ore required
+- `cost_gold` — gold required
+- `cost_gems` — gems required
+- `cost_food` — food required
+- `cost_coal` — coal required
+- `cost_livestock` — livestock required
+- `cost_clay` — clay required
+- `cost_flax` — flax required
+- `cost_tools` — tools required
+- `cost_wood_planks` — wood planks required
+- `cost_refined_stone` — refined stone required
+- `cost_iron_ingots` — iron ingots required
+- `cost_charcoal` — charcoal required
+- `cost_leather` — leather required
+- `cost_arrows` — arrows required
+- `cost_swords` — swords required
+- `cost_axes` — axes required
+- `cost_shields` — shields required
+- `cost_armour` — armour required
+- `cost_wagon` — wagons required
+- `cost_siege_weapons` — siege weapons required
+- `cost_jewelry` — jewelry required
+- `cost_spear` — spears required
+- `cost_horses` — horses required
+- `cost_pitchforks` — pitchforks required
+
