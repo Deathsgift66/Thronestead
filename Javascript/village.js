@@ -42,6 +42,9 @@ async function loadVillagePage() {
     // ✅ Load buildings
     await loadVillageBuildings(villageId);
 
+    // ✅ Load modifiers
+    await loadVillageModifiers(villageId);
+
     // ✅ Load military
     await loadVillageMilitary(villageId);
 
@@ -123,6 +126,42 @@ async function loadVillageBuildings(villageId) {
       <p>Level: ${building.level}</p>
     `;
     listEl.appendChild(card);
+  });
+}
+
+// ✅ Load Modifiers
+async function loadVillageModifiers(villageId) {
+  const modEl = document.getElementById('modifier-list');
+  if (!modEl) return;
+  modEl.innerHTML = "<p>Loading modifiers...</p>";
+
+  const { data: mods, error } = await supabase
+    .from('village_modifiers')
+    .select('*')
+    .eq('village_id', villageId);
+
+  if (error) {
+    console.error('❌ Error loading modifiers:', error);
+    modEl.innerHTML = '<p>Failed to load modifiers.</p>';
+    return;
+  }
+
+  modEl.innerHTML = '';
+  const now = Date.now();
+  if (!mods || mods.length === 0) {
+    modEl.innerHTML = '<p>No active modifiers.</p>';
+    return;
+  }
+
+  mods.forEach(mod => {
+    if (mod.expires_at && new Date(mod.expires_at).getTime() < now) return;
+    const card = document.createElement('div');
+    card.classList.add('modifier-card');
+    card.innerHTML = `
+      <h4>${mod.source}</h4>
+      <p>Expires: ${mod.expires_at ? new Date(mod.expires_at).toLocaleDateString() : 'Never'}</p>
+    `;
+    modEl.appendChild(card);
   });
 }
 

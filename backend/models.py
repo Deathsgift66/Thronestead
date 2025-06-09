@@ -444,6 +444,26 @@ class KingdomSpies(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class VillageModifier(Base):
+    """Temporary or permanent bonuses applied to a village."""
+
+    __tablename__ = 'village_modifiers'
+
+    modifier_id = Column(Integer, primary_key=True)
+    village_id = Column(Integer, index=True)
+    resource_bonus = Column(JSONB, default={})
+    troop_bonus = Column(JSONB, default={})
+    construction_speed_bonus = Column(Integer, default=0)
+    defense_bonus = Column(Integer, default=0)
+    trade_bonus = Column(Integer, default=0)
+    source = Column(String)
+    stacking_rules = Column(JSONB, default={})
+    expires_at = Column(DateTime(timezone=True))
+    applied_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class SpyMission(Base):
     """Active and completed spy missions."""
 
