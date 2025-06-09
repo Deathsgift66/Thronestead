@@ -158,3 +158,18 @@ Columns:
 - `attempt_count` — how many times the quest has been completed
 - `started_by` — user who started the quest
 
+## Table: `public.terrain_map`
+Stores the full battlefield grid for each war so replays and live battles use the same layout.
+
+Columns:
+- `terrain_id` — serial primary key
+- `war_id` — FK to `wars_tactical.war_id`
+- `tile_map` — JSONB tile grid
+- `generated_at` — timestamp when created
+- `map_width` — number of tiles horizontally
+- `map_height` — number of tiles vertically
+- `map_seed` — RNG seed used for generation
+- `map_version` — version of the tile format
+- `generated_by` — user/admin who generated the map
+- `map_name` — optional display name
+- `last_updated` — audit timestamp

@@ -33,6 +33,8 @@ class WarState:
     war_id: int
     tick: int
     castle_hp: int
+    map_width: int
+    map_height: int
     units: List[Unit] = field(default_factory=list)
     terrain: List[List[TerrainType]] = field(default_factory=list)
 

@@ -33,10 +33,14 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
         db.query(models.TerrainMap).filter(models.TerrainMap.war_id == war_id).first()
     )
     terrain = terrain_row.tile_map if terrain_row else TerrainGenerator().generate()
+    width = terrain_row.map_width if terrain_row else TerrainGenerator.WIDTH
+    height = terrain_row.map_height if terrain_row else TerrainGenerator.HEIGHT
     war = WarState(
         war_id=db_war.war_id,
         tick=db_war.battle_tick,
         castle_hp=db_war.castle_hp,
+        map_width=width,
+        map_height=height,
         terrain=terrain,
     )
     movements = (
@@ -117,7 +121,11 @@ def get_battle_terrain(war_id: int, db: Session = Depends(get_db)):
     )
     if not terrain_row:
         raise HTTPException(status_code=404, detail="terrain not found")
-    return {"tile_map": terrain_row.tile_map}
+    return {
+        "tile_map": terrain_row.tile_map,
+        "map_width": terrain_row.map_width,
+        "map_height": terrain_row.map_height,
+    }
 
 
 @router.get("/api/battle/units/{war_id}")
