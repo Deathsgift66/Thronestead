@@ -153,7 +153,12 @@ CREATE TABLE training_history (
     unit_id      INTEGER REFERENCES training_catalog(unit_id),
     unit_name    TEXT,
     quantity     INTEGER NOT NULL,
-    completed_at TIMESTAMP WITH TIME ZONE
+    completed_at TIMESTAMP WITH TIME ZONE,
+    source TEXT,
+    initiated_at TIMESTAMP WITH TIME ZONE,
+    trained_by UUID REFERENCES users(user_id),
+    xp_awarded INTEGER DEFAULT 0,
+    modifiers_applied JSONB DEFAULT '{}'::jsonb
 );
 
 -- MILITARY SLOTS ------------------------------------------------------------
