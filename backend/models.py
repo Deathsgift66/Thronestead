@@ -220,6 +220,7 @@ class UnitMovement(Base):
     war_id = Column(Integer, ForeignKey('wars_tactical.war_id'))
     kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
     unit_type = Column(String)
+    unit_level = Column(Integer)
     quantity = Column(Integer)
     position_x = Column(Integer)
     position_y = Column(Integer)
@@ -233,6 +234,9 @@ class UnitMovement(Base):
     morale = Column(Integer)
     status = Column(String)
     visible_enemies = Column(JSONB, default={})
+    issued_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class CombatLog(Base):

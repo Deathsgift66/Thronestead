@@ -685,6 +685,7 @@ CREATE TABLE public.unit_movements (
   war_id integer,
   kingdom_id integer,
   unit_type text,
+  unit_level integer,
   quantity integer,
   position_x integer,
   position_y integer,
@@ -698,9 +699,13 @@ CREATE TABLE public.unit_movements (
   morale double precision,
   status text,
   visible_enemies jsonb DEFAULT '{}'::jsonb,
+  issued_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT unit_movements_pkey PRIMARY KEY (movement_id),
   CONSTRAINT unit_movements_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
-  CONSTRAINT unit_movements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+  CONSTRAINT unit_movements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT unit_movements_issued_by_fkey FOREIGN KEY (issued_by) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.unit_stats (
   unit_type text NOT NULL,
