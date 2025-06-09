@@ -240,3 +240,19 @@ Columns:
 - `issued_by` — commander issuing the order
 - `created_at` — when the row was created
 - `last_updated` — last update time
+
+## Table: `public.village_buildings`
+Tracks the construction status and levels of buildings within each village.
+
+Columns:
+- `village_id` — FK to `kingdom_villages.village_id`
+- `building_id` — FK to `building_catalogue.building_id`
+- `level` — current level of the building
+- `construction_started_at` — when construction began
+- `construction_ends_at` — expected completion time
+- `is_under_construction` — boolean legacy flag
+- `created_at` — timestamp when the row was created
+- `last_updated` — last modification time
+- `constructed_by` — user who initiated the construction
+- `active_modifiers` — JSON of buffs or debuffs applied
+- `construction_status` — `idle`, `queued`, `under_construction`, `paused`, `complete`

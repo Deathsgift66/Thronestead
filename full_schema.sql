@@ -314,6 +314,21 @@ CREATE TABLE public.kingdom_villages (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_villages_pkey PRIMARY KEY (village_id)
 );
+
+CREATE TABLE public.village_buildings (
+  village_id integer NOT NULL REFERENCES public.kingdom_villages(village_id),
+  building_id integer NOT NULL REFERENCES public.building_catalogue(building_id),
+  level integer DEFAULT 0,
+  construction_started_at timestamp with time zone,
+  construction_ends_at timestamp with time zone,
+  is_under_construction boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  constructed_by uuid,
+  active_modifiers jsonb DEFAULT '{}'::jsonb,
+  construction_status text DEFAULT 'idle' CHECK (construction_status IN ('idle','queued','under_construction','paused','complete')),
+  CONSTRAINT village_buildings_pkey PRIMARY KEY (village_id, building_id)
+);
 CREATE TABLE public.kingdom_troops (
   kingdom_id integer NOT NULL,
   unit_type text NOT NULL,
