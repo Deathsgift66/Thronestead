@@ -47,6 +47,7 @@ the records created during onboarding.
 
 ✅ Kingdom troops table documented in [docs/kingdom_troops.md](docs/kingdom_troops.md)
 ✅ Training queue documented in [docs/training_queue.md](docs/training_queue.md)
+✅ Unit stats table documented in [docs/unit_stats.md](docs/unit_stats.md)
 ✅ Kingdoms master table documented in [docs/kingdoms.md](docs/kingdoms.md)
 ✅ Terrain map integration documented in [docs/terrain_map.md](docs/terrain_map.md)
 ✅ Final schema summary in [FINAL_SCHEMA_DOCUMENTATION.md](FINAL_SCHEMA_DOCUMENTATION.md)
