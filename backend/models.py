@@ -108,6 +108,28 @@ class AllianceVaultTransactionLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class TradeLog(Base):
+    """Canonical record of all resource trades in the economy."""
+
+    __tablename__ = 'trade_logs'
+
+    trade_id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    resource = Column(String)
+    quantity = Column(Integer)
+    unit_price = Column(Numeric)
+    buyer_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    seller_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    buyer_alliance_id = Column(Integer)
+    seller_alliance_id = Column(Integer)
+    buyer_name = Column(Text)
+    seller_name = Column(Text)
+    trade_type = Column(String)
+    trade_status = Column(String, default='completed')
+    initiated_by_system = Column(Boolean, default=False)
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class ProjectPlayerCatalogue(Base):
     __tablename__ = 'project_player_catalogue'
 

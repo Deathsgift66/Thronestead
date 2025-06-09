@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import AllianceVault, AllianceVaultTransactionLog, User
 from services.audit_service import log_action
+from services.trade_log_service import record_trade
 
 router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 
@@ -57,6 +58,19 @@ def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
     )
     db.add(log)
     db.commit()
+    record_trade(
+        db,
+        resource=payload.resource,
+        quantity=payload.amount,
+        unit_price=None,
+        buyer_id=None,
+        seller_id=payload.user_id,
+        buyer_alliance_id=payload.alliance_id,
+        seller_alliance_id=None,
+        buyer_name=None,
+        seller_name=None,
+        trade_type="alliance_trade",
+    )
     log_action(
         db,
         payload.user_id,
@@ -85,6 +99,19 @@ def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
     )
     db.add(log)
     db.commit()
+    record_trade(
+        db,
+        resource=payload.resource,
+        quantity=payload.amount,
+        unit_price=None,
+        buyer_id=payload.user_id,
+        seller_id=None,
+        buyer_alliance_id=None,
+        seller_alliance_id=payload.alliance_id,
+        buyer_name=None,
+        seller_name=None,
+        trade_type="alliance_trade",
+    )
     log_action(
         db,
         payload.user_id,
