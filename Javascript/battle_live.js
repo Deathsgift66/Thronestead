@@ -28,6 +28,9 @@ async function loadTerrain() {
   try {
     const response = await fetch(`/api/battle/terrain/${warId}`);
     const data = await response.json();
+    mapWidth = data.map_width;
+    mapHeight = data.map_height;
+    currentMapColumns = mapWidth;
     renderBattleMap(data.tile_map);
   } catch (err) {
     console.error('Error loading terrain:', err);
@@ -82,19 +85,18 @@ function refreshBattle() {
   loadUnits();
   loadCombatLogs();
 }
-
+let mapWidth = 60;
+let mapHeight = 20;
 let currentMapColumns = 60;
 
 function renderBattleMap(tileMap) {
   const battleMap = document.getElementById('battle-map');
   battleMap.innerHTML = '';
 
-  const rows = tileMap.length;
-  currentMapColumns = tileMap[0]?.length || 0;
-  battleMap.style.gridTemplateColumns = `repeat(${currentMapColumns}, 1fr)`;
+  battleMap.style.gridTemplateColumns = `repeat(${mapWidth}, 1fr)`;
 
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < currentMapColumns; col++) {
+  for (let row = 0; row < mapHeight; row++) {
+    for (let col = 0; col < mapWidth; col++) {
       const tile = document.createElement('div');
       tile.className = 'tile';
       const type = tileMap[row][col];
@@ -116,7 +118,7 @@ function renderUnits(units) {
   }
 
   units.forEach(unit => {
-    const index = unit.position_y * currentMapColumns + unit.position_x;
+    const index = unit.position_y * mapWidth + unit.position_x;
     if (!tiles[index]) return;
     const unitDiv = document.createElement('div');
     unitDiv.className = 'unit-icon';

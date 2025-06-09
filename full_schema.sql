@@ -576,6 +576,13 @@ CREATE TABLE public.terrain_map (
   war_id integer,
   tile_map jsonb,
   generated_at timestamp with time zone DEFAULT now(),
+  map_width integer,
+  map_height integer,
+  map_seed integer,
+  map_version integer DEFAULT 1,
+  generated_by uuid,
+  map_name text,
+  last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT terrain_map_pkey PRIMARY KEY (terrain_id),
   CONSTRAINT terrain_map_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );

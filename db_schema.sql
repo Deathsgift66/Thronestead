@@ -859,7 +859,14 @@ CREATE TABLE terrain_map (
     terrain_id SERIAL PRIMARY KEY,
     war_id INTEGER REFERENCES wars_tactical(war_id),
     tile_map JSONB,
-    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    map_width INTEGER,
+    map_height INTEGER,
+    map_seed INTEGER,
+    map_version INTEGER DEFAULT 1,
+    generated_by UUID REFERENCES users(user_id),
+    map_name TEXT,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE combat_logs (

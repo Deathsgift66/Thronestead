@@ -316,6 +316,15 @@ class TerrainMap(Base):
     war_id = Column(Integer, ForeignKey('wars_tactical.war_id'))
     tile_map = Column(JSONB)
     generated_at = Column(DateTime(timezone=True), server_default=func.now())
+    map_width = Column(Integer)
+    map_height = Column(Integer)
+    map_seed = Column(Integer)
+    map_version = Column(Integer, default=1)
+    generated_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    map_name = Column(String)
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class UnitStat(Base):
