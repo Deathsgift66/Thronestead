@@ -854,6 +854,7 @@ CREATE TABLE unit_movements (
     war_id INTEGER REFERENCES wars_tactical(war_id),
     kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
     unit_type TEXT,
+    unit_level INTEGER,
     quantity INTEGER,
     position_x INTEGER,
     position_y INTEGER,
@@ -865,7 +866,11 @@ CREATE TABLE unit_movements (
     fallback_point_y INTEGER,
     withdraw_threshold_percent INTEGER,
     morale FLOAT,
-    status TEXT
+    status TEXT,
+    visible_enemies JSONB DEFAULT '{}'::jsonb,
+    issued_by UUID REFERENCES users(user_id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE terrain_map (

@@ -188,3 +188,29 @@ Columns:
 - `effectiveness_multiplier` — multiplier applied in combat
 - `source` — origin of the rule (`base`, `tech`, `event`)
 - `notes` — optional conditions or restrictions
+
+## Table: `public.unit_movements`
+Tracks live unit orders for each tactical battle.
+
+Columns:
+- `movement_id` — primary key
+- `war_id` — FK to `wars_tactical.war_id`
+- `kingdom_id` — owning kingdom
+- `unit_type` — troop type
+- `unit_level` — level of the unit stack
+- `quantity` — number of troops
+- `position_x` — current X tile
+- `position_y` — current Y tile
+- `stance` — movement stance
+- `movement_path` — JSON path to follow
+- `target_priority` — preferred targets
+- `patrol_zone` — patrol area JSON
+- `fallback_point_x` — fallback X coordinate
+- `fallback_point_y` — fallback Y coordinate
+- `withdraw_threshold_percent` — morale threshold to retreat
+- `morale` — current morale
+- `status` — active/retreating/etc.
+- `visible_enemies` — cached visible enemy IDs
+- `issued_by` — commander issuing the order
+- `created_at` — when the row was created
+- `last_updated` — last update time
