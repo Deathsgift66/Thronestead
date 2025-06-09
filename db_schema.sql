@@ -1026,3 +1026,18 @@ CREATE POLICY access_own_kingdom_history ON kingdom_history_log
       WHERE k.kingdom_id = kingdom_history_log.kingdom_id
     )
   );
+
+-- Village Production Tracking ----------------------------------------------
+CREATE TABLE village_production (
+    village_id INTEGER REFERENCES kingdom_villages(village_id),
+    resource_type TEXT,
+    amount_produced NUMERIC DEFAULT 0,
+    production_rate NUMERIC DEFAULT 0,
+    active_modifiers JSONB DEFAULT '{}'::jsonb,
+    last_collected_at TIMESTAMP WITH TIME ZONE,
+    collection_method TEXT CHECK (collection_method IN ('automatic','manual','caravan')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by UUID REFERENCES users(user_id),
+    PRIMARY KEY (village_id, resource_type)
+);
