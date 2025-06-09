@@ -21,7 +21,6 @@ def create_user(db):
         username="tester",
         display_name="Test User",
         email="t@example.com",
-        password_hash="x",
     )
     db.add(user)
     db.commit()
