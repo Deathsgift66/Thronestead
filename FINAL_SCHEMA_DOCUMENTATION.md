@@ -276,6 +276,21 @@ Columns:
 - `created_at` — timestamp applied
 - `last_updated` — timestamp last changed
 =======
+## Table: `public.village_production`
+Tracks accumulated resources and production rates for each village.
+
+Columns:
+- `village_id` — FK to `kingdom_villages.village_id`
+- `resource_type` — resource being produced
+- `amount_produced` — uncollected amount
+- `production_rate` — units produced per hour
+- `active_modifiers` — jsonb of bonuses in effect
+- `last_collected_at` — when the player last claimed resources
+- `collection_method` — `automatic`, `manual`, or `caravan`
+- `created_at` — row initialization time
+- `last_updated` — last sync time
+- `updated_by` — user or system that modified the row
+=======
 ## Table: `public.training_catalog`
 Defines base training times and costs for every troop type.
 

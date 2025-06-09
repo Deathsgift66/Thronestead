@@ -464,6 +464,23 @@ class VillageModifier(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class VillageProduction(Base):
+    """Real-time resource production tracking for each village."""
+
+    __tablename__ = 'village_production'
+
+    village_id = Column(Integer, ForeignKey('kingdom_villages.village_id'), primary_key=True)
+    resource_type = Column(String, primary_key=True)
+    amount_produced = Column(Numeric, default=0)
+    production_rate = Column(Numeric, default=0)
+    active_modifiers = Column(JSONB, default={})
+    last_collected_at = Column(DateTime(timezone=True))
+    collection_method = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+
+
 class SpyMission(Base):
     """Active and completed spy missions."""
 

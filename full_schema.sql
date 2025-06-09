@@ -887,3 +887,17 @@ CREATE TABLE public.village_modifiers (
   last_updated timestamp with time zone DEFAULT now()
 );
 
+CREATE TABLE public.village_production (
+  village_id integer NOT NULL REFERENCES public.kingdom_villages(village_id),
+  resource_type text NOT NULL,
+  amount_produced numeric DEFAULT 0,
+  production_rate numeric DEFAULT 0,
+  active_modifiers jsonb DEFAULT '{}',
+  last_collected_at timestamp with time zone,
+  collection_method text CHECK (collection_method IN ('automatic','manual','caravan')),
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  updated_by uuid REFERENCES public.users(user_id),
+  CONSTRAINT village_production_pkey PRIMARY KEY (village_id, resource_type)
+);
+
