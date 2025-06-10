@@ -7,6 +7,7 @@ Author: Deathsgift66
 // Hardened Admin Audit Log Page — with Supabase auth, loading, error handling, and formatting
 
 import { supabase } from './supabaseClient.js';
+let eventSource;
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
@@ -35,6 +36,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Initial load
   await loadAuditLog();
+
+  // ✅ Real-time updates via SSE
+  try {
+    eventSource = new EventSource('/api/admin/audit-log/stream');
+    eventSource.onmessage = (ev) => {
+      const log = JSON.parse(ev.data);
+      prependLogRow(log);
+    };
+  } catch (err) {
+    console.error('SSE connection failed', err);
+  }
+  window.addEventListener('beforeunload', () => {
+    if (eventSource) eventSource.close();
+  });
 });
 
 // ✅ Load Audit Log
@@ -75,9 +90,9 @@ async function loadAuditLog() {
       const row = document.createElement("tr");
 
       row.innerHTML = `
-        <td>${formatTimestamp(log.time)}</td>
+        <td>${formatTimestamp(log.created_at)}</td>
         <td>${escapeHTML(log.action)}</td>
-        <td>${escapeHTML(log.admin)}</td>
+        <td>${escapeHTML(log.user_id || '')}</td>
         <td>${escapeHTML(log.details)}</td>
       `;
 
@@ -89,6 +104,21 @@ async function loadAuditLog() {
     tbody.innerHTML = `
       <tr><td colspan="4">Failed to load audit log.</td></tr>
     `;
+  }
+}
+
+function prependLogRow(log) {
+  const tbody = document.getElementById('audit-log-body');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>${formatTimestamp(log.created_at)}</td>
+    <td>${escapeHTML(log.action)}</td>
+    <td>${escapeHTML(log.user_id || '')}</td>
+    <td>${escapeHTML(log.details)}</td>
+  `;
+  tbody.prepend(row);
+  if (tbody.children.length > 100) {
+    tbody.removeChild(tbody.lastChild);
   }
 }
 
