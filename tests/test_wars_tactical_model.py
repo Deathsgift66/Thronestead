@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base
-from backend.models import WarsTactical
+from backend.models import WarsTactical, War
 
 
 def test_wars_tactical_model_creation():
@@ -11,7 +11,10 @@ def test_wars_tactical_model_creation():
     Base.metadata.create_all(engine)
     db = Session()
 
-    wt = WarsTactical(attacker_kingdom_id=1, defender_kingdom_id=2, phase="alert")
+    base_war = War(attacker_name="A", defender_name="B", status="active")
+    db.add(base_war)
+    db.flush()
+    wt = WarsTactical(war_id=base_war.war_id, attacker_kingdom_id=1, defender_kingdom_id=2, phase="alert")
     db.add(wt)
     db.commit()
 

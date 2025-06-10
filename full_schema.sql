@@ -195,6 +195,7 @@ CREATE TABLE public.combat_logs (
   CONSTRAINT combat_logs_pkey PRIMARY KEY (combat_id),
   CONSTRAINT combat_logs_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );
+CREATE INDEX combat_logs_war_id_idx ON public.combat_logs(war_id);
 CREATE TABLE public.kingdom_buildings (
   kingdom_id integer NOT NULL,
   building_id integer NOT NULL,
@@ -726,9 +727,11 @@ CREATE TABLE public.unit_movements (
   CONSTRAINT unit_movements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT unit_movements_issued_by_fkey FOREIGN KEY (issued_by) REFERENCES public.users(user_id)
 );
+CREATE INDEX unit_movements_war_id_idx ON public.unit_movements(war_id);
 CREATE TABLE public.unit_stats (
   unit_type text NOT NULL,
   tier integer NOT NULL,
+  version_tag text DEFAULT 'v1',
   class text NOT NULL,
   description text,
   hp integer NOT NULL,
@@ -798,6 +801,7 @@ CREATE TABLE public.war_scores (
   CONSTRAINT war_scores_pkey PRIMARY KEY (war_id),
   CONSTRAINT war_scores_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );
+CREATE INDEX war_scores_war_id_idx ON public.war_scores(war_id);
 CREATE TABLE public.wars (
   war_id integer NOT NULL DEFAULT nextval('wars_war_id_seq'::regclass),
   attacker_id uuid,
@@ -848,6 +852,7 @@ CREATE TABLE public.wars_tactical (
   weather text,
   submitted_by uuid,
   CONSTRAINT wars_tactical_pkey PRIMARY KEY (war_id),
+  CONSTRAINT wars_tactical_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars(war_id) ON DELETE CASCADE,
   CONSTRAINT wars_tactical_attacker_kingdom_id_fkey FOREIGN KEY (attacker_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT wars_tactical_defender_kingdom_id_fkey FOREIGN KEY (defender_kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
