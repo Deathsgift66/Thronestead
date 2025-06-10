@@ -29,13 +29,18 @@ function bindForms() {
   document.getElementById('treaty-form').addEventListener('submit', submitTreatyProposal);
   document.getElementById('war-form').addEventListener('submit', submitWarDeclaration);
 
+  const recipientInput = document.getElementById('msg-recipient');
+  recipientInput.addEventListener('input', () => loadRecipientSuggestions(recipientInput.value));
+  if (recipientInput.value) loadRecipientSuggestions(recipientInput.value);
+
   // Draft saving
   ['msg-recipient','msg-content','notice-title','notice-message','notice-category','notice-link','treaty-partner','treaty-type','war-defender','war-reason']
     .forEach(id => setupDraft(id));
 
   // Live previews
   document.getElementById('msg-content').addEventListener('input', () => {
-    document.getElementById('msg-preview').textContent = document.getElementById('msg-content').value;
+    const val = document.getElementById('msg-content').value;
+    document.getElementById('msg-preview').textContent = `${val.length} chars\n${val}`;
   });
   document.getElementById('notice-message').addEventListener('input', () => {
     document.getElementById('notice-preview').textContent = document.getElementById('notice-message').value;
@@ -55,6 +60,31 @@ function setupDraft(id) {
   el.value = localStorage.getItem(storageKey(id)) || '';
   el.addEventListener('input', () => {
     localStorage.setItem(storageKey(id), el.value);
+  });
+}
+
+// Fetch recipient suggestions from Supabase
+async function loadRecipientSuggestions(query) {
+  if (!query) {
+    document.getElementById('recipient-list').innerHTML = '';
+    return;
+  }
+  const { data, error } = await supabase
+    .from('users')
+    .select('user_id, username')
+    .ilike('username', `${query}%`)
+    .limit(5);
+  if (error) {
+    console.error('Suggestion error', error);
+    return;
+  }
+  const list = document.getElementById('recipient-list');
+  list.innerHTML = '';
+  (data || []).forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.user_id;
+    opt.textContent = u.username;
+    list.appendChild(opt);
   });
 }
 

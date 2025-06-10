@@ -11,6 +11,15 @@ body {
   min-height: 100vh;
 }
 
+@media (max-width: 600px) {
+  .tabs {
+    flex-direction: column;
+  }
+  .tab {
+    border-bottom: 1px solid var(--gold);
+  }
+}
+
 .main-container {
   width: auto;
   max-width: 1200px;
@@ -77,4 +86,9 @@ body {
   padding: 1rem;
   background: var(--stone-panel);
   border: 1px dashed var(--gold);
+}
+
+datalist option {
+  background: var(--parchment-dark);
+  color: var(--ink);
 }
