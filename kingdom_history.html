@@ -39,7 +39,7 @@ Author: Deathsgift66
   <script type="module" src="Javascript/components/authGuard.js"></script>
 </head>
 
-<body>
+<body data-theme="parchment">
 
 <!-- Navbar -->
 <div id="navbar-container"></div>
@@ -60,10 +60,10 @@ Author: Deathsgift66
 <main class="main-centered-container" aria-label="Kingdom History Interface">
 
   <!-- Timeline Panel -->
-  <section class="history-section">
-    <h2>Kingdom Timeline</h2>
-    <ul id="timeline" class="timeline"></ul>
-  </section>
+    <section class="history-section">
+      <h2>Kingdom Timeline</h2>
+      <ul id="timeline" class="timeline" aria-live="polite"></ul>
+    </section>
 
   <!-- Achievement Grid -->
   <section class="history-section">
@@ -73,22 +73,22 @@ Author: Deathsgift66
 
   <!-- Collapsible Logs -->
   <section id="war-log-panel" class="collapsible">
-    <h3>Past Wars</h3>
+    <h3><span class="chevron">▶</span> Past Wars</h3>
     <ul id="war-log"></ul>
   </section>
 
   <section id="project-log-panel" class="collapsible">
-    <h3>Project Activity</h3>
+    <h3><span class="chevron">▶</span> Project Activity</h3>
     <ul id="project-log"></ul>
   </section>
 
   <section id="quest-log-panel" class="collapsible">
-    <h3>Quest Attempts</h3>
+    <h3><span class="chevron">▶</span> Quest Attempts</h3>
     <ul id="quest-log"></ul>
   </section>
 
   <section id="training-log-panel" class="collapsible">
-    <h3>Training History</h3>
+    <h3><span class="chevron">▶</span> Training History</h3>
     <ul id="training-log"></ul>
   </section>
 
