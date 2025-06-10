@@ -79,16 +79,17 @@ async function renderVisibleTiles() {
   const startX = Math.floor(-offsetX / TILE_SIZE) - Math.floor(cols / 2);
   const startY = Math.floor(-offsetY / TILE_SIZE) - Math.floor(rows / 2);
 
-  const { data: tiles, error } = await supabase
-    .from('world_tiles')
-    .select('*')
-    .gte('x', startX)
-    .lte('x', startX + cols)
-    .gte('y', startY)
-    .lte('y', startY + rows);
+  const { data: mapRow, error } = await supabase
+    .from('terrain_map')
+    .select('tile_map')
+    .limit(1)
+    .single();
 
   if (error) return console.error('Tile fetch failed', error);
 
+  const tiles = (mapRow?.tile_map?.tiles || [])
+    .filter(t => t.x >= startX && t.x <= startX + cols &&
+                t.y >= startY && t.y <= startY + rows);
   tiles.forEach(tile => drawTile(tile));
 }
 
