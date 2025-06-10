@@ -7,10 +7,25 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentSession;
+let researchChannel;
+
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js protects this page → no duplicate session check
+  // ✅ Validate session
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  currentSession = session;
+
   // ✅ Initial load
   await loadResearchNexus();
+});
+
+window.addEventListener('beforeunload', () => {
+  if (researchChannel) supabase.removeChannel(researchChannel);
 });
 
 // ✅ Load Research Nexus
@@ -45,6 +60,20 @@ async function loadResearchNexus() {
 
     const kingdomId = userData.kingdom_id;
 
+    if (!researchChannel) {
+      researchChannel = supabase
+        .channel(`research-${kingdomId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'kingdom_research_tracking',
+          filter: `kingdom_id=eq.${kingdomId}`
+        }, () => {
+          loadResearchNexus();
+        })
+        .subscribe();
+    }
+
     // ✅ Load tech catalogue
     const { data: catalogueData, error: catalogueError } = await supabase
       .from('tech_catalogue')
@@ -55,13 +84,16 @@ async function loadResearchNexus() {
 
     if (catalogueError) throw catalogueError;
 
-    // ✅ Load kingdom research tracking
-    const { data: trackingData, error: trackingError } = await supabase
-      .from('kingdom_research_tracking')
-      .select('*')
-      .eq('kingdom_id', kingdomId);
-
-    if (trackingError) throw trackingError;
+    // ✅ Load kingdom research tracking via API
+    const res = await fetch('/api/kingdom/research', {
+      headers: {
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      }
+    });
+    const apiData = await res.json();
+    if (!res.ok) throw new Error(apiData.detail || 'Failed to load research');
+    const trackingData = apiData.research;
 
     // ✅ Separate completed and active research
     const activeResearch = trackingData.find(t => t.status === "active");
@@ -170,7 +202,11 @@ function showTechDetails(tech, isCompleted, isActive) {
       try {
         const res = await fetch("/api/kingdom/start_research", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentSession.access_token}`,
+            "X-User-ID": currentSession.user.id
+          },
           body: JSON.stringify({ tech_code: tech.tech_code })
         });
 
