@@ -3,7 +3,15 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base
 from backend.models import User, AllianceWar, AllianceWarPreplan
-from backend.routers.alliance_wars import list_wars, submit_preplan, get_preplan
+from backend.routers.alliance_wars import (
+    list_wars,
+    submit_preplan,
+    get_preplan,
+    declare_war,
+    respond_war,
+    DeclarePayload,
+    RespondPayload,
+)
 
 
 def setup_db():
@@ -63,3 +71,27 @@ def test_get_preplan_returns_plan():
 
     res = get_preplan(6, user_id=uid, db=db)
     assert res["plan"] == {"units": ["a"]}
+
+
+def test_declare_war_creates_record():
+    Session = setup_db()
+    db = Session()
+    uid = seed_user(db)
+
+    res = declare_war(DeclarePayload(defender_alliance_id=2), user_id=uid, db=db)
+    row = db.query(AllianceWar).filter_by(attacker_alliance_id=1, defender_alliance_id=2).first()
+    assert row is not None
+    assert row.war_status == "pending"
+    assert res["status"] == "pending"
+
+
+def test_accept_war_updates_status():
+    Session = setup_db()
+    db = Session()
+    uid = seed_user(db)
+    db.add(AllianceWar(alliance_war_id=10, attacker_alliance_id=2, defender_alliance_id=1, war_status="pending", phase="alert"))
+    db.commit()
+
+    respond_war(RespondPayload(alliance_war_id=10, action="accept"), user_id=uid, db=db)
+    row = db.query(AllianceWar).filter_by(alliance_war_id=10).first()
+    assert row.war_status == "active"

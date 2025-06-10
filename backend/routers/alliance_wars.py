@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from .progression_router import get_user_id, get_kingdom_id
-from services.audit_service import log_action
+from services.audit_service import log_action, log_alliance_activity
+from ..models import Notification
 
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
 
@@ -33,6 +35,85 @@ def authorize_war_access(db: Session, user_id: str, war_id: int) -> None:
         raise HTTPException(status_code=404, detail="War not found")
     if aid not in row:
         raise HTTPException(status_code=403, detail="Access denied")
+
+
+class DeclarePayload(BaseModel):
+    defender_alliance_id: int
+
+
+class RespondPayload(BaseModel):
+    alliance_war_id: int
+    action: str
+
+
+@router.post("/declare")
+def declare_war(
+    payload: DeclarePayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    attacker = get_alliance_id(db, user_id)
+    row = db.execute(
+        text(
+            "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "
+            "VALUES (:att, :def, 'alert', 'pending') RETURNING alliance_war_id"
+        ),
+        {"att": attacker, "def": payload.defender_alliance_id},
+    ).fetchone()
+    db.commit()
+    war_id = row[0]
+    log_alliance_activity(db, attacker, user_id, "Alliance War Declared", str(war_id))
+    defenders = db.execute(
+        text("SELECT user_id FROM alliance_members WHERE alliance_id = :aid"),
+        {"aid": payload.defender_alliance_id},
+    ).fetchall()
+    for (uid,) in defenders:
+        db.add(
+            Notification(
+                user_id=uid,
+                title="Alliance Under Attack",
+                message="Your alliance has been attacked!",
+                category="war",
+                source_system="war",
+            )
+        )
+    db.commit()
+    return {"status": "pending", "alliance_war_id": war_id}
+
+
+@router.post("/respond")
+def respond_war(
+    payload: RespondPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid = get_alliance_id(db, user_id)
+    row = db.execute(
+        text(
+            "SELECT attacker_alliance_id, defender_alliance_id FROM alliance_wars WHERE alliance_war_id = :wid"
+        ),
+        {"wid": payload.alliance_war_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="War not found")
+    if aid not in row:
+        raise HTTPException(status_code=403, detail="Access denied")
+    if payload.action == "accept":
+        status = "active"
+        db.execute(
+            text(
+                "UPDATE alliance_wars SET war_status = :st, phase = 'battle', start_date = now() WHERE alliance_war_id = :wid"
+            ),
+            {"st": status, "wid": payload.alliance_war_id},
+        )
+    else:
+        status = "cancelled"
+        db.execute(
+            text("UPDATE alliance_wars SET war_status = :st WHERE alliance_war_id = :wid"),
+            {"st": status, "wid": payload.alliance_war_id},
+        )
+    db.commit()
+    return {"status": status}
 
 
 @router.get("/list")
