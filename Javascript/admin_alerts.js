@@ -11,12 +11,24 @@ const REFRESH_MS = 30000;
 
 
 // ✅ On page load
+let realtimeSub;
 document.addEventListener('DOMContentLoaded', () => {
   loadAlerts();
   setInterval(loadAlerts, REFRESH_MS);
 
+  realtimeSub = supabase
+    .channel('admin_alerts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, () => {
+      loadAlerts();
+    })
+    .subscribe();
+
   document.getElementById('refresh-alerts').addEventListener('click', loadAlerts);
   document.getElementById('clear-filters').addEventListener('click', clearFilters);
+});
+
+window.addEventListener('beforeunload', () => {
+  realtimeSub?.unsubscribe();
 });
 
 // ✅ Load alerts from database
@@ -107,14 +119,15 @@ async function postAdminAction(endpoint, payload) {
 // Utility Functions
 // =====================
 function getFilters() {
-  return {
-    start: document.getElementById('filter-start').value,
-    end: document.getElementById('filter-end').value,
-    type: document.getElementById('filter-alert-type').value,
-    severity: document.getElementById('filter-severity').value,
-    kingdom: document.getElementById('filter-kingdom').value,
-    alliance: document.getElementById('filter-alliance').value,
-  };
+  const entries = [
+    ['start', document.getElementById('filter-start').value],
+    ['end', document.getElementById('filter-end').value],
+    ['type', document.getElementById('filter-alert-type').value],
+    ['severity', document.getElementById('filter-severity').value],
+    ['kingdom', document.getElementById('filter-kingdom').value],
+    ['alliance', document.getElementById('filter-alliance').value],
+  ];
+  return Object.fromEntries(entries.filter(([, v]) => v));
 }
 
 function clearFilters() {
