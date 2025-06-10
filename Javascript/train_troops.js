@@ -8,10 +8,14 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let troopLookup = new Map();
+let timerHandles = [];
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
   initToggleButtons();
   await loadGrandMusterHall();
+  setInterval(loadGrandMusterHall, 30000);
 });
 
 // ✅ Initialize Toggle Buttons
@@ -102,6 +106,7 @@ function renderTroopCatalogue(troops) {
   }
 
   troops.forEach(troop => {
+    troopLookup.set(troop.unit_id, troop);
     const card = document.createElement("div");
     card.classList.add("troop-card");
 
@@ -131,15 +136,18 @@ function renderTrainingQueue(queue) {
     const card = document.createElement("div");
     card.classList.add("queue-card");
 
-    const endsIn = Math.max(0, Math.floor((new Date(entry.training_ends_at).getTime() - Date.now()) / 1000));
+    const endMs = new Date(entry.training_ends_at).getTime();
+    const endsIn = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
 
+    card.dataset.end = endMs;
     card.innerHTML = `
       <h4>${escapeHTML(entry.unit_name)} x ${entry.quantity}</h4>
-      <p>Ends In: ${formatTime(endsIn)}</p>
+      <p>Ends In: <span class="countdown">${formatTime(endsIn)}</span></p>
     `;
 
     queueEl.appendChild(card);
   });
+  startQueueTimers();
 }
 
 // ✅ Render Training History
@@ -166,15 +174,38 @@ function renderTrainingHistory(history) {
   });
 }
 
+function startQueueTimers() {
+  timerHandles.forEach(id => clearInterval(id));
+  timerHandles = [];
+  document.querySelectorAll('.queue-card[data-end]').forEach(card => {
+    const end = parseInt(card.dataset.end, 10);
+    const span = card.querySelector('.countdown');
+    if (!span) return;
+    const update = () => {
+      const secs = Math.max(0, Math.floor((end - Date.now()) / 1000));
+      span.textContent = formatTime(secs);
+    };
+    update();
+    const id = setInterval(update, 1000);
+    timerHandles.push(id);
+  });
+}
+
 // ✅ Train Troop Action
 async function trainTroop(unitId) {
   if (!confirm(`Train 10 units of this troop?`)) return;
 
   try {
-    const res = await fetch("/api/kingdom/train_troop", {
+    const troop = troopLookup.get(unitId) || {};
+    const res = await fetch("/api/training_queue/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ unit_id: unitId, quantity: 10 })
+      body: JSON.stringify({
+        unit_id: unitId,
+        unit_name: troop.unit_name,
+        quantity: 10,
+        base_training_seconds: troop.training_time || 60,
+      });
     });
 
     const result = await res.json();

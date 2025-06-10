@@ -12,11 +12,17 @@ import { DataSet, Network } from 'https://cdn.jsdelivr.net/npm/vis-network/stand
 
 let network = null;
 let allTreaties = [];
+let realtimeSub;
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
   initControls();
   await loadTreatyWeb();
+  subscribeToTreatyChanges();
+});
+
+window.addEventListener('beforeunload', () => {
+  realtimeSub?.unsubscribe();
 });
 
 // ✅ Initialize Control Buttons
@@ -54,26 +60,16 @@ function initControls() {
 // ✅ Load Treaty Web Data and Render Graph
 async function loadTreatyWeb() {
   try {
-    // ✅ Load alliances
-    const { data: alliances, error: alliancesError } = await supabase
-      .from('alliances')
-      .select('alliance_id, name');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-    if (alliancesError) throw alliancesError;
-
-    // ✅ Load kingdoms
-    const { data: kingdoms, error: kingdomsError } = await supabase
-      .from('users')
-      .select('kingdom_id, kingdom_name');
-
-    if (kingdomsError) throw kingdomsError;
-
-    // ✅ Load treaties
-    const { data: treaties, error: treatiesError } = await supabase
-      .from('alliance_treaties')
-      .select('*');
-
-    if (treatiesError) throw treatiesError;
+    const res = await fetch('/api/treaty_web/data', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-User-ID': session.user.id
+      }
+    });
+    const { alliances = [], kingdoms = [], treaties = [] } = await res.json();
 
     // ✅ Store all treaties for timeline filtering
     allTreaties = treaties;
@@ -200,6 +196,15 @@ function filterTreatyWeb() {
       }
     }
   });
+}
+
+function subscribeToTreatyChanges() {
+  realtimeSub = supabase
+    .channel('treaty_web_updates')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, () => {
+      loadTreatyWeb();
+    })
+    .subscribe();
 }
 
 // ✅ Helper: Toast
