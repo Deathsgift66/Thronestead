@@ -25,6 +25,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  const form = document.getElementById("audit-filter-form");
+  if (form) {
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      await loadAuditLog();
+    });
+  }
+
   // ✅ Initial load
   await loadAuditLog();
 });
@@ -32,6 +40,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ✅ Load Audit Log
 async function loadAuditLog() {
   const tbody = document.getElementById("audit-log-body");
+  const user = document.getElementById("filter-user")?.value.trim();
+  const action = document.getElementById("filter-action")?.value.trim();
+  const from = document.getElementById("filter-from")?.value;
+  const to = document.getElementById("filter-to")?.value;
+  const limit = document.getElementById("filter-limit")?.value || 100;
 
   // Show loading state
   tbody.innerHTML = `
@@ -39,7 +52,14 @@ async function loadAuditLog() {
   `;
 
   try {
-    const res = await fetch("/api/audit-log");
+    const params = new URLSearchParams();
+    if (user) params.append("user_id", user);
+    if (action) params.append("action", action);
+    if (from) params.append("date_from", from);
+    if (to) params.append("date_to", to);
+    if (limit) params.append("limit", limit);
+
+    const res = await fetch(`/api/admin/audit-log?${params.toString()}`);
     const data = await res.json();
 
     tbody.innerHTML = "";

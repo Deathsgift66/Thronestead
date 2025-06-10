@@ -16,6 +16,7 @@ from .routers import (
     kingdom_military,
     alliance_vault,
     audit_log,
+    admin_audit_log,
     donate_vip,
     messages,
     player_management,
@@ -70,6 +71,7 @@ app.include_router(kingdom_military.router)
 app.include_router(alliance_vault.router)
 app.include_router(alliance_vault.alt_router)
 app.include_router(audit_log.router)
+app.include_router(admin_audit_log.router)
 app.include_router(donate_vip.router)
 app.include_router(messages.router)
 app.include_router(player_management.router)

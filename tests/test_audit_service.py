@@ -1,4 +1,10 @@
-from services.audit_service import log_action, fetch_logs, log_alliance_activity
+from services.audit_service import (
+    log_action,
+    fetch_logs,
+    log_alliance_activity,
+    fetch_filtered_logs,
+    fetch_user_related_logs,
+)
 
 
 class DummyResult:
@@ -13,9 +19,11 @@ class DummyDB:
     def __init__(self):
         self.inserts = []
         self.select_rows = []
+        self.queries = []
 
     def execute(self, query, params=None):
         q = str(query)
+        self.queries.append((q, params))
         if q.strip().startswith("INSERT INTO audit_log"):
             self.inserts.append(params)
             return DummyResult()
@@ -50,3 +58,20 @@ def test_log_alliance_activity_inserts():
     db = DummyDB()
     log_alliance_activity(db, 2, "u1", "Treaty Proposed", "Pact")
     assert any(p.get("aid") == 2 for p in db.inserts)
+
+
+def test_fetch_filtered_logs_params():
+    db = DummyDB()
+    db.select_rows = [(1, "u1", "login", "success", "2025-01-01")]
+    logs = fetch_filtered_logs(db, user_id="u1", action="log", limit=5)
+    assert len(logs) == 1
+    q, params = db.queries[-1]
+    assert params["uid"] == "u1"
+    assert params["act"] == "%log%"
+    assert params["limit"] == 5
+
+
+def test_fetch_user_related_logs_keys():
+    db = DummyDB()
+    result = fetch_user_related_logs(db, "u2")
+    assert set(result.keys()) >= {"global", "alliance", "vault", "grants", "loans", "training"}
