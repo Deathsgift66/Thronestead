@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js';
 
 let changelogData = [];
+let latestTimestamp = null;
 
 async function fetchChangelog() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -8,10 +9,26 @@ async function fetchChangelog() {
     window.location.href = 'login.html';
     return;
   }
-  const res = await fetch('/api/alliance/changelog', {
+  const url = latestTimestamp
+    ? `/api/alliance/changelog?since=${encodeURIComponent(latestTimestamp)}`
+    : '/api/alliance/changelog';
+  const res = await fetch(url, {
     headers: { 'X-User-ID': session.user.id }
   });
-  changelogData = await res.json();
+  const newData = await res.json();
+  if (latestTimestamp) {
+    const marked = newData.map(e => ({ ...e, new: true }));
+    changelogData = [...marked, ...changelogData];
+  } else {
+    changelogData = newData;
+  }
+  if (changelogData.length) {
+    latestTimestamp = changelogData[0].timestamp;
+  }
+  const lastEl = document.getElementById('last-updated');
+  if (lastEl && latestTimestamp) {
+    lastEl.textContent = new Date(latestTimestamp).toLocaleString();
+  }
   renderChangelog(changelogData);
 }
 
@@ -44,13 +61,18 @@ function renderChangelog(list) {
   list.forEach(entry => {
     const li = document.createElement('li');
     li.classList.add('log-entry');
+    if (entry.new) li.classList.add('new-entry');
     li.innerHTML = `
       <div class="log-time">${new Date(entry.timestamp).toLocaleString()}</div>
-      <div class="log-type">${entry.event_type}</div>
+      <div class="log-type ${entry.event_type}">${entry.event_type}</div>
       <div class="log-description">${entry.description}</div>
     `;
     container.appendChild(li);
   });
+  list.forEach(e => { delete e.new; });
 }
 
 window.addEventListener('DOMContentLoaded', fetchChangelog);
+window.addEventListener('DOMContentLoaded', () => {
+  setInterval(fetchChangelog, 30000);
+});

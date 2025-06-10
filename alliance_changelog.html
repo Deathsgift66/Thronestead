@@ -65,7 +65,9 @@ Author: Deathsgift66
           <option value="admin">Admin</option>
         </select>
         <button onclick="applyFilters()">Filter</button>
+        <button onclick="fetchChangelog()">Refresh</button>
       </div>
+      <div class="last-updated">Last updated: <span id="last-updated">--</span></div>
       <ul id="changelog-list" class="timeline-feed"></ul>
     </section>
   </main>
