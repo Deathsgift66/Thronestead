@@ -56,17 +56,22 @@ Author: Deathsgift66
   <main class="main-container">
     <section class="main-content">
       <div class="account-settings-container">
+        <img id="banner-preview" src="/assets/profile_banners/default.jpg" alt="Profile banner" class="banner-img" />
         <h2>Update Your Account</h2>
         <form id="account-form" aria-label="Account Settings Form">
 
           <!-- Profile Info -->
           <fieldset>
             <legend>Profile</legend>
+            <img id="avatar-preview" src="/avatars/default_avatar.png" alt="Avatar preview" width="80" height="80" />
+            <label for="avatar_url">Avatar URL</label>
+            <input type="text" id="avatar_url" name="avatar_url" />
+
             <label for="display_name">Display Name</label>
             <input type="text" id="display_name" name="display_name" required />
 
-            <label for="kingdom_name">Kingdom Name</label>
-            <input type="text" id="kingdom_name" name="kingdom_name" required />
+            <label for="motto">Motto</label>
+            <input type="text" id="motto" name="motto" />
 
             <label for="profile_bio">Bio</label>
             <textarea id="profile_bio" name="profile_bio" rows="3"></textarea>
@@ -85,14 +90,15 @@ Author: Deathsgift66
           <!-- Appearance -->
           <fieldset>
             <legend>Customization</legend>
-            <label for="kingdom_banner">Banner URL</label>
-            <input type="text" id="kingdom_banner" name="kingdom_banner" />
+            <label for="profile_banner">Profile Banner URL</label>
+            <input type="text" id="profile_banner" name="profile_banner" />
 
-            <label for="avatar_icon">Avatar Icon URL</label>
-            <input type="text" id="avatar_icon" name="avatar_icon" />
-
-            <label for="nameplate_color">Nameplate Color</label>
-            <input type="color" id="nameplate_color" name="nameplate_color" />
+            <label for="theme_preference">Theme</label>
+            <select id="theme_preference" name="theme_preference">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="parchment">Parchment</option>
+            </select>
           </fieldset>
 
           <!-- Preferences -->
@@ -110,11 +116,22 @@ Author: Deathsgift66
 
           <!-- VIP Status -->
           <fieldset>
-            <legend>VIP Status</legend>
-            <p id="vip-status">Checking status...</p>
-          </fieldset>
+          <legend>VIP Status</legend>
+          <p id="vip-status">Checking status...</p>
+        </fieldset>
 
-          <!-- Submit -->
+        <!-- Sessions -->
+        <fieldset>
+          <legend>Active Sessions</legend>
+          <table id="sessions-table">
+            <thead>
+              <tr><th>Device</th><th>Last Seen</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </fieldset>
+
+        <!-- Submit -->
           <button type="submit" class="btn">Save Changes</button>
         </form>
       </div>

@@ -1,155 +1,101 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: account_settings.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
-
 import { supabase } from './supabaseClient.js';
 
+async function loadUserProfile() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+  const res = await fetch('/api/account/profile', {
+    headers: { 'X-User-ID': user.id }
+  });
+  if (!res.ok) throw new Error('Failed to load profile');
+  const info = await res.json();
+
+  document.getElementById('avatar-preview').src = info.profile_picture_url || '/avatars/default_avatar.png';
+  document.getElementById('avatar_url').value = info.profile_picture_url || '';
+  document.getElementById('display_name').value = info.display_name || '';
+  document.getElementById('motto').value = info.motto || '';
+  document.getElementById('profile_bio').value = info.bio || '';
+  document.getElementById('email').value = info.email;
+  document.getElementById('profile_banner').value = info.profile_banner || '';
+  document.getElementById('banner-preview').src = info.profile_banner || '/assets/profile_banners/default.jpg';
+  document.getElementById('theme_preference').value = info.theme_preference || 'parchment';
+  const vipElement = document.getElementById('vip-status');
+  vipElement.innerText = info.vip_level ? `VIP ${info.vip_level}` : 'Not a VIP';
+  if (info.founder) vipElement.innerText += ' (Founder)';
+
+  const tbody = document.querySelector('#sessions-table tbody');
+  tbody.innerHTML = '';
+  info.sessions.forEach((s) => {
+    const row = document.createElement('tr');
+    row.id = `session-${s.session_id}`;
+    row.innerHTML = `<td>${s.device}</td><td>${s.last_seen}</td><td><button class="logout-session" data-id="${s.session_id}">Logout</button></td>`;
+    tbody.appendChild(row);
+  });
+}
+
+async function saveUserSettings() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+  const payload = {
+    display_name: document.getElementById('display_name').value,
+    motto: document.getElementById('motto').value,
+    bio: document.getElementById('profile_bio').value,
+    profile_picture_url: document.getElementById('avatar_url').value,
+    theme_preference: document.getElementById('theme_preference').value,
+    profile_banner: document.getElementById('profile_banner').value,
+  };
+  const res = await fetch('/api/account/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('Failed to save');
+  alert('Settings saved');
+}
+
+async function logoutSession(sessionId) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await fetch('/api/account/logout-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+    body: JSON.stringify({ session_id: sessionId })
+  });
+  document.getElementById(`session-${sessionId}`).remove();
+}
+
+function uploadAvatar() {
+  const url = document.getElementById('avatar_url').value;
+  document.getElementById('avatar-preview').src = url || '/avatars/default_avatar.png';
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    // Fetch User
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) throw new Error('Unauthorized');
-
-    // Fetch User Profile
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (error) throw new Error('Failed to load account data: ' + error.message);
-
-
-    // Prefill Form
-    document.getElementById('display_name').value = data.display_name || '';
-    document.getElementById('kingdom_name').value = data.kingdom_name || '';
-    document.getElementById('profile_bio').value = data.profile_bio || '';
-    document.getElementById('email').value = user.email;
-    document.getElementById('kingdom_banner').value = data.kingdom_banner || '';
-    document.getElementById('avatar_icon').value = data.avatar_icon || '';
-    document.getElementById('nameplate_color').value = data.nameplate_color || '#bfa24b';
-
-    document.getElementById('notifications_opt_in').checked = !!data.notifications_opt_in;
-    document.getElementById('bg_toggle').checked = !!data.use_play_background;
-
-    // VIP Status via API
-    const vipRes = await fetch('/api/kingdom/vip_status', {
-      headers: { 'X-User-ID': user.id }
-    });
-    const vipData = await vipRes.json();
-    const vipElement = document.getElementById('vip-status');
-    const level = vipData.vip_level || 0;
-    vipElement.innerText = level > 0 ? `VIP ${level}` : 'Not a VIP';
-    vipElement.title = 'Your current VIP status in Kingmaker\'s Rise';
-
+    await loadUserProfile();
   } catch (err) {
-    console.error('❌ Error loading account:', err);
-    alert('❌ Failed to load account settings. Please try again later.');
-    window.location.href = 'index.html';
+    console.error(err);
+    alert('Failed to load account');
   }
-});
 
-// Save Changes
-document.getElementById('account-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
+  document.getElementById('avatar_url').addEventListener('change', uploadAvatar);
+  document.getElementById('profile_banner').addEventListener('change', () => {
+    document.getElementById('banner-preview').src = document.getElementById('profile_banner').value;
+  });
 
-  // Disable button and show loading state
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.innerText = 'Saving...';
-
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Unauthorized');
-
-    const updates = {
-      display_name: document.getElementById('display_name').value,
-      kingdom_name: document.getElementById('kingdom_name').value,
-      profile_bio: document.getElementById('profile_bio').value,
-      kingdom_banner: document.getElementById('kingdom_banner').value,
-      avatar_icon: document.getElementById('avatar_icon').value,
-      nameplate_color: document.getElementById('nameplate_color').value,
-      notifications_opt_in: document.getElementById('notifications_opt_in').checked,
-      use_play_background: document.getElementById('bg_toggle').checked
-    };
-
-
-    const { error: updateError } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('user_id', user.id);
-
-    if (updateError) throw new Error('Failed to save changes: ' + updateError.message);
-
-
-    // Update Password if entered
-    const newPassword = document.getElementById('new_password').value;
-    if (newPassword) {
-      if (!validatePasswordComplexity(newPassword)) {
-        throw new Error(
-          "Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ, 0123456789, !@#$%^&*()_+-=[]{};':\"|<>?,./`~."
-        );
-      }
-      const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
-      if (pwError) throw new Error('Failed to update password: ' + pwError.message);
-    }
-
-    // Final confirmation
-    alert('✅ Changes saved successfully!');
-    document.getElementById('new_password').value = ''; // Clear password field
+  document.getElementById('account-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
     try {
-      await fetch('/api/audit-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          action: 'update_profile',
-          details: 'Updated account settings'
-        })
-      });
+      await saveUserSettings();
     } catch (err) {
-      console.error('Audit log failed:', err);
-    }
-  } catch (err) {
-    console.error('❌ Error during save:', err);
-    alert(err.message);
-  } finally {
-    // Re-enable button
-    submitBtn.disabled = false;
-    submitBtn.innerText = 'Save Changes';
-  }
-});
-
-// Logout Support (safe check for missing button)
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
-    } catch (err) {
-      console.error('❌ Logout failed:', err);
-      alert('❌ Failed to logout. Please try again.');
+      alert(err.message);
     }
   });
-} else {
-  console.warn('⚠️ Logout button not found in DOM');
-}
 
-// ✅ Helper: Password Complexity
-function validatePasswordComplexity(password) {
-  const lower = /[a-z]/;
-  const upper = /[A-Z]/;
-  const digit = /[0-9]/;
-  const special = /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]/;
-  return (
-    lower.test(password) &&
-    upper.test(password) &&
-    digit.test(password) &&
-    special.test(password)
-  );
-}
+  document.querySelector('#sessions-table').addEventListener('click', async (e) => {
+    if (e.target.classList.contains('logout-session')) {
+      const sid = e.target.dataset.id;
+      await logoutSession(sid);
+    }
+  });
+});
+
+export { loadUserProfile, saveUserSettings, logoutSession, uploadAvatar };
