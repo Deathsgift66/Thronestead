@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -7,6 +7,13 @@ from ..models import AllianceMember
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])
+
+
+def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
+    """Require X-User-ID header for authenticated actions."""
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="User ID header missing")
+    return x_user_id
 
 
 class MemberAction(BaseModel):
@@ -30,7 +37,11 @@ class ContributionPayload(BaseModel):
 
 
 @router.get("")
-def list_members(alliance_id: int = 1, db: Session = Depends(get_db)):
+def list_members(
+    alliance_id: int = 1,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     members = (
         db.query(AllianceMember)
         .filter(AllianceMember.alliance_id == alliance_id)
@@ -52,7 +63,11 @@ def list_members(alliance_id: int = 1, db: Session = Depends(get_db)):
 
 
 @router.post("/join")
-def join(payload: JoinPayload, db: Session = Depends(get_db)):
+def join(
+    payload: JoinPayload,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = AllianceMember(
         alliance_id=payload.alliance_id,
         user_id=payload.user_id,
@@ -73,7 +88,11 @@ def join(payload: JoinPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/leave")
-def leave(payload: MemberAction, db: Session = Depends(get_db)):
+def leave(
+    payload: MemberAction,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = (
         db.query(AllianceMember)
         .filter(AllianceMember.user_id == payload.user_id)
@@ -92,7 +111,11 @@ def leave(payload: MemberAction, db: Session = Depends(get_db)):
 
 
 @router.post("/promote")
-def promote(payload: RankPayload, db: Session = Depends(get_db)):
+def promote(
+    payload: RankPayload,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = (
         db.query(AllianceMember)
         .filter(
@@ -109,7 +132,11 @@ def promote(payload: RankPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/demote")
-def demote(payload: RankPayload, db: Session = Depends(get_db)):
+def demote(
+    payload: RankPayload,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = (
         db.query(AllianceMember)
         .filter(
@@ -126,7 +153,11 @@ def demote(payload: RankPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/remove")
-def remove(payload: MemberAction, db: Session = Depends(get_db)):
+def remove(
+    payload: MemberAction,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = (
         db.query(AllianceMember)
         .filter(
@@ -143,7 +174,11 @@ def remove(payload: MemberAction, db: Session = Depends(get_db)):
 
 
 @router.post("/contribute")
-def contribute(payload: ContributionPayload, db: Session = Depends(get_db)):
+def contribute(
+    payload: ContributionPayload,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = db.query(AllianceMember).filter(AllianceMember.user_id == payload.user_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -153,7 +188,11 @@ def contribute(payload: ContributionPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/apply")
-def apply_to_alliance(payload: JoinPayload, db: Session = Depends(get_db)):
+def apply_to_alliance(
+    payload: JoinPayload,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = AllianceMember(
         alliance_id=payload.alliance_id,
         user_id=payload.user_id,
@@ -168,7 +207,11 @@ def apply_to_alliance(payload: JoinPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/approve")
-def approve_member(payload: MemberAction, db: Session = Depends(get_db)):
+def approve_member(
+    payload: MemberAction,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     member = (
         db.query(AllianceMember)
         .filter(

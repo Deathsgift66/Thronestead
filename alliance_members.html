@@ -71,21 +71,22 @@ Author: Deathsgift66
       <!-- Table -->
       <section class="members-table-container" aria-label="Alliance Members Table">
         <table class="members-table">
+          <caption class="sr-only">Current alliance members</caption>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Rank</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Contribution</th>
-              <th>Economy</th>
-              <th>Military</th>
-              <th>Diplomacy</th>
-              <th>Output</th>
-              <th>Actions</th>
+              <th scope="col">Name</th>
+              <th scope="col">Rank</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col">Contribution</th>
+              <th scope="col">Economy</th>
+              <th scope="col">Military</th>
+              <th scope="col">Diplomacy</th>
+              <th scope="col">Output</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
-          <tbody id="members-list">
+          <tbody id="members-list" aria-live="polite">
             <tr>
               <td colspan="10">Loading members...</td>
             </tr>
