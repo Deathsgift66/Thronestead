@@ -1,30 +1,202 @@
-from fastapi import APIRouter
+from datetime import datetime, timedelta
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
+
+from ..database import get_db
+from ..models import (
+    User,
+    Alliance,
+    QuestAllianceCatalogue,
+    QuestAllianceTracking,
+    QuestAllianceContribution,
+)
+from services.audit_service import log_action
+from .progression_router import get_user_id
 
 router = APIRouter(prefix="/api/alliance-quests", tags=["alliance_quests"])
 
 
-class QuestPayload(BaseModel):
-    quest_id: str
-    contribution: int | None = None
+class QuestStartPayload(BaseModel):
+    quest_code: str
+
+
+def get_alliance_info(user_id: str, db: Session) -> tuple[int, str]:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user or not user.alliance_id:
+        raise HTTPException(status_code=404, detail="Alliance not found")
+    return user.alliance_id, user.alliance_role or "Member"
+
+
+@router.get("/catalogue")
+def get_quest_catalogue(db: Session = Depends(get_db)):
+    quests = (
+        db.query(QuestAllianceCatalogue)
+        .filter(QuestAllianceCatalogue.is_active.is_(True))
+        .order_by(QuestAllianceCatalogue.quest_code)
+        .all()
+    )
+    return [
+        {
+            "quest_code": q.quest_code,
+            "name": q.name,
+            "description": q.description,
+            "duration_hours": q.duration_hours,
+            "category": q.category,
+            "objectives": q.objectives,
+            "rewards": q.rewards,
+            "required_level": q.required_level,
+            "repeatable": q.repeatable,
+            "max_attempts": q.max_attempts,
+        }
+        for q in quests
+    ]
+
+
+@router.get("/available")
+def get_available_quests(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid, _ = get_alliance_info(user_id, db)
+    started = (
+        db.query(QuestAllianceTracking.quest_code)
+        .filter(QuestAllianceTracking.alliance_id == aid)
+        .all()
+    )
+    codes = [s.quest_code for s in started]
+    query = db.query(QuestAllianceCatalogue).filter(QuestAllianceCatalogue.is_active.is_(True))
+    if codes:
+        query = query.filter(~QuestAllianceCatalogue.quest_code.in_(codes))
+    quests = query.all()
+    return [
+        {
+            "quest_code": q.quest_code,
+            "name": q.name,
+            "description": q.description,
+            "duration_hours": q.duration_hours,
+            "category": q.category,
+            "objectives": q.objectives,
+            "rewards": q.rewards,
+        }
+        for q in quests
+    ]
+
+
+@router.get("/active")
+def get_active_quests(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid, _ = get_alliance_info(user_id, db)
+    rows = (
+        db.query(QuestAllianceTracking)
+        .filter(QuestAllianceTracking.alliance_id == aid)
+        .filter(QuestAllianceTracking.status == "active")
+        .all()
+    )
+    return [
+        {
+            "quest_code": r.quest_code,
+            "status": r.status,
+            "progress": r.progress,
+            "ends_at": r.ends_at,
+            "started_at": r.started_at,
+        }
+        for r in rows
+    ]
+
+
+@router.get("/completed")
+def get_completed_quests(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid, _ = get_alliance_info(user_id, db)
+    rows = (
+        db.query(QuestAllianceTracking)
+        .filter(QuestAllianceTracking.alliance_id == aid)
+        .filter(QuestAllianceTracking.status == "completed")
+        .all()
+    )
+    return [
+        {
+            "quest_code": r.quest_code,
+            "status": r.status,
+            "progress": r.progress,
+            "ends_at": r.ends_at,
+            "started_at": r.started_at,
+        }
+        for r in rows
+    ]
 
 
 @router.post("/start")
-async def start_quest(payload: QuestPayload):
-    return {"message": "Quest started", "quest_id": payload.quest_id}
+def start_quest(
+    payload: QuestStartPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid, role = get_alliance_info(user_id, db)
+    if role not in {"Leader", "Co-Leader", "Officer"}:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    quest = (
+        db.query(QuestAllianceCatalogue)
+        .filter(QuestAllianceCatalogue.quest_code == payload.quest_code)
+        .filter(QuestAllianceCatalogue.is_active.is_(True))
+        .first()
+    )
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    existing = (
+        db.query(QuestAllianceTracking)
+        .filter(QuestAllianceTracking.alliance_id == aid)
+        .filter(QuestAllianceTracking.quest_code == payload.quest_code)
+        .first()
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Quest already started or completed")
+    hours = quest.duration_hours or 0
+    ends_at = datetime.utcnow() + timedelta(hours=hours)
+    tracking = QuestAllianceTracking(
+        alliance_id=aid,
+        quest_code=payload.quest_code,
+        status="active",
+        progress=0,
+        ends_at=ends_at,
+        started_by=user_id,
+    )
+    db.add(tracking)
+    db.commit()
+    log_action(db, user_id, "Alliance Quest Started", payload.quest_code)
+    return {"status": "started"}
 
 
-@router.post("/accept")
-async def accept_quest(payload: QuestPayload):
-    return {"message": "Quest accepted", "quest_id": payload.quest_id}
-
-
-@router.get("")
-async def list_quests(status: str | None = None):
-    return {"quests": [], "status": status}
-
-
-@router.post("/contribute")
-async def contribute(payload: QuestPayload):
-    return {"message": "Contribution recorded", "quest_id": payload.quest_id}
+@router.get("/contributions")
+def get_contributions(
+    quest_code: Optional[str] = Query(None),
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid, _ = get_alliance_info(user_id, db)
+    query = db.query(QuestAllianceContribution).filter(
+        QuestAllianceContribution.alliance_id == aid
+    )
+    if quest_code:
+        query = query.filter(QuestAllianceContribution.quest_code == quest_code)
+    rows = query.order_by(QuestAllianceContribution.timestamp.desc()).all()
+    return [
+        {
+            "player_name": r.player_name,
+            "resource_type": r.resource_type,
+            "amount": r.amount,
+            "timestamp": r.timestamp,
+            "quest_code": r.quest_code,
+            "user_id": str(r.user_id),
+        }
+        for r in rows
+    ]
 
