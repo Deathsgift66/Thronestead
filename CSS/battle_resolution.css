@@ -142,4 +142,55 @@ body {
   color: var(--parchment);
 }
 
+/* Resolution Grid */
+.resolution-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .resolution-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Victory Banner */
+.victory-banner {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 2rem;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+/* Combat Log Entry */
+.combat-log-entry {
+  list-style: none;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 4px var(--shadow);
+  color: var(--parchment);
+}
+
+/* Loot Icons */
+.resource-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
+/* Participant Box */
+.participant-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
 /* Footer - handled globally */
