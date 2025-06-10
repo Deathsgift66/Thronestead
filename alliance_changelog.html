@@ -30,12 +30,15 @@ Author: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/alliance_common.css" />
   <link rel="stylesheet" href="CSS/alliance_changelog.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script type="module" src="Javascript/apiHelper.js"></script>
+  <script type="module" src="Javascript/allianceAppearance.js"></script>
   <script defer type="module" src="Javascript/alliance_changelog.js"></script>
 </head>
-<body>
+<body class="alliance-bg">
   <div id="navbar-container"></div>
   <script>
     fetch('navbar.html')
@@ -46,6 +49,8 @@ Author: Deathsgift66
   </script>
 
   <header class="kr-top-banner" aria-label="Alliance Changelog Banner">
+    <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
+    <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
     Alliance Changelog
   </header>
 

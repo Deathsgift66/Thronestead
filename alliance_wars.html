@@ -38,13 +38,16 @@ Author: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/alliance_common.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script type="module" src="Javascript/apiHelper.js"></script>
+  <script type="module" src="Javascript/allianceAppearance.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
 </head>
 
-<body>
+<body class="alliance-bg">
 
 <!-- Inject Navbar -->
 <div id="navbar-container"></div>
@@ -58,6 +61,8 @@ Author: Deathsgift66
 
 <!-- Page Banner -->
 <header class="kr-top-banner" aria-label="Alliance Wars Banner">
+  <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
+  <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
   Alliance Wars
 </header>
 

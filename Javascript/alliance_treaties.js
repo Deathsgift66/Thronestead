@@ -8,6 +8,12 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+const TREATY_INFO = {
+  'NAP': 'Non-Aggression Pact',
+  'Trade Pact': 'Allows trading resources',
+  'Mutual Defense': 'Allies will defend each other'
+};
+
 let treatyChannel;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -75,7 +81,7 @@ async function loadTreatyTabs() {
 
       card.innerHTML = `
         <h3>Treaty with ${treaty.partner_alliance_id}</h3>
-        <p>Type: <strong>${treaty.treaty_type}</strong></p>
+        <p>Type: <strong title="${TREATY_INFO[treaty.treaty_type] || ''}">${treaty.treaty_type}</strong></p>
         <p>Status: <strong>${treaty.status}</strong></p>
         <div class="treaty-actions">
           <button class="action-btn view-treaty-btn" data-treaty='${JSON.stringify(treaty)}'>View</button>
@@ -120,7 +126,7 @@ async function viewTreatyDetails(treaty) {
   const details = document.getElementById('treaty-details');
   details.innerHTML = `
     <h3>Treaty with Alliance ${data.partner_alliance_id}</h3>
-    <p>Type: <strong>${data.treaty_type}</strong></p>
+    <p>Type: <strong title="${TREATY_INFO[data.treaty_type] || ''}">${data.treaty_type}</strong></p>
     <p>Status: <strong>${data.status}</strong></p>
     <p>Signed: ${data.signed_at ?? 'Pending'}</p>
   `;

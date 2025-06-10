@@ -113,7 +113,13 @@ async function loadVaultSummary() {
     Object.entries(data.totals).forEach(([resource, amount]) => {
       const div = document.createElement("div");
       div.classList.add("vault-resource-row");
-      div.innerHTML = `<strong>${resource}</strong>: ${amount}`;
+      const pct = Math.min(100, (amount / 100000) * 100);
+      div.innerHTML = `
+        <strong>${resource}</strong>
+        <div class="vault-progress-bar">
+          <div class="vault-progress-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <span>${amount}</span>`;
       container.appendChild(div);
     });
 

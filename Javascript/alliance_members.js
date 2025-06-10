@@ -7,6 +7,14 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+const RANK_TOOLTIPS = {
+  Leader: 'Alliance leader with full authority',
+  'Co-Leader': 'Second in command',
+  'War Officer': 'Manages wartime efforts',
+  Diplomat: 'Handles treaties and diplomacy',
+  Member: 'Standard member'
+};
+
 
 // Enforce that user is alliance member or admin
 async function enforceAllianceOrAdminAccess() {
@@ -107,7 +115,7 @@ async function renderMembers(data) {
     row.innerHTML = `
       <td data-label="Crest"><img src="../images/crests/${member.crest || 'default.png'}" alt="Crest" class="crest-icon"></td>
       <td data-label="Name"><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${member.username}</a>${member.is_vip ? ' ⭐' : ''}</td>
-      <td data-label="Rank">${member.rank}</td>
+      <td data-label="Rank" title="${RANK_TOOLTIPS[member.rank] || ''}">${member.rank}</td>
       <td data-label="Role">${showFull ? (member.role || '—') : '—'}</td>
       <td data-label="Status">${showFull ? member.status : '—'}</td>
       <td data-label="Contribution">${showFull ? member.contribution : '—'}</td>

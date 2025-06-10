@@ -132,7 +132,7 @@ async function loadQuests(status) {
 
       card.innerHTML = `
         <div class="quest-header">
-          <span class="quest-title">${q.title}</span>
+          <span class="quest-title" title="${q.goal_desc}">${q.title}</span>
           <span class="quest-type">[${q.type}]</span>
         </div>
         <p class="quest-lore">${q.lore}</p>
