@@ -1,17 +1,74 @@
-.kingdom-achievements ul {
-  list-style: none;
-  padding-left: 0;
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-.kingdom-achievements li {
-  padding: 0.25rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+.achievement-card {
+  background: var(--panel-bg);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--shadow);
+  text-align: center;
+  padding: 0.5rem;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-.kingdom-achievements li:last-child {
-  border-bottom: none;
+.achievement-card:hover {
+  transform: scale(1.05);
 }
 
-.kingdom-achievements li.locked {
-  opacity: 0.5;
+.achievement-card img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.badge-earned {
+  border-color: var(--accent);
+}
+
+.badge-locked {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.badge-hidden .badge-name {
+  filter: blur(3px);
+}
+
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.filter-toolbar input[type="text"] {
+  flex: 1 1 200px;
+  padding: 0.25rem 0.5rem;
+}
+
+.progress-summary {
+  margin-top: 1rem;
+}
+
+.progress-bar {
+  background: var(--parchment-dark);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 1rem;
+}
+
+.progress-fill {
+  background: var(--accent);
+  height: 100%;
+  width: 0;
+}
+
+.modal.hidden {
+  display: none;
 }
