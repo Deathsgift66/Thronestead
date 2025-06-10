@@ -158,6 +158,32 @@ Author: Deathsgift66
   transform: scale(1.05);
 }
 
+/* User Info */
+.kr-navbar .user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+  font-family: 'Cinzel', serif;
+  color: var(--parchment);
+}
+
+.kr-navbar .user-info img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+}
+
+.kr-navbar .notification-badge {
+  background: var(--gold);
+  color: var(--ink);
+  border-radius: 50%;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .kr-navbar {
@@ -173,6 +199,11 @@ Author: Deathsgift66
   .kr-navbar .logout-btn {
     margin-top: 0.75rem;
     align-self: flex-end;
+  }
+
+  .kr-navbar .user-info {
+    margin-top: 0.75rem;
+    align-self: flex-start;
   }
 
   .kr-navbar .dropdown-content {
