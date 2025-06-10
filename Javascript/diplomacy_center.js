@@ -1,49 +1,85 @@
-// Fetch diplomacy metrics
-fetch('/api/diplomacy/summary')
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById('diplomacy-score').textContent = data.diplomacy_score;
-    document.getElementById('active-treaties-count').textContent = data.active_treaties;
-    document.getElementById('ongoing-wars-count').textContent = data.ongoing_wars;
-  });
+import { supabase } from './supabaseClient.js';
 
-// Populate treaties
-fetch('/api/diplomacy/treaties')
-  .then(res => res.json())
-  .then(data => {
-    const tbody = document.getElementById('treaty-rows');
-    data.forEach(treaty => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${treaty.treaty_type}</td>
-        <td>${treaty.partner_name}</td>
-        <td>${treaty.status}</td>
-        <td>${new Date(treaty.signed_at).toLocaleDateString()}</td>
-        <td>
-          ${treaty.status === 'proposed' ? `
-            <button onclick="respondTreaty(${treaty.treaty_id}, 'accept')">Accept</button>
-            <button onclick="respondTreaty(${treaty.treaty_id}, 'reject')">Reject</button>
-          ` : ''}
-        </td>
-      `;
-      tbody.appendChild(row);
-    });
-  });
+let treatyChannel;
 
-function proposeTreaty() {
-  const type = document.getElementById('treaty-type').value;
-  const partnerId = document.getElementById('partner-alliance-id').value;
-  fetch('/api/diplomacy/propose_treaty', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ treaty_type: type, partner_alliance_id: partnerId })
-  }).then(() => location.reload());
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  const uid = session.user.id;
+  await loadSummary(uid);
+  await loadTreaties(uid);
+
+  treatyChannel = supabase
+    .channel('public:alliance_treaties')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, () => {
+      loadSummary(uid);
+      loadTreaties(uid);
+    })
+    .subscribe();
+});
+
+window.addEventListener('beforeunload', () => {
+  if (treatyChannel) supabase.removeChannel(treatyChannel);
+});
+
+async function loadSummary(uid) {
+  const res = await fetch('/api/diplomacy/summary', { headers: { 'X-User-ID': uid } });
+  if (!res.ok) return;
+  const data = await res.json();
+  document.getElementById('diplomacy-score').textContent = data.diplomacy_score;
+  document.getElementById('active-treaties-count').textContent = data.active_treaties;
+  document.getElementById('ongoing-wars-count').textContent = data.ongoing_wars;
 }
 
-function respondTreaty(treatyId, action) {
-  fetch('/api/diplomacy/respond_treaty', {
+async function loadTreaties(uid) {
+  const res = await fetch('/api/diplomacy/treaties', { headers: { 'X-User-ID': uid } });
+  if (!res.ok) return;
+  const data = await res.json();
+  const tbody = document.getElementById('treaty-rows');
+  tbody.innerHTML = '';
+  data.forEach(t => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${t.treaty_type}</td>
+      <td>${t.partner_name}</td>
+      <td>${t.status}</td>
+      <td>${t.signed_at ? new Date(t.signed_at).toLocaleDateString() : ''}</td>
+      <td>
+        ${t.status === 'proposed' ? `
+          <button class="btn" data-id="${t.treaty_id}" data-action="accept">Accept</button>
+          <button class="btn" data-id="${t.treaty_id}" data-action="reject">Reject</button>
+        ` : ''}
+      </td>`;
+    tbody.appendChild(row);
+  });
+  tbody.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => respondTreaty(btn.dataset.id, btn.dataset.action));
+  });
+}
+
+export async function proposeTreaty() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  const type = document.getElementById('treaty-type').value;
+  const partnerId = document.getElementById('partner-alliance-id').value;
+  await fetch('/api/diplomacy/propose_treaty', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ treaty_id: treatyId, response_action: action })
-  }).then(() => location.reload());
+    headers: { 'Content-Type': 'application/json', 'X-User-ID': session.user.id },
+    body: JSON.stringify({ treaty_type: type, partner_alliance_id: partnerId })
+  });
+}
+
+window.proposeTreaty = proposeTreaty;
+
+async function respondTreaty(tid, action) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  await fetch('/api/diplomacy/respond_treaty', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-ID': session.user.id },
+    body: JSON.stringify({ treaty_id: parseInt(tid, 10), response_action: action })
+  });
 }

@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import verify_jwt_token
 from services.audit_service import log_alliance_activity
 
 router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy_center"])
@@ -31,7 +31,7 @@ class RespondPayload(BaseModel):
 
 
 @router.get("/summary")
-def summary(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def summary(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     aid = get_alliance_id(db, user_id)
 
     score_row = db.execute(
@@ -80,7 +80,7 @@ def summary(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
 
 
 @router.get("/treaties")
-def list_treaties(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def list_treaties(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     aid = get_alliance_id(db, user_id)
     rows = db.execute(
         text(
@@ -117,7 +117,7 @@ def list_treaties(user_id: str = Depends(get_user_id), db: Session = Depends(get
 @router.post("/propose_treaty")
 def propose_treaty(
     payload: ProposePayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     aid = get_alliance_id(db, user_id)
@@ -136,7 +136,7 @@ def propose_treaty(
 @router.post("/respond_treaty")
 def respond_treaty(
     payload: RespondPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     treaty = db.execute(
@@ -170,7 +170,7 @@ def respond_treaty(
 
 
 @router.get("/war_status")
-def war_status(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def war_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     aid = get_alliance_id(db, user_id)
     rows = db.execute(
         text(
