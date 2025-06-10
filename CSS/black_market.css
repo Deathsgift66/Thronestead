@@ -121,6 +121,23 @@ body {
   justify-content: center;
 }
 
+.resource-display {
+  margin-bottom: 1rem;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+}
+
+@media (max-width: 600px) {
+  .market-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+  .modal-content {
+    width: 90%;
+  }
+}
+
 .btn {
   background: var(--accent);
   color: #fff;

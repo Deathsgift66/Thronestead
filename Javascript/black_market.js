@@ -2,6 +2,9 @@ import { supabase } from './supabaseClient.js';
 
 let listings = [];
 let currentListing = null;
+let kingdomId = null;
+let accessToken = null;
+let userId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -9,6 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'login.html';
     return;
   }
+  accessToken = session.access_token;
+
+  await loadResources();
 
   document.getElementById('searchInput').addEventListener('input', renderListings);
   document.getElementById('sortSelect').addEventListener('change', renderListings);
@@ -17,13 +23,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadListings();
   await loadHistory();
+
+  // Refresh listings periodically for real-time updates
+  setInterval(loadListings, 15000);
+  setInterval(loadHistory, 30000);
 });
+
+async function loadResources() {
+  const { data: { user } } = await supabase.auth.getUser();
+  userId = user.id;
+  const { data: userData } = await supabase
+    .from('users')
+    .select('kingdom_id')
+    .eq('user_id', user.id)
+    .single();
+  kingdomId = userData?.kingdom_id || null;
+
+  if (kingdomId) {
+    const { data: res } = await supabase
+      .from('kingdom_resources')
+      .select('*')
+      .eq('kingdom_id', kingdomId)
+      .single();
+    if (res) {
+      document.getElementById('resourceDisplay').textContent =
+        `${res.gold} Gold • ${res.gems} Gems`;
+    }
+  }
+}
 
 async function loadListings() {
   const res = await fetch('/api/black-market/listings');
   const data = await res.json();
   listings = data.listings || [];
   renderListings();
+  document.getElementById('lastUpdated').textContent =
+    `Updated: ${new Date().toLocaleTimeString()}`;
 }
 
 function renderListings() {
@@ -72,17 +107,22 @@ async function confirmPurchase() {
 
   await fetch('/api/black-market/purchase', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ listing_id: currentListing.id, quantity: qty, kingdom_id: 'demo-kingdom' })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+      'X-User-ID': userId
+    },
+    body: JSON.stringify({ listing_id: currentListing.id, quantity: qty, kingdom_id: kingdomId })
   });
 
   closeModal();
   await loadListings();
   await loadHistory();
+  await loadResources();
 }
 
 async function loadHistory() {
-  const res = await fetch('/api/black-market/history?kingdom_id=demo-kingdom');
+  const res = await fetch(`/api/black-market/history?kingdom_id=${kingdomId}`);
   const data = await res.json();
   const container = document.getElementById('purchaseHistory');
   container.innerHTML = '';

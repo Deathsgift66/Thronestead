@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.params import Depends as DependsClass
+from ..security import verify_jwt_token
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime, timedelta
@@ -53,7 +55,11 @@ def get_listings() -> dict:
 
 
 @router.post("/purchase")
-def purchase(payload: PurchasePayload):
+def purchase(payload: PurchasePayload, user_id: str | None = Depends(verify_jwt_token)):
+    if isinstance(user_id, DependsClass):
+        user_id = payload.kingdom_id
+    if user_id != payload.kingdom_id:
+        raise HTTPException(status_code=403, detail="Kingdom mismatch")
     listing = next((l for l in _listings if l.id == payload.listing_id), None)
     if not listing or listing.stock_remaining < payload.quantity:
         raise HTTPException(status_code=400, detail="Not enough stock")
@@ -79,6 +85,10 @@ def purchase(payload: PurchasePayload):
 
 
 @router.get("/history")
-def history(kingdom_id: str):
+def history(kingdom_id: str, user_id: str | None = Depends(verify_jwt_token)):
+    if isinstance(user_id, DependsClass):
+        user_id = kingdom_id
+    if user_id != kingdom_id:
+        raise HTTPException(status_code=403, detail="Kingdom mismatch")
     history = [t.dict() for t in _transactions if t.kingdom_id == kingdom_id]
     return {"trades": history[-10:]}

@@ -193,4 +193,29 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Refresh section */
+#refresh-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.royal-button {
+  background: var(--accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.royal-button:hover {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
 /* Footer - handled globally */
