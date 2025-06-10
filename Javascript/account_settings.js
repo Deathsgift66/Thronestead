@@ -35,21 +35,33 @@ async function loadUserProfile() {
 async function saveUserSettings() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
+  const displayName = document.getElementById('display_name').value.trim();
+  const email = document.getElementById('email').value.trim();
   const payload = {
-    display_name: document.getElementById('display_name').value,
+    display_name: displayName,
     motto: document.getElementById('motto').value,
     bio: document.getElementById('profile_bio').value,
     profile_picture_url: document.getElementById('avatar_url').value,
     theme_preference: document.getElementById('theme_preference').value,
     profile_banner: document.getElementById('profile_banner').value,
   };
+
+  if (displayName.length < 3) {
+    showToast('Display Name must be at least 3 characters.');
+    return;
+  }
+  if (!validateEmail(email)) {
+    showToast('Please enter a valid email.');
+    return;
+  }
+  payload.email = email;
   const res = await fetch('/api/account/update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
     body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('Failed to save');
-  alert('Settings saved');
+  showToast('Settings saved');
 }
 
 async function logoutSession(sessionId) {
@@ -73,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadUserProfile();
   } catch (err) {
     console.error(err);
-    alert('Failed to load account');
+    showToast('Failed to load account');
   }
 
   document.getElementById('avatar_url').addEventListener('change', uploadAvatar);
@@ -86,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       await saveUserSettings();
     } catch (err) {
-      alert(err.message);
+      showToast(err.message);
     }
   });
 
@@ -99,3 +111,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 export { loadUserProfile, saveUserSettings, logoutSession, uploadAvatar };
+
+function validateEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
+
+function showToast(msg) {
+  const toastEl = document.getElementById('toast');
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => {
+    toastEl.classList.remove('show');
+  }, 3000);
+}
