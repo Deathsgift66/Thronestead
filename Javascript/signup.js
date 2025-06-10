@@ -8,12 +8,20 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", () => {
-  // ✅ Bind form submit
   const form = document.getElementById('signup-form');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleSignup();
   });
+
+  const kingdomNameEl = document.getElementById('kingdomName');
+  const usernameEl = document.getElementById('username');
+
+  const check = debounce(checkAvailability, 400);
+  kingdomNameEl.addEventListener('input', check);
+  usernameEl.addEventListener('input', check);
+
+  loadSignupStats();
 });
 
 // ✅ Handle Sign-Up
@@ -136,4 +144,59 @@ function showToast(msg) {
   setTimeout(() => {
     toastEl.classList.remove("show");
   }, 3000);
+}
+
+function debounce(fn, delay) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), delay);
+  };
+}
+
+async function checkAvailability() {
+  const kingdom = document.getElementById('kingdomName').value.trim();
+  const user = document.getElementById('username').value.trim();
+  if (!kingdom && !user) return;
+  try {
+    const res = await fetch('/api/signup/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kingdom_name: kingdom, username: user })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const kMsg = document.getElementById('kingdomName-msg');
+    const uMsg = document.getElementById('username-msg');
+    if (kingdom) {
+      kMsg.textContent = data.kingdom_available ? 'Available' : 'Taken';
+      kMsg.className = 'availability ' + (data.kingdom_available ? 'available' : 'taken');
+    }
+    if (user) {
+      uMsg.textContent = data.username_available ? 'Available' : 'Taken';
+      uMsg.className = 'availability ' + (data.username_available ? 'available' : 'taken');
+    }
+  } catch (err) {
+    console.error('checkAvailability failed', err);
+  }
+}
+
+async function loadSignupStats() {
+  const panel = document.querySelector('.stats-panel');
+  const list = document.getElementById('top-kingdoms-list');
+  if (!panel || !list) return;
+  try {
+    const res = await fetch('/api/signup/stats');
+    if (!res.ok) return;
+    const data = await res.json();
+    list.innerHTML = '';
+    data.top_kingdoms.forEach(k => {
+      const li = document.createElement('li');
+      li.textContent = `${k.kingdom_name} - Power ${k.score}`;
+      list.appendChild(li);
+    });
+    panel.classList.remove('hidden');
+  } catch (err) {
+    console.error('loadSignupStats failed', err);
+  }
 }

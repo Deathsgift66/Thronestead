@@ -69,11 +69,13 @@ Author: Deathsgift66
         <div class="form-group">
           <label for="kingdomName">Kingdom Name</label>
           <input type="text" id="kingdomName" required />
+          <div id="kingdomName-msg" class="availability"></div>
         </div>
 
         <div class="form-group">
           <label for="username">Ruler Name (Login)</label>
           <input type="text" id="username" required />
+          <div id="username-msg" class="availability"></div>
         </div>
 
         <div class="form-group">
@@ -105,6 +107,11 @@ Author: Deathsgift66
       <div class="links-section">
         Already a Kingmaker? <a href="login.html">Login Here</a>
       </div>
+
+      <section class="stats-panel hidden">
+        <h3>Legends of the Realm</h3>
+        <ul id="top-kingdoms-list"></ul>
+      </section>
 
     </div>
 
