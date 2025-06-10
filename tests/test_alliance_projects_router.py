@@ -50,7 +50,7 @@ def test_available_excludes_existing():
     db.add(ProjectsAllianceInProgress(alliance_id=1, project_key="p2", progress=10))
     db.commit()
 
-    res = get_available_projects(1, db)
+    res = get_available_projects(1, uid, db)
     assert res["projects"] == []
 
 
@@ -61,7 +61,7 @@ def test_start_creates_progress_row():
     db.add(ProjectAllianceCatalogue(project_code="p3", project_name="Three", build_time_seconds=10))
     db.commit()
 
-    start_alliance_project(StartPayload(project_key="p3", user_id=uid), db)
-    rows = get_in_progress_projects(1, db)
+    start_alliance_project(StartPayload(project_key="p3", user_id=uid), uid, db)
+    rows = get_in_progress_projects(1, uid, db)
     assert len(rows["projects"]) == 1
     assert rows["projects"][0]["project_key"] == "p3"
