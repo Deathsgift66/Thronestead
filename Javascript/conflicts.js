@@ -1,146 +1,131 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: conflicts.js
-Date: June 2, 2025
-Author: Deathsgift66
+Updated: July 2025
+Description: Handles fetching and rendering kingdom and alliance wars on the
+conflicts page.
 */
-// Hardened Conflicts Page — Matches Conflicts HTML — Tabular View
 
 import { supabase } from './supabaseClient.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
-
-  // ✅ Validate session
+// Initialize after DOM ready
+document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = "login.html";
+    window.location.href = 'login.html';
     return;
   }
 
-  // ✅ Initial load
   setupTabs();
-  await loadActiveConflicts();
-  await loadHistoricalConflicts();
+  await fetchKingdomWars();
+  await fetchAllianceWars();
 });
 
-// ✅ Setup Tabs
+// Switch between Kingdom and Alliance tabs
 function setupTabs() {
-  const tabButtons = document.querySelectorAll(".tab");
-  const tabPanels = document.querySelectorAll(".tab-panel");
-
-  tabButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-tab");
-
-      tabButtons.forEach(b => b.classList.remove("active"));
-      tabPanels.forEach(panel => panel.classList.add("hidden"));
-
-      btn.classList.add("active");
-      document.getElementById(targetId).classList.remove("hidden");
+  const buttons = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.tab-panel');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const panel = document.getElementById(btn.dataset.tab);
+      if (panel) panel.classList.add('active');
     });
   });
 }
 
-// ✅ Load Active Conflicts
-async function loadActiveConflicts() {
-  const tbody = document.getElementById("activeConflictsBody");
-
-  tbody.innerHTML = `
-    <tr><td colspan="4">Loading active conflicts...</td></tr>
-  `;
-
+// Load wars where the user’s kingdom is involved
+export async function fetchKingdomWars() {
+  const container = document.getElementById('kingdomWarsList');
+  if (!container) return;
+  container.innerHTML = '<p>Loading wars…</p>';
   try {
-    const res = await fetch("/api/conflicts/active");
+    const res = await fetch('/api/conflicts/kingdom');
     const data = await res.json();
-
-    tbody.innerHTML = "";
-
-    if (!data.conflicts || data.conflicts.length === 0) {
-      tbody.innerHTML = `
-        <tr><td colspan="4">No active conflicts.</td></tr>
+    container.innerHTML = '';
+    (data.wars || []).forEach(war => {
+      const card = document.createElement('div');
+      card.className = 'war-card';
+      card.innerHTML = `
+        <h4>${escapeHTML(war.attacker_name)} vs ${escapeHTML(war.defender_name)}</h4>
+        <p>Phase: <strong>${escapeHTML(war.phase || '')}</strong></p>
+        <p>Score: ${escapeHTML(war.attacker_score ?? 0)} - ${escapeHTML(war.defender_score ?? 0)}</p>
+        <button class="view-war-btn" data-id="${war.war_id}">View Details</button>
       `;
-      return;
-    }
-
-    data.conflicts.forEach(conflict => {
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${escapeHTML(conflict.parties || "Unknown")}</td>
-        <td>${escapeHTML(conflict.type || "Unknown")}</td>
-        <td>${escapeHTML(conflict.status || "Ongoing")}</td>
-        <td>${escapeHTML(conflict.started || "Unknown")}</td>
-      `;
-
-      tbody.appendChild(row);
+      container.appendChild(card);
     });
-
+    container.querySelectorAll('.view-war-btn').forEach(btn => {
+      btn.addEventListener('click', () => fetchWarDetails(btn.dataset.id));
+    });
   } catch (err) {
-    console.error("❌ Error loading active conflicts:", err);
-    tbody.innerHTML = `
-      <tr><td colspan="4">Failed to load active conflicts.</td></tr>
-    `;
+    console.error('Error loading kingdom wars:', err);
+    container.innerHTML = '<p>Failed to load wars.</p>';
   }
 }
 
-// ✅ Load Historical Conflicts
-async function loadHistoricalConflicts() {
-  const tbody = document.getElementById("historicalConflictsBody");
-
-  tbody.innerHTML = `
-    <tr><td colspan="5">Loading historical conflicts...</td></tr>
-  `;
-
+// Load alliance level wars
+export async function fetchAllianceWars() {
+  const container = document.getElementById('allianceWarsList');
+  if (!container) return;
+  container.innerHTML = '<p>Loading wars…</p>';
   try {
-    const res = await fetch("/api/conflicts/historical");
+    const res = await fetch('/api/conflicts/alliance');
     const data = await res.json();
-
-    tbody.innerHTML = "";
-
-    if (!data.conflicts || data.conflicts.length === 0) {
-      tbody.innerHTML = `
-        <tr><td colspan="5">No historical conflicts.</td></tr>
+    container.innerHTML = '';
+    (data.wars || []).forEach(war => {
+      const card = document.createElement('div');
+      card.className = 'war-card';
+      card.innerHTML = `
+        <h4>${escapeHTML(war.attacker_alliance)} vs ${escapeHTML(war.defender_alliance)}</h4>
+        <p>Phase: <strong>${escapeHTML(war.phase || '')}</strong></p>
+        <p>Score: ${escapeHTML(war.attacker_score ?? 0)} - ${escapeHTML(war.defender_score ?? 0)}</p>
+        <button class="view-war-btn" data-id="${war.war_id}">View Details</button>
       `;
-      return;
-    }
-
-    data.conflicts.forEach(conflict => {
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${escapeHTML(conflict.parties || "Unknown")}</td>
-        <td>${escapeHTML(conflict.type || "Unknown")}</td>
-        <td>${escapeHTML(conflict.outcome || "Unknown")}</td>
-        <td>${escapeHTML(conflict.ended || "Unknown")}</td>
-        <td>${escapeHTML(conflict.summary || "No summary.")}</td>
-      `;
-
-      tbody.appendChild(row);
+      container.appendChild(card);
     });
-
+    container.querySelectorAll('.view-war-btn').forEach(btn => {
+      btn.addEventListener('click', () => fetchWarDetails(btn.dataset.id));
+    });
   } catch (err) {
-    console.error("❌ Error loading historical conflicts:", err);
-    tbody.innerHTML = `
-      <tr><td colspan="5">Failed to load historical conflicts.</td></tr>
-    `;
+    console.error('Error loading alliance wars:', err);
+    container.innerHTML = '<p>Failed to load wars.</p>';
   }
 }
 
-// ✅ Basic HTML escape
+// Fetch full war details and display in modal
+export async function fetchWarDetails(id) {
+  const modal = document.getElementById('war-detail-modal');
+  if (!modal) return;
+  modal.innerHTML = '<div class="modal-content"><p>Loading…</p></div>';
+  modal.classList.remove('hidden');
+  try {
+    const res = await fetch(`/api/conflicts/war/${id}/details`);
+    const data = await res.json();
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>${escapeHTML(data.attacker_name)} vs ${escapeHTML(data.defender_name)}</h3>
+        <p>Result: ${escapeHTML(data.result || 'Ongoing')}</p>
+        <div id="combat-log-timeline"></div>
+        <button class="close-btn">Close</button>
+      </div>
+    `;
+    modal.querySelector('.close-btn').addEventListener('click', () => modal.classList.add('hidden'));
+  } catch (err) {
+    console.error('Error loading war details:', err);
+    modal.innerHTML = '<div class="modal-content"><p>Failed to load details.</p><button class="close-btn">Close</button></div>';
+    modal.querySelector('.close-btn').addEventListener('click', () => modal.classList.add('hidden'));
+  }
+}
+
+// Utility to escape user-supplied data
 function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  if (str === undefined || str === null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
