@@ -162,6 +162,36 @@ body {
   color: var(--gold);
 }
 
+.availability {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+.available {
+  color: var(--success);
+}
+.taken {
+  color: var(--error);
+}
+
+.stats-panel {
+  margin-top: 2rem;
+}
+
+.stats-panel ul {
+  list-style: none;
+  padding: 0;
+}
+
+.stats-panel li {
+  padding: 0.25rem 0;
+}
+
+@media (max-width: 600px) {
+  .signup-panel {
+    padding: 1rem;
+  }
+}
+
 .toast-notification {
   position: fixed;
   bottom: 1rem;
