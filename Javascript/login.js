@@ -23,6 +23,7 @@ let modal;
 let closeBtn;
 let sendResetBtn;
 let forgotMessage;
+let announcementList;
 
 document.addEventListener('DOMContentLoaded', () => {
   loginForm = document.getElementById('login-form');
@@ -30,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
   passwordInput = document.getElementById('password');
   loginButton = document.querySelector('#login-form .royal-button');
   messageContainer = document.getElementById('message');
+
+  announcementList = document.getElementById('announcement-list');
 
   forgotLink = document.querySelector('.account-links a[href="forgot_password.html"]');
   modal = document.getElementById('forgot-password-modal');
@@ -58,6 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', handleLogin);
   }
+
+  loadAnnouncements();
 });
 
 async function handleLogin(e) {
@@ -150,4 +155,20 @@ function showMessage(type, text) {
     messageContainer.classList.remove('show');
     messageContainer.textContent = '';
   }, 5000);
+}
+
+async function loadAnnouncements() {
+  if (!announcementList) return;
+  try {
+    const res = await fetch('/api/login/announcements');
+    if (!res.ok) return;
+    const data = await res.json();
+    data.announcements.forEach((a) => {
+      const li = document.createElement('li');
+      li.textContent = `${a.title} - ${a.content}`;
+      announcementList.appendChild(li);
+    });
+  } catch (err) {
+    console.error('Failed to load announcements', err);
+  }
 }
