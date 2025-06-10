@@ -100,6 +100,22 @@ h2 {
   box-shadow: 0 6px 12px var(--shadow);
 }
 
+/* Progress Bar */
+.quest-progress-bar {
+  background: var(--stone-bg);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.quest-progress-bar-inner {
+  background: var(--accent);
+  height: 100%;
+  transition: width var(--transition-medium);
+}
+
 /* Action Buttons */
 .quest-actions {
   margin-top: 1.5rem;
@@ -140,6 +156,16 @@ h2 {
   color: var(--gold);
   text-shadow: 1px 1px 3px black;
   margin-bottom: 1rem;
+}
+
+.hall-of-heroes ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.hall-of-heroes li {
+  padding: 0.25rem 0;
 }
 
 /* Modal - Hidden by Default */
@@ -183,5 +209,11 @@ h2 {
   #quest-board {
     grid-template-columns: 1fr;
     padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quest-card {
+    font-size: 0.9rem;
   }
 }

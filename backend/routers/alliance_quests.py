@@ -200,3 +200,63 @@ def get_contributions(
         for r in rows
     ]
 
+
+@router.get("/detail/{quest_code}")
+def quest_detail(
+    quest_code: str,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return detailed information about a specific alliance quest."""
+    aid, _ = get_alliance_info(user_id, db)
+
+    cat = (
+        db.query(QuestAllianceCatalogue)
+        .filter(QuestAllianceCatalogue.quest_code == quest_code)
+        .first()
+    )
+    if not cat:
+        raise HTTPException(status_code=404, detail="Quest not found")
+
+    tracking = (
+        db.query(QuestAllianceTracking)
+        .filter_by(alliance_id=aid, quest_code=quest_code)
+        .first()
+    )
+
+    contrib_rows = (
+        db.query(QuestAllianceContribution)
+        .filter_by(alliance_id=aid, quest_code=quest_code)
+        .order_by(QuestAllianceContribution.timestamp.desc())
+        .all()
+    )
+
+    contributions = [
+        {
+            "player_name": r.player_name,
+            "resource_type": r.resource_type,
+            "amount": r.amount,
+            "timestamp": r.timestamp,
+            "user_id": str(r.user_id),
+        }
+        for r in contrib_rows
+    ]
+
+    return {
+        "quest_code": cat.quest_code,
+        "name": cat.name,
+        "description": cat.description,
+        "duration_hours": cat.duration_hours,
+        "category": cat.category,
+        "objectives": cat.objectives,
+        "rewards": cat.rewards,
+        "required_level": cat.required_level,
+        "repeatable": cat.repeatable,
+        "max_attempts": cat.max_attempts,
+        "progress": tracking.progress if tracking else None,
+        "status": tracking.status if tracking else None,
+        "ends_at": tracking.ends_at if tracking else None,
+        "started_at": tracking.started_at if tracking else None,
+        "contributions": contributions,
+    }
+

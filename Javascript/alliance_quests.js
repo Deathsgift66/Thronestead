@@ -7,6 +7,9 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentFilter = 'active';
+let questChannel = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -19,6 +22,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Initial load
   await loadQuests("active");
+
+  questChannel = supabase
+    .channel('public:quest_alliance_tracking')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'quest_alliance_tracking' },
+      () => {
+        loadQuests(currentFilter);
+      }
+    )
+    .subscribe();
 
   // ✅ Filter tabs
   document.querySelectorAll(".filter-tab").forEach(tab => {
@@ -39,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const res = await fetch("/api/alliance-quests/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quest_id: questId })
+        body: JSON.stringify({ quest_code: questId })
       });
       const data = await res.json();
       alert(data.message || "Quest started.");
@@ -64,7 +78,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const res = await fetch("/api/alliance-quests/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quest_id: questId })
+        body: JSON.stringify({ quest_code: questId })
       });
       const result = await res.json();
       alert(result.message || "Quest accepted!");
@@ -72,10 +86,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadQuests("active");
     });
   }
+
+  window.addEventListener('beforeunload', () => {
+    if (questChannel) supabase.removeChannel(questChannel);
+  });
 });
 
 // ✅ Load quests by status
 async function loadQuests(status) {
+  currentFilter = status;
   const board = document.getElementById("quest-board");
   const heroes = document.getElementById("hero-list");
 
@@ -93,12 +112,13 @@ async function loadQuests(status) {
     }
     const res = await fetch(endpoint);
     const data = await res.json();
+    const quests = data.quests || data;
 
     // Clear board
     board.innerHTML = "";
     heroes.innerHTML = "";
 
-    if (!data.quests || data.quests.length === 0) {
+    if (!quests || quests.length === 0) {
       document.getElementById("no-quests-message").classList.remove("hidden");
       return;
     } else {
@@ -106,7 +126,7 @@ async function loadQuests(status) {
     }
 
     // Render quests
-    data.quests.forEach(q => {
+    quests.forEach(q => {
       const card = document.createElement("div");
       card.classList.add("quest-card");
 
@@ -126,7 +146,7 @@ async function loadQuests(status) {
         <div class="quest-rewards">🎁 Rewards: ${q.reward_gold} gold${q.reward_item ? ", " + q.reward_item : ""}</div>
         ${q.leader_note ? `<div class="quest-leader-note">🖋 Leader Note: ${q.leader_note}</div>` : ""}
         <div class="quest-actions">
-          <button class="view-quest-btn" data-quest='${JSON.stringify(q)}'>📜 View Details</button>
+          <button class="view-quest-btn" data-code="${q.quest_code}">📜 View Details</button>
         </div>
       `;
 
@@ -135,15 +155,18 @@ async function loadQuests(status) {
 
     // Add event listeners for View Details
     document.querySelectorAll(".view-quest-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const quest = JSON.parse(btn.dataset.quest);
+      btn.addEventListener("click", async () => {
+        const code = btn.dataset.code;
+        const resDetail = await fetch(`/api/alliance-quests/detail/${code}`);
+        const quest = await resDetail.json();
         openQuestModal(quest);
       });
     });
 
     // Render Hall of Heroes
-    if (data.heroes && data.heroes.length > 0) {
-      data.heroes.forEach(h => {
+    const heroData = data.heroes || [];
+    if (heroData.length > 0) {
+      heroData.forEach(h => {
         const li = document.createElement("li");
         li.textContent = `${h.name} — ${h.contributions} pts`;
         heroes.appendChild(li);
@@ -163,17 +186,17 @@ async function loadQuests(status) {
 function openQuestModal(q) {
   const modal = document.getElementById("quest-modal");
 
-  document.getElementById("modal-quest-title").textContent = q.title;
-  document.querySelector(".quest-type-modal").textContent = `[${q.type}]`;
-  document.getElementById("modal-quest-description").textContent = q.lore;
+  document.getElementById("modal-quest-title").textContent = q.name || q.title;
+  document.querySelector(".quest-type-modal").textContent = q.category ? `[${q.category}]` : q.type ? `[${q.type}]` : '';
+  document.getElementById("modal-quest-description").textContent = q.description || q.lore || '';
 
   // Contributions
   const contribList = document.getElementById("modal-quest-contributions");
   contribList.innerHTML = "";
-  if (q.required_contributions && q.required_contributions.length > 0) {
-    q.required_contributions.forEach(c => {
+  if (q.contributions && q.contributions.length > 0) {
+    q.contributions.forEach(c => {
       const li = document.createElement("li");
-      li.textContent = `${c.type}: ${c.amount}`;
+      li.textContent = `${c.player_name}: ${c.amount} ${c.resource_type}`;
       contribList.appendChild(li);
     });
   } else {
@@ -183,17 +206,16 @@ function openQuestModal(q) {
   // Rewards
   const rewardsList = document.getElementById("modal-quest-rewards");
   rewardsList.innerHTML = "";
-  const rewardGold = document.createElement("li");
-  rewardGold.textContent = `${q.reward_gold} Gold`;
-  rewardsList.appendChild(rewardGold);
-  if (q.reward_item) {
-    const rewardItem = document.createElement("li");
-    rewardItem.textContent = q.reward_item;
-    rewardsList.appendChild(rewardItem);
+  if (q.rewards) {
+    Object.entries(q.rewards).forEach(([k, v]) => {
+      const li = document.createElement("li");
+      li.textContent = `${k}: ${v}`;
+      rewardsList.appendChild(li);
+    });
   }
 
   // Time Left
-  document.getElementById("modal-time-left").textContent = q.time_left ?? "Unknown";
+  document.getElementById("modal-time-left").textContent = q.ends_at || "Unknown";
 
   // Leader Note
   const leaderNote = document.getElementById("modal-quest-leader-note");
@@ -207,13 +229,15 @@ function openQuestModal(q) {
 
   // Accept button
   const acceptBtn = document.getElementById("accept-quest-button");
-  if (q.can_accept) {
-    acceptBtn.classList.remove("hidden");
-    acceptBtn.dataset.questId = q.quest_id;
-    document.getElementById("role-check-message").textContent = "";
-  } else {
-    acceptBtn.classList.add("hidden");
-    document.getElementById("role-check-message").textContent = "You do not have permission to accept this quest.";
+  if (acceptBtn) {
+    if (q.status !== 'completed') {
+      acceptBtn.classList.remove("hidden");
+      acceptBtn.dataset.questId = q.quest_code;
+      document.getElementById("role-check-message").textContent = "";
+    } else {
+      acceptBtn.classList.add("hidden");
+      document.getElementById("role-check-message").textContent = "Quest already completed.";
+    }
   }
 
   // Open modal

@@ -7,6 +7,7 @@ from backend.models import (
     User,
     QuestAllianceCatalogue,
     QuestAllianceTracking,
+    QuestAllianceContribution,
 )
 from backend.routers import alliance_quests
 
@@ -93,3 +94,41 @@ def test_start_quest_creates_tracking():
     )
     assert row is not None and row.status == "active"
     assert res["status"] == "started"
+
+
+def test_detail_returns_tracking_and_contributions():
+    Session = setup_db()
+    db = Session()
+    uid = create_user(db)
+    db.add(
+        QuestAllianceCatalogue(
+            quest_code="q1",
+            name="One",
+            description="D",
+            is_active=True,
+        )
+    )
+    db.add(
+        QuestAllianceTracking(
+            alliance_id=1,
+            quest_code="q1",
+            status="active",
+            progress=25,
+        )
+    )
+    db.add(
+        QuestAllianceContribution(
+            alliance_id=1,
+            player_name="Tester",
+            resource_type="gold",
+            amount=10,
+            quest_code="q1",
+            user_id=uid,
+        )
+    )
+    db.commit()
+
+    res = alliance_quests.quest_detail("q1", user_id=uid, db=db)
+    assert res["quest_code"] == "q1"
+    assert res["progress"] == 25
+    assert len(res["contributions"]) == 1
