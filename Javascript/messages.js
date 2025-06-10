@@ -18,65 +18,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-
-  const { user } = session;
-  const accessToken = session.access_token;
-
-  // ✅ Determine page
-  if (document.getElementById("message-list")) {
-    await loadInbox(user, accessToken);
-    subscribeToMessages(user.id, () => loadInbox(user, accessToken));
-
   currentSession = session;
 
-  // ✅ Determine page
   if (document.getElementById("message-list")) {
-    // Inbox page
     await loadInbox(session);
     subscribeToNewMessages(session.user.id);
-
   } else if (document.getElementById("message-container")) {
     const urlParams = new URLSearchParams(window.location.search);
     const messageId = urlParams.get("message_id");
     if (messageId) {
-      await loadMessageView(messageId, user, accessToken);
-      subscribeToMessages(user.id, (payload) => {
+      await loadMessageView(messageId, session);
+      subscribeToMessages(session.user.id, (payload) => {
         if (payload.new.message_id === parseInt(messageId)) {
-          loadMessageView(messageId, user, accessToken);
+          loadMessageView(messageId, session);
         }
       });
     } else {
       document.getElementById("message-container").innerHTML = "<p>Invalid message.</p>";
     }
   } else if (document.getElementById("compose-form")) {
-    setupCompose(user, accessToken);
+    setupCompose(session);
   }
 });
 
 // ✅ Load Inbox
-
-async function loadInbox(user, token) {
-
 async function loadInbox(session) {
-
   const container = document.getElementById("message-list");
   container.innerHTML = "<p>Loading messages...</p>";
 
   try {
-
-    const res = await fetch('/api/messages/list', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-User-ID': user.id
-      }
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Error');
-
-    container.innerHTML = "";
-
-    if (!data.messages || data.messages.length === 0) {
-
     const res = await fetch('/api/messages/inbox', {
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
@@ -89,15 +59,11 @@ async function loadInbox(session) {
     container.innerHTML = "";
     document.getElementById('message-count').textContent = `${messages.length} Messages`;
     if (!messages || messages.length === 0) {
-
       container.innerHTML = "<p>No messages found.</p>";
       return;
     }
 
-    data.messages.forEach(msg => {
-
     messages.forEach(msg => {
-
       const card = document.createElement("div");
       card.classList.add("message-card");
       if (!msg.is_read) card.classList.add('unread');
@@ -105,11 +71,7 @@ async function loadInbox(session) {
       card.innerHTML = `
         <a href="message.html?message_id=${msg.message_id}">
           <div class="message-meta">
-
-            <span>From: ${escapeHTML(msg.username || "Unknown")}</span>
-=======
             <span>From: ${escapeHTML(msg.sender || "Unknown")}</span>
-
             <span>${formatDate(msg.sent_at)}</span>
           </div>
           <div class="message-subject">${escapeHTML((msg.subject || msg.message).substring(0, 50))}</div>
@@ -118,7 +80,6 @@ async function loadInbox(session) {
 
       container.appendChild(card);
     });
-
   } catch (err) {
     console.error("❌ Error loading inbox:", err);
     container.innerHTML = "<p>Failed to load messages.</p>";
@@ -142,15 +103,15 @@ function subscribeToNewMessages(uid) {
 }
 
 // ✅ Load Message View
-async function loadMessageView(messageId, user, token) {
+async function loadMessageView(messageId, session) {
   const container = document.getElementById("message-container");
   container.innerHTML = "<p>Loading message...</p>";
 
   try {
     const res = await fetch(`/api/messages/${messageId}`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-User-ID': user.id
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-User-ID': session.user.id
       }
     });
     const data = await res.json();
@@ -182,8 +143,8 @@ async function loadMessageView(messageId, user, token) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'X-User-ID': user.id
+            'Authorization': `Bearer ${session.access_token}`,
+            'X-User-ID': session.user.id
           },
           body: JSON.stringify({ message_id: messageId })
         });
@@ -209,7 +170,7 @@ async function loadMessageView(messageId, user, token) {
 }
 
 // ✅ Setup Compose
-function setupCompose(user, token) {
+function setupCompose(session) {
   const composeForm = document.getElementById("compose-form");
 
   // ✅ If replying to someone
@@ -234,23 +195,10 @@ function setupCompose(user, token) {
     }
 
     try {
-
-=======
-      const { data: { session } } = await supabase.auth.getSession();
-
-
       const res = await fetch('/api/messages/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-          'X-User-ID': user.id
-        },
-        body: JSON.stringify({ recipient, subject, content: messageContent })
-      });
-      if (!res.ok) throw new Error();
-=======
           'Authorization': `Bearer ${session.access_token}`,
           'X-User-ID': session.user.id
         },
@@ -263,7 +211,6 @@ function setupCompose(user, token) {
       });
 
       if (!res.ok) throw new Error('send failed');
-
 
       alert("Message sent!");
       window.location.href = "messages.html";
