@@ -121,3 +121,25 @@ body {
   color: #1a1a1a;
 }
 
+.legend-panel {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  background: rgba(251, 240, 217, 0.95);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--shadow);
+  padding: 1rem;
+  color: var(--ink);
+  z-index: var(--z-index-modal);
+}
+
+@media (max-width: 600px) {
+  .treaty-controls {
+    flex-direction: column;
+  }
+  .network-area {
+    height: 400px;
+  }
+}
+
