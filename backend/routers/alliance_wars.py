@@ -123,6 +123,28 @@ def get_combat_logs(
     return [dict(r) for r in rows]
 
 
+@router.get("/preplan")
+def get_preplan(
+    alliance_war_id: int,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    authorize_war_access(db, user_id, alliance_war_id)
+    kid = get_kingdom_id(db, user_id)
+    row = (
+        db.execute(
+            text(
+                "SELECT preplan_jsonb FROM alliance_war_preplans "
+                "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+            ),
+            {"wid": alliance_war_id, "kid": kid},
+        )
+        .mappings()
+        .first()
+    )
+    return {"plan": row["preplan_jsonb"] if row else {}}
+
+
 @router.post("/preplan/submit")
 def submit_preplan(
     alliance_war_id: int,

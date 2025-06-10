@@ -22,6 +22,7 @@ Author: Deathsgift66
   <meta name="twitter:description" content="Set up unit orders before battle in Kingmaker's Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <link rel="stylesheet" href="CSS/battle_replay.css" />
+  <link rel="stylesheet" href="CSS/preplan_editor.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script defer type="module" src="Javascript/preplan_editor.js"></script>
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
@@ -41,12 +42,19 @@ Author: Deathsgift66
   Kingmaker's Rise — Battle Pre-Planning
 </header>
 <main class="main-centered-container" aria-label="Pre-Plan Interface">
-  <section class="alliance-members-container">
-    <h2>Battle Pre-Planning</h2>
-    <p>Set unit orders ahead of the upcoming battle.</p>
-    <label for="war-id">War ID</label>
-    <input id="war-id" type="number" min="1" />
-    <button id="save-plan">Save Plan</button>
+  <section class="preplan-wrapper panel">
+    <h2>Battle Pre‑Planning</h2>
+    <p>Draft your troop orders and formations.</p>
+    <div class="form-row">
+      <label for="war-id">War ID</label>
+      <input id="war-id" type="number" min="1" />
+    </div>
+    <textarea id="preplan-json" rows="8" aria-label="Preplan JSON"></textarea>
+    <button id="save-plan" class="btn">Save Plan</button>
+  </section>
+  <section class="scoreboard panel">
+    <h2>Current Score</h2>
+    <div id="scoreboard-display">0 - 0</div>
   </section>
 </main>
 <footer class="site-footer">

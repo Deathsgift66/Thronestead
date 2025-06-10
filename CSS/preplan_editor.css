@@ -1,0 +1,35 @@
+@import url("./root_theme.css");
+
+body {
+  background: url('../Assets/world_map_background.png') no-repeat center/cover fixed;
+  color: var(--parchment);
+}
+
+.preplan-wrapper,
+.scoreboard {
+  background: var(--overlay);
+  border: var(--border);
+  border-radius: var(--border-radius);
+  padding: var(--padding-lg);
+  margin-bottom: var(--gap-default);
+  width: 100%;
+  box-shadow: var(--box-shadow);
+}
+
+.preplan-wrapper textarea {
+  width: 100%;
+  min-height: 200px;
+  margin: var(--padding-md) 0;
+}
+
+.scoreboard div {
+  font-size: var(--font-lg);
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .preplan-wrapper,
+  .scoreboard {
+    padding: var(--padding-md);
+  }
+}
