@@ -27,6 +27,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Initial load
   await loadOverview();
+  // realtime updates to resources
+  subscribeToResourceUpdates();
 });
 
 // ✅ Load Overview Data
@@ -58,48 +60,10 @@ async function loadOverview() {
     if (userError) throw userError;
     const kingdomId = userData.kingdom_id;
 
-    const { data: resRow, error: resErr } = await supabase
-      .from('kingdom_resources')
-      .select('*')
-      .eq('kingdom_id', kingdomId)
-      .single();
-    if (resErr) throw resErr;
-
-    const { data: slotRow, error: slotErr } = await supabase
-      .from('kingdom_troop_slots')
-      .select('*')
-      .eq('kingdom_id', kingdomId)
-      .single();
-    if (slotErr) throw slotErr;
-
-    const { data: troopsData, error: troopsErr } = await supabase
-      .from('kingdom_troops')
-      .select('quantity')
-      .eq('kingdom_id', kingdomId);
-    if (troopsErr) throw troopsErr;
-
-    const totalTroops = troopsData.reduce((sum, r) => sum + (r.quantity || 0), 0);
-    const baseSlots =
-      (slotRow.base_slots || 0) +
-      (slotRow.slots_from_buildings || 0) +
-      (slotRow.slots_from_tech || 0) +
-      (slotRow.slots_from_projects || 0) +
-      (slotRow.slots_from_events || 0);
-    const usedSlots = slotRow.used_slots || 0;
-
-    const data = {
-      resources: Object.fromEntries(
-        Object.entries(resRow || {}).filter(([k]) => k !== 'kingdom_id')
-      ),
-      troops: {
-        total: totalTroops,
-        slots: {
-          base: baseSlots,
-          used: usedSlots,
-          available: Math.max(0, baseSlots - usedSlots)
-        }
-      }
-    };
+    const ovRes = await fetch('/api/overview', {
+      headers: { 'X-User-ID': currentUser.id }
+    });
+    const data = await ovRes.json();
 
     // ✅ Summary Panel
     summaryContainer.innerHTML = `
@@ -220,4 +184,47 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+// Subscribe to realtime resource updates
+function subscribeToResourceUpdates() {
+  supabase.auth.getUser().then(({ data }) => {
+    const uid = data?.user?.id;
+    if (!uid) return;
+    supabase
+      .from('users')
+      .select('kingdom_id')
+      .eq('user_id', uid)
+      .single()
+      .then(({ data }) => {
+        const kid = data?.kingdom_id;
+        if (!kid) return;
+        supabase
+          .channel('kr-overview-' + kid)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'kingdom_resources', filter: `kingdom_id=eq.${kid}` },
+            (payload) => {
+              if (payload.new) {
+                updateResourceUI(payload.new);
+              }
+            }
+          )
+          .subscribe();
+      });
+  });
+}
+
+function updateResourceUI(row) {
+  const container = document.getElementById('overview-resources');
+  if (!container) return;
+  container.innerHTML = '';
+  const list = document.createElement('ul');
+  for (const [k, v] of Object.entries(row)) {
+    if (k === 'kingdom_id') continue;
+    const li = document.createElement('li');
+    li.innerHTML = `<strong>${escapeHTML(k)}:</strong> ${v}`;
+    list.appendChild(li);
+  }
+  container.appendChild(list);
 }

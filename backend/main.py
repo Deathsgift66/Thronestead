@@ -39,6 +39,8 @@ from .routers import (
     admin_dashboard,
     account_settings,
     spies_router,
+    policies_laws_router,
+    overview as overview_router,
     legal,
     trade_logs,
     training_history,
@@ -104,6 +106,7 @@ app.include_router(progression_router.router)
     app.include_router(alliance_treaties_router.router)
     app.include_router(account_settings.router)
     app.include_router(spies_router.router)
+app.include_router(policies_laws_router.router)
 app.include_router(trade_logs.router)
 app.include_router(training_history.router)
 app.include_router(village_modifiers.router)
@@ -120,5 +123,7 @@ app.include_router(legal.router)
 app.include_router(profile_view.router)
 app.include_router(navbar.router)
 app.include_router(seasonal_effects.router)
+app.include_router(overview_router.router)
+
 
 

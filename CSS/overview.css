@@ -15,6 +15,20 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('../Assets/signupparchment.png');
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .main-centered-container {
@@ -86,6 +100,11 @@ body {
   color: #d8caa5;
 }
 
+.live-note {
+  font-style: italic;
+  color: var(--highlight);
+}
+
 /* Overview Summary */
 .overview-summary {
   background: var(--stone-panel);
@@ -130,4 +149,13 @@ body {
 
 .site-footer a:hover {
   color: var(--gold);
+}
+
+@media (max-width: 600px) {
+  .main-centered-container {
+    padding: 1rem;
+  }
+  .overview-panels {
+    grid-template-columns: 1fr;
+  }
 }
