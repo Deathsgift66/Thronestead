@@ -25,27 +25,28 @@ async function loadPoliciesAndLaws() {
   summaryContainer.innerHTML = "<p>Building summary...</p>";
 
   try {
-    // ✅ Load user profile
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('active_policy, active_laws')
-      .eq('user_id', user.id)
-      .single();
+    // ✅ Auth token for backend requests
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const uid = session?.user?.id;
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'X-User-ID': uid,
+      'Content-Type': 'application/json'
+    };
 
-    if (userError) throw userError;
+    // ✅ Load user profile
+    const userRes = await fetch('/api/policies-laws/user', { headers });
+    if (!userRes.ok) throw new Error('Failed to load user data');
+    const userData = await userRes.json();
 
     const activePolicy = userData.active_policy;
     const activeLaws = userData.active_laws || [];
 
     // ✅ Load catalog
-    const { data: catalogData, error: catalogError } = await supabase
-      .from('policies_laws_catalogue')
-      .select('*')
-      .eq('is_active', true)
-      .order('unlock_at_level', { ascending: true });
-
-    if (catalogError) throw catalogError;
+    const catRes = await fetch('/api/policies-laws/catalogue', { headers });
+    if (!catRes.ok) throw new Error('Failed to load catalogue');
+    const { entries: catalogData } = await catRes.json();
 
     // Separate policies and laws
     const policies = catalogData.filter(item => item.type === "policy");
@@ -58,6 +59,7 @@ async function loadPoliciesAndLaws() {
       card.classList.add("policy-card");
 
       card.innerHTML = `
+        <span class="glow"></span>
         <h3>${escapeHTML(policy.name)}</h3>
         <p>${escapeHTML(policy.description)}</p>
         <p>Category: ${escapeHTML(policy.category || '')}</p>
@@ -83,6 +85,7 @@ async function loadPoliciesAndLaws() {
       const isActive = activeLaws.includes(law.id);
 
       card.innerHTML = `
+        <span class="glow"></span>
         <h3>${escapeHTML(law.name)}</h3>
         <p>${escapeHTML(law.description)}</p>
         <p>Category: ${escapeHTML(law.category || '')}</p>
@@ -101,17 +104,15 @@ async function loadPoliciesAndLaws() {
     document.querySelectorAll(".policy-select-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const policyId = btn.dataset.id;
-
         try {
-          const { error } = await supabase
-            .from('users')
-            .update({ active_policy: policyId })
-            .eq('user_id', user.id);
-
-          if (error) throw error;
-
+          const res = await fetch('/api/policies-laws/policy', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ policy_id: parseInt(policyId) })
+          });
+          if (!res.ok) throw new Error('request failed');
           alert("Policy updated!");
-          await loadPoliciesAndLaws(); // Refresh
+          await loadPoliciesAndLaws();
         } catch (err) {
           console.error("❌ Error updating policy:", err);
           alert("Failed to update policy.");
@@ -132,15 +133,14 @@ async function loadPoliciesAndLaws() {
         }
 
         try {
-          const { error } = await supabase
-            .from('users')
-            .update({ active_laws: updatedLaws })
-            .eq('user_id', user.id);
-
-          if (error) throw error;
-
+          const res = await fetch('/api/policies-laws/laws', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ law_ids: updatedLaws })
+          });
+          if (!res.ok) throw new Error('request failed');
           alert("Laws updated!");
-          await loadPoliciesAndLaws(); // Refresh
+          await loadPoliciesAndLaws();
         } catch (err) {
           console.error("❌ Error updating laws:", err);
           alert("Failed to update laws.");

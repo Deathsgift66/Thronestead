@@ -6,7 +6,7 @@ Author: Deathsgift66
 */
 @import url("./root_theme.css");
 
-body {
+body.medieval-page {
   margin: 0;
   font-family: 'IM Fell English', serif;
   background: url('../Assets/policies_laws.png') no-repeat center center fixed;
@@ -88,11 +88,28 @@ body {
   border: 1px solid var(--gold);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.policy-card .glow,
+.law-card .glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 10px var(--gold);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
 .policy-card:hover, .law-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 12px var(--shadow);
+}
+
+.policy-card:hover .glow,
+.law-card:hover .glow {
+  opacity: 1;
 }
 
 .policy-active, .law-active {
@@ -110,5 +127,12 @@ body {
   font-family: 'Cinzel', serif;
   color: var(--gold);
   margin-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+  .policy-options,
+  .law-options {
+    grid-template-columns: 1fr;
+  }
 }
 
