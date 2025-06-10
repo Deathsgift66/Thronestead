@@ -142,3 +142,19 @@ body {
   display: none;
 }
 
+.last-updated {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  text-align: right;
+  color: var(--parchment);
+}
+
+@media (max-width: 600px) {
+  .tabs {
+    flex-wrap: wrap;
+  }
+  .leaderboard-container {
+    padding: 1rem;
+  }
+}
+

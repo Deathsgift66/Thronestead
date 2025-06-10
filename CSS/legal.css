@@ -96,6 +96,23 @@ body {
   gap: 1.5rem;
 }
 
+#search-container {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+#doc-search {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--input-padding);
+  border: var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-family: var(--font-body);
+}
+
 .legal-card {
   background: var(--stone-panel);
   padding: 1.5rem;

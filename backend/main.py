@@ -39,6 +39,7 @@ from .routers import (
     admin_dashboard,
     account_settings,
     spies_router,
+    legal,
     trade_logs,
     training_history,
     village_modifiers,
@@ -50,6 +51,7 @@ from .routers import (
     kingdom_history,
     kingdom_achievements,
     login_routes,
+    navbar,
 )
 from .database import engine
 from .models import Base
@@ -112,4 +114,7 @@ app.include_router(kingdom_history.router)
 app.include_router(forgot_password.router)
 app.include_router(kingdom_achievements.router)
 app.include_router(login_routes.router)
+app.include_router(legal.router)
+app.include_router(navbar.router)
+
 

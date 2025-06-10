@@ -59,25 +59,25 @@ Author: Deathsgift66
 </header>
 
 <!-- Main Centered Layout -->
-<main class="diplomacy-center-container">
-  <section class="diplomacy-metrics">
+<main class="diplomacy-center-grid">
+  <section class="diplomacy-metrics panel">
     <h2>Diplomacy Metrics</h2>
-    <p><strong>Diplomacy Score:</strong> <span id="diplomacy-score">--</span></p>
-    <p><strong>Active Treaties:</strong> <span id="active-treaties-count">--</span></p>
-    <p><strong>Ongoing Wars:</strong> <span id="ongoing-wars-count">--</span></p>
+    <p><strong>Diplomacy Score:</strong> <span id="diplomacy-score" aria-live="polite">--</span></p>
+    <p><strong>Active Treaties:</strong> <span id="active-treaties-count" aria-live="polite">--</span></p>
+    <p><strong>Ongoing Wars:</strong> <span id="ongoing-wars-count" aria-live="polite">--</span></p>
   </section>
 
-  <section class="treaty-list">
+  <section class="treaty-list panel">
     <h2>Alliance Treaties</h2>
     <table class="treaties-table">
       <thead>
         <tr><th>Type</th><th>Partner</th><th>Status</th><th>Signed</th><th>Actions</th></tr>
       </thead>
-      <tbody id="treaty-rows"></tbody>
+      <tbody id="treaty-rows" aria-live="polite"></tbody>
     </table>
   </section>
 
-  <section class="propose-treaty-form">
+  <section class="propose-treaty-form panel">
     <h2>Propose New Treaty</h2>
     <label for="treaty-type">Treaty Type:</label>
     <select id="treaty-type">
@@ -87,7 +87,7 @@ Author: Deathsgift66
     </select>
     <label for="partner-alliance-id">Partner Alliance ID:</label>
     <input type="number" id="partner-alliance-id" />
-    <button onclick="proposeTreaty()">Submit Proposal</button>
+    <button class="btn" onclick="proposeTreaty()">Submit Proposal</button>
   </section>
 </main>
 

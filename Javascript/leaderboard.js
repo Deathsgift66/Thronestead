@@ -8,6 +8,8 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentTab = "kingdoms";
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -29,7 +31,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupTabs();
 
   // ✅ Load default tab (Top Kingdoms)
-  await loadLeaderboard("kingdoms");
+  await loadLeaderboard(currentTab);
+
+  // Auto-refresh leaderboard every 30 seconds for real-time updates
+  setInterval(() => {
+    loadLeaderboard(currentTab);
+  }, 30000);
 });
 
 // ✅ Setup Tabs
@@ -43,6 +50,7 @@ function setupTabs() {
       // Activate clicked tab
       tabButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      currentTab = target;
 
       // Load corresponding leaderboard
       await loadLeaderboard(target);
@@ -124,6 +132,9 @@ async function loadLeaderboard(type) {
         });
       });
     }
+
+    const ts = new Date().toLocaleTimeString();
+    document.getElementById("last-updated").textContent = `Last updated: ${ts}`;
 
   } catch (err) {
     console.error(`❌ Error loading ${type} leaderboard:`, err);
