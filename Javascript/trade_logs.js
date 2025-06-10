@@ -8,12 +8,16 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 
+let realtimeChannel = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
   initTabs();
   initFilters();
   populateResourceOptions();
   await loadTradeLogs();
+  startAutoRefresh();
+  subscribeRealtime();
 });
 
 // ✅ Tabs
@@ -173,6 +177,7 @@ async function loadTradeLogs() {
     totalVolumeEl.textContent = totalVolume.toLocaleString();
     totalTradesEl.textContent = totalTrades.toString();
     avgPriceEl.textContent = totalTrades > 0 ? (totalValue / totalVolume).toFixed(2) : "-";
+    updateLastUpdated();
 
   } catch (err) {
     console.error("❌ Error loading trade logs:", err);
@@ -210,4 +215,43 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function updateLastUpdated() {
+  const el = document.getElementById('last-updated');
+  if (el) el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+function startAutoRefresh() {
+  setInterval(() => {
+    loadTradeLogs();
+  }, 30000);
+}
+
+function subscribeRealtime() {
+  realtimeChannel = supabase
+    .channel('public:trade_logs')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'trade_logs' },
+      () => {
+        loadTradeLogs();
+      }
+    )
+    .subscribe(status => {
+      const indicator = document.getElementById('realtime-indicator');
+      if (indicator) {
+        if (status === 'SUBSCRIBED') {
+          indicator.textContent = 'Live';
+          indicator.className = 'connected';
+        } else {
+          indicator.textContent = 'Offline';
+          indicator.className = 'disconnected';
+        }
+      }
+    });
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  });
 }

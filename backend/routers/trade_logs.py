@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import TradeLog
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/trade-logs", tags=["trade_logs"])
 
@@ -14,6 +15,7 @@ def get_trade_logs(
     alliance_id: int | None = Query(None),
     trade_type: str | None = Query(None),
     limit: int = Query(50),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     query = db.query(TradeLog)
