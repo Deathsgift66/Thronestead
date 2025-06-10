@@ -132,3 +132,29 @@ body {
   border-radius: 5px;
 }
 
+/* Responsive Layout */
+@media (min-width: 768px) {
+  .alliance-members-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+  }
+
+  .temple-overview,
+  .temple-construction,
+  .temple-list {
+    flex: 1 1 30%;
+    max-width: 30%;
+  }
+}
+
+@media (max-width: 767px) {
+  .temple-overview,
+  .temple-construction,
+  .temple-list {
+    width: 100%;
+    padding: 1rem;
+  }
+}
+
