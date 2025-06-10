@@ -7,10 +7,22 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentSession = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentSession = session;
+
   // ✅ authGuard.js protects this page → no duplicate session checks
   // ✅ Initial load
   await loadProjects();
+  setInterval(loadProjects, 30000);
 
   // ✅ Bind tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -117,9 +129,13 @@ async function loadProjects() {
         if (!confirm(`Start project "${projectCode}"?`)) return;
 
         try {
-          const res = await fetch("/api/kingdom/start_project", {
+          const res = await fetch("/api/projects/start", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${currentSession.access_token}`,
+              "X-User-ID": currentSession.user.id
+            },
             body: JSON.stringify({ project_code: projectCode })
           });
 
@@ -149,6 +165,8 @@ async function loadProjects() {
       const projectDef = filteredCatalogue.find(p => p.project_code === activeProject.project_code);
 
       const remainingTime = Math.max(0, Math.floor((new Date(activeProject.ends_at).getTime() - Date.now()) / 1000));
+      const totalTime = Math.max(1, Math.floor((new Date(activeProject.ends_at).getTime() - new Date(activeProject.starts_at).getTime()) / 1000));
+      const progressPercent = Math.min(100, Math.floor(((totalTime - remainingTime) / totalTime) * 100));
 
       const card = document.createElement("div");
       card.classList.add("project-card");
@@ -158,6 +176,7 @@ async function loadProjects() {
         <p>${escapeHTML(projectDef?.description || "")}</p>
         <p>Power Score: ${activeProject.power_score}</p>
         <p>Time Remaining: <span class="countdown" data-ends-at="${activeProject.ends_at}">${formatTime(remainingTime)}</span></p>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width: ${progressPercent}%"></div></div>
       `;
 
       activeList.appendChild(card);

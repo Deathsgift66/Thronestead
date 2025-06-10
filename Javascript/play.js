@@ -9,6 +9,7 @@ import { supabase } from './supabaseClient.js';
 
 let currentUser = null;
 let kingdomId = null;
+let authToken = '';
 const regionMap = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   currentUser = session.user;
+  authToken = session.access_token;
 
   const { data: profile, error } = await supabase
     .from('users')
@@ -50,11 +52,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (nameInput) nameInput.readOnly = true;
 
   await loadRegions();
+  await loadAnnouncements();
   bindEvents(profile);
 });
 
 function bindEvents(profileExists) {
   const createBtn = document.getElementById('create-kingdom-btn');
+  const bannerPreview = document.getElementById('banner-preview');
+  const emblemPreview = document.getElementById('emblem-preview');
+  const bannerEl = document.getElementById('banner-image-input');
+  const emblemEl = document.getElementById('emblem-image-input');
+
+  if (bannerEl && bannerPreview) {
+    bannerEl.addEventListener('input', () => {
+      bannerPreview.src = bannerEl.value.trim();
+    });
+  }
+  if (emblemEl && emblemPreview) {
+    emblemEl.addEventListener('input', () => {
+      emblemPreview.src = emblemEl.value.trim();
+    });
+  }
 
   createBtn.addEventListener('click', async () => {
     const kNameEl = document.getElementById('kingdom-name-input');
@@ -63,6 +81,12 @@ function bindEvents(profileExists) {
     const villageEl = document.getElementById('village-name-input');
     const bannerEl = document.getElementById('banner-image-input');
     const emblemEl = document.getElementById('emblem-image-input');
+    if (bannerEl && bannerPreview) {
+      bannerPreview.src = bannerEl.value;
+    }
+    if (emblemEl && emblemPreview) {
+      emblemPreview.src = emblemEl.value;
+    }
     const mottoEl = document.getElementById('motto-input');
 
     const kingdomName = kNameEl.value.trim();
@@ -93,7 +117,8 @@ function bindEvents(profileExists) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-ID': currentUser.id
+          'X-User-ID': currentUser.id,
+          Authorization: `Bearer ${authToken}`
         },
         body: JSON.stringify({
           kingdom_name: kingdomName,
@@ -190,4 +215,20 @@ async function loadRegions() {
     }
     infoEl.innerHTML = html;
   });
+}
+
+async function loadAnnouncements() {
+  const container = document.getElementById('announcements');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/login/announcements');
+    if (!res.ok) throw new Error('fetch failed');
+    const data = await res.json();
+    const items = data.announcements || [];
+    container.innerHTML = items
+      .map(a => `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`)
+      .join('');
+  } catch (err) {
+    console.error('Failed to load announcements', err);
+  }
 }

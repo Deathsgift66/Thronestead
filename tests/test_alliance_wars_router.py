@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base
 from backend.models import User, AllianceWar, AllianceWarPreplan
-from backend.routers.alliance_wars import list_wars, submit_preplan
+from backend.routers.alliance_wars import list_wars, submit_preplan, get_preplan
 
 
 def setup_db():
@@ -51,3 +51,15 @@ def test_submit_preplan_upserts():
     row = db.query(AllianceWarPreplan).filter_by(alliance_war_id=5, kingdom_id=1).first()
     assert row is not None
     assert row.preplan_jsonb == {"units": []}
+
+
+def test_get_preplan_returns_plan():
+    Session = setup_db()
+    db = Session()
+    uid = seed_user(db)
+    db.add(AllianceWar(alliance_war_id=6, attacker_alliance_id=1, defender_alliance_id=2, war_status="preplan", phase="preplan"))
+    db.add(AllianceWarPreplan(alliance_war_id=6, kingdom_id=1, preplan_jsonb={"units": ["a"]}))
+    db.commit()
+
+    res = get_preplan(6, user_id=uid, db=db)
+    assert res["plan"] == {"units": ["a"]}

@@ -40,6 +40,7 @@ from .routers import (
     account_settings,
     spies_router,
     policies_laws_router,
+    overview as overview_router,
     legal,
     trade_logs,
     training_history,
@@ -52,6 +53,7 @@ from .routers import (
     kingdom_history,
     kingdom_achievements,
     login_routes,
+    profile_view,
     navbar,
 )
 from .database import engine
@@ -117,6 +119,8 @@ app.include_router(forgot_password.router)
 app.include_router(kingdom_achievements.router)
 app.include_router(login_routes.router)
 app.include_router(legal.router)
+app.include_router(profile_view.router)
 app.include_router(navbar.router)
+app.include_router(overview_router.router)
 
 

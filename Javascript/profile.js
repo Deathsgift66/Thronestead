@@ -31,16 +31,19 @@ async function loadPlayerProfile() {
   customizationContainer.innerHTML = "<p>Loading customization options...</p>";
 
   try {
-    // ✅ Load user profile
-    const { data: { user } } = await supabase.auth.getUser();
+    // ✅ Load user profile via API for security
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+    const headers = {
+      'Authorization': `Bearer ${session.access_token}`,
+      'X-User-ID': session.user.id
+    };
 
-    if (error) throw error;
+    const res = await fetch('/api/profile/overview', { headers });
+    const overview = await res.json();
+    if (!res.ok) throw new Error(overview.detail || 'Failed to load');
+    const data = overview.user || {};
 
     // ✅ Render avatar
     if (data.profile_avatar_url) {
@@ -58,9 +61,7 @@ async function loadPlayerProfile() {
 
     // ✅ VIP badge via API
     try {
-      const vipRes = await fetch('/api/kingdom/vip_status', {
-        headers: { 'X-User-ID': user.id }
-      });
+      const vipRes = await fetch('/api/kingdom/vip_status', { headers });
       const vipData = await vipRes.json();
       const lvl = vipData.vip_level || 0;
       if (lvl > 0) {
@@ -76,8 +77,8 @@ async function loadPlayerProfile() {
     // Prestige and titles
     try {
       const [prestigeRes, titlesRes] = await Promise.all([
-        fetch('/api/kingdom/prestige', { headers: { 'X-User-ID': user.id } }),
-        fetch('/api/kingdom/titles', { headers: { 'X-User-ID': user.id } })
+        fetch('/api/kingdom/prestige', { headers }),
+        fetch('/api/kingdom/titles', { headers })
       ]);
       const prestigeData = await prestigeRes.json();
       const titlesData = await titlesRes.json();
@@ -110,7 +111,8 @@ async function loadPlayerProfile() {
       });
     });
 
-    await loadRecentActions(user.id);
+    await loadRecentActions(session.user.id);
+    subscribeRecentActions(session.user.id);
 
   } catch (err) {
     console.error("❌ Error loading profile:", err);
@@ -148,6 +150,32 @@ async function loadRecentActions(userId) {
     console.error('Error loading recent actions:', err);
     tbody.innerHTML = `<tr><td colspan="3">Failed to load.</td></tr>`;
   }
+}
+
+let auditChannel;
+function subscribeRecentActions(userId) {
+  if (auditChannel) supabase.removeChannel(auditChannel);
+  auditChannel = supabase
+    .channel(`audit_log:${userId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'audit_log', filter: `user_id=eq.${userId}` },
+      payload => addAuditEntry(payload.new)
+    )
+    .subscribe();
+}
+
+function addAuditEntry(entry) {
+  const tbody = document.getElementById('recent-log-body');
+  if (!tbody) return;
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>${formatTimestamp(entry.created_at)}</td>
+    <td>${escapeHTML(entry.action)}</td>
+    <td>${escapeHTML(entry.details)}</td>
+  `;
+  tbody.prepend(row);
+  if (tbody.rows.length > 10) tbody.deleteRow(-1);
 }
 
 function formatTimestamp(timestamp) {

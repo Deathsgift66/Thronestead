@@ -195,6 +195,21 @@ body {
   cursor: not-allowed;
 }
 
+.image-preview-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.image-preview-row img {
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--gold);
+}
+
 #continue-btn {
   padding: 0.7rem 1.5rem;
   font-size: 1rem;
@@ -226,4 +241,19 @@ body {
 
 .toast-notification.show {
   opacity: 1;
+}
+
+.announcements-container {
+  margin-top: 2rem;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 1rem;
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.announcement h4 {
+  margin-bottom: 0.25rem;
+  color: var(--gold);
 }

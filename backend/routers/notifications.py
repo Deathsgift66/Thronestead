@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
+from ..security import verify_jwt_token
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
@@ -13,9 +14,15 @@ class NotificationAction(BaseModel):
     notification_id: str | None = None
 
 
-def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
+def get_current_user_id(
+    x_user_id: str | None = Header(None),
+    authorization: str | None = Header(None)
+) -> str:
     if not x_user_id:
         raise HTTPException(status_code=401, detail="User ID header missing")
+    # verify token matches user when provided
+    if authorization:
+        verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
     return x_user_id
 
 
