@@ -44,6 +44,7 @@ from .routers import (
     legal,
     trade_logs,
     training_history,
+    training_queue,
     village_modifiers,
     settings_router,
     alliance_home,
@@ -109,6 +110,7 @@ app.include_router(progression_router.router)
 app.include_router(policies_laws_router.router)
 app.include_router(trade_logs.router)
 app.include_router(training_history.router)
+app.include_router(training_queue.router)
 app.include_router(village_modifiers.router)
 app.include_router(settings_router.router)
 app.include_router(alliance_home.router)
