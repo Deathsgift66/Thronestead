@@ -57,6 +57,7 @@ from .routers import (
     profile_view,
     navbar,
     seasonal_effects,
+    world_map,
 )
 from .database import engine
 from .models import Base
@@ -125,6 +126,7 @@ app.include_router(legal.router)
 app.include_router(profile_view.router)
 app.include_router(navbar.router)
 app.include_router(seasonal_effects.router)
+app.include_router(world_map.router)
 app.include_router(overview_router.router)
 
 
