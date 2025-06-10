@@ -68,23 +68,15 @@ Author: Deathsgift66
     <h2>Battle Resolution</h2>
     <p>View the outcome of the battle and review key combat events and rewards.</p>
 
-    <!-- Outcome -->
-    <section class="battle-outcome" aria-label="Battle Outcome">
-      <h3>Battle Outcome</h3>
-      <p><strong>Status:</strong> <span id="battle-status">Loading...</span></p>
-      <p><strong>Winner:</strong> <span id="winner-name">Loading...</span></p>
-      <p><strong>Losses:</strong> <span id="losses">Loading...</span></p>
-      <p><strong>Rewards:</strong> <span id="rewards">Loading...</span></p>
-    </section>
-
-    <!-- Combat Log -->
-    <section class="battle-timeline" aria-label="Combat Log">
-      <h3>Combat Log</h3>
-      <ul id="combat-log-list" aria-live="polite">
-        <!-- JS will populate this -->
-      </ul>
-    </section>
-
+    <div class="resolution-grid">
+      <section id="resolution-summary"></section>
+      <section id="score-breakdown"></section>
+      <section id="combat-timeline"></section>
+      <section id="casualty-report"></section>
+      <section id="loot-summary"></section>
+      <section id="participant-breakdown"></section>
+      <section id="replay-button"></section>
+    </div>
   </section>
 
 </main>
