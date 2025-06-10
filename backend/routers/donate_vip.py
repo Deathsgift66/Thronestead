@@ -11,18 +11,7 @@ from services.audit_service import log_action
 router = APIRouter(prefix="/api/vip", tags=["vip"])
 
 
-def get_supabase_client():
-    try:
-        from supabase import create_client
-    except ImportError as e:
-        raise RuntimeError("supabase client library not installed") from e
-    import os
-
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
-    if not url or not key:
-        raise RuntimeError("Supabase credentials not configured")
-    return create_client(url, key)
+from ..supabase_client import get_supabase_client
 
 
 class DonationPayload(BaseModel):
