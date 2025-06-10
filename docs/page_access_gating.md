@@ -16,7 +16,7 @@ This document summarizes the progression restrictions enforced across key pages 
 | **alliance_wars.html** | ✅ Min level to start war | ✅ Nobles to initiate | ✅ Knights to lead | ✅ Army must fit slots | Alliance War tier requires high progression |
 | **train_troops.html** | ✅ To unlock unit tiers | ❌ | ✅ Required for elite units | ✅ Must fit troop slots | Cannot exceed slots |
 | **kingdom_military.html** | Display only | ❌ | Display only (assigned Knights) | ✅ Must fit slots | Show slot usage |
-| **diplomacy/treaties.html** | ✅ For major treaty types | ✅ Nobles to propose certain treaties | ❌ | ❌ | High diplomacy gated by Nobles and Castle |
+| **alliance_treaties.html** | ✅ For major treaty types | ✅ Nobles to propose certain treaties | ❌ | ❌ | High diplomacy gated by Nobles and Castle |
 | **policies.html** | ✅ Certain policies gated | ❌ | ❌ | ❌ | Castle Level required for policy unlocks |
 | **laws.html** | ✅ Certain laws gated | ❌ | ❌ | ❌ | Castle Level required for laws |
 | **market_listings.html** | ❌ | ❌ | ❌ | ❌ | Market is not gated (open economy) |
