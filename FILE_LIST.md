@@ -57,7 +57,6 @@
 - town_criers.html
 - trade_logs.html
 - train_troops.html
-- treaties.html
 - treaty_web.html
 - tutorial.html
 - village.html
@@ -191,7 +190,6 @@
 - Javascript/town_criers.js
 - Javascript/trade_logs.js
 - Javascript/train_troops.js
-- Javascript/treaties.js
 - Javascript/treaty_web.js
 - Javascript/tutorial.js
 - Javascript/village.js
