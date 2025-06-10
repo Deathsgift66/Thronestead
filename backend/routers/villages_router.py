@@ -96,3 +96,49 @@ async def create_village(
     ).fetchone()
     db.commit()
     return {"message": "Village created", "village_id": result[0]}
+
+
+@router.get("/summary/{village_id}")
+def get_village_summary(
+    village_id: int,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return key details for a single village owned by the player's kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    owner = db.execute(
+        text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
+        {"vid": village_id},
+    ).fetchone()
+    if not owner or owner[0] != kid:
+        raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
+
+    village = db.execute(
+        text(
+            """
+            SELECT village_id, village_name, village_type, is_capital, population,
+                   defense_level, prosperity
+            FROM kingdom_villages
+            WHERE village_id = :vid
+            """
+        ),
+        {"vid": village_id},
+    ).mappings().fetchone()
+
+    resources = db.execute(
+        text("SELECT * FROM village_resources WHERE village_id = :vid"),
+        {"vid": village_id},
+    ).mappings().fetchone()
+
+    buildings = db.execute(
+        text(
+            "SELECT building_id, level FROM village_buildings WHERE village_id = :vid ORDER BY building_id"
+        ),
+        {"vid": village_id},
+    ).mappings().fetchall()
+
+    return {
+        "village": dict(village) if village else {},
+        "resources": dict(resources) if resources else {},
+        "buildings": [dict(b) for b in buildings],
+    }

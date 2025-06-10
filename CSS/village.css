@@ -149,3 +149,28 @@ body {
 .site-footer a:hover {
   color: var(--gold);
 }
+
+/* Realtime Status */
+#realtime-indicator {
+  font-family: 'Cinzel', serif;
+  margin-top: 0.5rem;
+}
+
+#realtime-indicator.connected {
+  color: var(--success);
+}
+
+#realtime-indicator.disconnected {
+  color: var(--error);
+}
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+  .ledger-container {
+    flex-direction: column;
+  }
+  .ledger-sidebar,
+  .ledger-content {
+    max-height: none;
+  }
+}
