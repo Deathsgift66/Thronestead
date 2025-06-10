@@ -201,6 +201,7 @@ CREATE TABLE kingdom_troop_slots (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+CREATE INDEX unit_movements_war_id_idx ON unit_movements (war_id);
 
 -- CASTLE PROGRESSION ------------------------------------------------------
 CREATE TABLE kingdom_castle_progression (
@@ -895,7 +896,7 @@ CREATE TYPE war_phase AS ENUM ('alert', 'planning', 'live', 'resolved');
 CREATE TYPE war_status AS ENUM ('active', 'paused', 'ended');
 
 CREATE TABLE wars_tactical (
-    war_id SERIAL PRIMARY KEY,
+    war_id SERIAL PRIMARY KEY REFERENCES wars(war_id) ON DELETE CASCADE,
     attacker_kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
     defender_kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
     phase war_phase DEFAULT 'alert',
@@ -968,6 +969,7 @@ CREATE TABLE combat_logs (
     notes TEXT,
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+CREATE INDEX combat_logs_war_id_idx ON combat_logs (war_id);
 
 CREATE TABLE war_preplans (
     preplan_id SERIAL PRIMARY KEY,

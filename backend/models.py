@@ -267,7 +267,7 @@ class ProjectsAllianceInProgress(Base):
 
 class WarsTactical(Base):
     __tablename__ = "wars_tactical"
-    war_id = Column(Integer, primary_key=True)
+    war_id = Column(Integer, ForeignKey("wars.war_id"), primary_key=True)
     attacker_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     defender_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     phase = Column(String)
@@ -291,7 +291,7 @@ class WarsTactical(Base):
 class UnitMovement(Base):
     __tablename__ = "unit_movements"
     movement_id = Column(Integer, primary_key=True)
-    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"))
+    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     unit_type = Column(String)
     unit_level = Column(Integer)
@@ -318,7 +318,7 @@ class UnitMovement(Base):
 class CombatLog(Base):
     __tablename__ = "combat_logs"
     combat_id = Column(Integer, primary_key=True)
-    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"))
+    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
     tick_number = Column(Integer)
     event_type = Column(String)
     attacker_unit_id = Column(Integer)
@@ -462,7 +462,7 @@ class BattleResolutionLog(Base):
 
 class WarScore(Base):
     __tablename__ = "war_scores"
-    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), primary_key=True)
+    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), primary_key=True, index=True)
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
     victor = Column(String)
@@ -492,6 +492,7 @@ class UnitStat(Base):
     __tablename__ = "unit_stats"
     unit_type = Column(String, primary_key=True)
     tier = Column(Integer)
+    version_tag = Column(String, default="v1")
     hp = Column(Integer)
     damage = Column(Integer)
     defense = Column(Integer)
