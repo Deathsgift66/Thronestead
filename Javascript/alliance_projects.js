@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient.js';
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
   await loadAllLists();
+  setInterval(loadAllLists, 30000);
 });
 
 function setupTabs() {

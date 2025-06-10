@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
+from ..security import verify_jwt_token
 from ..models import (
     Alliance,
     ProjectAllianceCatalogue,
@@ -21,7 +22,10 @@ class StartPayload(BaseModel):
 
 
 @router.get("/catalogue")
-def get_all_catalogue_projects(db: Session = Depends(get_db)):
+def get_all_catalogue_projects(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     rows = (
         db.query(ProjectAllianceCatalogue)
         .filter(ProjectAllianceCatalogue.is_active.is_(True))
@@ -36,7 +40,16 @@ def get_all_catalogue_projects(db: Session = Depends(get_db)):
 
 
 @router.get("/available")
-def get_available_projects(alliance_id: int, db: Session = Depends(get_db)):
+def get_available_projects(
+    alliance_id: int,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter_by(user_id=user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.alliance_id != alliance_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this alliance")
     alliance = db.query(Alliance).filter_by(alliance_id=alliance_id).first()
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance not found")
@@ -69,7 +82,14 @@ def get_available_projects(alliance_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/in-progress")
-def get_in_progress_projects(alliance_id: int, db: Session = Depends(get_db)):
+def get_in_progress_projects(
+    alliance_id: int,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter_by(user_id=user_id).first()
+    if not user or user.alliance_id != alliance_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this alliance")
     rows = (
         db.query(ProjectsAllianceInProgress)
         .filter_by(alliance_id=alliance_id)
@@ -84,7 +104,14 @@ def get_in_progress_projects(alliance_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/built")
-def get_built_projects(alliance_id: int, db: Session = Depends(get_db)):
+def get_built_projects(
+    alliance_id: int,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter_by(user_id=user_id).first()
+    if not user or user.alliance_id != alliance_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this alliance")
     rows = (
         db.query(ProjectsAlliance)
         .filter_by(alliance_id=alliance_id)
@@ -100,7 +127,13 @@ def get_built_projects(alliance_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/start")
-def start_alliance_project(payload: StartPayload, db: Session = Depends(get_db)):
+def start_alliance_project(
+    payload: StartPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    if payload.user_id != user_id:
+        raise HTTPException(status_code=401, detail="Token mismatch")
     user = db.query(User).filter_by(user_id=payload.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
