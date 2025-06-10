@@ -1,11 +1,20 @@
 import { supabase } from './supabaseClient.js';
 
+async function authHeaders() {
+  const [{ data: { user } }, { data: { session } }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession()
+  ]);
+  if (!user || !session) throw new Error('Unauthorized');
+  return {
+    'X-User-ID': user.id,
+    Authorization: `Bearer ${session.access_token}`
+  };
+}
+
 async function loadUserProfile() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
-  const res = await fetch('/api/account/profile', {
-    headers: { 'X-User-ID': user.id }
-  });
+  const headers = await authHeaders();
+  const res = await fetch('/api/account/profile', { headers });
   if (!res.ok) throw new Error('Failed to load profile');
   const info = await res.json();
 
@@ -18,6 +27,7 @@ async function loadUserProfile() {
   document.getElementById('profile_banner').value = info.profile_banner || '';
   document.getElementById('banner-preview').src = info.profile_banner || '/assets/profile_banners/default.jpg';
   document.getElementById('theme_preference').value = info.theme_preference || 'parchment';
+  document.body.dataset.theme = document.getElementById('theme_preference').value;
   const vipElement = document.getElementById('vip-status');
   vipElement.innerText = info.vip_level ? `VIP ${info.vip_level}` : 'Not a VIP';
   if (info.founder) vipElement.innerText += ' (Founder)';
@@ -33,8 +43,7 @@ async function loadUserProfile() {
 }
 
 async function saveUserSettings() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
+  const headers = await authHeaders();
   const displayName = document.getElementById('display_name').value.trim();
   const email = document.getElementById('email').value.trim();
   const payload = {
@@ -57,7 +66,7 @@ async function saveUserSettings() {
   payload.email = email;
   const res = await fetch('/api/account/update', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+    headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('Failed to save');
@@ -65,11 +74,10 @@ async function saveUserSettings() {
 }
 
 async function logoutSession(sessionId) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const headers = await authHeaders();
   await fetch('/api/account/logout-session', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+    headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id: sessionId })
   });
   document.getElementById(`session-${sessionId}`).remove();
@@ -80,9 +88,22 @@ function uploadAvatar() {
   document.getElementById('avatar-preview').src = url || '/avatars/default_avatar.png';
 }
 
+function subscribeSessions(userId) {
+  supabase
+    .channel('user_sessions')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'user_active_sessions', filter: `user_id=eq.${userId}` },
+      loadUserProfile
+    )
+    .subscribe();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadUserProfile();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) subscribeSessions(user.id);
   } catch (err) {
     console.error(err);
     showToast('Failed to load account');
@@ -91,6 +112,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('avatar_url').addEventListener('change', uploadAvatar);
   document.getElementById('profile_banner').addEventListener('change', () => {
     document.getElementById('banner-preview').src = document.getElementById('profile_banner').value;
+  });
+  document.getElementById('theme_preference').addEventListener('change', (e) => {
+    document.body.dataset.theme = e.target.value;
   });
 
   document.getElementById('account-form').addEventListener('submit', async (e) => {
@@ -110,7 +134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-export { loadUserProfile, saveUserSettings, logoutSession, uploadAvatar };
+export { loadUserProfile, saveUserSettings, logoutSession, uploadAvatar, subscribeSessions };
 
 function validateEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
