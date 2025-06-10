@@ -228,6 +228,18 @@ class WarsTactical(Base):
     castle_hp = Column(Integer, default=1000)
     battle_tick = Column(Integer, default=0)
     war_status = Column(String)
+    terrain_id = Column(Integer, ForeignKey('terrain_map.terrain_id'))
+    current_turn = Column(String)
+    attacker_score = Column(Integer, default=0)
+    defender_score = Column(Integer, default=0)
+    last_tick_processed_at = Column(DateTime(timezone=True))
+    tick_interval_seconds = Column(Integer, default=300)
+    is_concluded = Column(Boolean, default=False)
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    ended_at = Column(DateTime(timezone=True))
+    fog_of_war = Column(Boolean, default=False)
+    weather = Column(String)
+    submitted_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
 
 
 class UnitMovement(Base):
