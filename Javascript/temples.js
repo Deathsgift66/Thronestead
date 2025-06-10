@@ -7,10 +7,37 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentSession;
+let currentKingdomId;
+let templeChannel;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  currentSession = session;
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('kingdom_id')
+    .eq('user_id', session.user.id)
+    .single();
+  currentKingdomId = userData?.kingdom_id;
+
+  if (currentKingdomId) {
+    subscribeToTempleUpdates(currentKingdomId);
+  }
+
   // ✅ Initial load
   await loadTemplesNexus();
+});
+
+window.addEventListener('beforeunload', () => {
+  if (templeChannel) supabase.removeChannel(templeChannel);
 });
 
 // ✅ Load Temples Nexus
@@ -27,22 +54,27 @@ async function loadTemplesNexus() {
   templeListEl.innerHTML = "<p>Loading your temples...</p>";
 
   try {
-    // ✅ Load user
-    const { data: { user } } = await supabase.auth.getUser();
+    let uid = currentSession?.user.id;
+    if (!uid) {
+      const { data: { user } } = await supabase.auth.getUser();
+      uid = user.id;
+    }
 
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('kingdom_id')
-      .eq('user_id', user.id)
-      .single();
+    if (!currentKingdomId) {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('kingdom_id')
+        .eq('user_id', uid)
+        .single();
+      if (userError) throw userError;
+      currentKingdomId = userData.kingdom_id;
+    }
 
-    if (userError) throw userError;
-
-    const kingdomId = userData.kingdom_id;
+    const kingdomId = currentKingdomId;
 
     // ✅ Load kingdom temples
     const { data: templesData, error: templesError } = await supabase
-      .from('temples')
+      .from('kingdom_temples')
       .select('*')
       .eq('kingdom_id', kingdomId);
 
@@ -149,6 +181,20 @@ function renderTempleList(subTemples) {
   });
 }
 
+function subscribeToTempleUpdates(kid) {
+  templeChannel = supabase
+    .channel('temples-' + kid)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'kingdom_temples',
+      filter: `kingdom_id=eq.${kid}`
+    }, () => {
+      loadTemplesNexus();
+    })
+    .subscribe();
+}
+
 // ✅ Construct Temple Action
 async function constructTemple(templeType) {
   if (!confirm(`Construct a new "${templeType}"?`)) return;
@@ -156,7 +202,11 @@ async function constructTemple(templeType) {
   try {
     const res = await fetch("/api/kingdom/construct_temple", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      },
       body: JSON.stringify({ temple_type: templeType })
     });
 

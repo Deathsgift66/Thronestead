@@ -11,6 +11,11 @@ import { supabase } from './supabaseClient.js';
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
   await loadVillagePage();
+  const urlParams = new URLSearchParams(window.location.search);
+  const villageId = urlParams.get('village_id');
+  if (villageId) {
+    initRealtime(villageId);
+  }
 });
 
 // ✅ Load Full Village Page
@@ -24,14 +29,11 @@ async function loadVillagePage() {
       return;
     }
 
-    // ✅ Load village data
-    const { data: village, error: villageError } = await supabase
-      .from('villages')
-      .select('*')
-      .eq('village_id', villageId)
-      .single();
-
-    if (villageError) throw villageError;
+    // ✅ Load village data from secure API
+    const res = await fetch(`/api/kingdom/villages/summary/${villageId}`);
+    if (!res.ok) throw new Error('Failed to load village summary');
+    const summary = await res.json();
+    const village = summary.village;
 
     // ✅ Update Village Banner
     document.getElementById('village-name').textContent = village.village_name;
@@ -268,6 +270,38 @@ async function loadVillageEvents(villageId) {
     `;
     logEl.appendChild(entry);
   });
+}
+
+// ✅ Realtime Subscription
+function initRealtime(villageId) {
+  const indicator = document.getElementById('realtime-indicator');
+  indicator.textContent = 'Connecting...';
+  const channel = supabase
+    .channel('public:village_' + villageId)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'village_resources', filter: 'village_id=eq.' + villageId },
+      payload => {
+        loadVillageResources(villageId);
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'village_events', filter: 'village_id=eq.' + villageId },
+      payload => {
+        loadVillageEvents(villageId);
+      }
+    )
+    .subscribe(status => {
+      if (status === 'SUBSCRIBED') {
+        indicator.textContent = 'Live';
+        indicator.className = 'connected';
+      } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
+        indicator.textContent = 'Offline';
+        indicator.className = 'disconnected';
+      }
+    });
+  return channel;
 }
 
 // ✅ Helper: Format Resource Name

@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTabs();
   await loadBoard();
   await loadYourScrolls();
+  subscribeToScrolls();
 
   // ✅ Bind compose form
   const composeForm = document.getElementById('compose-form');
@@ -28,7 +29,7 @@ function initTabs() {
 
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-target');
+      const target = btn.getAttribute('data-tab');
 
       tabButtons.forEach(b => b.classList.remove('active'));
       tabSections.forEach(section => section.classList.remove('active'));
@@ -45,16 +46,22 @@ async function loadBoard() {
   boardEl.innerHTML = "<p>Loading board feed...</p>";
 
   try {
-    const { data, error } = await supabase
-      .from('town_crier_scrolls')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(25);
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
 
-    if (error) throw error;
+    const res = await fetch('/api/town-criers/latest', {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'X-User-ID': session.user.id,
+      }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.detail || 'Error');
 
     boardEl.innerHTML = "";
 
+    const data = result.scrolls || [];
     if (data.length === 0) {
       boardEl.innerHTML = "<p>No scrolls posted yet.</p>";
       return;
@@ -121,6 +128,25 @@ async function loadYourScrolls() {
   }
 }
 
+// ✅ Real-time Updates
+let scrollChannel;
+function subscribeToScrolls() {
+  scrollChannel = supabase
+    .channel('public:town_crier_scrolls')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'town_crier_scrolls' },
+      () => {
+        loadBoard();
+      }
+    )
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    if (scrollChannel) supabase.removeChannel(scrollChannel);
+  });
+}
+
 // ✅ Submit Scroll
 async function submitScroll() {
   const titleEl = document.getElementById('scroll-title');
@@ -140,28 +166,23 @@ async function submitScroll() {
   }
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const payload = { title, body };
 
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('display_name')
-      .eq('user_id', user.id)
-      .single();
+    const res = await fetch('/api/town-criers/post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        'X-User-ID': session.user.id,
+      },
+      body: JSON.stringify(payload)
+    });
 
-    if (profileError) throw profileError;
-
-    const payload = {
-      author_id: user.id,
-      author_display_name: profile.display_name,
-      title: title,
-      body: body
-    };
-
-    const { error } = await supabase
-      .from('town_crier_scrolls')
-      .insert(payload);
-
-    if (error) throw error;
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.detail || 'Error');
+    }
 
     showToast("Scroll posted successfully!");
 

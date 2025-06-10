@@ -8,12 +8,17 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let realtimeChannel;
+let currentKingdomId;
+
 document.addEventListener("DOMContentLoaded", async () => {
   await validateVIPAccess();
   await loadVillages();
+  await loadVillageOverview();
   populateMassActionsPanel();
   populateControlsPanel();
   setupAmbientToggle();
+  if (currentKingdomId) subscribeVillageRealtime(currentKingdomId);
   showToast("Sovereign’s Grand Overseer loaded!");
 });
 
@@ -56,6 +61,7 @@ async function loadVillages() {
   }
 
   const kingdomId = profile.kingdom_id;
+  currentKingdomId = kingdomId;
 
   const { data: villages, error: villagesError } = await supabase
     .from('villages')
@@ -166,6 +172,54 @@ function filterVillages() {
 function sortVillages() {
   const sortBy = document.getElementById('sortVillages').value;
   SovereignUtils.sortVillageGrid(sortBy);
+}
+
+// ✅ Load Overview via API
+async function loadVillageOverview() {
+  const { data: { user } } = await supabase.auth.getUser();
+  const res = await fetch('/api/village-master/overview', {
+    headers: { 'X-User-ID': user.id }
+  });
+  if (!res.ok) return;
+  const data = await res.json();
+  const statsEl = document.getElementById('village-stats');
+  statsEl.innerHTML = '';
+  data.overview.forEach(v => {
+    const div = document.createElement('div');
+    div.className = 'village-stat';
+    div.textContent = `${v.village_name}: buildings ${v.building_count}, levels ${v.total_level}`;
+    statsEl.appendChild(div);
+  });
+}
+
+// ✅ Realtime Updates
+function subscribeVillageRealtime(kingdomId) {
+  realtimeChannel = supabase
+    .channel('villages-' + kingdomId)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'kingdom_villages', filter: `kingdom_id=eq.${kingdomId}` },
+      () => {
+        loadVillages();
+        loadVillageOverview();
+      }
+    )
+    .subscribe(status => {
+      const ind = document.getElementById('realtime-indicator');
+      if (ind) {
+        if (status === 'SUBSCRIBED') {
+          ind.textContent = 'Live';
+          ind.className = 'connected';
+        } else {
+          ind.textContent = 'Offline';
+          ind.className = 'disconnected';
+        }
+      }
+    });
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  });
 }
 
 // ✅ Toast Helper

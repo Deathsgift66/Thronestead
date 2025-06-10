@@ -191,3 +191,17 @@ body {
 .site-footer a:hover {
   color: var(--gold);
 }
+
+@media (max-width: 800px) {
+  .main-content {
+    flex-direction: column;
+  }
+  .toggle-section {
+    grid-template-columns: 1fr;
+  }
+  .controls-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+

@@ -192,3 +192,14 @@ body {
 .site-footer a:hover {
   color: var(--gold);
 }
+
+@media (max-width: 600px) {
+  .tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .main-centered-container {
+    padding: 1rem;
+  }
+}

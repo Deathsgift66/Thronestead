@@ -83,6 +83,29 @@ body {
   text-align: center;
 }
 
+.overview-panel {
+  background: rgba(251, 240, 217, 0.95);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 1rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.realtime-status {
+  font-family: var(--font-secondary);
+  margin-top: 0.5rem;
+}
+
+.realtime-status .connected {
+  color: var(--success);
+}
+
+.realtime-status .disconnected {
+  color: var(--error);
+}
+
 .controls-panel,
 .mass-actions-panel,
 .village-grid,

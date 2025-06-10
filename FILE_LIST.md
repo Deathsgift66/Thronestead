@@ -57,7 +57,6 @@
 - town_criers.html
 - trade_logs.html
 - train_troops.html
-- treaties.html
 - treaty_web.html
 - tutorial.html
 - village.html
@@ -191,7 +190,6 @@
 - Javascript/town_criers.js
 - Javascript/trade_logs.js
 - Javascript/train_troops.js
-- Javascript/treaties.js
 - Javascript/treaty_web.js
 - Javascript/tutorial.js
 - Javascript/village.js
@@ -245,10 +243,12 @@
 - backend/routers/player_management.py
 - backend/routers/progression_router.py
 - backend/routers/projects_router.py
+- backend/routers/resources.py
 - backend/routers/quests_router.py
 - backend/routers/settings_router.py
 - backend/routers/spies_router.py
 - backend/routers/titles_router.py
+- backend/routers/town_criers.py
 - backend/routers/trade_logs.py
 - backend/routers/training_history.py
 - backend/routers/treaties_router.py
@@ -296,8 +296,10 @@
 - tests/test_trade_log_service.py
 - tests/test_training_history_service.py
 - tests/test_training_queue_service.py
+- tests/test_resources_router.py
 - tests/test_village_modifiers_router.py
 - tests/test_vip_status_service.py
+- tests/test_town_criers_router.py
 - tests/test_war_model.py
 - tests/test_wars_tactical_model.py
 

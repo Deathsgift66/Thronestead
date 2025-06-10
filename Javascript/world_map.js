@@ -7,6 +7,8 @@ Author: Deathsgift66
 // world_map.js — Tile-based world map engine for Kingmaker's Rise
 import { supabase } from './supabaseClient.js';
 
+let currentSession;
+let mapChannel;
 
 const canvas = document.getElementById('world-canvas');
 const ctx = canvas.getContext('2d');
@@ -32,8 +34,19 @@ const TERRAIN_COLORS = {
 };
 
 window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentSession = session;
   await renderVisibleTiles();
+  bindRealtime();
   bindControls();
+});
+
+window.addEventListener('beforeunload', () => {
+  if (mapChannel) supabase.removeChannel(mapChannel);
 });
 
 function bindControls() {
@@ -72,6 +85,15 @@ function bindControls() {
   });
 }
 
+function bindRealtime() {
+  mapChannel = supabase
+    .channel('world-map')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'terrain_map' }, () => {
+      renderVisibleTiles();
+    })
+    .subscribe();
+}
+
 async function renderVisibleTiles() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const cols = Math.floor(canvas.width / (TILE_SIZE * zoom)) + 2;
@@ -79,13 +101,14 @@ async function renderVisibleTiles() {
   const startX = Math.floor(-offsetX / TILE_SIZE) - Math.floor(cols / 2);
   const startY = Math.floor(-offsetY / TILE_SIZE) - Math.floor(rows / 2);
 
-  const { data: mapRow, error } = await supabase
-    .from('terrain_map')
-    .select('tile_map')
-    .limit(1)
-    .single();
-
-  if (error) return console.error('Tile fetch failed', error);
+  const res = await fetch('/api/world-map/tiles', {
+    headers: {
+      'Authorization': `Bearer ${currentSession.access_token}`,
+      'X-User-ID': currentSession.user.id
+    }
+  });
+  if (!res.ok) return console.error('Tile fetch failed');
+  const mapRow = await res.json();
 
   const tiles = (mapRow?.tile_map?.tiles || [])
     .filter(t => t.x >= startX && t.x <= startX + cols &&
