@@ -47,7 +47,6 @@
 - preplan_editor.html
 - profile.html
 - projects.html
-- quest_alliance.html
 - quests.html
 - research.html
 - resources.html
@@ -110,7 +109,6 @@
 - CSS/profile.css
 - CSS/progressionBanner.css
 - CSS/projects_kingdom.css
-- CSS/quest_alliance.css
 - CSS/quests.css
 - CSS/research.css
 - CSS/resources.css
@@ -180,7 +178,6 @@
 - Javascript/progressionBanner.js
 - Javascript/progressionGlobal.js
 - Javascript/projects_kingdom.js
-- Javascript/quest_alliance.js
 - Javascript/quests.js
 - Javascript/research.js
 - Javascript/resourceTypes.js
