@@ -160,7 +160,7 @@ function openApplyModal(allianceId, allianceName) {
     }
 
     try {
-      const res = await fetch("/api/alliances/apply", {
+      const res = await fetch("/api/alliance_members/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
