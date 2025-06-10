@@ -440,6 +440,12 @@ class AllianceWarScore(Base):
     )
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
+    attacker_kills = Column(Integer, default=0)
+    defender_kills = Column(Integer, default=0)
+    attacker_losses = Column(Integer, default=0)
+    defender_losses = Column(Integer, default=0)
+    resources_plundered = Column(Integer, default=0)
+    battles_participated = Column(Integer, default=0)
     victor = Column(String)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

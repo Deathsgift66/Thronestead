@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base
@@ -9,8 +9,13 @@ from backend.routers.alliance_wars import (
     get_preplan,
     declare_war,
     respond_war,
+    list_active_wars,
+    request_join,
+    surrender_war,
     DeclarePayload,
     RespondPayload,
+    JoinPayload,
+    SurrenderPayload,
 )
 
 
@@ -95,3 +100,38 @@ def test_accept_war_updates_status():
     respond_war(RespondPayload(alliance_war_id=10, action="accept"), user_id=uid, db=db)
     row = db.query(AllianceWar).filter_by(alliance_war_id=10).first()
     assert row.war_status == "active"
+
+
+def test_join_war_increments_battles():
+    Session = setup_db()
+    db = Session()
+    uid = seed_user(db)
+    db.add(AllianceWar(alliance_war_id=20, attacker_alliance_id=1, defender_alliance_id=2, war_status="active", phase="battle"))
+    db.commit()
+    request_join(JoinPayload(alliance_war_id=20, side="attacker"), user_id=uid, db=db)
+    score = db.execute(text("SELECT battles_participated FROM alliance_war_scores WHERE alliance_war_id = :wid"), {"wid": 20}).fetchone()
+    assert score[0] == 1
+
+
+def test_surrender_updates_victor():
+    Session = setup_db()
+    db = Session()
+    uid = seed_user(db)
+    db.add(AllianceWar(alliance_war_id=30, attacker_alliance_id=1, defender_alliance_id=2, war_status="active", phase="battle"))
+    db.commit()
+    surrender_war(SurrenderPayload(alliance_war_id=30, side="attacker"), user_id=uid, db=db)
+    war = db.query(AllianceWar).filter_by(alliance_war_id=30).first()
+    assert war.war_status == "surrendered"
+    score = db.execute(text("SELECT victor FROM alliance_war_scores WHERE alliance_war_id = :wid"), {"wid": 30}).fetchone()
+    assert score[0] == "defender"
+
+
+def test_active_wars_endpoint_lists_active():
+    Session = setup_db()
+    db = Session()
+    seed_user(db)
+    db.add(AllianceWar(alliance_war_id=40, attacker_alliance_id=1, defender_alliance_id=2, war_status="active", phase="battle"))
+    db.add(AllianceWar(alliance_war_id=41, attacker_alliance_id=1, defender_alliance_id=3, war_status="pending", phase="alert"))
+    db.commit()
+    res = list_active_wars(db=db)
+    assert len(res["wars"]) == 1

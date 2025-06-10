@@ -62,18 +62,21 @@ async function loadAllianceWars() {
   container.innerHTML = "<p>Loading alliance wars...</p>";
 
   try {
-    const res = await fetch("/api/alliance-wars/list");
-    const data = await res.json();
+    const res = await fetch('/api/alliance-wars/active');
+    const globalData = await res.json();
+    const res2 = await fetch('/api/alliance-wars/list');
+    const data = await res2.json();
 
     container.innerHTML = "";
 
     // Render Active Wars
-    if (data.active_wars && data.active_wars.length > 0) {
+    const activeList = globalData.wars || data.active_wars || [];
+    if (activeList.length > 0) {
       const activeHeader = document.createElement("h3");
       activeHeader.textContent = "⚔️ Active Wars";
       container.appendChild(activeHeader);
 
-      data.active_wars.forEach(war => {
+      activeList.forEach(war => {
         const card = document.createElement("div");
         card.classList.add("war-card");
 
@@ -168,7 +171,11 @@ function renderWarOverview(war, score) {
     <p><strong>Phase:</strong> ${war.phase}</p>
     <p><strong>Attacker Score:</strong> ${score?.attacker_score ?? 0}</p>
     <p><strong>Defender Score:</strong> ${score?.defender_score ?? 0}</p>
+    <button id="join-war-btn" class="action-btn">Join War</button>
+    <button id="surrender-btn" class="action-btn">Surrender</button>
   `;
+  document.getElementById('join-war-btn').addEventListener('click', () => joinWar('attacker'));
+  document.getElementById('surrender-btn').addEventListener('click', surrenderWar);
 }
 
 async function loadCombatLogs() {
@@ -233,9 +240,11 @@ function renderScoreboard(score) {
   }
   container.innerHTML = `
     <table class="score-table">
-      <tr><th>Side</th><th>Score</th></tr>
-      <tr><td>Attacker</td><td>${score.attacker_score ?? 0}</td></tr>
-      <tr><td>Defender</td><td>${score.defender_score ?? 0}</td></tr>
+      <tr><th>Side</th><th>Score</th><th>Kills</th><th>Losses</th></tr>
+      <tr><td>Attacker</td><td>${score.attacker_score ?? 0}</td><td>${score.attacker_kills ?? 0}</td><td>${score.attacker_losses ?? 0}</td></tr>
+      <tr><td>Defender</td><td>${score.defender_score ?? 0}</td><td>${score.defender_kills ?? 0}</td><td>${score.defender_losses ?? 0}</td></tr>
+      <tr><th colspan="2">Resources Plundered</th><td colspan="2">${score.resources_plundered ?? 0}</td></tr>
+      <tr><th colspan="2">Battles Participated</th><td colspan="2">${score.battles_participated ?? 0}</td></tr>
     </table>
   `;
 }
@@ -349,5 +358,35 @@ function switchTab(id) {
   document.querySelectorAll('.tab-section').forEach(s => s.classList.toggle('active', s.id === id));
   if (id !== 'tab-live') {
     stopCombatPolling();
+  }
+}
+
+async function joinWar(side) {
+  if (!currentWarId) return;
+  try {
+    await fetch('/api/alliance-wars/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alliance_war_id: currentWarId, side })
+    });
+    await loadParticipants();
+    await loadScoreboard();
+  } catch (err) {
+    console.error('Error joining war:', err);
+  }
+}
+
+async function surrenderWar() {
+  if (!currentWarId) return;
+  try {
+    await fetch('/api/alliance-wars/surrender', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alliance_war_id: currentWarId, side: 'attacker' })
+    });
+    await loadAllianceWars();
+    await viewWarDetails({ alliance_war_id: currentWarId });
+  } catch (err) {
+    console.error('Error surrendering:', err);
   }
 }
