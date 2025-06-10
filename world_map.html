@@ -65,12 +65,16 @@ Author: Deathsgift66
   <section class="alliance-members-container">
 
     <!-- World Map Stage -->
-    <div id="map-stage"></div>
+    <div id="map-stage">
+      <canvas id="world-canvas" width="1200" height="800" aria-label="World Map Canvas"></canvas>
+    </div>
 
     <!-- Map UI -->
     <div class="map-ui">
       <div class="map-controls">
-        <!-- Zoom, Pan, Filters — JS will populate -->
+        <button id="zoom-in" class="btn">+</button>
+        <button id="zoom-out" class="btn">-</button>
+        <button id="center-map" class="btn">Center</button>
       </div>
       <div class="map-legend">
         <!-- Legend content — JS will populate -->

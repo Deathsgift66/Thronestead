@@ -147,3 +147,51 @@ body {
   text-align: center;
   color: var(--ink);
 }
+
+/* Cards */
+.resource-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  background: rgba(245, 231, 196, 0.95);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  color: var(--ink);
+}
+
+.resource-card,
+.vault-card {
+  background: var(--panel-bg);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(245, 231, 196, 0.95);
+  color: var(--ink);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: var(--z-index-toast);
+}
+.toast.show {
+  opacity: 1;
+}
+
+@media (max-width: 700px) {
+  .resource-table {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+}

@@ -107,6 +107,22 @@ body {
   margin-bottom: 1rem;
 }
 
+.war-feed {
+  margin-top: 1rem;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.war-event {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
 .modal {
   position: fixed;
   top: 10%;
@@ -157,5 +173,23 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--accent);
   border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .main-centered-container {
+    padding: 1rem;
+  }
+  .kr-war-controls {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 500px) {
+  .war-card h3 {
+    font-size: 1rem;
+  }
+  .war-card p {
+    font-size: 0.9rem;
+  }
 }
 
