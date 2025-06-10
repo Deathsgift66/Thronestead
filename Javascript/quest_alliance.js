@@ -7,6 +7,13 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+async function fetchWithAuth(url, options = {}) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const headers = options.headers || {};
+  headers['X-User-ID'] = user.id;
+  return fetch(url, { ...options, headers });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
   // ✅ Initial load
@@ -27,63 +34,25 @@ async function loadAllianceQuests() {
   contributionLogEl.innerHTML = "<p>Loading contribution log...</p>";
 
   try {
-    // ✅ Fetch user + alliance ID
-    const { data: { user } } = await supabase.auth.getUser();
+    const [catalogueRes, activeRes, completedRes, contribRes] = await Promise.all([
+      fetchWithAuth('/api/alliance-quests/catalogue'),
+      fetchWithAuth('/api/alliance-quests/active'),
+      fetchWithAuth('/api/alliance-quests/completed'),
+      fetchWithAuth('/api/alliance-quests/contributions'),
+    ]);
 
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('alliance_id, alliance_role')
-      .eq('user_id', user.id)
-      .single();
+    const catalogueData = await catalogueRes.json();
+    const activeData = await activeRes.json();
+    const completedData = await completedRes.json();
+    const contributionData = await contribRes.json();
 
-    if (userError) throw userError;
+    const allianceRole = window.user?.alliance_role || 'Member';
 
-    const allianceId = userData.alliance_id;
-    const allianceRole = userData.alliance_role;
-
-    const { data: allianceData, error: allianceError } = await supabase
-      .from('alliances')
-      .select('level')
-      .eq('alliance_id', allianceId)
-      .single();
-
-    if (allianceError) throw allianceError;
-
-    const allianceLevel = allianceData.level;
-
-    // ✅ Fetch catalogue
-    const { data: catalogueData, error: catalogueError } = await supabase
-      .from('quest_alliance_catalogue')
-      .select('*')
-      .eq('is_active', true)
-      .lte('required_level', allianceLevel);
-
-    if (catalogueError) throw catalogueError;
-
-    // ✅ Fetch alliance quests
-    const { data: allianceQuestsData, error: allianceQuestsError } = await supabase
-      .from('quest_alliance_tracking')
-      .select('*')
-      .eq('alliance_id', allianceId);
-
-    if (allianceQuestsError) throw allianceQuestsError;
-
-    // ✅ Fetch contribution log
-    const { data: contributionData, error: contributionError } = await supabase
-      .from('quest_alliance_contributions')
-      .select('*')
-      .eq('alliance_id', allianceId)
-      .order('timestamp', { ascending: false })
-      .limit(25);
-
-    if (contributionError) throw contributionError;
-
-    // ✅ Separate active/completed quests
-    const activeQuests = allianceQuestsData.filter(q => q.status === "active");
-    const completedQuests = allianceQuestsData.filter(q => q.status === "completed");
+    const activeQuests = activeData;
+    const completedQuests = completedData;
 
     // ✅ Render quest catalogue
-    renderQuestCatalogue(catalogueData, allianceQuestsData, allianceRole);
+    renderQuestCatalogue(catalogueData, [...activeQuests, ...completedQuests], allianceRole);
 
     // ✅ Render active quests
     renderActiveQuests(activeQuests, catalogueData);
@@ -149,9 +118,9 @@ function renderQuestCatalogue(catalogue, allianceQuests, role) {
       if (!confirm(`Accept quest "${questCode}"?`)) return;
 
       try {
-        const res = await fetch("/api/alliance/accept_quest", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetchWithAuth('/api/alliance-quests/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ quest_code: questCode })
         });
 
