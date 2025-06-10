@@ -1,5 +1,7 @@
 import { supabase } from './supabaseClient.js';
 
+let activityChannel;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -11,10 +13,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function fetchAllianceDetails(userId) {
   try {
-    const res = await fetch(`/api/alliance-home/details?user_id=${encodeURIComponent(userId)}`);
+    const res = await fetch('/api/alliance-home/details', {
+      headers: { 'X-User-Id': userId }
+    });
     if (!res.ok) throw new Error('Request failed');
     const data = await res.json();
     populateAlliance(data);
+    setupRealtime(data.alliance.alliance_id);
   } catch (err) {
     console.error('Failed to fetch alliance details:', err);
   }
@@ -141,4 +146,28 @@ function setText(id, text) {
 function formatDate(str) {
   if (!str) return '';
   return new Date(str).toLocaleString();
+}
+
+function setupRealtime(aid) {
+  if (activityChannel) {
+    supabase.removeChannel(activityChannel);
+  }
+  activityChannel = supabase
+    .channel('alliance_home_' + aid)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'alliance_activity_log', filter: `alliance_id=eq.${aid}` },
+      payload => addActivityEntry(payload.new)
+    )
+    .subscribe();
+}
+
+function addActivityEntry(entry) {
+  const list = document.getElementById('activity-log');
+  if (!list) return;
+  const li = document.createElement('li');
+  li.classList.add('activity-log-entry');
+  li.textContent = `[${formatDate(entry.created_at)}] ${entry.user_id}: ${entry.description}`;
+  list.prepend(li);
+  if (list.children.length > 20) list.removeChild(list.lastChild);
 }
