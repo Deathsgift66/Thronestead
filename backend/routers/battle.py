@@ -318,13 +318,8 @@ def battle_resolution(
 @router.get("/api/battle-replay/{war_id}")
 def battle_replay(
     war_id: int,
-
     db: Session = Depends(get_db),
     user_id: str = Depends(verify_jwt_token),
-):
-=======
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
 ):
     """Return pre-generated replay data for a finished war."""
     war = db.query(models.WarsTactical).filter(models.WarsTactical.war_id == war_id).first()
