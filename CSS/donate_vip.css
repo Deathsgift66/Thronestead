@@ -6,12 +6,10 @@ Author: Deathsgift66
 */
 @import url("./root_theme.css");
 
-
-
 body {
   margin: 0;
-  font-family: 'IM Fell English', serif;
-  background: url('../Assets/donate.png') no-repeat center center fixed;
+  font-family: "IM Fell English", serif;
+  background: url("../Assets/donate.png") no-repeat center center fixed;
   background-size: cover;
   color: var(--parchment);
   display: flex;
@@ -44,7 +42,7 @@ body {
 }
 
 .alliance-customization-area h2 {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   color: var(--gold);
   text-shadow: 1px 1px 3px black;
   margin-bottom: 1rem;
@@ -76,7 +74,7 @@ body {
 }
 
 .alliance-members-container h2 {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   color: var(--gold);
   text-shadow: 1px 1px 3px black;
   margin-bottom: 1rem;
@@ -104,7 +102,7 @@ body {
 }
 
 .vip-tier h3 {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   color: var(--gold);
   text-shadow: 1px 1px 3px black;
   margin-bottom: 0.5rem;
@@ -122,9 +120,11 @@ body {
   border-radius: 6px;
   border: 1px solid var(--gold);
   cursor: pointer;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-weight: bold;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 }
 
 .donate-btn:hover {
@@ -150,7 +150,9 @@ body {
   border-radius: var(--btn-radius);
   padding: var(--btn-padding);
   cursor: pointer;
-  transition: background var(--transition-medium), color var(--transition-medium);
+  transition:
+    background var(--transition-medium),
+    color var(--transition-medium);
 }
 .vip-button:hover {
   background: var(--btn-hover-bg);
@@ -193,6 +195,34 @@ body {
 .vip-perks-table th {
   background: var(--table-header-bg);
   color: var(--ink);
+}
+
+/* Leaderboard */
+.vip-leaderboard {
+  margin-top: 2rem;
+  width: 100%;
+  text-align: center;
+}
+
+.leaderboard-container {
+  overflow-x: auto;
+  background: rgba(251, 240, 217, 0.95);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 1rem;
+  color: var(--ink);
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  border: 1px solid var(--gold);
+  padding: 0.5rem;
 }
 
 /* Footer - handled globally */
