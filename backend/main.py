@@ -28,6 +28,7 @@ from .routers import (
     titles_router,
     treaties_router,
     alliance_treaties_router,
+    account_settings,
     spies_router,
     trade_logs,
     training_history,
@@ -72,12 +73,13 @@ app.include_router(diplomacy.router)
 app.include_router(leaderboard.router)
 app.include_router(buildings.router)
 app.include_router(progression_router.router)
-app.include_router(villages_router.router)
-app.include_router(vip_status_router.router)
-app.include_router(titles_router.router)
-app.include_router(treaties_router.router)
-app.include_router(alliance_treaties_router.router)
-app.include_router(spies_router.router)
+    app.include_router(villages_router.router)
+    app.include_router(vip_status_router.router)
+    app.include_router(titles_router.router)
+    app.include_router(treaties_router.router)
+    app.include_router(alliance_treaties_router.router)
+    app.include_router(account_settings.router)
+    app.include_router(spies_router.router)
 app.include_router(trade_logs.router)
 app.include_router(training_history.router)
 app.include_router(village_modifiers.router)
