@@ -137,6 +137,23 @@ section h2 {
   border-bottom: 1px solid var(--gold);
 }
 
+/* Top Contributors */
+#top-contrib-list {
+  list-style: none;
+  padding: 0;
+}
+.top-contrib-entry {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.contrib-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
 
 /* Mobile Responsive */
 @media (max-width: 768px) {

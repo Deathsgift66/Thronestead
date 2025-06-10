@@ -26,7 +26,7 @@ def alliance_details(
 
     # Members list with usernames
     member_rows = (
-        db.query(AllianceMember, User.username)
+        db.query(AllianceMember, User.username, User.profile_picture_url)
         .join(User, AllianceMember.user_id == User.user_id)
         .filter(AllianceMember.alliance_id == aid)
         .order_by(AllianceMember.rank, AllianceMember.contribution.desc())
@@ -36,12 +36,13 @@ def alliance_details(
         {
             "user_id": str(m.user_id),
             "username": username,
+            "avatar": avatar,
             "rank": m.rank,
             "contribution": m.contribution,
             "status": m.status,
             "crest": m.crest,
         }
-        for m, username in member_rows
+        for m, username, avatar in member_rows
     ]
 
     # Vault resources
