@@ -1,70 +1,153 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
-from ..models import Alliance, ProjectAllianceCatalogue, ProjectsAlliance
+from ..models import (
+    Alliance,
+    ProjectAllianceCatalogue,
+    ProjectsAlliance,
+    ProjectsAllianceInProgress,
+    User,
+)
 
 router = APIRouter(prefix="/api/alliance-projects", tags=["alliance_projects"])
 
 
-class ProjectPayload(BaseModel):
-    project_id: str | None = None
-    progress: int | None = None
+class StartPayload(BaseModel):
+    project_key: str
+    user_id: str
 
 
-@router.get("")
-def list_projects(alliance_id: int = 1, db: Session = Depends(get_db)):
-    alliance = db.query(Alliance).filter(Alliance.alliance_id == alliance_id).first()
+@router.get("/catalogue")
+def get_all_catalogue_projects(db: Session = Depends(get_db)):
+    rows = (
+        db.query(ProjectAllianceCatalogue)
+        .filter(ProjectAllianceCatalogue.is_active.is_(True))
+        .all()
+    )
+    return {
+        "projects": [
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
+            for r in rows
+        ]
+    }
+
+
+@router.get("/available")
+def get_available_projects(alliance_id: int, db: Session = Depends(get_db)):
+    alliance = db.query(Alliance).filter_by(alliance_id=alliance_id).first()
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance not found")
 
-    rows = (
-        db.query(ProjectsAlliance)
-        .filter(ProjectsAlliance.alliance_id == alliance_id)
-        .filter(
-            (ProjectsAlliance.is_active.is_(True))
-            | (ProjectsAlliance.build_state.in_(["queued", "building"]))
-        )
-        .order_by(ProjectsAlliance.start_time.desc())
+    built = (
+        db.query(ProjectsAlliance.project_key)
+        .filter_by(alliance_id=alliance_id)
         .all()
     )
+    active = (
+        db.query(ProjectsAllianceInProgress.project_key)
+        .filter_by(alliance_id=alliance_id)
+        .all()
+    )
+    exclude = {b[0] for b in built} | {a[0] for a in active}
 
+    rows = (
+        db.query(ProjectAllianceCatalogue)
+        .filter(ProjectAllianceCatalogue.is_active.is_(True))
+        .filter(~ProjectAllianceCatalogue.project_code.in_(exclude))
+        .filter(ProjectAllianceCatalogue.requires_alliance_level <= alliance.level)
+        .all()
+    )
     return {
         "projects": [
-            {
-                "project_id": r.project_id,
-                "name": r.name,
-                "project_key": r.project_key,
-                "progress": r.progress,
-                "build_state": r.build_state,
-                "start_time": r.start_time,
-                "end_time": r.end_time,
-                "expires_at": r.expires_at,
-                "built_by": r.built_by,
-                "modifiers": r.modifiers,
-            }
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
+            for r in rows
+        ]
+    }
+
+
+@router.get("/in-progress")
+def get_in_progress_projects(alliance_id: int, db: Session = Depends(get_db)):
+    rows = (
+        db.query(ProjectsAllianceInProgress)
+        .filter_by(alliance_id=alliance_id)
+        .all()
+    )
+    return {
+        "projects": [
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
+            for r in rows
+        ]
+    }
+
+
+@router.get("/built")
+def get_built_projects(alliance_id: int, db: Session = Depends(get_db)):
+    rows = (
+        db.query(ProjectsAlliance)
+        .filter_by(alliance_id=alliance_id)
+        .filter(ProjectsAlliance.build_state == "completed")
+        .all()
+    )
+    return {
+        "projects": [
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
             for r in rows
         ]
     }
 
 
 @router.post("/start")
-async def start_project(payload: ProjectPayload):
-    return {"message": "Project started", "project_id": payload.project_id}
+def start_alliance_project(payload: StartPayload, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(user_id=payload.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.alliance_id:
+        raise HTTPException(status_code=400, detail="User not in an alliance")
 
+    alliance = db.query(Alliance).filter_by(alliance_id=user.alliance_id).first()
+    if not alliance:
+        raise HTTPException(status_code=404, detail="Alliance not found")
 
-@router.post("/update")
-async def update_project(payload: ProjectPayload):
-    return {"message": "Project updated", "project_id": payload.project_id}
+    project = (
+        db.query(ProjectAllianceCatalogue)
+        .filter_by(project_code=payload.project_key)
+        .first()
+    )
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
 
+    if alliance.level < (project.requires_alliance_level or 0):
+        raise HTTPException(status_code=400, detail="Alliance level too low")
 
-@router.get("/contributors")
-async def project_contributors():
-    return {"contributors": []}
+    exists = (
+        db.query(ProjectsAlliance.project_id)
+        .filter_by(alliance_id=alliance.alliance_id, project_key=payload.project_key)
+        .first()
+    )
+    if exists:
+        raise HTTPException(status_code=400, detail="Project already built")
 
+    active = (
+        db.query(ProjectsAllianceInProgress.progress_id)
+        .filter_by(alliance_id=alliance.alliance_id, project_key=payload.project_key)
+        .first()
+    )
+    if active:
+        raise HTTPException(status_code=400, detail="Project already in progress")
 
-@router.get("/notifications")
-async def project_notifications():
-    return {"notifications": []}
-
+    record = ProjectsAllianceInProgress(
+        alliance_id=alliance.alliance_id,
+        project_key=payload.project_key,
+        progress=0,
+        started_at=datetime.utcnow(),
+        expected_end=datetime.utcnow()
+        + timedelta(seconds=project.build_time_seconds or 0),
+        status="building",
+        built_by=payload.user_id,
+    )
+    db.add(record)
+    db.commit()
+    return {"status": "started"}
