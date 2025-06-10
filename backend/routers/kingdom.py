@@ -10,6 +10,7 @@ from ..services.research_service import start_research as db_start_research
 from ..services.kingdom_quest_service import start_quest as db_start_quest
 from ..services.kingdom_setup_service import create_kingdom_transaction
 from .progression_router import get_user_id
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
@@ -48,7 +49,7 @@ class KingdomCreatePayload(BaseModel):
 @router.post("/create")
 def create_kingdom(
     payload: KingdomCreatePayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     try:
