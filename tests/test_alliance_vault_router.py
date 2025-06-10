@@ -1,9 +1,11 @@
 import uuid
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base
-from backend.models import AllianceVault, AllianceVaultTransactionLog, TradeLog, User
+from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, TradeLog, User
 from backend.routers.alliance_vault import VaultTransaction, deposit, withdraw, summary
 
 
@@ -14,13 +16,16 @@ def setup_db():
     return Session
 
 
-def create_user(db):
+def create_user(db, alliance_id=1, role="Leader"):
     uid = uuid.uuid4()
+    db.add(Alliance(alliance_id=alliance_id, name="A"))
     user = User(
         user_id=uid,
         username="tester",
         display_name="Test User",
         email="t@example.com",
+        alliance_id=alliance_id,
+        alliance_role=role,
     )
     db.add(user)
     db.commit()
@@ -33,7 +38,8 @@ def test_deposit_and_withdraw():
     user_id = create_user(db)
 
     deposit(
-        VaultTransaction(alliance_id=1, resource="wood", amount=100, user_id=user_id),
+        VaultTransaction(alliance_id=1, resource="wood", amount=100),
+        user_id,
         db,
     )
     vault = db.query(AllianceVault).filter_by(alliance_id=1).first()
@@ -44,7 +50,8 @@ def test_deposit_and_withdraw():
     assert tlog.quantity == 100 and tlog.trade_type == "alliance_trade"
 
     withdraw(
-        VaultTransaction(alliance_id=1, resource="wood", amount=40, user_id=user_id),
+        VaultTransaction(alliance_id=1, resource="wood", amount=40),
+        user_id,
         db,
     )
     vault = db.query(AllianceVault).filter_by(alliance_id=1).first()
@@ -62,9 +69,20 @@ def test_deposit_and_withdraw():
 def test_summary_totals():
     Session = setup_db()
     db = Session()
+    user_id = create_user(db, alliance_id=2)
     db.add(AllianceVault(alliance_id=2, wood=50, gold=75))
     db.commit()
 
-    res = summary(alliance_id=2, db=db)
+    res = summary(user_id=user_id, db=db)
     assert res["totals"]["wood"] == 50
     assert res["totals"]["gold"] == 75
+
+
+def test_withdraw_permission_denied():
+    Session = setup_db()
+    db = Session()
+    user_id = create_user(db, role="Member")
+
+    deposit(VaultTransaction(alliance_id=1, resource="gold", amount=10), user_id, db)
+    with pytest.raises(HTTPException):
+        withdraw(VaultTransaction(alliance_id=1, resource="gold", amount=5), user_id, db)
