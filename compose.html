@@ -10,6 +10,9 @@ Updated: Compose interface with tabs
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Compose | Kingmaker's Rise</title>
   <meta name="description" content="Send messages, notices, treaties or war declarations." />
+  <meta property="og:title" content="Compose | Kingmaker's Rise" />
+  <meta property="og:description" content="Send messages, notices, treaties or war declarations." />
+  <meta name="twitter:card" content="summary" />
   <link rel="stylesheet" href="CSS/compose.css" />
   <script defer type="module" src="Javascript/compose.js"></script>
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
@@ -34,8 +37,9 @@ Updated: Compose interface with tabs
   <section id="tab-message" class="tab-content active">
     <form id="message-form">
       <div class="form-group">
-        <label for="msg-recipient">Recipient ID</label>
-        <input id="msg-recipient" required />
+        <label for="msg-recipient">Recipient</label>
+        <input id="msg-recipient" list="recipient-list" autocomplete="off" required />
+        <datalist id="recipient-list"></datalist>
       </div>
       <div class="form-group">
         <label for="msg-content">Message</label>

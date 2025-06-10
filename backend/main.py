@@ -22,6 +22,7 @@ from .routers import (
     donate_vip,
     forgot_password,
     messages,
+    compose,
     player_management,
     market,
     diplomacy,
@@ -80,6 +81,7 @@ app.include_router(audit_log.router)
 app.include_router(admin_audit_log.router)
 app.include_router(donate_vip.router)
 app.include_router(messages.router)
+app.include_router(compose.router)
 app.include_router(player_management.router)
 app.include_router(market.router)
 app.include_router(diplomacy.router)
