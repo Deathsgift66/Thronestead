@@ -8,6 +8,8 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentSession;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Validate session
   const { data: { session } } = await supabase.auth.getSession();
@@ -16,10 +18,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  currentSession = session;
+
   // ✅ Determine page
   if (document.getElementById("message-list")) {
     // Inbox page
-    await loadInbox();
+    await loadInbox(session);
+    subscribeToNewMessages(session.user.id);
   } else if (document.getElementById("message-container")) {
     // Message view page
     const urlParams = new URLSearchParams(window.location.search);
@@ -36,39 +41,36 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ✅ Load Inbox
-async function loadInbox() {
+async function loadInbox(session) {
   const container = document.getElementById("message-list");
   container.innerHTML = "<p>Loading messages...</p>";
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // ✅ JOIN with users table for sender name
-    const { data, error } = await supabase
-      .from("player_messages")
-      .select("message_id, subject, message, sent_at, is_read, users(username)")
-      .eq("recipient_id", user.id)
-      .eq("deleted_by_recipient", false)
-      .order("sent_at", { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
+    const res = await fetch('/api/messages/inbox', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-User-ID': session.user.id
+      }
+    });
+    if (!res.ok) throw new Error('Failed');
+    const { messages } = await res.json();
 
     container.innerHTML = "";
-
-    if (!data || data.length === 0) {
+    document.getElementById('message-count').textContent = `${messages.length} Messages`;
+    if (!messages || messages.length === 0) {
       container.innerHTML = "<p>No messages found.</p>";
       return;
     }
 
-    data.forEach(msg => {
+    messages.forEach(msg => {
       const card = document.createElement("div");
       card.classList.add("message-card");
+      if (!msg.is_read) card.classList.add('unread');
 
       card.innerHTML = `
         <a href="message.html?message_id=${msg.message_id}">
           <div class="message-meta">
-            <span>From: ${escapeHTML(msg.users?.username || "Unknown")}</span>
+            <span>From: ${escapeHTML(msg.sender || "Unknown")}</span>
             <span>${formatDate(msg.sent_at)}</span>
           </div>
           <div class="message-subject">${escapeHTML((msg.subject || msg.message).substring(0, 50))}</div>
@@ -82,6 +84,22 @@ async function loadInbox() {
     console.error("❌ Error loading inbox:", err);
     container.innerHTML = "<p>Failed to load messages.</p>";
   }
+}
+
+function subscribeToNewMessages(uid) {
+  const channel = supabase.channel(`inbox-${uid}`);
+  channel
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'player_messages', filter: `recipient_id=eq.${uid}` },
+      payload => {
+        // Simple refresh on new message
+        if (currentSession) {
+          loadInbox(currentSession);
+        }
+      }
+    )
+    .subscribe();
 }
 
 // ✅ Load Message View
@@ -185,31 +203,24 @@ function setupCompose() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
 
-      // ✅ Look up recipient user_id
-      const { data: recipientData, error: recipientError } = await supabase
-        .from("users")
-        .select("user_id")
-        .eq("username", recipient)
-        .single();
-
-      if (recipientError || !recipientData) {
-        throw new Error("Recipient not found.");
-      }
-
-      const { error: sendError } = await supabase
-        .from("player_messages")
-        .insert({
-          recipient_id: recipientData.user_id,
-          user_id: user.id,
+      const res = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'X-User-ID': session.user.id
+        },
+        body: JSON.stringify({
+          recipient: recipient,
           subject: subject || null,
-          message: messageContent,
-          sent_at: new Date().toISOString(),
-          is_read: false
-        });
+          content: messageContent,
+          sender_id: session.user.id
+        })
+      });
 
-      if (sendError) throw sendError;
+      if (!res.ok) throw new Error('send failed');
 
       alert("Message sent!");
       window.location.href = "messages.html";
