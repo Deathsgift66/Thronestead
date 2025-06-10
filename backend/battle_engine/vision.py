@@ -60,7 +60,7 @@ def terrain_vision_modifier(terrain_type: str) -> float:
         return 1.0
     if terrain_type == "forest":
         return 2.0
-    if terrain_type == "hill":
+    if terrain_type == "hills":
         return 0.75
     if terrain_type == "river":
         return 1.5

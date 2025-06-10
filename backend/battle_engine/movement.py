@@ -99,7 +99,7 @@ def terrain_movement_modifier(terrain_type: str, unit: Dict[str, Any]) -> float:
         return 2.0 if unit.get("class") == "cavalry" else 1.5
     if terrain_type == "river":
         return 1.0 if unit.get("can_build_bridge") else 999
-    if terrain_type == "hill":
+    if terrain_type == "hills":
         return 1.5
     if terrain_type == "bridge":
         return 1.0
