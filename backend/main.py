@@ -20,6 +20,7 @@ from .routers import (
     audit_log,
     admin_audit_log,
     donate_vip,
+    forgot_password,
     messages,
     player_management,
     market,
@@ -100,4 +101,5 @@ app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)
 app.include_router(kingdom_history.router)
+app.include_router(forgot_password.router)
 

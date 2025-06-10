@@ -234,6 +234,7 @@
 - backend/routers/conflicts.py
 - backend/routers/diplomacy.py
 - backend/routers/donate_vip.py
+- backend/routers/forgot_password.py
 - backend/routers/kingdom.py
 - backend/routers/kingdom_history.py
 - backend/routers/kingdom_military.py
@@ -280,6 +281,7 @@
 - tests/test_alliance_vault_router.py
 - tests/test_audit_service.py
 - tests/test_black_market.py
+- tests/test_forgot_password_router.py
 - tests/test_history_service.py
 - tests/test_kingdom_achievement_service.py
 - tests/test_kingdom_history_service.py
