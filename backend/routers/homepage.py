@@ -1,18 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 
-def get_supabase_client():
-    """Return a configured Supabase client or raise if unavailable."""
-    try:
-        from supabase import create_client
-    except ImportError as e:  # pragma: no cover - optional
-        raise RuntimeError("supabase client library not installed") from e
-    import os
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
-    if not url or not key:
-        raise RuntimeError("Supabase credentials not configured")
-    return create_client(url, key)
+from ..supabase_client import get_supabase_client
 
 
 router = APIRouter(prefix="/api/homepage", tags=["homepage"])

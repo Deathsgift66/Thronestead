@@ -79,6 +79,20 @@ game. To initialize a local database run:
 psql -f full_schema.sql
 ```
 
+### Supabase Configuration
+
+Environment variables for the Supabase connection are loaded from the `.ENV` file at the project root. The key variables are:
+
+```
+SUPABASE_URL
+SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+Update these values with your project credentials to enable API access.
+
 This will create all tables referenced by the frontend.
 
 ---
