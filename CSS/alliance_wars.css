@@ -232,4 +232,38 @@ body {
   list-style: none;
 }
 
+.score-table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+
+.score-table th,
+.score-table td {
+  border: 1px solid var(--gold);
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.participants {
+  display: flex;
+  gap: var(--gap-default);
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.participant-list {
+  flex: 1 1 200px;
+  background: var(--stone-panel);
+  border: var(--border);
+  padding: var(--padding-sm);
+  border-radius: var(--border-radius);
+}
+
+@media (max-width: 768px) {
+  .battle-container {
+    flex-direction: column;
+  }
+}
+
 /* Footer - handled globally */

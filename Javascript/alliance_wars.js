@@ -9,6 +9,7 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentWarId = null;
+let combatInterval = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
@@ -141,6 +142,9 @@ async function viewWarDetails(war) {
     renderWarOverview(data.war, data.score);
     renderBattleMap(data.map?.tile_map || []);
     await loadCombatLogs();
+    await loadScoreboard();
+    await loadParticipants();
+    startCombatPolling();
   } catch (err) {
     console.error('Error loading war details:', err);
   }
@@ -204,6 +208,79 @@ function renderCombatLog(logs) {
   });
 }
 
+async function loadScoreboard() {
+  if (!currentWarId) return;
+  try {
+    const res = await fetch(`/api/alliance-wars/scoreboard?alliance_war_id=${currentWarId}`);
+    const data = await res.json();
+    renderScoreboard(data.score || data);
+  } catch (err) {
+    console.error('Error loading scoreboard:', err);
+  }
+}
+
+function renderScoreboard(score) {
+  const container = document.getElementById('scoreboard');
+  if (!container) return;
+  if (!score) {
+    container.textContent = 'No score data.';
+    return;
+  }
+  container.innerHTML = `
+    <table class="score-table">
+      <tr><th>Side</th><th>Score</th></tr>
+      <tr><td>Attacker</td><td>${score.attacker_score ?? 0}</td></tr>
+      <tr><td>Defender</td><td>${score.defender_score ?? 0}</td></tr>
+    </table>
+  `;
+}
+
+async function loadParticipants() {
+  if (!currentWarId) return;
+  try {
+    const { data, error } = await supabase
+      .from('alliance_war_participants')
+      .select('kingdom_id, role')
+      .eq('alliance_war_id', currentWarId);
+    if (error) throw error;
+    renderParticipants(data);
+  } catch (err) {
+    console.error('Error loading participants:', err);
+  }
+}
+
+function renderParticipants(list) {
+  const container = document.getElementById('participants');
+  if (!container) return;
+  if (!list || list.length === 0) {
+    container.textContent = 'No participants.';
+    return;
+  }
+  const attackers = list.filter(p => p.role === 'attacker');
+  const defenders = list.filter(p => p.role === 'defender');
+  container.innerHTML = `
+    <div class="participant-list"><h4>Attackers</h4>${attackers.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>
+    <div class="participant-list"><h4>Defenders</h4>${defenders.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>
+  `;
+}
+
+function startCombatPolling() {
+  stopCombatPolling();
+  combatInterval = setInterval(() => {
+    if (document.getElementById('tab-live').classList.contains('active')) {
+      loadCombatLogs();
+      loadScoreboard();
+    }
+  }, 5000);
+}
+
+function stopCombatPolling() {
+  if (combatInterval) {
+    clearInterval(combatInterval);
+    combatInterval = null;
+  }
+}
+
 function initTabs() {
   document.querySelectorAll('.tab-button').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -213,4 +290,7 @@ function initTabs() {
 function switchTab(id) {
   document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   document.querySelectorAll('.tab-section').forEach(s => s.classList.toggle('active', s.id === id));
+  if (id !== 'tab-live') {
+    stopCombatPolling();
+  }
 }
