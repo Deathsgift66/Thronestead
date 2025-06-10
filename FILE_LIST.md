@@ -248,6 +248,7 @@
 - backend/routers/settings_router.py
 - backend/routers/spies_router.py
 - backend/routers/titles_router.py
+- backend/routers/town_criers.py
 - backend/routers/trade_logs.py
 - backend/routers/training_history.py
 - backend/routers/treaties_router.py
@@ -298,6 +299,7 @@
 - tests/test_resources_router.py
 - tests/test_village_modifiers_router.py
 - tests/test_vip_status_service.py
+- tests/test_town_criers_router.py
 - tests/test_war_model.py
 - tests/test_wars_tactical_model.py
 
