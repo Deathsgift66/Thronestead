@@ -41,6 +41,7 @@ class KingdomCreatePayload(BaseModel):
     village_name: str
     region: str
     banner_image: str | None = None
+    emblem_image: str | None = None
     motto: str | None = None
 
 
@@ -59,6 +60,7 @@ def create_kingdom(
             payload.village_name,
             payload.ruler_title,
             payload.banner_image,
+            payload.emblem_image,
             payload.motto,
         )
     except Exception as e:

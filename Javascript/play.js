@@ -62,6 +62,7 @@ function bindEvents(profileExists) {
     const regionEl = document.getElementById('region-select');
     const villageEl = document.getElementById('village-name-input');
     const bannerEl = document.getElementById('banner-image-input');
+    const emblemEl = document.getElementById('emblem-image-input');
     const mottoEl = document.getElementById('motto-input');
 
     const kingdomName = kNameEl.value.trim();
@@ -69,6 +70,7 @@ function bindEvents(profileExists) {
     const region = regionEl.value;
     const villageName = villageEl.value.trim();
     const bannerImage = bannerEl.value.trim();
+    const emblemImage = emblemEl.value.trim();
     const motto = mottoEl.value.trim();
 
     if (kingdomName.length < 3) {
@@ -99,6 +101,7 @@ function bindEvents(profileExists) {
           village_name: villageName,
           region,
           banner_image: bannerImage || null,
+          emblem_image: emblemImage || null,
           motto: motto || null
         })
       });
