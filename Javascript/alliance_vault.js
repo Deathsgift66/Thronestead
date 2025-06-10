@@ -236,8 +236,10 @@ async function loadVaultHistory() {
 
   try {
     const actionFilter = document.getElementById('filter-action').value;
+    const daysFilter = document.getElementById('filter-days').value;
     const params = new URLSearchParams();
     if (actionFilter) params.append('action', actionFilter);
+    if (daysFilter) params.append('days', daysFilter);
     const res = await authFetch(`/api/vault/transactions?${params.toString()}`);
     const data = await res.json();
 
