@@ -50,6 +50,7 @@ from .routers import (
     wars,
     quests_router,
     projects_router,
+    resources,
     kingdom_history,
     kingdom_achievements,
     login_routes,
@@ -57,6 +58,7 @@ from .routers import (
     navbar,
     seasonal_effects,
     village_master as village_master_router,
+    world_map,
 )
 from .database import engine
 from .models import Base
@@ -116,6 +118,7 @@ app.include_router(alliance_home.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)
+app.include_router(resources.router)
 app.include_router(kingdom_history.router)
 app.include_router(forgot_password.router)
 app.include_router(kingdom_achievements.router)
@@ -124,6 +127,7 @@ app.include_router(legal.router)
 app.include_router(profile_view.router)
 app.include_router(navbar.router)
 app.include_router(seasonal_effects.router)
+app.include_router(world_map.router)
 app.include_router(overview_router.router)
 app.include_router(village_master_router.router)
 
