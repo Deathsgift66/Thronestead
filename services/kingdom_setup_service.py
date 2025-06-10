@@ -31,6 +31,7 @@ def create_kingdom_transaction(
     village_name: str,
     ruler_title: Optional[str] = None,
     banner_image: Optional[str] = None,
+    emblem_image: Optional[str] = None,
     motto: Optional[str] = None,
 ) -> int:
     """Create a new kingdom and related records. Returns the kingdom_id."""
