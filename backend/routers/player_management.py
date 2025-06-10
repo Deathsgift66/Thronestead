@@ -1,5 +1,20 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from ..security import verify_jwt_token
+
+
+def get_supabase_client():
+    """Return a configured Supabase client or raise if unavailable."""
+    try:
+        from supabase import create_client
+    except ImportError as e:  # pragma: no cover - library optional in tests
+        raise RuntimeError("supabase client library not installed") from e
+    import os
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+    if not url or not key:
+        raise RuntimeError("Supabase credentials not configured")
+    return create_client(url, key)
 
 router = APIRouter(prefix="/api/admin", tags=["player_management"])
 
@@ -15,16 +30,69 @@ class PlayerAction(BaseModel):
 
 
 @router.get("/players")
-async def players(search: str | None = None):
-    return {"players": [], "search": search}
+async def players(
+    search: str | None = None,
+    user_id: str = Depends(verify_jwt_token),
+):
+    supabase = get_supabase_client()
+    query = (
+        supabase.table("users")
+        .select("user_id,username,email,vip_tier,status")
+    )
+    if search:
+        query = query.or_(
+            f"user_id.ilike.%{search}%,username.ilike.%{search}%,email.ilike.%{search}%"
+        )
+    res = query.limit(100).execute()
+    players = getattr(res, "data", res) or []
+    # Fetch kingdom names
+    for p in players:
+        kid_res = (
+            supabase.table("kingdoms")
+            .select("kingdom_name")
+            .eq("user_id", p["user_id"])
+            .single()
+            .execute()
+        )
+        p["kingdom_name"] = (getattr(kid_res, "data", kid_res) or {}).get("kingdom_name")
+    return {"players": players}
 
 
 @router.post("/bulk_action")
-async def bulk_action(payload: BulkAction):
+async def bulk_action(
+    payload: BulkAction,
+    user_id: str = Depends(verify_jwt_token),
+):
+    supabase = get_supabase_client()
+    if payload.action == "ban":
+        supabase.table("users").update({"status": "banned"}).in_("user_id", payload.player_ids).execute()
+    elif payload.action == "flag":
+        supabase.table("users").update({"flagged": True}).in_("user_id", payload.player_ids).execute()
+    elif payload.action == "logout":
+        supabase.table("user_active_sessions").update({"session_status": "expired"}).in_("user_id", payload.player_ids).execute()
+    elif payload.action == "reset_password":
+        supabase.table("users").update({"force_password_reset": True}).in_("user_id", payload.player_ids).execute()
+    else:
+        raise HTTPException(status_code=400, detail="Unknown action")
     return {"message": "bulk done", "count": len(payload.player_ids)}
 
 
 @router.post("/player_action")
-async def player_action(payload: PlayerAction):
+async def player_action(
+    payload: PlayerAction,
+    user_id: str = Depends(verify_jwt_token),
+):
+    supabase = get_supabase_client()
+    if payload.action == "ban":
+        supabase.table("users").update({"status": "banned"}).eq("user_id", payload.player_id).execute()
+    elif payload.action == "flag":
+        supabase.table("users").update({"flagged": True}).eq("user_id", payload.player_id).execute()
+    elif payload.action == "freeze":
+        supabase.table("users").update({"status": "frozen"}).eq("user_id", payload.player_id).execute()
+    elif payload.action == "history":
+        # placeholder for retrieving history
+        pass
+    else:
+        raise HTTPException(status_code=400, detail="Unknown action")
     return {"message": "action done", "player": payload.player_id}
 
