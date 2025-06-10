@@ -73,6 +73,12 @@ body {
   margin-bottom: 2rem;
 }
 
+.projects-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .project-panel {
   background: var(--stone-panel);
   padding: 1.5rem;
@@ -127,6 +133,12 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .project-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .project-card {

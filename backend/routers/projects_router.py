@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from datetime import datetime, timedelta
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from ..data import castle_progression_state
+from ..data import castle_progression_state, kingdom_projects
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -18,15 +20,31 @@ def _get_requirements(code: str):
             "required_castle_level": 1,
             "required_nobles": 0,
             "required_knights": 0,
+            "build_time_seconds": 60,
+            "power_score": 10,
         }
     }
-    return catalogue.get(code, {"required_castle_level": 0, "required_nobles": 0, "required_knights": 0})
+    return catalogue.get(
+        code,
+        {
+            "required_castle_level": 0,
+            "required_nobles": 0,
+            "required_knights": 0,
+            "build_time_seconds": 60,
+            "power_score": 0,
+        },
+    )
 
 
 @router.post("/start")
-async def start_project(payload: ProjectPayload):
+async def start_project(
+    payload: ProjectPayload,
+    user_id: str = Depends(verify_jwt_token),
+):
     req = _get_requirements(payload.project_code)
-    prog = castle_progression_state.get(payload.kingdom_id, {"castle_level": 0, "nobles": 0, "knights": 0})
+    prog = castle_progression_state.get(
+        payload.kingdom_id, {"castle_level": 0, "nobles": 0, "knights": 0}
+    )
 
     if (
         prog["castle_level"] < req["required_castle_level"]
@@ -35,4 +53,27 @@ async def start_project(payload: ProjectPayload):
     ):
         raise HTTPException(status_code=403, detail="Project requirements not met")
 
-    return {"message": "Project started", "project_code": payload.project_code}
+    ends_at = datetime.utcnow() + timedelta(seconds=req.get("build_time_seconds", 60))
+    record = {
+        "project_code": payload.project_code,
+        "started_at": datetime.utcnow().isoformat(),
+        "ends_at": ends_at.isoformat(),
+        "started_by": user_id,
+        "power_score": req.get("power_score", 0),
+    }
+    kingdom_projects.setdefault(payload.kingdom_id, []).append(record)
+
+    return {
+        "message": "Project started",
+        "project_code": payload.project_code,
+        "ends_at": record["ends_at"],
+    }
+
+
+@router.get("/status/{kingdom_id}")
+async def project_status(
+    kingdom_id: int,
+    user_id: str = Depends(verify_jwt_token),
+):
+    return {"projects": kingdom_projects.get(kingdom_id, [])}
+

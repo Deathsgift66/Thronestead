@@ -38,6 +38,9 @@ castle_progression_state = {
     }
 }
 
+# Active kingdom projects keyed by kingdom_id
+kingdom_projects: dict[int, list[dict]] = {}
+
 # List of villages currently controlled by each kingdom
 kingdom_villages: dict[int, list[dict]] = {}
 
