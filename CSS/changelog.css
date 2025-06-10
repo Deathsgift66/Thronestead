@@ -92,3 +92,35 @@ body {
   margin-top: 1rem;
 }
 
+.refresh-btn {
+  background: var(--gold);
+  color: var(--stone-bg);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+.refresh-btn:hover {
+  background: var(--highlight);
+}
+
+.changelog-entry {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+.changelog-entry h3 {
+  margin: 0 0 0.5rem;
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+}
+
+@media (max-width: 600px) {
+  .main-centered-container {
+    padding: 1rem;
+  }
+  .changelog-entry {
+    padding: 0.75rem;
+  }
+}
+

@@ -8,6 +8,20 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let realtimeSub;
+
+async function authHeaders() {
+  const [{ data: { user } }, { data: { session } }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession()
+  ]);
+  if (!user || !session) throw new Error('Unauthorized');
+  return {
+    'X-User-ID': user.id,
+    Authorization: `Bearer ${session.access_token}`
+  };
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -27,6 +41,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Initial load
   await loadChangelog();
+  setupRealtime();
+
+  const refreshBtn = document.getElementById('refresh-log');
+  if (refreshBtn) refreshBtn.addEventListener('click', loadChangelog);
 });
 
 // ✅ Load Changelog Entries
@@ -36,7 +54,7 @@ async function loadChangelog() {
   container.innerHTML = "<p>Loading changelog...</p>";
 
   try {
-    const res = await fetch("/api/changelog");
+    const res = await fetch("/api/changelog", { headers: await authHeaders() });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -79,6 +97,17 @@ async function loadChangelog() {
     container.innerHTML = "<p>Failed to load changelog.</p>";
   }
 }
+
+function setupRealtime() {
+  realtimeSub = supabase
+    .channel('game_changelog')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_changelog' }, loadChangelog)
+    .subscribe();
+}
+
+window.addEventListener('beforeunload', () => {
+  realtimeSub?.unsubscribe();
+});
 
 // ✅ Format Date (YYYY-MM-DD → MM/DD/YYYY)
 function formatDate(dateStr) {
