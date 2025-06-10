@@ -7,6 +7,8 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let playerChannel;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Rely on authGuard.js — no duplicate session checks needed
   // ✅ Initial load
@@ -14,6 +16,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Bind filter search button
   document.getElementById("search-button").addEventListener("click", async () => {
+    await loadPlayerTable();
+  });
+  document.getElementById("search-reset").addEventListener("click", async () => {
+    document.getElementById("search-input").value = "";
     await loadPlayerTable();
   });
 
@@ -35,12 +41,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("modal-close-btn").addEventListener("click", () => {
     document.getElementById("admin-modal").classList.add("hidden");
   });
+
+  // ✅ Real-time updates
+  playerChannel = supabase
+    .channel('players')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, async () => {
+      await loadPlayerTable();
+    })
+    .subscribe();
+});
+
+window.addEventListener('beforeunload', () => {
+  if (playerChannel) {
+    playerChannel.unsubscribe();
+  }
 });
 
 // ✅ Load Player Table
 async function loadPlayerTable() {
   const tableBody = document.querySelector("#player-table tbody");
-  const query = document.querySelector(".alliance-members-container input[type='text']").value.trim();
+  const query = document.getElementById("search-input").value.trim();
 
   tableBody.innerHTML = "<tr><td colspan='8'>Loading players...</td></tr>";
 

@@ -165,3 +165,26 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .player-controls,
+  .bulk-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .player-controls input {
+    width: 100%;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    background-attachment: scroll;
+  }
+}
+

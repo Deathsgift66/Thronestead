@@ -67,17 +67,17 @@ Author: Deathsgift66
 
     <!-- Player Filter -->
     <div class="player-controls">
-      <input type="text" placeholder="Search by Username / ID / Email" />
-      <button class="action-btn">Search</button>
-      <button class="action-btn">Reset</button>
+      <input id="search-input" type="text" placeholder="Search by Username / ID / Email" />
+      <button id="search-button" class="action-btn">Search</button>
+      <button id="search-reset" class="action-btn">Reset</button>
     </div>
 
     <!-- Bulk Actions -->
     <div class="bulk-actions">
-      <button class="action-btn">Ban Selected</button>
-      <button class="action-btn">Flag Selected</button>
-      <button class="action-btn">Force Logout</button>
-      <button class="action-btn">Reset Password</button>
+      <button id="bulk-ban" class="action-btn">Ban Selected</button>
+      <button id="bulk-flag" class="action-btn">Flag Selected</button>
+      <button id="bulk-logout" class="action-btn">Force Logout</button>
+      <button id="bulk-reset-password" class="action-btn">Reset Password</button>
     </div>
 
     <!-- Player Table -->
@@ -104,9 +104,9 @@ Author: Deathsgift66
     <!-- Admin Modal -->
     <div id="admin-modal" class="modal hidden">
       <div class="modal-content">
-        <h3 class="modal-title">Admin Action</h3>
-        <p id="modal-description">Action details go here.</p>
-        <button class="action-btn">Confirm</button>
+        <h3 id="modal-title" class="modal-title">Admin Action</h3>
+        <p id="modal-body">Action details go here.</p>
+        <button id="modal-confirm-btn" class="action-btn">Confirm</button>
         <button class="action-btn" id="modal-close-btn">Close</button>
       </div>
     </div>
