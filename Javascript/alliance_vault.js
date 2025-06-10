@@ -9,7 +9,38 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 
+let currentUser = null;
+
+function authFetch(url, options = {}) {
+  options.headers = {
+    ...(options.headers || {}),
+    'X-User-Id': currentUser?.id || ''
+  };
+  return fetch(url, options);
+}
+
+function subscribeToVault(allianceId) {
+  supabase.channel('vault_' + allianceId)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'alliance_vault_transaction_log',
+      filter: `alliance_id=eq.${allianceId}`
+    }, async () => {
+      await loadVaultSummary();
+      await loadVaultHistory();
+    })
+    .subscribe();
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+  currentUser = user;
+
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
   if (logoutBtn) {
@@ -27,6 +58,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadDepositForm();
   await loadWithdrawForm();
   await loadVaultHistory();
+
+  const { data: allianceData } = await supabase
+    .from('users')
+    .select('alliance_id')
+    .eq('user_id', user.id)
+    .single();
+  if (allianceData && allianceData.alliance_id) {
+    subscribeToVault(allianceData.alliance_id);
+  }
 
   document.getElementById('apply-trans-filter').addEventListener('click', async () => {
     await loadVaultHistory();
@@ -61,7 +101,7 @@ async function loadVaultSummary() {
   container.innerHTML = "<p>Loading vault totals...</p>";
 
   try {
-    const res = await fetch("/api/vault/resources");
+    const res = await authFetch("/api/vault/resources");
     const data = await res.json();
 
     container.innerHTML = "";
@@ -86,7 +126,7 @@ async function loadVaultSummary() {
 // ✅ Load Custom Board (Image + Text)
 async function loadCustomBoard() {
   try {
-    const res = await fetch("/api/alliance-vault/custom-board");
+    const res = await authFetch("/api/alliance-vault/custom-board");
     const data = await res.json();
 
     const imgSlot = document.getElementById("custom-image-slot");
@@ -132,11 +172,10 @@ async function loadDepositForm() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const res = await fetch("/api/vault/deposit", {
+      const res = await authFetch("/api/vault/deposit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resource, amount, user_id: user.id })
+        body: JSON.stringify({ resource, amount })
       });
       const result = await res.json();
       alert(result.message || "Deposit successful.");
@@ -174,11 +213,10 @@ async function loadWithdrawForm() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const res = await fetch("/api/vault/withdraw", {
+      const res = await authFetch("/api/vault/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resource, amount, user_id: user.id })
+        body: JSON.stringify({ resource, amount })
       });
       const result = await res.json();
       alert(result.message || "Withdrawal successful.");
@@ -200,7 +238,7 @@ async function loadVaultHistory() {
     const actionFilter = document.getElementById('filter-action').value;
     const params = new URLSearchParams();
     if (actionFilter) params.append('action', actionFilter);
-    const res = await fetch(`/api/vault/transactions?${params.toString()}`);
+    const res = await authFetch(`/api/vault/transactions?${params.toString()}`);
     const data = await res.json();
 
     tbody.innerHTML = "";
