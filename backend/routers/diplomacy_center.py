@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -23,6 +24,8 @@ def get_alliance_id(db: Session, user_id: str) -> int:
 class ProposePayload(BaseModel):
     treaty_type: str
     partner_alliance_id: int
+    notes: str | None = None
+    end_date: str | None = None
 
 
 class RespondPayload(BaseModel):
@@ -80,8 +83,19 @@ def summary(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_
 
 
 @router.get("/treaties")
-def list_treaties(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+def list_treaties(
+    status_filter: str | None = Query(None, alias="filter"),
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     aid = get_alliance_id(db, user_id)
+    db.execute(
+        text(
+            "UPDATE alliance_treaties SET status = 'expired'"
+            " WHERE status = 'active' AND end_date IS NOT NULL AND end_date < now()"
+        )
+    )
+    db.commit()
     rows = db.execute(
         text(
             """
@@ -90,15 +104,18 @@ def list_treaties(user_id: str = Depends(verify_jwt_token), db: Session = Depend
                    CASE WHEN t.alliance_id = :aid THEN t.partner_alliance_id ELSE t.alliance_id END AS partner_id,
                    t.status,
                    t.signed_at,
+                   t.end_date,
+                   t.notes,
                    a.name AS partner_name,
                    a.emblem_url
               FROM alliance_treaties t
               JOIN alliances a ON a.alliance_id = CASE WHEN t.alliance_id = :aid THEN t.partner_alliance_id ELSE t.alliance_id END
-             WHERE t.alliance_id = :aid OR t.partner_alliance_id = :aid
+             WHERE (t.alliance_id = :aid OR t.partner_alliance_id = :aid)
+             {status}
              ORDER BY t.signed_at DESC
             """
-        ),
-        {"aid": aid},
+        ).format(status="" if not status_filter else "AND t.status = :st"),
+        {"aid": aid, "st": status_filter} if status_filter else {"aid": aid},
     ).fetchall()
     return [
         {
@@ -107,8 +124,10 @@ def list_treaties(user_id: str = Depends(verify_jwt_token), db: Session = Depend
             "partner_alliance_id": r[2],
             "status": r[3],
             "signed_at": r[4].isoformat() if r[4] else None,
-            "partner_name": r[5],
-            "emblem_url": r[6],
+            "end_date": r[5].isoformat() if r[5] else None,
+            "notes": r[6],
+            "partner_name": r[7],
+            "emblem_url": r[8],
         }
         for r in rows
     ]
@@ -123,10 +142,16 @@ def propose_treaty(
     aid = get_alliance_id(db, user_id)
     db.execute(
         text(
-            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status) "
-            "VALUES (:aid, :type, :pid, 'proposed')"
+            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, notes, end_date) "
+            "VALUES (:aid, :type, :pid, 'proposed', :notes, :end_date)"
         ),
-        {"aid": aid, "type": payload.treaty_type, "pid": payload.partner_alliance_id},
+        {
+            "aid": aid,
+            "type": payload.treaty_type,
+            "pid": payload.partner_alliance_id,
+            "notes": payload.notes,
+            "end_date": payload.end_date,
+        },
     )
     db.commit()
     log_alliance_activity(db, aid, user_id, "Treaty Proposed", payload.treaty_type)
@@ -167,6 +192,37 @@ def respond_treaty(
     db.commit()
     log_alliance_activity(db, aid, f"Treaty {status.capitalize()}", str(payload.treaty_id))
     return {"status": status}
+
+
+@router.post("/renew_treaty")
+def renew_treaty(
+    treaty_id: int,
+    end_date: str | None = None,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    row = db.execute(
+        text(
+            "SELECT alliance_id, partner_alliance_id, treaty_type FROM alliance_treaties WHERE treaty_id = :tid"
+        ),
+        {"tid": treaty_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Treaty not found")
+    aid = get_alliance_id(db, user_id)
+    if aid not in row[:2]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    db.execute(text("UPDATE alliance_treaties SET status = 'expired' WHERE treaty_id = :tid"), {"tid": treaty_id})
+    db.execute(
+        text(
+            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, end_date) "
+            "VALUES (:aid, :type, :pid, 'active', :ed)"
+        ),
+        {"aid": row[0], "type": row[2], "pid": row[1], "ed": end_date},
+    )
+    db.commit()
+    log_alliance_activity(db, aid, "Treaty Renewed", str(treaty_id))
+    return {"status": "renewed"}
 
 
 @router.get("/war_status")

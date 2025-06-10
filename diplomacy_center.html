@@ -69,9 +69,16 @@ Author: Deathsgift66
 
   <section class="treaty-list panel">
     <h2>Alliance Treaties</h2>
+    <label for="treaty-filter">Filter:</label>
+    <select id="treaty-filter">
+      <option value="">All</option>
+      <option value="active">Active</option>
+      <option value="expired">Expired</option>
+      <option value="proposed">Pending</option>
+    </select>
     <table class="treaties-table">
       <thead>
-        <tr><th>Type</th><th>Partner</th><th>Status</th><th>Signed</th><th>Actions</th></tr>
+        <tr><th>Type</th><th>Partner</th><th>Status</th><th>Signed</th><th>Expires</th><th>Actions</th></tr>
       </thead>
       <tbody id="treaty-rows" aria-live="polite"></tbody>
     </table>
@@ -87,6 +94,10 @@ Author: Deathsgift66
     </select>
     <label for="partner-alliance-id">Partner Alliance ID:</label>
     <input type="number" id="partner-alliance-id" />
+    <label for="treaty-notes">Notes:</label>
+    <textarea id="treaty-notes"></textarea>
+    <label for="treaty-end">End Date:</label>
+    <input type="date" id="treaty-end" />
     <button class="btn" onclick="proposeTreaty()">Submit Proposal</button>
   </section>
 </main>

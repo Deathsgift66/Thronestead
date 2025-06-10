@@ -13,6 +13,8 @@ router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
 class ProposePayload(BaseModel):
     treaty_type: str
     partner_alliance_id: int
+    notes: str | None = None
+    end_date: str | None = None
 
 
 class RespondPayload(BaseModel):
@@ -56,7 +58,7 @@ def get_my_treaties(user_id: str = Depends(get_user_id), db: Session = Depends(g
     rows = db.execute(
         text(
             """
-            SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at
+            SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at, end_date, notes
               FROM alliance_treaties
              WHERE alliance_id = :aid OR partner_alliance_id = :aid
              ORDER BY signed_at DESC
@@ -73,6 +75,8 @@ def get_my_treaties(user_id: str = Depends(get_user_id), db: Session = Depends(g
                 "partner_alliance_id": r[3],
                 "status": r[4],
                 "signed_at": r[5].isoformat() if r[5] else None,
+                "end_date": r[6].isoformat() if r[6] else None,
+                "notes": r[7],
             }
             for r in rows
         ]
@@ -88,10 +92,16 @@ def propose_treaty(
     aid = validate_alliance_permission(db, user_id, "can_manage_treaties")
     db.execute(
         text(
-            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status) "
-            "VALUES (:aid, :type, :pid, 'proposed')"
+            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, notes, end_date) "
+            "VALUES (:aid, :type, :pid, 'proposed', :notes, :ed)"
         ),
-        {"aid": aid, "type": payload.treaty_type, "pid": payload.partner_alliance_id},
+        {
+            "aid": aid,
+            "type": payload.treaty_type,
+            "pid": payload.partner_alliance_id,
+            "notes": payload.notes,
+            "ed": payload.end_date,
+        },
     )
     db.commit()
     log_alliance_activity(db, aid, user_id, "Treaty Proposed", payload.treaty_type)
@@ -136,6 +146,38 @@ def respond_to_treaty(
     return {"status": status}
 
 
+@router.post("/renew")
+def renew_treaty(
+    treaty_id: int,
+    end_date: str | None = None,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    row = db.execute(
+        text(
+            "SELECT alliance_id, partner_alliance_id, treaty_type FROM alliance_treaties WHERE treaty_id = :tid"
+        ),
+        {"tid": treaty_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Treaty not found")
+    aid = get_alliance_id(db, user_id)
+    if aid not in row[:2]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    db.execute(text("UPDATE alliance_treaties SET status = 'expired' WHERE treaty_id = :tid"), {"tid": treaty_id})
+    db.execute(
+        text(
+            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, end_date) "
+            "VALUES (:aid, :type, :pid, 'active', :ed)"
+        ),
+        {"aid": row[0], "type": row[2], "pid": row[1], "ed": end_date},
+    )
+    db.commit()
+    log_alliance_activity(db, aid, user_id, "Treaty Renewed", str(treaty_id))
+    log_action(db, user_id, "Treaty Renewed", str(treaty_id))
+    return {"status": "renewed"}
+
+
 @router.get("/view/{treaty_id}")
 def view_treaty(
     treaty_id: int,
@@ -144,7 +186,7 @@ def view_treaty(
 ):
     row = db.execute(
         text(
-            "SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at "
+            "SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at, end_date, notes "
             "FROM alliance_treaties WHERE treaty_id = :tid"
         ),
         {"tid": treaty_id},
@@ -161,4 +203,6 @@ def view_treaty(
         "partner_alliance_id": row[3],
         "status": row[4],
         "signed_at": row[5].isoformat() if row[5] else None,
+        "end_date": row[6].isoformat() if row[6] else None,
+        "notes": row[7],
     }
