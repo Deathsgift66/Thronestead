@@ -5,33 +5,19 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 @import url("./root_theme.css");
+@import url("./base_styles.css");
 
 
 
 /* Variables */
 /* Base */
 body {
-  margin: 0;
-  font-family: 'IM Fell English', serif;
   background: url('../Assets/alliancewars.png') no-repeat center center fixed;
   background-size: cover;
   color: var(--parchment);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 
 /* Main Centered Layout */
-.main-centered-container {
-  width: auto;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 
 /* Customization Section */
 .alliance-customization-area {

@@ -5,16 +5,12 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 @import url("./root_theme.css");
+@import url("./base_styles.css");
 
 body {
-  margin: 0;
-  font-family: "IM Fell English", serif;
   background: url("../Assets/donate.png") no-repeat center center fixed;
   background-size: cover;
   color: var(--parchment);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 
 .donate-vip-container {
