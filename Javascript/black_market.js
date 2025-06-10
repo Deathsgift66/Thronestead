@@ -1,154 +1,99 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: black_market.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
-// Hardened Black Market system — matches current HTML
-
 import { supabase } from './supabaseClient.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
+let listings = [];
+let currentListing = null;
 
-  // ✅ Validate session
+document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = "login.html";
+    window.location.href = 'login.html';
     return;
   }
 
-  // ✅ Initial load
-  await loadBlackMarketListings();
+  document.getElementById('searchInput').addEventListener('input', renderListings);
+  document.getElementById('sortSelect').addEventListener('change', renderListings);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('confirmPurchase').addEventListener('click', confirmPurchase);
 
-  // ✅ Bind Place Listing form
-  const listingForm = document.getElementById("listingForm");
-  if (listingForm) {
-    listingForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      await placeNewListing();
-    });
-  }
+  await loadListings();
+  await loadHistory();
 });
 
-// ✅ Load Black Market Listings
-async function loadBlackMarketListings() {
-  const tbody = document.getElementById("listingsTableBody");
+async function loadListings() {
+  const res = await fetch('/api/black-market/listings');
+  const data = await res.json();
+  listings = data.listings || [];
+  renderListings();
+}
 
-  tbody.innerHTML = `
-    <tr><td colspan="5">Loading black market listings...</td></tr>
-  `;
+function renderListings() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+  let filtered = listings.filter(l => l.item_name.toLowerCase().includes(search));
+  if (sort === 'price') filtered.sort((a,b)=>a.price_per_unit-b.price_per_unit);
+  if (sort === 'quantity') filtered.sort((a,b)=>b.stock_remaining-a.stock_remaining);
+  if (sort === 'expiry') filtered.sort((a,b)=>new Date(a.expires_at)-new Date(b.expires_at));
 
-  try {
-    const res = await fetch("/api/black-market");
-    const data = await res.json();
-
-    tbody.innerHTML = "";
-
-    if (!data.listings || data.listings.length === 0) {
-      tbody.innerHTML = `
-        <tr><td colspan="5">No listings available.</td></tr>
-      `;
-      return;
-    }
-
-    data.listings.forEach(listing => {
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${escapeHTML(listing.item)}</td>
-        <td>${listing.price}</td>
-        <td>${listing.quantity}</td>
-        <td>${escapeHTML(listing.seller)}</td>
-        <td>
-          <button class="action-btn buy-btn" data-id="${listing.id}" data-quantity="${listing.quantity}" data-price="${listing.price}" data-item="${escapeHTML(listing.item)}">Buy</button>
-        </td>
-      `;
-
-      tbody.appendChild(row);
-    });
-
-    // ✅ Bind Buy buttons
-    document.querySelectorAll(".buy-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const listingId = btn.dataset.id;
-        const item = btn.dataset.item;
-        const price = btn.dataset.price;
-        const maxQty = parseInt(btn.dataset.quantity);
-
-        const qty = prompt(`How many '${item}' do you want to buy? (Max: ${maxQty})`);
-        const qtyInt = parseInt(qty);
-
-        if (!qtyInt || qtyInt <= 0 || qtyInt > maxQty) {
-          alert("Invalid quantity.");
-          return;
-        }
-
-        try {
-          const res = await fetch("/api/black-market/buy", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ listing_id: listingId, quantity: qtyInt })
-          });
-          const result = await res.json();
-          alert(result.message || "Purchase completed.");
-          await loadBlackMarketListings();
-        } catch (err) {
-          console.error("❌ Error purchasing:", err);
-          alert("Purchase failed.");
-        }
-      });
-    });
-
-  } catch (err) {
-    console.error("❌ Error loading black market:", err);
-    tbody.innerHTML = `
-      <tr><td colspan="5">Failed to load black market listings.</td></tr>
+  const grid = document.getElementById('listingsGrid');
+  grid.innerHTML = '';
+  filtered.forEach(l => {
+    const card = document.createElement('div');
+    card.className = 'listing-card';
+    card.innerHTML = `
+      <img src="Assets/1.png" alt="${l.item_name}">
+      <strong>${escapeHTML(l.item_name)}</strong><br>
+      ${l.stock_remaining} available<br>
+      ${l.price_per_unit} ${l.currency_type}
     `;
-  }
+    card.addEventListener('click', () => openModal(l));
+    grid.appendChild(card);
+  });
 }
 
-// ✅ Place New Listing
-async function placeNewListing() {
-  const item = document.getElementById("item").value.trim();
-  const price = parseFloat(document.getElementById("price").value);
-  const quantity = parseInt(document.getElementById("quantity").value);
-
-  if (!item || !price || price <= 0 || !quantity || quantity <= 0) {
-    alert("Please enter valid item, price, and quantity.");
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/black-market/place", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item, price, quantity })
-    });
-    const result = await res.json();
-    alert(result.message || "Listing created.");
-    document.getElementById("listingForm").reset();
-    await loadBlackMarketListings();
-  } catch (err) {
-    console.error("❌ Error placing listing:", err);
-    alert("Failed to place listing.");
-  }
+function openModal(listing) {
+  currentListing = listing;
+  document.getElementById('modalTitle').textContent = listing.item_name;
+  document.getElementById('modalDesc').textContent = listing.description;
+  document.getElementById('modalPrice').textContent = `${listing.price_per_unit} ${listing.currency_type} each`;
+  const qtyInput = document.getElementById('purchaseQty');
+  qtyInput.value = 1;
+  qtyInput.max = listing.stock_remaining;
+  document.getElementById('purchaseModal').classList.remove('hidden');
 }
 
-// ✅ Basic HTML escape
+function closeModal() {
+  document.getElementById('purchaseModal').classList.add('hidden');
+  currentListing = null;
+}
+
+async function confirmPurchase() {
+  const qty = parseInt(document.getElementById('purchaseQty').value);
+  if (!currentListing || !qty || qty < 1 || qty > currentListing.stock_remaining) return;
+
+  await fetch('/api/black-market/purchase', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ listing_id: currentListing.id, quantity: qty, kingdom_id: 'demo-kingdom' })
+  });
+
+  closeModal();
+  await loadListings();
+  await loadHistory();
+}
+
+async function loadHistory() {
+  const res = await fetch('/api/black-market/history?kingdom_id=demo-kingdom');
+  const data = await res.json();
+  const container = document.getElementById('purchaseHistory');
+  container.innerHTML = '';
+  (data.trades || []).forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.textContent = `${t.item_name} x${t.quantity} at ${t.price_per_unit} ${t.currency_type}`;
+    container.appendChild(div);
+  });
+}
+
 function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
