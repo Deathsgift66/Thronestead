@@ -4,77 +4,141 @@ File Name: donate_vip.js
 Date: June 2, 2025
 Author: Deathsgift66
 */
-// Hardened VIP/Donate Page — Stripe Flow
+// VIP Donation Logic
 
 import { supabase } from './supabaseClient.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout (optional — if using navbar inject)
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
+let vipStatus = null;
+let vipTiers = [];
 
-  // ✅ Validate session
+async function init() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = "login.html";
+    window.location.href = 'login.html';
     return;
   }
 
-  // ✅ Initial load — Bind VIP buttons
-  bindVipButtons();
-});
+  await loadVIPStatus();
+  await loadVIPTiers();
 
-// ✅ Bind VIP buttons
-function bindVipButtons() {
-  document.querySelectorAll('.donate-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const tier = mapButtonToTier(btn.id);
-
-      if (!tier) {
-        alert("Invalid VIP tier.");
-        return;
-      }
-
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-
-        const res = await fetch("/api/stripe/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tier,
-            user_id: user.id
-          })
-        });
-
-        const result = await res.json();
-
-        if (!res.ok || !result.session_url) {
-          throw new Error(result.error || "Failed to create checkout session.");
-        }
-
-        // ✅ Redirect to Stripe checkout
-        window.location.href = result.session_url;
-
-      } catch (err) {
-        console.error("❌ Error starting checkout:", err);
-        alert("Failed to start checkout. Please try again.");
+  const form = document.getElementById('donation-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tierId = document.getElementById('selected-tier-id').value;
+      if (tierId) {
+        await submitVIPDonation(parseInt(tierId));
       }
     });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+export async function loadVIPStatus() {
+  try {
+    const res = await fetch('/api/vip/status');
+    if (!res.ok) throw new Error('failed');
+    vipStatus = await res.json();
+    renderStatus(vipStatus);
+  } catch {
+    vipStatus = null;
+  }
+}
+
+export async function loadVIPTiers() {
+  try {
+    const res = await fetch('/api/vip/tiers');
+    if (!res.ok) throw new Error('failed');
+    const data = await res.json();
+    vipTiers = data.tiers || [];
+    renderTiers(vipTiers);
+  } catch {
+    vipTiers = [];
+  }
+}
+
+export async function submitVIPDonation(tier_id) {
+  try {
+    const res = await fetch('/api/vip/donate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier_id })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.detail || 'Failed');
+      return;
+    }
+    await loadVIPStatus();
+    document.getElementById('donation-form').hidden = true;
+    alert('VIP updated!');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderTiers(tiers) {
+  const container = document.getElementById('vip-tier-cards');
+  if (!container) return;
+  container.innerHTML = '';
+  tiers.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'vip-tier-card';
+    card.innerHTML = `
+      <h3>${t.tier_name}</h3>
+      <div class="vip-price">${t.price_gold} gold</div>
+      <button class="vip-button" data-tier="${t.tier_id}">Donate</button>
+    `;
+    const btn = card.querySelector('button');
+    btn.addEventListener('click', () => {
+      document.getElementById('selected-tier-id').value = t.tier_id;
+      document.getElementById('donation-form').hidden = false;
+      renderPerks(t);
+    });
+    container.appendChild(card);
   });
 }
 
-// ✅ Map button ID → VIP Tier
-function mapButtonToTier(buttonId) {
-  switch (buttonId) {
-    case 'vip1-btn': return 'VIP1';
-    case 'vip2-btn': return 'VIP2';
-    case 'vip3-btn': return 'VIP3';
-    default: return null;
+function renderStatus(status) {
+  const banner = document.getElementById('current-status-banner');
+  const founder = document.getElementById('founder-preview');
+  if (!banner) return;
+
+  if (status.founder) {
+    founder.hidden = false;
+    founder.textContent = 'Founder Perk Active';
+    banner.textContent = 'Founder VIP - Permanent';
+  } else if (status.vip_level) {
+    banner.innerHTML = `VIP ${status.vip_level} - expires in <span id="vip-timer"></span>`;
+    renderTimer(status.expires_at);
+  } else {
+    banner.textContent = 'No active VIP status';
   }
+}
+
+export function renderPerks(tier) {
+  const container = document.getElementById('founder-preview');
+  if (!container) return;
+  container.innerHTML = tier.perks || '';
+}
+
+export function renderTimer(expiry) {
+  const timerEl = document.getElementById('vip-timer');
+  if (!timerEl || !expiry) return;
+  function update() {
+    const diff = new Date(expiry) - new Date();
+    if (diff <= 0) {
+      timerEl.textContent = 'expired';
+      clearInterval(interval);
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    timerEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
+  }
+  update();
+  const interval = setInterval(update, 1000);
 }
