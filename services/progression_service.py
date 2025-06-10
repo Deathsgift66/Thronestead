@@ -112,36 +112,14 @@ def check_progression_requirements(
     required_nobles: int = 0,
     required_knights: int = 0,
 ) -> None:
-    """Validate castle level, noble and knight requirements.
+    """Validate progression requirements.
 
-    Raises ``HTTPException`` with status code 403 if any requirement is unmet.
+    The updated schema no longer tracks castle levels, nobles or knights.
+    This function now acts as a no-op for compatibility.
     """
 
-    # Castle level defaults to 1 if no record exists yet
-    castle_record = db.execute(
-        text(
-            "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
-        ),
-        {"kid": kingdom_id},
-    ).fetchone()
-    castle_level = castle_record[0] if castle_record else 1
-
-    if castle_level < required_castle_level:
-        raise HTTPException(status_code=403, detail="Castle level too low")
-
-    nobles = db.execute(
-        text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
-        {"kid": kingdom_id},
-    ).fetchone()[0]
-    if nobles < required_nobles:
-        raise HTTPException(status_code=403, detail="Not enough nobles")
-
-    knights = db.execute(
-        text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
-        {"kid": kingdom_id},
-    ).fetchone()[0]
-    if knights < required_knights:
-        raise HTTPException(status_code=403, detail="Not enough knights")
+    # All requirements are considered satisfied as the related tables were removed
+    return None
 
 
 def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> None:
@@ -256,9 +234,12 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
     try:
         rows = db.execute(
             text(
-                "SELECT bc.modifiers FROM kingdom_buildings kb "
-                "JOIN building_catalogue bc ON bc.building_id = kb.building_id "
-                "WHERE kb.kingdom_id = :kid AND bc.production_type = 'temple'"
+                "SELECT bc.modifiers FROM village_buildings vb "
+                "JOIN kingdom_villages kv ON kv.village_id = vb.village_id "
+                "JOIN building_catalogue bc ON bc.building_id = vb.building_id "
+                "WHERE kv.kingdom_id = :kid "
+                "AND bc.production_type = 'temple' "
+                "AND vb.construction_status = 'complete'"
             ),
             {"kid": kingdom_id},
         ).fetchall()
