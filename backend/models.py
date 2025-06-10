@@ -578,6 +578,62 @@ class KingdomHistoryLog(Base):
     event_date = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class QuestAllianceCatalogue(Base):
+    """Master list of all alliance quests available in the game."""
+
+    __tablename__ = 'quest_alliance_catalogue'
+
+    quest_code = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(Text)
+    duration_hours = Column(Integer)
+    category = Column(String)
+    objectives = Column(JSONB, default={})
+    rewards = Column(JSONB, default={})
+    required_level = Column(Integer, default=1)
+    repeatable = Column(Boolean, default=True)
+    max_attempts = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class QuestAllianceTracking(Base):
+    """Tracks progress for quests undertaken by an alliance."""
+
+    __tablename__ = 'quest_alliance_tracking'
+
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'), primary_key=True)
+    quest_code = Column(String, ForeignKey('quest_alliance_catalogue.quest_code'), primary_key=True)
+    status = Column(String)
+    progress = Column(Integer, default=0)
+    ends_at = Column(DateTime(timezone=True))
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    attempt_count = Column(Integer, default=1)
+    started_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+
+
+class QuestKingdomCatalogue(Base):
+    """Master list of quests available to individual kingdoms."""
+
+    __tablename__ = 'quest_kingdom_catalogue'
+
+    quest_code = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(Text)
+    duration_hours = Column(Integer)
+    category = Column(String)
+    objectives = Column(JSONB, default={})
+    rewards = Column(JSONB, default={})
+    required_level = Column(Integer, default=1)
+    repeatable = Column(Boolean, default=True)
+    max_attempts = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class QuestAllianceContribution(Base):
     """Transaction log of player contributions toward alliance quests."""
 
