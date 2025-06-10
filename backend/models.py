@@ -316,6 +316,23 @@ class AllianceWarPreplan(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class WarPreplan(Base):
+    """Pre‑battle plans for tactical wars."""
+
+    __tablename__ = 'war_preplans'
+
+    preplan_id = Column(Integer, primary_key=True)
+    war_id = Column(Integer, ForeignKey('wars_tactical.war_id'))
+    kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
+    preplan_jsonb = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    submitted_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    is_finalized = Column(Boolean, default=False)
+    version = Column(Integer, default=1)
+    status = Column(String, default='draft')
+
+
 class AllianceWarScore(Base):
     __tablename__ = 'alliance_war_scores'
     alliance_war_id = Column(
