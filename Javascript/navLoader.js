@@ -6,14 +6,17 @@ Author: Deathsgift66
 */
 // navLoader.js — Dynamically injects shared navbar
 document.addEventListener("DOMContentLoaded", async () => {
-  const target = document.getElementById("kr-navbar-container");
+  const target =
+    document.getElementById("kr-navbar-container") ||
+    document.getElementById("navbar-container");
 
   if (target) {
-    const response = await fetch("../navbar.html");
+    const response = await fetch("navbar.html");
     const html = await response.text();
     target.innerHTML = html;
 
-    // Re-init dropdown logic
-    import("./navDropdown.js");
+    // Re-init dropdown logic and profile loader
+    await import("./navDropdown.js");
+    await import("./navbar.js");
   }
 });
