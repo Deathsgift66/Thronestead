@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends
+try:
+    from sqlalchemy import text
+    from sqlalchemy.orm import Session
+except Exception:  # pragma: no cover
+    text = lambda q: q  # type: ignore
+    Session = object  # type: ignore
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 from ..database import get_db
 from .progression_router import get_user_id
@@ -77,4 +82,48 @@ async def player_action(
 ):
     log_action(db, admin_id, "admin_action", payload.alert_id or "")
     return {"message": "Action executed", "action": payload.alert_id}
+
+
+@router.get("/alerts")
+async def get_admin_alerts(
+    admin_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Aggregate recent system alerts for the admin dashboard."""
+    audit = db.execute(
+        text(
+            "SELECT * FROM audit_log "
+            "WHERE created_at >= NOW() - INTERVAL '24 HOURS' "
+            "ORDER BY created_at DESC"
+        )
+    ).fetchall()
+    actions = db.execute(
+        text(
+            "SELECT * FROM admin_actions "
+            "WHERE created_at >= NOW() - INTERVAL '24 HOURS' "
+            "ORDER BY created_at DESC"
+        )
+    ).fetchall()
+    notes = db.execute(text("SELECT * FROM admin_notes")).fetchall()
+    war_logs = db.execute(
+        text(
+            "SELECT * FROM alliance_war_combat_logs "
+            "WHERE timestamp >= NOW() - INTERVAL '24 HOURS' "
+            "ORDER BY timestamp DESC"
+        )
+    ).fetchall()
+    treaties = db.execute(
+        text(
+            "SELECT * FROM alliance_treaties "
+            "ORDER BY signed_at DESC LIMIT 10"
+        )
+    ).fetchall()
+
+    return {
+        "audit": [dict(r._mapping) for r in audit],
+        "admin_actions": [dict(r._mapping) for r in actions],
+        "moderation_notes": [dict(r._mapping) for r in notes],
+        "recent_war_logs": [dict(r._mapping) for r in war_logs],
+        "treaty_activity": [dict(r._mapping) for r in treaties],
+    }
 

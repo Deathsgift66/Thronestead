@@ -7,103 +7,34 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+const REFRESH_MS = 30000;
+
 
 // ✅ On page load
 document.addEventListener('DOMContentLoaded', () => {
   loadAlerts();
+  setInterval(loadAlerts, REFRESH_MS);
 
-  // Refresh button
   document.getElementById('refresh-alerts').addEventListener('click', loadAlerts);
-
-  // Clear filters
-  document.getElementById('clear-filters').addEventListener('click', () => {
-    document.getElementById('filter-username').value = '';
-    document.getElementById('filter-type').value = '';
-    document.getElementById('filter-date').value = '';
-    loadAlerts();
-  });
+  document.getElementById('clear-filters').addEventListener('click', clearFilters);
 });
 
 // ✅ Load alerts from database
 async function loadAlerts() {
-  const container = document.getElementById('alerts-container');
+  const container = document.getElementById('alerts-feed');
   container.innerHTML = '<p>Loading alerts...</p>';
 
   try {
-    // Build filter conditions
-    const usernameFilter = document.getElementById('filter-username').value.trim().toLowerCase();
-    const typeFilter = document.getElementById('filter-type').value;
-    const dateFilter = document.getElementById('filter-date').value;
+    const params = new URLSearchParams(getFilters());
+    const res = await fetch(`/api/admin/alerts?${params.toString()}`);
+    const data = await res.json();
 
-    let query = supabase
-      .from('account_alerts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    // Fetch raw data first
-    const { data, error } = await query;
-
-    if (error) throw new Error('Error loading alerts: ' + error.message);
-
-    let filteredData = data;
-
-    // Apply filters (client-side for now — can optimize to server later)
-    if (usernameFilter) {
-      filteredData = filteredData.filter(alert =>
-        (alert.player_username || '').toLowerCase().includes(usernameFilter)
-      );
-    }
-
-    if (typeFilter) {
-      filteredData = filteredData.filter(alert => alert.alert_type === typeFilter);
-    }
-
-    if (dateFilter) {
-      filteredData = filteredData.filter(alert => alert.created_at.startsWith(dateFilter));
-    }
-
-    // Render
-    if (filteredData.length === 0) {
-      container.innerHTML = '<p>No matching alerts found.</p>';
-      return;
-    }
-
-    const table = document.createElement('table');
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Player</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Actions</th>
-        </tr>
-      </thead>`;
-
-    const tbody = document.createElement('tbody');
-
-    filteredData.forEach(alert => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${new Date(alert.created_at).toLocaleString()}</td>
-        <td>${alert.player_username || 'Unknown'} (ID: ${alert.player_id})</td>
-        <td>${alert.alert_type}</td>
-        <td>${alert.description || '—'}</td>
-        <td class="action-buttons">
-          <button class="action-btn flag-btn" data-action="flag" data-id="${alert.id}" data-player="${alert.player_id}">Flag</button>
-          <button class="action-btn freeze-btn" data-action="freeze" data-id="${alert.id}" data-player="${alert.player_id}">Freeze</button>
-          <button class="action-btn ban-btn" data-action="ban" data-id="${alert.id}" data-player="${alert.player_id}">Ban</button>
-          <button class="action-btn dismiss-btn" data-action="dismiss" data-id="${alert.id}">Dismiss</button>
-        </td>`;
-      tbody.appendChild(row);
-    });
-
-    table.appendChild(tbody);
-    container.innerHTML = ''; // Clear loading text
-    container.appendChild(table);
-
-    attachActionHandlers();
-
+    container.innerHTML = '';
+    renderCategory(container, 'Moderation', data.moderation_notes);
+    renderCategory(container, 'War', data.recent_war_logs);
+    renderCategory(container, 'Diplomacy', data.treaty_activity);
+    renderCategory(container, 'Audit Log', data.audit);
+    renderCategory(container, 'Admin Actions', data.admin_actions);
   } catch (err) {
     console.error('❌ Failed to load alerts:', err);
     container.innerHTML = '<p>Error loading alerts. Please try again later.</p>';
@@ -170,4 +101,56 @@ async function postAdminAction(endpoint, payload) {
     const errText = await response.text();
     throw new Error(`Server error: ${errText}`);
   }
+}
+
+// =====================
+// Utility Functions
+// =====================
+function getFilters() {
+  return {
+    start: document.getElementById('filter-start').value,
+    end: document.getElementById('filter-end').value,
+    type: document.getElementById('filter-alert-type').value,
+    severity: document.getElementById('filter-severity').value,
+    kingdom: document.getElementById('filter-kingdom').value,
+    alliance: document.getElementById('filter-alliance').value,
+  };
+}
+
+function clearFilters() {
+  document.querySelectorAll('.filter-input').forEach(el => (el.value = ''));
+  loadAlerts();
+}
+
+function renderCategory(container, title, items) {
+  if (!items || items.length === 0) return;
+  const section = document.createElement('div');
+  section.className = 'alert-category';
+  const h = document.createElement('h3');
+  h.textContent = title;
+  section.appendChild(h);
+
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'alert-item ' + mapSeverity(item.severity || item.priority);
+    div.textContent = formatItem(item);
+    section.appendChild(div);
+  });
+
+  container.appendChild(section);
+}
+
+function mapSeverity(sev) {
+  if (!sev) return 'severity-low';
+  const s = String(sev).toLowerCase();
+  if (s.includes('high') || s.includes('critical')) return 'severity-high';
+  if (s.includes('medium')) return 'severity-medium';
+  return 'severity-low';
+}
+
+function formatItem(item) {
+  if (item.message) return `[${item.event_type || 'log'}] ${item.message}`;
+  if (item.action && item.details) return `${item.action} - ${item.details}`;
+  if (item.note) return item.note;
+  return JSON.stringify(item);
 }
