@@ -26,6 +26,8 @@ class NoticePayload(BaseModel):
 class TreatyPayload(BaseModel):
     partner_alliance_id: int
     treaty_type: str
+    notes: str | None = None
+    end_date: str | None = None
 
 
 class WarPayload(BaseModel):
@@ -97,10 +99,16 @@ def propose_treaty(
 
     db.execute(
         text(
-            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status) "
-            "VALUES (:aid, :type, :pid, 'proposed')"
+            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, notes, end_date) "
+            "VALUES (:aid, :type, :pid, 'proposed', :notes, :ed)"
         ),
-        {"aid": aid, "type": payload.treaty_type, "pid": payload.partner_alliance_id},
+        {
+            "aid": aid,
+            "type": payload.treaty_type,
+            "pid": payload.partner_alliance_id,
+            "notes": payload.notes,
+            "ed": payload.end_date,
+        },
     )
     db.commit()
     log_action(db, user_id, "propose_treaty", payload.treaty_type)

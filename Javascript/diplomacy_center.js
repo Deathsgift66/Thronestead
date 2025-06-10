@@ -12,6 +12,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadSummary(uid);
   await loadTreaties(uid);
 
+  document.getElementById('treaty-filter').addEventListener('change', () => {
+    loadTreaties(uid);
+  });
+
   treatyChannel = supabase
     .channel('public:alliance_treaties')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, () => {
@@ -35,7 +39,9 @@ async function loadSummary(uid) {
 }
 
 async function loadTreaties(uid) {
-  const res = await fetch('/api/diplomacy/treaties', { headers: { 'X-User-ID': uid } });
+  const filter = document.getElementById('treaty-filter').value;
+  const url = filter ? `/api/diplomacy/treaties?filter=${filter}` : '/api/diplomacy/treaties';
+  const res = await fetch(url, { headers: { 'X-User-ID': uid } });
   if (!res.ok) return;
   const data = await res.json();
   const tbody = document.getElementById('treaty-rows');
@@ -47,10 +53,17 @@ async function loadTreaties(uid) {
       <td>${t.partner_name}</td>
       <td>${t.status}</td>
       <td>${t.signed_at ? new Date(t.signed_at).toLocaleDateString() : ''}</td>
+      <td>${t.end_date ? new Date(t.end_date).toLocaleDateString() : ''}</td>
       <td>
         ${t.status === 'proposed' ? `
           <button class="btn" data-id="${t.treaty_id}" data-action="accept">Accept</button>
           <button class="btn" data-id="${t.treaty_id}" data-action="reject">Reject</button>
+        ` : ''}
+        ${t.status === 'active' ? `
+          <button class="btn" data-id="${t.treaty_id}" data-action="cancel">Cancel</button>
+        ` : ''}
+        ${t.status === 'expired' ? `
+          <button class="btn" data-id="${t.treaty_id}" data-action="renew">Renew</button>
         ` : ''}
       </td>`;
     tbody.appendChild(row);
@@ -65,10 +78,12 @@ export async function proposeTreaty() {
   if (!session) return;
   const type = document.getElementById('treaty-type').value;
   const partnerId = document.getElementById('partner-alliance-id').value;
+  const notes = document.getElementById('treaty-notes').value;
+  const endDate = document.getElementById('treaty-end').value;
   await fetch('/api/diplomacy/propose_treaty', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-User-ID': session.user.id },
-    body: JSON.stringify({ treaty_type: type, partner_alliance_id: partnerId })
+    body: JSON.stringify({ treaty_type: type, partner_alliance_id: partnerId, notes, end_date: endDate })
   });
 }
 
@@ -77,9 +92,18 @@ window.proposeTreaty = proposeTreaty;
 async function respondTreaty(tid, action) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return;
-  await fetch('/api/diplomacy/respond_treaty', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-User-ID': session.user.id },
-    body: JSON.stringify({ treaty_id: parseInt(tid, 10), response_action: action })
-  });
+  if (action === 'renew') {
+    await fetch('/api/diplomacy/renew_treaty', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-ID': session.user.id },
+      body: JSON.stringify({ treaty_id: parseInt(tid, 10) })
+    });
+  } else {
+    await fetch('/api/diplomacy/respond_treaty', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-ID': session.user.id },
+      body: JSON.stringify({ treaty_id: parseInt(tid, 10), response_action: action })
+    });
+  }
+  loadTreaties(session.user.id);
 }
