@@ -8,13 +8,13 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js protects this page → no duplicate session check
-  // ✅ Initial load
-  await loadSeasonalEffects();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  await loadSeasonalEffects(session);
 });
 
 // ✅ Load Seasonal Effects Nexus
-async function loadSeasonalEffects() {
+async function loadSeasonalEffects(session) {
   const modifiersEl = document.getElementById('active-modifiers');
   const timerEl = document.getElementById('season-timer');
   const wheelEl = document.getElementById('forecast-wheel');
@@ -31,25 +31,14 @@ async function loadSeasonalEffects() {
   marketEl.innerHTML = "<p>Loading market projections...</p>";
 
   try {
-    // ✅ Load current season
-    const { data: seasonData, error: seasonError } = await supabase
-      .from('seasonal_effects')
-      .select('*')
-      .eq('active', true)
-      .single();
+    const res = await fetch('/api/seasonal-effects', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-User-ID': session.user.id
+      }
+    });
+    const { current: seasonData, forecast: forecastData } = await res.json();
 
-    if (seasonError) throw seasonError;
-
-    // ✅ Load upcoming seasons
-    const { data: forecastData, error: forecastError } = await supabase
-      .from('seasonal_effects')
-      .select('*')
-      .order('start_date', { ascending: true })
-      .limit(4);
-
-    if (forecastError) throw forecastError;
-
-    // ✅ Render sections
     renderActiveModifiers(seasonData);
     renderSeasonTimer(seasonData.ends_at);
     renderForecastWheel(forecastData, seasonData.season_code);
@@ -118,6 +107,8 @@ function renderForecastWheel(forecast, currentSeasonCode) {
       <p>Starts: ${new Date(season.start_date).toLocaleDateString()}</p>
     `;
 
+    card.addEventListener('click', () => openForecastModal(season));
+
     wheelEl.appendChild(card);
   });
 }
@@ -171,6 +162,19 @@ function startSeasonCountdown(endsAt) {
   };
 
   update();
+}
+
+function openForecastModal(season) {
+  const overlay = document.getElementById('forecast-modal');
+  const body = document.getElementById('forecast-modal-body');
+  body.innerHTML = `
+    <h3>${escapeHTML(season.name)}</h3>
+    <p>${escapeHTML(season.lore_text || 'No details')}</p>
+  `;
+  overlay.classList.remove('hidden');
+  document.getElementById('close-forecast-modal').onclick = () => {
+    overlay.classList.add('hidden');
+  };
 }
 
 // ✅ Helper: Format Time

@@ -71,6 +71,9 @@ body {
   padding: 2rem;
   width: 100%;
   margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
 }
 
 .seasonal-banner {
@@ -155,5 +158,23 @@ body {
 .btn-fantasy:hover {
   background: var(--gold);
   color: #1a1a1a;
+}
+
+.forecast-card {
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.forecast-card:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 600px) {
+  .alliance-members-container {
+    grid-template-columns: 1fr;
+  }
 }
 
