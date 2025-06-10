@@ -76,12 +76,9 @@ async function loadAuditLogs() {
   container.innerHTML = '<p>Loading logs...</p>';
 
   try {
-    const { data: logs, error } = await supabase
-      .from('audit_log')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw new Error('Failed to fetch audit logs: ' + error.message);
+    const res = await fetch('/api/admin/audit/logs');
+    if (!res.ok) throw new Error('Failed to fetch audit logs');
+    const logs = await res.json();
 
     container.innerHTML = '';
     if (logs.length === 0) {
@@ -191,6 +188,37 @@ async function postAdminAction(endpoint, payload) {
   }
 }
 
+// Toggle a system flag using the admin API
+async function toggleFlag() {
+  const key = document.getElementById('flag-key').value;
+  const val = document.getElementById('flag-value').value === 'true';
+  try {
+    await postAdminAction('/api/admin/flags/toggle', { flag_key: key, value: val });
+    alert('Flag updated');
+  } catch (err) {
+    console.error('Flag update failed:', err);
+    alert('Failed to update flag');
+  }
+}
+
+// Update a kingdom field via the admin API
+async function updateKingdom() {
+  const kid = document.getElementById('kingdom-id').value;
+  const field = document.getElementById('kingdom-field').value;
+  const value = document.getElementById('kingdom-value').value;
+  try {
+    await postAdminAction('/api/admin/kingdoms/update', {
+      kingdom_id: Number(kid),
+      field,
+      value
+    });
+    alert('Kingdom updated');
+  } catch (err) {
+    console.error('Kingdom update failed:', err);
+    alert('Failed to update kingdom');
+  }
+}
+
 // 🧩 DOM Ready Hooks
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboardStats();
@@ -200,4 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('search-btn').addEventListener('click', loadPlayerList);
   document.getElementById('status-filter').addEventListener('change', loadPlayerList);
   document.getElementById('load-logs-btn').addEventListener('click', loadAuditLogs);
+  document.getElementById('toggle-flag-btn').addEventListener('click', toggleFlag);
+  document.getElementById('update-kingdom-btn').addEventListener('click', updateKingdom);
 });
