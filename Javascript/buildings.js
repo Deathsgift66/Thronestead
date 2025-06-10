@@ -1,152 +1,140 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: buildings.js
-Date: June 2, 2025
-Author: Deathsgift66
+Updated: 2025-06-03 by Codex
 */
-// Hardened Buildings Management Page
+// Buildings Management with real-time progress
 
 import { supabase } from './supabaseClient.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
+let currentVillage = null;
+let timerHandle = null;
 
-  // ✅ Validate session
+document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = "login.html";
+    window.location.href = 'login.html';
     return;
   }
-
-  // ✅ Initial load
-  await loadBuildings();
+  await loadVillages();
 });
 
-// ✅ Load Buildings
-async function loadBuildings() {
-  const tbody = document.getElementById("buildingsTableBody");
-
-  tbody.innerHTML = `
-    <tr><td colspan="5">Loading buildings...</td></tr>
-  `;
-
-  try {
-    // ✅ Get user
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // ✅ Get user's kingdom ID
-    const { data: kingdomData, error: kingdomError } = await supabase
-      .from('players')
-      .select('kingdom_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (kingdomError || !kingdomData?.kingdom_id) {
-      throw new Error("Failed to load kingdom ID.");
-    }
-
-    const kingdomId = kingdomData.kingdom_id;
-
-    // ✅ Get kingdom buildings
-    const { data: buildingsData, error: buildingsError } = await supabase
-      .from('kingdom_buildings')
-      .select('*')
-      .eq('kingdom_id', kingdomId);
-
-    if (buildingsError) {
-      throw new Error("Failed to load kingdom buildings.");
-    }
-
-    if (!buildingsData || buildingsData.length === 0) {
-      tbody.innerHTML = `
-        <tr><td colspan="5">No buildings constructed.</td></tr>
-      `;
-      return;
-    }
-
-    // ✅ Preload building catalogue via API
-    const catRes = await fetch('/api/buildings/catalogue');
-    const catJson = await catRes.json();
-    const catalogueData = catJson.buildings || [];
-
-    // ✅ Build lookup maps
-    const catalogueMap = {};
-    catalogueData.forEach(b => {
-      catalogueMap[b.building_id] = b;
+async function loadVillages() {
+  const select = document.getElementById('villageSelect');
+  const { data: { user } } = await supabase.auth.getUser();
+  const res = await fetch('/api/kingdom/villages', {
+    headers: { 'X-User-ID': user.id }
+  });
+  const data = await res.json();
+  const villages = data.villages || [];
+  select.innerHTML = '';
+  villages.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.village_id;
+    opt.textContent = v.village_name;
+    select.appendChild(opt);
+  });
+  if (villages.length) {
+    currentVillage = villages[0].village_id;
+    select.value = currentVillage;
+    select.addEventListener('change', () => {
+      currentVillage = parseInt(select.value, 10);
+      loadBuildings();
     });
-
-    const kingdomMap = {};
-    buildingsData.forEach(b => {
-      kingdomMap[b.building_id] = b.level;
-    });
-
-    // ✅ Populate table
-    tbody.innerHTML = "";
-
-    catalogueData.forEach(catalog => {
-      const level = kingdomMap[catalog.building_id] || 0;
-      const production = catalog.production_rate ? `${catalog.production_rate * level} ${catalog.production_type}` : "N/A";
-      const upkeep = catalog.upkeep ? `${catalog.upkeep * level}` : "None";
-      const label = level === 0 ? "Build" : "Upgrade";
-
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${escapeHTML(catalog.building_name)}</td>
-        <td>${level}</td>
-        <td>${production}</td>
-        <td>${upkeep}</td>
-        <td>
-          <button class="action-btn upgrade-btn" data-building-id="${catalog.building_id}">${label}</button>
-        </td>
-      `;
-
-      tbody.appendChild(row);
-    });
-
-    // ✅ Bind Build/Upgrade buttons
-    document.querySelectorAll(".upgrade-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const buildingId = btn.dataset["buildingId"];
-
-        try {
-          const res = await fetch("/api/buildings/upgrade", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ building_id: buildingId })
-          });
-          const result = await res.json();
-          alert(result.message || "Building upgraded.");
-          await loadBuildings();
-        } catch (err) {
-          console.error("❌ Error upgrading building:", err);
-          alert("Upgrade failed.");
-        }
-      });
-    });
-
-  } catch (err) {
-    console.error("❌ Error loading buildings:", err);
-    tbody.innerHTML = `
-      <tr><td colspan="5">Failed to load buildings.</td></tr>
-    `;
+    await loadBuildings();
   }
 }
 
-// ✅ Basic HTML escape
+async function loadBuildings() {
+  if (timerHandle) clearInterval(timerHandle);
+  const tbody = document.getElementById('buildingsTableBody');
+  tbody.innerHTML = `<tr><td colspan="5">Loading...</td></tr>`;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch(`/api/buildings/village/${currentVillage}`, {
+      headers: { 'X-User-ID': user.id }
+    });
+    const json = await res.json();
+    const buildings = json.buildings || [];
+    tbody.innerHTML = '';
+    buildings.forEach(b => {
+      const row = document.createElement('tr');
+      const statusCell = document.createElement('td');
+      let statusHTML = 'Ready';
+      if (b.is_under_construction) {
+        statusHTML = `
+          <div class="progress-bar">
+            <div class="progress-bar-fill" data-start="${b.construction_started_at}" data-end="${b.construction_ends_at}"></div>
+          </div>
+          <span class="timer" data-start="${b.construction_started_at}" data-end="${b.construction_ends_at}"></span>
+        `;
+      }
+      statusCell.innerHTML = statusHTML;
+      const btnLabel = b.level === 0 ? 'Build' : 'Upgrade';
+      const actionBtn = `<button class="action-btn build-btn" data-building-id="${b.building_id}" ${b.is_under_construction ? 'disabled' : ''}>${btnLabel}</button>`;
+      row.innerHTML = `
+        <td><img src="Assets/buildings/${b.building_id}.png" class="building-icon" onerror="this.src='Assets/buildings/building_default.png'" alt="${b.building_name}"></td>
+        <td>${escapeHTML(b.building_name)}</td>
+        <td>${b.level}</td>
+      `;
+      row.appendChild(statusCell);
+      row.innerHTML += `<td>${actionBtn}</td>`;
+      tbody.appendChild(row);
+    });
+    bindButtons();
+    updateTimers();
+    timerHandle = setInterval(updateTimers, 1000);
+  } catch (err) {
+    console.error('Error loading buildings:', err);
+    tbody.innerHTML = `<tr><td colspan="5">Failed to load buildings.</td></tr>`;
+  }
+}
+
+function bindButtons() {
+  document.querySelectorAll('.build-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const buildingId = parseInt(btn.dataset['buildingId'], 10);
+      const action = btn.textContent.toLowerCase() === 'build' ? 'construct' : 'upgrade';
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const res = await fetch(`/api/buildings/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+          body: JSON.stringify({ village_id: currentVillage, building_id: buildingId })
+        });
+        const result = await res.json();
+        alert(result.message);
+        await loadBuildings();
+      } catch (err) {
+        console.error('Action failed:', err);
+        alert('Action failed');
+      }
+    });
+  });
+}
+
+function updateTimers() {
+  const now = Date.now();
+  document.querySelectorAll('.progress-bar-fill').forEach(bar => {
+    const start = new Date(bar.dataset['start']).getTime();
+    const end = new Date(bar.dataset['end']).getTime();
+    const total = end - start;
+    const remaining = end - now;
+    const pct = Math.min(100, Math.max(0, ((total - remaining) / total) * 100));
+    bar.style.width = pct + '%';
+    const timer = bar.parentElement.nextElementSibling;
+    if (timer) {
+      timer.textContent = remaining > 0 ? Math.ceil(remaining / 1000) + 's' : 'Done';
+    }
+  });
+}
+
 function escapeHTML(str) {
-  if (!str) return "";
+  if (!str) return '';
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

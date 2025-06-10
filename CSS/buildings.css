@@ -104,6 +104,31 @@ body {
   color: var(--parchment);
 }
 
+.building-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.progress-bar {
+  background: var(--parchment-dark);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 1rem;
+}
+
+.progress-bar-fill {
+  background: var(--accent);
+  height: 100%;
+  width: 0;
+}
+
+.timer {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
 .buildings-table th {
   background: var(--gold);
   color: #1a1a1a;

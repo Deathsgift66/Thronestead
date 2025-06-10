@@ -71,15 +71,18 @@ Author: Deathsgift66
     <p>View, upgrade, and manage your kingdom's buildings and infrastructure.</p>
 
     <!-- Buildings Table -->
+    <label for="villageSelect">Village:</label>
+    <select id="villageSelect"></select>
+
     <section class="buildings-table" aria-label="Buildings List">
       <table id="buildingsTable">
         <thead>
           <tr>
+            <th>Icon</th>
             <th>Building</th>
             <th>Level</th>
-            <th>Production</th>
-            <th>Upkeep</th>
-            <th>Upgrade</th>
+            <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="buildingsTableBody">
