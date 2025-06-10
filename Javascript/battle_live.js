@@ -17,10 +17,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadUnits();
   await loadCombatLogs();
   await loadStatus();
+  await loadScoreboard();
+  subscribeScoreboard();
 
   // Refresh unit positions periodically
   setInterval(loadUnits, 10000);
   setInterval(pollStatus, 5000);
+});
+
+window.addEventListener('beforeunload', () => {
+  if (scoreboardChannel) supabase.removeChannel(scoreboardChannel);
 });
 
 // =============================================
@@ -104,6 +110,7 @@ function countdownTick() {
   if (lastTick !== 0 && timer === tickInterval) {
     loadUnits();
     loadCombatLogs();
+    loadScoreboard();
   }
 }
 
@@ -132,6 +139,7 @@ function refreshBattle() {
 let mapWidth = 60;
 let mapHeight = 20;
 let currentMapColumns = 60;
+let scoreboardChannel = null;
 
 function renderBattleMap(tileMap) {
   const battleMap = document.getElementById('battle-map');
@@ -181,6 +189,48 @@ function renderCombatLog(logs) {
     line.innerText = `[Tick ${log.tick_number}] ${log.event_type.toUpperCase()} — ${log.notes} (Damage: ${log.damage_dealt})`;
     logDiv.appendChild(line);
   });
+}
+
+// =============================================
+// SCOREBOARD (Supabase)
+// =============================================
+async function loadScoreboard() {
+  try {
+    const { data, error } = await supabase
+      .from('war_scores')
+      .select('attacker_score, defender_score, victor')
+      .eq('war_id', warId)
+      .single();
+    if (error) throw error;
+    if (data) renderScoreboard(data);
+  } catch (err) {
+    console.error('Error loading scoreboard:', err);
+  }
+}
+
+function renderScoreboard(score) {
+  if (!score) return;
+  document.getElementById('score-attacker').textContent = score.attacker_score;
+  document.getElementById('score-defender').textContent = score.defender_score;
+  document.getElementById('score-victor').textContent = score.victor || 'TBD';
+}
+
+function subscribeScoreboard() {
+  scoreboardChannel = supabase
+    .channel('public:war_scores')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'war_scores',
+        filter: `war_id=eq.${warId}`
+      },
+      payload => {
+        renderScoreboard(payload.new);
+      }
+    )
+    .subscribe();
 }
 
 // =============================================

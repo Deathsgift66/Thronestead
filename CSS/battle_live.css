@@ -119,6 +119,17 @@ body {
   gap: 0.5rem;
 }
 
+.scoreboard {
+  background: var(--panel-bg);
+  border: var(--border);
+  padding: var(--padding-sm);
+  margin-top: 1rem;
+}
+
+.scoreboard div {
+  margin-bottom: 0.25rem;
+}
+
 .btn-fantasy {
   background: var(--accent);
   color: white;
@@ -134,4 +145,17 @@ body {
 .btn-fantasy:hover {
   background: var(--gold);
   color: #1a1a1a;
+}
+
+@media (max-width: 768px) {
+  .battle-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+  }
+  #battle-map {
+    overflow-x: auto;
+    grid-template-columns: repeat(60, minmax(12px, 1fr));
+  }
 }

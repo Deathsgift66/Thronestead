@@ -64,19 +64,29 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
 
 
 @router.post("/api/start-battle/{war_id}")
-def start_battle(war_id: int, db: Session = Depends(get_db)):
+def start_battle(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     war = _load_war_from_db(war_id, db)
     _manager.start_war(war)
     return {"status": "started", "war_id": war_id}
 
 
 @router.post("/api/battle/start/{war_id}")
-def start_battle_alt(war_id: int, db: Session = Depends(get_db)):
-    return start_battle(war_id, db)
+def start_battle_alt(
+    war_id: int, db: Session = Depends(get_db), user_id: str = Depends(verify_jwt_token)
+):
+    return start_battle(war_id, db, user_id)
 
 
 @router.post("/api/run-tick/{war_id}")
-def run_tick(war_id: int, db: Session = Depends(get_db)):
+def run_tick(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     war = _manager.get_war(war_id)
     if not war:
         raise HTTPException(status_code=404, detail="war not active")
@@ -115,13 +125,21 @@ def run_tick(war_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/api/battle/next_tick")
-def next_tick(war_id: int, db: Session = Depends(get_db)):
+def next_tick(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     """Trigger the next combat tick for a war (admin/debug)."""
     return run_tick(war_id, db)
 
 
 @router.get("/api/battle/status/{war_id}")
-def get_battle_status(war_id: int, db: Session = Depends(get_db)):
+def get_battle_status(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     """Return battle status with scores."""
     war = (
         db.query(models.WarsTactical)
@@ -150,7 +168,11 @@ def get_battle_status(war_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/api/battle/terrain/{war_id}")
-def get_battle_terrain(war_id: int, db: Session = Depends(get_db)):
+def get_battle_terrain(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     """Return terrain tile map for the given war."""
     terrain_row = (
         db.query(models.TerrainMap).filter(models.TerrainMap.war_id == war_id).first()
@@ -165,7 +187,11 @@ def get_battle_terrain(war_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/api/battle/units/{war_id}")
-def get_battle_units(war_id: int, db: Session = Depends(get_db)):
+def get_battle_units(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     """Return active unit movements for the given war."""
     units = (
         db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
@@ -192,7 +218,11 @@ class OrderPayload(BaseModel):
 
 
 @router.post("/api/battle/orders")
-def post_orders(payload: OrderPayload, db: Session = Depends(get_db)):
+def post_orders(
+    payload: OrderPayload,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     """Update unit movement order (simplified)."""
     mov = (
         db.query(models.UnitMovement)
@@ -208,7 +238,12 @@ def post_orders(payload: OrderPayload, db: Session = Depends(get_db)):
 
 
 @router.get("/api/battle/logs/{war_id}")
-def get_combat_logs(war_id: int, since: int = 0, db: Session = Depends(get_db)):
+def get_combat_logs(
+    war_id: int,
+    since: int = 0,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     """Return combat logs for the given war ordered by tick."""
     logs = (
         db.query(models.CombatLog)
@@ -241,6 +276,7 @@ def battle_resolution(
     db: Session = Depends(get_db),
     user_id: str = Depends(verify_jwt_token),
 ):
+
     """Return post-battle summary for participants only."""
     war = (
         db.query(models.WarsTactical)
@@ -259,6 +295,7 @@ def battle_resolution(
         and not user.is_admin
     ):
         raise HTTPException(status_code=403, detail="not authorized")
+
 
     res = (
         db.query(models.BattleResolutionLog)
@@ -281,6 +318,11 @@ def battle_resolution(
 @router.get("/api/battle-replay/{war_id}")
 def battle_replay(
     war_id: int,
+
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
+=======
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
@@ -301,6 +343,7 @@ def battle_replay(
         .order_by(models.UnitMovement.movement_id)
         .all()
     )
+
     logs = (
         db.query(models.CombatLog)
         .filter(models.CombatLog.war_id == war_id)
@@ -351,7 +394,11 @@ def battle_replay(
 
 
 @router.get("/api/alliance-battle-replay/{alliance_war_id}")
-def alliance_battle_replay(alliance_war_id: int, db: Session = Depends(get_db)):
+def alliance_battle_replay(
+    alliance_war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
     logs = (
         db.query(models.AllianceWarCombatLog)
         .filter(models.AllianceWarCombatLog.alliance_war_id == alliance_war_id)
@@ -374,4 +421,25 @@ def alliance_battle_replay(alliance_war_id: int, db: Session = Depends(get_db)):
             }
             for l in logs
         ]
+    }
+
+
+@router.get("/api/battle/scoreboard/{war_id}")
+def get_battle_scoreboard(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
+    score = (
+        db.query(models.WarScore)
+        .filter(models.WarScore.war_id == war_id)
+        .first()
+    )
+    if not score:
+        raise HTTPException(status_code=404, detail="score not found")
+    return {
+        "war_id": score.war_id,
+        "attacker_score": score.attacker_score,
+        "defender_score": score.defender_score,
+        "victor": score.victor,
     }
