@@ -52,10 +52,14 @@ Author: Deathsgift66
       <section class="search-sort-controls" aria-label="Alliance Member Controls">
         <input type="text" id="member-search" placeholder="Search by name..." aria-label="Search Members" />
         <select id="sort-by" aria-label="Sort By">
-          <option value="name">Name</option>
+          <option value="username">Name</option>
           <option value="rank">Rank</option>
           <option value="contribution">Contribution</option>
           <option value="status">Status</option>
+          <option value="military_score">Military</option>
+          <option value="economy_score">Economy</option>
+          <option value="diplomacy_score">Diplomacy</option>
+          <option value="total_output">Resource Output</option>
         </select>
         <select id="sort-direction" aria-label="Sort Direction">
           <option value="asc">Ascending</option>
@@ -71,14 +75,19 @@ Author: Deathsgift66
             <tr>
               <th>Name</th>
               <th>Rank</th>
+              <th>Role</th>
               <th>Status</th>
               <th>Contribution</th>
+              <th>Economy</th>
+              <th>Military</th>
+              <th>Diplomacy</th>
+              <th>Output</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="members-list">
             <tr>
-              <td colspan="5">Loading members...</td>
+              <td colspan="10">Loading members...</td>
             </tr>
           </tbody>
         </table>
