@@ -80,10 +80,12 @@ async function loadCombatLogs() {
 let lastTick = 0;
 let tickInterval = 300;
 let logsTick = 0;
+let statusData = null;
 async function loadStatus() {
   try {
     const res = await fetch(`/api/battle/status/${warId}`);
     const data = await res.json();
+    statusData = data;
     lastTick = data.battle_tick;
     tickInterval = data.tick_interval_seconds;
     document.getElementById('weather').textContent = data.weather;
@@ -175,9 +177,23 @@ function renderUnits(units) {
     const unitDiv = document.createElement('div');
     unitDiv.className = 'unit-icon';
     unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();
+    unitDiv.title = `HP: ${unit.hp ?? '?'}  Morale: ${unit.morale ?? '?'}%`;
     unitDiv.addEventListener('click', () => openOrderPanel(unit));
     tiles[index].appendChild(unitDiv);
+    if (unit.morale !== undefined) {
+      const morale = document.createElement('div');
+      morale.className = 'morale-bar';
+      morale.style.width = unit.morale + '%';
+      tiles[index].appendChild(morale);
+    }
   });
+
+  const fog = document.getElementById('fog-overlay');
+  if (statusData?.fog_of_war) {
+    fog.style.display = 'block';
+  } else {
+    fog.style.display = 'none';
+  }
 }
 
 function renderCombatLog(logs) {

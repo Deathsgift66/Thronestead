@@ -114,9 +114,26 @@ export function renderTick(tick) {
     const index = u.position_y * 60 + u.position_x;
     const node = grid.selectAll('div.tile').nodes()[index];
     if (node) {
-      d3.select(node).append('div').attr('class', 'unit-icon').text(u.icon);
+      const unitDiv = d3.select(node)
+        .append('div')
+        .attr('class', 'unit-icon')
+        .text(u.icon)
+        .attr('title', `HP: ${u.hp ?? '?'}  Morale: ${u.morale ?? '?'}%`);
+      if (u.morale !== undefined) {
+        d3.select(node)
+          .append('div')
+          .attr('class', 'morale-bar')
+          .style('width', `${u.morale}%`);
+      }
     }
   });
+
+  const fog = document.getElementById('fog-overlay');
+  if (replayData.fog_of_war) {
+    fog.style.display = 'block';
+  } else {
+    fog.style.display = 'none';
+  }
 
   const logs = replayData.combat_logs.filter(l => l.tick === tick);
   const feed = d3.select('#combat-log-entries').html('');
@@ -167,4 +184,6 @@ export function resetReplay() {
   playTimeline = null;
   currentTick = 0;
   renderTick(0);
+  const fog = document.getElementById('fog-overlay');
+  if (fog) fog.style.display = replayData?.fog_of_war ? 'block' : 'none';
 }
