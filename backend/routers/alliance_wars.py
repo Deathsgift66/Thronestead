@@ -19,6 +19,22 @@ def get_alliance_id(db: Session, user_id: str) -> int:
     return row[0]
 
 
+def authorize_war_access(db: Session, user_id: str, war_id: int) -> None:
+    """Ensure the requesting user belongs to one of the alliances in the war."""
+    aid = get_alliance_id(db, user_id)
+    row = db.execute(
+        text(
+            "SELECT attacker_alliance_id, defender_alliance_id "
+            "FROM alliance_wars WHERE alliance_war_id = :wid"
+        ),
+        {"wid": war_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="War not found")
+    if aid not in row:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+
 @router.get("/list")
 def list_wars(
     user_id: str = Depends(get_user_id),
@@ -51,8 +67,10 @@ def list_wars(
 @router.get("/view")
 def view_war_details(
     alliance_war_id: int,
+    user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
+    authorize_war_access(db, user_id, alliance_war_id)
     war = (
         db.execute(
             text("SELECT * FROM alliance_wars WHERE alliance_war_id = :wid"),
@@ -86,8 +104,10 @@ def view_war_details(
 def get_combat_logs(
     alliance_war_id: int,
     since_tick: int = 0,
+    user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
+    authorize_war_access(db, user_id, alliance_war_id)
     rows = (
         db.execute(
             text(
@@ -110,6 +130,7 @@ def submit_preplan(
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
+    authorize_war_access(db, user_id, alliance_war_id)
     kid = get_kingdom_id(db, user_id)
     db.execute(
         text(
@@ -122,3 +143,41 @@ def submit_preplan(
     log_action(db, user_id, "Preplan Submitted", f"Alliance War ID {alliance_war_id}")
     db.commit()
     return {"status": "submitted"}
+
+
+@router.get("/scoreboard")
+def get_scoreboard(
+    alliance_war_id: int,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    authorize_war_access(db, user_id, alliance_war_id)
+    row = (
+        db.execute(
+            text("SELECT * FROM alliance_war_scores WHERE alliance_war_id = :wid"),
+            {"wid": alliance_war_id},
+        )
+        .mappings()
+        .first()
+    )
+    return {"score": dict(row) if row else {}}
+
+
+@router.get("/participants")
+def get_participants(
+    alliance_war_id: int,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    authorize_war_access(db, user_id, alliance_war_id)
+    rows = (
+        db.execute(
+            text(
+                "SELECT kingdom_id, role FROM alliance_war_participants WHERE alliance_war_id = :wid"
+            ),
+            {"wid": alliance_war_id},
+        )
+        .mappings()
+        .fetchall()
+    )
+    return {"participants": [dict(r) for r in rows]}
