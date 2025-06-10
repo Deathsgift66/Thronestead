@@ -55,6 +55,35 @@ body {
   color: #bfa24b;
 }
 
+.log-type.war { color: var(--danger); }
+.log-type.treaty { color: var(--highlight); }
+.log-type.project { color: var(--accent); }
+.log-type.quest { color: var(--success); }
+.log-type.member { color: var(--gold); }
+.log-type.admin { color: var(--info); }
+
 .log-description {
   color: #fff;
+}
+
+.last-updated {
+  margin-top: 0.5rem;
+  font-style: italic;
+  text-align: right;
+}
+
+.new-entry {
+  animation: flash-bg 1s ease-in-out;
+}
+
+@keyframes flash-bg {
+  from { background: rgba(255, 255, 255, 0.2); }
+  to { background: transparent; }
+}
+
+@media (max-width: 600px) {
+  .log-entry {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 }

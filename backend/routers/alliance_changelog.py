@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 
+from datetime import datetime
 from .progression_router import get_user_id
 
 
@@ -20,9 +21,19 @@ router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"]
 
 
 @router.get("")
-async def get_alliance_changelog(user_id: str = Depends(get_user_id)):
+async def get_alliance_changelog(
+    since: str | None = None,
+    user_id: str = Depends(get_user_id),
+):
     """Return latest alliance changelog events for the player's alliance."""
     supabase = get_supabase_client()
+
+    # Verify the requesting user exists to prevent forged headers
+    user_check = (
+        supabase.table("users").select("user_id").eq("user_id", user_id).single().execute()
+    )
+    if not getattr(user_check, "data", user_check):
+        raise HTTPException(status_code=401, detail="Invalid user")
 
     alliance_res = (
         supabase.table("alliance_members")
@@ -84,6 +95,12 @@ async def get_alliance_changelog(user_id: str = Depends(get_user_id)):
         add_log("admin", a, a.get("details", ""))
 
     all_logs.sort(key=lambda x: x["timestamp"], reverse=True)
+    if since:
+        try:
+            since_dt = datetime.fromisoformat(since)
+            all_logs = [l for l in all_logs if datetime.fromisoformat(l["timestamp"]) > since_dt]
+        except ValueError:
+            pass
     latest = all_logs[:100]
 
     actor_ids = [l["actor"] for l in latest if l.get("actor")]
