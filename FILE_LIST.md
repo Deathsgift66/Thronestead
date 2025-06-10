@@ -263,6 +263,7 @@
 - services/kingdom_quest_service.py
 - services/kingdom_title_service.py
 - services/kingdom_treaty_service.py
+- services/alliance_treaty_service.py
 - services/progression_service.py
 - services/research_service.py
 - services/spies_service.py
@@ -281,6 +282,7 @@
 - tests/test_kingdom_quest_service.py
 - tests/test_kingdom_title_service.py
 - tests/test_kingdom_treaty_service.py
+- tests/test_alliance_treaty_service.py
 - tests/test_notifications_router.py
 - tests/test_progression_service.py
 - tests/test_research_service.py

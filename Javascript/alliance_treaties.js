@@ -18,34 +18,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ✅ Initial load
-  await loadTreaties();
+  await loadTreatyTabs();
 
   // ✅ Bind "Create New Treaty" button
   const createBtn = document.getElementById("create-new-treaty");
   if (createBtn) {
     createBtn.addEventListener("click", async () => {
       const treatyType = prompt("Enter treaty type (e.g., NAP, Trade Pact, Mutual Defense):");
-      if (!treatyType) return;
-      const res = await fetch("/api/alliance-treaties/create", {
+      const partnerId = prompt("Enter partner alliance id:");
+      if (!treatyType || !partnerId) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      const res = await fetch("/api/alliance-treaties/propose", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: treatyType })
+        headers: { "Content-Type": "application/json", 'X-User-ID': user.id },
+        body: JSON.stringify({ treaty_type: treatyType, partner_alliance_id: parseInt(partnerId, 10) })
       });
       const data = await res.json();
-      alert(data.message || "Treaty created.");
-      await loadTreaties();
+      alert(data.status || "Proposal sent.");
+      await loadTreatyTabs();
     });
   }
 });
 
-// ✅ Load Alliance Treaties
-async function loadTreaties() {
+async function loadTreatyTabs() {
   const container = document.getElementById("treaties-container");
   container.innerHTML = "<p>Loading treaties...</p>";
 
   try {
-    const res = await fetch("/api/alliance-treaties");
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch("/api/alliance-treaties/my-treaties", { headers: { 'X-User-ID': user.id } });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -60,11 +61,13 @@ async function loadTreaties() {
       card.classList.add("treaty-card");
 
       card.innerHTML = `
-        <h3>${treaty.alliance_name}</h3>
-        <p>Type: <strong>${treaty.type}</strong></p>
+        <h3>Treaty with ${treaty.partner_alliance_id}</h3>
+        <p>Type: <strong>${treaty.treaty_type}</strong></p>
         <p>Status: <strong>${treaty.status}</strong></p>
         <div class="treaty-actions">
           <button class="action-btn view-treaty-btn" data-treaty='${JSON.stringify(treaty)}'>View</button>
+          ${treaty.status === 'proposed' ? `<button class="action-btn accept-btn" data-id="${treaty.treaty_id}">Accept</button>` : ''}
+          ${treaty.status !== 'cancelled' ? `<button class="action-btn cancel-btn" data-id="${treaty.treaty_id}">Cancel</button>` : ''}
         </div>
       `;
 
@@ -78,6 +81,16 @@ async function loadTreaties() {
         viewTreatyDetails(treaty);
       });
     });
+    document.querySelectorAll(".accept-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await respondToTreaty(parseInt(btn.dataset.id, 10), 'accept');
+      });
+    });
+    document.querySelectorAll(".cancel-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await respondToTreaty(parseInt(btn.dataset.id, 10), 'cancel');
+      });
+    });
 
   } catch (err) {
     console.error("❌ Error loading treaties:", err);
@@ -88,10 +101,20 @@ async function loadTreaties() {
 // ✅ View Treaty Details (Modal or Navigate)
 function viewTreatyDetails(treaty) {
   // For now, just an alert — you can replace with a modal
-  alert(`Treaty with ${treaty.alliance_name}\nType: ${treaty.type}\nStatus: ${treaty.status}\n\n(Modal under development)`);
+  alert(`Treaty with ${treaty.partner_alliance_id}\nType: ${treaty.treaty_type}\nStatus: ${treaty.status}\n\n(Modal under development)`);
 
   // Example: To open a modal in future
   // const modal = document.getElementById("treaty-modal");
   // Populate modal fields...
   // modal.classList.add("open");
+}
+
+async function respondToTreaty(treatyId, action) {
+  const { data: { user } } = await supabase.auth.getUser();
+  await fetch('/api/alliance-treaties/respond', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+    body: JSON.stringify({ treaty_id: treatyId, action })
+  });
+  await loadTreatyTabs();
 }
