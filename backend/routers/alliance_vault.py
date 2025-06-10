@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -14,15 +14,48 @@ router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 alt_router = APIRouter(prefix="/api/vault", tags=["alliance_vault"])
 
 
+def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="User ID header missing")
+    return x_user_id
+
+
+def get_supabase_client():
+    try:
+        from supabase import create_client
+    except ImportError as e:
+        raise RuntimeError("supabase client library not installed") from e
+    import os
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+    if not url or not key:
+        raise RuntimeError("Supabase credentials not configured")
+    return create_client(url, key)
+
+
 class VaultTransaction(BaseModel):
     alliance_id: int = 1
     resource: str
     amount: int
-    user_id: str | None = None
 
 
 @router.get("/summary")
-def summary(alliance_id: int = 1, db: Session = Depends(get_db)):
+def summary(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    supabase = get_supabase_client()
+    alliance_res = (
+        supabase.table("users")
+        .select("alliance_id")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    alliance = getattr(alliance_res, "data", alliance_res)
+    alliance_id = alliance.get("alliance_id") if alliance else None
+    if not alliance_id:
+        raise HTTPException(status_code=403, detail="Not in an alliance")
     vault = db.query(AllianceVault).filter_by(alliance_id=alliance_id).first()
     if not vault:
         raise HTTPException(status_code=404, detail="Vault not found")
@@ -44,7 +77,27 @@ async def custom_board():
 
 
 @router.post("/deposit")
-def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
+def deposit(
+    payload: VaultTransaction,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    supabase = get_supabase_client()
+    alliance_res = (
+        supabase.table("users")
+        .select("alliance_id")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    alliance = getattr(alliance_res, "data", alliance_res)
+    alliance_id = alliance.get("alliance_id") if alliance else None
+    if not alliance_id:
+        raise HTTPException(status_code=403, detail="Not in an alliance")
+    if payload.alliance_id and payload.alliance_id != alliance_id:
+        raise HTTPException(status_code=403, detail="Cannot deposit to another alliance")
+    payload.alliance_id = alliance_id
+
     vault = db.query(AllianceVault).filter_by(alliance_id=payload.alliance_id).first()
     if not vault:
         vault = AllianceVault(alliance_id=payload.alliance_id)
@@ -54,7 +107,7 @@ def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
     setattr(vault, payload.resource, getattr(vault, payload.resource) + payload.amount)
     log = AllianceVaultTransactionLog(
         alliance_id=payload.alliance_id,
-        user_id=payload.user_id,
+        user_id=user_id,
         action='deposit',
         resource_type=payload.resource,
         amount=payload.amount,
@@ -68,7 +121,7 @@ def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
         quantity=payload.amount,
         unit_price=None,
         buyer_id=None,
-        seller_id=payload.user_id,
+        seller_id=user_id,
         buyer_alliance_id=payload.alliance_id,
         seller_alliance_id=None,
         buyer_name=None,
@@ -77,7 +130,7 @@ def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
     )
     log_action(
         db,
-        payload.user_id,
+        user_id,
         "deposit_vault",
         f"Deposited {payload.amount} {payload.resource} into Alliance Vault ID {payload.alliance_id}",
     )
@@ -85,7 +138,27 @@ def deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
 
 
 @router.post("/withdraw")
-def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
+def withdraw(
+    payload: VaultTransaction,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    supabase = get_supabase_client()
+    alliance_res = (
+        supabase.table("users")
+        .select("alliance_id")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    alliance = getattr(alliance_res, "data", alliance_res)
+    alliance_id = alliance.get("alliance_id") if alliance else None
+    if not alliance_id:
+        raise HTTPException(status_code=403, detail="Not in an alliance")
+    if payload.alliance_id and payload.alliance_id != alliance_id:
+        raise HTTPException(status_code=403, detail="Cannot withdraw from another alliance")
+    payload.alliance_id = alliance_id
+
     vault = db.query(AllianceVault).filter_by(alliance_id=payload.alliance_id).first()
     if not vault or not hasattr(vault, payload.resource):
         raise HTTPException(status_code=404, detail="Resource not found")
@@ -95,7 +168,7 @@ def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
     setattr(vault, payload.resource, current - payload.amount)
     log = AllianceVaultTransactionLog(
         alliance_id=payload.alliance_id,
-        user_id=payload.user_id,
+        user_id=user_id,
         action='withdraw',
         resource_type=payload.resource,
         amount=payload.amount,
@@ -108,7 +181,7 @@ def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
         resource=payload.resource,
         quantity=payload.amount,
         unit_price=None,
-        buyer_id=payload.user_id,
+        buyer_id=user_id,
         seller_id=None,
         buyer_alliance_id=None,
         seller_alliance_id=payload.alliance_id,
@@ -118,7 +191,7 @@ def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
     )
     log_action(
         db,
-        payload.user_id,
+        user_id,
         "withdraw_vault",
         f"Withdrew {payload.amount} {payload.resource} from Alliance Vault ID {payload.alliance_id}",
     )
@@ -126,8 +199,29 @@ def withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
 
 
 @router.get("/history")
-def history(alliance_id: int = 1, action: str | None = None, page: int = 1, db: Session = Depends(get_db)):
-    query = db.query(AllianceVaultTransactionLog, User.username).join(User, AllianceVaultTransactionLog.user_id == User.user_id, isouter=True).filter(AllianceVaultTransactionLog.alliance_id == alliance_id)
+def history(
+    action: str | None = None,
+    page: int = 1,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    supabase = get_supabase_client()
+    alliance_res = (
+        supabase.table("users")
+        .select("alliance_id")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    alliance = getattr(alliance_res, "data", alliance_res)
+    alliance_id = alliance.get("alliance_id") if alliance else None
+    if not alliance_id:
+        raise HTTPException(status_code=403, detail="Not in an alliance")
+    query = (
+        db.query(AllianceVaultTransactionLog, User.username)
+        .join(User, AllianceVaultTransactionLog.user_id == User.user_id, isouter=True)
+        .filter(AllianceVaultTransactionLog.alliance_id == alliance_id)
+    )
     if action:
         query = query.filter(AllianceVaultTransactionLog.action == action)
     records = query.order_by(AllianceVaultTransactionLog.created_at.desc()).offset((page-1)*50).limit(50).all()
@@ -151,23 +245,23 @@ def history(alliance_id: int = 1, action: str | None = None, page: int = 1, db: 
 # consistent while allowing the frontend to use the documented routes.
 
 @alt_router.get("/resources")
-def alt_resources(alliance_id: int = 1, db: Session = Depends(get_db)):
-    return summary(alliance_id, db)
+def alt_resources(user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    return summary(user_id, db)
 
 
 @alt_router.post("/deposit")
-def alt_deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
-    return deposit(payload, db)
+def alt_deposit(payload: VaultTransaction, user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    return deposit(payload, user_id, db)
 
 
 @alt_router.post("/withdraw")
-def alt_withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
-    return withdraw(payload, db)
+def alt_withdraw(payload: VaultTransaction, user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    return withdraw(payload, user_id, db)
 
 
 @alt_router.get("/transactions")
-def alt_transactions(alliance_id: int = 1, action: str | None = None, page: int = 1, db: Session = Depends(get_db)):
-    return history(alliance_id, action, page, db)
+def alt_transactions(action: str | None = None, page: int = 1, user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    return history(action, page, user_id, db)
 
 
 @alt_router.get("/tax-policy")

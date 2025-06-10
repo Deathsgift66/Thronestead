@@ -164,3 +164,16 @@ body {
 
 .tab-section { display: none; }
 .tab-section.active { display: block; }
+
+@media (max-width: 600px) {
+  .main-centered-container {
+    padding: 1rem;
+  }
+  .tab-control-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .panel {
+    padding: 1rem;
+  }
+}
