@@ -28,6 +28,7 @@ from .routers import (
     titles_router,
     treaties_router,
     alliance_treaties_router,
+    admin_dashboard,
     account_settings,
     spies_router,
     trade_logs,
@@ -52,6 +53,7 @@ load_game_settings()
 
 app.include_router(alliance_members.router)
 app.include_router(admin.router)
+app.include_router(admin_dashboard.router)
 app.include_router(alliance_projects.router)
 app.include_router(kingdom.router)
 app.include_router(conflicts.router)
