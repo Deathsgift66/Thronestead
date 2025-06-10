@@ -8,6 +8,8 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let treatyChannel;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -19,6 +21,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await loadTreatyTabs();
+
+  treatyChannel = supabase
+    .channel('public:alliance_treaties')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, payload => {
+      loadTreatyTabs();
+    })
+    .subscribe();
 
   // ✅ Bind "Create New Treaty" button
   const createBtn = document.getElementById("create-new-treaty");
@@ -38,6 +47,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadTreatyTabs();
     });
   }
+});
+
+window.addEventListener('beforeunload', () => {
+  if (treatyChannel) supabase.removeChannel(treatyChannel);
 });
 
 async function loadTreatyTabs() {
@@ -99,15 +112,36 @@ async function loadTreatyTabs() {
 }
 
 // ✅ View Treaty Details (Modal or Navigate)
-function viewTreatyDetails(treaty) {
-  // For now, just an alert — you can replace with a modal
-  alert(`Treaty with ${treaty.partner_alliance_id}\nType: ${treaty.treaty_type}\nStatus: ${treaty.status}\n\n(Modal under development)`);
-
-  // Example: To open a modal in future
-  // const modal = document.getElementById("treaty-modal");
-  // Populate modal fields...
-  // modal.classList.add("open");
+async function viewTreatyDetails(treaty) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const res = await fetch(`/api/alliance-treaties/view/${treaty.treaty_id}`, { headers: { 'X-User-ID': user.id } });
+  const data = await res.json();
+  const modal = document.getElementById('treaty-modal');
+  const details = document.getElementById('treaty-details');
+  details.innerHTML = `
+    <h3>Treaty with Alliance ${data.partner_alliance_id}</h3>
+    <p>Type: <strong>${data.treaty_type}</strong></p>
+    <p>Status: <strong>${data.status}</strong></p>
+    <p>Signed: ${data.signed_at ?? 'Pending'}</p>
+  `;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  modal.querySelector('.modal-close').focus();
 }
+
+document.querySelector('.modal-close')?.addEventListener('click', () => {
+  const modal = document.getElementById('treaty-modal');
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+});
+
+document.getElementById('treaty-modal')?.addEventListener('click', e => {
+  if (e.target.id === 'treaty-modal') {
+    const modal = document.getElementById('treaty-modal');
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+});
 
 async function respondToTreaty(treatyId, action) {
   const { data: { user } } = await supabase.auth.getUser();
