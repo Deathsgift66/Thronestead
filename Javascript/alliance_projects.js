@@ -64,6 +64,7 @@ function renderAvailable(list) {
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)}</h3>
       <p>${escapeHTML(p.description || '')}</p>
+      <p>Costs: ${formatCosts(p.resource_costs)}</p>
       <p>Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
       <button class="action-btn start-btn" data-key="${p.project_code}">Start</button>
     `;
@@ -99,15 +100,40 @@ function renderInProgress(list) {
     const percent = p.progress || 0;
     const card = document.createElement('div');
     card.className = 'project-card';
+    const end = new Date(p.expected_end);
+    const eta = formatTime(Math.max(0, Math.floor((end - Date.now()) / 1000)));
     card.innerHTML = `
       <h3>${escapeHTML(p.project_key)}</h3>
       <div class="progress-bar">
         <div class="progress-bar-fill" style="width:${percent}%"></div>
       </div>
-      <p>${percent}% complete</p>
+      <p>${percent}% complete - ETA ${eta}</p>
+      <ul class="contrib-list">Loading...</ul>
     `;
     container.appendChild(card);
+    loadLeaderboard(p.project_key, card.querySelector('.contrib-list'));
   });
+}
+
+async function loadLeaderboard(key, element) {
+  try {
+    const res = await fetch(`/api/alliance-projects/leaderboard?project_key=${key}`);
+    const data = await res.json();
+    element.innerHTML = '';
+    const list = data.leaderboard || [];
+    if (list.length === 0) {
+      element.innerHTML = '<li>No contributions yet.</li>';
+      return;
+    }
+    list.forEach(r => {
+      const li = document.createElement('li');
+      li.textContent = `${escapeHTML(r.player_name)}: ${r.total}`;
+      element.appendChild(li);
+    });
+  } catch (err) {
+    console.error('leaderboard', err);
+    element.innerHTML = '<li>Failed to load leaderboard.</li>';
+  }
 }
 
 async function loadCompleted() {
@@ -196,6 +222,13 @@ function formatTime(seconds) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   return `${h}h ${m}m ${s}s`;
+}
+
+function formatCosts(obj) {
+  if (!obj) return 'N/A';
+  return Object.entries(obj)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(', ');
 }
 
 function escapeHTML(str) {

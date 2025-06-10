@@ -1,19 +1,25 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+import pytest
 
+from fastapi import HTTPException
 from backend.database import Base
 from backend.models import (
     Alliance,
     ProjectAllianceCatalogue,
     ProjectsAlliance,
     ProjectsAllianceInProgress,
+    ProjectAllianceContribution,
     User,
 )
 from backend.routers.alliance_projects import (
     get_available_projects,
     start_alliance_project,
+    contribute_to_project,
+    project_leaderboard,
     StartPayload,
+    ContributionPayload,
     get_in_progress_projects,
 )
 
@@ -65,3 +71,32 @@ def test_start_creates_progress_row():
     rows = get_in_progress_projects(1, uid, db)
     assert len(rows["projects"]) == 1
     assert rows["projects"][0]["project_key"] == "p3"
+
+
+def test_start_rejects_if_active():
+    Session = setup_db()
+    db = Session()
+    uid = seed_basic(db)
+    db.add(ProjectAllianceCatalogue(project_code="p4", project_name="Four"))
+    db.add(ProjectAllianceCatalogue(project_code="p5", project_name="Five"))
+    db.add(ProjectsAllianceInProgress(alliance_id=1, project_key="p4", progress=0, status="building", expected_end=datetime.utcnow()))
+    db.commit()
+    with pytest.raises(HTTPException):
+        start_alliance_project(StartPayload(project_key="p5", user_id=uid), uid, db)
+
+
+def test_contribute_records_entry():
+    Session = setup_db()
+    db = Session()
+    uid = seed_basic(db)
+    db.add(ProjectAllianceCatalogue(project_code="p6", project_name="Six"))
+    db.add(ProjectsAllianceInProgress(alliance_id=1, project_key="p6", progress=0, status="building", expected_end=datetime.utcnow()))
+    db.commit()
+
+    contribute_to_project(
+        ContributionPayload(project_key="p6", resource_type="wood", amount=5, user_id=uid),
+        uid,
+        db,
+    )
+    rows = db.query(ProjectAllianceContribution).filter_by(project_key="p6").all()
+    assert len(rows) == 1 and rows[0].amount == 5
