@@ -27,43 +27,22 @@ async function loadResourcesNexus() {
   simulatorsEl.innerHTML = "<p>Loading simulators...</p>";
 
   try {
-    // ✅ Load user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id;
+    if (!uid) throw new Error('No user');
+    const token = session.access_token;
 
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('kingdom_id, alliance_id')
-      .eq('user_id', user.id)
-      .single();
+    const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
 
-    if (userError) throw userError;
+    const res = await fetch('/api/resources', { headers });
+    if (!res.ok) throw new Error('Failed');
+    const { resources: resourcesData } = await res.json();
 
-    const kingdomId = userData.kingdom_id;
-    const allianceId = userData.alliance_id;
-
-    // ✅ Load kingdom resources
-    const { data: resourcesData, error: resourcesError } = await supabase
-      .from('kingdom_resources')
-      .select('*')
-      .eq('kingdom_id', kingdomId)
-      .single();
-
-    if (resourcesError) throw resourcesError;
-
-    // ✅ Load alliance vault (if in alliance)
     let vaultData = null;
-    if (allianceId) {
-      const { data, error } = await supabase
-        .from('alliance_vault')
-        .select('*')
-        .eq('alliance_id', allianceId)
-        .single();
-
-      if (error) {
-        console.warn("No vault data found.");
-      } else {
-        vaultData = data;
-      }
+    const vres = await fetch('/api/vault/resources', { headers });
+    if (vres.ok) {
+      const { totals } = await vres.json();
+      vaultData = totals;
     }
 
     // ✅ Render resource summary
@@ -77,6 +56,9 @@ async function loadResourcesNexus() {
 
     // ✅ Render simulators panel
     renderSimulators();
+
+    // ✅ Subscribe to realtime updates
+    subscribeToResourceUpdates();
 
   } catch (err) {
     console.error("❌ Error loading Resources Nexus:", err);
@@ -185,4 +167,42 @@ function showToast(msg) {
   setTimeout(() => {
     toastEl.classList.remove("show");
   }, 3000);
+}
+
+// ✅ Realtime subscriptions
+function subscribeToResourceUpdates() {
+  supabase.auth.getUser().then(({ data }) => {
+    const uid = data?.user?.id;
+    if (!uid) return;
+    supabase
+      .from('users')
+      .select('kingdom_id, alliance_id')
+      .eq('user_id', uid)
+      .single()
+      .then(({ data }) => {
+        const kid = data?.kingdom_id;
+        const aid = data?.alliance_id;
+        if (kid) {
+          supabase
+            .channel('kr-resources-' + kid)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'kingdom_resources', filter: `kingdom_id=eq.${kid}` }, (payload) => {
+              if (payload.new) {
+                renderResourceSummary(payload.new);
+                renderResourceTable(payload.new);
+              }
+            })
+            .subscribe();
+        }
+        if (aid) {
+          supabase
+            .channel('kr-vault-' + aid)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_vault', filter: `alliance_id=eq.${aid}` }, (payload) => {
+              if (payload.new) {
+                renderVaultTable(payload.new);
+              }
+            })
+            .subscribe();
+        }
+      });
+  });
 }
