@@ -7,6 +7,9 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentUserId = null;
+let realtimeChannel = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -23,12 +26,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "login.html";
     return;
   }
+  currentUserId = session.user.id;
+
+  subscribeRealtime();
+  startAutoRefresh();
 
   // ✅ Initial load
   await loadMilitarySummary();
   await loadRecruitableUnits();
   await loadTrainingQueue();
   await loadTrainingHistory();
+  updateLastUpdated();
 });
 
 // ✅ Load Military Summary
@@ -37,7 +45,7 @@ async function loadMilitarySummary() {
   container.innerHTML = "<p>Loading military summary...</p>";
 
   try {
-    const res = await fetch("/api/kingdom_military/summary");
+    const res = await fetch("/api/kingdom_military/summary", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     container.innerHTML = `
@@ -51,6 +59,7 @@ async function loadMilitarySummary() {
     console.error("❌ Error loading military summary:", err);
     container.innerHTML = "<p>Failed to load military summary.</p>";
   }
+  updateLastUpdated();
 }
 
 // ✅ Load Recruitable Units
@@ -59,7 +68,7 @@ async function loadRecruitableUnits() {
   container.innerHTML = "<p>Loading recruitable units...</p>";
 
   try {
-    const res = await fetch("/api/kingdom_military/recruitable");
+    const res = await fetch("/api/kingdom_military/recruitable", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -99,7 +108,7 @@ async function loadRecruitableUnits() {
         try {
           const res = await fetch("/api/kingdom_military/recruit", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", 'X-User-ID': currentUserId },
             body: JSON.stringify({ unit_id: unitId, quantity: qtyInt })
           });
 
@@ -131,7 +140,7 @@ async function loadTrainingQueue() {
   container.innerHTML = "<p>Loading training queue...</p>";
 
   try {
-    const res = await fetch("/api/kingdom_military/queue");
+    const res = await fetch("/api/kingdom_military/queue", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -156,6 +165,7 @@ async function loadTrainingQueue() {
     console.error("❌ Error loading training queue:", err);
     container.innerHTML = "<p>Failed to load training queue.</p>";
   }
+  updateLastUpdated();
 }
 
 // ✅ Load Training History
@@ -164,7 +174,7 @@ async function loadTrainingHistory() {
   container.innerHTML = "<p>Loading training history...</p>";
 
   try {
-    const res = await fetch("/api/training-history?kingdom_id=1&limit=50");
+    const res = await fetch("/api/training-history?kingdom_id=1&limit=50", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -187,6 +197,7 @@ async function loadTrainingHistory() {
     console.error("❌ Error loading training history:", err);
     container.innerHTML = "<p>Failed to load training history.</p>";
   }
+  updateLastUpdated();
 }
 
 // ✅ Format Cost
@@ -214,4 +225,42 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function updateLastUpdated() {
+  const el = document.getElementById('last-updated');
+  if (el) el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+function startAutoRefresh() {
+  setInterval(() => {
+    loadMilitarySummary();
+    loadTrainingQueue();
+    updateLastUpdated();
+  }, 30000);
+}
+
+function subscribeRealtime() {
+  realtimeChannel = supabase
+    .channel('public:training_queue')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'training_queue' }, () => {
+      loadTrainingQueue();
+      loadMilitarySummary();
+    })
+    .subscribe(status => {
+      const indicator = document.getElementById('realtime-indicator');
+      if (indicator) {
+        if (status === 'SUBSCRIBED') {
+          indicator.textContent = 'Live';
+          indicator.className = 'connected';
+        } else {
+          indicator.textContent = 'Offline';
+          indicator.className = 'disconnected';
+        }
+      }
+    });
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  });
 }

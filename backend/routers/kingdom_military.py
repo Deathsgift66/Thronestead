@@ -1,7 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header, Depends
 from pydantic import BaseModel
 
 from ..data import military_state, recruitable_units
+
+
+def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
+    """Require X-User-ID header for authentication."""
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="User ID header missing")
+    return x_user_id
 
 router = APIRouter(prefix="/api/kingdom_military", tags=["kingdom_military"])
 
@@ -23,7 +30,7 @@ def get_state():
 
 
 @router.get("/summary")
-async def summary():
+async def summary(user_id: str = Depends(get_current_user_id)):
     state = get_state()
     base = state["base_slots"]
     used = state["used_slots"]
@@ -39,12 +46,12 @@ async def summary():
 
 
 @router.get("/recruitable")
-async def recruitable():
+async def recruitable(user_id: str = Depends(get_current_user_id)):
     return {"units": recruitable_units}
 
 
 @router.post("/recruit")
-async def recruit(payload: RecruitPayload):
+async def recruit(payload: RecruitPayload, user_id: str = Depends(get_current_user_id)):
     state = get_state()
 
     if payload.quantity <= 0:
@@ -67,13 +74,13 @@ async def recruit(payload: RecruitPayload):
 
 
 @router.get("/queue")
-async def queue():
+async def queue(user_id: str = Depends(get_current_user_id)):
     state = get_state()
     return {"queue": state["queue"]}
 
 
 @router.get("/history")
-async def history():
+async def history(user_id: str = Depends(get_current_user_id)):
     state = get_state()
     return {"history": state["history"]}
 

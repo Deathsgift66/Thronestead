@@ -170,4 +170,41 @@ body {
   opacity: 1;
 }
 
+/* Realtime Status */
+.military-status {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-family: var(--font-secondary);
+  margin-bottom: 1rem;
+  color: var(--gold);
+}
+
+#realtime-indicator.connected {
+  color: var(--success);
+}
+
+#realtime-indicator.disconnected {
+  color: var(--low-morale);
+}
+
+/* Unit Card */
+.unit-card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  box-shadow: var(--box-shadow);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  #unit-list {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
 /* Footer - handled globally */
