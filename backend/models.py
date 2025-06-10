@@ -734,6 +734,22 @@ class QuestAllianceContribution(Base):
     contribution_type = Column(String, default="resource")
 
 
+class ProjectAllianceContribution(Base):
+    """Logs player resource contributions toward alliance projects."""
+
+    __tablename__ = "project_alliance_contributions"
+
+    contribution_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    player_name = Column(String)
+    resource_type = Column(String)
+    amount = Column(Integer)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_code"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    contribution_type = Column(String, default="resource")
+
+
 class QuestKingdomTracking(Base):
     """Tracks progress for kingdom quests."""
 
