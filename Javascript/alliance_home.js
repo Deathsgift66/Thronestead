@@ -41,6 +41,7 @@ function populateAlliance(data) {
   renderAchievements(data.achievements);
   renderActivity(data.activity);
   renderDiplomacy(data.treaties);
+  renderActiveBattles(data.wars);
   renderWarScore(data.wars);
 }
 
@@ -127,13 +128,32 @@ function renderDiplomacy(treaties) {
   });
 }
 
+function renderActiveBattles(wars) {
+  const container = document.getElementById('active-battles-list');
+  if (!container) return;
+  container.innerHTML = '';
+  const active = wars.filter(w => w.war_status === 'active');
+  if (active.length === 0) {
+    container.textContent = 'No active battles.';
+    return;
+  }
+  active.forEach(w => {
+    const div = document.createElement('div');
+    div.classList.add('battle-entry');
+    div.textContent = `War ${w.alliance_war_id} — ${w.war_status}`;
+    container.appendChild(div);
+  });
+}
+
 function renderWarScore(wars) {
   const container = document.getElementById('war-score-summary');
   if (!container) return;
   container.innerHTML = '';
   wars.forEach(w => {
     const div = document.createElement('div');
-    div.textContent = `War ${w.alliance_war_id}: ${w.attacker_score} - ${w.defender_score}`;
+    const att = w.attacker_score ?? 0;
+    const def = w.defender_score ?? 0;
+    div.textContent = `War ${w.alliance_war_id}: Attacker ${att} vs Defender ${def}`;
     container.appendChild(div);
   });
 }

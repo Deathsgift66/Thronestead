@@ -25,6 +25,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTabs();
   await loadCustomBoard();
   await loadAllianceWars();
+  await loadPendingWars();
+  const declareBtn = document.getElementById('declare-alliance-war-btn');
+  if (declareBtn) {
+    declareBtn.addEventListener('click', submitDeclareWar);
+  }
 });
 
 // ✅ Load Alliance Custom Board (image + text)
@@ -285,6 +290,58 @@ function initTabs() {
   document.querySelectorAll('.tab-button').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
+}
+
+async function submitDeclareWar() {
+  const target = document.getElementById('target-alliance-id').value.trim();
+  if (!target) return;
+  try {
+    await fetch('/api/alliance-wars/declare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ defender_alliance_id: parseInt(target) })
+    });
+    document.getElementById('target-alliance-id').value = '';
+    await loadAllianceWars();
+    await loadPendingWars();
+  } catch (err) {
+    console.error('Error declaring alliance war:', err);
+  }
+}
+
+async function loadPendingWars() {
+  const container = document.getElementById('pending-wars-list');
+  if (!container) return;
+  container.innerHTML = 'Loading...';
+  try {
+    const res = await fetch('/api/alliance-wars/list');
+    const data = await res.json();
+    const pending = (data.upcoming_wars || []).filter(w => w.war_status === 'pending');
+    container.innerHTML = '';
+    if (pending.length === 0) {
+      container.textContent = 'No pending wars.';
+      return;
+    }
+    pending.forEach(w => {
+      const row = document.createElement('div');
+      row.innerHTML = `War ${w.alliance_war_id} vs ${w.attacker_alliance_id === w.defender_alliance_id ? '' : w.attacker_alliance_id} <button class="accept-war-btn" data-id="${w.alliance_war_id}">Accept</button>`;
+      container.appendChild(row);
+    });
+    document.querySelectorAll('.accept-war-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await fetch('/api/alliance-wars/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ alliance_war_id: parseInt(btn.dataset.id), action: 'accept' })
+        });
+        await loadAllianceWars();
+        await loadPendingWars();
+      });
+    });
+  } catch (err) {
+    console.error('Error loading pending wars:', err);
+    container.textContent = 'Failed to load.';
+  }
 }
 
 function switchTab(id) {
