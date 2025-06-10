@@ -8,6 +8,10 @@ from services.audit_service import log_action
 from services.trade_log_service import record_trade
 
 router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
+# Secondary router mirroring simplified REST style endpoints used by the
+# frontend specification. These simply delegate to the existing handlers
+# above so tests and legacy routes continue to work.
+alt_router = APIRouter(prefix="/api/vault", tags=["alliance_vault"])
 
 
 class VaultTransaction(BaseModel):
@@ -139,4 +143,36 @@ def history(alliance_id: int = 1, action: str | None = None, page: int = 1, db: 
             "notes": t.notes,
         })
     return {"history": result}
+
+
+# ---------------------------------------------------------------------------
+# Alternative endpoints matching the simplified `/api/vault` schema.  These
+# helpers simply call the existing logic above so the behaviour remains
+# consistent while allowing the frontend to use the documented routes.
+
+@alt_router.get("/resources")
+def alt_resources(alliance_id: int = 1, db: Session = Depends(get_db)):
+    return summary(alliance_id, db)
+
+
+@alt_router.post("/deposit")
+def alt_deposit(payload: VaultTransaction, db: Session = Depends(get_db)):
+    return deposit(payload, db)
+
+
+@alt_router.post("/withdraw")
+def alt_withdraw(payload: VaultTransaction, db: Session = Depends(get_db)):
+    return withdraw(payload, db)
+
+
+@alt_router.get("/transactions")
+def alt_transactions(alliance_id: int = 1, action: str | None = None, page: int = 1, db: Session = Depends(get_db)):
+    return history(alliance_id, action, page, db)
+
+
+@alt_router.get("/tax-policy")
+def alt_tax_policy():
+    # Placeholder until tax policy tables are implemented
+    return {"policy": []}
+
 
