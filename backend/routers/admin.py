@@ -86,37 +86,61 @@ async def player_action(
 
 @router.get("/alerts")
 async def get_admin_alerts(
+    start: str | None = None,
+    end: str | None = None,
     admin_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
     """Aggregate recent system alerts for the admin dashboard."""
+
+    params: dict[str, str] = {}
+    filters = []
+    if start:
+        filters.append("created_at >= :start")
+        params["start"] = start
+    if end:
+        filters.append("created_at <= :end")
+        params["end"] = end
+
+    where = f" WHERE {' AND '.join(filters)}" if filters else ""
+
     audit = db.execute(
         text(
-            "SELECT * FROM audit_log "
-            "WHERE created_at >= NOW() - INTERVAL '24 HOURS' "
-            "ORDER BY created_at DESC"
-        )
+            "SELECT * FROM audit_log" + where + " ORDER BY created_at DESC"
+        ),
+        params,
     ).fetchall()
+
     actions = db.execute(
         text(
-            "SELECT * FROM admin_actions "
-            "WHERE created_at >= NOW() - INTERVAL '24 HOURS' "
-            "ORDER BY created_at DESC"
-        )
+            "SELECT * FROM admin_actions" + where + " ORDER BY created_at DESC"
+        ),
+        params,
     ).fetchall()
-    notes = db.execute(text("SELECT * FROM admin_notes")).fetchall()
+
+    notes = db.execute(
+        text("SELECT * FROM admin_notes" + where + " ORDER BY created_at DESC"),
+        params,
+    ).fetchall()
+
+    war_where = where.replace("created_at", "timestamp")
     war_logs = db.execute(
         text(
-            "SELECT * FROM alliance_war_combat_logs "
-            "WHERE timestamp >= NOW() - INTERVAL '24 HOURS' "
-            "ORDER BY timestamp DESC"
-        )
+            "SELECT * FROM alliance_war_combat_logs" +
+            war_where +
+            " ORDER BY timestamp DESC"
+        ),
+        params,
     ).fetchall()
+
+    treaty_where = where.replace("created_at", "signed_at")
     treaties = db.execute(
         text(
-            "SELECT * FROM alliance_treaties "
-            "ORDER BY signed_at DESC LIMIT 10"
-        )
+            "SELECT * FROM alliance_treaties" +
+            treaty_where +
+            " ORDER BY signed_at DESC LIMIT 10"
+        ),
+        params,
     ).fetchall()
 
     return {

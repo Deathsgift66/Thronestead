@@ -23,6 +23,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: url('../Assets/admin_alerts.png') no-repeat center center fixed;
+  background-size: cover;
 }
 
 .main-container {
@@ -148,3 +150,13 @@ tr:nth-child(even) {
 .alert-item.severity-low { border-left-color: var(--alert-yellow); }
 .alert-item.severity-medium { border-left-color: var(--alert-blue); }
 .alert-item.severity-high { border-left-color: var(--alert-red); }
+
+@media (max-width: 768px) {
+  .search-sort-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .main-container {
+    padding: 1rem;
+  }
+}
