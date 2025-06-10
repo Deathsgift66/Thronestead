@@ -116,3 +116,60 @@ body {
   opacity: 1;
 }
 
+/* -----------------------------------------------
+   Research Layout & Nodes
+------------------------------------------------ */
+.tech-node {
+  background: var(--panel-bg);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+.tech-node:hover {
+  transform: scale(1.02);
+}
+.tech-node.locked {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+}
+.tech-node.active {
+  border-color: var(--accent);
+}
+.tech-node.completed {
+  border-color: var(--success);
+  background: rgba(50, 205, 50, 0.2);
+}
+
+.tech-card {
+  background: var(--panel-bg);
+  border: var(--card-border);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.countdown {
+  font-weight: bold;
+}
+
+.prereq.done {
+  color: var(--success);
+}
+
+@media (min-width: 768px) {
+  .alliance-members-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--gap-default);
+  }
+}
+
+@media (min-width: 1024px) {
+  .alliance-members-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+

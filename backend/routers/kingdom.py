@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 from ..data import military_state, recruitable_units
 from ..database import get_db
 from ..services.research_service import start_research as db_start_research
+from ..services.research_service import list_research
 from ..services.kingdom_quest_service import start_quest as db_start_quest
 from ..services.kingdom_setup_service import create_kingdom_transaction
-from .progression_router import get_user_id
+from .progression_router import get_user_id, get_kingdom_id
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
@@ -113,11 +114,13 @@ async def kingdom_summary():
 @router.post("/start_research")
 async def start_research(
     payload: ResearchPayload,
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Begin research on a technology for kingdom ``1`` (demo)."""
+    """Begin research on a technology for the authenticated kingdom."""
     try:
-        ends_at = db_start_research(db, 1, payload.tech_code)
+        kid = get_kingdom_id(db, user_id)
+        ends_at = db_start_research(db, kid, payload.tech_code)
     except ValueError:
         raise HTTPException(status_code=404, detail="Tech not found")
 
@@ -126,6 +129,17 @@ async def start_research(
         "tech_code": payload.tech_code,
         "ends_at": ends_at.isoformat(),
     }
+
+
+@router.get("/research")
+async def get_research(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Return research tracking data for the authenticated kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    records = list_research(db, kid)
+    return {"research": records}
 
 
 @router.post("/accept_quest")
