@@ -58,6 +58,7 @@ from .routers import (
     profile_view,
     navbar,
     seasonal_effects,
+    treaty_web,
     village_master as village_master_router,
     world_map,
 )
@@ -131,7 +132,9 @@ app.include_router(navbar.router)
 app.include_router(seasonal_effects.router)
 app.include_router(world_map.router)
 app.include_router(overview_router.router)
+app.include_router(treaty_web.router)
 app.include_router(village_master_router.router)
+
 
 
 
