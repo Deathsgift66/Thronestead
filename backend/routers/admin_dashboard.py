@@ -124,3 +124,19 @@ def update_kingdom_field(
         f"{field} -> {value} for {kingdom_id}",
     )
     return {"status": "updated"}
+
+
+@router.get("/flagged")
+def get_flagged_users(
+    admin_user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Return list of flagged users for review."""
+    verify_admin(admin_user_id, db)
+    rows = db.execute(
+        text(
+            "SELECT player_id, alert_type, created_at "
+            "FROM account_alerts ORDER BY created_at DESC"
+        )
+    ).fetchall()
+    return [dict(r._mapping) for r in rows]

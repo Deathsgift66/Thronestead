@@ -25,6 +25,8 @@ class DummyDB:
             return DummyResult([(True,)])
         if "from audit_log" in lower:
             return DummyResult(self.rows)
+        if "from account_alerts" in lower:
+            return DummyResult(self.rows)
         return DummyResult()
 
     def commit(self):
@@ -52,3 +54,10 @@ def test_update_kingdom_field_runs_update():
     admin_dashboard.update_kingdom_field(1, "gold", 5, admin_user_id="a1", db=db)
     assert any("update kingdoms" in q[0].lower() for q in db.queries)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
+
+
+def test_get_flagged_users():
+    db = DummyDB()
+    db.rows = [("u1", "Exploit", "2025-01-02")]
+    results = admin_dashboard.get_flagged_users(db=db, admin_user_id="a1")
+    assert results[0]["alert_type"] == "Exploit"

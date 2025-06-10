@@ -7,6 +7,8 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+const REFRESH_MS = 30000;
+
 
 // 🟢 Load Game-Wide Dashboard Stats
 async function loadDashboardStats() {
@@ -99,6 +101,37 @@ async function loadAuditLogs() {
   } catch (err) {
     console.error('⚠️ Failed to load audit logs:', err);
     container.innerHTML = '<p class="error-msg">Failed to fetch audit logs.</p>';
+  }
+}
+
+// 🚩 Load flagged users from the admin API
+async function loadFlaggedUsers() {
+  const container = document.getElementById('flagged-list');
+  if (!container) return;
+  container.innerHTML = '<p>Loading flagged players...</p>';
+
+  try {
+    const res = await fetch('/api/admin/flagged');
+    if (!res.ok) throw new Error('Failed to fetch flagged users');
+    const rows = await res.json();
+
+    container.innerHTML = '';
+    if (rows.length === 0) {
+      container.innerHTML = '<p>No flagged users.</p>';
+      return;
+    }
+
+    rows.forEach(row => {
+      const card = document.createElement('div');
+      card.className = 'flagged-card';
+      card.innerHTML = `
+        <p><strong>${row.player_id}</strong> — ${row.alert_type}</p>
+        <p>${new Date(row.created_at).toLocaleString()}</p>`;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Failed to load flagged users:', err);
+    container.innerHTML = '<p>Error loading flagged users.</p>';
   }
 }
 
@@ -224,6 +257,20 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDashboardStats();
   loadPlayerList();
   loadAccountAlerts();
+  loadFlaggedUsers();
+
+  setInterval(() => {
+    loadDashboardStats();
+    loadFlaggedUsers();
+  }, REFRESH_MS);
+
+  supabase
+    .channel('admin_dashboard_alerts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, () => {
+      loadAccountAlerts();
+      loadFlaggedUsers();
+    })
+    .subscribe();
 
   document.getElementById('search-btn').addEventListener('click', loadPlayerList);
   document.getElementById('status-filter').addEventListener('change', loadPlayerList);
