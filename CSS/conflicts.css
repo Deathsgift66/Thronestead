@@ -187,4 +187,24 @@ body {
   display: none;
 }
 
+/* Live Feed */
+.live-feed {
+  background: var(--dark-panel);
+  color: var(--parchment);
+  padding: 1rem;
+  border-radius: 8px;
+  width: 100%;
+  box-shadow: 0 2px 6px var(--shadow);
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .conflict-tabs {
+    flex-direction: column;
+  }
+  .conflict-tabs .tab {
+    margin: 0.25rem 0;
+  }
+}
+
 /* Footer - handled globally */
