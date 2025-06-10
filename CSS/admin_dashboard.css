@@ -112,6 +112,19 @@ p {
   color: var(--ink);
 }
 
+/* Flagged Users */
+#flagged-list {
+  margin-top: 0.75rem;
+}
+.flagged-card {
+  background: var(--panel-bg);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-left: 4px solid var(--alert-red);
+  box-shadow: 0 2px 4px var(--shadow);
+  color: var(--ink);
+}
+
 /* Buttons */
 button, .action-btn {
   background: var(--accent);
