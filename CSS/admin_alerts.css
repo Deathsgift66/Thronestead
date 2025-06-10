@@ -6,6 +6,13 @@ Author: Deathsgift66
 */
 @import url("./root_theme.css");
 
+:root {
+  --alert-red: var(--danger);
+  --alert-yellow: var(--warning);
+  --alert-blue: var(--info);
+  --alert-green: var(--success);
+}
+
 
 
 
@@ -117,3 +124,27 @@ tr:nth-child(even) {
   opacity: 0.9;
   box-shadow: 0 2px 6px var(--shadow);
 }
+
+/* Alert Feed */
+.alert-category {
+  margin-bottom: 1.5rem;
+}
+
+.alert-category h3 {
+  margin-bottom: 0.5rem;
+  color: var(--gold);
+  font-family: var(--font-header);
+}
+
+.alert-item {
+  background: var(--parchment-dark);
+  border: 1px solid var(--gold);
+  border-left: 6px solid var(--info);
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 6px var(--shadow-base);
+}
+
+.alert-item.severity-low { border-left-color: var(--alert-yellow); }
+.alert-item.severity-medium { border-left-color: var(--alert-blue); }
+.alert-item.severity-high { border-left-color: var(--alert-red); }
