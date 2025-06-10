@@ -235,7 +235,30 @@ def get_combat_logs(war_id: int, since: int = 0, db: Session = Depends(get_db)):
 
 
 @router.get("/api/battle-resolution/{war_id}")
-def battle_resolution(war_id: int, db: Session = Depends(get_db)):
+def battle_resolution(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
+    """Return post-battle summary for participants only."""
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        raise HTTPException(status_code=404, detail="war not found")
+
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="invalid user")
+
+    if (
+        user.kingdom_id not in [war.attacker_kingdom_id, war.defender_kingdom_id]
+        and not user.is_admin
+    ):
+        raise HTTPException(status_code=403, detail="not authorized")
+
     res = (
         db.query(models.BattleResolutionLog)
         .filter(models.BattleResolutionLog.war_id == war_id)
@@ -243,11 +266,13 @@ def battle_resolution(war_id: int, db: Session = Depends(get_db)):
     )
     if not res:
         raise HTTPException(status_code=404, detail="resolution not found")
+
     return {
         "winner_side": res.winner_side,
         "total_ticks": res.total_ticks,
         "attacker_casualties": res.attacker_casualties,
         "defender_casualties": res.defender_casualties,
+        "loot_summary": res.loot_summary,
     }
 
 

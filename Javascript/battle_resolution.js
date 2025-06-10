@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   await loadResolution();
+  document.getElementById('refresh-btn').addEventListener('click', () => loadResolution());
+  setInterval(() => loadResolution(true), 30000);
 
   // log to audit_log (best effort)
   try {
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ===============================
 // LOAD RESOLUTION DATA
 // ===============================
-async function loadResolution() {
+async function loadResolution(silent = false) {
   const summary = document.getElementById('resolution-summary');
   const scoreBox = document.getElementById('score-breakdown');
   const timeline = document.getElementById('combat-timeline');
@@ -47,8 +49,9 @@ async function loadResolution() {
   const lootBox = document.getElementById('loot-summary');
   const participantsBox = document.getElementById('participant-breakdown');
   const replayBtn = document.getElementById('replay-button');
+  const lastUpdated = document.getElementById('last-updated');
 
-  summary.innerHTML = 'Loading...';
+  if (!silent) summary.innerHTML = 'Loading...';
   scoreBox.innerHTML = '';
   timeline.innerHTML = '';
   casualty.innerHTML = '';
@@ -151,6 +154,8 @@ async function loadResolution() {
 
     // Replay button
     replayBtn.innerHTML = `<a href="battle_replay.html?war_id=${warId}" class="royal-button">Replay Battle</a>`;
+
+    lastUpdated.textContent = new Date().toLocaleTimeString();
   } catch (err) {
     console.error('Failed to load battle resolution', err);
     summary.textContent = 'Failed to load resolution data.';
