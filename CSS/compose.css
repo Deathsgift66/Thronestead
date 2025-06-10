@@ -1,0 +1,80 @@
+@import url("./root_theme.css");
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/messages.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--parchment);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 1rem;
+}
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  background: var(--leather);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-bottom: none;
+}
+.tab.active {
+  background: var(--stone-panel);
+}
+.tab-content {
+  display: none;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.tab-content.active {
+  display: block;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--parchment-dark);
+  border: var(--input-border);
+  border-radius: 4px;
+}
+.action-buttons {
+  text-align: right;
+  margin-top: 1rem;
+}
+.action-buttons button {
+  margin-left: 0.5rem;
+}
+.live-preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--stone-panel);
+  border: 1px dashed var(--gold);
+}
