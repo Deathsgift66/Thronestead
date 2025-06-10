@@ -8,8 +8,9 @@ from services.kingdom_history_service import (
     fetch_history,
     fetch_full_history,
 )
-from .progression_router import get_user_id, get_kingdom_id
+from .progression_router import get_kingdom_id
 from .admin_dashboard import verify_admin
+from ..security import verify_jwt_token
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/kingdom-history", tags=["kingdom_history"])
@@ -35,7 +36,11 @@ def kingdom_history(
 
 
 @router.post("")
-def create_history(payload: HistoryPayload, db: Session = Depends(get_db)):
+def create_history(
+    payload: HistoryPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     """Insert a new history event."""
 
     log_event(db, payload.kingdom_id, payload.event_type, payload.event_details)
@@ -45,7 +50,7 @@ def create_history(payload: HistoryPayload, db: Session = Depends(get_db)):
 @router.get("/{kingdom_id}/full")
 def full_history(
     kingdom_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """Return all historical data for the requested kingdom."""

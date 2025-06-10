@@ -13,6 +13,11 @@ async function init() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
+  const { data: { session } } = await supabase.auth.getSession();
+  const authHeaders = session
+    ? { 'Authorization': `Bearer ${session.access_token}`, 'X-User-ID': user.id }
+    : { 'X-User-ID': user.id };
+
   const { data: userData } = await supabase
     .from('users')
     .select('kingdom_id')
@@ -21,13 +26,14 @@ async function init() {
 
   if (!userData) return;
 
-  await loadFullHistory(user.id, userData.kingdom_id);
+  await loadFullHistory(authHeaders, userData.kingdom_id);
   bindCollapsibles();
+  subscribeToRealtime(userData.kingdom_id);
 }
 
-async function loadFullHistory(userId, kingdomId) {
+async function loadFullHistory(headers, kingdomId) {
   const res = await fetch(`/api/kingdom-history/${kingdomId}/full`, {
-    headers: { 'X-User-ID': userId }
+    headers
   });
   const data = await res.json();
 
@@ -80,8 +86,41 @@ function bindCollapsibles() {
     if (!header) return;
     header.addEventListener('click', () => {
       sec.classList.toggle('open');
+      const chev = header.querySelector('.chevron');
+      if (chev) {
+        chev.textContent = sec.classList.contains('open') ? '▼' : '▶';
+      }
     });
   });
+}
+
+function subscribeToRealtime(kingdomId) {
+  supabase
+    .channel('history-' + kingdomId)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'kingdom_history_log', filter: `kingdom_id=eq.${kingdomId}` },
+      payload => addTimelineEntry(payload.new)
+    )
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'kingdom_achievements', filter: `kingdom_id=eq.${kingdomId}` },
+      payload => addAchievementBadge(payload.new)
+    )
+    .subscribe();
+}
+
+function addTimelineEntry(entry) {
+  const li = document.createElement('li');
+  li.textContent = `[${new Date(entry.event_date).toLocaleDateString()}] ${entry.event_details}`;
+  document.getElementById('timeline').prepend(li);
+}
+
+function addAchievementBadge(rec) {
+  const div = document.createElement('div');
+  div.classList.add('achievement-badge');
+  div.textContent = rec.name || rec.achievement_code;
+  document.getElementById('achievement-grid').prepend(div);
 }
 
 function escapeHTML(str) {
