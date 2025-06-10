@@ -316,6 +316,36 @@ class AllianceWarPreplan(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class War(Base):
+    """Metadata for kingdom level wars."""
+
+    __tablename__ = 'wars'
+
+    war_id = Column(Integer, primary_key=True)
+    attacker_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    defender_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    attacker_name = Column(String)
+    defender_name = Column(String)
+    war_reason = Column(Text)
+    status = Column(String)
+    start_date = Column(DateTime(timezone=True))
+    end_date = Column(DateTime(timezone=True))
+    attacker_score = Column(Integer, default=0)
+    defender_score = Column(Integer, default=0)
+    attacker_kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
+    defender_kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
+    war_type = Column(String)
+    is_retaliation = Column(Boolean, default=False)
+    treaty_triggered = Column(Boolean, default=False)
+    victory_condition = Column(String)
+    outcome = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    submitted_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+
+
 class WarPreplan(Base):
     """Pre‑battle plans for tactical wars."""
 

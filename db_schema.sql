@@ -600,7 +600,17 @@ CREATE TABLE wars (
     start_date      TIMESTAMP WITH TIME ZONE,
     end_date        TIMESTAMP WITH TIME ZONE,
     attacker_score  INTEGER DEFAULT 0,
-    defender_score  INTEGER DEFAULT 0
+    defender_score  INTEGER DEFAULT 0,
+    attacker_kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    defender_kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    war_type        TEXT,
+    is_retaliation  BOOLEAN DEFAULT FALSE,
+    treaty_triggered BOOLEAN DEFAULT FALSE,
+    victory_condition TEXT,
+    outcome         TEXT,
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_updated    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    submitted_by    UUID REFERENCES users(user_id)
 );
 
 -- NOTIFICATIONS -------------------------------------------------------------

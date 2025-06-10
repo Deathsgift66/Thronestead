@@ -810,9 +810,22 @@ CREATE TABLE public.wars (
   end_date timestamp with time zone,
   attacker_score integer DEFAULT 0,
   defender_score integer DEFAULT 0,
+  attacker_kingdom_id integer,
+  defender_kingdom_id integer,
+  war_type text,
+  is_retaliation boolean DEFAULT false,
+  treaty_triggered boolean DEFAULT false,
+  victory_condition text,
+  outcome text,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  submitted_by uuid,
   CONSTRAINT wars_pkey PRIMARY KEY (war_id),
   CONSTRAINT wars_attacker_id_fkey FOREIGN KEY (attacker_id) REFERENCES public.users(user_id),
-  CONSTRAINT wars_defender_id_fkey FOREIGN KEY (defender_id) REFERENCES public.users(user_id)
+  CONSTRAINT wars_defender_id_fkey FOREIGN KEY (defender_id) REFERENCES public.users(user_id),
+  CONSTRAINT wars_attacker_kingdom_id_fkey FOREIGN KEY (attacker_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT wars_defender_kingdom_id_fkey FOREIGN KEY (defender_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT wars_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.wars_tactical (
   war_id integer NOT NULL DEFAULT nextval('wars_tactical_war_id_seq'::regclass),
