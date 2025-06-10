@@ -105,6 +105,15 @@ h2 {
   background-color: rgba(255, 255, 255, 0.04);
 }
 
+.leader-row td {
+  background-color: rgba(212, 179, 115, 0.2);
+}
+
+.crest-icon {
+  width: 32px;
+  height: 32px;
+}
+
 /* Action Buttons */
 .members-table button {
   background: var(--accent);

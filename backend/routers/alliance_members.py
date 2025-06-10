@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import AllianceMember
+from ..models import AllianceMember, Alliance
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])
@@ -34,6 +34,11 @@ class RankPayload(MemberAction):
 class ContributionPayload(BaseModel):
     user_id: str
     amount: int
+
+
+class TransferLeadershipPayload(BaseModel):
+    new_leader_id: str
+    alliance_id: int = 1
 
 
 @router.get("")
@@ -225,4 +230,46 @@ def approve_member(
     member.status = "active"
     db.commit()
     return {"message": "Member approved"}
+
+
+@router.post("/transfer_leadership")
+def transfer_leadership(
+    payload: TransferLeadershipPayload,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    alliance = db.query(Alliance).filter_by(alliance_id=payload.alliance_id).first()
+    if not alliance:
+        raise HTTPException(status_code=404, detail="Alliance not found")
+    if alliance.leader != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    new_leader = (
+        db.query(AllianceMember)
+        .filter(
+            AllianceMember.alliance_id == payload.alliance_id,
+            AllianceMember.user_id == payload.new_leader_id,
+        )
+        .first()
+    )
+    if not new_leader:
+        raise HTTPException(status_code=404, detail="Target member not found")
+
+    alliance.leader = new_leader.user_id
+
+    current_leader = (
+        db.query(AllianceMember)
+        .filter(
+            AllianceMember.alliance_id == payload.alliance_id,
+            AllianceMember.user_id == user_id,
+        )
+        .first()
+    )
+    if current_leader:
+        current_leader.rank = "Co-Leader"
+    new_leader.rank = "Leader"
+
+    db.commit()
+    log_action(db, user_id, "transfer_leader", f"Transferred to {new_leader.user_id}")
+    return {"message": "Leadership transferred", "leader": new_leader.user_id}
 
