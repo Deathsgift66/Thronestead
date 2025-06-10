@@ -134,3 +134,31 @@ def respond_to_treaty(
     log_alliance_activity(db, aid, user_id, f"Treaty {status.capitalize()}", str(payload.treaty_id))
     log_action(db, user_id, f"Treaty {status}", str(payload.treaty_id))
     return {"status": status}
+
+
+@router.get("/view/{treaty_id}")
+def view_treaty(
+    treaty_id: int,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    row = db.execute(
+        text(
+            "SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at "
+            "FROM alliance_treaties WHERE treaty_id = :tid"
+        ),
+        {"tid": treaty_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Treaty not found")
+    aid = get_alliance_id(db, user_id)
+    if aid not in (row[1], row[3]):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return {
+        "treaty_id": row[0],
+        "alliance_id": row[1],
+        "treaty_type": row[2],
+        "partner_alliance_id": row[3],
+        "status": row[4],
+        "signed_at": row[5].isoformat() if row[5] else None,
+    }
