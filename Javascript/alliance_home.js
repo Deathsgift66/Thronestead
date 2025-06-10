@@ -30,13 +30,30 @@ function populateAlliance(data) {
   if (!a) return;
   setText('alliance-name', a.name);
   setText('alliance-leader', a.leader);
+  setText('alliance-region', a.region);
+  setText('alliance-founded', formatDate(a.created_at));
+  setText('alliance-level', a.level);
   setText('alliance-status', a.status);
   setText('alliance-members', a.member_count);
+  setText('alliance-wars-count', a.wars_count);
+  setText('alliance-treaties-count', a.treaties_count);
+  setText('alliance-military', a.military_score);
+  setText('alliance-economy', a.economy_score);
+  setText('alliance-diplomacy', a.diplomacy_score);
   const banner = document.getElementById('alliance-banner-img');
   if (banner) banner.src = a.banner || 'Assets/banner.png';
 
+  if (data.vault) {
+    setText('alliance-fortification', data.vault.fortification_level ?? 0);
+    setText('alliance-army', data.vault.army_count ?? 0);
+    setText('vault-gold', data.vault.gold ?? 0);
+    setText('vault-food', data.vault.food ?? 0);
+    setText('vault-ore', data.vault.iron_ore ?? 0);
+  }
+
   renderProjects(data.projects);
   renderMembers(data.members);
+  renderTopContributors(data.members);
   renderQuests(data.quests);
   renderAchievements(data.achievements);
   renderActivity(data.activity);
@@ -70,6 +87,32 @@ function renderMembers(members) {
       <td>${m.contribution}</td>
       <td>${m.status}</td>`;
     body.appendChild(row);
+  });
+}
+
+function renderTopContributors(members) {
+  const list = document.getElementById('top-contrib-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!members.length) {
+    list.innerHTML = '<li>No data.</li>';
+    return;
+  }
+  const top = [...members]
+    .sort((a, b) => (b.contribution || 0) - (a.contribution || 0))
+    .slice(0, 5);
+  top.forEach(m => {
+    const li = document.createElement('li');
+    li.classList.add('top-contrib-entry');
+    const img = document.createElement('img');
+    img.classList.add('contrib-avatar');
+    img.src = m.avatar || 'Assets/default_avatar.png';
+    img.alt = m.username;
+    li.appendChild(img);
+    const span = document.createElement('span');
+    span.textContent = ` ${m.username} - ${m.contribution}`;
+    li.appendChild(span);
+    list.appendChild(li);
   });
 }
 
