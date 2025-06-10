@@ -7,6 +7,23 @@ Author: Deathsgift66
 // Live Battle Viewer — fetches terrain, units and combat logs
 
 import { supabase } from './supabaseClient.js';
+const UNIT_COUNTERS = { infantry: "archers", cavalry: "spearmen", archers: "infantry", mage: "infantry" };
+const TERRAIN_EFFECTS = { forest: "Defense bonus", river: "Slows movement", hill: "Ranged bonus" };
+function playTickSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.value = 880;
+    osc.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+  } catch (e) {
+    console.error("audio", e);
+  }
+}
+
+
 
 // Retrieve war_id from URL (?war_id=123)
 const urlParams = new URLSearchParams(window.location.search);
@@ -110,6 +127,7 @@ function countdownTick() {
   if (timer <= 0) timer = tickInterval;
   document.getElementById('tick-timer').textContent = `${timer}s`;
   if (lastTick !== 0 && timer === tickInterval) {
+    playTickSound();
     loadUnits();
     loadCombatLogs();
     loadScoreboard();
@@ -158,6 +176,7 @@ function renderBattleMap(tileMap) {
       else if (type === 'river') tile.style.backgroundColor = '#1E90FF';
       else if (type === 'hill') tile.style.backgroundColor = '#8B4513';
       else tile.style.backgroundColor = 'var(--stone-panel)';
+      tile.title = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${TERRAIN_EFFECTS[type] || ''}`;
       battleMap.appendChild(tile);
     }
   }
@@ -177,7 +196,8 @@ function renderUnits(units) {
     const unitDiv = document.createElement('div');
     unitDiv.className = 'unit-icon';
     unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();
-    unitDiv.title = `HP: ${unit.hp ?? '?'}  Morale: ${unit.morale ?? '?'}%`;
+    const counter = UNIT_COUNTERS[unit.unit_type] || 'none';
+    unitDiv.title = `HP: ${unit.hp ?? '?'}  Morale: ${unit.morale ?? '?'}%  Counters: ${counter}`;
     unitDiv.addEventListener('click', () => openOrderPanel(unit));
     tiles[index].appendChild(unitDiv);
     if (unit.morale !== undefined) {

@@ -251,6 +251,30 @@ async function updateKingdom() {
     alert('Failed to update kingdom');
   }
 }
+async function forceEndWar() {
+  const wid = document.getElementById("war-id").value;
+  if (!wid) return alert("Enter war ID");
+  try {
+    await postAdminAction("/api/admin/wars/force_end", { war_id: Number(wid) });
+    alert("War ended");
+  } catch (err) {
+    console.error("Force end failed:", err);
+    alert("Failed to end war");
+  }
+}
+
+async function rollbackCombatTick() {
+  const wid = document.getElementById("war-id").value;
+  if (!wid) return alert("Enter war ID");
+  try {
+    await postAdminAction("/api/admin/wars/rollback_tick", { war_id: Number(wid) });
+    alert("Tick rolled back");
+  } catch (err) {
+    console.error("Rollback failed:", err);
+    alert("Failed to rollback tick");
+  }
+}
+
 
 // 🧩 DOM Ready Hooks
 document.addEventListener('DOMContentLoaded', () => {
@@ -277,4 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('load-logs-btn').addEventListener('click', loadAuditLogs);
   document.getElementById('toggle-flag-btn').addEventListener('click', toggleFlag);
   document.getElementById('update-kingdom-btn').addEventListener('click', updateKingdom);
+  document.getElementById("force-end-war-btn").addEventListener("click", forceEndWar);
+  document.getElementById("rollback-tick-btn").addEventListener("click", rollbackCombatTick);
 });

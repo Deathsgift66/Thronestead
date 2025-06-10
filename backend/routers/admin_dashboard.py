@@ -140,3 +140,25 @@ def get_flagged_users(
         )
     ).fetchall()
     return [dict(r._mapping) for r in rows]
+class WarAction(BaseModel):
+    war_id: int
+
+
+@router.post("/wars/force_end")
+def force_end_war(payload: WarAction, admin_user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+    verify_admin(admin_user_id, db)
+    db.execute(text("UPDATE wars_tactical SET war_status = 'completed', is_concluded = TRUE, ended_at = NOW() WHERE war_id = :wid"), {"wid": payload.war_id})
+    db.commit()
+    log_action(db, admin_user_id, "Force End War", f"War {payload.war_id}")
+    return {"status": "ended", "war_id": payload.war_id}
+
+
+@router.post("/wars/rollback_tick")
+def rollback_combat_tick(payload: WarAction, admin_user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+    verify_admin(admin_user_id, db)
+    db.execute(text("UPDATE wars_tactical SET battle_tick = battle_tick - 1 WHERE war_id = :wid AND battle_tick > 0"), {"wid": payload.war_id})
+    db.execute(text("DELETE FROM combat_logs WHERE combat_id IN (SELECT combat_id FROM combat_logs WHERE war_id = :wid ORDER BY tick_number DESC LIMIT 1)"), {"wid": payload.war_id})
+    db.commit()
+    log_action(db, admin_user_id, "Rollback Combat Tick", f"War {payload.war_id}")
+    return {"status": "rolled_back", "war_id": payload.war_id}
+
