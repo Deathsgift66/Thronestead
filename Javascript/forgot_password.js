@@ -3,7 +3,10 @@ Project Name: Kingmakers Rise Frontend
 File Name: forgot_password.js
 Date: June 2, 2025
 Author: Deathsgift66
+Updated: Enhanced interactivity and Supabase tips
 */
+
+import { supabase } from './supabaseClient.js';
 
 const requestForm = document.getElementById('request-form');
 const emailInput = document.getElementById('email');
@@ -13,6 +16,9 @@ const statusBanner = document.getElementById('status');
 const resetCodeInput = document.getElementById('reset-code');
 const newPasswordInput = document.getElementById('new-password');
 const confirmPasswordInput = document.getElementById('confirm-password');
+const strengthMeter = document.getElementById('strength-meter');
+const tipsPanel = document.getElementById('tips-panel');
+const tipsList = document.getElementById('tips-list');
 
 requestForm.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -21,6 +27,7 @@ requestForm.addEventListener('submit', (e) => {
 
 document.getElementById('verify-code-btn').addEventListener('click', submitResetCode);
 document.getElementById('set-password-btn').addEventListener('click', submitNewPassword);
+newPasswordInput.addEventListener('input', updateStrengthMeter);
 
 async function submitForgotRequest() {
   const email = emailInput.value.trim();
@@ -109,4 +116,39 @@ function renderStatusMessage(msg, isError) {
   statusBanner.classList.remove('success-banner', 'error-banner');
   statusBanner.classList.add(isError ? 'error-banner' : 'success-banner');
 }
+
+function calculateStrength(pw) {
+  let score = 0;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  return score;
+}
+
+function updateStrengthMeter() {
+  const score = calculateStrength(newPasswordInput.value);
+  const percent = (score / 5) * 100;
+  const color = score >= 4 ? 'var(--success)' : score >= 3 ? 'var(--warning)' : 'var(--error)';
+  strengthMeter.innerHTML = `<div class="strength-meter-bar" style="width:${percent}%;background:${color}"></div>`;
+}
+
+async function loadSecurityTips() {
+  try {
+    const { data, error } = await supabase.from('security_tips').select('tip').limit(5);
+    if (error) throw error;
+    tipsList.innerHTML = '';
+    data.forEach(row => {
+      const li = document.createElement('li');
+      li.textContent = row.tip;
+      tipsList.appendChild(li);
+    });
+    tipsPanel.classList.remove('hidden');
+  } catch (err) {
+    console.warn('Failed to load tips');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadSecurityTips);
 
