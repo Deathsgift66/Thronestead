@@ -154,6 +154,10 @@ body {
   .sidebar {
     width: 100%;
   }
+  .hud {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
   #battle-map {
     overflow-x: auto;
     grid-template-columns: repeat(60, minmax(12px, 1fr));
