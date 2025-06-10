@@ -49,6 +49,7 @@ from .routers import (
     wars,
     quests_router,
     projects_router,
+    resources,
     kingdom_history,
     kingdom_achievements,
     login_routes,
@@ -112,6 +113,7 @@ app.include_router(alliance_home.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)
+app.include_router(resources.router)
 app.include_router(kingdom_history.router)
 app.include_router(forgot_password.router)
 app.include_router(kingdom_achievements.router)

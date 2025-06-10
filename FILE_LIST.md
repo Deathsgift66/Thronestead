@@ -248,6 +248,7 @@
 - backend/routers/player_management.py
 - backend/routers/progression_router.py
 - backend/routers/projects_router.py
+- backend/routers/resources.py
 - backend/routers/quests_router.py
 - backend/routers/settings_router.py
 - backend/routers/spies_router.py
@@ -299,6 +300,7 @@
 - tests/test_trade_log_service.py
 - tests/test_training_history_service.py
 - tests/test_training_queue_service.py
+- tests/test_resources_router.py
 - tests/test_village_modifiers_router.py
 - tests/test_vip_status_service.py
 - tests/test_war_model.py
