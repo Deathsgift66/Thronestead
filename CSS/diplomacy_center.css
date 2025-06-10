@@ -3,27 +3,28 @@
 body {
   margin: 0;
   font-family: var(--font-body);
-  background: url('../Assets/aged-wood-texture.png') no-repeat center center fixed;
+  background: url('../Assets/diplomacy_center_background.png') no-repeat center center fixed;
   background-size: cover;
-  color: var(--ink);
+  color: var(--parchment);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-.diplomacy-center-container {
+.diplomacy-center-grid {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: 1fr minmax(auto, 900px) 1fr;
+  gap: var(--gap-default);
   box-sizing: border-box;
 }
 
-.diplomacy-center-container section {
+.diplomacy-center-grid > section {
+  grid-column: 2;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(6px);
   border-radius: 12px;
@@ -80,7 +81,11 @@ button:hover {
 }
 
 @media (max-width: 768px) {
-  .diplomacy-center-container {
+  .diplomacy-center-grid {
+    grid-template-columns: 1fr;
     padding: 1rem;
+  }
+  .diplomacy-center-grid > section {
+    grid-column: 1;
   }
 }
