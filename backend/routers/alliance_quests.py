@@ -158,6 +158,19 @@ def start_quest(
         .first()
     )
     if existing:
+        if existing.status == "completed" and quest.repeatable:
+            if quest.max_attempts and existing.attempt_count >= quest.max_attempts:
+                raise HTTPException(status_code=400, detail="Max attempts reached")
+            hours = quest.duration_hours or 0
+            existing.status = "active"
+            existing.progress = 0
+            existing.ends_at = datetime.utcnow() + timedelta(hours=hours)
+            existing.started_at = datetime.utcnow()
+            existing.started_by = user_id
+            existing.reward_claimed = False
+            db.commit()
+            log_action(db, user_id, "Alliance Quest Restarted", payload.quest_code)
+            return {"status": "started"}
         raise HTTPException(status_code=400, detail="Quest already started or completed")
     hours = quest.duration_hours or 0
     ends_at = datetime.utcnow() + timedelta(hours=hours)
@@ -255,8 +268,101 @@ def quest_detail(
         "max_attempts": cat.max_attempts,
         "progress": tracking.progress if tracking else None,
         "status": tracking.status if tracking else None,
+        "reward_claimed": tracking.reward_claimed if tracking else None,
         "ends_at": tracking.ends_at if tracking else None,
         "started_at": tracking.started_at if tracking else None,
         "contributions": contributions,
     }
+
+
+class ProgressPayload(BaseModel):
+    quest_code: str
+    amount: int
+
+
+@router.post("/progress")
+def update_progress(
+    payload: ProgressPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid, _ = get_alliance_info(user_id, db)
+    row = (
+        db.query(QuestAllianceTracking)
+        .filter_by(alliance_id=aid, quest_code=payload.quest_code)
+        .first()
+    )
+    if not row or row.status != "active":
+        raise HTTPException(status_code=404, detail="Quest not active")
+    row.progress = min(100, row.progress + payload.amount)
+    row.last_updated = datetime.utcnow()
+    if row.progress >= 100:
+        row.progress = 100
+        row.status = "completed"
+        row.attempt_count = (row.attempt_count or 0) + 1
+        quest = (
+            db.query(QuestAllianceCatalogue)
+            .filter_by(quest_code=payload.quest_code)
+            .first()
+        )
+        if quest and quest.rewards:
+            next_code = quest.rewards.get("unlock_next")
+            if next_code:
+                next_row = (
+                    db.query(QuestAllianceTracking)
+                    .filter_by(alliance_id=aid, quest_code=next_code)
+                    .first()
+                )
+                if not next_row:
+                    next_quest = (
+                        db.query(QuestAllianceCatalogue)
+                        .filter_by(quest_code=next_code)
+                        .first()
+                    )
+                    if next_quest:
+                        hours = next_quest.duration_hours or 0
+                        db.add(
+                            QuestAllianceTracking(
+                                alliance_id=aid,
+                                quest_code=next_code,
+                                status="active",
+                                progress=0,
+                                ends_at=datetime.utcnow()
+                                + timedelta(hours=hours),
+                                started_by=user_id,
+                            )
+                        )
+    db.commit()
+    return {"status": row.status, "progress": row.progress}
+
+
+class ClaimPayload(BaseModel):
+    quest_code: str
+
+
+@router.post("/claim")
+def claim_reward(
+    payload: ClaimPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    aid, role = get_alliance_info(user_id, db)
+    if role not in {"Leader", "Co-Leader", "Officer"}:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    row = (
+        db.query(QuestAllianceTracking)
+        .filter_by(alliance_id=aid, quest_code=payload.quest_code)
+        .first()
+    )
+    if not row or row.status != "completed" or row.reward_claimed:
+        raise HTTPException(status_code=400, detail="Quest not claimable")
+    quest = (
+        db.query(QuestAllianceCatalogue)
+        .filter_by(quest_code=payload.quest_code)
+        .first()
+    )
+    row.reward_claimed = True
+    db.commit()
+    log_action(db, user_id, "Alliance Quest Reward Claimed", payload.quest_code)
+    return {"status": "claimed", "rewards": quest.rewards if quest else {}}
 

@@ -87,6 +87,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // ✅ Claim reward button
+  const claimBtn = document.getElementById("claim-reward-button");
+  if (claimBtn) {
+    claimBtn.addEventListener("click", async () => {
+      const questId = claimBtn.dataset.questId;
+      if (!questId) return;
+      const res = await fetch("/api/alliance-quests/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quest_code: questId })
+      });
+      const result = await res.json();
+      alert(result.message || "Reward claimed!");
+      document.getElementById("quest-modal").classList.remove("open");
+      await loadQuests("completed");
+    });
+  }
+
   window.addEventListener('beforeunload', () => {
     if (questChannel) supabase.removeChannel(questChannel);
   });
@@ -207,9 +225,16 @@ function openQuestModal(q) {
   const rewardsList = document.getElementById("modal-quest-rewards");
   rewardsList.innerHTML = "";
   if (q.rewards) {
-    Object.entries(q.rewards).forEach(([k, v]) => {
+    Object.entries(q.rewards).forEach(([type, reward]) => {
       const li = document.createElement("li");
-      li.textContent = `${k}: ${v}`;
+      if (typeof reward === "object") {
+        const details = Object.entries(reward)
+          .map(([rk, rv]) => `${rk} ${rv}`)
+          .join(", ");
+        li.textContent = `${type}: ${details}`;
+      } else {
+        li.textContent = `${type}: ${reward}`;
+      }
       rewardsList.appendChild(li);
     });
   }
@@ -237,6 +262,16 @@ function openQuestModal(q) {
     } else {
       acceptBtn.classList.add("hidden");
       document.getElementById("role-check-message").textContent = "Quest already completed.";
+    }
+  }
+
+  const claimBtn = document.getElementById("claim-reward-button");
+  if (claimBtn) {
+    if (q.status === 'completed' && !q.reward_claimed) {
+      claimBtn.classList.remove("hidden");
+      claimBtn.dataset.questId = q.quest_code;
+    } else {
+      claimBtn.classList.add("hidden");
     }
   }
 

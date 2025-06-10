@@ -699,6 +699,7 @@ class QuestAllianceTracking(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     attempt_count = Column(Integer, default=1)
+    reward_claimed = Column(Boolean, default=False)
     started_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
