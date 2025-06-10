@@ -42,6 +42,7 @@ the records created during onboarding.
 ✅ Alliance project catalogue documented in [docs/project_alliance_catalogue.md](docs/project_alliance_catalogue.md)
 ✅ Alliance projects runtime table documented in [docs/projects_alliance.md](docs/projects_alliance.md)
 ✅ Alliance quest contributions documented in [docs/quest_alliance_contributions.md](docs/quest_alliance_contributions.md)
+✅ Alliance member roster uses Supabase RPC `get_alliance_members_detailed`
 
 
 ✅ VIP status system documented in [docs/vip_status.md](docs/vip_status.md)

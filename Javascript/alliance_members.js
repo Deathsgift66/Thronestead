@@ -55,14 +55,14 @@ let members = [];
 
 async function fetchMembers() {
   const tbody = document.getElementById('members-list');
-  tbody.innerHTML = `<tr><td colspan="5">Loading members...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="10">Loading members...</td></tr>`;
 
   try {
-    const res = await fetch('/api/alliance_members');
+    const res = await fetch('/api/alliance-members/view');
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
     const json = await res.json();
-    members = json.members;
+    members = json.alliance_members;
     renderMembers(members);
 
   } catch (err) {
@@ -94,12 +94,18 @@ async function renderMembers(data) {
   data.forEach(member => {
     const canManage = isAdmin || rankPower.indexOf(userRank) > rankPower.indexOf(member.rank);
     const row = document.createElement('tr');
+    const showFull = member.same_alliance;
 
     row.innerHTML = `
-      <td>${member.name}</td>
+      <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${member.username}</a>${member.is_vip ? ' ⭐' : ''}</td>
       <td>${member.rank}</td>
-      <td>${member.status}</td>
-      <td>${member.contribution}</td>
+      <td>${showFull ? (member.role || '—') : '—'}</td>
+      <td>${showFull ? member.status : '—'}</td>
+      <td>${showFull ? member.contribution : '—'}</td>
+      <td>${showFull ? member.economy_score : '—'}</td>
+      <td>${showFull ? member.military_score : '—'}</td>
+      <td>${showFull ? member.diplomacy_score : '—'}</td>
+      <td>${showFull ? member.total_output : '—'}</td>
       <td>
         ${canManage ? `
           <button onclick="promoteMember('${member.user_id}')">⬆️</button>
@@ -118,18 +124,18 @@ function setupUIControls() {
     const sortBy = document.getElementById('sort-by').value;
     const direction = document.getElementById('sort-direction').value;
 
-    let filtered = members.filter(m => m.name.toLowerCase().includes(keyword));
+    let filtered = members.filter(m => m.username.toLowerCase().includes(keyword));
 
     filtered.sort((a, b) => {
-      if (sortBy === 'contribution') {
-        return direction === 'asc'
-          ? a.contribution - b.contribution
-          : b.contribution - a.contribution;
-      } else {
-        return direction === 'asc'
-          ? ('' + a[sortBy]).localeCompare(b[sortBy])
-          : ('' + b[sortBy]).localeCompare(a[sortBy]);
+      const numericFields = ['contribution','military_score','economy_score','diplomacy_score','total_output'];
+      if (numericFields.includes(sortBy)) {
+        const valA = Number(a[sortBy] || 0);
+        const valB = Number(b[sortBy] || 0);
+        return direction === 'asc' ? valA - valB : valB - valA;
       }
+      return direction === 'asc'
+        ? ('' + a[sortBy]).localeCompare(b[sortBy])
+        : ('' + b[sortBy]).localeCompare(a[sortBy]);
     });
 
     renderMembers(filtered);
