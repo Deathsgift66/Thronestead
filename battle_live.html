@@ -65,6 +65,13 @@ Author: Deathsgift66
 
   <!-- Battle Area -->
   <section class="battle-area" aria-label="Battlefield">
+    <div class="hud" aria-label="Battle Status">
+      <div>Weather: <span id="weather"></span></div>
+      <div>Phase: <span id="phase"></span></div>
+      <div>Castle HP: <span id="castle-hp"></span></div>
+      <div>Score A: <span id="score-a"></span> vs B: <span id="score-b"></span></div>
+      <div>Next Tick in: <span id="tick-timer"></span></div>
+    </div>
     <div class="battle-container">
       <div id="battle-map" class="battle-map" aria-label="Battle Map">
         <!-- Tiles + units rendered by JS -->
@@ -79,6 +86,14 @@ Author: Deathsgift66
           <button class="btn-fantasy" onclick="refreshBattle()">Refresh Battle Data</button>
         </div>
       </aside>
+    </div>
+    <div id="order-panel" class="order-panel hidden" aria-label="Issue Orders">
+      <h3>Unit Orders</h3>
+      <div>Unit: <span id="order-unit"></span></div>
+      <label>Move to X:<input type="number" id="order-x" min="0" max="59"></label>
+      <label>Y:<input type="number" id="order-y" min="0" max="19"></label>
+      <button class="btn-fantasy" onclick="submitOrders()">Submit</button>
+      <button class="btn-fantasy" onclick="closeOrderPanel()">Close</button>
     </div>
   </section>
 

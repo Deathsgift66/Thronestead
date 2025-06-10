@@ -16,9 +16,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadTerrain();
   await loadUnits();
   await loadCombatLogs();
+  await loadStatus();
 
   // Refresh unit positions periodically
   setInterval(loadUnits, 10000);
+  setInterval(pollStatus, 5000);
 });
 
 // =============================================
@@ -55,11 +57,53 @@ async function loadUnits() {
 // =============================================
 async function loadCombatLogs() {
   try {
-    const response = await fetch(`/api/battle/logs/${warId}`);
+    const response = await fetch(`/api/battle/logs/${warId}?since=${logsTick}`);
     const data = await response.json();
+    if (data.combat_logs.length) {
+      logsTick = data.combat_logs[data.combat_logs.length - 1].tick_number;
+    }
     renderCombatLog(data.combat_logs);
   } catch (err) {
     console.error('Error loading combat logs:', err);
+  }
+}
+
+// =============================================
+// LOAD STATUS
+// =============================================
+let lastTick = 0;
+let tickInterval = 300;
+let logsTick = 0;
+async function loadStatus() {
+  try {
+    const res = await fetch(`/api/battle/status/${warId}`);
+    const data = await res.json();
+    lastTick = data.battle_tick;
+    tickInterval = data.tick_interval_seconds;
+    document.getElementById('weather').textContent = data.weather;
+    document.getElementById('phase').textContent = data.phase;
+    document.getElementById('castle-hp').textContent = data.castle_hp;
+    document.getElementById('score-a').textContent = data.attacker_score;
+    document.getElementById('score-b').textContent = data.defender_score;
+  } catch (e) {
+    console.error('Error loading status', e);
+  }
+}
+
+function pollStatus() {
+  loadStatus().then(() => {
+    countdownTick();
+  });
+}
+
+let timer = tickInterval;
+function countdownTick() {
+  timer -= 5;
+  if (timer <= 0) timer = tickInterval;
+  document.getElementById('tick-timer').textContent = `${timer}s`;
+  if (lastTick !== 0 && timer === tickInterval) {
+    loadUnits();
+    loadCombatLogs();
   }
 }
 
@@ -123,6 +167,7 @@ function renderUnits(units) {
     const unitDiv = document.createElement('div');
     unitDiv.className = 'unit-icon';
     unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();
+    unitDiv.addEventListener('click', () => openOrderPanel(unit));
     tiles[index].appendChild(unitDiv);
   });
 }
@@ -136,4 +181,39 @@ function renderCombatLog(logs) {
     line.innerText = `[Tick ${log.tick_number}] ${log.event_type.toUpperCase()} — ${log.notes} (Damage: ${log.damage_dealt})`;
     logDiv.appendChild(line);
   });
+}
+
+// =============================================
+// ORDER PANEL
+// =============================================
+let activeUnit = null;
+
+function openOrderPanel(unit) {
+  activeUnit = unit;
+  document.getElementById('order-unit').textContent = unit.unit_type + ' #' + unit.movement_id;
+  document.getElementById('order-x').value = unit.position_x;
+  document.getElementById('order-y').value = unit.position_y;
+  document.getElementById('order-panel').classList.remove('hidden');
+}
+
+function closeOrderPanel() {
+  document.getElementById('order-panel').classList.add('hidden');
+  activeUnit = null;
+}
+
+async function submitOrders() {
+  if (!activeUnit) return;
+  const x = parseInt(document.getElementById('order-x').value, 10);
+  const y = parseInt(document.getElementById('order-y').value, 10);
+  try {
+    await fetch('/api/battle/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ movement_id: activeUnit.movement_id, position_x: x, position_y: y })
+    });
+    closeOrderPanel();
+    refreshBattle();
+  } catch (e) {
+    console.error('Failed to submit orders', e);
+  }
 }
