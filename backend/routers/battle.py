@@ -438,3 +438,78 @@ def get_battle_scoreboard(
         "defender_score": score.defender_score,
         "victor": score.victor,
     }
+
+
+def _aggregate_war_summary(db: Session, war_id: int) -> dict:
+    """Return aggregated kill and morale totals for a war."""
+
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        return {}
+
+    units = (
+        db.query(models.UnitMovement.movement_id, models.UnitMovement.kingdom_id)
+        .filter(models.UnitMovement.war_id == war_id)
+        .all()
+    )
+    owner_by_unit = {u.movement_id: u.kingdom_id for u in units}
+
+    logs = (
+        db.query(models.CombatLog)
+        .filter(models.CombatLog.war_id == war_id)
+        .all()
+    )
+
+    att_id = war.attacker_kingdom_id
+    def_id = war.defender_kingdom_id
+
+    summary = {
+        "attacker_kills": 0,
+        "defender_kills": 0,
+        "attacker_morale": 0,
+        "defender_morale": 0,
+    }
+
+    for log in logs:
+        kid = owner_by_unit.get(log.defender_unit_id)
+        if kid == att_id:
+            summary["attacker_kills"] += log.damage_dealt or 0
+            summary["attacker_morale"] += log.morale_shift or 0
+        elif kid == def_id:
+            summary["defender_kills"] += log.damage_dealt or 0
+            summary["defender_morale"] += log.morale_shift or 0
+
+    return summary
+
+
+@router.get("/api/battle/summary/{war_id}")
+def get_battle_summary(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
+    """Return simple aggregated results for a war."""
+
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        raise HTTPException(status_code=404, detail="war not found")
+
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="invalid user")
+
+    if (
+        user.kingdom_id not in [war.attacker_kingdom_id, war.defender_kingdom_id]
+        and not user.is_admin
+    ):
+        raise HTTPException(status_code=403, detail="not authorized")
+
+    return _aggregate_war_summary(db, war_id)
