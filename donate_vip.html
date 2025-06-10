@@ -61,37 +61,21 @@ Author: Deathsgift66
 </header>
 
 <!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Donate & VIP Interface">
-
-
-
+<main class="donate-vip-container" aria-label="Donate & VIP Interface">
   <!-- Core VIP Panel -->
   <section class="alliance-members-container">
     <h2>Donate & VIP</h2>
     <p>Support the game and unlock exclusive cosmetic VIP rewards. VIP status offers NO gameplay advantage and is purely cosmetic or convenience-based.</p>
 
-    <section class="vip-container">
-      <div class="vip-tier">
-        <h3>VIP Tier 1</h3>
-        <p>Supporter Badge + Exclusive Chat Emote + VIP Profile Frame.</p>
-        <button class="donate-btn" id="vip1-btn">Donate $3/month</button>
-      </div>
+    <div id="current-status-banner" class="vip-expiry-banner"></div>
+    <div id="founder-preview" class="founder-badge" hidden></div>
+    <div id="vip-tier-cards" class="vip-tier-cards"></div>
 
-      <div class="vip-tier">
-        <h3>VIP Tier 2</h3>
-        <p>All VIP 1 rewards + Exclusive Kingdom Banner + Custom Avatar Border.</p>
-        <button class="donate-btn" id="vip2-btn">Donate $5/month</button>
-      </div>
-
-      <div class="vip-tier">
-        <h3>VIP Tier 3</h3>
-        <p>All VIP 2 rewards + VIP-Only Cosmetic Building Skins + Exclusive Forum Badge.</p>
-        <button class="donate-btn" id="vip3-btn">Donate $10/month</button>
-      </div>
-    </section>
-
+    <form id="donation-form" class="vip-donation-form" hidden>
+      <input type="hidden" id="selected-tier-id" />
+      <button type="submit" class="vip-button">Donate</button>
+    </form>
   </section>
-
 </main>
 
 <!-- Footer -->

@@ -19,7 +19,7 @@ body {
   min-height: 100vh;
 }
 
-.main-centered-container {
+.donate-vip-container {
   width: auto;
   max-width: 1200px;
   margin: 0 auto;
@@ -130,6 +130,69 @@ body {
 .donate-btn:hover {
   background: var(--gold);
   color: #1a1a1a;
+}
+
+/* New VIP Donation Styles */
+.vip-tier-card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--border-radius);
+  padding: var(--padding-md);
+  text-align: center;
+  box-shadow: var(--box-shadow);
+  position: relative;
+}
+
+.vip-button {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: var(--btn-border);
+  border-radius: var(--btn-radius);
+  padding: var(--btn-padding);
+  cursor: pointer;
+  transition: background var(--transition-medium), color var(--transition-medium);
+}
+.vip-button:hover {
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+}
+
+.vip-expiry-banner {
+  background: var(--banner-dark);
+  color: var(--parchment);
+  padding: var(--padding-sm);
+  border-radius: var(--border-radius-small);
+  margin-bottom: var(--gap-default);
+  text-align: center;
+}
+
+.founder-badge {
+  background: var(--gold);
+  color: var(--ink);
+  padding: var(--padding-sm);
+  border-radius: var(--border-radius-small);
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: var(--gap-default);
+}
+
+.vip-perks-table {
+  width: 100%;
+  background: var(--table-bg);
+  border: var(--table-border);
+  border-radius: var(--table-radius);
+  margin-top: var(--gap-default);
+  text-align: left;
+  color: var(--ink);
+}
+.vip-perks-table th,
+.vip-perks-table td {
+  padding: var(--table-padding);
+  border-bottom: 1px solid var(--leather);
+}
+.vip-perks-table th {
+  background: var(--table-header-bg);
+  color: var(--ink);
 }
 
 /* Footer - handled globally */
