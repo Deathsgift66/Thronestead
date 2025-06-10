@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import verify_jwt_token
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/account", tags=["account"])
@@ -25,7 +25,7 @@ class SessionPayload(BaseModel):
 
 @router.get("/profile")
 def load_profile(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     row = db.execute(
@@ -81,7 +81,7 @@ def load_profile(
 @router.post("/update")
 def update_profile(
     payload: UpdatePayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     # fetch current values
@@ -153,7 +153,7 @@ def update_profile(
 @router.post("/logout-session")
 def logout_session(
     payload: SessionPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     row = db.execute(

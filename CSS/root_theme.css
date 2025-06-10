@@ -283,3 +283,25 @@ header.kr-top-banner {
     padding: 0.5rem 1rem;
   }
 }
+
+/* -----------------------------------------------
+   Theme Variants
+------------------------------------------------ */
+body[data-theme="light"] {
+  --input-bg: #ffffff;
+  --panel-bg: #f5f5f5;
+  background-color: #fafafa;
+  color: var(--ink);
+}
+body[data-theme="dark"] {
+  --input-bg: var(--dark-panel);
+  --panel-bg: var(--dark-panel);
+  background-color: #1b1b1b;
+  color: var(--text-on-dark);
+}
+body[data-theme="parchment"] {
+  --input-bg: var(--parchment-dark);
+  --panel-bg: var(--panel-bg);
+  background-color: var(--stone-bg);
+  color: var(--parchment);
+}
