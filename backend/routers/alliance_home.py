@@ -4,13 +4,17 @@ from sqlalchemy import text
 
 from ..database import get_db
 from ..models import User, Alliance, AllianceMember, AllianceVault
+from .progression_router import get_user_id
 
 router = APIRouter(prefix="/api/alliance-home", tags=["alliance_home"])
 
 
 @router.get("/details")
-def alliance_details(user_id: str, db: Session = Depends(get_db)):
-    """Return aggregated alliance details for a given user_id."""
+def alliance_details(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return aggregated alliance details for the current user."""
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user or not user.alliance_id:
         raise HTTPException(status_code=404, detail="Alliance not found")
