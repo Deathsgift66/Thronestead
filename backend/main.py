@@ -39,6 +39,7 @@ from .routers import (
     admin_dashboard,
     account_settings,
     spies_router,
+    overview as overview_router,
     legal,
     trade_logs,
     training_history,
@@ -118,5 +119,6 @@ app.include_router(login_routes.router)
 app.include_router(legal.router)
 app.include_router(profile_view.router)
 app.include_router(navbar.router)
+app.include_router(overview_router.router)
 
 
