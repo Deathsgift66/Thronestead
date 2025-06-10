@@ -29,6 +29,7 @@ def seed_user(db):
         email="t@example.com",
         kingdom_id=1,
         alliance_id=1,
+        alliance_role="Leader",
     )
     db.add(user)
     db.commit()

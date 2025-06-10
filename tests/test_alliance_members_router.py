@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base
-from backend.models import AllianceMember
+from backend.models import AllianceMember, User
 from backend.routers.alliance_members import promote, RankPayload
 
 
@@ -17,6 +17,7 @@ def test_promote_updates_rank():
     Session = setup_db()
     db = Session()
     db.add(AllianceMember(alliance_id=1, user_id="u1", username="A", rank="Member"))
+    db.add(User(user_id="admin", username="admin", email="a@example.com", alliance_id=1, alliance_role="Leader"))
     db.commit()
 
     promote(RankPayload(user_id="u1", alliance_id=1, new_rank="Leader"), user_id="admin", db=db)

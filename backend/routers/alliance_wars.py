@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .progression_router import get_user_id, get_kingdom_id
 from services.audit_service import log_action, log_alliance_activity
+from services.role_service import AllianceRole, require_role
 from ..models import Notification
 
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
@@ -52,7 +53,7 @@ def declare_war(
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
-    attacker = get_alliance_id(db, user_id)
+    attacker, _ = require_role(db, user_id, {AllianceRole.LEADER, AllianceRole.OFFICER})
     row = db.execute(
         text(
             "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "

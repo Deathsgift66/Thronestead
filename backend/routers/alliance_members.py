@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import AllianceMember
 from services.audit_service import log_action
+from services.role_service import AllianceRole, require_role
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])
 
@@ -116,6 +117,7 @@ def promote(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
+    require_role(db, user_id, {AllianceRole.LEADER, AllianceRole.OFFICER})
     member = (
         db.query(AllianceMember)
         .filter(
@@ -158,6 +160,7 @@ def remove(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
+    require_role(db, user_id, {AllianceRole.LEADER, AllianceRole.OFFICER})
     member = (
         db.query(AllianceMember)
         .filter(

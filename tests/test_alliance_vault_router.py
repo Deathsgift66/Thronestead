@@ -21,6 +21,8 @@ def create_user(db):
         username="tester",
         display_name="Test User",
         email="t@example.com",
+        alliance_id=1,
+        alliance_role="Leader",
     )
     db.add(user)
     db.commit()
@@ -34,7 +36,8 @@ def test_deposit_and_withdraw():
 
     deposit(
         VaultTransaction(alliance_id=1, resource="wood", amount=100, user_id=user_id),
-        db,
+        user_id=user_id,
+        db=db,
     )
     vault = db.query(AllianceVault).filter_by(alliance_id=1).first()
     assert vault.wood == 100
@@ -45,7 +48,8 @@ def test_deposit_and_withdraw():
 
     withdraw(
         VaultTransaction(alliance_id=1, resource="wood", amount=40, user_id=user_id),
-        db,
+        user_id=user_id,
+        db=db,
     )
     vault = db.query(AllianceVault).filter_by(alliance_id=1).first()
     assert vault.wood == 60

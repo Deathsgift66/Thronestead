@@ -6,6 +6,7 @@ from ..database import get_db
 from ..models import AllianceVault, AllianceVaultTransactionLog, User
 from services.audit_service import log_action
 from services.trade_log_service import record_trade
+from services.role_service import AllianceRole, require_role
 
 router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 # Secondary router mirroring simplified REST style endpoints used by the
@@ -133,6 +134,7 @@ def withdraw(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
+    require_role(db, user_id, {AllianceRole.LEADER, AllianceRole.OFFICER})
     supabase = get_supabase_client()
     alliance_res = (
         supabase.table("users")
