@@ -7,10 +7,27 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let questChannel = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
   // ✅ Initial load
   await loadKingdomQuests();
+
+  questChannel = supabase
+    .channel('public:quest_kingdom_tracking')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'quest_kingdom_tracking' },
+      () => {
+        loadKingdomQuests();
+      }
+    )
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    if (questChannel) supabase.removeChannel(questChannel);
+  });
 });
 
 // ✅ Load Kingdom Quests

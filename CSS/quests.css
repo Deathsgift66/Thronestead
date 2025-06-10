@@ -127,3 +127,15 @@ body {
   border-radius: 5px;
 }
 
+/* Responsive grid for quest panels */
+.quests-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .quests-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
