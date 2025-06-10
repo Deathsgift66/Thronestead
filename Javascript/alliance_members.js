@@ -57,7 +57,7 @@ let membersChannel;
 
 async function fetchMembers() {
   const tbody = document.getElementById('members-list');
-  tbody.innerHTML = `<tr><td colspan="10">Loading members...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="11">Loading members...</td></tr>`;
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -86,22 +86,26 @@ async function getUserPrivileges() {
 
   return {
     isAdmin: adminRes.data?.is_admin || false,
-    userRank: rankRes.data?.rank || null
+    userRank: rankRes.data?.rank || null,
+    userId: user.id
   };
 }
 
 async function renderMembers(data) {
   const tbody = document.getElementById('members-list');
   tbody.innerHTML = '';
-  const { isAdmin, userRank } = await getUserPrivileges();
+  const { isAdmin, userRank, userId } = await getUserPrivileges();
+  const isLeader = userRank === 'Leader';
   const rankPower = ['Member', 'Diplomat', 'War Officer', 'Co-Leader', 'Leader'];
 
   data.forEach(member => {
     const canManage = isAdmin || rankPower.indexOf(userRank) > rankPower.indexOf(member.rank);
     const row = document.createElement('tr');
+    if (member.rank === 'Leader') row.classList.add('leader-row');
     const showFull = member.same_alliance;
 
     row.innerHTML = `
+      <td data-label="Crest"><img src="../images/crests/${member.crest || 'default.png'}" alt="Crest" class="crest-icon"></td>
       <td data-label="Name"><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${member.username}</a>${member.is_vip ? ' ⭐' : ''}</td>
       <td data-label="Rank">${member.rank}</td>
       <td data-label="Role">${showFull ? (member.role || '—') : '—'}</td>
@@ -116,6 +120,7 @@ async function renderMembers(data) {
           <button onclick="promoteMember('${member.user_id}')">⬆️</button>
           <button onclick="demoteMember('${member.user_id}')">⬇️</button>
           <button onclick="removeMember('${member.user_id}')">❌</button>
+          ${isLeader && member.user_id !== userId ? `<button onclick="transferLeadership('${member.user_id}')">👑</button>` : ''}
         ` : '—'}
       </td>
     `;
@@ -220,6 +225,27 @@ async function removeMember(userId) {
   } catch (err) {
     console.error('❌ Remove failed:', err);
     alert('❌ Remove failed: ' + err.message);
+  }
+}
+
+async function transferLeadership(userId) {
+  if (!confirm('Transfer alliance leadership to this member?')) return;
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch('/api/alliance_members/transfer_leadership', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+      body: JSON.stringify({ new_leader_id: userId })
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    alert('✅ Leadership transferred.');
+    fetchMembers();
+
+  } catch (err) {
+    console.error('❌ Transfer failed:', err);
+    alert('❌ Transfer failed: ' + err.message);
   }
 }
 
