@@ -1,0 +1,55 @@
+<!--
+Project Name: Kingmakers Rise Frontend
+File Name: account_projects.html
+--> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Projects | Kingmaker's Rise</title>
+  <meta name="description" content="Manage your personal kingdom projects." />
+  <link rel="stylesheet" href="CSS/account_projects.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="Javascript/account_projects.js"></script>
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script type="module" src="Javascript/progressionBanner.js"></script>
+</head>
+<body>
+  <div id="navbar-container"></div>
+  <script>
+    fetch('navbar.html').then(r=>r.text()).then(html=>{document.getElementById('navbar-container').innerHTML=html});
+  </script>
+  <header class="kr-top-banner" aria-label="Account Projects Banner">
+    Account Projects
+  </header>
+  <main class="main-centered-container" aria-label="Account Projects Interface">
+    <section class="account-projects-container">
+      <h2>Your Projects</h2>
+      <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="available-projects">Available</button>
+        <button class="tab-btn" data-tab="active-projects">Active</button>
+      </div>
+      <div class="project-panel" id="power-score-panel">
+        <h3 class="panel-title">Kingdom Power Score</h3>
+        <div id="power-score"></div>
+      </div>
+      <div id="available-projects" class="tab-content active">
+        <div class="project-list" id="available-projects-list"></div>
+      </div>
+      <div id="active-projects" class="tab-content">
+        <div class="project-list" id="active-projects-list"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div>&copy; 2025 Kingmaker’s Rise</div>
+    <div><a href="legal.html">View Legal Documents</a></div>
+  </footer>
+</body>
+</html>

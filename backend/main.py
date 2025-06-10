@@ -37,6 +37,7 @@ from .routers import (
     admin_dashboard,
     account_settings,
     spies_router,
+    account_projects,
     trade_logs,
     training_history,
     village_modifiers,
@@ -102,6 +103,7 @@ app.include_router(alliance_home.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)
+app.include_router(account_projects.router)
 app.include_router(kingdom_history.router)
 app.include_router(forgot_password.router)
 

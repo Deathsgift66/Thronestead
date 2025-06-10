@@ -4,6 +4,7 @@
 - .ENV
 
 ## HTML Files
+- account_projects.html
 - account_settings.html
 - admin_alerts.html
 - admin_dashboard.html
@@ -68,6 +69,7 @@
 - world_map.html
 
 ## CSS Files
+- CSS/account_projects.css
 - CSS/account_settings.css
 - CSS/admin_alerts.css
 - CSS/admin_dashboard.css
@@ -130,6 +132,7 @@
 - CSS/world_map.css
 
 ## JavaScript Files
+- Javascript/account_projects.js
 - Javascript/account_settings.js
 - Javascript/admin_alerts.js
 - Javascript/admin_dashboard.js
@@ -218,6 +221,7 @@
 - backend/models.py
 - backend/progression_service.py
 - backend/routers/__init__.py
+- backend/routers/account_projects.py
 - backend/routers/admin.py
 - backend/routers/alliance_changelog.py
 - backend/routers/alliance_members.py
