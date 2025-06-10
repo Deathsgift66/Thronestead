@@ -926,3 +926,15 @@ CREATE TABLE public.village_production (
   CONSTRAINT village_production_pkey PRIMARY KEY (village_id, resource_type)
 );
 
+
+CREATE TABLE public.kingdom_temples (
+  temple_id serial PRIMARY KEY,
+  kingdom_id integer REFERENCES public.kingdoms(kingdom_id),
+  temple_name text,
+  temple_type text,
+  level integer DEFAULT 1,
+  is_major boolean DEFAULT false,
+  constructed_by uuid REFERENCES public.users(user_id),
+  created_at timestamp with time zone DEFAULT now()
+);
+

@@ -1063,3 +1063,16 @@ CREATE TABLE village_production (
     updated_by UUID REFERENCES users(user_id),
     PRIMARY KEY (village_id, resource_type)
 );
+
+-- Kingdom Temples -------------------------------------------------------
+CREATE TABLE kingdom_temples (
+    temple_id SERIAL PRIMARY KEY,
+    kingdom_id INTEGER REFERENCES kingdoms(kingdom_id),
+    temple_name TEXT,
+    temple_type TEXT,
+    level INTEGER DEFAULT 1,
+    is_major BOOLEAN DEFAULT FALSE,
+    constructed_by UUID REFERENCES users(user_id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+

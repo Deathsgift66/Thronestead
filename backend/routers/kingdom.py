@@ -29,7 +29,9 @@ class QuestPayload(BaseModel):
 
 
 class TemplePayload(BaseModel):
-    temple: str
+    temple_type: str
+    temple_name: str | None = None
+    is_major: bool | None = False
 
 
 class TrainPayload(BaseModel):
@@ -71,13 +73,16 @@ def create_kingdom(
 
 
 def get_state():
-    return military_state.setdefault(1, {
-        "base_slots": 20,
-        "used_slots": 0,
-        "morale": 100,
-        "queue": [],
-        "history": [],
-    })
+    return military_state.setdefault(
+        1,
+        {
+            "base_slots": 20,
+            "used_slots": 0,
+            "morale": 100,
+            "queue": [],
+            "history": [],
+        },
+    )
 
 
 @router.post("/start_project")
@@ -161,8 +166,51 @@ async def accept_quest(
 
 
 @router.post("/construct_temple")
-async def construct_temple(payload: TemplePayload):
-    return {"message": "Temple construction started", "temple": payload.temple}
+def construct_temple(
+    payload: TemplePayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            """
+            INSERT INTO kingdom_temples (
+                kingdom_id, temple_name, temple_type, level, is_major, constructed_by
+            ) VALUES (
+                :kid, :name, :type, 1, :major, :uid
+            )
+            """
+        ),
+        {
+            "kid": kid,
+            "name": payload.temple_name or payload.temple_type,
+            "type": payload.temple_type,
+            "major": payload.is_major,
+            "uid": user_id,
+        },
+    )
+    db.commit()
+    return {"message": "Temple construction started"}
+
+
+@router.get("/temples")
+def list_temples(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    rows = (
+        db.execute(
+            text(
+                "SELECT * FROM kingdom_temples WHERE kingdom_id = :kid ORDER BY temple_id"
+            ),
+            {"kid": kid},
+        )
+        .mappings()
+        .fetchall()
+    )
+    return {"temples": [dict(r) for r in rows]}
 
 
 @router.post("/train_troop")
@@ -180,10 +228,11 @@ async def train_troop(payload: TrainPayload):
         raise HTTPException(status_code=404, detail="Unit not found")
 
     state["used_slots"] += payload.quantity
-    state["queue"].append({
-        "unit_name": unit["name"],
-        "quantity": payload.quantity,
-    })
+    state["queue"].append(
+        {
+            "unit_name": unit["name"],
+            "quantity": payload.quantity,
+        }
+    )
 
     return {"message": "Training queued", "unit_id": payload.unit_id}
-
