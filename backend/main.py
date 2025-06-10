@@ -33,6 +33,7 @@ from .routers import (
     training_history,
     village_modifiers,
     settings_router,
+    alliance_home,
     wars,
     quests_router,
     projects_router,
@@ -81,6 +82,7 @@ app.include_router(trade_logs.router)
 app.include_router(training_history.router)
 app.include_router(village_modifiers.router)
 app.include_router(settings_router.router)
+app.include_router(alliance_home.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)
