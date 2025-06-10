@@ -1,4 +1,7 @@
+import json
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -15,27 +18,25 @@ class VillagePayload(BaseModel):
     kingdom_id: int | None = None
 
 
-@router.get("")
-async def list_villages(
-    user_id: str = Depends(get_user_id),
-    db: Session = Depends(get_db),
-):
-    """List villages for the player's kingdom."""
-    kid = get_kingdom_id(db, user_id)
+def _fetch_villages(db: Session, kid: int):
     rows = db.execute(
         text(
             """
-            SELECT village_id, village_name, village_type, is_capital, population,
-                   defense_level, prosperity, created_at, last_updated
-            FROM kingdom_villages
-            WHERE kingdom_id = :kid
-            ORDER BY created_at
+            SELECT v.village_id, v.village_name, v.village_type, v.is_capital,
+                   v.population, v.defense_level, v.prosperity,
+                   v.created_at, v.last_updated,
+                   COUNT(b.building_id) AS building_count
+            FROM kingdom_villages v
+            LEFT JOIN village_buildings b ON b.village_id = v.village_id
+            WHERE v.kingdom_id = :kid
+            GROUP BY v.village_id
+            ORDER BY v.created_at
             """
         ),
         {"kid": kid},
     ).fetchall()
 
-    villages = [
+    return [
         {
             "village_id": r[0],
             "village_name": r[1],
@@ -46,9 +47,20 @@ async def list_villages(
             "prosperity": r[6],
             "created_at": r[7],
             "last_updated": r[8],
+            "building_count": r[9],
         }
         for r in rows
     ]
+
+
+@router.get("")
+async def list_villages(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """List villages for the player's kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    villages = _fetch_villages(db, kid)
     return {"villages": villages}
 
 
@@ -96,3 +108,26 @@ async def create_village(
     ).fetchone()
     db.commit()
     return {"message": "Village created", "village_id": result[0]}
+
+
+@router.get("/stream")
+async def stream_villages(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Stream village updates in real time using server-sent events."""
+    kid = get_kingdom_id(db, user_id)
+
+    async def event_generator():
+        last_update: str | None = None
+        while True:
+            villages = _fetch_villages(db, kid)
+            if villages:
+                latest = str(max(v["last_updated"] for v in villages))
+                if latest != last_update:
+                    last_update = latest
+                    data = json.dumps(villages, default=str)
+                    yield f"data: {data}\n\n"
+            await asyncio.sleep(5)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
