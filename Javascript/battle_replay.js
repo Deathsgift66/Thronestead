@@ -8,6 +8,18 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+async function authHeaders() {
+  const [{ data: { user } }, { data: { session } }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession()
+  ]);
+  if (!user || !session) throw new Error('Unauthorized');
+  return {
+    'X-User-ID': user.id,
+    Authorization: `Bearer ${session.access_token}`
+  };
+}
+
 const urlParams = new URLSearchParams(window.location.search);
 const warId = parseInt(urlParams.get('war_id'), 10) || 0;
 
@@ -20,6 +32,7 @@ let playbackSpeed = 1;
 // ===============================
 // DOM READY
 // ===============================
+let realtimeSub;
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -30,6 +43,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadReplayData();
   renderTick(0);
   displayOutcome();
+
+  realtimeSub = supabase
+    .channel(`replay_${warId}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'combat_logs', filter: `war_id=eq.${warId}` }, payload => {
+      if (!replayData) return;
+      replayData.combat_logs.push({
+        tick: payload.new.tick_number,
+        message: payload.new.notes || payload.new.event_type,
+        attacker_unit_id: payload.new.attacker_unit_id,
+        defender_unit_id: payload.new.defender_unit_id,
+        position_x: payload.new.position_x,
+        position_y: payload.new.position_y,
+        damage_dealt: payload.new.damage_dealt
+      });
+      if (payload.new.tick_number === currentTick) renderTick(currentTick);
+    })
+    .subscribe();
 
   document.getElementById('play-btn').addEventListener('click', animateTimeline);
   document.getElementById('pause-btn').addEventListener('click', () => {
@@ -48,12 +78,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+window.addEventListener('beforeunload', () => {
+  realtimeSub?.unsubscribe();
+});
+
 // ===============================
 // LOAD REPLAY DATA
 // ===============================
 export async function loadReplayData() {
   try {
-    const res = await fetch(`/api/battle/replay/${warId}`);
+    const headers = await authHeaders();
+    const res = await fetch(`/api/battle/replay/${warId}`, { headers });
     replayData = await res.json();
     tickInterval = replayData.tick_interval_seconds * 1000;
     document.getElementById('replay-timeline').max = replayData.total_ticks;

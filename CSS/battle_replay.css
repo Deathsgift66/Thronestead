@@ -159,6 +159,35 @@ body {
   overflow-y: auto;
 }
 
+/* Layout Wrapper */
+.replay-wrapper {
+  display: flex;
+  gap: var(--gap-default);
+  width: 100%;
+}
+
+.battle-column {
+  flex: 2;
+}
+
+.log-column {
+  flex: 1;
+  max-width: 350px;
+}
+
+@media (max-width: 800px) {
+  .replay-wrapper {
+    flex-direction: column;
+  }
+  .log-column {
+    max-width: none;
+  }
+  #battlefield-grid {
+    grid-template-columns: repeat(30, 10px);
+    grid-template-rows: repeat(10, 10px);
+  }
+}
+
 #combat-log-entries div {
   margin-bottom: 0.5rem;
 }

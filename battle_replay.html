@@ -66,50 +66,47 @@ Author: Deathsgift66
 <main class="main-centered-container" aria-label="Battle Replay Interface">
 
 
-  <!-- Core Replay Panel -->
-  <section class="alliance-members-container">
-    <h2>Battle Replay</h2>
-    <p>Review the battle events step by step as they happened.</p>
+  <section class="replay-wrapper">
+    <div class="battle-column alliance-members-container">
+      <h2>Battle Replay</h2>
+      <p>Review the battle events step by step as they happened.</p>
 
-    <!-- Replay Controls -->
-    <section class="replay-controls" aria-label="Replay Controls">
-      <button id="play-btn">Play</button>
-      <button id="pause-btn" disabled>Pause</button>
-      <button id="reset-btn">Reset</button>
-      <label for="speed-select">Speed:</label>
-      <select id="speed-select">
-        <option value="1">1x</option>
-        <option value="2">2x</option>
-        <option value="4">4x</option>
-      </select>
-    </section>
+      <section class="replay-controls" aria-label="Replay Controls">
+        <button id="play-btn">Play</button>
+        <button id="pause-btn" disabled>Pause</button>
+        <button id="reset-btn">Reset</button>
+        <label for="speed-select">Speed:</label>
+        <select id="speed-select">
+          <option value="1">1x</option>
+          <option value="2">2x</option>
+          <option value="4">4x</option>
+        </select>
+      </section>
 
-    <!-- Timeline Slider -->
-    <section class="timeline-container" aria-label="Replay Timeline">
-      <input type="range" id="replay-timeline" min="0" value="0" step="1" />
-    </section>
+      <section class="timeline-container" aria-label="Replay Timeline">
+        <input type="range" id="replay-timeline" min="0" value="0" step="1" />
+      </section>
 
-    <!-- Battlefield Grid -->
-    <section id="battlefield-grid" class="battlefield-grid" aria-label="Battlefield Grid">
-      <!-- Tiles rendered by JS -->
-    </section>
+      <section id="battlefield-grid" class="battlefield-grid" aria-label="Battlefield Grid">
+        <!-- Tiles rendered by JS -->
+      </section>
 
-    <!-- Combat Log Feed -->
-    <section id="combat-log-feed" class="combat-log-feed" aria-label="Combat Log Feed">
-      <h3>Combat Log</h3>
-      <div id="combat-log-entries" aria-live="polite"></div>
-    </section>
+      <section id="battle-outcome" class="battle-outcome" aria-label="Battle Outcome Summary">
+        <h3>Battle Outcome</h3>
+        <p><strong>Status:</strong> <span id="battle-status">Loading...</span></p>
+        <p><strong>Winner:</strong> <span id="winner-name">Loading...</span></p>
+        <p><strong>Casualties:</strong> <span id="casualties">0</span></p>
+        <p><strong>Castle Damage:</strong> <span id="castle-damage">0</span></p>
+        <p><strong>Loot:</strong> <span id="loot">None</span></p>
+      </section>
+    </div>
 
-    <!-- Outcome Summary -->
-    <section id="battle-outcome" class="battle-outcome" aria-label="Battle Outcome Summary">
-      <h3>Battle Outcome</h3>
-      <p><strong>Status:</strong> <span id="battle-status">Loading...</span></p>
-      <p><strong>Winner:</strong> <span id="winner-name">Loading...</span></p>
-      <p><strong>Casualties:</strong> <span id="casualties">0</span></p>
-      <p><strong>Castle Damage:</strong> <span id="castle-damage">0</span></p>
-      <p><strong>Loot:</strong> <span id="loot">None</span></p>
-    </section>
-
+    <aside class="log-column">
+      <section id="combat-log-feed" class="combat-log-feed" aria-label="Combat Log Feed">
+        <h3>Combat Log</h3>
+        <div id="combat-log-entries" aria-live="polite"></div>
+      </section>
+    </aside>
   </section>
 
 </main>

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from ..database import get_db
 from .. import models
+from ..security import verify_jwt_token
 
 from ..battle_engine import (
     BattleTickHandler,
@@ -276,19 +277,61 @@ def battle_resolution(
     }
 
 
+@router.get("/api/battle/replay/{war_id}")
 @router.get("/api/battle-replay/{war_id}")
-def battle_replay(war_id: int, db: Session = Depends(get_db)):
+def battle_replay(
+    war_id: int,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Return pre-generated replay data for a finished war."""
+    war = db.query(models.WarsTactical).filter(models.WarsTactical.war_id == war_id).first()
+    if not war:
+        raise HTTPException(status_code=404, detail="war not found")
+
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="user not found")
+    if user.kingdom_id not in (war.attacker_kingdom_id, war.defender_kingdom_id):
+        raise HTTPException(status_code=403, detail="not authorized for this war")
+
+    movements = (
+        db.query(models.UnitMovement)
+        .filter(models.UnitMovement.war_id == war_id)
+        .order_by(models.UnitMovement.movement_id)
+        .all()
+    )
     logs = (
         db.query(models.CombatLog)
         .filter(models.CombatLog.war_id == war_id)
         .order_by(models.CombatLog.tick_number)
         .all()
     )
+    res = (
+        db.query(models.BattleResolutionLog)
+        .filter(models.BattleResolutionLog.war_id == war_id)
+        .first()
+    )
+
     return {
-        "logs": [
+        "tick_interval_seconds": war.tick_interval_seconds,
+        "total_ticks": res.total_ticks if res else war.battle_tick,
+        "unit_movements": [
+            {
+                "movement_id": m.movement_id,
+                "kingdom_id": m.kingdom_id,
+                "unit_type": m.unit_type,
+                "position_x": m.position_x,
+                "position_y": m.position_y,
+                "icon": m.unit_type[0].upper(),
+                "tick": 0,
+            }
+            for m in movements
+        ],
+        "combat_logs": [
             {
                 "tick": l.tick_number,
-                "event": l.event_type,
+                "message": l.notes or l.event_type,
                 "attacker_unit_id": l.attacker_unit_id,
                 "defender_unit_id": l.defender_unit_id,
                 "position_x": l.position_x,
@@ -296,7 +339,14 @@ def battle_replay(war_id: int, db: Session = Depends(get_db)):
                 "damage_dealt": l.damage_dealt,
             }
             for l in logs
-        ]
+        ],
+        "battle_resolution": {
+            "status": res.winner_side if res else "pending",
+            "winner": res.winner_side,
+            "casualties": (res.attacker_casualties + res.defender_casualties) if res else 0,
+            "castle_damage": 0,
+            "loot": res.loot_summary if res else {},
+        },
     }
 
 
