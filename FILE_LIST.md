@@ -7,6 +7,7 @@
 - account_settings.html
 - admin_alerts.html
 - admin_dashboard.html
+- alliance_changelog.html
 - alliance_home.html
 - alliance_members.html
 - alliance_projects.html
@@ -70,6 +71,7 @@
 - CSS/account_settings.css
 - CSS/admin_alerts.css
 - CSS/admin_dashboard.css
+- CSS/alliance_changelog.css
 - CSS/alliance_home.css
 - CSS/alliance_members.css
 - CSS/alliance_projects.css
@@ -131,6 +133,7 @@
 - Javascript/account_settings.js
 - Javascript/admin_alerts.js
 - Javascript/admin_dashboard.js
+- Javascript/alliance_changelog.js
 - Javascript/alliance_home.js
 - Javascript/alliance_members.js
 - Javascript/alliance_projects.js
@@ -216,6 +219,7 @@
 - backend/progression_service.py
 - backend/routers/__init__.py
 - backend/routers/admin.py
+- backend/routers/alliance_changelog.py
 - backend/routers/alliance_members.py
 - backend/routers/alliance_projects.py
 - backend/routers/alliance_quests.py

@@ -13,6 +13,7 @@ from .routers import (
     notifications,
     battle,
     alliance_quests,
+    alliance_changelog,
     changelog,
     kingdom_military,
     alliance_vault,
@@ -68,6 +69,7 @@ app.include_router(alliance_wars.router)
 app.include_router(notifications.router)
 app.include_router(battle.router)
 app.include_router(alliance_quests.router)
+app.include_router(alliance_changelog.router)
 app.include_router(changelog.router)
 app.include_router(kingdom_military.router)
 app.include_router(alliance_vault.router)
