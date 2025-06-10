@@ -15,8 +15,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const html = await response.text();
     target.innerHTML = html;
 
-    // Re-init dropdown logic and profile loader
-    await import("./navDropdown.js");
-    await import("./navbar.js");
+    // Re-init dropdown logic and profile loader in parallel
+    await Promise.all([
+      import("./navDropdown.js"),
+      import("./navbar.js"),
+    ]);
   }
 });
