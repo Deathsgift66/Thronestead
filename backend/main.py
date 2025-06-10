@@ -30,6 +30,7 @@ from .routers import (
     leaderboard,
     homepage,
     buildings,
+    tutorial,
     progression_router,
     villages_router,
     vip_status_router,
@@ -77,6 +78,7 @@ app.include_router(conflicts.router)
 app.include_router(black_market.router)
 app.include_router(black_market_routes.router)
 app.include_router(news.router)
+app.include_router(tutorial.router)
 app.include_router(homepage.router)
 app.include_router(alliance_wars.router)
 app.include_router(notifications.router)
