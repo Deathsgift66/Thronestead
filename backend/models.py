@@ -219,6 +219,19 @@ class ProjectsAlliance(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class ProjectsAllianceInProgress(Base):
+    __tablename__ = 'projects_alliance_in_progress'
+
+    progress_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey('alliances.alliance_id'))
+    project_key = Column(String, ForeignKey('project_alliance_catalogue.project_code'))
+    progress = Column(Integer, default=0)
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    expected_end = Column(DateTime(timezone=True))
+    status = Column(String, default='building')
+    built_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+
+
 class WarsTactical(Base):
     __tablename__ = 'wars_tactical'
     war_id = Column(Integer, primary_key=True)

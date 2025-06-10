@@ -63,6 +63,54 @@ h2, h3 {
   color: var(--ink);
 }
 
+/* Tabs */
+.tab-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.tab-btn {
+  background: var(--accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  font-family: 'Cinzel', serif;
+  cursor: pointer;
+}
+.tab-btn.active {
+  background: var(--gold);
+  color: var(--ink);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.project-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.project-card {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--gold);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.progress-bar {
+  background: var(--parchment-dark);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.progress-bar-fill {
+  background: var(--accent);
+  height: 1rem;
+  width: 0;
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {

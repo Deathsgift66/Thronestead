@@ -56,28 +56,27 @@ Author: Deathsgift66
   <!-- Main Content Area -->
   <main class="main-container" aria-label="Alliance Project Management">
     <div class="alliance-projects-container">
-      <h2>Manage and View Your Alliance Projects</h2>
+      <h2>Alliance Projects</h2>
 
-      <section class="projects-list" aria-label="Active Projects">
-        <h3>Active Projects</h3>
-        <div id="active-projects" class="projects-dashboard" aria-live="polite"></div>
-      </section>
+      <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="available-tab">Available Projects</button>
+        <button class="tab-btn" data-tab="in-progress-tab">In Progress</button>
+        <button class="tab-btn" data-tab="completed-tab">Completed</button>
+        <button class="tab-btn" data-tab="catalogue-tab">All Projects</button>
+      </div>
 
-      <section class="project-actions" aria-label="Manage Projects">
-        <h3>Manage Projects</h3>
-        <button class="action-btn" id="start-new-project">Start New Project</button>
-        <button class="action-btn" id="view-all-projects">View All Projects</button>
-      </section>
-
-      <section class="project-contributions" aria-label="Project Contributions">
-        <h3>Project Contributions</h3>
-        <div id="project-contributors" class="contributors-panel" aria-live="polite"></div>
-      </section>
-
-      <section class="project-notifications" aria-label="Project Alerts">
-        <h3>Project Alerts</h3>
-        <div id="project-notifications" class="notifications-panel" aria-live="polite"></div>
-      </section>
+      <div id="available-tab" class="tab-content active">
+        <div class="project-list" id="available-projects-list"></div>
+      </div>
+      <div id="in-progress-tab" class="tab-content">
+        <div class="project-list" id="in-progress-projects-list"></div>
+      </div>
+      <div id="completed-tab" class="tab-content">
+        <div class="project-list" id="completed-projects-list"></div>
+      </div>
+      <div id="catalogue-tab" class="tab-content">
+        <div class="project-list" id="catalogue-projects-list"></div>
+      </div>
     </div>
   </main>
 
