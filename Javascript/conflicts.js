@@ -8,6 +8,8 @@ conflicts page.
 
 import { supabase } from './supabaseClient.js';
 
+const REFRESH_MS = 30000;
+
 // Initialize after DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -19,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
   await fetchKingdomWars();
   await fetchAllianceWars();
+  startAutoRefresh();
 });
 
 // Switch between Kingdom and Alliance tabs
@@ -59,6 +62,7 @@ export async function fetchKingdomWars() {
     container.querySelectorAll('.view-war-btn').forEach(btn => {
       btn.addEventListener('click', () => fetchWarDetails(btn.dataset.id));
     });
+    updateFeed(data.wars);
   } catch (err) {
     console.error('Error loading kingdom wars:', err);
     container.innerHTML = '<p>Failed to load wars.</p>';
@@ -88,6 +92,7 @@ export async function fetchAllianceWars() {
     container.querySelectorAll('.view-war-btn').forEach(btn => {
       btn.addEventListener('click', () => fetchWarDetails(btn.dataset.id));
     });
+    updateFeed(data.wars);
   } catch (err) {
     console.error('Error loading alliance wars:', err);
     container.innerHTML = '<p>Failed to load wars.</p>';
@@ -128,4 +133,23 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function startAutoRefresh() {
+  setInterval(async () => {
+    await fetchKingdomWars();
+    await fetchAllianceWars();
+  }, REFRESH_MS);
+}
+
+function updateFeed(wars) {
+  const feed = document.getElementById('liveFeed');
+  if (!feed || !wars) return;
+  if (wars.length === 0) {
+    feed.textContent = 'No active conflicts.';
+    return;
+  }
+  feed.innerHTML = wars
+    .map(w => `<div>${escapeHTML(w.attacker_name || w.attacker_alliance)} vs ${escapeHTML(w.defender_name || w.defender_alliance)} - ${escapeHTML(w.phase || '')}</div>`)
+    .join('');
 }
