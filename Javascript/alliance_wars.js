@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ✅ Load Alliance Custom Board (image + text)
 async function loadCustomBoard() {
   try {
-    const res = await fetch("/api/alliance-wars/custom-board");
+    const res = await fetch("/api/alliance-vault/custom-board");
     const data = await res.json();
 
     const imgSlot = document.getElementById("custom-image-slot");

@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     acceptBtn.addEventListener("click", async () => {
       const questId = acceptBtn.dataset.questId;
       if (!questId) return;
-      const res = await fetch("/api/alliance-quests/accept", {
+      const res = await fetch("/api/alliance-quests/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quest_id: questId })
@@ -83,7 +83,15 @@ async function loadQuests(status) {
   heroes.innerHTML = "<li>Loading heroes...</li>";
 
   try {
-    const res = await fetch(`/api/alliance-quests?status=${status}`);
+    let endpoint;
+    if (status === "active") {
+      endpoint = "/api/alliance-quests/active";
+    } else if (status === "completed") {
+      endpoint = "/api/alliance-quests/completed";
+    } else {
+      endpoint = "/api/alliance-quests/available";
+    }
+    const res = await fetch(endpoint);
     const data = await res.json();
 
     // Clear board
@@ -212,14 +220,3 @@ function openQuestModal(q) {
   modal.classList.add("open");
 }
 
-// ✅ Contribute to quest (called from modal if needed)
-async function contributeToQuest(questId) {
-  const res = await fetch("/api/alliance-quests/contribute", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ quest_id: questId })
-  });
-  const result = await res.json();
-  alert(result.message || "Contribution sent!");
-  await loadQuests("active");
-}
