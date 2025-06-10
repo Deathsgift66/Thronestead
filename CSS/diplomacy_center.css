@@ -1,14 +1,10 @@
 @import url("./root_theme.css");
+@import url("./base_styles.css");
 
 body {
-  margin: 0;
-  font-family: var(--font-body);
   background: url('../Assets/diplomacy_center_background.png') no-repeat center center fixed;
   background-size: cover;
   color: var(--parchment);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 
 .diplomacy-center-grid {

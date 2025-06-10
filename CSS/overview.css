@@ -5,16 +5,12 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 @import url("./root_theme.css");
+@import url("./base_styles.css");
 
 body {
-  margin: 0;
-  font-family: 'IM Fell English', serif;
   background: url('../Assets/overview.png') no-repeat center center fixed;
   background-size: cover;
   color: var(--parchment);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
   position: relative;
 }
 
@@ -31,16 +27,6 @@ body::before {
   z-index: -1;
 }
 
-.main-centered-container {
-  width: auto;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 
 /* Customization Section */
 .alliance-customization-area {
@@ -152,9 +138,6 @@ body::before {
 }
 
 @media (max-width: 600px) {
-  .main-centered-container {
-    padding: 1rem;
-  }
   .overview-panels {
     grid-template-columns: 1fr;
   }

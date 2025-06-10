@@ -5,16 +5,12 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 @import url("./root_theme.css");
+@import url("./base_styles.css");
 
 
 
 body {
-  margin: 0;
-  font-family: var(--font-body);
   color: var(--ink);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
   background-color: var(--stone-bg);
   background-image: linear-gradient(var(--overlay), var(--overlay)), url('../Assets/19.png');
   background-size: cover;
