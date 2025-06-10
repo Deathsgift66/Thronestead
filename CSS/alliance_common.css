@@ -1,0 +1,13 @@
+@media (max-width: 600px) {
+  .alliance-visuals img {
+    max-width: 100%;
+    height: auto;
+  }
+  .tab-buttons {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .panel {
+    padding: 1rem;
+  }
+}

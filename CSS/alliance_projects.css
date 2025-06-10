@@ -123,6 +123,7 @@ h2, h3 {
   background: var(--accent);
   height: 1rem;
   width: 0;
+  transition: width var(--transition-medium);
 }
 
 

@@ -81,6 +81,23 @@ body {
   margin-bottom: 2rem;
 }
 
+.vault-resource-row {
+  margin-bottom: 0.5rem;
+}
+.vault-progress-bar {
+  background: var(--parchment-dark);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  height: 8px;
+  overflow: hidden;
+}
+.vault-progress-bar-fill {
+  background: var(--accent);
+  height: 100%;
+  width: 0;
+  transition: width var(--transition-medium);
+}
+
 /* Footer */
 .site-footer {
   text-align: center;
