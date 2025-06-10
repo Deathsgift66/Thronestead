@@ -28,6 +28,7 @@ from .routers import (
     diplomacy,
     diplomacy_center,
     leaderboard,
+    homepage,
     buildings,
     progression_router,
     villages_router,
@@ -68,6 +69,7 @@ app.include_router(conflicts.router)
 app.include_router(black_market.router)
 app.include_router(black_market_routes.router)
 app.include_router(news.router)
+app.include_router(homepage.router)
 app.include_router(alliance_wars.router)
 app.include_router(notifications.router)
 app.include_router(battle.router)
