@@ -8,6 +8,8 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentSession;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Validate session
   const { data: { session } } = await supabase.auth.getSession();
@@ -16,59 +18,98 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+
+  const { user } = session;
+  const accessToken = session.access_token;
+
+  // ✅ Determine page
+  if (document.getElementById("message-list")) {
+    await loadInbox(user, accessToken);
+    subscribeToMessages(user.id, () => loadInbox(user, accessToken));
+
+  currentSession = session;
+
   // ✅ Determine page
   if (document.getElementById("message-list")) {
     // Inbox page
-    await loadInbox();
+    await loadInbox(session);
+    subscribeToNewMessages(session.user.id);
+
   } else if (document.getElementById("message-container")) {
-    // Message view page
     const urlParams = new URLSearchParams(window.location.search);
     const messageId = urlParams.get("message_id");
     if (messageId) {
-      await loadMessageView(messageId);
+      await loadMessageView(messageId, user, accessToken);
+      subscribeToMessages(user.id, (payload) => {
+        if (payload.new.message_id === parseInt(messageId)) {
+          loadMessageView(messageId, user, accessToken);
+        }
+      });
     } else {
       document.getElementById("message-container").innerHTML = "<p>Invalid message.</p>";
     }
   } else if (document.getElementById("compose-form")) {
-    // Compose page
-    setupCompose();
+    setupCompose(user, accessToken);
   }
 });
 
 // ✅ Load Inbox
-async function loadInbox() {
+
+async function loadInbox(user, token) {
+
+async function loadInbox(session) {
+
   const container = document.getElementById("message-list");
   container.innerHTML = "<p>Loading messages...</p>";
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
 
-    // ✅ JOIN with users table for sender name
-    const { data, error } = await supabase
-      .from("player_messages")
-      .select("message_id, subject, message, sent_at, is_read, users(username)")
-      .eq("recipient_id", user.id)
-      .eq("deleted_by_recipient", false)
-      .order("sent_at", { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
+    const res = await fetch('/api/messages/list', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-User-ID': user.id
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error');
 
     container.innerHTML = "";
 
-    if (!data || data.length === 0) {
+    if (!data.messages || data.messages.length === 0) {
+
+    const res = await fetch('/api/messages/inbox', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-User-ID': session.user.id
+      }
+    });
+    if (!res.ok) throw new Error('Failed');
+    const { messages } = await res.json();
+
+    container.innerHTML = "";
+    document.getElementById('message-count').textContent = `${messages.length} Messages`;
+    if (!messages || messages.length === 0) {
+
       container.innerHTML = "<p>No messages found.</p>";
       return;
     }
 
-    data.forEach(msg => {
+    data.messages.forEach(msg => {
+
+    messages.forEach(msg => {
+
       const card = document.createElement("div");
       card.classList.add("message-card");
+      if (!msg.is_read) card.classList.add('unread');
 
       card.innerHTML = `
         <a href="message.html?message_id=${msg.message_id}">
           <div class="message-meta">
-            <span>From: ${escapeHTML(msg.users?.username || "Unknown")}</span>
+
+            <span>From: ${escapeHTML(msg.username || "Unknown")}</span>
+=======
+            <span>From: ${escapeHTML(msg.sender || "Unknown")}</span>
+
             <span>${formatDate(msg.sent_at)}</span>
           </div>
           <div class="message-subject">${escapeHTML((msg.subject || msg.message).substring(0, 50))}</div>
@@ -84,35 +125,40 @@ async function loadInbox() {
   }
 }
 
+function subscribeToNewMessages(uid) {
+  const channel = supabase.channel(`inbox-${uid}`);
+  channel
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'player_messages', filter: `recipient_id=eq.${uid}` },
+      payload => {
+        // Simple refresh on new message
+        if (currentSession) {
+          loadInbox(currentSession);
+        }
+      }
+    )
+    .subscribe();
+}
+
 // ✅ Load Message View
-async function loadMessageView(messageId) {
+async function loadMessageView(messageId, user, token) {
   const container = document.getElementById("message-container");
   container.innerHTML = "<p>Loading message...</p>";
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // ✅ JOIN with users table for sender name
-    const { data, error } = await supabase
-      .from("player_messages")
-      .select("message_id, subject, message, sent_at, is_read, user_id, deleted_by_recipient, users(username)")
-      .eq("message_id", messageId)
-      .eq("recipient_id", user.id)
-      .single();
-
-    if (error || !data) {
-      throw new Error("Message not found or access denied.");
-    }
-
-    // ✅ Mark as read
-    await supabase
-      .from("player_messages")
-      .update({ is_read: true })
-      .eq("message_id", messageId);
+    const res = await fetch(`/api/messages/${messageId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-User-ID': user.id
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error');
 
     container.innerHTML = `
       <div class="message-meta">
-        <strong>From:</strong> ${escapeHTML(data.users?.username || "Unknown")}
+        <strong>From:</strong> ${escapeHTML(data.username || "Unknown")}
         <br>
         <strong>Date:</strong> ${formatDate(data.sent_at)}
       </div>
@@ -132,13 +178,16 @@ async function loadMessageView(messageId) {
       if (!confirm("Are you sure you want to delete this message?")) return;
 
       try {
-        const { error: deleteError } = await supabase
-          .from("player_messages")
-          .update({ deleted_by_recipient: true })
-          .eq("message_id", messageId)
-          .eq("recipient_id", user.id);
-
-        if (deleteError) throw deleteError;
+        const resp = await fetch('/api/messages/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-User-ID': user.id
+          },
+          body: JSON.stringify({ message_id: messageId })
+        });
+        if (!resp.ok) throw new Error();
 
         alert("Message deleted.");
         window.location.href = "messages.html";
@@ -160,7 +209,7 @@ async function loadMessageView(messageId) {
 }
 
 // ✅ Setup Compose
-function setupCompose() {
+function setupCompose(user, token) {
   const composeForm = document.getElementById("compose-form");
 
   // ✅ If replying to someone
@@ -185,31 +234,36 @@ function setupCompose() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
 
-      // ✅ Look up recipient user_id
-      const { data: recipientData, error: recipientError } = await supabase
-        .from("users")
-        .select("user_id")
-        .eq("username", recipient)
-        .single();
+=======
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (recipientError || !recipientData) {
-        throw new Error("Recipient not found.");
-      }
 
-      const { error: sendError } = await supabase
-        .from("player_messages")
-        .insert({
-          recipient_id: recipientData.user_id,
-          user_id: user.id,
+      const res = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+
+          'Authorization': `Bearer ${token}`,
+          'X-User-ID': user.id
+        },
+        body: JSON.stringify({ recipient, subject, content: messageContent })
+      });
+      if (!res.ok) throw new Error();
+=======
+          'Authorization': `Bearer ${session.access_token}`,
+          'X-User-ID': session.user.id
+        },
+        body: JSON.stringify({
+          recipient: recipient,
           subject: subject || null,
-          message: messageContent,
-          sent_at: new Date().toISOString(),
-          is_read: false
-        });
+          content: messageContent,
+          sender_id: session.user.id
+        })
+      });
 
-      if (sendError) throw sendError;
+      if (!res.ok) throw new Error('send failed');
+
 
       alert("Message sent!");
       window.location.href = "messages.html";
@@ -240,4 +294,16 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+// ✅ Real-time subscription
+function subscribeToMessages(userId, callback) {
+  supabase
+    .channel('messages:' + userId)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'player_messages', filter: `recipient_id=eq.${userId}` },
+      payload => callback(payload)
+    )
+    .subscribe();
 }

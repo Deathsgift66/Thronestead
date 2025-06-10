@@ -57,19 +57,16 @@ Author: Deathsgift66
 </header>
 
 <!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="News Hub Interface">
-
-  <!-- Core News Panel -->
-  <section class="alliance-members-container">
-
-    <!-- Content Container -->
-    <div class="content-container">
-      <h2>News</h2>
-      <p>Welcome to the News page. This will be the hub for player-run newspapers and public news.</p>
+<main id="main-content" class="news-container" aria-label="News Hub Interface">
+  <section class="news-panel">
+    <h2>News Hub</h2>
+    <div class="news-controls">
+      <input type="text" id="search-input" placeholder="Search articles..." />
     </div>
-
+    <div id="articles" class="articles-grid">
+      <!-- Populated via JS -->
+    </div>
   </section>
-
 </main>
 
 <!-- Footer -->

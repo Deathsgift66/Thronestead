@@ -28,6 +28,62 @@ body {
   align-items: center;
 }
 
+/* Message layout */
+.message-container {
+  background: var(--dark-panel);
+  border: var(--border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 700px;
+}
+
+.message-meta {
+  font-family: var(--font-primary);
+  margin-bottom: 1rem;
+  color: var(--text-on-dark);
+  font-size: var(--font-sm);
+}
+
+.message-body {
+  font-family: var(--font-body);
+  font-size: var(--font-md);
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+}
+
+.message-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  background: var(--accent);
+  color: var(--btn-text);
+  padding: var(--btn-padding);
+  border: var(--btn-border);
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  font-family: var(--font-primary);
+  transition: background var(--transition-medium), color var(--transition-medium);
+}
+
+.action-btn:hover {
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+}
+
+@media (max-width: 600px) {
+  .main-centered-container {
+    padding: 1rem;
+  }
+  .message-container {
+    padding: 1rem;
+  }
+}
+
 /* Customization Section */
 .alliance-customization-area {
   background: rgba(0, 0, 0, 0.45);
