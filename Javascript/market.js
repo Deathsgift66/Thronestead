@@ -7,6 +7,9 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentUserId = null;
+let realtimeChannel = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -23,9 +26,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "login.html";
     return;
   }
+  currentUserId = session.user.id;
 
   // ✅ Setup tabs
   setupTabs();
+
+  subscribeRealtime();
+  startAutoRefresh();
 
   // ✅ Load default tab → Browse Listings
   await loadMarketListings();
@@ -65,7 +72,9 @@ async function loadMarketListings() {
   container.innerHTML = "<p>Loading market listings...</p>";
 
   try {
-    const res = await fetch("/api/market/listings");
+    const res = await fetch("/api/market/listings", {
+      headers: { 'X-User-ID': currentUserId }
+    });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -87,6 +96,7 @@ async function loadMarketListings() {
     });
 
     container.appendChild(list);
+    updateLastUpdated();
   } catch (err) {
     console.error("❌ Error loading market listings:", err);
     container.innerHTML = "<p>Failed to load market listings.</p>";
@@ -99,7 +109,9 @@ async function loadMyListings() {
   container.innerHTML = "<p>Loading your listings...</p>";
 
   try {
-    const res = await fetch("/api/market/my_listings");
+    const res = await fetch("/api/market/my_listings", {
+      headers: { 'X-User-ID': currentUserId }
+    });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -134,7 +146,7 @@ async function loadMyListings() {
         try {
           const res = await fetch("/api/market/cancel_listing", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", 'X-User-ID': currentUserId },
             body: JSON.stringify({ listing_id: listingId })
           });
 
@@ -158,6 +170,7 @@ async function loadMyListings() {
     console.error("❌ Error loading my listings:", err);
     container.innerHTML = "<p>Failed to load your listings.</p>";
   }
+  updateLastUpdated();
 }
 
 // ✅ Load Trade History
@@ -166,7 +179,9 @@ async function loadTradeHistory() {
   container.innerHTML = "<p>Loading trade history...</p>";
 
   try {
-    const res = await fetch("/api/market/history");
+    const res = await fetch("/api/market/history", {
+      headers: { 'X-User-ID': currentUserId }
+    });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -189,6 +204,7 @@ async function loadTradeHistory() {
     });
 
     container.appendChild(list);
+    updateLastUpdated();
   } catch (err) {
     console.error("❌ Error loading trade history:", err);
     container.innerHTML = "<p>Failed to load trade history.</p>";
@@ -214,4 +230,39 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function updateLastUpdated() {
+  const el = document.getElementById('last-updated');
+  if (el) el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+function startAutoRefresh() {
+  setInterval(() => {
+    loadMarketListings();
+  }, 30000);
+}
+
+function subscribeRealtime() {
+  realtimeChannel = supabase
+    .channel('public:market_listings')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'market_listings' }, () => {
+      loadMarketListings();
+    })
+    .subscribe(status => {
+      const indicator = document.getElementById('realtime-indicator');
+      if (indicator) {
+        if (status === 'SUBSCRIBED') {
+          indicator.textContent = 'Live';
+          indicator.className = 'connected';
+        } else {
+          indicator.textContent = 'Offline';
+          indicator.className = 'disconnected';
+        }
+      }
+    });
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  });
 }

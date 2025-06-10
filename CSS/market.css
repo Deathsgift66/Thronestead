@@ -166,4 +166,26 @@ body {
   color: #1a1a1a;
 }
 
+/* Realtime Status */
+.realtime-status {
+  margin-bottom: 1rem;
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+}
+
+#realtime-indicator.connected {
+  color: var(--success);
+}
+
+#realtime-indicator.disconnected {
+  color: var(--error);
+}
+
+@media (max-width: 768px) {
+  .market-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* Footer - matches site */
