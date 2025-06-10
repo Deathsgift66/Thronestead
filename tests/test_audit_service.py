@@ -1,4 +1,4 @@
-from services.audit_service import log_action, fetch_logs
+from services.audit_service import log_action, fetch_logs, log_alliance_activity
 
 
 class DummyResult:
@@ -17,6 +17,9 @@ class DummyDB:
     def execute(self, query, params=None):
         q = str(query)
         if q.strip().startswith("INSERT INTO audit_log"):
+            self.inserts.append(params)
+            return DummyResult()
+        if q.strip().startswith("INSERT INTO alliance_activity_log"):
             self.inserts.append(params)
             return DummyResult()
         if "FROM audit_log" in q:
@@ -41,3 +44,9 @@ def test_fetch_logs_returns_rows():
     logs = fetch_logs(db, "u1", 10)
     assert len(logs) == 1
     assert logs[0]["action"] == "start_war"
+
+
+def test_log_alliance_activity_inserts():
+    db = DummyDB()
+    log_alliance_activity(db, 2, "u1", "Treaty Proposed", "Pact")
+    assert any(p.get("aid") == 2 for p in db.inserts)

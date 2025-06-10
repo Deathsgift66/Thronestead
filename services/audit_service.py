@@ -52,3 +52,15 @@ def fetch_logs(db: Session, user_id: str | None = None, limit: int = 100) -> lis
         }
         for r in rows
     ]
+
+
+def log_alliance_activity(db: Session, alliance_id: int, user_id: str | None, action: str, description: str) -> None:
+    """Insert a new alliance activity log entry."""
+    db.execute(
+        text(
+            "INSERT INTO alliance_activity_log (alliance_id, user_id, action, description) "
+            "VALUES (:aid, :uid, :act, :desc)"
+        ),
+        {"aid": alliance_id, "uid": user_id, "act": action, "desc": description},
+    )
+    db.commit()
