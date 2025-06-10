@@ -7,6 +7,7 @@ from .routers import (
     kingdom,
     conflicts,
     black_market,
+    black_market_routes,
     news,
     alliance_wars,
     notifications,
@@ -61,6 +62,7 @@ app.include_router(alliance_projects.router)
 app.include_router(kingdom.router)
 app.include_router(conflicts.router)
 app.include_router(black_market.router)
+app.include_router(black_market_routes.router)
 app.include_router(news.router)
 app.include_router(alliance_wars.router)
 app.include_router(notifications.router)

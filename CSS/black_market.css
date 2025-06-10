@@ -1,12 +1,4 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: black_market.css
-Date: June 2, 2025
-Author: Deathsgift66
-*/
 @import url("./root_theme.css");
-
-
 
 body {
   margin: 0;
@@ -20,7 +12,7 @@ body {
 }
 
 .main-centered-container {
-  width: auto;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
@@ -30,115 +22,29 @@ body {
   align-items: center;
 }
 
-/* Customization Section */
-.alliance-customization-area {
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(5px);
+.black-market-panel {
+  background: var(--dark-panel);
+  border: 2px solid var(--gold);
   border-radius: 12px;
-  border: 1px solid var(--gold);
   box-shadow: 0 4px 12px var(--shadow);
-  padding: 2rem;
+  padding: 1.5rem;
   width: 100%;
-  margin-bottom: 2rem;
-  text-align: center;
 }
 
-.alliance-customization-area h2 {
+.black-market-panel h2 {
   font-family: 'Cinzel', serif;
   color: var(--gold);
-  text-shadow: 1px 1px 3px black;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
-#custom-image-slot img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-#custom-text-slot {
-  font-size: 1.1rem;
-  color: var(--parchment);
-  padding: 1rem;
-}
-
-/* Core Panel */
-.alliance-members-container {
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(5px);
-  border-radius: 12px;
-  border: 1px solid var(--gold);
-  box-shadow: 0 6px 14px var(--shadow);
-  padding: 2rem;
-  width: 100%;
-  margin-bottom: 2rem;
-}
-
-.alliance-members-container h2 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  text-shadow: 1px 1px 3px black;
-  margin-bottom: 1rem;
-}
-
-.alliance-members-container p {
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
-  color: #d8caa5;
-}
-
-/* Market Table */
-.market-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--stone-panel);
-  box-shadow: 0 2px 8px var(--shadow);
-  margin-bottom: 2rem;
-}
-
-.market-table th, .market-table td {
-  padding: 0.75rem;
-  text-align: center;
-  border: 1px solid var(--gold);
-  color: var(--parchment);
-}
-
-.market-table th {
-  background: var(--gold);
-  color: #1a1a1a;
-  font-family: 'Cinzel', serif;
-}
-
-.market-table tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.market-table tr:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Place Listing Form */
-.place-listing h3 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  text-shadow: 1px 1px 3px black;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.place-listing form {
+.market-controls {
   display: flex;
-  flex-direction: column;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.place-listing label {
-  font-weight: bold;
-  color: var(--parchment);
-}
-
-.place-listing input {
+.market-controls input,
+.market-controls select {
   padding: 0.5rem;
   border-radius: 6px;
   border: 1px solid var(--gold);
@@ -146,21 +52,86 @@ body {
   color: var(--ink);
 }
 
-.place-listing button {
-  background: var(--accent);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.listing-card {
+  background: var(--panel-bg);
   border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.listing-card img {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 0.5rem;
+}
+
+.history-list {
+  margin-top: 1rem;
+}
+
+.history-item {
+  background: var(--stone-panel);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-index-modal);
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--modal-bg);
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px var(--shadow);
+  padding: 1rem 1.5rem;
+  color: var(--ink);
+  width: 100%;
+  max-width: 400px;
+}
+
+.modal-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   font-family: 'Cinzel', serif;
-  font-weight: bold;
-  transition: background 0.3s ease, color 0.3s ease;
 }
 
-.place-listing button:hover {
+.btn:hover {
   background: var(--gold);
-  color: #1a1a1a;
+  color: var(--ink);
 }
-
-/* Footer - handled globally */
