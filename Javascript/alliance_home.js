@@ -1,254 +1,144 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: alliance_home.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
-
 import { supabase } from './supabaseClient.js';
 
-
-(async () => {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) window.location.href = 'login.html';
-
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) logoutBtn.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
-    });
-
-    await loadAllianceData(session.user.id);
-
-  } catch (err) {
-    console.error('❌ Failed to initialize Alliance Home:', err);
-    alert('❌ Failed to load Alliance Home. Please try again.');
-    window.location.href = 'play.html';
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
   }
-})();
+  fetchAllianceDetails(session.user.id);
+});
 
-async function loadAllianceData(userId) {
+async function fetchAllianceDetails(userId) {
   try {
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('alliance_id')
-      .eq('id', userId)
-      .single();
-
-    if (profileError) throw new Error('Failed to load profile: ' + profileError.message);
-    if (!profile?.alliance_id) {
-      alert('You are not in an alliance.');
-      return;
-    }
-
-    const { data: alliance, error: allianceError } = await supabase
-      .from('alliances')
-      .select('*')
-      .eq('id', profile.alliance_id)
-      .single();
-
-    if (allianceError) throw new Error('Failed to load alliance: ' + allianceError.message);
-    if (!alliance) {
-      alert('Alliance not found.');
-      return;
-    }
-
-    // Basic details
-    document.getElementById('alliance-name').textContent = alliance.name;
-    document.getElementById('alliance-leader').textContent = alliance.leader;
-    document.getElementById('alliance-status').textContent = alliance.status;
-    document.getElementById('alliance-founded')?.textContent = new Date(alliance.created_at).toLocaleDateString();
-    document.getElementById('alliance-level')?.textContent = alliance.level ?? '--';
-    document.getElementById('alliance-region')?.textContent = alliance.region ?? 'Unspecified';
-    document.getElementById('alliance-motd')?.textContent = alliance.motd ?? 'No message set.';
-    document.getElementById('alliance-banner-img')?.setAttribute('src', alliance.banner || 'Assets/banner.png');
-    document.getElementById('alliance-emblem-img')?.setAttribute('src', alliance.emblem_url || 'Assets/avatars/default_avatar_emperor.png');
-
-    // Scores
-    document.getElementById('military-score')?.textContent = alliance.military_score ?? '--';
-    document.getElementById('economy-score')?.textContent = alliance.economy_score ?? '--';
-    document.getElementById('diplomacy-score')?.textContent = alliance.diplomacy_score ?? '--';
-    document.getElementById('war-count')?.textContent = alliance.wars_count ?? 0;
-    document.getElementById('treaty-count')?.textContent = alliance.treaties_count ?? 0;
-    document.getElementById('project-count')?.textContent = alliance.projects_active ?? 0;
-
-    await loadVault(profile.alliance_id);
-    await loadMembers(profile.alliance_id);
-    await loadProjects(profile.alliance_id);
-    await loadContributors(profile.alliance_id);
-    await loadAchievements(profile.alliance_id);
-
-
+    const res = await fetch(`/api/alliance-home/details?user_id=${encodeURIComponent(userId)}`);
+    if (!res.ok) throw new Error('Request failed');
+    const data = await res.json();
+    populateAlliance(data);
   } catch (err) {
-    console.error('❌ Error loading Alliance Data:', err);
-    alert('❌ Error loading Alliance Data: ' + err.message);
+    console.error('Failed to fetch alliance details:', err);
   }
 }
 
-async function loadVault(allianceId) {
-  const container = document.getElementById('vault-resource-list');
-  if (container) container.innerHTML = '<p>Loading vault...</p>';
+function populateAlliance(data) {
+  const a = data.alliance;
+  if (!a) return;
+  setText('alliance-name', a.name);
+  setText('alliance-leader', a.leader);
+  setText('alliance-status', a.status);
+  setText('alliance-members', a.member_count);
+  const banner = document.getElementById('alliance-banner-img');
+  if (banner) banner.src = a.banner || 'Assets/banner.png';
 
-  try {
-    const { data: vault, error } = await supabase
-      .from('alliance_vault')
-      .select('*')
-      .eq('alliance_id', allianceId)
-      .single();
-
-    if (error) throw new Error('Failed to load vault: ' + error.message);
-    if (!vault) return;
-
-    if (container) container.innerHTML = '';
-
-    Object.entries(vault).forEach(([resource, amount]) => {
-      if (['id', 'alliance_id', 'created_at', 'updated_at'].includes(resource)) return;
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${resource.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}:</strong> ${amount}`;
-      container?.appendChild(li);
-    });
-
-    document.getElementById('fortification-level')?.textContent = vault.fortification_level ?? '--';
-    document.getElementById('alliance-army-count')?.textContent = vault.army_count ?? '--';
-
-
-  } catch (err) {
-    console.error('❌ Failed to load vault:', err);
-    if (container) container.innerHTML = '<p>Failed to load vault.</p>';
-  }
+  renderProjects(data.projects);
+  renderMembers(data.members);
+  renderQuests(data.quests);
+  renderAchievements(data.achievements);
+  renderActivity(data.activity);
+  renderDiplomacy(data.treaties);
+  renderWarScore(data.wars);
 }
 
-async function loadMembers(allianceId) {
-  const container = document.getElementById('members-list');
-  if (container) container.innerHTML = '<tr><td colspan="5">Loading members...</td></tr>';
-
-  try {
-    const { data: members, error } = await supabase
-      .from('alliance_members')
-      .select('*')
-      .eq('alliance_id', allianceId);
-
-    if (error) throw new Error('Failed to load members: ' + error.message);
-
-    container.innerHTML = '';
-
-    members.forEach(member => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td><img src="../images/crests/${member.crest || 'default.png'}" alt="Crest" class="crest"></td>
-        <td>${member.username}</td>
-        <td>${member.rank}</td>
-        <td>${member.contribution}</td>
-        <td>${member.status}</td>`;
-      container.appendChild(row);
-    });
-
-    document.getElementById('alliance-members-count')?.textContent = members.length;
-
-
-  } catch (err) {
-    console.error('❌ Failed to load members:', err);
-    if (container) container.innerHTML = '<tr><td colspan="5">Failed to load members.</td></tr>';
-  }
-}
-
-async function loadProjects(allianceId) {
+function renderProjects(projects) {
   const container = document.getElementById('project-progress-bars');
-  if (container) container.innerHTML = '<p>Loading projects...</p>';
-
-  try {
-    const { data: projects, error } = await supabase
-      .from('projects_alliance')
-      .select('*')
-      .eq('alliance_id', allianceId);
-
-    if (error) throw new Error('Failed to load projects: ' + error.message);
-
-    container.innerHTML = '';
-
-    projects.forEach(project => {
-      const div = document.createElement('div');
-      div.classList.add('project-bar');
-      div.innerHTML = `<label>${project.name}</label><progress value="${project.progress}" max="100"></progress> <span>${project.progress}%</span>`;
-      container.appendChild(div);
-    });
-
-
-  } catch (err) {
-    console.error('❌ Failed to load projects:', err);
-    if (container) container.innerHTML = '<p>Failed to load projects.</p>';
-  }
+  if (!container) return;
+  container.innerHTML = '';
+  projects.forEach(p => {
+    const div = document.createElement('div');
+    div.classList.add('project-bar');
+    div.innerHTML = `<label>${p.name}</label><progress value="${p.progress}" max="100"></progress> <span>${p.progress}%</span>`;
+    container.appendChild(div);
+  });
 }
 
-async function loadContributors(allianceId) {
-  const container = document.getElementById('top-contributors');
-  if (container) container.innerHTML = '<p>Loading contributors...</p>';
-
-  try {
-    const { data: top, error } = await supabase
-      .from('alliance_members')
-      .select('*')
-      .eq('alliance_id', allianceId)
-      .order('contribution', { ascending: false })
-      .limit(5);
-
-    if (error) throw new Error('Failed to load contributors: ' + error.message);
-
-    container.innerHTML = '';
-
-    top.forEach(member => {
-      const li = document.createElement('li');
-      li.textContent = `${member.username}: ${member.contribution}`;
-      container.appendChild(li);
-    });
-
-
-  } catch (err) {
-    console.error('❌ Failed to load contributors:', err);
-    if (container) container.innerHTML = '<p>Failed to load contributors.</p>';
-  }
+function renderMembers(members) {
+  const body = document.getElementById('members-list');
+  if (!body) return;
+  body.innerHTML = '';
+  members.forEach(m => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><img src="../images/crests/${m.crest || 'default.png'}" alt="Crest" class="crest"></td>
+      <td>${m.username}</td>
+      <td>${m.rank}</td>
+      <td>${m.contribution}</td>
+      <td>${m.status}</td>`;
+    body.appendChild(row);
+  });
 }
 
-async function loadAchievements(allianceId) {
+function renderQuests(quests) {
+  const container = document.getElementById('quest-list');
+  if (!container) return;
+  container.innerHTML = '';
+  quests.forEach(q => {
+    const card = document.createElement('div');
+    card.classList.add('quest-card');
+    card.innerHTML = `<strong>${q.name}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${q.progress}%"></div></div>`;
+    container.appendChild(card);
+  });
+}
+
+function renderAchievements(achievements) {
   const list = document.getElementById('achievements-list');
-  if (list) list.innerHTML = '<li>Loading achievements...</li>';
-
-  try {
-    const { data, error } = await supabase
-      .from('alliance_achievements')
-      .select('awarded_at, alliance_achievement_catalogue(name, description)')
-      .eq('alliance_id', allianceId)
-      .order('awarded_at', { ascending: false });
-
-    if (error) throw new Error('Failed to load achievements: ' + error.message);
-
-    list.innerHTML = '';
-
-    if (!data || data.length === 0) {
-      list.innerHTML = '<li>No achievements earned yet.</li>';
-      return;
-    }
-
-    data.forEach(row => {
-      const li = document.createElement('li');
-      const ach = row.alliance_achievement_catalogue;
-      li.innerHTML = `<strong>${escapeHTML(ach.name)}</strong> - ${escapeHTML(ach.description)} (${new Date(row.awarded_at).toLocaleDateString()})`;
-      list.appendChild(li);
-    });
-
-  } catch (err) {
-    console.error('❌ Failed to load achievements:', err);
-    if (list) list.innerHTML = '<li>Failed to load achievements.</li>';
+  if (!list) return;
+  list.innerHTML = '';
+  if (!achievements.length) {
+    list.innerHTML = '<li>No achievements earned yet.</li>';
+    return;
   }
+  achievements.forEach(a => {
+    const li = document.createElement('li');
+    const img = document.createElement('span');
+    img.classList.add('achievement-badge');
+    if (a.icon_url) img.style.backgroundImage = `url(${a.icon_url})`;
+    li.appendChild(img);
+    li.insertAdjacentText('beforeend', ` ${a.name}`);
+    list.appendChild(li);
+  });
 }
 
-function escapeHTML(str) {
+function renderActivity(entries) {
+  const list = document.getElementById('activity-log');
+  if (!list) return;
+  list.innerHTML = '';
+  entries.forEach(e => {
+    const li = document.createElement('li');
+    li.classList.add('activity-log-entry');
+    li.textContent = `[${formatDate(e.created_at)}] ${e.username}: ${e.description}`;
+    list.appendChild(li);
+  });
+}
+
+function renderDiplomacy(treaties) {
+  const container = document.getElementById('diplomacy-table');
+  if (!container) return;
+  container.innerHTML = '';
+  treaties.forEach(t => {
+    const row = document.createElement('div');
+    row.classList.add('diplomacy-row');
+    row.textContent = `${t.treaty_type} with Alliance ${t.partner_alliance_id} (${t.status})`;
+    container.appendChild(row);
+  });
+}
+
+function renderWarScore(wars) {
+  const container = document.getElementById('war-score-summary');
+  if (!container) return;
+  container.innerHTML = '';
+  wars.forEach(w => {
+    const div = document.createElement('div');
+    div.textContent = `War ${w.alliance_war_id}: ${w.attacker_score} - ${w.defender_score}`;
+    container.appendChild(div);
+  });
+}
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function formatDate(str) {
   if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  return new Date(str).toLocaleString();
 }
