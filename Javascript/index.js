@@ -17,6 +17,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Optional: floating CTA on scroll
   setupFloatingCTA();
+
+  // ✅ Load latest news and subscribe to updates
+  await loadNews();
+  setupNewsRealtime();
 });
 
 // ✅ Update Hero CTA based on login state
@@ -81,3 +85,50 @@ function setupFloatingCTA() {
     }
   });
 }
+
+// ✅ Load News Articles
+async function loadNews() {
+  const list = document.getElementById("news-list");
+  if (!list) return;
+  list.innerHTML = "<li>Loading news...</li>";
+  try {
+    const res = await fetch("/api/homepage/featured");
+    const data = await res.json();
+    list.innerHTML = "";
+    if (!data.articles || data.articles.length === 0) {
+      list.innerHTML = "<li>No news available.</li>";
+      return;
+    }
+    data.articles.forEach(a => {
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>${escapeHTML(a.title)}</strong> <span class="date">${formatDate(a.published_at)}</span><br>${escapeHTML(a.summary)}`;
+      list.appendChild(li);
+    });
+  } catch (err) {
+    console.error("❌ Error loading news:", err);
+    list.innerHTML = "<li>Failed to load news.</li>";
+  }
+}
+
+// ✅ Realtime updates via Supabase
+let newsSub;
+function setupNewsRealtime() {
+  const list = document.getElementById("news-list");
+  if (!list) return;
+  newsSub = supabase
+    .channel("news_articles")
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, loadNews)
+    .subscribe();
+}
+
+window.addEventListener('beforeunload', () => {
+  newsSub?.unsubscribe();
+});
+
+// ✅ Format Date
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
