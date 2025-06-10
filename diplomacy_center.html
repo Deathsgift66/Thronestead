@@ -59,19 +59,36 @@ Author: Deathsgift66
 </header>
 
 <!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="Diplomacy Center Interface">
-
-  <!-- Core Diplomacy Panel -->
-  <section class="alliance-members-container">
-
-    <!-- Content Container -->
-    <div class="content-container">
-      <h2>Diplomacy Center</h2>
-      <p>Welcome to the Diplomacy Center. Manage alliances and negotiate treaties here.</p>
-    </div>
-
+<main class="diplomacy-center-container">
+  <section class="diplomacy-metrics">
+    <h2>Diplomacy Metrics</h2>
+    <p><strong>Diplomacy Score:</strong> <span id="diplomacy-score">--</span></p>
+    <p><strong>Active Treaties:</strong> <span id="active-treaties-count">--</span></p>
+    <p><strong>Ongoing Wars:</strong> <span id="ongoing-wars-count">--</span></p>
   </section>
 
+  <section class="treaty-list">
+    <h2>Alliance Treaties</h2>
+    <table class="treaties-table">
+      <thead>
+        <tr><th>Type</th><th>Partner</th><th>Status</th><th>Signed</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="treaty-rows"></tbody>
+    </table>
+  </section>
+
+  <section class="propose-treaty-form">
+    <h2>Propose New Treaty</h2>
+    <label for="treaty-type">Treaty Type:</label>
+    <select id="treaty-type">
+      <option value="non_aggression">Non-Aggression Pact</option>
+      <option value="alliance">Military Alliance</option>
+      <option value="economic">Trade Agreement</option>
+    </select>
+    <label for="partner-alliance-id">Partner Alliance ID:</label>
+    <input type="number" id="partner-alliance-id" />
+    <button onclick="proposeTreaty()">Submit Proposal</button>
+  </section>
 </main>
 
 <!-- Footer -->

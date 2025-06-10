@@ -24,6 +24,7 @@ from .routers import (
     player_management,
     market,
     diplomacy,
+    diplomacy_center,
     leaderboard,
     buildings,
     progression_router,
@@ -81,6 +82,7 @@ app.include_router(messages.router)
 app.include_router(player_management.router)
 app.include_router(market.router)
 app.include_router(diplomacy.router)
+app.include_router(diplomacy_center.router)
 app.include_router(leaderboard.router)
 app.include_router(buildings.router)
 app.include_router(progression_router.router)

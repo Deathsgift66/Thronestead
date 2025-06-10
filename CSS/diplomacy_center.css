@@ -1,90 +1,86 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: diplomacy_center.css
-Date: June 2, 2025
-Author: Deathsgift66
-*/
 @import url("./root_theme.css");
 
 body {
   margin: 0;
-  font-family: 'IM Fell English', serif;
-  background: url('../Assets/diplomacy_center_background.png') no-repeat center center fixed;
+  font-family: var(--font-body);
+  background: url('../Assets/aged-wood-texture.png') no-repeat center center fixed;
   background-size: cover;
-  color: var(--parchment);
+  color: var(--ink);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-.main-centered-container {
-  width: auto;
+.diplomacy-center-container {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 2rem;
+  box-sizing: border-box;
 }
 
-/* Customization Section */
-.alliance-customization-area {
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(5px);
+.diplomacy-center-container section {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
   border-radius: 12px;
   border: 1px solid var(--gold);
   box-shadow: 0 4px 12px var(--shadow);
-  padding: 2rem;
-  width: 100%;
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.alliance-customization-area h2 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  text-shadow: 1px 1px 3px black;
-  margin-bottom: 1rem;
-}
-
-#custom-image-slot img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-#custom-text-slot {
-  font-size: 1.1rem;
-  color: var(--parchment);
-  padding: 1rem;
-}
-
-/* Core Panel */
-.alliance-members-container {
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(5px);
-  border-radius: 12px;
-  border: 1px solid var(--gold);
-  box-shadow: 0 6px 14px var(--shadow);
-  padding: 2rem;
-  width: 100%;
-  margin-bottom: 2rem;
-}
-
-.content-container {
-  background: rgba(251, 240, 217, 0.95);
-  border: 3px solid var(--gold);
-  border-radius: 12px;
-  box-shadow: 0 8px 16px var(--shadow);
   padding: 1.5rem;
+}
+
+h2 {
+  font-family: var(--font-primary);
+  color: var(--gold);
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 3px black;
+}
+
+.treaties-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
   color: var(--ink);
 }
 
-.content-container h2 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  margin-bottom: 1rem;
+.treaties-table th, .treaties-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid var(--gold);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
+.treaties-table th {
+  background-color: var(--gold);
+  color: #1e1e1e;
+  font-family: var(--font-primary);
+}
+
+.treaties-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--gold);
+  padding: 0.4rem 0.8rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+button:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .diplomacy-center-container {
+    padding: 1rem;
+  }
+}
