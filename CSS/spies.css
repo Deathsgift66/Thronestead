@@ -1,0 +1,63 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: spies.css
+Date: June 2, 2025
+Author: Deathsgift66
+*/
+@import url("./root_theme.css");
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: url('../Assets/train_troops_background.png') no-repeat center center fixed, var(--stone-bg);
+  background-size: cover;
+  color: var(--parchment);
+}
+
+.main-centered-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--padding-lg);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-default);
+  box-sizing: border-box;
+}
+
+.spy-panel {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--gold);
+  border-radius: var(--border-radius);
+  padding: var(--padding-md);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.spy-panel h2 {
+  font-family: var(--font-header);
+  color: var(--gold);
+  margin-top: 0;
+}
+
+#realtime-indicator {
+  font-size: var(--font-sm);
+  font-family: var(--font-body);
+  color: var(--text-highlight);
+}
+
+#realtime-indicator.connected { color: var(--success); }
+#realtime-indicator.disconnected { color: var(--error); }
+
+@media (max-width: 700px) {
+  .main-centered-container {
+    padding: var(--padding-md);
+  }
+  .spy-panel {
+    padding: var(--padding-sm);
+  }
+}

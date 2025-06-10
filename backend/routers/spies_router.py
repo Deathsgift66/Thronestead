@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .progression_router import get_user_id, get_kingdom_id
+from .progression_router import get_kingdom_id
+from ..security import verify_jwt_token
 from services import spies_service
 
 router = APIRouter(prefix="/api/kingdom", tags=["spies"])
@@ -17,7 +18,7 @@ class TrainPayload(BaseModel):
     quantity: int
 
 @router.get("/spies")
-async def get_spy_info(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+async def get_spy_info(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     return spies_service.get_spy_record(db, kid)
 
@@ -25,7 +26,7 @@ async def get_spy_info(user_id: str = Depends(get_user_id), db: Session = Depend
 @router.post("/spies/train")
 async def train_spies(
     payload: TrainPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -35,7 +36,7 @@ async def train_spies(
 @router.post("/spy_missions")
 async def launch_spy_mission(
     payload: SpyMissionPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -45,7 +46,7 @@ async def launch_spy_mission(
     return {"message": "Mission launched", "mission_id": mission_id}
 
 @router.get("/spy_missions")
-async def list_spy_missions(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+async def list_spy_missions(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     missions = spies_service.list_spy_missions(db, kid)
     return {"missions": missions}
