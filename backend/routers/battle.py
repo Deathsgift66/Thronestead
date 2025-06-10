@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from ..database import get_db
 from .. import models
@@ -68,6 +69,11 @@ def start_battle(war_id: int, db: Session = Depends(get_db)):
     return {"status": "started", "war_id": war_id}
 
 
+@router.post("/api/battle/start/{war_id}")
+def start_battle_alt(war_id: int, db: Session = Depends(get_db)):
+    return start_battle(war_id, db)
+
+
 @router.post("/api/run-tick/{war_id}")
 def run_tick(war_id: int, db: Session = Depends(get_db)):
     war = _manager.get_war(war_id)
@@ -113,6 +119,35 @@ def next_tick(war_id: int, db: Session = Depends(get_db)):
     return run_tick(war_id, db)
 
 
+@router.get("/api/battle/status/{war_id}")
+def get_battle_status(war_id: int, db: Session = Depends(get_db)):
+    """Return battle status with scores."""
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        raise HTTPException(status_code=404, detail="war not found")
+    score = (
+        db.query(models.WarScore)
+        .filter(models.WarScore.war_id == war_id)
+        .first()
+    )
+    return {
+        "war_id": war.war_id,
+        "phase": war.phase,
+        "weather": war.weather,
+        "battle_tick": war.battle_tick,
+        "tick_interval_seconds": war.tick_interval_seconds,
+        "castle_hp": war.castle_hp,
+        "attacker_score": score.attacker_score if score else war.attacker_score,
+        "defender_score": score.defender_score if score else war.defender_score,
+        "is_concluded": war.is_concluded,
+        "war_status": war.war_status,
+    }
+
+
 @router.get("/api/battle/terrain/{war_id}")
 def get_battle_terrain(war_id: int, db: Session = Depends(get_db)):
     """Return terrain tile map for the given war."""
@@ -149,12 +184,35 @@ def get_battle_units(war_id: int, db: Session = Depends(get_db)):
     }
 
 
+class OrderPayload(BaseModel):
+    movement_id: int
+    position_x: int
+    position_y: int
+
+
+@router.post("/api/battle/orders")
+def post_orders(payload: OrderPayload, db: Session = Depends(get_db)):
+    """Update unit movement order (simplified)."""
+    mov = (
+        db.query(models.UnitMovement)
+        .filter(models.UnitMovement.movement_id == payload.movement_id)
+        .first()
+    )
+    if not mov:
+        raise HTTPException(status_code=404, detail="movement not found")
+    mov.position_x = payload.position_x
+    mov.position_y = payload.position_y
+    db.commit()
+    return {"status": "ok"}
+
+
 @router.get("/api/battle/logs/{war_id}")
-def get_combat_logs(war_id: int, db: Session = Depends(get_db)):
+def get_combat_logs(war_id: int, since: int = 0, db: Session = Depends(get_db)):
     """Return combat logs for the given war ordered by tick."""
     logs = (
         db.query(models.CombatLog)
         .filter(models.CombatLog.war_id == war_id)
+        .filter(models.CombatLog.tick_number > since)
         .order_by(models.CombatLog.tick_number, models.CombatLog.combat_id)
         .all()
     )
