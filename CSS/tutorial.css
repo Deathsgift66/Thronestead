@@ -84,21 +84,6 @@ body {
   color: var(--ink);
 }
 
-.tutorial-step {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  border-bottom: 1px solid var(--gold);
-}
-
-.tutorial-step:last-child {
-  border-bottom: none;
-}
-
-.tutorial-step h3 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  margin-bottom: 0.5rem;
-}
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 10px;
@@ -107,5 +92,45 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--accent);
   border-radius: 5px;
+}
+
+/* Progress Bar */
+.progress-bar-bg {
+  background: var(--stone-panel);
+  border-radius: 4px;
+  overflow: hidden;
+  height: 8px;
+  margin-bottom: 1rem;
+}
+
+.progress-bar-fill {
+  background: var(--gold);
+  height: 100%;
+  width: 0;
+  transition: width var(--transition-medium);
+}
+
+.tutorial-step {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--transition-medium), transform var(--transition-medium);
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--gold);
+}
+
+.tutorial-step.visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .main-centered-container {
+    padding: 1rem;
+  }
+  .tutorial-scroll {
+    max-height: 400px;
+    padding: 1rem;
+  }
 }
 
