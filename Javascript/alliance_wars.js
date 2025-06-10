@@ -8,6 +8,8 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentWarId = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -19,6 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ✅ Initial load
+  initTabs();
   await loadCustomBoard();
   await loadAllianceWars();
 });
@@ -53,7 +56,7 @@ async function loadAllianceWars() {
   container.innerHTML = "<p>Loading alliance wars...</p>";
 
   try {
-    const res = await fetch("/api/alliance-wars");
+    const res = await fetch("/api/alliance-wars/list");
     const data = await res.json();
 
     container.innerHTML = "";
@@ -88,12 +91,12 @@ async function loadAllianceWars() {
     }
 
     // Render Past Wars
-    if (data.past_wars && data.past_wars.length > 0) {
+    if (data.completed_wars && data.completed_wars.length > 0) {
       const pastHeader = document.createElement("h3");
       pastHeader.textContent = "🏅 Past Wars";
       container.appendChild(pastHeader);
 
-      data.past_wars.forEach(war => {
+      data.completed_wars.forEach(war => {
         const card = document.createElement("div");
         card.classList.add("war-card");
 
@@ -129,15 +132,85 @@ async function loadAllianceWars() {
 }
 
 // ✅ View War Details (Modal or Navigate)
-function viewWarDetails(war) {
-  // For now: simple alert (can replace with modal or navigation)
-  alert(`War vs ${war.opponent}\nType: ${war.type || "N/A"}\nStatus: ${war.status || war.result}\n\n(More details available in future updates)`);
+async function viewWarDetails(war) {
+  currentWarId = war.alliance_war_id || war.id;
+  switchTab('tab-overview');
+  try {
+    const res = await fetch(`/api/alliance-wars/view?alliance_war_id=${currentWarId}`);
+    const data = await res.json();
+    renderWarOverview(data.war, data.score);
+    renderBattleMap(data.map?.tile_map || []);
+    await loadCombatLogs();
+  } catch (err) {
+    console.error('Error loading war details:', err);
+  }
+}
 
-  // Example for modal:
-  // const modal = document.getElementById("war-modal");
-  // Populate modal fields...
-  // modal.classList.add("open");
+function renderWarOverview(war, score) {
+  const container = document.getElementById('war-overview');
+  if (!war) {
+    container.textContent = 'No data.';
+    return;
+  }
+  container.innerHTML = `
+    <p><strong>Attacker:</strong> ${war.attacker_alliance_id}</p>
+    <p><strong>Defender:</strong> ${war.defender_alliance_id}</p>
+    <p><strong>Status:</strong> ${war.war_status}</p>
+    <p><strong>Phase:</strong> ${war.phase}</p>
+    <p><strong>Attacker Score:</strong> ${score?.attacker_score ?? 0}</p>
+    <p><strong>Defender Score:</strong> ${score?.defender_score ?? 0}</p>
+  `;
+}
 
-  // Example for page nav:
-  // window.location.href = `/alliance_war_detail.html?war_id=${war.id}`;
+async function loadCombatLogs() {
+  if (!currentWarId) return;
+  try {
+    const res = await fetch(`/api/alliance-wars/combat-log?alliance_war_id=${currentWarId}`);
+    const data = await res.json();
+    renderCombatLog(data.combat_logs || data.logs || data);
+  } catch (err) {
+    console.error('Error loading combat logs:', err);
+  }
+}
+
+function renderBattleMap(tileMap) {
+  const battleMap = document.getElementById('battle-map');
+  if (!battleMap) return;
+  battleMap.innerHTML = '';
+  const height = tileMap.length || 20;
+  const width = tileMap[0]?.length || 60;
+  battleMap.style.gridTemplateColumns = `repeat(${width}, 20px)`;
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      const type = tileMap[r]?.[c];
+      if (type === 'forest') tile.style.backgroundColor = '#228B22';
+      else if (type === 'river') tile.style.backgroundColor = '#1E90FF';
+      else if (type === 'hill') tile.style.backgroundColor = '#8B4513';
+      battleMap.appendChild(tile);
+    }
+  }
+}
+
+function renderCombatLog(logs) {
+  const div = document.getElementById('combat-log');
+  if (!div) return;
+  div.innerHTML = '<strong>Combat Log:</strong><hr>';
+  (logs || []).forEach(log => {
+    const line = document.createElement('div');
+    line.innerText = `[Tick ${log.tick_number}] ${log.event_type} — ${log.notes}`;
+    div.appendChild(line);
+  });
+}
+
+function initTabs() {
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.toggle('active', s.id === id));
 }

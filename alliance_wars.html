@@ -77,10 +77,59 @@ Author: Deathsgift66
 
   <!-- Core War Panel -->
   <section class="alliance-members-container">
-    <h2>Ongoing Alliance Wars</h2>
-    <p>Monitor active wars, view progress, and manage your alliance's battle efforts.</p>
-    <div id="wars-container" aria-live="polite">
-      <!-- War cards injected by JavaScript -->
+    <div class="tabs">
+      <button class="tab-button active" data-tab="tab-active">⚔️ Active Wars</button>
+      <button class="tab-button" data-tab="tab-history">📜 War History</button>
+      <button class="tab-button" data-tab="tab-overview">🧭 War Overview</button>
+      <button class="tab-button" data-tab="tab-preplan">🧠 Pre‑Planning</button>
+      <button class="tab-button" data-tab="tab-live">🔴 Live Battle</button>
+      <button class="tab-button" data-tab="tab-resolution">📊 Results</button>
+    </div>
+
+    <!-- Active Wars -->
+    <div id="tab-active" class="tab-section active" aria-label="Active Wars">
+      <h2>Ongoing Alliance Wars</h2>
+      <p>Monitor active wars, view progress, and manage your alliance's battle efforts.</p>
+      <div id="wars-container" aria-live="polite">
+        <!-- War cards injected by JavaScript -->
+      </div>
+    </div>
+
+    <!-- War History -->
+    <div id="tab-history" class="tab-section" aria-label="Past Wars">
+      <h2>Past Wars</h2>
+      <div id="history-container">
+        <!-- Past wars injected by JavaScript -->
+      </div>
+    </div>
+
+    <!-- War Overview -->
+    <div id="tab-overview" class="tab-section" aria-label="War Overview">
+      <h2>War Overview</h2>
+      <div id="war-overview"></div>
+    </div>
+
+    <!-- Pre‑Planning -->
+    <div id="tab-preplan" class="tab-section" aria-label="Preplanning">
+      <h2>Pre‑Planning Phase</h2>
+      <div id="preplan-area"></div>
+    </div>
+
+    <!-- Live Battle -->
+    <div id="tab-live" class="tab-section" aria-label="Live Battle Phase">
+      <h2>Live Battle</h2>
+      <div class="battle-container">
+        <div id="battle-map" class="battle-map"></div>
+        <aside class="sidebar">
+          <div id="combat-log" class="combat-log" aria-live="polite"><strong>Combat Log:</strong><hr></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="tab-resolution" class="tab-section" aria-label="Battle Results">
+      <h2>Battle Results</h2>
+      <div id="results-area"></div>
     </div>
   </section>
 
