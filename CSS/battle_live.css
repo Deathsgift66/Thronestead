@@ -26,6 +26,7 @@ body {
 
 #battle-map {
   display: grid;
+  position: relative;
   grid-template-columns: repeat(60, 20px);
   grid-template-rows: repeat(20, 20px);
   gap: 1px;
@@ -51,6 +52,19 @@ body {
   font-size: 12px;
   color: #fff;
   text-align: center;
+}
+
+.morale-bar {
+  height: 3px;
+  background: var(--low-morale);
+}
+
+.fog-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  display: none;
 }
 
 .hud {

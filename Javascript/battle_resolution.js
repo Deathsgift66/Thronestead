@@ -48,6 +48,7 @@ async function loadResolution(silent = false) {
   const casualty = document.getElementById('casualty-report');
   const lootBox = document.getElementById('loot-summary');
   const participantsBox = document.getElementById('participant-breakdown');
+  const statBox = document.getElementById('stat-changes');
   const replayBtn = document.getElementById('replay-button');
   const lastUpdated = document.getElementById('last-updated');
 
@@ -56,6 +57,7 @@ async function loadResolution(silent = false) {
   timeline.innerHTML = '';
   casualty.innerHTML = '';
   lootBox.innerHTML = '';
+  statBox.innerHTML = '';
   participantsBox.innerHTML = '';
   replayBtn.innerHTML = '';
 
@@ -141,16 +143,43 @@ async function loadResolution(silent = false) {
       lootBox.innerHTML += '<p>No loot.</p>';
     }
 
+    if (resolution.rewards) {
+      const rewards = document.createElement('div');
+      rewards.innerHTML = '<h4>Rewards</h4>';
+      const rList = document.createElement('ul');
+      for (const [name, val] of Object.entries(resolution.rewards)) {
+        const li = document.createElement('li');
+        li.textContent = `${name}: ${val}`;
+        rList.appendChild(li);
+      }
+      rewards.appendChild(rList);
+      lootBox.appendChild(rewards);
+    }
+
     // Participant breakdown
     participantsBox.innerHTML = '<h3>Participants</h3>';
+    const totalUnitsAll = movements.reduce((s, m) => s + (m.quantity || 0), 0) || 1;
     participants.forEach(k => {
       const box = document.createElement('div');
       box.className = 'participant-box';
       const units = movements.filter(m => m.kingdom_id === k.kingdom_id);
       const total = units.reduce((sum, u) => sum + (u.quantity || 0), 0);
-      box.innerHTML = `<strong>${k.kingdom_name}</strong><br>Units Sent: ${total}`;
+      const contrib = ((total / totalUnitsAll) * 100).toFixed(1);
+      box.innerHTML = `<strong>${k.kingdom_name}</strong><br>Units Sent: ${total}<br>Contribution: ${contrib}%`;
       participantsBox.appendChild(box);
     });
+
+    // Stat changes
+    if (resolution.stat_changes) {
+      statBox.innerHTML = '<h3>Stat Changes</h3>';
+      const list = document.createElement('ul');
+      for (const [stat, val] of Object.entries(resolution.stat_changes)) {
+        const li = document.createElement('li');
+        li.textContent = `${stat}: ${val > 0 ? '+' : ''}${val}`;
+        list.appendChild(li);
+      }
+      statBox.appendChild(list);
+    }
 
     // Replay button
     replayBtn.innerHTML = `<a href="battle_replay.html?war_id=${warId}" class="royal-button">Replay Battle</a>`;
