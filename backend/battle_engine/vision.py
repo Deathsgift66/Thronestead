@@ -4,21 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-# Optional database interface used by process_unit_vision
-try:
-    from ..db import db  # type: ignore
-except Exception:  # pragma: no cover - simple fallback
-    class _DummyDB:
-        def query(self, *args: Any, **kwargs: Any) -> Any:
-            class _Result:
-                def first(self) -> None:
-                    return None
-            return _Result()
-
-        def execute(self, *args: Any, **kwargs: Any) -> None:
-            pass
-
-    db = _DummyDB()
+# Database interface for unit vision updates
+from ..db import db
 
 
 def process_unit_vision(unit: Dict[str, Any], all_units: List[Dict[str, Any]], terrain: List[List[str]]) -> None:
