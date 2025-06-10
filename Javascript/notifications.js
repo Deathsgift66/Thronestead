@@ -7,6 +7,10 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let currentSession;
+let notificationChannel;
+let allNotifications = [];
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Validate session
   const { data: { session } } = await supabase.auth.getSession();
@@ -15,11 +19,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // ✅ Initial load
+  currentSession = session;
+
   await loadNotifications();
 
-  // ✅ Bind toolbar buttons
+  notificationChannel = supabase
+    .channel(`notifications-${session.user.id}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'notifications',
+      filter: `user_id=eq.${session.user.id}`
+    }, () => {
+      loadNotifications();
+    })
+    .subscribe();
+
+  const filterInput = document.getElementById('notification-filter');
+  if (filterInput) {
+    filterInput.addEventListener('input', filterNotifications);
+  }
+
   bindToolbar();
+});
+
+window.addEventListener('beforeunload', () => {
+  if (notificationChannel) supabase.removeChannel(notificationChannel);
 });
 
 // ✅ Load Notifications
@@ -29,17 +54,36 @@ async function loadNotifications() {
   container.innerHTML = "<p>Loading notifications...</p>";
 
   try {
-    const res = await fetch("/api/notifications/list");
+    const res = await fetch("/api/notifications/list", {
+      headers: {
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      }
+    });
     const data = await res.json();
 
     container.innerHTML = "";
 
-    if (!data.notifications || data.notifications.length === 0) {
-      container.innerHTML = "<p>No notifications found.</p>";
-      return;
-    }
+    allNotifications = data.notifications || [];
+    renderNotifications(allNotifications);
 
-    data.notifications.forEach(notification => {
+  } catch (err) {
+    console.error("❌ Error loading notifications:", err);
+    container.innerHTML = "<p>Failed to load notifications.</p>";
+  }
+}
+
+function renderNotifications(list) {
+  const container = document.getElementById("notification-feed");
+
+  container.innerHTML = "";
+
+  if (!list || list.length === 0) {
+    container.innerHTML = "<p>No notifications found.</p>";
+    return;
+  }
+
+  list.forEach(notification => {
       const card = document.createElement("div");
       card.classList.add("notification-item");
 
@@ -70,10 +114,6 @@ async function loadNotifications() {
       });
     });
 
-  } catch (err) {
-    console.error("❌ Error loading notifications:", err);
-    container.innerHTML = "<p>Failed to load notifications.</p>";
-  }
 }
 
 // ✅ Bind Toolbar
@@ -99,12 +139,26 @@ function bindToolbar() {
   });
 }
 
+function filterNotifications() {
+  const input = document.getElementById('notification-filter');
+  if (!input) return;
+  const term = input.value.toLowerCase();
+  const filtered = allNotifications.filter(n =>
+    n.title.toLowerCase().includes(term) || n.message.toLowerCase().includes(term)
+  );
+  renderNotifications(filtered);
+}
+
 // ✅ Mark single notification read
 async function markNotificationRead(notificationId) {
   try {
     const res = await fetch("/api/notifications/mark_read", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      },
       body: JSON.stringify({ notification_id: notificationId })
     });
 
@@ -125,7 +179,11 @@ async function markNotificationRead(notificationId) {
 async function markAllRead() {
   try {
     const res = await fetch("/api/notifications/mark_all_read", {
-      method: "POST"
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      }
     });
 
     const result = await res.json();
@@ -146,7 +204,11 @@ async function markAllRead() {
 async function clearAllNotifications() {
   try {
     const res = await fetch("/api/notifications/clear_all", {
-      method: "POST"
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      }
     });
 
     const result = await res.json();
