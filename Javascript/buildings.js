@@ -9,6 +9,7 @@ import { supabase } from './supabaseClient.js';
 
 let currentVillage = null;
 let timerHandle = null;
+let modal, modalName, modalDesc, modalCost;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -16,6 +17,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'login.html';
     return;
   }
+  modal = document.getElementById('buildingModal');
+  modalName = document.getElementById('modalBuildingName');
+  modalDesc = document.getElementById('modalBuildingDesc');
+  modalCost = document.getElementById('modalBuildCost');
+  document.getElementById('buildingModalClose').addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
   await loadVillages();
 });
 
@@ -59,6 +67,9 @@ async function loadBuildings() {
     tbody.innerHTML = '';
     buildings.forEach(b => {
       const row = document.createElement('tr');
+      row.dataset.buildingId = b.building_id;
+      row.classList.add('building-row');
+      row.addEventListener('click', () => showBuildingInfo(b.building_id));
       const statusCell = document.createElement('td');
       let statusHTML = 'Ready';
       if (b.is_under_construction) {
@@ -92,7 +103,8 @@ async function loadBuildings() {
 
 function bindButtons() {
   document.querySelectorAll('.build-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const buildingId = parseInt(btn.dataset['buildingId'], 10);
       const action = btn.textContent.toLowerCase() === 'build' ? 'construct' : 'upgrade';
       try {
@@ -127,6 +139,23 @@ function updateTimers() {
       timer.textContent = remaining > 0 ? Math.ceil(remaining / 1000) + 's' : 'Done';
     }
   });
+}
+
+async function showBuildingInfo(bid) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch(`/api/buildings/info/${bid}`, {
+      headers: { 'X-User-ID': user.id }
+    });
+    if (!res.ok) throw new Error('Failed');
+    const { building } = await res.json();
+    modalName.textContent = building.building_name;
+    modalDesc.textContent = building.description || '';
+    modalCost.textContent = JSON.stringify(building.build_cost, null, 2);
+    modal.classList.remove('hidden');
+  } catch (err) {
+    console.error('Failed to load building info', err);
+  }
 }
 
 function escapeHTML(str) {
