@@ -30,9 +30,12 @@ def navbar_profile(user_id: str = Depends(verify_jwt_token)):
         .single()
         .execute()
     )
-    user = getattr(user_res, "data", user_res)
-    if not user:
+    result = getattr(user_res, "data", None)
+    if result is None and isinstance(user_res, dict):
+        result = user_res.get("data")
+    if not result:
         raise HTTPException(status_code=404, detail="User not found")
+    user = result
 
     msg_res = (
         supabase.table("player_messages")
