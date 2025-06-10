@@ -202,3 +202,22 @@ def cancel_build(
     db.commit()
     return {"message": "Construction cancelled"}
 
+
+@router.get("/info/{building_id}")
+def get_building_info(
+    building_id: int,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.execute(
+            text("SELECT * FROM building_catalogue WHERE building_id = :bid"),
+            {"bid": building_id},
+        )
+        .mappings()
+        .fetchone()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Building not found")
+    return {"building": dict(row)}
+
