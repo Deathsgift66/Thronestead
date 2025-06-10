@@ -8,6 +8,7 @@ from ..data import military_state, recruitable_units
 from ..database import get_db
 from ..services.research_service import start_research as db_start_research
 from ..services.kingdom_quest_service import start_quest as db_start_quest
+from ..services.kingdom_setup_service import create_kingdom_transaction
 from .progression_router import get_user_id
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
@@ -32,6 +33,37 @@ class TemplePayload(BaseModel):
 class TrainPayload(BaseModel):
     unit_id: int
     quantity: int
+
+
+class KingdomCreatePayload(BaseModel):
+    kingdom_name: str
+    ruler_title: str | None = None
+    village_name: str
+    region: str
+    banner_image: str | None = None
+    motto: str | None = None
+
+
+@router.post("/create")
+def create_kingdom(
+    payload: KingdomCreatePayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    try:
+        kid = create_kingdom_transaction(
+            db,
+            user_id,
+            payload.kingdom_name,
+            payload.region,
+            payload.village_name,
+            payload.ruler_title,
+            payload.banner_image,
+            payload.motto,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"kingdom_id": kid}
 
 
 def get_state():
