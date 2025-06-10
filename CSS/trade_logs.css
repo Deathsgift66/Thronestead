@@ -106,6 +106,13 @@ body {
   align-items: center;
 }
 
+@media (max-width: 768px) {
+  .filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .ledger-table {
   background: rgba(251, 240, 217, 0.95);
   border: 3px solid var(--gold);
@@ -160,6 +167,21 @@ body {
 .btn-fantasy:hover {
   background: var(--gold);
   color: #1a1a1a;
+}
+
+/* Realtime Status */
+.realtime-status {
+  margin-bottom: 1rem;
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+}
+
+#realtime-indicator.connected {
+  color: var(--success);
+}
+
+#realtime-indicator.disconnected {
+  color: var(--error);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
