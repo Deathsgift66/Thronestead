@@ -284,3 +284,96 @@ def get_participants(
         .fetchall()
     )
     return {"participants": [dict(r) for r in rows]}
+
+
+@router.get("/active")
+def list_active_wars(db: Session = Depends(get_db)):
+    rows = (
+        db.execute(
+            text("SELECT * FROM alliance_wars WHERE war_status = 'active'"),
+        )
+        .mappings()
+        .fetchall()
+    )
+    return {"wars": [dict(r) for r in rows]}
+
+
+class JoinPayload(BaseModel):
+    alliance_war_id: int
+    side: str
+
+
+@router.post("/join")
+def request_join(
+    payload: JoinPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    authorize_war_access(db, user_id, payload.alliance_war_id)
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            "INSERT INTO alliance_war_participants (alliance_war_id, kingdom_id, role) "
+            "VALUES (:wid, :kid, :role) ON CONFLICT DO NOTHING"
+        ),
+        {"wid": payload.alliance_war_id, "kid": kid, "role": payload.side},
+    )
+    db.execute(
+        text(
+            "INSERT INTO alliance_war_scores (alliance_war_id, battles_participated) "
+            "VALUES (:wid, 1) "
+            "ON CONFLICT (alliance_war_id) DO UPDATE SET battles_participated = alliance_war_scores.battles_participated + 1, last_updated = now()"
+        ),
+        {"wid": payload.alliance_war_id},
+    )
+    db.commit()
+    return {"status": "joined"}
+
+
+class SurrenderPayload(BaseModel):
+    alliance_war_id: int
+    side: str
+
+
+@router.post("/surrender")
+def surrender_war(
+    payload: SurrenderPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    authorize_war_access(db, user_id, payload.alliance_war_id)
+    victor = "defender" if payload.side == "attacker" else "attacker"
+    db.execute(
+        text(
+            "UPDATE alliance_wars SET war_status = 'surrendered', phase = 'ended', end_date = now() "
+            "WHERE alliance_war_id = :wid"
+        ),
+        {"wid": payload.alliance_war_id},
+    )
+    db.execute(
+        text(
+            "INSERT INTO alliance_war_scores (alliance_war_id, victor) VALUES (:wid, :victor) "
+            "ON CONFLICT (alliance_war_id) DO UPDATE SET victor = :victor, last_updated = now()"
+        ),
+        {"wid": payload.alliance_war_id, "victor": victor},
+    )
+    db.commit()
+    return {"status": "surrendered", "victor": victor}
+
+
+@router.get("/summary")
+def war_summary(
+    alliance_war_id: int,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    authorize_war_access(db, user_id, alliance_war_id)
+    row = (
+        db.execute(
+            text("SELECT * FROM alliance_war_scores WHERE alliance_war_id = :wid"),
+            {"wid": alliance_war_id},
+        )
+        .mappings()
+        .first()
+    )
+    return {"summary": dict(row) if row else {}}
