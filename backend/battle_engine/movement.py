@@ -4,15 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-# Optional database interface used by update_unit_position
-try:
-    from ..db import db  # type: ignore
-except Exception:  # pragma: no cover - simple fallback
-    class _DummyDB:
-        def execute(self, *args: Any, **kwargs: Any) -> None:
-            pass
-
-    db = _DummyDB()
+# Database interface for persisting movement state
+from ..db import db
 
 
 def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> None:

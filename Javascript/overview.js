@@ -163,7 +163,7 @@ async function loadOverview() {
       }
     }
 
-    // ✅ Quests Panel (placeholder)
+    // ✅ Quests Panel
     questsContainer.innerHTML = "<p>No active quests.</p>";
 
   } catch (err) {

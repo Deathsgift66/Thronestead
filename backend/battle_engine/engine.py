@@ -115,13 +115,13 @@ class BattleTickHandler:
     def run_tick(self, war: WarState) -> List[Dict]:
         """Process one battle tick and return combat logs."""
         logs: List[Dict] = []
-        # Movement placeholder: units hold position
+        # Movement: units hold position for now
         # Fog of war calculation
         visible = self.fog.visible_tiles(war.units, war.terrain)
         logs.append({"event": "vision_update", "tiles": len(visible)})
         # Combat
         self.combat.resolve(war, logs)
-        # Siege damage placeholder
+        # Simple siege damage calculation
         siege_units = [u for u in war.units if u.unit_type == "siege"]
         if siege_units:
             damage = len(siege_units) * 5

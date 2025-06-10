@@ -7,17 +7,7 @@ from typing import Any, Dict, List
 from .movement import process_unit_movement
 from .vision import process_unit_vision
 
-try:
-    from ..db import db  # type: ignore
-except Exception:  # pragma: no cover - simple fallback
-    class _DummyDB:
-        def query(self, *args: Any, **kwargs: Any) -> List[Dict]:
-            return []
-
-        def execute(self, *args: Any, **kwargs: Any) -> None:
-            pass
-
-    db = _DummyDB()
+from ..db import db
 
 
 def process_unit_combat(

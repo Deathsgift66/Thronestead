@@ -4,18 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-# Optional database interface for get_counter_multiplier
-try:
-    from ..db import db  # type: ignore
-except Exception:  # pragma: no cover - simple fallback
-    class _DummyDB:
-        def query(self, *args: Any, **kwargs: Any) -> Any:
-            class _Result:
-                def first(self) -> None:
-                    return None
-            return _Result()
-
-    db = _DummyDB()
+# Database interface for counters
+from ..db import db
 
 
 def select_target(unit: Dict[str, Any], enemies_in_range: List[Dict[str, Any]]) -> Dict[str, Any]:

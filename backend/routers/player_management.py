@@ -4,6 +4,9 @@ from ..security import verify_jwt_token
 
 
 from ..supabase_client import get_supabase_client
+from services.audit_service import fetch_user_related_logs
+from ..database import get_db
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/api/admin", tags=["player_management"])
 
@@ -70,6 +73,7 @@ async def bulk_action(
 async def player_action(
     payload: PlayerAction,
     user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
 ):
     supabase = get_supabase_client()
     if payload.action == "ban":
@@ -79,8 +83,8 @@ async def player_action(
     elif payload.action == "freeze":
         supabase.table("users").update({"status": "frozen"}).eq("user_id", payload.player_id).execute()
     elif payload.action == "history":
-        # placeholder for retrieving history
-        pass
+        logs = fetch_user_related_logs(db, payload.player_id)
+        return {"history": logs}
     else:
         raise HTTPException(status_code=400, detail="Unknown action")
     return {"message": "action done", "player": payload.player_id}
