@@ -47,18 +47,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!accessGranted) return;
 
   await fetchMembers();
+  setupRealtime();
   setupUIControls();
   setupLogout();
 });
 
 let members = [];
+let membersChannel;
 
 async function fetchMembers() {
   const tbody = document.getElementById('members-list');
   tbody.innerHTML = `<tr><td colspan="10">Loading members...</td></tr>`;
 
   try {
-    const res = await fetch('/api/alliance-members/view');
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch('/api/alliance-members/view', {
+      headers: { 'X-User-ID': user.id }
+    });
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
     const json = await res.json();
@@ -97,16 +102,16 @@ async function renderMembers(data) {
     const showFull = member.same_alliance;
 
     row.innerHTML = `
-      <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${member.username}</a>${member.is_vip ? ' ⭐' : ''}</td>
-      <td>${member.rank}</td>
-      <td>${showFull ? (member.role || '—') : '—'}</td>
-      <td>${showFull ? member.status : '—'}</td>
-      <td>${showFull ? member.contribution : '—'}</td>
-      <td>${showFull ? member.economy_score : '—'}</td>
-      <td>${showFull ? member.military_score : '—'}</td>
-      <td>${showFull ? member.diplomacy_score : '—'}</td>
-      <td>${showFull ? member.total_output : '—'}</td>
-      <td>
+      <td data-label="Name"><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${member.username}</a>${member.is_vip ? ' ⭐' : ''}</td>
+      <td data-label="Rank">${member.rank}</td>
+      <td data-label="Role">${showFull ? (member.role || '—') : '—'}</td>
+      <td data-label="Status">${showFull ? member.status : '—'}</td>
+      <td data-label="Contribution">${showFull ? member.contribution : '—'}</td>
+      <td data-label="Economy">${showFull ? member.economy_score : '—'}</td>
+      <td data-label="Military">${showFull ? member.military_score : '—'}</td>
+      <td data-label="Diplomacy">${showFull ? member.diplomacy_score : '—'}</td>
+      <td data-label="Output">${showFull ? member.total_output : '—'}</td>
+      <td data-label="Actions">
         ${canManage ? `
           <button onclick="promoteMember('${member.user_id}')">⬆️</button>
           <button onclick="demoteMember('${member.user_id}')">⬇️</button>
@@ -142,13 +147,27 @@ function setupUIControls() {
   });
 }
 
+function setupRealtime() {
+  membersChannel = supabase
+    .channel('public:alliance_members')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_members' }, payload => {
+      fetchMembers();
+    })
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    if (membersChannel) supabase.removeChannel(membersChannel);
+  });
+}
+
 async function promoteMember(userId) {
   if (!confirm('Are you sure you want to promote this member?')) return;
 
   try {
+    const { data: { user } } = await supabase.auth.getUser();
     const res = await fetch('/api/alliance_members/promote', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
       body: JSON.stringify({ user_id: userId })
     });
 
@@ -166,9 +185,10 @@ async function demoteMember(userId) {
   if (!confirm('Are you sure you want to demote this member?')) return;
 
   try {
+    const { data: { user } } = await supabase.auth.getUser();
     const res = await fetch('/api/alliance_members/demote', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
       body: JSON.stringify({ user_id: userId })
     });
 
@@ -186,9 +206,10 @@ async function removeMember(userId) {
   if (!confirm('Are you sure you want to REMOVE this member? This cannot be undone.')) return;
 
   try {
+    const { data: { user } } = await supabase.auth.getUser();
     const res = await fetch('/api/alliance_members/remove', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
       body: JSON.stringify({ user_id: userId })
     });
 

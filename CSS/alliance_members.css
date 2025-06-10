@@ -163,3 +163,27 @@ h2 {
     padding: 0.25rem 0.5rem;
   }
 }
+
+@media (max-width: 500px) {
+  .members-table thead {
+    display: none;
+  }
+  .members-table tr {
+    display: block;
+    margin-bottom: 1rem;
+  }
+  .members-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--gold);
+  }
+  .members-table td:last-child {
+    border-bottom: none;
+  }
+  .members-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    margin-right: 0.5rem;
+  }
+}
