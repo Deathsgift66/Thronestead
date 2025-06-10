@@ -62,51 +62,27 @@ Author: Deathsgift66
 
 
 
-  <!-- Core Conflicts Panel -->
+  <!-- Conflicts Hub -->
   <section class="alliance-members-container">
     <h2>Conflicts</h2>
-    <p>Track active and historical conflicts, wars, and disputes.</p>
+    <p>Track current and past wars between kingdoms and alliances.</p>
 
-    <!-- Conflict Tabs -->
     <div class="conflict-tabs">
-      <button class="tab active" data-tab="activeConflicts">Active Conflicts</button>
-      <button class="tab" data-tab="historicalConflicts">Historical Conflicts</button>
+      <button class="tab active" data-tab="kingdomTab">Kingdom Wars</button>
+      <button class="tab" data-tab="allianceTab">Alliance Wars</button>
     </div>
 
-    <!-- Tab Panels -->
-    <div id="activeConflicts" class="tab-panel active">
-      <table>
-        <thead>
-          <tr>
-            <th>Conflict</th>
-            <th>Start Date</th>
-            <th>Status</th>
-            <th>Participants</th>
-          </tr>
-        </thead>
-        <tbody id="activeConflictsBody">
-          <!-- JS will populate -->
-        </tbody>
-      </table>
+    <div id="kingdomTab" class="tab-panel active">
+      <div id="kingdomWarsList"></div>
     </div>
 
-    <div id="historicalConflicts" class="tab-panel">
-      <table>
-        <thead>
-          <tr>
-            <th>Conflict</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Outcome</th>
-          </tr>
-        </thead>
-        <tbody id="historicalConflictsBody">
-          <!-- JS will populate -->
-        </tbody>
-      </table>
+    <div id="allianceTab" class="tab-panel">
+      <div id="allianceWarsList"></div>
     </div>
 
   </section>
+
+  <div id="war-detail-modal" class="modal hidden"></div>
 
 </main>
 
