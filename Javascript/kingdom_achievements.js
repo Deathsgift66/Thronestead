@@ -1,74 +1,217 @@
 import { supabase } from './supabaseClient.js';
 
-let currentUser = null;
+let allAchievements = [];
+let filteredAchievements = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
     window.location.href = 'login.html';
     return;
   }
-  currentUser = session.user;
 
-  const { data: userRow, error: userError } = await supabase
-    .from('users')
+  allAchievements = await loadKingdomAchievements(user.id);
+  filteredAchievements = [...allAchievements];
+  renderAchievementsList(filteredAchievements);
+  addCategoryFilter(allAchievements);
+  setupSearchBar();
+  setupSorting();
+  updateProgressSummary(allAchievements);
+});
+
+async function loadKingdomAchievements(userId) {
+  const { data: kingdom, error } = await supabase
+    .from('kingdoms')
     .select('kingdom_id')
-    .eq('user_id', currentUser.id)
+    .eq('user_id', userId)
     .single();
-  if (userError) {
-    console.error('❌ Failed to load user kingdom:', userError);
+  if (error) {
+    console.error('Failed to load kingdom_id', error);
+    return [];
+  }
+
+  const [unlocked, all] = await Promise.all([
+    supabase
+      .from('kingdom_achievements')
+      .select('achievement_code, awarded_at')
+      .eq('kingdom_id', kingdom.kingdom_id),
+    supabase.from('kingdom_achievement_catalogue').select('*')
+  ]);
+
+  if (unlocked.error || all.error) {
+    console.error('Failed to fetch achievements', unlocked.error || all.error);
+    return [];
+  }
+
+  const unlockedSet = new Set(unlocked.data.map(a => a.achievement_code));
+
+  return all.data.map(ach => ({
+    ...ach,
+    is_unlocked: unlockedSet.has(ach.achievement_code),
+    awarded_at:
+      unlocked.data.find(u => u.achievement_code === ach.achievement_code)?.awarded_at ||
+      null
+  }));
+}
+
+function renderAchievementsList(list) {
+  const grid = document.getElementById('achievement-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (!list.length) {
+    grid.innerHTML = '<p>No achievements found.</p>';
     return;
   }
 
-  loadAchievements(userRow.kingdom_id);
-});
+  list.forEach(ach => {
+    const card = document.createElement('div');
+    card.classList.add('achievement-card');
+    card.dataset.category = ach.category || '';
+    card.dataset.name = ach.name.toLowerCase();
+    card.dataset.description = (ach.description || '').toLowerCase();
+    if (ach.is_unlocked) card.classList.add('badge-earned');
+    else card.classList.add('badge-locked');
+    if (ach.is_hidden && !ach.is_unlocked) card.classList.add('badge-hidden');
 
-async function loadAchievements(kingdomId) {
-  const list = document.getElementById('kingdom-achievements-list');
-  if (list) list.innerHTML = '<li>Loading achievements...</li>';
+    const img = document.createElement('img');
+    img.src = ach.icon_url || 'Assets/icon-sword.svg';
+    img.alt = ach.name;
+    card.appendChild(img);
 
-  try {
-    const [catalogueRes, unlockedRes] = await Promise.all([
-      supabase.from('kingdom_achievement_catalogue').select('*'),
-      supabase
-        .from('kingdom_achievements')
-        .select('achievement_code, awarded_at')
-        .eq('kingdom_id', kingdomId)
-    ]);
+    const name = document.createElement('div');
+    name.classList.add('badge-name');
+    name.textContent = !ach.is_hidden || ach.is_unlocked ? ach.name : '??? Unknown Deed';
+    card.appendChild(name);
 
-    if (catalogueRes.error) throw catalogueRes.error;
-    if (unlockedRes.error) throw unlockedRes.error;
-
-    const unlockedMap = new Map(
-      (unlockedRes.data || []).map(r => [r.achievement_code, r.awarded_at])
-    );
-
-    list.innerHTML = '';
-    catalogueRes.data.forEach(row => {
-      if (row.is_hidden && !unlockedMap.has(row.achievement_code)) {
-        return;
-      }
-      const li = document.createElement('li');
-      if (unlockedMap.has(row.achievement_code)) {
-        li.innerHTML = `<strong>${escapeHTML(row.name)}</strong> - ${escapeHTML(row.description)} (${new Date(unlockedMap.get(row.achievement_code)).toLocaleDateString()})`;
-      } else {
-        li.textContent = row.name;
-        li.classList.add('locked');
-      }
-      list.appendChild(li);
-    });
-  } catch (err) {
-    console.error('❌ Failed to load achievements:', err);
-    if (list) list.innerHTML = '<li>Failed to load achievements.</li>';
-  }
+    card.addEventListener('click', () => displayAchievementDetail(ach));
+    grid.appendChild(card);
+  });
 }
 
-function escapeHTML(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+function addCategoryFilter(achievements) {
+  const toolbar = document.getElementById('filter-toolbar');
+  if (!toolbar) return;
+
+  const search = document.createElement('input');
+  search.type = 'text';
+  search.placeholder = 'Search achievements...';
+  search.id = 'achievement-search';
+  toolbar.appendChild(search);
+
+  const sortSelect = document.createElement('select');
+  sortSelect.id = 'achievement-sort';
+  sortSelect.innerHTML = `
+    <option value="name">Name</option>
+    <option value="category">Category</option>
+    <option value="points">Points</option>
+    <option value="status">Unlocked</option>
+  `;
+  toolbar.appendChild(sortSelect);
+
+  const categories = [...new Set(achievements.map(a => a.category).filter(Boolean))].sort();
+  categories.unshift('All');
+
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.classList.add('action-btn');
+    btn.textContent = cat;
+    btn.addEventListener('click', () => {
+      filterByCategory(cat === 'All' ? null : cat);
+    });
+    toolbar.appendChild(btn);
+  });
+}
+
+function filterByCategory(category) {
+  filteredAchievements = category
+    ? allAchievements.filter(a => a.category === category)
+    : [...allAchievements];
+  applySearch(document.getElementById('achievement-search')?.value || '');
+}
+
+function setupSearchBar() {
+  const input = document.getElementById('achievement-search');
+  if (!input) return;
+  input.addEventListener('input', e => {
+    applySearch(e.target.value);
+  });
+}
+
+function applySearch(keyword) {
+  keyword = keyword.toLowerCase();
+  let list = filteredAchievements.filter(a =>
+    a.name.toLowerCase().includes(keyword) ||
+    (a.description || '').toLowerCase().includes(keyword)
+  );
+  const sortMethod = document.getElementById('achievement-sort')?.value || 'name';
+  list = sortAchievements(list, sortMethod);
+  renderAchievementsList(list);
+  updateProgressSummary(list);
+}
+
+function setupSorting() {
+  const select = document.getElementById('achievement-sort');
+  if (!select) return;
+  select.addEventListener('change', () => {
+    applySearch(document.getElementById('achievement-search')?.value || '');
+  });
+}
+
+function sortAchievements(list, method) {
+  const arr = [...list];
+  switch (method) {
+    case 'category':
+      arr.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+      break;
+    case 'points':
+      arr.sort((a, b) => (b.points || 0) - (a.points || 0));
+      break;
+    case 'status':
+      arr.sort((a, b) => Number(b.is_unlocked) - Number(a.is_unlocked));
+      break;
+    default:
+      arr.sort((a, b) => a.name.localeCompare(b.name));
+  }
+  return arr;
+}
+
+function displayAchievementDetail(ach) {
+  const modal = document.getElementById('achievement-modal');
+  if (!modal) return;
+
+  const reward = ach.reward && Object.keys(ach.reward).length
+    ? Object.entries(ach.reward)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ')
+    : 'None';
+
+  modal.innerHTML = `
+    <h2>${!ach.is_hidden || ach.is_unlocked ? ach.name : '???'}</h2>
+    <p>${!ach.is_hidden || ach.is_unlocked ? ach.description : 'Unlock to reveal details.'}</p>
+    <p>Category: ${ach.category || 'N/A'}</p>
+    <p>Reward: ${reward}</p>
+    <p>Status: ${ach.is_unlocked ? 'Unlocked' : 'Locked'}</p>
+    ${ach.awarded_at ? `<p>Earned on: ${new Date(ach.awarded_at).toLocaleString()}</p>` : ''}
+    <button class="action-btn" id="close-achievement-modal">Close</button>
+  `;
+
+  modal.classList.remove('hidden');
+  document.getElementById('close-achievement-modal').addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+}
+
+
+function updateProgressSummary(list) {
+  const summary = document.getElementById('progress-summary');
+  if (!summary) return;
+  const total = list.length;
+  const unlocked = list.filter(a => a.is_unlocked).length;
+  const percent = total ? Math.round((unlocked / total) * 100) : 0;
+  summary.classList.add('progress-summary');
+  summary.innerHTML = `
+    <p>${unlocked} / ${total} unlocked (${percent}%)</p>
+    <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
+  `;
 }
