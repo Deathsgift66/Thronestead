@@ -4,11 +4,25 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import verify_jwt_token
 from services.vip_status_service import get_vip_status, upsert_vip_status
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/vip", tags=["vip"])
+
+
+def get_supabase_client():
+    try:
+        from supabase import create_client
+    except ImportError as e:
+        raise RuntimeError("supabase client library not installed") from e
+    import os
+
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+    if not url or not key:
+        raise RuntimeError("Supabase credentials not configured")
+    return create_client(url, key)
 
 
 class DonationPayload(BaseModel):
@@ -16,7 +30,7 @@ class DonationPayload(BaseModel):
 
 
 @router.get("/status")
-def vip_status(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def vip_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     record = get_vip_status(db, user_id)
     if not record:
         return {"vip_level": 0, "expires_at": None, "founder": False}
@@ -24,7 +38,7 @@ def vip_status(user_id: str = Depends(get_user_id), db: Session = Depends(get_db
 
 
 @router.get("/tiers")
-def vip_tiers():
+def vip_tiers(user_id: str = Depends(verify_jwt_token)):
     return {
         "tiers": [
             {
@@ -52,10 +66,25 @@ def vip_tiers():
     }
 
 
+@router.get("/leaders")
+def vip_leaderboard(user_id: str = Depends(verify_jwt_token)):
+    """Return top VIP donors from Supabase."""
+    supabase = get_supabase_client()
+    result = (
+        supabase.table("vip_donations")
+        .select("user_id, username, total_donated")
+        .order("total_donated", desc=True)
+        .limit(10)
+        .execute()
+    )
+    leaders = getattr(result, "data", result) or []
+    return {"leaders": leaders}
+
+
 @router.post("/donate")
 def donate(
     payload: DonationPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     # Demo implementation: upgrade VIP without charging
@@ -63,7 +92,11 @@ def donate(
     if payload.tier_id not in tiers:
         raise HTTPException(status_code=400, detail="invalid tier")
 
-    record = get_vip_status(db, user_id) or {"vip_level": 0, "expires_at": None, "founder": False}
+    record = get_vip_status(db, user_id) or {
+        "vip_level": 0,
+        "expires_at": None,
+        "founder": False,
+    }
     level = payload.tier_id
     expires_at = datetime.utcnow() + timedelta(days=30)
     if record.get("founder"):
@@ -72,4 +105,3 @@ def donate(
     upsert_vip_status(db, user_id, level, expires_at, record.get("founder", False))
     log_action(db, user_id, "vip_donation", f"User upgraded to VIP {level}")
     return {"message": "ok"}
-
