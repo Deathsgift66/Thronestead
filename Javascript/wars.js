@@ -10,6 +10,7 @@ import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   setupControls();
+  subscribeToWarUpdates();
   await loadWars();
   showToast("Unified War Command Center loaded!");
 });
@@ -26,6 +27,26 @@ function setupControls() {
     showToast("Refreshing active wars...");
     await loadWars();
   });
+}
+
+// ✅ Subscribe to Supabase real-time updates
+function subscribeToWarUpdates() {
+  supabase
+    .channel('public:wars')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'wars' }, payload => {
+      appendWarEvent(`${payload.new.attacker_name} vs ${payload.new.defender_name} — ${payload.new.status}`);
+      loadWars();
+    })
+    .subscribe();
+}
+
+function appendWarEvent(msg) {
+  const feed = document.getElementById('war-feed');
+  if (!feed) return;
+  const el = document.createElement('div');
+  el.className = 'war-event';
+  el.textContent = msg;
+  feed.prepend(el);
 }
 
 // ✅ Load Active Wars
@@ -54,8 +75,9 @@ async function loadWars() {
       card.classList.add('war-card');
       card.innerHTML = `
         <h3>${war.attacker_name} ⚔️ ${war.defender_name}</h3>
+        <p class="war-reason">${war.war_reason || ''}</p>
         <p>Status: ${war.status}</p>
-        <p>Start Date: ${new Date(war.start_date).toLocaleString()}</p>
+        <p>Start: ${new Date(war.start_date).toLocaleString()}</p>
         <p>Score: ${war.attacker_score} - ${war.defender_score}</p>
         <button class="action-btn" onclick="openWarDetailModal(${war.war_id})">View Details</button>
       `;
@@ -154,13 +176,9 @@ async function openWarDetailModal(warId) {
   `;
 
   try {
-    const { data: war, error } = await supabase
-      .from('wars')
-      .select('*')
-      .eq('war_id', warId)
-      .single();
-
-    if (error) throw error;
+    const res = await fetch(`/api/wars/view?war_id=${warId}`);
+    const { war } = await res.json();
+    if (!res.ok) throw new Error('Failed to load');
 
     const content = modal.querySelector('.modal-content');
     content.innerHTML = `

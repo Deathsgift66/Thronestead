@@ -30,6 +30,7 @@ from .routers import (
     leaderboard,
     homepage,
     buildings,
+    tutorial,
     progression_router,
     villages_router,
     vip_status_router,
@@ -50,6 +51,7 @@ from .routers import (
     wars,
     quests_router,
     projects_router,
+    resources,
     kingdom_history,
     kingdom_achievements,
     login_routes,
@@ -57,6 +59,8 @@ from .routers import (
     navbar,
     seasonal_effects,
     treaty_web,
+    village_master as village_master_router,
+    world_map,
 )
 from .database import engine
 from .models import Base
@@ -78,6 +82,7 @@ app.include_router(conflicts.router)
 app.include_router(black_market.router)
 app.include_router(black_market_routes.router)
 app.include_router(news.router)
+app.include_router(tutorial.router)
 app.include_router(homepage.router)
 app.include_router(alliance_wars.router)
 app.include_router(notifications.router)
@@ -116,6 +121,7 @@ app.include_router(alliance_home.router)
 app.include_router(wars.router)
 app.include_router(quests_router.router)
 app.include_router(projects_router.router)
+app.include_router(resources.router)
 app.include_router(kingdom_history.router)
 app.include_router(forgot_password.router)
 app.include_router(kingdom_achievements.router)
@@ -124,8 +130,11 @@ app.include_router(legal.router)
 app.include_router(profile_view.router)
 app.include_router(navbar.router)
 app.include_router(seasonal_effects.router)
+app.include_router(world_map.router)
 app.include_router(overview_router.router)
 app.include_router(treaty_web.router)
+app.include_router(village_master_router.router)
+
 
 
 
