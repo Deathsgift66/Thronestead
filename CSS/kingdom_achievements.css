@@ -1,3 +1,11 @@
+.parchment-bg {
+  background: url('../Assets/signupparchment.png') no-repeat center center/cover, var(--parchment-dark);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px var(--shadow);
+  color: var(--ink);
+}
+
 .badge-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -69,6 +77,36 @@
   width: 0;
 }
 
+.modal {
+  background: var(--modal-bg);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  padding: 1rem;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--z-index-modal);
+  max-width: 400px;
+  width: 90%;
+}
+
 .modal.hidden {
   display: none;
+}
+
+@media (min-width: 600px) {
+  .achievement-card {
+    padding: 1rem;
+  }
+  .achievement-card img {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+@media (min-width: 900px) {
+  .badge-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
 }

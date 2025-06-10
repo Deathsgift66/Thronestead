@@ -237,6 +237,7 @@
 - backend/routers/forgot_password.py
 - backend/routers/kingdom.py
 - backend/routers/kingdom_history.py
+- backend/routers/kingdom_achievements.py
 - backend/routers/kingdom_military.py
 - backend/routers/leaderboard.py
 - backend/routers/market.py
@@ -284,6 +285,7 @@
 - tests/test_forgot_password_router.py
 - tests/test_history_service.py
 - tests/test_kingdom_achievement_service.py
+- tests/test_kingdom_achievements_router.py
 - tests/test_kingdom_history_service.py
 - tests/test_kingdom_quest_service.py
 - tests/test_kingdom_title_service.py

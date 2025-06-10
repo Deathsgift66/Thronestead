@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient.js';
 
 let allAchievements = [];
 let filteredAchievements = [];
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -9,14 +10,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'login.html';
     return;
   }
+  currentUser = user;
 
-  allAchievements = await loadKingdomAchievements(user.id);
+  const { kingdomId } = await loadKingdomAchievements(user.id);
   filteredAchievements = [...allAchievements];
   renderAchievementsList(filteredAchievements);
   addCategoryFilter(allAchievements);
   setupSearchBar();
   setupSorting();
   updateProgressSummary(allAchievements);
+  if (kingdomId) subscribeToUpdates(kingdomId);
 });
 
 async function loadKingdomAchievements(userId) {
@@ -27,7 +30,7 @@ async function loadKingdomAchievements(userId) {
     .single();
   if (error) {
     console.error('Failed to load kingdom_id', error);
-    return [];
+    return { achievements: [], kingdomId: null };
   }
 
   const [unlocked, all] = await Promise.all([
@@ -40,18 +43,19 @@ async function loadKingdomAchievements(userId) {
 
   if (unlocked.error || all.error) {
     console.error('Failed to fetch achievements', unlocked.error || all.error);
-    return [];
+    return { achievements: [], kingdomId: kingdom.kingdom_id };
   }
 
   const unlockedSet = new Set(unlocked.data.map(a => a.achievement_code));
 
-  return all.data.map(ach => ({
+  allAchievements = all.data.map(ach => ({
     ...ach,
     is_unlocked: unlockedSet.has(ach.achievement_code),
     awarded_at:
       unlocked.data.find(u => u.achievement_code === ach.achievement_code)?.awarded_at ||
       null
   }));
+  return { achievements: allAchievements, kingdomId: kingdom.kingdom_id };
 }
 
 function renderAchievementsList(list) {
@@ -214,4 +218,25 @@ function updateProgressSummary(list) {
     <p>${unlocked} / ${total} unlocked (${percent}%)</p>
     <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
   `;
+}
+
+function subscribeToUpdates(kid) {
+  supabase
+    .channel('kingdom_achievements_' + kid)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'kingdom_achievements',
+        filter: `kingdom_id=eq.${kid}`
+      },
+      async () => {
+        const { achievements } = await loadKingdomAchievements(currentUser.id);
+        filteredAchievements = [...achievements];
+        renderAchievementsList(filteredAchievements);
+        updateProgressSummary(filteredAchievements);
+      }
+    )
+    .subscribe();
 }
