@@ -86,24 +86,34 @@ class CombatResolver:
         for pos, units in units_by_pos.items():
             if len(units) < 2:
                 continue
-            attacker = units[0]
-            defender = units[1]
-            damage = min(attacker.quantity * 10, defender.hp)
-            defender.hp -= damage
-            logs.append({
-                "event": "attack",
-                "attacker_id": attacker.unit_id,
-                "defender_id": defender.unit_id,
-                "pos": pos,
-                "damage": damage,
-            })
-            if defender.hp <= 0:
-                logs.append({
-                    "event": "death",
-                    "unit_id": defender.unit_id,
-                    "pos": pos,
-                })
-                war.units.remove(defender)
+            to_remove: List[Unit] = []
+            for i, attacker in enumerate(units):
+                for defender in units[i + 1 :]:
+                    if attacker.kingdom_id == defender.kingdom_id:
+                        continue
+                    damage = min(attacker.quantity * 10, defender.hp)
+                    defender.hp -= damage
+                    logs.append(
+                        {
+                            "event": "attack",
+                            "attacker_id": attacker.unit_id,
+                            "defender_id": defender.unit_id,
+                            "pos": pos,
+                            "damage": damage,
+                        }
+                    )
+                    if defender.hp <= 0 and defender not in to_remove:
+                        logs.append(
+                            {
+                                "event": "death",
+                                "unit_id": defender.unit_id,
+                                "pos": pos,
+                            }
+                        )
+                        to_remove.append(defender)
+            for unit in to_remove:
+                if unit in war.units:
+                    war.units.remove(unit)
 
 
 class BattleTickHandler:
