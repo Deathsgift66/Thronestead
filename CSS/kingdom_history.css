@@ -28,23 +28,62 @@ body {
   align-items: center;
 }
 
-.history-list {
+.history-section {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.timeline {
   list-style: none;
   padding: 0;
+  margin: 0;
+  border-left: 2px solid var(--gold);
+}
+
+.timeline li {
+  position: relative;
+  padding: 0 0 1rem 1rem;
+}
+
+.timeline li::before {
+  content: '\2022';
+  position: absolute;
+  left: -0.6rem;
+  color: var(--gold);
+}
+
+.achievement-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.achievement-badge {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--gold);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.collapsible {
   width: 100%;
 }
 
-.history-item {
-  background: rgba(0, 0, 0, 0.55);
+.collapsible h3 {
+  margin: 0;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.5rem;
   border: 1px solid var(--gold);
-  border-radius: 8px;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 8px var(--shadow);
+  cursor: pointer;
 }
 
-.history-item .date {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  margin-bottom: 0.25rem;
+.collapsible ul {
+  list-style: none;
+  padding: 0.5rem;
+  display: none;
+}
+
+.collapsible.open ul {
+  display: block;
 }

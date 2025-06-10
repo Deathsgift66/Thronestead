@@ -59,13 +59,37 @@ Author: Deathsgift66
 <!-- Main Centered Layout -->
 <main class="main-centered-container" aria-label="Kingdom History Interface">
 
-  <!-- History Panel -->
-  <section class="alliance-members-container">
-    <h2>Kingdom History</h2>
-    <p>A chronological record of your kingdom's major events.</p>
-    <ul id="history-list" class="history-list">
-      <!-- JS populates -->
-    </ul>
+  <!-- Timeline Panel -->
+  <section class="history-section">
+    <h2>Kingdom Timeline</h2>
+    <ul id="timeline" class="timeline"></ul>
+  </section>
+
+  <!-- Achievement Grid -->
+  <section class="history-section">
+    <h2>Achievements</h2>
+    <div id="achievement-grid" class="achievement-grid"></div>
+  </section>
+
+  <!-- Collapsible Logs -->
+  <section id="war-log-panel" class="collapsible">
+    <h3>Past Wars</h3>
+    <ul id="war-log"></ul>
+  </section>
+
+  <section id="project-log-panel" class="collapsible">
+    <h3>Project Activity</h3>
+    <ul id="project-log"></ul>
+  </section>
+
+  <section id="quest-log-panel" class="collapsible">
+    <h3>Quest Attempts</h3>
+    <ul id="quest-log"></ul>
+  </section>
+
+  <section id="training-log-panel" class="collapsible">
+    <h3>Training History</h3>
+    <ul id="training-log"></ul>
   </section>
 
 </main>
