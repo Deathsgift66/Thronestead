@@ -58,12 +58,18 @@ function bindEvents(profileExists) {
 
   createBtn.addEventListener('click', async () => {
     const kNameEl = document.getElementById('kingdom-name-input');
+    const titleEl = document.getElementById('ruler-title-input');
     const regionEl = document.getElementById('region-select');
     const villageEl = document.getElementById('village-name-input');
+    const bannerEl = document.getElementById('banner-image-input');
+    const mottoEl = document.getElementById('motto-input');
 
     const kingdomName = kNameEl.value.trim();
+    const rulerTitle = titleEl.value.trim();
     const region = regionEl.value;
     const villageName = villageEl.value.trim();
+    const bannerImage = bannerEl.value.trim();
+    const motto = mottoEl.value.trim();
 
     if (kingdomName.length < 3) {
       showToast('Kingdom name must be at least 3 characters.');
@@ -81,78 +87,23 @@ function bindEvents(profileExists) {
     createBtn.disabled = true;
 
     try {
-      const { data: existing, error: existErr } = await supabase
-        .from('kingdoms')
-        .select('kingdom_id')
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-      if (existErr) throw existErr;
-      if (existing) {
-        showToast('You already have a kingdom.');
-        createBtn.disabled = false;
-        return;
-      }
-
-      if (!profileExists) {
-        const { error: userErr } = await supabase.from('users').insert({
-          user_id: currentUser.id,
-          username: currentUser.user_metadata.username,
-          display_name: currentUser.user_metadata.display_name,
+      const res = await fetch('/api/kingdom/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': currentUser.id
+        },
+        body: JSON.stringify({
           kingdom_name: kingdomName,
-          email: currentUser.email,
-          profile_bio: '',
-          profile_picture_url: '',
+          ruler_title: rulerTitle || null,
+          village_name: villageName,
           region,
-          kingdom_id: null,
-          alliance_id: null,
-          alliance_role: null,
-          active_policy: null,
-          active_laws: [],
-          is_admin: false,
-          is_banned: false,
-          is_deleted: false,
-          setup_complete: false
-        });
-        if (userErr && userErr.code !== '23505') throw userErr;
-      }
-
-      const { data: kingdomData, error: kErr } = await supabase
-        .from('kingdoms')
-        .insert({
-          user_id: currentUser.id,
-          kingdom_name: kingdomName,
-          region,
-          prestige_score: 0,
-          avatar_url: ''
+          banner_image: bannerImage || null,
+          motto: motto || null
         })
-        .select('kingdom_id')
-        .single();
-      if (kErr) throw kErr;
+      });
 
-      kingdomId = kingdomData.kingdom_id;
-
-      const regionData = regionMap[region] || {};
-
-      const { error: villageErr } = await supabase
-        .from('kingdom_villages')
-        .insert({ kingdom_id: kingdomId, village_name: villageName });
-      if (villageErr) throw villageErr;
-
-      await supabase
-        .from('kingdom_resources')
-        .insert({ kingdom_id: kingdomId, ...(regionData.resource_bonus || {}) });
-
-      await supabase
-        .from('kingdom_troop_slots')
-        .insert({
-          kingdom_id: kingdomId,
-          base_slots: 20 + (regionData.troop_bonus?.base_slots || 0)
-        });
-
-      await supabase
-        .from('users')
-        .update({ setup_complete: true, kingdom_id: kingdomId })
-        .eq('user_id', currentUser.id);
+      if (!res.ok) throw new Error('Request failed');
 
       showToast('Kingdom created!');
       setTimeout(() => {

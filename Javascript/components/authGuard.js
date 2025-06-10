@@ -27,12 +27,12 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .select("is_admin")
+      .select("is_admin, setup_complete")
       .eq("user_id", user.id)
       .single();
 
-    if (!userData || userError) {
-      // New account without profile -> push to onboarding
+    if (!userData || userError || userData.setup_complete !== true) {
+      // New account or not finished onboarding -> push to onboarding
       return (window.location.href = "play.html");
     }
 
