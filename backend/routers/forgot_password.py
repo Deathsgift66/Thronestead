@@ -1,9 +1,10 @@
 from __future__ import annotations
 import hashlib
+import os
 import time
 import uuid
 import re
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from pydantic import BaseModel
@@ -17,8 +18,9 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 RESET_STORE: dict[str, tuple[str, float]] = {}
 VERIFIED_SESSIONS: dict[str, tuple[str, float]] = {}
 RATE_LIMIT: dict[str, list[float]] = {}
-TOKEN_TTL = 15 * 60
-SESSION_TTL = 10 * 60
+TOKEN_TTL = int(os.getenv("PASSWORD_RESET_TOKEN_TTL", "900"))
+SESSION_TTL = int(os.getenv("PASSWORD_RESET_SESSION_TTL", "600"))
+RATE_LIMIT_MAX = int(os.getenv("PASSWORD_RESET_RATE_LIMIT", "3"))
 
 class EmailPayload(BaseModel):
     email: str
@@ -48,14 +50,14 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-@router.post("/request-password-reset")
+@router.post("/request-password-reset", status_code=status.HTTP_201_CREATED)
 def request_password_reset(
     payload: EmailPayload, request: Request, db: Session = Depends(get_db)
 ):
     _prune_expired()
     ip = request.client.host if request.client else ""
     history = RATE_LIMIT.setdefault(ip, [])
-    if len(history) >= 3:
+    if len(history) >= RATE_LIMIT_MAX:
         raise HTTPException(status_code=429, detail="Too many requests")
     history.append(time.time())
 
