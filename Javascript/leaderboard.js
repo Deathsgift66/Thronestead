@@ -10,6 +10,23 @@ import { supabase } from './supabaseClient.js';
 
 let currentTab = "kingdoms";
 
+const headers = {
+  kingdoms: ["Rank", "Kingdom", "Ruler", "Power", "Economy"],
+  alliances: [
+    "Rank",
+    "Alliance",
+    "Military",
+    "Economy",
+    "Diplomacy",
+    "Wins",
+    "Losses",
+    "Prestige",
+    "Apply",
+  ],
+  wars: ["Rank", "Kingdom", "Ruler", "Wins", "Losses"],
+  economy: ["Rank", "Kingdom", "Ruler", "Trade", "Market %"],
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -61,20 +78,27 @@ function setupTabs() {
 // ✅ Load Leaderboard
 async function loadLeaderboard(type) {
   const tbody = document.getElementById("leaderboard-body");
+  const headerRow = document.getElementById("leaderboard-headers");
+
+  const cols = headers[type] ? headers[type].length : 5;
 
   tbody.innerHTML = `
-    <tr><td colspan="5">Loading leaderboard...</td></tr>
+    <tr><td colspan="${cols}">Loading leaderboard...</td></tr>
   `;
 
   try {
     const res = await fetch(`/api/leaderboard/${type}`);
     const data = await res.json();
 
+    if (headers[type]) {
+      headerRow.innerHTML = headers[type].map(h => `<th>${h}</th>`).join("");
+    }
+
     tbody.innerHTML = "";
 
     if (!data.entries || data.entries.length === 0) {
       tbody.innerHTML = `
-        <tr><td colspan="5">No results available.</td></tr>
+        <tr><td colspan="${cols}">No results available.</td></tr>
       `;
       return;
     }
@@ -95,8 +119,12 @@ async function loadLeaderboard(type) {
         row.innerHTML = `
           <td>${index + 1}</td>
           <td>${escapeHTML(entry.alliance_name)}</td>
-          <td>${entry.member_count}</td>
-          <td>${entry.total_power}</td>
+          <td>${entry.military_score}</td>
+          <td>${entry.economy_score}</td>
+          <td>${entry.diplomacy_score}</td>
+          <td>${entry.war_wins}</td>
+          <td>${entry.war_losses}</td>
+          <td>${entry.prestige_score ?? '—'}</td>
           <td>
             <button class="action-btn apply-btn" data-alliance-id="${entry.alliance_id}" data-alliance-name="${escapeHTML(entry.alliance_name)}">Apply</button>
           </td>
@@ -139,7 +167,7 @@ async function loadLeaderboard(type) {
   } catch (err) {
     console.error(`❌ Error loading ${type} leaderboard:`, err);
     tbody.innerHTML = `
-      <tr><td colspan="5">Failed to load leaderboard.</td></tr>
+      <tr><td colspan="${cols}">Failed to load leaderboard.</td></tr>
     `;
   }
 }
