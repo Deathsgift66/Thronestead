@@ -1,0 +1,80 @@
+<!--
+Project Name: Kingmakers Rise Frontend
+File Name: alliance_changelog.html
+Date: June 2, 2025
+Author: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Alliance Changelog | Kingmaker's Rise</title>
+  <meta name="description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
+  <meta name="keywords" content="Kingmaker's Rise, alliance log, history" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/alliance_changelog.html" />
+
+  <meta property="og:title" content="Alliance Changelog | Kingmaker's Rise" />
+  <meta property="og:description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/alliance_changelog.html" />
+  <meta property="og:type" content="website" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Alliance Changelog | Kingmaker's Rise" />
+  <meta name="twitter:description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/alliance_changelog.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script defer type="module" src="Javascript/alliance_changelog.js"></script>
+</head>
+<body>
+  <div id="navbar-container"></div>
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
+
+  <header class="kr-top-banner" aria-label="Alliance Changelog Banner">
+    Alliance Changelog
+  </header>
+
+  <main class="main-centered-container" aria-label="Alliance Changelog Interface">
+    <section class="changelog-container">
+      <h2>Alliance Changelog</h2>
+      <div class="filter-bar">
+        <input type="date" id="filter-start" />
+        <input type="date" id="filter-end" />
+        <select id="filter-type">
+          <option value="">All Types</option>
+          <option value="war">Wars</option>
+          <option value="treaty">Treaties</option>
+          <option value="project">Projects</option>
+          <option value="quest">Quests</option>
+          <option value="member">Members</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button onclick="applyFilters()">Filter</button>
+      </div>
+      <ul id="changelog-list" class="timeline-feed"></ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="legal.html">View Legal Documents</a>
+    </div>
+  </footer>
+</body>
+</html>

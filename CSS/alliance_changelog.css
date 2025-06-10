@@ -1,0 +1,60 @@
+@import url('./root_theme.css');
+
+body {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  background: url('../Assets/changelog_background.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--parchment);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-centered-container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.changelog-container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(2px);
+  border-radius: 10px;
+  color: #eae0d5;
+  width: 100%;
+}
+
+.timeline-feed {
+  list-style: none;
+  padding: 0;
+}
+
+.log-entry {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  grid-template-columns: 200px 100px 1fr;
+  align-items: start;
+}
+
+.log-time {
+  font-weight: bold;
+}
+
+.log-type {
+  text-transform: uppercase;
+  color: #bfa24b;
+}
+
+.log-description {
+  color: #fff;
+}
