@@ -61,7 +61,7 @@ async function loadVaultSummary() {
   container.innerHTML = "<p>Loading vault totals...</p>";
 
   try {
-    const res = await fetch("/api/alliance-vault/summary");
+    const res = await fetch("/api/vault/resources");
     const data = await res.json();
 
     container.innerHTML = "";
@@ -133,7 +133,7 @@ async function loadDepositForm() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const res = await fetch("/api/alliance-vault/deposit", {
+      const res = await fetch("/api/vault/deposit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resource, amount, user_id: user.id })
@@ -175,7 +175,7 @@ async function loadWithdrawForm() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const res = await fetch("/api/alliance-vault/withdraw", {
+      const res = await fetch("/api/vault/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resource, amount, user_id: user.id })
@@ -200,7 +200,7 @@ async function loadVaultHistory() {
     const actionFilter = document.getElementById('filter-action').value;
     const params = new URLSearchParams();
     if (actionFilter) params.append('action', actionFilter);
-    const res = await fetch(`/api/alliance-vault/history?${params.toString()}`);
+    const res = await fetch(`/api/vault/transactions?${params.toString()}`);
     const data = await res.json();
 
     tbody.innerHTML = "";
