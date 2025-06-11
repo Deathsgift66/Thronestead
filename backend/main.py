@@ -3,6 +3,7 @@ from .routers import (
     admin,
     alliance_members,
     alliance_members_view,
+    alliance_management,
     alliance_projects,
     kingdom,
     conflicts,
@@ -78,6 +79,7 @@ load_game_settings()
 
 app.include_router(alliance_members.router)
 app.include_router(alliance_members_view.router)
+app.include_router(alliance_management.router)
 app.include_router(admin.router)
 app.include_router(admin_dashboard.router)
 app.include_router(alliance_projects.router)
