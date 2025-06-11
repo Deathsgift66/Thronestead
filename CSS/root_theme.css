@@ -177,6 +177,15 @@ Author: Deathsgift66
   outline-offset: 2px;
 }
 
+/* Accessible default button states */
+button:hover {
+  filter: brightness(1.1);
+}
+button:focus {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
+}
+
 /* -----------------------------------------------
    Form Elements Base
 ------------------------------------------------ */

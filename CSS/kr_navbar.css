@@ -44,6 +44,13 @@ Author: Deathsgift66
   left: 1rem;
   z-index: 9999;
 }
+.kr-navbar .dropdown-toggle:hover {
+  filter: brightness(1.1);
+}
+.kr-navbar .dropdown-toggle:focus {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
+}
 
 
 /* Show dropdown on hover or when dropdown-content is hovered */
