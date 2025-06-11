@@ -26,31 +26,18 @@ The `kingdoms` table stores the master record for every player kingdom in the ga
 | `last_login_at` | Last time this player was online ("active players") |
 | `last_updated` | Sync field — update whenever kingdom info changes |
 | `is_npc` | `true` if this is an NPC kingdom |
-| `customizations` | JSON of cosmetic settings |
-| `ruler_title` | Optional title displayed with the ruler name |
-| `banner_url` | URL of the kingdom's banner image |
-| `emblem_url` | URL of the kingdom's emblem image |
 
 ## Usage Examples
 
 ### Creating a new kingdom
 ```sql
-INSERT INTO public.kingdoms (
-  user_id,
-  kingdom_name,
-  region,
-  ruler_name,
-  ruler_title,
-  banner_url,
-  emblem_url
-)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT INTO public.kingdoms (user_id, kingdom_name, region, ruler_name)
+VALUES (?, ?, ?, ?);
 ```
 
 ### Fetching the profile page
 ```sql
-SELECT kingdom_name, ruler_name, ruler_title, region,
-       description, motto, banner_url, emblem_url,
+SELECT kingdom_name, ruler_name, region, description, motto,
        prestige_score, military_score, economy_score, diplomacy_score,
        avatar_url, status, alliance_id, alliance_role
 FROM public.kingdoms
