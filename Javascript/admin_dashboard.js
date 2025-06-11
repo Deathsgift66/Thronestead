@@ -7,6 +7,16 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+// Escape HTML special characters to prevent XSS when using innerHTML
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const REFRESH_MS = 30000;
 
 
@@ -55,12 +65,12 @@ async function loadPlayerList() {
       const card = document.createElement('div');
       card.className = 'player-card';
       card.innerHTML = `
-        <p><strong>${player.username}</strong> (${player.id})</p>
-        <p>Status: ${player.status}</p>
+        <p><strong>${escapeHTML(player.username)}</strong> (${escapeHTML(player.id)})</p>
+        <p>Status: ${escapeHTML(player.status)}</p>
         <div class="player-actions">
-          <button onclick="flagUser('${player.id}')">Flag</button>
-          <button onclick="freezeUser('${player.id}')">Freeze</button>
-          <button onclick="banUser('${player.id}')">Ban</button>
+          <button onclick="flagUser('${escapeHTML(player.id)}')">Flag</button>
+          <button onclick="freezeUser('${escapeHTML(player.id)}')">Freeze</button>
+          <button onclick="banUser('${escapeHTML(player.id)}')">Ban</button>
         </div>`;
       container.appendChild(card);
     });
@@ -92,7 +102,7 @@ async function loadAuditLogs() {
       const entry = document.createElement('div');
       entry.className = 'log-card';
       entry.innerHTML = `
-        <p><strong>${log.action}</strong> — ${log.details}</p>
+        <p><strong>${escapeHTML(log.action)}</strong> — ${escapeHTML(log.details)}</p>
         <p class="log-time">${new Date(log.created_at).toLocaleString()}</p>`;
       container.appendChild(entry);
     });
@@ -125,7 +135,7 @@ async function loadFlaggedUsers() {
       const card = document.createElement('div');
       card.className = 'flagged-card';
       card.innerHTML = `
-        <p><strong>${row.player_id}</strong> — ${row.alert_type}</p>
+        <p><strong>${escapeHTML(row.player_id)}</strong> — ${escapeHTML(row.alert_type)}</p>
         <p>${new Date(row.created_at).toLocaleString()}</p>`;
       container.appendChild(card);
     });
@@ -158,10 +168,10 @@ async function loadAccountAlerts() {
       const item = document.createElement('div');
       item.className = 'alert-item';
       item.innerHTML = `
-        <p><strong>${alert.alert_type}</strong> — ${alert.player_username || 'Unknown'} (${alert.player_id})</p>
-        <p>${alert.description || 'No details provided.'}</p>
+        <p><strong>${escapeHTML(alert.alert_type)}</strong> — ${escapeHTML(alert.player_username || 'Unknown')} (${escapeHTML(alert.player_id)})</p>
+        <p>${escapeHTML(alert.description || 'No details provided.')}</p>
         <p>${new Date(alert.created_at).toLocaleString()}</p>
-        <button onclick="showAlertDetails('${alert.id}')">Details</button>`;
+        <button onclick="showAlertDetails('${escapeHTML(alert.id)}')">Details</button>`;
       container.appendChild(item);
     });
 
