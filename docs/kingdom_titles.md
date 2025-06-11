@@ -28,4 +28,4 @@ ORDER BY awarded_at DESC;
 
 ## Active Title
 
-Players may select one title to show as their current badge. The `active_title` column on `kingdoms` stores this choice.
+Players may select one title to show as their current badge. The selection is typically saved in the `customizations` JSON column of the `kingdoms` table.

@@ -8,7 +8,6 @@ This table defines the core attributes and functional roles for every unit type 
 | --- | --- |
 | `unit_type` | Unique ID for the unit (e.g. `archer`) |
 | `tier` | Tech progression level (1 basic, 5 advanced) |
-| `version_tag` | Schema version identifier |
 | `class` | General type: `infantry`, `ranged`, `cavalry`, `siege`, etc. |
 | `description` | Text shown in UI and encyclopedia |
 | `hp` | Health pool per unit |
