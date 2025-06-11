@@ -260,12 +260,16 @@ async function loadAnnouncements() {
   if (!container) return;
   try {
     const res = await fetch('/api/login/announcements');
-    if (!res.ok) throw new Error('fetch failed');
-    const data = await res.json();
-    const items = data.announcements || [];
-    container.innerHTML = items
-      .map(a => `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`)
-      .join('');
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      const items = data.announcements || [];
+      container.innerHTML = items
+        .map(a => `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`)
+        .join('');
+    } catch (e) {
+      console.error('Invalid JSON from announcements:', text);
+    }
   } catch (err) {
     console.error('Failed to load announcements', err);
   }
