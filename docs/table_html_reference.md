@@ -16,7 +16,7 @@ This document maps key PostgreSQL tables and their important columns to the HTML
 ---
 
 ### Table: `kingdoms`
-**Relevant Columns**: `kingdom_id`, `user_id`, `kingdom_name`, `region`, `ruler_title`, `banner_url`, `emblem_url`, `prestige_score`, `economy_score`, `military_score`, `diplomacy_score`, `alliance_id`, `status`, `created_at`
+**Relevant Columns**: `kingdom_id`, `user_id`, `kingdom_name`, `region`, `prestige_score`, `economy_score`, `military_score`, `diplomacy_score`, `alliance_id`, `status`, `created_at`
 **Used In**:
 - `play.html`: creation during onboarding
 - `overview.html`: display region info
