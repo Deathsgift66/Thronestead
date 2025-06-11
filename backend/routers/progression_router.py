@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from services.progression_service import calculate_troop_slots, get_total_modifiers
 from uuid import UUID
-from ..data import kingdom_villages, get_max_villages_allowed, military_state
+from ..data import get_max_villages_allowed
 
 router = APIRouter(prefix="/api/progression", tags=["progression"])
 
@@ -240,29 +240,58 @@ def refresh_progression(
 
 
 @router.get("/summary")
-def progression_summary(user_id: str = Depends(get_user_id)):
-    state = progression_state.setdefault(user_id, {"castle_level": 1, "nobles": [], "knights": []})
-    castle_level = state["castle_level"]
-    villages = kingdom_villages.get(1, [])
-    mil = military_state.setdefault(1, {
-        "base_slots": 20,
-        "used_slots": 0,
-        "morale": 100,
-        "queue": [],
-        "history": [],
-    })
-    used = mil["used_slots"]
+def progression_summary(
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return a quick overview of castle level, nobles, knights and slots."""
+    kid = get_kingdom_id(db, user_id)
+
+    # Castle level ---------------------------------------------------
+    row = db.execute(
+        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
+        {"kid": kid},
+    ).fetchone()
+    castle_level = row[0] if row else 1
+
+    # Counts ----------------------------------------------------------
+    nobles = db.execute(
+        text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
+        {"kid": kid},
+    ).fetchone()
+    nobles_count = nobles[0] if nobles else 0
+
+    knights = db.execute(
+        text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
+        {"kid": kid},
+    ).fetchone()
+    knights_count = knights[0] if knights else 0
+
+    villages = db.execute(
+        text("SELECT COUNT(*) FROM kingdom_villages WHERE kingdom_id = :kid"),
+        {"kid": kid},
+    ).fetchone()
+    village_count = villages[0] if villages else 0
+
+    # Troop slots -----------------------------------------------------
+    slots_row = db.execute(
+        text("SELECT used_slots FROM kingdom_troop_slots WHERE kingdom_id = :kid"),
+        {"kid": kid},
+    ).fetchone()
+    used = slots_row[0] if slots_row else 0
+    total_slots = calculate_troop_slots(db, kid)
+
     return {
         "castle_level": castle_level,
         "max_villages": get_max_villages_allowed(castle_level),
-        "current_villages": len(villages),
-        "nobles_total": len(state["nobles"]),
-        "nobles_available": len(state["nobles"]),
-        "knights_total": len(state["knights"]),
-        "knights_available": len(state["knights"]),
+        "current_villages": village_count,
+        "nobles_total": nobles_count,
+        "nobles_available": nobles_count,
+        "knights_total": knights_count,
+        "knights_available": knights_count,
         "troop_slots": {
             "used": used,
-            "available": max(0, mil["base_slots"] - used),
+            "available": max(0, total_slots - used),
         },
     }
 
