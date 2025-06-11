@@ -71,8 +71,9 @@ from .data import load_game_settings
 
 app = FastAPI(title="Kingmaker's Rise API")
 
-# Ensure tables exist
-Base.metadata.create_all(bind=engine)
+# Ensure tables exist when an engine is configured
+if engine:
+    Base.metadata.create_all(bind=engine)
 load_game_settings()
 
 app.include_router(alliance_members.router)

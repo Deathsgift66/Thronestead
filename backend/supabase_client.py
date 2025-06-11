@@ -1,20 +1,31 @@
+"""Supabase client configuration for the API."""
+
+from __future__ import annotations
+
+import logging
 import os
 
 
-def get_supabase_client():
-    """Return a configured Supabase client or raise if unavailable."""
-    try:  # pragma: no cover - optional dependency
-        from supabase import create_client
-    except ImportError as e:  # pragma: no cover - library missing
-        raise RuntimeError("supabase client library not installed") from e
+try:  # pragma: no cover - optional dependency
+    from supabase import create_client
+except ImportError as e:  # pragma: no cover - library missing
+    raise RuntimeError("supabase client library not installed") from e
 
-    url = os.getenv("SUPABASE_URL")
-    key = (
-        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        or os.getenv("SUPABASE_KEY")
-        or os.getenv("SUPABASE_ANON_KEY")
-    )
-    if not url or not key:
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+    logging.error("Supabase credentials missing; set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY")
+    supabase = None
+else:
+    supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+
+def get_supabase_client() -> "create_client":
+    """Return the configured Supabase client or raise if unavailable."""
+
+    if supabase is None:
         raise RuntimeError("Supabase credentials not configured")
+    return supabase
 
-    return create_client(url, key)

@@ -1,11 +1,9 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
-from sqlalchemy.sql import func
-
-from ..database import get_db
-from backend.models import User, PlayerMessage
+from ..supabase_client import get_supabase_client
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/messages", tags=["messages"])
@@ -23,140 +21,144 @@ class MessagePayload(BaseModel):
     recipient: str
     subject: str | None = None
     content: str
-    sender_id: str | None = None
 
 
 @router.get("/inbox")
-def list_inbox(
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    rows = (
-        db.query(PlayerMessage, User.username.label("sender"))
-        .join(User, User.user_id == PlayerMessage.user_id)
-        .filter(
-            PlayerMessage.recipient_id == user_id,
-            PlayerMessage.deleted_by_recipient.is_(False),
+async def list_inbox(user_id: str = Depends(verify_jwt_token)):
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("player_messages")
+        .select(
+            "message_id,subject,message,sent_at,is_read,user_id,users(username)"
         )
-        .order_by(PlayerMessage.sent_at.desc())
+        .eq("recipient_id", user_id)
+        .eq("deleted_by_recipient", False)
+        .order("sent_at", desc=True)
         .limit(100)
-        .all()
+        .execute()
     )
+
     messages = [
         {
-            "message_id": r.PlayerMessage.message_id,
-            "subject": r.PlayerMessage.subject,
-            "message": r.PlayerMessage.message,
-            "sent_at": r.PlayerMessage.sent_at,
-            "is_read": r.PlayerMessage.is_read,
-            "sender": r.sender,
+            "message_id": r["message_id"],
+            "subject": r["subject"],
+            "message": r["message"],
+            "sent_at": r["sent_at"],
+            "is_read": r["is_read"],
+            "sender": r.get("users", {}).get("username"),
         }
-        for r in rows
+        for r in res.data or []
     ]
     return {"messages": messages}
 
 
 @router.get("/view/{message_id}")
-def view_message(
-    message_id: int,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    row = (
-        db.query(PlayerMessage, User.username.label("sender"))
-        .join(User, User.user_id == PlayerMessage.user_id)
-        .filter(
-            PlayerMessage.message_id == message_id,
-            PlayerMessage.recipient_id == user_id,
-        )
-        .first()
+async def view_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("player_messages")
+        .select("* , users(username)")
+        .eq("message_id", message_id)
+        .eq("recipient_id", user_id)
+        .single()
+        .execute()
     )
-    if not row:
+    if not res.data:
         raise HTTPException(status_code=404, detail="Message not found")
 
-    row.PlayerMessage.is_read = True
-    db.commit()
-
-    msg = row.PlayerMessage
+    supabase.table("player_messages").update({"is_read": True}).eq(
+        "message_id", message_id
+    ).execute()
+    row = res.data
     return {
-        "message_id": msg.message_id,
-        "subject": msg.subject,
-        "message": msg.message,
-        "sent_at": msg.sent_at,
-        "is_read": msg.is_read,
-        "sender": row.sender,
+        "message_id": row["message_id"],
+        "subject": row["subject"],
+        "message": row["message"],
+        "sent_at": row["sent_at"],
+        "is_read": True,
+        "sender": row.get("users", {}).get("username"),
     }
 
 
 @router.post("/delete/{message_id}")
-def delete_message(
-    message_id: int,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
+async def delete_message_route(
+    message_id: int, user_id: str = Depends(verify_jwt_token)
 ):
-    row = (
-        db.query(PlayerMessage)
-        .filter(
-            PlayerMessage.message_id == message_id,
-            PlayerMessage.recipient_id == user_id,
-        )
-        .first()
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("player_messages")
+        .select("message_id")
+        .eq("message_id", message_id)
+        .eq("recipient_id", user_id)
+        .maybe_single()
+        .execute()
     )
-    if not row:
+    if not res.data:
         raise HTTPException(status_code=404, detail="Message not found")
-    row.deleted_by_recipient = True
-    db.commit()
+
+    supabase.table("player_messages").update({"deleted_by_recipient": True}).eq(
+        "message_id", message_id
+    ).execute()
     return {"status": "deleted", "message_id": message_id}
 
 
 @router.post("/send")
-def send_message(
-    payload: MessagePayload,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+async def send_message(
+    payload: MessagePayload, user_id: str = Depends(get_current_user_id)
 ):
-    recipient = db.query(User).filter(User.username == payload.recipient).first()
-    if not recipient:
-        raise HTTPException(status_code=404, detail="Recipient not found")
-    message = PlayerMessage(
-        recipient_id=recipient.user_id,
-        user_id=user_id,
-        subject=payload.subject,
-        message=payload.content,
+    supabase = get_supabase_client()
+    rec = (
+        supabase.table("users")
+        .select("user_id")
+        .eq("username", payload.recipient)
+        .single()
+        .execute()
     )
-    db.add(message)
-    db.commit()
-    db.refresh(message)
-    return {"message": "sent", "message_id": message.message_id}
+    if not rec.data:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+
+    insert_res = (
+        supabase.table("player_messages")
+        .insert(
+            {
+                "recipient_id": rec.data["user_id"],
+                "user_id": user_id,
+                "subject": payload.subject,
+                "message": payload.content,
+            }
+        )
+        .execute()
+    )
+    mid = insert_res.data[0]["message_id"] if insert_res.data else None
+    return {"message": "sent", "message_id": mid}
 
 
 @router.get("/list")
-def list_messages(
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-):
-    rows = (
-        db.query(PlayerMessage, User.username)
-        .join(User, PlayerMessage.user_id == User.user_id)
-        .filter(PlayerMessage.recipient_id == user_id)
-        .filter(PlayerMessage.deleted_by_recipient.is_(False))
-        .order_by(PlayerMessage.sent_at.desc())
-        .all()
+async def list_messages(user_id: str = Depends(get_current_user_id)):
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("player_messages")
+        .select(
+            "message_id,subject,message,sent_at,is_read,user_id,users(username)"
+        )
+        .eq("recipient_id", user_id)
+        .eq("deleted_by_recipient", False)
+        .order("sent_at", desc=True)
+        .execute()
     )
-    return {
-        "messages": [
-            {
-                "message_id": m.message_id,
-                "subject": m.subject,
-                "message": m.message,
-                "sent_at": m.sent_at,
-                "is_read": m.is_read,
-                "user_id": m.user_id,
-                "username": u,
-            }
-            for m, u in rows
-        ]
-    }
+    messages = [
+        {
+            "message_id": r["message_id"],
+            "subject": r["subject"],
+            "message": r["message"],
+            "sent_at": r["sent_at"],
+            "is_read": r["is_read"],
+            "user_id": r["user_id"],
+            "username": r.get("users", {}).get("username"),
+        }
+        for r in res.data or []
+    ]
+    return {"messages": messages}
 
 
 class DeletePayload(BaseModel):
@@ -164,49 +166,47 @@ class DeletePayload(BaseModel):
 
 
 @router.post("/delete")
-def delete_message(
-    payload: DeletePayload,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-):
-    msg = (
-        db.query(PlayerMessage)
-        .filter(PlayerMessage.message_id == payload.message_id,
-                PlayerMessage.recipient_id == user_id)
-        .first()
+async def delete_message(payload: DeletePayload, user_id: str = Depends(get_current_user_id)):
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("player_messages")
+        .select("message_id")
+        .eq("message_id", payload.message_id)
+        .eq("recipient_id", user_id)
+        .maybe_single()
+        .execute()
     )
-    if not msg:
+    if not res.data:
         raise HTTPException(status_code=404, detail="Message not found")
-    msg.deleted_by_recipient = True
-    db.commit()
+    supabase.table("player_messages").update({"deleted_by_recipient": True}).eq(
+        "message_id", payload.message_id
+    ).execute()
     return {"status": "deleted"}
 
 
 @router.get("/{message_id}")
-def get_message(
-    message_id: int,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-):
-    row = (
-        db.query(PlayerMessage, User.username)
-        .join(User, PlayerMessage.user_id == User.user_id)
-        .filter(PlayerMessage.message_id == message_id,
-                PlayerMessage.recipient_id == user_id)
-        .first()
+async def get_message(message_id: int, user_id: str = Depends(get_current_user_id)):
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("player_messages")
+        .select("*, users(username)")
+        .eq("message_id", message_id)
+        .eq("recipient_id", user_id)
+        .single()
+        .execute()
     )
-    if not row:
+    if not res.data:
         raise HTTPException(status_code=404, detail="Message not found")
-    msg, username = row
-    msg.is_read = True
-    msg.last_updated = func.now()
-    db.commit()
+    supabase.table("player_messages").update({"is_read": True}).eq(
+        "message_id", message_id
+    ).execute()
+    row = res.data
     return {
-        "message_id": msg.message_id,
-        "subject": msg.subject,
-        "message": msg.message,
-        "sent_at": msg.sent_at,
-        "user_id": msg.user_id,
-        "username": username,
+        "message_id": row["message_id"],
+        "subject": row["subject"],
+        "message": row["message"],
+        "sent_at": row["sent_at"],
+        "user_id": row["user_id"],
+        "username": row.get("users", {}).get("username"),
     }
 
