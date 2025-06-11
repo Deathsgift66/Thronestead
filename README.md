@@ -95,6 +95,15 @@ Update these values with your project credentials to enable API access.
 
 This will create all tables referenced by the frontend.
 
+### Troubleshooting Login
+
+If you see an **"invalid api key"** error when logging in, it usually means the
+Supabase credentials in `.ENV` (or `Javascript/config.js` for the static build)
+don't match your Supabase project. Copy the variables from your Supabase
+dashboard and update both `SUPABASE_URL` and `SUPABASE_ANON_KEY`. After editing
+`.ENV`, restart the backend and rebuild the frontend so the updated values are
+used.
+
 ---
 
 ## 📝 License
