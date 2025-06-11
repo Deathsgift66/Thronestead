@@ -70,7 +70,7 @@ body {
   width: 100%;
   margin-bottom: 2rem;
   text-align: center;
-  max-width: 1200px;           /* Sets a sensible width limit for large screens */
+  max-width: 1600px;           /* Sets a sensible width limit for large screens */
   width: 95%;                  /* Ensures proper responsiveness on small screens */
   margin-left: auto;           /* Centers the section horizontally */
   margin-right: auto;
@@ -114,7 +114,7 @@ body {
   border: 1px solid var(--gold);
   box-shadow: 0 6px 14px var(--shadow);
   padding: 2rem;
-  width: 80%;
+  width: 100%;
   margin-bottom: 2rem;
   text-align: center;
 }
