@@ -1190,3 +1190,14 @@ CREATE TABLE public.wars_tactical (
   CONSTRAINT wars_tactical_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id),
   CONSTRAINT wars_tactical_terrain_id_fkey FOREIGN KEY (terrain_id) REFERENCES public.terrain_map(terrain_id)
 );
+
+-- Noble Houses ------------------------------------------------------------
+CREATE TABLE public.noble_houses (
+  house_id serial PRIMARY KEY,
+  name text NOT NULL,
+  motto text,
+  crest text,
+  region text,
+  description text,
+  created_at timestamp with time zone DEFAULT now()
+);

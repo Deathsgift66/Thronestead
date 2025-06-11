@@ -185,6 +185,20 @@ class TradeLog(Base):
     )
 
 
+class NobleHouse(Base):
+    """Represents a noble house or family."""
+
+    __tablename__ = "noble_houses"
+
+    house_id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    motto = Column(Text)
+    crest = Column(Text)
+    region = Column(String)
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class ProjectPlayerCatalogue(Base):
     __tablename__ = "project_player_catalogue"
 
