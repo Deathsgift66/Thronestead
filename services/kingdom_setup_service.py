@@ -22,6 +22,9 @@ START_BUILDINGS = [
     "Warehouse",
 ]
 
+# Default noble created for every new kingdom
+DEFAULT_NOBLE_NAME = "Founding Noble"
+
 
 def create_kingdom_transaction(
     db: Session,
@@ -77,6 +80,14 @@ def create_kingdom_transaction(
                 "INSERT INTO kingdom_troop_slots (kingdom_id, base_slots) VALUES (:kid, 20)"
             ),
             {"kid": kingdom_id},
+        )
+
+        # Insert the first noble so progression can begin immediately
+        db.execute(
+            text(
+                "INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"
+            ),
+            {"kid": kingdom_id, "name": DEFAULT_NOBLE_NAME},
         )
 
         db.execute(
