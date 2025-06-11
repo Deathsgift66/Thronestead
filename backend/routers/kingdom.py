@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 
 from ..data import military_state, recruitable_units
 from ..database import get_db
-from ..services.research_service import start_research as db_start_research
-from ..services.research_service import list_research
-from ..services.kingdom_quest_service import start_quest as db_start_quest
-from ..services.kingdom_setup_service import create_kingdom_transaction
+from services.research_service import start_research as db_start_research
+from services.research_service import list_research
+from services.kingdom_quest_service import start_quest as db_start_quest
+from services.kingdom_setup_service import create_kingdom_transaction
 from .progression_router import get_user_id, get_kingdom_id
 from ..security import verify_jwt_token
 
