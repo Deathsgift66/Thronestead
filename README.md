@@ -105,6 +105,24 @@ This will create all tables referenced by the frontend.
 
 ---
 
+## Testing
+
+Use the provided helper to run the Python test suite in restricted environments:
+
+```bash
+python -m venv venv && source venv/bin/activate
+pip install -r dev_requirements.txt
+pytest
+```
+
+You can run these commands directly or simply execute:
+
+```bash
+./scripts/run_tests.sh
+```
+
+---
+
 ## 📝 License
 
 Proprietary — Kingmaker’s Rise Project.  
