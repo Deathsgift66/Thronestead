@@ -440,7 +440,8 @@ CREATE TABLE public.project_player_catalogue (
   CONSTRAINT project_player_catalogue_pkey PRIMARY KEY (project_code)
 );
 CREATE TABLE public.project_alliance_catalogue (
-  project_code text NOT NULL,
+  project_id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  project_key text NOT NULL,
   project_name text NOT NULL,
   description text,
   category text,
@@ -455,29 +456,31 @@ CREATE TABLE public.project_alliance_catalogue (
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
   user_id uuid,
-  modifiers jsonb,
-  requires_alliance_level integer DEFAULT 0,
+  modifiers jsonb DEFAULT '{}'::jsonb,
+  requires_alliance_level integer DEFAULT 1,
   is_active boolean DEFAULT true,
   max_active_instances integer,
   expires_at timestamp with time zone,
-  CONSTRAINT project_alliance_catalogue_pkey PRIMARY KEY (project_code),
+  CONSTRAINT project_alliance_catalogue_pkey PRIMARY KEY (project_id),
   CONSTRAINT project_alliance_catalogue_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.projects_alliance (
   project_id integer NOT NULL DEFAULT nextval('projects_alliance_project_id_seq'::regclass),
-  alliance_id integer REFERENCES public.alliances(alliance_id),
+  alliance_id integer,
   name text NOT NULL,
-  project_key text REFERENCES public.project_alliance_catalogue(project_code),
   progress integer DEFAULT 0,
   modifiers jsonb DEFAULT '{}'::jsonb,
+  project_key text,
   start_time timestamp with time zone DEFAULT now(),
   end_time timestamp with time zone,
-  is_active boolean DEFAULT false,
+  is_active boolean DEFAULT true,
   build_state text CHECK (build_state IN ('queued','building','completed','expired')) DEFAULT 'queued',
   built_by uuid REFERENCES public.users(user_id),
   expires_at timestamp with time zone,
   last_updated timestamp with time zone DEFAULT now(),
-  CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id)
+  CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id),
+  CONSTRAINT projects_alliance_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT projects_alliance_built_by_fkey FOREIGN KEY (built_by) REFERENCES public.users(user_id)
 );
 
 CREATE TABLE public.alliance_treaties (

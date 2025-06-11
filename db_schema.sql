@@ -433,7 +433,8 @@ CREATE TABLE alliance_vault (
 );
 
 CREATE TABLE project_alliance_catalogue (
-    project_code TEXT PRIMARY KEY,
+    project_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    project_key TEXT NOT NULL,
     project_name TEXT NOT NULL,
     description  TEXT,
     category TEXT,
@@ -448,8 +449,8 @@ CREATE TABLE project_alliance_catalogue (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     user_id UUID REFERENCES users(user_id),
-    modifiers JSONB,
-    requires_alliance_level INTEGER DEFAULT 0,
+    modifiers JSONB DEFAULT '{}'::jsonb,
+    requires_alliance_level INTEGER DEFAULT 1,
     is_active BOOLEAN DEFAULT TRUE,
     max_active_instances INTEGER,
     expires_at TIMESTAMP WITH TIME ZONE
@@ -459,12 +460,12 @@ CREATE TABLE projects_alliance (
     project_id  SERIAL PRIMARY KEY,
     alliance_id INTEGER REFERENCES alliances(alliance_id),
     name        TEXT NOT NULL,
-    project_key TEXT REFERENCES project_alliance_catalogue(project_code),
     progress    INTEGER DEFAULT 0,
     modifiers   JSONB DEFAULT '{}'::jsonb,
+    project_key TEXT,
     start_time  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     end_time    TIMESTAMP WITH TIME ZONE,
-    is_active   BOOLEAN DEFAULT FALSE,
+    is_active   BOOLEAN DEFAULT TRUE,
     build_state TEXT CHECK (build_state IN ('queued','building','completed','expired')) DEFAULT 'queued',
     built_by    UUID REFERENCES users(user_id),
     expires_at  TIMESTAMP WITH TIME ZONE,
