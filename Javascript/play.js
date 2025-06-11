@@ -11,6 +11,21 @@ let currentUser = null;
 let kingdomId = null;
 let authToken = '';
 const regionMap = {};
+const avatarList = [
+  'Assets/avatars/Default_avatar_english_king.png',
+  'Assets/avatars/Default_avatar_english_queen.png',
+  'Assets/avatars/Default_avatar_slavic_king.png',
+  'Assets/avatars/Default_avatar_slavic_queen.png',
+  'Assets/avatars/Default_avatar_sultan.png',
+  'Assets/avatars/default_avatar_emperor.png',
+  'Assets/avatars/default_avatar_empress.png',
+  'Assets/avatars/default_avatar_indian_king.png',
+  'Assets/avatars/default_avatar_indian_queen.png',
+  'Assets/avatars/default_avatar_nubian_king.png',
+  'Assets/avatars/default_avatar_nubian_queen.png'
+];
+let selectedAvatar = avatarList[0];
+let vipLevel = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -51,8 +66,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (nameInput) nameInput.readOnly = true;
 
+  await loadVIPStatus();
   await loadRegions();
   await loadAnnouncements();
+  renderAvatarOptions();
   bindEvents(profile);
 });
 
@@ -62,6 +79,14 @@ function bindEvents(profileExists) {
   const emblemPreview = document.getElementById('emblem-preview');
   const bannerEl = document.getElementById('banner-image-input');
   const emblemEl = document.getElementById('emblem-image-input');
+  const customAvatarEl = document.getElementById('custom-avatar-url');
+
+  if (customAvatarEl) {
+    customAvatarEl.addEventListener('input', () => {
+      selectedAvatar = customAvatarEl.value.trim() || avatarList[0];
+      document.getElementById('avatar-preview').src = selectedAvatar;
+    });
+  }
 
   if (bannerEl && bannerPreview) {
     bannerEl.addEventListener('input', () => {
@@ -132,6 +157,19 @@ function bindEvents(profileExists) {
       });
 
       if (!res.ok) throw new Error('Request failed');
+
+      await fetch('/api/account/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': currentUser.id,
+          Authorization: `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          display_name: kingdomName,
+          profile_picture_url: selectedAvatar
+        })
+      });
 
       showToast('Kingdom created!');
       setTimeout(() => {
@@ -230,5 +268,43 @@ async function loadAnnouncements() {
       .join('');
   } catch (err) {
     console.error('Failed to load announcements', err);
+  }
+}
+
+async function loadVIPStatus() {
+  try {
+    const res = await fetch('/api/kingdom/vip_status', {
+      headers: { 'X-User-ID': currentUser.id }
+    });
+    const data = await res.json();
+    vipLevel = data.vip_level || 0;
+  } catch (e) {
+    vipLevel = 0;
+  }
+}
+
+function renderAvatarOptions() {
+  const container = document.getElementById('avatar-options');
+  const customContainer = document.getElementById('custom-avatar-container');
+  if (!container) return;
+  container.innerHTML = '';
+  avatarList.forEach(src => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Avatar Option';
+    img.className = 'avatar-option';
+    img.addEventListener('click', () => {
+      selectedAvatar = src;
+      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+      img.classList.add('selected');
+      document.getElementById('avatar-preview').src = src;
+    });
+    container.appendChild(img);
+  });
+  document.getElementById('avatar-preview').src = selectedAvatar;
+  const first = container.querySelector('.avatar-option');
+  if (first) first.classList.add('selected');
+  if (vipLevel > 0 && customContainer) {
+    customContainer.classList.remove('hidden');
   }
 }
