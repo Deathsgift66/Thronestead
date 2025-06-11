@@ -16,6 +16,18 @@ from sqlalchemy.sql import func
 from .database import Base
 
 
+class Kingdom(Base):
+    """Minimal kingdom model for tests and basic relations."""
+
+    __tablename__ = "kingdoms"
+
+    kingdom_id = Column(Integer, primary_key=True)
+    user_id = Column(UUID(as_uuid=True))
+    kingdom_name = Column(String, nullable=False)
+    region = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class User(Base):
     __tablename__ = "users"
     user_id = Column(UUID(as_uuid=True), primary_key=True)

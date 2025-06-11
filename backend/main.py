@@ -40,7 +40,7 @@ from .routers import (
     admin_dashboard,
     account_settings,
     spies_router,
-    policies_laws_router,
+    policies_laws as policies_laws_router,
     overview as overview_router,
     legal,
     trade_logs,
