@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from ..security import verify_jwt_token
+from uuid import UUID
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
@@ -20,6 +21,10 @@ def get_current_user_id(
 ) -> str:
     if not x_user_id:
         raise HTTPException(status_code=401, detail="User ID header missing")
+    try:
+        x_user_id = str(UUID(x_user_id))
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid user ID")
     # verify token matches user when provided
     if authorization:
         verify_jwt_token(authorization=authorization, x_user_id=x_user_id)

@@ -7,15 +7,20 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from services.progression_service import calculate_troop_slots, get_total_modifiers
+from uuid import UUID
 from ..data import kingdom_villages, get_max_villages_allowed, military_state
 
 router = APIRouter(prefix="/api/progression", tags=["progression"])
 
 
 def get_user_id(x_user_id: str | None = Header(None)) -> str:
+    """Validate and return the X-User-ID header as a UUID string."""
     if not x_user_id:
         raise HTTPException(status_code=401, detail="User ID header missing")
-    return x_user_id
+    try:
+        return str(UUID(x_user_id))
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid user ID")
 
 
 def get_kingdom_id(db: Session, user_id: str) -> int:

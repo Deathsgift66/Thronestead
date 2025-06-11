@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from uuid import UUID
 from fastapi import APIRouter
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
@@ -19,7 +20,10 @@ alt_router = APIRouter(prefix="/api/vault", tags=["alliance_vault"])
 def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
     if not x_user_id:
         raise HTTPException(status_code=401, detail="User ID header missing")
-    return x_user_id
+    try:
+        return str(UUID(x_user_id))
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid user ID")
 
 
 def get_alliance_info(user_id: str, db: Session) -> tuple[int, str]:

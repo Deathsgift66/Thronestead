@@ -1,5 +1,6 @@
 import base64
 import json
+from uuid import UUID
 from fastapi import Header, HTTPException
 
 
@@ -31,4 +32,8 @@ def verify_jwt_token(
     uid = payload.get("sub")
     if not uid or uid != x_user_id:
         raise HTTPException(status_code=401, detail="Token mismatch")
+    try:
+        UUID(uid)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid user ID")
     return uid
