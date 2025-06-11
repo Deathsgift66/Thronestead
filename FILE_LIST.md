@@ -1,7 +1,7 @@
 # Repository File List
 
 ## Environment Files
-- .ENV
+- .env.example
 
 ## HTML Files
 - account_settings.html

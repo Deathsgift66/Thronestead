@@ -81,7 +81,7 @@ psql -f full_schema.sql
 
 ### Supabase Configuration
 
-Environment variables for the Supabase connection are loaded from the `.ENV` file at the project root. The key variables are:
+Environment variables for the Supabase connection are loaded from the `.ENV` file at the project root. Copy `.env.example` to `.ENV` and update it with your credentials. The key variables are:
 
 ```
 SUPABASE_URL

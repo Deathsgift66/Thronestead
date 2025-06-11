@@ -1,0 +1,6 @@
+# Ignore environment file containing credentials
+.ENV
+
+# Node modules and Python caches
+node_modules/
+__pycache__/
