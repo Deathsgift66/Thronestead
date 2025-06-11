@@ -17,7 +17,7 @@ async def steps(user_id: str = Depends(get_user_id)):
     user_check = (
         supabase.table("users").select("user_id").eq("user_id", user_id).single().execute()
     )
-    if not getattr(user_check, "data", user_check):
+    if getattr(user_check, "error", None) or not getattr(user_check, "data", None):
         raise HTTPException(status_code=401, detail="Invalid user")
 
     res = (

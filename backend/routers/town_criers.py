@@ -23,7 +23,7 @@ async def latest_scrolls(user_id: str = Depends(verify_jwt_token)):
     check = (
         supabase.table("users").select("user_id").eq("user_id", user_id).single().execute()
     )
-    if not getattr(check, "data", check):
+    if getattr(check, "error", None) or not getattr(check, "data", None):
         raise HTTPException(status_code=401, detail="Invalid user")
 
     res = (
@@ -58,7 +58,7 @@ async def post_scroll(payload: ScrollPayload, user_id: str = Depends(verify_jwt_
         .execute()
     )
     prof_row = getattr(prof, "data", prof)
-    if not prof_row:
+    if getattr(prof, "error", None) or not prof_row:
         raise HTTPException(status_code=401, detail="Invalid user")
 
     record = {

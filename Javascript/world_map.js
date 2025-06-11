@@ -79,10 +79,25 @@ function bindControls() {
     renderVisibleTiles();
   });
 
-  document.getElementById('logout-btn').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = 'index.html';
-  });
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    });
+  } else {
+    const waitId = setInterval(() => {
+      const btn = document.getElementById('logout-btn');
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          await supabase.auth.signOut();
+          window.location.href = 'index.html';
+        });
+        clearInterval(waitId);
+      }
+    }, 100);
+    setTimeout(() => clearInterval(waitId), 3000);
+  }
 }
 
 function bindRealtime() {
