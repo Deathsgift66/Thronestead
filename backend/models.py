@@ -22,7 +22,7 @@ class Kingdom(Base):
     __tablename__ = "kingdoms"
 
     kingdom_id = Column(Integer, primary_key=True)
-    user_id = Column(UUID(as_uuid=True))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     kingdom_name = Column(String, nullable=False)
     region = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
