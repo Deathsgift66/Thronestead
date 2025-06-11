@@ -106,7 +106,7 @@ function renderTopContributors(members) {
     li.classList.add('top-contrib-entry');
     const img = document.createElement('img');
     img.classList.add('contrib-avatar');
-    img.src = m.avatar || 'Assets/default_avatar.png';
+    img.src = m.avatar || 'Assets/avatars/default_avatar_emperor.png';
     img.alt = m.username;
     li.appendChild(img);
     const span = document.createElement('span');
