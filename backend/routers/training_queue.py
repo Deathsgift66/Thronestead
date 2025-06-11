@@ -5,7 +5,11 @@ from sqlalchemy.orm import Session
 from ..security import verify_jwt_token
 from ..database import get_db
 from .progression_router import get_kingdom_id
-from services.training_queue_service import add_training_order, fetch_queue
+from services.training_queue_service import (
+    add_training_order,
+    fetch_queue,
+    cancel_training,
+)
 
 router = APIRouter(prefix="/api/training_queue", tags=["training_queue"])
 
@@ -15,6 +19,10 @@ class TrainOrderPayload(BaseModel):
     unit_name: str
     quantity: int
     base_training_seconds: int = 60
+
+
+class CancelPayload(BaseModel):
+    queue_id: int
 
 
 @router.post("/start")
@@ -43,4 +51,15 @@ def list_queue(
     kid = get_kingdom_id(db, user_id)
     rows = fetch_queue(db, kid)
     return {"queue": rows}
+
+
+@router.post("/cancel")
+def cancel_order(
+    payload: CancelPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    cancel_training(db, payload.queue_id, kid)
+    return {"message": "Training cancelled"}
 

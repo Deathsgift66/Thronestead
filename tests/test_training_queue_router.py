@@ -1,4 +1,10 @@
-from backend.routers.training_queue import start_training, list_queue, TrainOrderPayload
+from backend.routers.training_queue import (
+    start_training,
+    list_queue,
+    cancel_order,
+    TrainOrderPayload,
+    CancelPayload,
+)
 
 class DummyResult:
     def __init__(self, row=None, rows=None):
@@ -22,6 +28,8 @@ class DummyDB:
             return DummyResult((1,))
         if q.strip().startswith("INSERT INTO training_queue"):
             return DummyResult((5,))
+        if q.strip().startswith("UPDATE training_queue"):
+            return DummyResult()
         if "FROM training_queue" in q:
             return DummyResult(rows=self.rows)
         return DummyResult()
@@ -42,4 +50,11 @@ def test_list_queue_returns_rows():
     res = list_queue(user_id="u1", db=db)
     assert len(res["queue"]) == 1
     assert res["queue"][0]["unit_name"] == "Knight"
+
+
+def test_cancel_order_updates_row():
+    db = DummyDB()
+    cancel_order(CancelPayload(queue_id=2), user_id="u1", db=db)
+    executed = " ".join(db.executed[-1][0].split()).lower()
+    assert "update training_queue" in executed
 

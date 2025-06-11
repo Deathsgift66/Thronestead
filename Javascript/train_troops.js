@@ -143,9 +143,16 @@ function renderTrainingQueue(queue) {
     card.innerHTML = `
       <h4>${escapeHTML(entry.unit_name)} x ${entry.quantity}</h4>
       <p>Ends In: <span class="countdown">${formatTime(endsIn)}</span></p>
+      <button class="action-btn cancel-btn" data-qid="${entry.queue_id}">Cancel</button>
     `;
 
     queueEl.appendChild(card);
+  });
+  queueEl.querySelectorAll('.cancel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qid = parseInt(btn.dataset.qid, 10);
+      cancelTraining(qid);
+    });
   });
   startQueueTimers();
 }
@@ -218,6 +225,24 @@ async function trainTroop(unitId) {
   } catch (err) {
     console.error("❌ Error training troop:", err);
     showToast(err.message || "Failed to train troop.");
+  }
+}
+
+async function cancelTraining(queueId) {
+  if (!confirm('Cancel this training order?')) return;
+  try {
+    const res = await fetch('/api/training_queue/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ queue_id: queueId })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed');
+    showToast(result.message || 'Training cancelled');
+    await loadGrandMusterHall();
+  } catch (err) {
+    console.error('❌ Error cancelling training:', err);
+    showToast(err.message || 'Failed to cancel');
   }
 }
 
