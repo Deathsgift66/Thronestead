@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import User, VillageModifier
 from backend.routers.village_modifiers import (
     ModifierPayload,

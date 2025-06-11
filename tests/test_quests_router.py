@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import User, Kingdom, QuestKingdomTracking
 from backend.routers.quests_router import get_active_quests
 

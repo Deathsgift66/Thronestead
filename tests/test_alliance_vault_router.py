@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, TradeLog, User
 from backend.routers.alliance_vault import VaultTransaction, deposit, withdraw, summary
 

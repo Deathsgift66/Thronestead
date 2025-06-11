@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 
 from fastapi import HTTPException
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import (
     Alliance,
     ProjectAllianceCatalogue,

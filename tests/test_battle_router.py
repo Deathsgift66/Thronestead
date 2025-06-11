@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi import HTTPException
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import WarScore
 from backend.routers.battle import get_battle_scoreboard
 

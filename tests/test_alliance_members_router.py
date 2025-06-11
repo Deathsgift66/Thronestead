@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import AllianceMember, Alliance
 from backend.routers.alliance_members import (
     promote,

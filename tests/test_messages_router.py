@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 import uuid
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import User, PlayerMessage
 from backend.routers.messages import (
     send_message,
@@ -15,7 +15,7 @@ from backend.routers.messages import (
 )
 
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import User, PlayerMessage
 from backend.routers import messages
 

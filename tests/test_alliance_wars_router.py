@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import User, AllianceWar, AllianceWarPreplan
 from backend.routers.alliance_wars import (
     list_wars,
