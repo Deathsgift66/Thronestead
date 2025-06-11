@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Any, Optional
+from pydantic import BaseModel
 
 from ..database import get_db
 from .progression_router import get_user_id
