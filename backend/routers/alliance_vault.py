@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import AllianceVault, AllianceVaultTransactionLog, User
+from backend.models import AllianceVault, AllianceVaultTransactionLog, User
 from services.audit_service import log_action
 from services.trade_log_service import record_trade
 

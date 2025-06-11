@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from ..database import get_db
-from ..models import VillageModifier
+from backend.models import VillageModifier
 
 router = APIRouter(prefix="/api/village_modifiers", tags=["village_modifiers"])
 

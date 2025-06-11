@@ -7,7 +7,7 @@ from ..supabase_client import get_supabase_client
 from ..database import get_db
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, or_
-from ..models import Alliance, AllianceWar, AllianceWarScore
+from backend.models import Alliance, AllianceWar, AllianceWarScore
 
 router = APIRouter(prefix="/api/leaderboard", tags=["leaderboard"])
 

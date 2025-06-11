@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import TerrainMap
+from backend.models import TerrainMap
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/world-map", tags=["world-map"])

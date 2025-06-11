@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from ..database import get_db
 from ..security import verify_jwt_token
-from ..models import (
+from backend.models import (
     Alliance,
     ProjectAllianceCatalogue,
     ProjectsAlliance,

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from ..database import get_db
-from ..models import User, PlayerMessage
+from backend.models import User, PlayerMessage
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/messages", tags=["messages"])

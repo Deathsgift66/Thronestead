@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
-from ..models import (
+from backend.models import (
     User,
     Alliance,
     QuestAllianceCatalogue,

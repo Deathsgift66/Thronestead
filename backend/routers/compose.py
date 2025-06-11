@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ..database import get_db
-from ..models import PlayerMessage, Notification, War
+from backend.models import PlayerMessage, Notification, War
 from ..security import verify_jwt_token
 from services.audit_service import log_action
 
