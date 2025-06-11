@@ -112,14 +112,44 @@ def check_progression_requirements(
     required_nobles: int = 0,
     required_knights: int = 0,
 ) -> None:
-    """Validate progression requirements.
+    """Validate progression requirements against the database.
 
-    The updated schema no longer tracks castle levels, nobles or knights.
-    This function now acts as a no-op for compatibility.
+    The function checks the player's castle level, the number of nobles and the
+    number of knights. If any requirement is not satisfied an HTTP 403 error is
+    raised.
     """
 
-    # All requirements are considered satisfied as the related tables were removed
-    return None
+    # Castle level -------------------------------------------------------
+    castle_row = db.execute(
+        text(
+            "SELECT castle_level FROM kingdom_castle_progression"
+            " WHERE kingdom_id = :kid"
+        ),
+        {"kid": kingdom_id},
+    ).fetchone()
+    castle_level = castle_row[0] if castle_row else 1
+    if castle_level < required_castle_level:
+        raise HTTPException(status_code=403, detail="Castle level too low")
+
+    # Nobles count -------------------------------------------------------
+    if required_nobles > 0:
+        noble_row = db.execute(
+            text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
+            {"kid": kingdom_id},
+        ).fetchone()
+        nobles = noble_row[0] if noble_row else 0
+        if nobles < required_nobles:
+            raise HTTPException(status_code=403, detail="Not enough nobles")
+
+    # Knights count ------------------------------------------------------
+    if required_knights > 0:
+        knight_row = db.execute(
+            text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
+            {"kid": kingdom_id},
+        ).fetchone()
+        knights = knight_row[0] if knight_row else 0
+        if knights < required_knights:
+            raise HTTPException(status_code=403, detail="Not enough knights")
 
 
 def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> None:
