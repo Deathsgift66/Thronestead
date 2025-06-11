@@ -221,3 +221,37 @@ def get_building_info(
         raise HTTPException(status_code=404, detail="Building not found")
     return {"building": dict(row)}
 
+
+@router.post("/reset")
+def reset_build(
+    payload: BuildingActionPayload,
+    user_id: str = Depends(get_user_id),
+    db: Session = Depends(get_db),
+):
+    """Reset a building's level back to zero."""
+    kid = get_kingdom_id(db, user_id)
+    owner = db.execute(
+        text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
+        {"vid": payload.village_id},
+    ).fetchone()
+    if not owner or owner[0] != kid:
+        raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
+
+    db.execute(
+        text(
+            """
+            UPDATE village_buildings
+            SET level = 0,
+                is_under_construction = false,
+                construction_status = 'idle',
+                construction_started_at = NULL,
+                construction_ends_at = NULL
+            WHERE village_id = :vid AND building_id = :bid
+            """
+        ),
+        {"vid": payload.village_id, "bid": payload.building_id},
+    )
+    log_action(db, user_id, "reset_build", f"{payload.village_id}:{payload.building_id}")
+    db.commit()
+    return {"message": "Building reset"}
+

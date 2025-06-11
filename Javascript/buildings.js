@@ -82,14 +82,22 @@ async function loadBuildings() {
       }
       statusCell.innerHTML = statusHTML;
       const btnLabel = b.level === 0 ? 'Build' : 'Upgrade';
-      const actionBtn = `<button class="action-btn build-btn" data-building-id="${b.building_id}" ${b.is_under_construction ? 'disabled' : ''}>${btnLabel}</button>`;
+      let actionHTML = '';
+      if (b.is_under_construction) {
+        actionHTML = `<button class="action-btn cancel-btn" data-building-id="${b.building_id}">Cancel</button>`;
+      } else {
+        actionHTML = `<button class="action-btn build-btn" data-building-id="${b.building_id}">${btnLabel}</button>`;
+        if (b.level > 0) {
+          actionHTML += ` <button class="action-btn reset-btn" data-building-id="${b.building_id}">Reset</button>`;
+        }
+      }
       row.innerHTML = `
         <td><img src="Assets/buildings/${b.building_id}.png" class="building-icon" onerror="this.src='Assets/buildings/building_default.png'" alt="${b.building_name}"></td>
         <td>${escapeHTML(b.building_name)}</td>
         <td>${b.level}</td>
       `;
       row.appendChild(statusCell);
-      row.innerHTML += `<td>${actionBtn}</td>`;
+      row.innerHTML += `<td>${actionHTML}</td>`;
       tbody.appendChild(row);
     });
     bindButtons();
@@ -119,6 +127,50 @@ function bindButtons() {
         await loadBuildings();
       } catch (err) {
         console.error('Action failed:', err);
+        alert('Action failed');
+      }
+    });
+  });
+
+  document.querySelectorAll('.cancel-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const buildingId = parseInt(btn.dataset['buildingId'], 10);
+      if (!confirm('Cancel construction?')) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const res = await fetch('/api/buildings/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+          body: JSON.stringify({ village_id: currentVillage, building_id: buildingId })
+        });
+        const result = await res.json();
+        alert(result.message);
+        await loadBuildings();
+      } catch (err) {
+        console.error('Cancel failed:', err);
+        alert('Action failed');
+      }
+    });
+  });
+
+  document.querySelectorAll('.reset-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const buildingId = parseInt(btn.dataset['buildingId'], 10);
+      if (!confirm('Reset building level to 0?')) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const res = await fetch('/api/buildings/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+          body: JSON.stringify({ village_id: currentVillage, building_id: buildingId })
+        });
+        const result = await res.json();
+        alert(result.message);
+        await loadBuildings();
+      } catch (err) {
+        console.error('Reset failed:', err);
         alert('Action failed');
       }
     });
