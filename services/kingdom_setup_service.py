@@ -1,4 +1,5 @@
 from typing import Optional
+import json
 
 try:
     from sqlalchemy import text
@@ -8,10 +9,9 @@ except Exception:  # pragma: no cover
     Session = object  # type: ignore
 
 START_RESOURCES = {
-    "wood": 500,
-    "stone": 500,
-    "food": 300,
-    "gold": 200,
+    "wood": 100,
+    "stone": 100,
+    "food": 1000,
 }
 
 START_BUILDINGS = [
@@ -39,15 +39,36 @@ def create_kingdom_transaction(
 ) -> int:
     """Create a new kingdom and related records. Returns the kingdom_id."""
     try:
+        ruler_row = db.execute(
+            text("SELECT display_name FROM users WHERE user_id = :uid"),
+            {"uid": user_id},
+        ).fetchone()
+        ruler_name = ruler_row[0] if ruler_row else None
+
+        custom = {}
+        if banner_image:
+            custom["banner_url"] = banner_image
+        if emblem_image:
+            custom["emblem_url"] = emblem_image
+        if ruler_title:
+            custom["ruler_title"] = ruler_title
+
         row = db.execute(
             text(
                 """
-                INSERT INTO kingdoms (user_id, kingdom_name, region)
-                VALUES (:uid, :name, :region)
+                INSERT INTO kingdoms (user_id, kingdom_name, region, ruler_name, motto, customizations)
+                VALUES (:uid, :name, :region, :rname, :motto, :cust)
                 RETURNING kingdom_id
                 """
             ),
-            {"uid": user_id, "name": kingdom_name, "region": region},
+            {
+                "uid": user_id,
+                "name": kingdom_name,
+                "region": region,
+                "rname": ruler_name,
+                "motto": motto,
+                "cust": json.dumps(custom),
+            },
         ).fetchone()
         if not row:
             raise ValueError("failed")
@@ -56,8 +77,8 @@ def create_kingdom_transaction(
         vil_row = db.execute(
             text(
                 """
-                INSERT INTO kingdom_villages (kingdom_id, village_name, is_capital)
-                VALUES (:kid, :vname, TRUE)
+                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type, is_capital)
+                VALUES (:kid, :vname, 'capital', TRUE)
                 RETURNING village_id
                 """
             ),
@@ -68,8 +89,8 @@ def create_kingdom_transaction(
         db.execute(
             text(
                 """
-                INSERT INTO kingdom_resources (kingdom_id, wood, stone, food, gold)
-                VALUES (:kid, :wood, :stone, :food, :gold)
+                INSERT INTO kingdom_resources (kingdom_id, wood, stone, food)
+                VALUES (:kid, :wood, :stone, :food)
                 """
             ),
             {"kid": kingdom_id, **START_RESOURCES},
@@ -88,6 +109,55 @@ def create_kingdom_transaction(
                 "INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"
             ),
             {"kid": kingdom_id, "name": DEFAULT_NOBLE_NAME},
+        )
+
+        # Optional default tables to avoid null lookups
+        db.execute(
+            text("INSERT INTO kingdom_spies (kingdom_id) VALUES (:kid)"),
+            {"kid": kingdom_id},
+        )
+        db.execute(
+            text(
+                "INSERT INTO kingdom_religion (kingdom_id, religion_name, faith_level) "
+                "VALUES (:kid, 'None', 1)"
+            ),
+            {"kid": kingdom_id},
+        )
+
+        tech_row = db.execute(
+            text("SELECT tech_code FROM tech_catalogue LIMIT 1")
+        ).fetchone()
+        if tech_row:
+            db.execute(
+                text(
+                    "INSERT INTO kingdom_research_tracking (kingdom_id, tech_code, status) "
+                    "VALUES (:kid, :code, 'locked')"
+                ),
+                {"kid": kingdom_id, "code": tech_row[0]},
+            )
+
+        db.execute(
+            text(
+                "INSERT INTO audit_log (user_id, action, details) "
+                "VALUES (:uid, 'kingdom_create', :det)"
+            ),
+            {"uid": user_id, "det": f'Created kingdom {kingdom_name}'},
+        )
+
+        db.execute(
+            text(
+                "INSERT INTO kingdom_history_log (kingdom_id, event_type, event_details) "
+                "VALUES (:kid, 'created', :det)"
+            ),
+            {"kid": kingdom_id, "det": f'Kingdom {kingdom_name} created'},
+        )
+
+        db.execute(
+            text(
+                "INSERT INTO kingdom_vip_status (user_id, vip_level) "
+                "VALUES (:uid, 0) ON CONFLICT (user_id) DO NOTHING"
+            ),
+            {"uid": user_id},
         )
 
         db.execute(
