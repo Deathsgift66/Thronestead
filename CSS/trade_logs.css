@@ -107,6 +107,7 @@ body {
   padding: 1.5rem;
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: auto;
   color: var(--ink);
 }
 
