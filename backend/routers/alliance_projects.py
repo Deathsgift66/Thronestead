@@ -92,7 +92,7 @@ def get_available_projects(
     rows = (
         db.query(ProjectAllianceCatalogue)
         .filter(ProjectAllianceCatalogue.is_active.is_(True))
-        .filter(~ProjectAllianceCatalogue.project_code.in_(exclude))
+        .filter(~ProjectAllianceCatalogue.project_key.in_(exclude))
         .filter(ProjectAllianceCatalogue.requires_alliance_level <= alliance.level)
         .all()
     )
@@ -171,7 +171,7 @@ def start_alliance_project(
 
     project = (
         db.query(ProjectAllianceCatalogue)
-        .filter_by(project_code=payload.project_key)
+        .filter_by(project_key=payload.project_key)
         .first()
     )
     if not project:
