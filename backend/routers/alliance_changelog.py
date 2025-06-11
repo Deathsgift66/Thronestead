@@ -22,7 +22,7 @@ async def get_alliance_changelog(
     user_check = (
         supabase.table("users").select("user_id").eq("user_id", user_id).single().execute()
     )
-    if not getattr(user_check, "data", user_check):
+    if getattr(user_check, "error", None) or not getattr(user_check, "data", None):
         raise HTTPException(status_code=401, detail="Invalid user")
 
     alliance_res = (
@@ -33,7 +33,7 @@ async def get_alliance_changelog(
         .execute()
     )
     alliance = getattr(alliance_res, "data", alliance_res)
-    if not alliance:
+    if getattr(alliance_res, "error", None) or not alliance:
         raise HTTPException(status_code=403, detail="Not in an alliance")
     alliance_id = alliance["alliance_id"]
 
