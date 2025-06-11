@@ -161,13 +161,17 @@ async function loadAnnouncements() {
   if (!announcementList) return;
   try {
     const res = await fetch('/api/login/announcements');
-    if (!res.ok) return;
-    const data = await res.json();
-    data.announcements.forEach((a) => {
-      const li = document.createElement('li');
-      li.textContent = `${a.title} - ${a.content}`;
-      announcementList.appendChild(li);
-    });
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      data.announcements.forEach((a) => {
+        const li = document.createElement('li');
+        li.textContent = `${a.title} - ${a.content}`;
+        announcementList.appendChild(li);
+      });
+    } catch (e) {
+      console.error('Invalid JSON from announcements:', text);
+    }
   } catch (err) {
     console.error('Failed to load announcements', err);
   }
