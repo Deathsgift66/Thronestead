@@ -68,6 +68,14 @@ the records created during onboarding.
 - SPA-ready → Netlify optimized
 - No framework (Vanilla + Modules) → lean, fast
 
+
+## Development Setup
+
+Install Python dependencies with:
+```bash
+pip install -r dev_requirements.txt
+```
+
 ---
 
 ## Database Setup

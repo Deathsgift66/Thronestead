@@ -4,3 +4,7 @@
 # Node modules and Python caches
 node_modules/
 __pycache__/
+
+# Ensure CI dependencies are tracked
+!dev_requirements.txt
+!tests/
