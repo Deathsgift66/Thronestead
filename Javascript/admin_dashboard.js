@@ -285,6 +285,19 @@ async function rollbackCombatTick() {
   }
 }
 
+// Trigger a full database rollback requiring the master password
+async function rollbackDatabase() {
+  const pass = document.getElementById('rollback-password').value;
+  if (!pass) return alert('Enter master password');
+  try {
+    await postAdminAction('/api/admin/rollback/database', { password: pass });
+    alert('Rollback triggered');
+  } catch (err) {
+    console.error('Rollback failed:', err);
+    alert('Failed to trigger rollback');
+  }
+}
+
 
 // 🧩 DOM Ready Hooks
 document.addEventListener('DOMContentLoaded', () => {
@@ -313,4 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('update-kingdom-btn').addEventListener('click', updateKingdom);
   document.getElementById("force-end-war-btn").addEventListener("click", forceEndWar);
   document.getElementById("rollback-tick-btn").addEventListener("click", rollbackCombatTick);
+  const rbBtn = document.getElementById('rollback-btn');
+  if (rbBtn) rbBtn.addEventListener('click', rollbackDatabase);
 });
