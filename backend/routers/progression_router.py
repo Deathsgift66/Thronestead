@@ -111,6 +111,54 @@ def upgrade_castle(
         {"kid": kid},
     ).fetchone()[0]
 
+    # automatically grant nobles or knights at key castle levels
+    # castle level 2 -> second noble
+    if level >= 2:
+        noble_count = db.execute(
+            text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
+            {"kid": kid},
+        ).fetchone()[0]
+        required = 2
+        while noble_count < required:
+            db.execute(
+                text("INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"),
+                {"kid": kid, "name": f"Noble {noble_count + 1}"},
+            )
+            noble_count += 1
+        db.execute(
+            text("INSERT INTO kingdom_troop_slots (kingdom_id) VALUES (:kid) ON CONFLICT (kingdom_id) DO NOTHING"),
+            {"kid": kid},
+        )
+        db.execute(
+            text("UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"),
+            {"count": noble_count, "kid": kid},
+        )
+
+    # castle level 3 and 4 -> unlock knights
+    if level >= 3:
+        knight_count = db.execute(
+            text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
+            {"kid": kid},
+        ).fetchone()[0]
+        # one knight at level 3, two at level 4+
+        required = 1 if level == 3 else 2 if level >= 4 else 0
+        while knight_count < required:
+            db.execute(
+                text("INSERT INTO kingdom_knights (kingdom_id, knight_name) VALUES (:kid, :name)"),
+                {"kid": kid, "name": f"Knight {knight_count + 1}"},
+            )
+            knight_count += 1
+        db.execute(
+            text("INSERT INTO kingdom_troop_slots (kingdom_id) VALUES (:kid) ON CONFLICT (kingdom_id) DO NOTHING"),
+            {"kid": kid},
+        )
+        db.execute(
+            text("UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"),
+            {"bonus": knight_count * 2, "kid": kid},
+        )
+
+    db.commit()
+
     calculate_troop_slots(db, kid)
 
     return {"message": "Castle upgraded", "castle_level": level}
