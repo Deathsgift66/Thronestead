@@ -63,6 +63,7 @@ from .routers import (
     treaty_web,
     village_master as village_master_router,
     world_map,
+    health,
 )
 from .database import engine
 from .models import Base
@@ -134,6 +135,7 @@ app.include_router(profile_view.router)
 app.include_router(navbar.router)
 app.include_router(seasonal_effects.router)
 app.include_router(world_map.router)
+app.include_router(health.router)
 app.include_router(overview_router.router)
 app.include_router(signup_router.router)
 app.include_router(treaty_web.router)
