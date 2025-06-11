@@ -1,7 +1,7 @@
 -- Migration: expand projects_alliance with runtime tracking fields
 
 ALTER TABLE public.projects_alliance
-  ADD COLUMN project_key text REFERENCES project_alliance_catalogue(project_code),
+  ADD COLUMN project_key text REFERENCES project_alliance_catalogue(project_key),
   ADD COLUMN modifiers jsonb DEFAULT '{}'::jsonb,
   ADD COLUMN start_time timestamp with time zone DEFAULT now(),
   ADD COLUMN end_time timestamp with time zone,

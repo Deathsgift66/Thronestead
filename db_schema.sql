@@ -433,7 +433,7 @@ CREATE TABLE alliance_vault (
 );
 
 CREATE TABLE project_alliance_catalogue (
-    project_code TEXT PRIMARY KEY,
+    project_key TEXT PRIMARY KEY,
     project_name TEXT NOT NULL,
     description  TEXT,
     category TEXT,
@@ -459,7 +459,7 @@ CREATE TABLE projects_alliance (
     project_id  SERIAL PRIMARY KEY,
     alliance_id INTEGER REFERENCES alliances(alliance_id),
     name        TEXT NOT NULL,
-    project_key TEXT REFERENCES project_alliance_catalogue(project_code),
+    project_key TEXT REFERENCES project_alliance_catalogue(project_key),
     progress    INTEGER DEFAULT 0,
     modifiers   JSONB DEFAULT '{}'::jsonb,
     start_time  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

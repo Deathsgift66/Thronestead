@@ -218,7 +218,7 @@ class ProjectPlayerCatalogue(Base):
 class ProjectAllianceCatalogue(Base):
     __tablename__ = "project_alliance_catalogue"
 
-    project_code = Column(String, primary_key=True)
+    project_key = Column(String, primary_key=True)
     project_name = Column(String, nullable=False)
     description = Column(Text)
     category = Column(String)
@@ -250,7 +250,7 @@ class ProjectsAlliance(Base):
     project_id = Column(Integer, primary_key=True)
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
     name = Column(String, nullable=False)
-    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_code"))
+    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
     progress = Column(Integer, default=0)
     modifiers = Column(JSONB, default={})
     start_time = Column(DateTime(timezone=True), server_default=func.now())
@@ -269,7 +269,7 @@ class ProjectsAllianceInProgress(Base):
 
     progress_id = Column(Integer, primary_key=True)
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
-    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_code"))
+    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
     progress = Column(Integer, default=0)
     started_at = Column(DateTime(timezone=True), server_default=func.now())
     expected_end = Column(DateTime(timezone=True))
@@ -764,7 +764,7 @@ class ProjectAllianceContribution(Base):
     resource_type = Column(String)
     amount = Column(Integer)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_code"))
+    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     contribution_type = Column(String, default="resource")
 
