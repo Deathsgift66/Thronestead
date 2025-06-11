@@ -55,6 +55,7 @@ the records created during onboarding.
 ✅ Kingdoms master table documented in [docs/kingdoms.md](docs/kingdoms.md)
 ✅ Terrain map integration documented in [docs/terrain_map.md](docs/terrain_map.md)
 ✅ Final schema summary in [FINAL_SCHEMA_DOCUMENTATION.md](FINAL_SCHEMA_DOCUMENTATION.md)
+✅ Noble houses documented in [docs/noble_houses.md](docs/noble_houses.md)
 
 
 

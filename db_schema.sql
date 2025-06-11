@@ -1078,3 +1078,14 @@ CREATE TABLE kingdom_temples (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Noble Houses ------------------------------------------------------------
+CREATE TABLE noble_houses (
+    house_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    motto TEXT,
+    crest TEXT,
+    region TEXT,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
