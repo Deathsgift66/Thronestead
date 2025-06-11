@@ -13,7 +13,7 @@ Author: Deathsgift66
 ---------------------------------------- */
 
 body {
-  background: url('../assets/admin_dashboard.png') no-repeat center center fixed;
+  background: url('../Assets/admin_dashboard.png') no-repeat center center fixed;
   background-size: cover;
   color: var(--ink);
 }

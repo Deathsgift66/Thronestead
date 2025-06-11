@@ -50,7 +50,7 @@ async function loadPlayerProfile() {
       avatarImg.src = data.profile_avatar_url;
       avatarImg.alt = `${data.username}'s Avatar`;
     } else {
-      avatarImg.src = "../Assets/default_avatar.png";
+      avatarImg.src = "../Assets/avatars/default_avatar_emperor.png";
       avatarImg.alt = "Default Avatar";
     }
 

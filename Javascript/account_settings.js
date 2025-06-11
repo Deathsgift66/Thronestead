@@ -18,14 +18,14 @@ async function loadUserProfile() {
   if (!res.ok) throw new Error('Failed to load profile');
   const info = await res.json();
 
-  document.getElementById('avatar-preview').src = info.profile_picture_url || '/avatars/default_avatar.png';
+  document.getElementById('avatar-preview').src = info.profile_picture_url || 'Assets/avatars/default_avatar_emperor.png';
   document.getElementById('avatar_url').value = info.profile_picture_url || '';
   document.getElementById('display_name').value = info.display_name || '';
   document.getElementById('motto').value = info.motto || '';
   document.getElementById('profile_bio').value = info.bio || '';
   document.getElementById('email').value = info.email;
   document.getElementById('profile_banner').value = info.profile_banner || '';
-  document.getElementById('banner-preview').src = info.profile_banner || '/assets/profile_banners/default.jpg';
+  document.getElementById('banner-preview').src = info.profile_banner || 'Assets/profile_background.png';
   document.getElementById('theme_preference').value = info.theme_preference || 'parchment';
   document.body.dataset.theme = document.getElementById('theme_preference').value;
   const vipElement = document.getElementById('vip-status');
@@ -85,7 +85,7 @@ async function logoutSession(sessionId) {
 
 function uploadAvatar() {
   const url = document.getElementById('avatar_url').value;
-  document.getElementById('avatar-preview').src = url || '/avatars/default_avatar.png';
+  document.getElementById('avatar-preview').src = url || 'Assets/avatars/default_avatar_emperor.png';
 }
 
 function subscribeSessions(userId) {

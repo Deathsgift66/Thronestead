@@ -12,7 +12,7 @@ Author: Deathsgift66
 body {
   background-color: #1a1a1a;
   color: var(--parchment);
-    background: url(../Assets/legal.png)no-repeat center center fixed;
+  background: url(../Assets/Legal.png) no-repeat center center fixed;
   background-size: cover;
 }
 
