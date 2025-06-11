@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
-from backend.database import Base
+from backend.db_base import Base
 
 
 class KingdomCastleProgression(Base):

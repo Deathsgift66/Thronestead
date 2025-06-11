@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.database import Base
+from backend.db_base import Base
 from backend.models import BlackMarketListing, TradeLog, User
 from backend.routers.black_market import (
     ListingPayload,
