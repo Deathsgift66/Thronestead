@@ -196,6 +196,35 @@ body {
   border: 1px solid var(--gold);
 }
 
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.avatar-grid img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.avatar-grid img.selected {
+  border-color: var(--gold);
+}
+
+.avatar-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  display: block;
+  margin: 0 auto 1rem;
+}
+
 #continue-btn {
   padding: 0.7rem 1.5rem;
   font-size: 1rem;
