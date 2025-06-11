@@ -42,11 +42,11 @@ async function loadCustomBoard() {
     const textSlot = document.getElementById("custom-text-slot");
 
     imgSlot.innerHTML = data.image_url
-      ? `<img src="${data.image_url}" alt="Alliance War Banner" class="war-board-image">`
+      ? `<img src="${escapeHTML(data.image_url)}" alt="Alliance War Banner" class="war-board-image">`
       : "<p>No custom image set.</p>";
 
     textSlot.innerHTML = data.custom_text
-      ? `<p>${data.custom_text}</p>`
+      ? `<p>${escapeHTML(data.custom_text)}</p>`
       : "<p>No custom text set.</p>";
 
   } catch (err) {
@@ -81,11 +81,11 @@ async function loadAllianceWars() {
         card.classList.add("war-card");
 
         card.innerHTML = `
-          <h4>${war.opponent}</h4>
-          <p>Type: <strong>${war.type}</strong></p>
-          <p>Status: <strong>${war.status}</strong></p>
-          <p>Started: <strong>${war.started}</strong></p>
-          <p>Turns Left: <strong>${war.turns_left}</strong></p>
+          <h4>${escapeHTML(war.opponent)}</h4>
+          <p>Type: <strong>${escapeHTML(war.type)}</strong></p>
+          <p>Status: <strong>${escapeHTML(war.status)}</strong></p>
+          <p>Started: <strong>${escapeHTML(war.started)}</strong></p>
+          <p>Turns Left: <strong>${escapeHTML(String(war.turns_left))}</strong></p>
           <div class="war-actions">
             <button class="action-btn view-war-btn" data-war='${JSON.stringify(war)}'>View</button>
           </div>
@@ -110,9 +110,9 @@ async function loadAllianceWars() {
         card.classList.add("war-card");
 
         card.innerHTML = `
-          <h4>${war.opponent}</h4>
-          <p>Result: <strong>${war.result}</strong></p>
-          <p>Ended: <strong>${war.ended}</strong></p>
+          <h4>${escapeHTML(war.opponent)}</h4>
+          <p>Result: <strong>${escapeHTML(war.result)}</strong></p>
+          <p>Ended: <strong>${escapeHTML(war.ended)}</strong></p>
           <div class="war-actions">
             <button class="action-btn view-war-btn" data-war='${JSON.stringify(war)}'>View</button>
           </div>
@@ -165,12 +165,12 @@ function renderWarOverview(war, score) {
     return;
   }
   container.innerHTML = `
-    <p><strong>Attacker:</strong> ${war.attacker_alliance_id}</p>
-    <p><strong>Defender:</strong> ${war.defender_alliance_id}</p>
-    <p><strong>Status:</strong> ${war.war_status}</p>
-    <p><strong>Phase:</strong> ${war.phase}</p>
-    <p><strong>Attacker Score:</strong> ${score?.attacker_score ?? 0}</p>
-    <p><strong>Defender Score:</strong> ${score?.defender_score ?? 0}</p>
+    <p><strong>Attacker:</strong> ${escapeHTML(war.attacker_alliance_id)}</p>
+    <p><strong>Defender:</strong> ${escapeHTML(war.defender_alliance_id)}</p>
+    <p><strong>Status:</strong> ${escapeHTML(war.war_status)}</p>
+    <p><strong>Phase:</strong> ${escapeHTML(war.phase)}</p>
+    <p><strong>Attacker Score:</strong> ${escapeHTML(String(score?.attacker_score ?? 0))}</p>
+    <p><strong>Defender Score:</strong> ${escapeHTML(String(score?.defender_score ?? 0))}</p>
     <button id="join-war-btn" class="action-btn">Join War</button>
     <button id="surrender-btn" class="action-btn">Surrender</button>
   `;
@@ -241,10 +241,10 @@ function renderScoreboard(score) {
   container.innerHTML = `
     <table class="score-table">
       <tr><th>Side</th><th>Score</th><th>Kills</th><th>Losses</th></tr>
-      <tr><td>Attacker</td><td>${score.attacker_score ?? 0}</td><td>${score.attacker_kills ?? 0}</td><td>${score.attacker_losses ?? 0}</td></tr>
-      <tr><td>Defender</td><td>${score.defender_score ?? 0}</td><td>${score.defender_kills ?? 0}</td><td>${score.defender_losses ?? 0}</td></tr>
-      <tr><th colspan="2">Resources Plundered</th><td colspan="2">${score.resources_plundered ?? 0}</td></tr>
-      <tr><th colspan="2">Battles Participated</th><td colspan="2">${score.battles_participated ?? 0}</td></tr>
+      <tr><td>Attacker</td><td>${escapeHTML(String(score.attacker_score ?? 0))}</td><td>${escapeHTML(String(score.attacker_kills ?? 0))}</td><td>${escapeHTML(String(score.attacker_losses ?? 0))}</td></tr>
+      <tr><td>Defender</td><td>${escapeHTML(String(score.defender_score ?? 0))}</td><td>${escapeHTML(String(score.defender_kills ?? 0))}</td><td>${escapeHTML(String(score.defender_losses ?? 0))}</td></tr>
+      <tr><th colspan="2">Resources Plundered</th><td colspan="2">${escapeHTML(String(score.resources_plundered ?? 0))}</td></tr>
+      <tr><th colspan="2">Battles Participated</th><td colspan="2">${escapeHTML(String(score.battles_participated ?? 0))}</td></tr>
     </table>
   `;
 }
@@ -273,8 +273,8 @@ function renderParticipants(list) {
   const attackers = list.filter(p => p.role === 'attacker');
   const defenders = list.filter(p => p.role === 'defender');
   container.innerHTML = `
-    <div class="participant-list"><h4>Attackers</h4>${attackers.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>
-    <div class="participant-list"><h4>Defenders</h4>${defenders.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>
+    <div class="participant-list"><h4>Attackers</h4>${attackers.map(p => `<div>${escapeHTML(p.kingdom_id)}</div>`).join('')}</div>
+    <div class="participant-list"><h4>Defenders</h4>${defenders.map(p => `<div>${escapeHTML(p.kingdom_id)}</div>`).join('')}</div>
   `;
 }
 
@@ -333,7 +333,7 @@ async function loadPendingWars() {
     }
     pending.forEach(w => {
       const row = document.createElement('div');
-      row.innerHTML = `War ${w.alliance_war_id} vs ${w.attacker_alliance_id === w.defender_alliance_id ? '' : w.attacker_alliance_id} <button class="accept-war-btn" data-id="${w.alliance_war_id}">Accept</button>`;
+      row.innerHTML = `War ${escapeHTML(w.alliance_war_id)} vs ${w.attacker_alliance_id === w.defender_alliance_id ? '' : escapeHTML(w.attacker_alliance_id)} <button class="accept-war-btn" data-id="${w.alliance_war_id}">Accept</button>`;
       container.appendChild(row);
     });
     document.querySelectorAll('.accept-war-btn').forEach(btn => {
@@ -389,4 +389,15 @@ async function surrenderWar() {
   } catch (err) {
     console.error('Error surrendering:', err);
   }
+}
+
+// ✅ Helper: Escape HTML
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
