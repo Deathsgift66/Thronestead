@@ -1,4 +1,6 @@
 # Final Schema Documentation
+**Schema Version: 6.11.25**
+
 
 This file lists the complete SQL schema used by the application.
 
