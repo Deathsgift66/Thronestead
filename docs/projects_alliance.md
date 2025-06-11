@@ -15,7 +15,7 @@ The `projects_alliance` table tracks every active or queued Alliance Project. Ea
 | `project_id` | Unique project instance identifier. Primary key. |
 | `alliance_id` | Alliance that owns this project. |
 | `name` | Project name (duplicated from catalogue). |
-| `project_key` | FK to `project_alliance_catalogue.project_code`. |
+| `project_key` | FK to `project_alliance_catalogue.project_key`. |
 | `progress` | Current build progress 0-100. |
 | `modifiers` | Bonuses applied when active. |
 | `start_time` | When construction started. |

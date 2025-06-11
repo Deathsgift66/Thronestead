@@ -6,8 +6,7 @@ The `village_modifiers` table stores temporary or permanent bonuses applied to a
 
 | Column | Description |
 | --- | --- |
-| `modifier_id` | Primary key |
-| `village_id` | FK to `kingdom_villages.village_id` |
+| `village_id` | Primary key referencing `kingdom_villages.village_id` |
 | `resource_bonus` | JSON of resource boosts |
 | `troop_bonus` | JSON of combat bonuses |
 | `construction_speed_bonus` | Flat percent boost to build speed |

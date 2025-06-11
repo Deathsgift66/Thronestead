@@ -6,13 +6,14 @@ The `project_alliance_catalogue` table defines every Alliance Project available 
 
 * Acts as a static catalogue managed by admins.
 * Each project describes how to unlock it, what it costs and what modifiers it provides.
-* Alliances reference a project via the `project_code` (sometimes called `project_key`).
+* Alliances reference a project via the `project_key` value.
 
 ## Table Structure
 
 | Column | Purpose |
 | --- | --- |
-| `project_code` | Short unique string identifier (primary key). |
+| `project_id` | Serial primary key. |
+| `project_key` | Short unique string identifier. |
 | `project_name` | Name shown to players. |
 | `description` | Detailed description. |
 | `category` | Project category such as `Military`, `Economic`, `Diplomatic`, `Special`. |
@@ -36,7 +37,7 @@ The `project_alliance_catalogue` table defines every Alliance Project available 
 ### Column breakdown
 
 * `project_id` – internal serial primary key.
-* `project_code` (or `project_key`) – stable external identifier used by other tables.
+* `project_key` – stable external identifier used by other tables.
 * `project_name` – display name in the UI.
 * `description` – long description of the project.
 * `category` – grouping for the UI such as economic, military or diplomatic.
