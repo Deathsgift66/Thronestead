@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import AllianceMember, Alliance
+from backend.models import AllianceMember, Alliance
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])

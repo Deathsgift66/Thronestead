@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
-from .. import models
+from backend import models
 from ..security import verify_jwt_token
 
 from ..battle_engine import (

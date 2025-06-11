@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ..database import get_db
-from ..models import User, Alliance, AllianceMember, AllianceVault
+from backend.models import User, Alliance, AllianceMember, AllianceVault
 from .progression_router import get_user_id
 
 router = APIRouter(prefix="/api/alliance-home", tags=["alliance_home"])

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import BlackMarketListing, User
+from backend.models import BlackMarketListing, User
 from services.trade_log_service import record_trade
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market"])

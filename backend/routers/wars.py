@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import War
+from backend.models import War
 from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
 from services.audit_service import log_action

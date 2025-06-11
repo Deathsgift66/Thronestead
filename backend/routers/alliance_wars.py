@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .progression_router import get_user_id, get_kingdom_id
 from services.audit_service import log_action, log_alliance_activity
-from ..models import Notification
+from backend.models import Notification
 
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
 

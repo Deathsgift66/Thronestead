@@ -3,7 +3,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import TradeLog
+from backend.models import TradeLog
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/trade-logs", tags=["trade_logs"])

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import QuestKingdomTracking
+from backend.models import QuestKingdomTracking
 from .progression_router import get_user_id, get_kingdom_id
 from ..data import castle_progression_state
 

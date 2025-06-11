@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import User, KingdomResources
+from backend.models import User, KingdomResources
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])

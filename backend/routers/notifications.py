@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from ..database import get_db
-from ..models import Notification
+from backend.models import Notification
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 

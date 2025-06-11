@@ -10,7 +10,7 @@ from sqlalchemy.sql import text
 from pydantic import BaseModel
 
 from ..database import get_db
-from ..models import User, Notification
+from backend.models import User, Notification
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
