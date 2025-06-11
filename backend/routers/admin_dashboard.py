@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -145,6 +146,10 @@ class WarAction(BaseModel):
     war_id: int
 
 
+class RollbackRequest(BaseModel):
+    password: str
+
+
 @router.post("/wars/force_end")
 def force_end_war(payload: WarAction, admin_user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
     verify_admin(admin_user_id, db)
@@ -162,4 +167,16 @@ def rollback_combat_tick(payload: WarAction, admin_user_id: str = Depends(get_us
     db.commit()
     log_action(db, admin_user_id, "Rollback Combat Tick", f"War {payload.war_id}")
     return {"status": "rolled_back", "war_id": payload.war_id}
+
+
+@router.post("/rollback/database")
+def rollback_database(payload: RollbackRequest, admin_user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+    """Trigger a database rollback if the master password matches."""
+    verify_admin(admin_user_id, db)
+    master = os.getenv("MASTER_ROLLBACK_PASSWORD")
+    if not master or payload.password != master:
+        raise HTTPException(status_code=403, detail="Invalid master password")
+
+    log_action(db, admin_user_id, "Rollback Database", "Admin triggered rollback")
+    return {"status": "rollback_triggered"}
 

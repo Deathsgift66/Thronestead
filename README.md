@@ -98,6 +98,7 @@ SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
+MASTER_ROLLBACK_PASSWORD
 ```
 
 Update these values with your project credentials to enable API access.

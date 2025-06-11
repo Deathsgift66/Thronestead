@@ -1,4 +1,6 @@
 from backend.routers import admin_dashboard
+import pytest
+from fastapi import HTTPException
 
 
 class DummyResult:
@@ -61,3 +63,26 @@ def test_get_flagged_users():
     db.rows = [("u1", "Exploit", "2025-01-02")]
     results = admin_dashboard.get_flagged_users(db=db, admin_user_id="a1")
     assert results[0]["alert_type"] == "Exploit"
+
+
+def test_rollback_database_checks_password(monkeypatch):
+    db = DummyDB()
+    monkeypatch.setenv("MASTER_ROLLBACK_PASSWORD", "secret")
+    admin_dashboard.rollback_database(
+        admin_dashboard.RollbackRequest(password="secret"),
+        admin_user_id="a1",
+        db=db,
+    )
+    assert any("insert into audit_log" in q[0].lower() for q in db.queries)
+
+
+def test_rollback_database_bad_password(monkeypatch):
+    db = DummyDB()
+    monkeypatch.setenv("MASTER_ROLLBACK_PASSWORD", "secret")
+    with pytest.raises(HTTPException):
+        admin_dashboard.rollback_database(
+            admin_dashboard.RollbackRequest(password="wrong"),
+            admin_user_id="a1",
+            db=db,
+        )
+
