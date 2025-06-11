@@ -75,6 +75,12 @@ app = FastAPI(title="Kingmaker's Rise API")
 Base.metadata.create_all(bind=engine)
 load_game_settings()
 
+
+@app.get("/api/health")
+async def healthcheck():
+    """Simple healthcheck endpoint for uptime monitoring."""
+    return {"status": "ok"}
+
 app.include_router(alliance_members.router)
 app.include_router(alliance_members_view.router)
 app.include_router(admin.router)
