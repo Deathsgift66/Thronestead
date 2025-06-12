@@ -28,6 +28,9 @@ async function loadUserProfile() {
   document.getElementById('banner-preview').src = info.profile_banner || 'Assets/profile_background.png';
   document.getElementById('theme_preference').value = info.theme_preference || 'parchment';
   document.body.dataset.theme = document.getElementById('theme_preference').value;
+  document.getElementById('last_login').textContent = `Last Login: ${info.last_login_at || 'Unknown'}`;
+  document.getElementById('ip_alerts').checked = !!info.ip_login_alerts;
+  document.getElementById('email_confirmations').checked = !!info.email_login_confirmations;
   const vipElement = document.getElementById('vip-status');
   vipElement.innerText = info.vip_level ? `VIP ${info.vip_level}` : 'Not a VIP';
   if (info.founder) vipElement.innerText += ' (Founder)';
@@ -53,6 +56,8 @@ async function saveUserSettings() {
     profile_picture_url: document.getElementById('avatar_url').value,
     theme_preference: document.getElementById('theme_preference').value,
     profile_banner: document.getElementById('profile_banner').value,
+    ip_login_alerts: document.getElementById('ip_alerts').checked,
+    email_login_confirmations: document.getElementById('email_confirmations').checked,
   };
 
   if (displayName.length < 3) {
