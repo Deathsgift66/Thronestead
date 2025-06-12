@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from .routers import (
     admin,
     alliance_members,
@@ -147,3 +148,11 @@ app.include_router(signup_router.router)
 app.include_router(treaty_web.router)
 app.include_router(village_master_router.router)
 app.include_router(vacation_mode.router)
+
+# Mount static frontend after all API routes so that API endpoints take
+# precedence over static files.
+app.mount(
+    "/",
+    StaticFiles(directory=".", html=True),
+    name="static",
+)
