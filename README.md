@@ -142,7 +142,7 @@ Date: **June 2, 2025**
 ---
 
 **For testers:**  
-Current deployed version → `v6.2.25`  
+Current deployed version → `v6.12.2025.5.54`
 Pre-Alpha build — **feature-complete** FrontEnd.
 
 ---

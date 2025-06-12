@@ -525,7 +525,7 @@ class UnitStat(Base):
     __tablename__ = "unit_stats"
     unit_type = Column(String, primary_key=True)
     tier = Column(Integer)
-    version_tag = Column(String, default="v1")
+    version_tag = Column(String, default="v6.12.2025.5.54")
     hp = Column(Integer)
     damage = Column(Integer)
     defense = Column(Integer)

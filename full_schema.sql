@@ -997,7 +997,7 @@ CREATE INDEX unit_movements_war_id_idx ON public.unit_movements(war_id);
 CREATE TABLE public.unit_stats (
   unit_type text NOT NULL,
   tier integer NOT NULL,
-  version_tag text DEFAULT 'v1',
+  version_tag text DEFAULT 'v6.12.2025.5.54',
   class text NOT NULL,
   description text,
   hp integer NOT NULL,
