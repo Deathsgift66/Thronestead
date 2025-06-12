@@ -192,6 +192,7 @@
 - Javascript/train_troops.js
 - Javascript/treaty_web.js
 - Javascript/tutorial.js
+- Javascript/tutorialModal.js
 - Javascript/village.js
 - Javascript/village_master.js
 - Javascript/villages.js
