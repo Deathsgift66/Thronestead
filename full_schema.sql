@@ -329,6 +329,8 @@ CREATE TABLE public.building_catalogue (
   unlock_at_level integer DEFAULT 1,
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
+  cost_to_produce jsonb DEFAULT '{}'::jsonb,
+  efficiency_multiplier numeric DEFAULT 1.0,
   CONSTRAINT building_catalogue_pkey PRIMARY KEY (building_id)
 );
 
