@@ -21,6 +21,7 @@ class MessagePayload(BaseModel):
     recipient: str
     subject: str | None = None
     content: str
+    category: str | None = None
 
 
 @router.get("/inbox")
@@ -29,7 +30,7 @@ async def list_inbox(user_id: str = Depends(verify_jwt_token)):
     res = (
         supabase.table("player_messages")
         .select(
-            "message_id,subject,message,sent_at,is_read,user_id,users(username)"
+            "message_id,subject,message,category,sent_at,is_read,user_id,users(username)"
         )
         .eq("recipient_id", user_id)
         .eq("deleted_by_recipient", False)
@@ -43,6 +44,7 @@ async def list_inbox(user_id: str = Depends(verify_jwt_token)):
             "message_id": r["message_id"],
             "subject": r["subject"],
             "message": r["message"],
+            "category": r.get("category"),
             "sent_at": r["sent_at"],
             "is_read": r["is_read"],
             "sender": r.get("users", {}).get("username"),
@@ -74,6 +76,7 @@ async def view_message(message_id: int, user_id: str = Depends(verify_jwt_token)
         "message_id": row["message_id"],
         "subject": row["subject"],
         "message": row["message"],
+        "category": row.get("category"),
         "sent_at": row["sent_at"],
         "is_read": True,
         "sender": row.get("users", {}).get("username"),
@@ -102,6 +105,15 @@ async def delete_message_route(
     return {"status": "deleted", "message_id": message_id}
 
 
+@router.post("/mark_all_read")
+async def mark_all_read(user_id: str = Depends(get_current_user_id)):
+    supabase = get_supabase_client()
+    supabase.table("player_messages").update({"is_read": True}).eq(
+        "recipient_id", user_id
+    ).execute()
+    return {"message": "All marked read"}
+
+
 @router.post("/send")
 async def send_message(
     payload: MessagePayload, user_id: str = Depends(get_current_user_id)
@@ -125,6 +137,7 @@ async def send_message(
                 "user_id": user_id,
                 "subject": payload.subject,
                 "message": payload.content,
+                "category": payload.category or "player",
             }
         )
         .execute()
@@ -139,7 +152,7 @@ async def list_messages(user_id: str = Depends(get_current_user_id)):
     res = (
         supabase.table("player_messages")
         .select(
-            "message_id,subject,message,sent_at,is_read,user_id,users(username)"
+            "message_id,subject,message,category,sent_at,is_read,user_id,users(username)"
         )
         .eq("recipient_id", user_id)
         .eq("deleted_by_recipient", False)
@@ -151,6 +164,7 @@ async def list_messages(user_id: str = Depends(get_current_user_id)):
             "message_id": r["message_id"],
             "subject": r["subject"],
             "message": r["message"],
+            "category": r.get("category"),
             "sent_at": r["sent_at"],
             "is_read": r["is_read"],
             "user_id": r["user_id"],

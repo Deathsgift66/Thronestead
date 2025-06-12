@@ -10,6 +10,7 @@ from backend.routers.messages import (
     list_messages,
     get_message,
     delete_message,
+    mark_all_read,
     MessagePayload,
     DeletePayload,
 )
@@ -39,7 +40,7 @@ def test_full_message_flow():
     sender = create_user(db, "sender")
     recipient = create_user(db, "rec")
 
-    send_message(MessagePayload(recipient="rec", subject="Hi", content="Hello"), user_id=sender, db=db)
+    send_message(MessagePayload(recipient="rec", subject="Hi", content="Hello", category="player"), user_id=sender, db=db)
     res = list_messages(user_id=recipient, db=db)
     assert len(res["messages"]) == 1
     mid = res["messages"][0]["message_id"]
@@ -97,4 +98,17 @@ def test_delete_message_sets_flag():
     messages.delete_message(message_id=msg.message_id, user_id=uid1, db=db)
     row = db.query(PlayerMessage).filter_by(message_id=msg.message_id).first()
     assert row.deleted_by_recipient is True
+
+
+def test_mark_all_read_updates_rows():
+    Session = setup_db()
+    db = Session()
+    uid1, uid2 = seed_users(db)
+    db.add(PlayerMessage(user_id=uid2, recipient_id=uid1, message="Hail"))
+    db.add(PlayerMessage(user_id=uid2, recipient_id=uid1, message="Yo"))
+    db.commit()
+
+    messages.mark_all_read(user_id=uid1, db=db)
+    rows = db.query(PlayerMessage).filter_by(recipient_id=uid1).all()
+    assert all(r.is_read for r in rows)
 

@@ -10,6 +10,7 @@ The `player_messages` table stores direct player-to-player private mail. Each ro
 | `user_id` | Who sent the message (FK to `users.user_id`, `ON DELETE SET NULL`) |
 | `recipient_id` | Who received the message (FK to `users.user_id`, `ON DELETE SET NULL`) |
 | `message` | Message text |
+| `category` | Message type (player, alliance, trade, battle, system) |
 | `sent_at` | When the message was sent |
 | `is_read` | Whether the recipient has read it |
 
@@ -17,8 +18,8 @@ The `player_messages` table stores direct player-to-player private mail. Each ro
 
 ### Sending a message
 ```sql
-INSERT INTO public.player_messages (user_id, recipient_id, message)
-VALUES ('SENDER-UUID', 'RECIPIENT-UUID', 'Hello there!');
+INSERT INTO public.player_messages (user_id, recipient_id, message, category)
+VALUES ('SENDER-UUID', 'RECIPIENT-UUID', 'Hello there!', 'player');
 ```
 
 ### Listing inbox
@@ -45,3 +46,10 @@ WHERE message_id = ?;
 ```
 
 Messages should never be hard deleted so moderation can review disputes if needed.
+
+### Marking all as read
+```sql
+UPDATE public.player_messages
+SET is_read = true
+WHERE recipient_id = 'RECIPIENT-UUID';
+```

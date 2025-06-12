@@ -599,6 +599,7 @@ CREATE TABLE public.player_messages (
   user_id uuid,
   recipient_id uuid,
   message text,
+  category text DEFAULT 'player',
   sent_at timestamp with time zone DEFAULT now(),
   is_read boolean DEFAULT false,
   CONSTRAINT player_messages_pkey PRIMARY KEY (message_id)

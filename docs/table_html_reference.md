@@ -145,7 +145,7 @@ This document maps key PostgreSQL tables and their important columns to the HTML
 - `profile.html`: recent actions feed for the current player
 
 ### Table: `player_messages`
-**Relevant Columns**: `message_id`, `sender_id`, `receiver_id`, `subject`, `body`, `sent_at`, `is_read`
+**Relevant Columns**: `message_id`, `sender_id`, `receiver_id`, `subject`, `body`, `category`, `sent_at`, `is_read`
 **Used In**:
 - `messages.html`: inbox listing and message reading
 - `message.html`: display a single message
