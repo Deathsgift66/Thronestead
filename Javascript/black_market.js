@@ -53,7 +53,12 @@ async function loadResources() {
 }
 
 async function loadListings() {
-  const res = await fetch('/api/black-market/listings');
+  const res = await fetch('/api/black-market/listings', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'X-User-ID': userId
+    }
+  });
   const data = await res.json();
   listings = data.listings || [];
   renderListings();
@@ -122,7 +127,12 @@ async function confirmPurchase() {
 }
 
 async function loadHistory() {
-  const res = await fetch(`/api/black-market/history?kingdom_id=${kingdomId}`);
+  const res = await fetch(`/api/black-market/history?kingdom_id=${kingdomId}`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'X-User-ID': userId
+    }
+  });
   const data = await res.json();
   const container = document.getElementById('purchaseHistory');
   container.innerHTML = '';

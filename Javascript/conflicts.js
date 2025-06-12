@@ -7,6 +7,9 @@ Description: Dynamic conflict listing with filters and sorting.
 
 import { supabase } from './supabaseClient.js';
 
+let accessToken = null;
+let userId = null;
+
 const REFRESH_MS = 30000;
 let conflicts = [];
 let currentFilter = 'all';
@@ -20,6 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'login.html';
     return;
   }
+  accessToken = session.access_token;
+  userId = session.user.id;
   setupControls();
   await loadConflicts();
   startAutoRefresh();
@@ -55,7 +60,12 @@ async function loadConflicts() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="10">Loading conflicts...</td></tr>';
   try {
-    const res = await fetch('/api/conflicts/overview');
+    const res = await fetch('/api/conflicts/overview', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      }
+    });
     const data = await res.json();
     conflicts = data.wars || [];
     applyFilters();
