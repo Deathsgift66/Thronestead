@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from ..security import verify_jwt_token
 from ..database import get_db
 from services.vacation_mode_service import check_vacation_mode
