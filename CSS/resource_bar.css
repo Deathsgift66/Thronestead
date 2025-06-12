@@ -1,0 +1,27 @@
+.resource-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--parchment);
+  padding: 0.25rem 1rem;
+  z-index: 1031;
+  font-size: 0.9rem;
+}
+.resource-bar a {
+  color: var(--parchment);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.resource-bar a:hover {
+  color: var(--gold);
+}
+.resource-bar .resource-icon {
+  font-size: 1.2rem;
+}
