@@ -80,8 +80,8 @@ function bindEvents() {
   const createBtn = document.getElementById('create-kingdom-btn');
   const bannerPreview = document.getElementById('banner-preview');
   const emblemPreview = document.getElementById('emblem-preview');
-  const bannerEl = document.getElementById('banner-image-input');
-  const emblemEl = document.getElementById('emblem-image-input');
+  const bannerEl = document.getElementById('banner_url');
+  const emblemEl = document.getElementById('emblem_url');
   const customAvatarEl = document.getElementById('custom-avatar-url');
 
   if (customAvatarEl) {
@@ -109,8 +109,8 @@ function bindEvents() {
     const titleEl = document.getElementById('ruler-title-input');
     const regionEl = document.getElementById('region-select');
     const villageEl = document.getElementById('village-name-input');
-    const bannerEl = document.getElementById('banner-image-input');
-    const emblemEl = document.getElementById('emblem-image-input');
+    const bannerEl = document.getElementById('banner_url');
+    const emblemEl = document.getElementById('emblem_url');
     if (bannerEl && bannerPreview) {
       bannerPreview.src = bannerEl.value;
     }
@@ -123,8 +123,8 @@ function bindEvents() {
     const rulerTitle = titleEl.value.trim();
     const region = regionEl.value;
     const villageName = villageEl.value.trim();
-    const bannerImage = bannerEl.value.trim();
-    const emblemImage = emblemEl.value.trim();
+    const bannerUrl = bannerEl.value.trim();
+    const emblemUrl = emblemEl.value.trim();
     const motto = mottoEl.value.trim();
 
     if (kingdomName.length < 3) {
@@ -155,8 +155,8 @@ function bindEvents() {
           ruler_title: rulerTitle || null,
           village_name: villageName,
           region,
-          banner_image: bannerImage || null,
-          emblem_image: emblemImage || null,
+          banner_url: bannerUrl || null,
+          emblem_url: emblemUrl || null,
           motto: motto || null
         })
       });
