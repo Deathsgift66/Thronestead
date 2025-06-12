@@ -519,13 +519,18 @@ class TerrainMap(Base):
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    map_type = Column(String, default="battlefield")
+    tile_schema_version = Column(Integer, default=1)
+    is_active = Column(Boolean, default=True)
+    map_source = Column(String, default="auto-generated")
+    map_features = Column(JSONB, default={})
 
 
 class UnitStat(Base):
     __tablename__ = "unit_stats"
     unit_type = Column(String, primary_key=True)
     tier = Column(Integer)
-    version_tag = Column(String, default="v6.12.2025.5.54")
+    version_tag = Column(String, default="v6.12.2025.13.16")
     hp = Column(Integer)
     damage = Column(Integer)
     defense = Column(Integer)
