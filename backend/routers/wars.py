@@ -8,6 +8,7 @@ from backend.models import War
 from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
 from services.audit_service import log_action
+from services.vacation_mode_service import check_vacation_mode
 
 router = APIRouter(prefix="/api/wars", tags=["wars"])
 
@@ -24,6 +25,7 @@ async def declare_war(
 ):
     """Declare a new war if the kingdom has available knights."""
     kid = get_kingdom_id(db, user_id)
+    check_vacation_mode(db, kid)
     knights = db.execute(
         text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
         {"kid": kid},

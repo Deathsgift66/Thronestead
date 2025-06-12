@@ -41,7 +41,10 @@ CREATE TABLE kingdoms (
     user_id      UUID REFERENCES users(user_id),
     kingdom_name TEXT NOT NULL,
     region       TEXT,
-    created_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_on_vacation BOOLEAN DEFAULT FALSE,
+    vacation_started_at TIMESTAMP WITH TIME ZONE,
+    vacation_expires_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE region_catalogue (

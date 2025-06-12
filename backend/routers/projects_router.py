@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 from ..data import castle_progression_state, kingdom_projects
 from ..security import verify_jwt_token
+from ..database import get_db
+from services.vacation_mode_service import check_vacation_mode
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -40,7 +42,9 @@ def _get_requirements(code: str):
 async def start_project(
     payload: ProjectPayload,
     user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
 ):
+    check_vacation_mode(db, payload.kingdom_id)
     req = _get_requirements(payload.project_code)
     prog = castle_progression_state.get(
         payload.kingdom_id, {"castle_level": 0, "nobles": 0, "knights": 0}

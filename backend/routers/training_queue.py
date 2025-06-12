@@ -10,6 +10,7 @@ from services.training_queue_service import (
     fetch_queue,
     cancel_training,
 )
+from services.vacation_mode_service import check_vacation_mode
 
 router = APIRouter(prefix="/api/training_queue", tags=["training_queue"])
 
@@ -32,6 +33,7 @@ def start_training(
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
+    check_vacation_mode(db, kid)
     qid = add_training_order(
         db,
         kingdom_id=kid,
@@ -60,6 +62,7 @@ def cancel_order(
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
+    check_vacation_mode(db, kid)
     cancel_training(db, payload.queue_id, kid)
     return {"message": "Training cancelled"}
 

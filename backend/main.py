@@ -63,6 +63,7 @@ from .routers import (
     signup as signup_router,
     treaty_web,
     village_master as village_master_router,
+    vacation_mode,
     world_map,
     health,
 )
@@ -143,3 +144,4 @@ app.include_router(overview_router.router)
 app.include_router(signup_router.router)
 app.include_router(treaty_web.router)
 app.include_router(village_master_router.router)
+app.include_router(vacation_mode.router)

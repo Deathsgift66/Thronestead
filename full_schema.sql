@@ -573,6 +573,9 @@ CREATE TABLE public.kingdoms (
   last_updated timestamp with time zone DEFAULT now(),
   is_npc boolean DEFAULT false,
   customizations jsonb DEFAULT '{}'::jsonb,
+  is_on_vacation boolean DEFAULT false,
+  vacation_started_at timestamp with time zone,
+  vacation_expires_at timestamp with time zone,
   CONSTRAINT kingdoms_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdoms_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
