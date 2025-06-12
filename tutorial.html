@@ -30,6 +30,7 @@ Author: Deathsgift66
   <link rel="stylesheet" href="CSS/tutorial.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script defer type="module" src="Javascript/tutorial.js"></script>
+  <script defer type="module" src="Javascript/tutorialModal.js"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
@@ -72,6 +73,45 @@ Author: Deathsgift66
   </section>
 
 </main>
+
+<!-- Tutorial Modal -->
+<div id="tutorialModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-content">
+    <button id="tutorialClose" class="close-btn" aria-label="Close">&times;</button>
+    <div class="tutorial-tabs">
+      <button class="tab" data-step="0">Introduction</button>
+      <button class="tab" data-step="1">Cities</button>
+      <button class="tab" data-step="2">Projects</button>
+      <button class="tab" data-step="3">Trading</button>
+      <button class="tab" data-step="4">Wars</button>
+      <button class="tab" data-step="5">Alliances</button>
+    </div>
+    <div id="panel-0" class="tutorial-panel active">
+      <p>Welcome to Kingmaker’s Rise! This tutorial will guide you through the basics of the realm.</p>
+      <button class="royal-button continue-btn">Continue</button>
+    </div>
+    <div id="panel-1" class="tutorial-panel">
+      <p>Cities are the backbone of your kingdom. Construct buildings to expand your influence.</p>
+      <button class="royal-button continue-btn">Continue</button>
+    </div>
+    <div id="panel-2" class="tutorial-panel">
+      <p>Projects let you develop advanced capabilities and unique kingdom upgrades.</p>
+      <button class="royal-button continue-btn">Continue</button>
+    </div>
+    <div id="panel-3" class="tutorial-panel">
+      <p>Trading with other players is key to acquiring rare resources and wealth.</p>
+      <button class="royal-button continue-btn">Continue</button>
+    </div>
+    <div id="panel-4" class="tutorial-panel">
+      <p>Wars determine dominance. Train troops and strategize carefully.</p>
+      <button class="royal-button continue-btn">Continue</button>
+    </div>
+    <div id="panel-5" class="tutorial-panel">
+      <p>Alliances offer strength in numbers. Work together to conquer your foes.</p>
+      <button class="royal-button continue-btn">Continue</button>
+    </div>
+  </div>
+</div>
 
 <!-- Footer -->
 <footer class="site-footer">
