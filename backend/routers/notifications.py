@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.responses import StreamingResponse
+import asyncio
+import json
 from ..security import verify_jwt_token
 from uuid import UUID
 from pydantic import BaseModel
@@ -31,39 +34,99 @@ def get_current_user_id(
     return x_user_id
 
 
+def _serialize_notification(row: Notification) -> dict:
+    return {
+        "notification_id": row.notification_id,
+        "title": row.title,
+        "message": row.message,
+        "category": row.category,
+        "priority": row.priority,
+        "link_action": row.link_action,
+        "created_at": row.created_at,
+        "is_read": row.is_read,
+        "expires_at": row.expires_at,
+        "source_system": row.source_system,
+        "last_updated": row.last_updated,
+    }
+
+
 @router.get("/list")
 def list_notifications(
+    limit: int | None = None,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    rows = (
+    query = (
         db.query(Notification)
-        .filter(Notification.user_id == user_id)
+        .filter(
+            (Notification.user_id == user_id)
+            | (Notification.user_id.is_(None))
+        )
         .filter(
             (Notification.expires_at.is_(None))
             | (Notification.expires_at > func.now())
         )
         .order_by(Notification.is_read.asc(), Notification.created_at.desc())
-        .all()
     )
-    return {
-        "notifications": [
-            {
-                "notification_id": r.notification_id,
-                "title": r.title,
-                "message": r.message,
-                "category": r.category,
-                "priority": r.priority,
-                "link_action": r.link_action,
-                "created_at": r.created_at,
-                "is_read": r.is_read,
-                "expires_at": r.expires_at,
-                "source_system": r.source_system,
-                "last_updated": r.last_updated,
-            }
-            for r in rows
-        ]
-    }
+    if limit:
+        query = query.limit(limit)
+    rows = query.all()
+    return {"notifications": [_serialize_notification(r) for r in rows]}
+
+
+@router.get("/latest")
+def latest_notifications(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+    limit: int = 5,
+):
+    return list_notifications(limit=limit, user_id=user_id, db=db)
+
+
+@router.delete("/{notification_id}")
+def delete_notification(
+    notification_id: int,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    deleted = (
+        db.query(Notification)
+        .filter(
+            Notification.notification_id == notification_id,
+            Notification.user_id == user_id,
+        )
+        .delete()
+    )
+    db.commit()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"deleted": notification_id}
+
+
+@router.get("/stream")
+async def stream_notifications(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Simple long-polling style stream of new notifications."""
+    async def event_generator():
+        last_check = func.now()
+        for _ in range(30):  # ~2.5 minutes
+            rows = (
+                db.query(Notification)
+                .filter(
+                    (Notification.user_id == user_id)
+                    | (Notification.user_id.is_(None))
+                )
+                .filter(Notification.last_updated > last_check)
+                .all()
+            )
+            last_check = func.now()
+            for r in rows:
+                yield f"data: {json.dumps(_serialize_notification(r))}\n\n"
+            await asyncio.sleep(5)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.post("/mark_read")

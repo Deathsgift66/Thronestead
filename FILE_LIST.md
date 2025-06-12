@@ -165,6 +165,7 @@
 - Javascript/navDropdown.js
 - Javascript/navLoader.js
 - Javascript/navbar.js
+- Javascript/notificationBell.js
 - Javascript/news.js
 - Javascript/notifications.js
 - Javascript/overview.js

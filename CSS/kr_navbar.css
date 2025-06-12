@@ -192,6 +192,34 @@ Author: Deathsgift66
   font-weight: bold;
 }
 
+.kr-navbar .nav-bell {
+  position: relative;
+  cursor: pointer;
+}
+
+.kr-navbar #bell-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 120%;
+  background: var(--parchment);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px var(--shadow);
+  padding: 0.5rem;
+  min-width: 180px;
+  z-index: var(--z-index-sticky);
+}
+
+.kr-navbar #bell-dropdown.show {
+  display: block;
+}
+
+.kr-navbar .bell-item {
+  padding: 0.25rem 0;
+  font-family: 'IM Fell English', serif;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .kr-navbar {
