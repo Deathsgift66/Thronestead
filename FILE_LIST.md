@@ -256,6 +256,7 @@
 - backend/routers/town_criers.py
 - backend/routers/trade_logs.py
 - backend/routers/training_history.py
+- backend/routers/training_catalog.py
 - backend/routers/treaties_router.py
 - backend/routers/village_modifiers.py
 - backend/routers/villages_router.py
@@ -279,6 +280,7 @@
 - services/tax_service.py
 - services/trade_log_service.py
 - services/training_history_service.py
+- services/training_catalog_service.py
 - services/training_queue_service.py
 - services/vip_status_service.py
 - tests/test_alliance_projects_router.py
@@ -300,6 +302,8 @@
 - tests/test_tax_service.py
 - tests/test_trade_log_service.py
 - tests/test_training_history_service.py
+- tests/test_training_catalog_service.py
+- tests/test_training_catalog_router.py
 - tests/test_training_queue_service.py
 - tests/test_resources_router.py
 - tests/test_village_modifiers_router.py
@@ -337,6 +341,7 @@
 - migrations/2025_06_24_expand_users_table.sql
 - migrations/2025_06_25_expand_wars_table.sql
 - migrations/2025_06_26_add_wars_tactical_table.sql
+- migrations/2025_06_29_seed_training_catalog.sql
 
 ## Markdown Files
 - FILE_LIST.md

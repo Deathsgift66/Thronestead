@@ -39,3 +39,9 @@ The `training_catalog` table defines the base cost and time to train every unit.
 | `cost_pitchforks` | Pitchforks required |
 
 All cost columns default to `0` if not specified.
+
+Initial units are populated via the migration
+`migrations/2025_06_29_seed_training_catalog.sql`.
+
+The full catalog can be retrieved via the API endpoint
+`/api/training_catalog` which returns a JSON list ordered by tier.

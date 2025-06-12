@@ -67,13 +67,11 @@ async function loadGrandMusterHall() {
 
     const kingdomId = userData.kingdom_id;
 
-    // ✅ Load troops from training_catalog
-    const { data: troopsData, error: troopsError } = await supabase
-      .from('training_catalog')
-      .select('*')
-      .order('tier', { ascending: true });
-
-    if (troopsError) throw troopsError;
+    // ✅ Load troops from training_catalog via API
+    const headers = { Authorization: `Bearer ${accessToken}`, 'X-User-ID': userId };
+    const troopsRes = await fetch('/api/training_catalog', { headers });
+    if (!troopsRes.ok) throw new Error('Failed to load catalog');
+    const { catalog: troopsData } = await troopsRes.json();
 
     // ✅ Load training queue
     const { data: queueData, error: queueError } = await supabase
