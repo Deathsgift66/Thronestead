@@ -2,13 +2,16 @@
 Project Name: Kingmakers Rise Frontend
 File Name: conflicts.js
 Updated: July 2025
-Description: Handles fetching and rendering kingdom and alliance wars on the
-conflicts page.
+Description: Dynamic conflict listing with filters and sorting.
 */
 
 import { supabase } from './supabaseClient.js';
 
 const REFRESH_MS = 30000;
+let conflicts = [];
+let currentFilter = 'all';
+let sortBy = 'started_at';
+let sortDir = 'desc';
 
 // Initialize after DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
@@ -17,114 +20,121 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'login.html';
     return;
   }
-
-  setupTabs();
-  await fetchKingdomWars();
-  await fetchAllianceWars();
+  setupControls();
+  await loadConflicts();
   startAutoRefresh();
 });
 
-// Switch between Kingdom and Alliance tabs
-function setupTabs() {
-  const buttons = document.querySelectorAll('.tab');
-  const panels = document.querySelectorAll('.tab-panel');
-  buttons.forEach(btn => {
+function setupControls() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
-      panels.forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const panel = document.getElementById(btn.dataset.tab);
-      if (panel) panel.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+  const search = document.getElementById('conflictSearch');
+  if (search) search.addEventListener('input', applyFilters);
+  document.querySelectorAll('#conflictTable th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const field = th.dataset.field;
+      if (sortBy === field) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortBy = field;
+        sortDir = 'asc';
+      }
+      applyFilters();
     });
   });
 }
 
-// Load wars where the user’s kingdom is involved
-export async function fetchKingdomWars() {
-  const container = document.getElementById('kingdomWarsList');
-  if (!container) return;
-  container.innerHTML = '<p>Loading wars…</p>';
+async function loadConflicts() {
+  const tbody = document.getElementById('conflictRows');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10">Loading conflicts...</td></tr>';
   try {
-    const res = await fetch('/api/conflicts/kingdom');
+    const res = await fetch('/api/conflicts/overview');
     const data = await res.json();
-    container.innerHTML = '';
-    (data.wars || []).forEach(war => {
-      const card = document.createElement('div');
-      card.className = 'war-card';
-      card.innerHTML = `
-        <h4>${escapeHTML(war.attacker_name)} vs ${escapeHTML(war.defender_name)}</h4>
-        <p>Phase: <strong>${escapeHTML(war.phase || '')}</strong></p>
-        <p>Score: ${escapeHTML(war.attacker_score ?? 0)} - ${escapeHTML(war.defender_score ?? 0)}</p>
-        <button class="view-war-btn" data-id="${war.war_id}">View Details</button>
-      `;
-      container.appendChild(card);
-    });
-    container.querySelectorAll('.view-war-btn').forEach(btn => {
-      btn.addEventListener('click', () => fetchWarDetails(btn.dataset.id));
-    });
-    updateFeed(data.wars);
+    conflicts = data.wars || [];
+    applyFilters();
   } catch (err) {
-    console.error('Error loading kingdom wars:', err);
-    container.innerHTML = '<p>Failed to load wars.</p>';
+    console.error('Error loading conflicts:', err);
+    tbody.innerHTML = '<tr><td colspan="10">Failed to load conflicts.</td></tr>';
   }
 }
 
-// Load alliance level wars
-export async function fetchAllianceWars() {
-  const container = document.getElementById('allianceWarsList');
-  if (!container) return;
-  container.innerHTML = '<p>Loading wars…</p>';
-  try {
-    const res = await fetch('/api/conflicts/alliance');
-    const data = await res.json();
-    container.innerHTML = '';
-    (data.wars || []).forEach(war => {
-      const card = document.createElement('div');
-      card.className = 'war-card';
-      card.innerHTML = `
-        <h4>${escapeHTML(war.attacker_alliance)} vs ${escapeHTML(war.defender_alliance)}</h4>
-        <p>Phase: <strong>${escapeHTML(war.phase || '')}</strong></p>
-        <p>Score: ${escapeHTML(war.attacker_score ?? 0)} - ${escapeHTML(war.defender_score ?? 0)}</p>
-        <button class="view-war-btn" data-id="${war.war_id}">View Details</button>
-      `;
-      container.appendChild(card);
-    });
-    container.querySelectorAll('.view-war-btn').forEach(btn => {
-      btn.addEventListener('click', () => fetchWarDetails(btn.dataset.id));
-    });
-    updateFeed(data.wars);
-  } catch (err) {
-    console.error('Error loading alliance wars:', err);
-    container.innerHTML = '<p>Failed to load wars.</p>';
+function applyFilters() {
+  const search = document.getElementById('conflictSearch').value.toLowerCase();
+  let rows = conflicts.slice();
+  if (currentFilter === 'active') rows = rows.filter(r => r.phase === 'live');
+  else if (currentFilter === 'concluded') rows = rows.filter(r => r.phase === 'resolved');
+  else if (currentFilter === 'planning') rows = rows.filter(r => r.phase === 'planning');
+  else if (currentFilter === 'resolution') rows = rows.filter(r => r.phase === 'resolved' && r.winner_side);
+  if (search) {
+    rows = rows.filter(r =>
+      (r.attacker_alliance || '').toLowerCase().includes(search) ||
+      (r.defender_alliance || '').toLowerCase().includes(search) ||
+      (r.attacker_kingdom || '').toLowerCase().includes(search) ||
+      (r.defender_kingdom || '').toLowerCase().includes(search)
+    );
   }
+  if (sortBy) {
+    rows.sort((a, b) => compareFields(a, b, sortBy));
+  }
+  renderRows(rows);
 }
 
-// Fetch full war details and display in modal
-export async function fetchWarDetails(id) {
-  const modal = document.getElementById('war-detail-modal');
-  if (!modal) return;
-  modal.innerHTML = '<div class="modal-content"><p>Loading…</p></div>';
-  modal.classList.remove('hidden');
-  try {
-    const res = await fetch(`/api/conflicts/war/${id}/details`);
-    const data = await res.json();
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3>${escapeHTML(data.attacker_name)} vs ${escapeHTML(data.defender_name)}</h3>
-        <p>Result: ${escapeHTML(data.result || 'Ongoing')}</p>
-        <div id="combat-log-timeline"></div>
-        <button class="close-btn">Close</button>
-      </div>
+function compareFields(a, b, field) {
+  const valA = a[field];
+  const valB = b[field];
+  if (field === 'started_at') {
+    const da = valA ? new Date(valA) : 0;
+    const db = valB ? new Date(valB) : 0;
+    return sortDir === 'asc' ? da - db : db - da;
+  }
+  return sortDir === 'asc'
+    ? String(valA || '').localeCompare(String(valB || ''))
+    : String(valB || '').localeCompare(String(valA || ''));
+}
+
+function renderRows(rows) {
+  const tbody = document.getElementById('conflictRows');
+  if (!tbody) return;
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10">No conflicts found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    const pct = row.battle_tick ? Math.min(row.battle_tick * 100 / 12, 100) : 0;
+    const progress = `<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%" title="Attacker ${row.attacker_score || 0} / Defender ${row.defender_score || 0}"></div></div>`;
+    const statusClass = `status-${row.phase || 'alert'}`;
+    tr.innerHTML = `
+      <td>${row.war_id}</td>
+      <td>${escapeHTML(row.attacker_alliance || row.attacker_kingdom || '')}</td>
+      <td>${escapeHTML(row.defender_alliance || row.defender_kingdom || '')}</td>
+      <td>${escapeHTML(row.war_type || '')}</td>
+      <td>${row.started_at ? new Date(row.started_at).toLocaleDateString() : ''}</td>
+      <td class="${statusClass}">${escapeHTML(row.phase || '')}</td>
+      <td>${escapeHTML(row.victor || row.winner_side || '')}</td>
+      <td>${progress}</td>
+      <td>${row.castle_hp ?? ''}</td>
+      <td>
+        <a href="battle_live.html?war_id=${row.war_id}">View Battle</a>
+        ${row.victor || row.winner_side ? ` | <a href="battle_resolution.html?war_id=${row.war_id}">View Resolution</a>` : ''}
+      </td>
     `;
-    modal.querySelector('.close-btn').addEventListener('click', () => modal.classList.add('hidden'));
-  } catch (err) {
-    console.error('Error loading war details:', err);
-    modal.innerHTML = '<div class="modal-content"><p>Failed to load details.</p><button class="close-btn">Close</button></div>';
-    modal.querySelector('.close-btn').addEventListener('click', () => modal.classList.add('hidden'));
-  }
+    tbody.appendChild(tr);
+  });
 }
 
-// Utility to escape user-supplied data
+function startAutoRefresh() {
+  setInterval(loadConflicts, REFRESH_MS);
+}
+
 function escapeHTML(str) {
   if (str === undefined || str === null) return '';
   return String(str)
@@ -133,23 +143,4 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
-}
-
-function startAutoRefresh() {
-  setInterval(async () => {
-    await fetchKingdomWars();
-    await fetchAllianceWars();
-  }, REFRESH_MS);
-}
-
-function updateFeed(wars) {
-  const feed = document.getElementById('liveFeed');
-  if (!feed || !wars) return;
-  if (wars.length === 0) {
-    feed.textContent = 'No active conflicts.';
-    return;
-  }
-  feed.innerHTML = wars
-    .map(w => `<div>${escapeHTML(w.attacker_name || w.attacker_alliance)} vs ${escapeHTML(w.defender_name || w.defender_alliance)} - ${escapeHTML(w.phase || '')}</div>`)
-    .join('');
 }
