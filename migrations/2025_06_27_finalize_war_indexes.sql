@@ -12,4 +12,4 @@ CREATE INDEX IF NOT EXISTS unit_movements_war_id_idx ON public.unit_movements(wa
 
 -- Add version_tag to unit_stats for schema versioning
 ALTER TABLE public.unit_stats
-  ADD COLUMN version_tag text DEFAULT 'v1';
+  ADD COLUMN version_tag text DEFAULT 'v6.12.2025.5.54';
