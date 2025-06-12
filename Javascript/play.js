@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     .eq('user_id', currentUser.id)
     .maybeSingle();
 
-  if (error && profile !== null) {
+  if (error) {
     console.error('❌ Error loading profile:', error);
     showToast('Failed to load profile.');
     return;
@@ -70,10 +70,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadRegions();
   await loadAnnouncements();
   renderAvatarOptions();
-  bindEvents(profile);
+  bindEvents();
 });
 
-function bindEvents(profileExists) {
+function bindEvents() {
   const createBtn = document.getElementById('create-kingdom-btn');
   const bannerPreview = document.getElementById('banner-preview');
   const emblemPreview = document.getElementById('emblem-preview');
@@ -98,6 +98,8 @@ function bindEvents(profileExists) {
       emblemPreview.src = emblemEl.value.trim();
     });
   }
+
+  if (!createBtn) return;
 
   createBtn.addEventListener('click', async () => {
     const kNameEl = document.getElementById('kingdom-name-input');
