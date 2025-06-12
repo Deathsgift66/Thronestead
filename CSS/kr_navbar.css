@@ -228,3 +228,38 @@ Author: Deathsgift66
     font-size: 1rem;
   }
 }
+
+/* Mobile Link Bar (hidden by default) */
+.mobile-link-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-link-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--parchment);
+    border-top: 2px solid var(--leather);
+    padding: 0.5rem 0;
+    z-index: var(--z-index-sticky);
+  }
+
+  .mobile-link-bar a,
+  .mobile-link-bar button {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    flex: 1;
+    text-align: center;
+  }
+
+  .mobile-link-bar img {
+    width: 24px;
+    height: 24px;
+  }
+}

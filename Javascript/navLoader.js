@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all([
       import("./navDropdown.js"),
       import("./navbar.js"),
+      import("./mobileLinkBar.js"),
     ]);
   }
 });
