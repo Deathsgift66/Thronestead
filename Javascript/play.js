@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const { data: profile, error } = await supabase
     .from('users')
-    .select('setup_complete, kingdom_id, display_name')
+    .select('setup_complete, kingdom_id, display_name, kingdom_name')
     .eq('user_id', currentUser.id)
     .maybeSingle();
 
@@ -57,8 +57,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (profile) {
     kingdomId = profile.kingdom_id;
-    document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(profile.display_name)}!`;
-    if (nameInput) nameInput.value = profile.display_name;
+    const greetName = profile.display_name || profile.kingdom_name;
+    document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(greetName || currentUser.user_metadata.display_name)}!`;
+    if (nameInput) {
+      nameInput.value = profile.kingdom_name || profile.display_name || currentUser.user_metadata.display_name;
+    }
   } else {
     document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(currentUser.user_metadata.display_name)}!`;
     if (nameInput) nameInput.value = currentUser.user_metadata.display_name;
