@@ -26,6 +26,7 @@
 - conflicts.html
 - diplomacy_center.html
 - donate_vip.html
+- edit_kingdom.html
 - forgot_password.html
 - index.html
 - kingdom_achievements.html
@@ -87,6 +88,7 @@
 - CSS/conflicts.css
 - CSS/diplomacy_center.css
 - CSS/donate_vip.css
+- CSS/edit_kingdom.css
 - CSS/forgot_password.css
 - CSS/index.css
 - CSS/kingdom_achievements.css
@@ -151,6 +153,7 @@
 - Javascript/conflicts.js
 - Javascript/diplomacy_center.js
 - Javascript/donate_vip.js
+- Javascript/edit_kingdom.js
 - Javascript/forgot_password.js
 - Javascript/index.js
 - Javascript/kingdom_achievements.js
