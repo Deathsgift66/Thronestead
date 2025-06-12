@@ -7,6 +7,9 @@ Author: Deathsgift66
 // Live Battle Viewer — fetches terrain, units and combat logs
 
 import { supabase } from './supabaseClient.js';
+
+let accessToken = null;
+let userId = null;
 const UNIT_COUNTERS = { infantry: "archers", cavalry: "spearmen", archers: "infantry", mage: "infantry" };
 const TERRAIN_EFFECTS = { forest: "Defense bonus", river: "Slows movement", hill: "Ranged bonus" };
 function playTickSound() {
@@ -30,6 +33,13 @@ const urlParams = new URLSearchParams(window.location.search);
 const warId = parseInt(urlParams.get('war_id'), 10) || 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  accessToken = session.access_token;
+  userId = session.user.id;
   await loadTerrain();
   await loadUnits();
   await loadCombatLogs();
@@ -51,7 +61,12 @@ window.addEventListener('beforeunload', () => {
 // =============================================
 async function loadTerrain() {
   try {
-    const response = await fetch(`/api/battle/terrain/${warId}`);
+    const response = await fetch(`/api/battle/terrain/${warId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      }
+    });
     const data = await response.json();
     mapWidth = data.map_width;
     mapHeight = data.map_height;
@@ -67,7 +82,12 @@ async function loadTerrain() {
 // =============================================
 async function loadUnits() {
   try {
-    const response = await fetch(`/api/battle/units/${warId}`);
+    const response = await fetch(`/api/battle/units/${warId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      }
+    });
     const data = await response.json();
     renderUnits(data.units);
   } catch (err) {
@@ -80,7 +100,12 @@ async function loadUnits() {
 // =============================================
 async function loadCombatLogs() {
   try {
-    const response = await fetch(`/api/battle/logs/${warId}?since=${logsTick}`);
+    const response = await fetch(`/api/battle/logs/${warId}?since=${logsTick}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      }
+    });
     const data = await response.json();
     if (data.combat_logs.length) {
       logsTick = data.combat_logs[data.combat_logs.length - 1].tick_number;
@@ -100,7 +125,12 @@ let logsTick = 0;
 let statusData = null;
 async function loadStatus() {
   try {
-    const res = await fetch(`/api/battle/status/${warId}`);
+    const res = await fetch(`/api/battle/status/${warId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      }
+    });
     const data = await res.json();
     statusData = data;
     lastTick = data.battle_tick;
@@ -140,7 +170,11 @@ function countdownTick() {
 export async function triggerNextTick() {
   try {
     const response = await fetch(`/api/battle/next_tick?war_id=${warId}`, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      }
     });
     const data = await response.json();
     refreshBattle();
@@ -294,7 +328,11 @@ async function submitOrders() {
   try {
     await fetch('/api/battle/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      },
       body: JSON.stringify({ movement_id: activeUnit.movement_id, position_x: x, position_y: y })
     });
     closeOrderPanel();

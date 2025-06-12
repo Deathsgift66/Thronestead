@@ -8,11 +8,21 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+let accessToken = null;
+let userId = null;
+
 let troopLookup = new Map();
 let timerHandles = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  accessToken = session.access_token;
+  userId = session.user.id;
   initToggleButtons();
   await loadGrandMusterHall();
   setInterval(loadGrandMusterHall, 30000);
@@ -206,7 +216,11 @@ async function trainTroop(unitId) {
     const troop = troopLookup.get(unitId) || {};
     const res = await fetch("/api/training_queue/start", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      },
       body: JSON.stringify({
         unit_id: unitId,
         unit_name: troop.unit_name,
@@ -233,7 +247,11 @@ async function cancelTraining(queueId) {
   try {
     const res = await fetch('/api/training_queue/cancel', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      },
       body: JSON.stringify({ queue_id: queueId })
     });
     const result = await res.json();
