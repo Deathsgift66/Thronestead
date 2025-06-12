@@ -957,7 +957,12 @@ CREATE TABLE terrain_map (
     map_version INTEGER DEFAULT 1,
     generated_by UUID REFERENCES users(user_id),
     map_name TEXT,
-    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    map_type TEXT DEFAULT 'battlefield',
+    tile_schema_version INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    map_source TEXT DEFAULT 'auto-generated',
+    map_features JSONB DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE combat_logs (
