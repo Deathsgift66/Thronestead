@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("navbar-container");
 
   if (target) {
-    const response = await fetch("navbar.html");
+    const response = await fetch("/navbar.html");
     const html = await response.text();
     target.innerHTML = html;
 
