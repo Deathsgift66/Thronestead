@@ -11,9 +11,12 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    # Provide a backward compatible alias used in some modules/tests
+    Session = SessionLocal
 else:
     engine = None
     SessionLocal = None
+    Session = None  # type: ignore
     logging.warning("DATABASE_URL not set; SQLAlchemy engine disabled")
 
 
