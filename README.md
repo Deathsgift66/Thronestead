@@ -77,6 +77,21 @@ Install Python dependencies with:
 pip install -r dev_requirements.txt
 ```
 
+### Running the Local API
+
+The frontend expects the FastAPI backend to be available at
+`http://localhost:8000`. After installing the dependencies make sure to start the
+API server in a separate terminal:
+
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+When the backend is not running the static server used by `npm run serve` will
+return `index.html` for requests under `/api`, leading to browser console errors
+like `Invalid JSON from /api/resources`.
+
 ---
 
 ## Database Setup
