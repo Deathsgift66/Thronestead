@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from ..data import castle_progression_state, kingdom_projects
 from ..security import verify_jwt_token
 from ..database import get_db
+from sqlalchemy.orm import Session
 from services.vacation_mode_service import check_vacation_mode
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
