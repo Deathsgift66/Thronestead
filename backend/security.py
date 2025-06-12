@@ -3,6 +3,8 @@ import json
 from uuid import UUID
 from fastapi import Header, HTTPException
 
+__all__ = ["verify_jwt_token"]
+
 
 def verify_jwt_token(
     authorization: str | None = Header(None),
