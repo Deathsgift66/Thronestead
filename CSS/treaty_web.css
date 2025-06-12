@@ -120,6 +120,26 @@ body {
   z-index: var(--z-index-modal);
 }
 
+.filter-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-btn.active {
+  box-shadow: 0 0 5px var(--gold);
+}
+
+.war-active {
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { stroke-width: 2; }
+  to { stroke-width: 4; }
+}
+
 @media (max-width: 600px) {
   .treaty-controls {
     flex-direction: column;
