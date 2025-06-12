@@ -29,6 +29,7 @@ Author: Deathsgift66
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/treaty_web.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer type="module" src="https://cdn.jsdelivr.net/npm/d3@7/+esm"></script>
   <script defer type="module" src="Javascript/treaty_web.js"></script>
 
   <!-- Global Assets -->
@@ -72,6 +73,12 @@ Author: Deathsgift66
       <button id="refreshGraph" class="btn-fantasy">Refresh Graph</button>
       <button id="toggleLegend" class="btn-fantasy">Toggle Legend</button>
     </div>
+    <div class="filter-controls">
+      <button class="btn-fantasy filter-btn active" data-type="MDP">MDP</button>
+      <button class="btn-fantasy filter-btn active" data-type="protection">Protection</button>
+      <button class="btn-fantasy filter-btn active" data-type="NAP">NAP</button>
+      <button class="btn-fantasy filter-btn active" data-type="war">War</button>
+    </div>
 
     <!-- Timeline Control -->
     <div class="timeline-control">
@@ -82,7 +89,7 @@ Author: Deathsgift66
     <!-- Treaty Web Container -->
     <div class="treaty-web-container">
       <div id="network" class="network-area">
-        <!-- Vis.js Network Graph renders here -->
+        <!-- D3.js network graph renders here -->
       </div>
     </div>
 

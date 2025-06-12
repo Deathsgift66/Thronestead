@@ -1,228 +1,154 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: treaty_web.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
-// Treaty Web Nexus Page Controller
-
+// Treaty Web visualization using D3.js
 import { supabase } from './supabaseClient.js';
-import { DataSet, Network } from 'https://cdn.jsdelivr.net/npm/vis-network/standalone/esm/vis-network.min.js';
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 
+let rawData = { nodes: [], links: [] };
+let svg, linkGroup, nodeGroup, simulation;
+const typeColor = {
+  MDP: 'blue',
+  protection: 'green',
+  NAP: 'yellow',
+  war: 'red'
+};
 
-let network = null;
-let allTreaties = [];
-let realtimeSub;
-
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js protects this page → no duplicate session check
+document.addEventListener('DOMContentLoaded', async () => {
   initControls();
-  await loadTreatyWeb();
-  subscribeToTreatyChanges();
+  await loadNetwork();
 });
 
-window.addEventListener('beforeunload', () => {
-  realtimeSub?.unsubscribe();
-});
-
-// ✅ Initialize Control Buttons
-function initControls() {
-  document.getElementById('refreshGraph').addEventListener('click', async () => {
-    showToast("Refreshing Treaty Web...");
-    await loadTreatyWeb();
-  });
-
-  document.getElementById('toggleLegend').addEventListener('click', () => {
-    let legend = document.getElementById('legend-panel');
-    if (!legend) {
-      // Inject legend panel if not present
-      legend = document.createElement('div');
-      legend.id = 'legend-panel';
-      legend.className = 'legend-panel';
-      legend.innerHTML = `
-        <h4>Treaty Web Legend</h4>
-        <ul>
-          <li><span style="color: green;">Alliance → Alliance Treaty</span></li>
-          <li><span style="color: blue;">Alliance → Kingdom Treaty</span></li>
-          <li><span style="color: orange;">Kingdom → Kingdom Treaty</span></li>
-        </ul>
-      `;
-      document.body.appendChild(legend);
-    }
-    legend.classList.toggle('hidden');
-  });
-
-  document.getElementById('timelineRange').addEventListener('input', () => {
-    filterTreatyWeb();
-  });
-}
-
-// ✅ Load Treaty Web Data and Render Graph
-async function loadTreatyWeb() {
+async function loadNetwork() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const res = await fetch('/api/treaty_web/data', {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id
-      }
-    });
-    const { alliances = [], kingdoms = [], treaties = [] } = await res.json();
-
-    // ✅ Store all treaties for timeline filtering
-    allTreaties = treaties;
-
-    // ✅ Build Graph
-    const nodes = new DataSet();
-    const edges = new DataSet();
-
-    // Add Alliance nodes
-    alliances.forEach(a => {
-      nodes.add({
-        id: `A-${a.alliance_id}`,
-        label: a.name,
-        shape: 'ellipse',
-        color: 'green'
-      });
-    });
-
-    // Add Kingdom nodes
-    kingdoms.forEach(k => {
-      nodes.add({
-        id: `K-${k.kingdom_id}`,
-        label: k.kingdom_name,
-        shape: 'box',
-        color: 'orange'
-      });
-    });
-
-    // Add Treaty edges
-    treaties.forEach(t => {
-      let source = "";
-      let target = "";
-      let color = "";
-
-      if (t.type === "Alliance → Alliance") {
-        source = `A-${t.alliance_id_source}`;
-        target = `A-${t.alliance_id_target}`;
-        color = 'green';
-      } else if (t.type === "Alliance → Kingdom") {
-        source = `A-${t.alliance_id_source}`;
-        target = `K-${t.kingdom_id_target}`;
-        color = 'blue';
-      } else if (t.type === "Kingdom → Kingdom") {
-        source = `K-${t.kingdom_id_source}`;
-        target = `K-${t.kingdom_id_target}`;
-        color = 'orange';
-      }
-
-      edges.add({
-        from: source,
-        to: target,
-        color: { color: color },
-        label: t.treaty_type || "Treaty",
-        arrows: "to"
-      });
-    });
-
-    // ✅ Draw Graph
-    const container = document.getElementById('network');
-    const data = { nodes, edges };
-    const options = {
-      physics: {
-        stabilization: false,
-        barnesHut: {
-          gravitationalConstant: -30000,
-          springLength: 150
-        }
-      },
-      edges: {
-        smooth: true
-      },
-      nodes: {
-        font: { size: 16 }
-      }
-    };
-
-    network = new Network(container, data, options);
-
-    showToast("Treaty Web loaded!");
-
+    const headers = session ? { 'X-User-ID': session.user.id } : {};
+    const res = await fetch('/api/alliances/treaty-network', { headers });
+    const data = await res.json();
+    rawData.nodes = data.nodes || [];
+    rawData.links = data.edges || [];
+    renderGraph();
+    showToast('Treaty network loaded');
   } catch (err) {
-    console.error("❌ Error loading Treaty Web:", err);
-    showToast("Failed to load Treaty Web.");
+    console.error('Failed to load treaty network', err);
+    showToast('Failed to load network');
   }
 }
 
-// ✅ Filter Treaty Web by Timeline
-function filterTreatyWeb() {
-  if (!network || !allTreaties.length) return;
+function renderGraph() {
+  const container = document.getElementById('network');
+  container.innerHTML = '';
+  const width = container.clientWidth;
+  const height = container.clientHeight;
 
-  const timelineVal = document.getElementById('timelineRange').value;
-  const days = parseInt(timelineVal);
+  svg = d3.select(container)
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
 
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - days);
+  const zoomGroup = svg.append('g');
+  svg.call(d3.zoom().on('zoom', e => zoomGroup.attr('transform', e.transform)));
 
-  const edges = network.body.data.edges;
+  linkGroup = zoomGroup.append('g').attr('stroke-opacity', 0.6);
+  nodeGroup = zoomGroup.append('g');
 
-  edges.forEach(edge => {
-    const treaty = allTreaties.find(t => {
-      let source = "";
-      let target = "";
+  simulation = d3.forceSimulation(rawData.nodes)
+    .force('link', d3.forceLink(rawData.links).id(d => d.alliance_id).distance(120))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(width / 2, height / 2));
 
-      if (t.type === "Alliance → Alliance") {
-        source = `A-${t.alliance_id_source}`;
-        target = `A-${t.alliance_id_target}`;
-      } else if (t.type === "Alliance → Kingdom") {
-        source = `A-${t.alliance_id_source}`;
-        target = `K-${t.kingdom_id_target}`;
-      } else if (t.type === "Kingdom → Kingdom") {
-        source = `K-${t.kingdom_id_source}`;
-        target = `K-${t.kingdom_id_target}`;
-      }
+  updateGraph();
+}
 
-      return edge.from === source && edge.to === target;
+function updateGraph() {
+  const active = Array.from(document.querySelectorAll('.filter-btn.active'))
+    .map(b => b.dataset.type);
+  const links = rawData.links.filter(l => active.includes(l.type));
+
+  const linkSel = linkGroup.selectAll('line').data(links, d => d.treaty_id);
+  linkSel.exit().remove();
+  const linkEnter = linkSel.enter().append('line')
+    .attr('stroke-width', 2)
+    .attr('stroke', d => typeColor[d.type] || '#999')
+    .attr('class', d => d.type === 'war' && d.status === 'active' ? 'war-active' : null);
+  linkEnter.append('title').text(d => `${d.type} - ${d.date_signed || 'pending'}`);
+  linkSel.merge(linkEnter);
+
+  const nodeSel = nodeGroup.selectAll('g').data(rawData.nodes, d => d.alliance_id);
+  nodeSel.exit().remove();
+  const nodeEnter = nodeSel.enter().append('g')
+    .on('click', (e, d) => {
+      window.location.href = `alliance_home.html?aid=${d.alliance_id}`;
     });
 
-    if (treaty) {
-      const createdAt = new Date(treaty.created_at);
-      if (createdAt >= cutoffDate) {
-        edges.update({ id: edge.id, hidden: false });
-      } else {
-        edges.update({ id: edge.id, hidden: true });
-      }
-    }
+  nodeEnter.append('circle')
+    .attr('r', 22)
+    .attr('fill', '#ccc');
+
+  nodeEnter.append('image')
+    .attr('href', d => d.emblem_url)
+    .attr('width', 40)
+    .attr('height', 40)
+    .attr('x', -20)
+    .attr('y', -20)
+    .attr('clip-path', 'circle(20px at 20px 20px)');
+
+  nodeEnter.append('title').text(d => `${d.name} (Lv ${d.level})`);
+  nodeSel.merge(nodeEnter);
+
+  simulation.nodes(rawData.nodes).on('tick', ticked);
+  simulation.force('link').links(links);
+  simulation.alpha(1).restart();
+}
+
+function ticked() {
+  linkGroup.selectAll('line')
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+
+  nodeGroup.selectAll('g')
+    .attr('transform', d => `translate(${d.x},${d.y})`);
+}
+
+function initControls() {
+  document.getElementById('refreshGraph').addEventListener('click', loadNetwork);
+  document.getElementById('toggleLegend').addEventListener('click', toggleLegend);
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      updateGraph();
+    });
   });
 }
 
-function subscribeToTreatyChanges() {
-  realtimeSub = supabase
-    .channel('treaty_web_updates')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, () => {
-      loadTreatyWeb();
-    })
-    .subscribe();
+function toggleLegend() {
+  let legend = document.getElementById('legend-panel');
+  if (!legend) {
+    legend = document.createElement('div');
+    legend.id = 'legend-panel';
+    legend.className = 'legend-panel';
+    legend.innerHTML = `
+      <h4>Treaty Types</h4>
+      <ul>
+        <li><span style="color: blue;">MDP</span></li>
+        <li><span style="color: green;">Protection</span></li>
+        <li><span style="color: yellow;">NAP</span></li>
+        <li><span style="color: red;">War</span></li>
+      </ul>`;
+    document.body.appendChild(legend);
+  }
+  legend.classList.toggle('hidden');
 }
 
-// ✅ Helper: Toast
 function showToast(msg) {
   let toastEl = document.getElementById('toast');
-
-  // Inject toast if not present
   if (!toastEl) {
-    toastEl = document.createElement("div");
-    toastEl.id = "toast";
-    toastEl.className = "toast-notification";
+    toastEl = document.createElement('div');
+    toastEl.id = 'toast';
+    toastEl.className = 'toast-notification';
     document.body.appendChild(toastEl);
   }
-
   toastEl.textContent = msg;
-  toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 3000);
 }
+
