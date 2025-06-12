@@ -337,6 +337,7 @@
 - migrations/2025_06_24_expand_users_table.sql
 - migrations/2025_06_25_expand_wars_table.sql
 - migrations/2025_06_26_add_wars_tactical_table.sql
+- migrations/2025_06_29_seed_training_catalog.sql
 
 ## Markdown Files
 - FILE_LIST.md
