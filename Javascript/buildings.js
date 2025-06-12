@@ -9,7 +9,7 @@ import { supabase } from './supabaseClient.js';
 
 let currentVillage = null;
 let timerHandle = null;
-let modal, modalName, modalDesc, modalCost;
+let modal, modalName, modalDesc, modalCost, modalProduceCost, modalEfficiency;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   modalName = document.getElementById('modalBuildingName');
   modalDesc = document.getElementById('modalBuildingDesc');
   modalCost = document.getElementById('modalBuildCost');
+  modalProduceCost = document.getElementById('modalProduceCost');
+  modalEfficiency = document.getElementById('modalEfficiency');
   document.getElementById('buildingModalClose').addEventListener('click', () => {
     modal.classList.add('hidden');
   });
@@ -204,6 +206,13 @@ async function showBuildingInfo(bid) {
     modalName.textContent = building.building_name;
     modalDesc.textContent = building.description || '';
     modalCost.textContent = JSON.stringify(building.build_cost, null, 2);
+    modalProduceCost.textContent = JSON.stringify(
+      building.cost_to_produce || {},
+      null,
+      2
+    );
+    modalEfficiency.textContent =
+      'Efficiency: ' + (building.efficiency_multiplier || 1);
     modal.classList.remove('hidden');
   } catch (err) {
     console.error('Failed to load building info', err);
@@ -219,3 +228,4 @@ function escapeHTML(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+

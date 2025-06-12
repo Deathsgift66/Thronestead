@@ -45,7 +45,8 @@ def get_village_buildings(
                 """
                 SELECT bc.building_id, bc.building_name, bc.category, bc.description,
                        bc.production_type, bc.build_cost, bc.modifiers,
-                       bc.build_time_seconds,
+                       bc.build_time_seconds, bc.cost_to_produce,
+                       bc.efficiency_multiplier,
                        COALESCE(vb.level, 0) AS level,
                        vb.is_under_construction, vb.construction_started_at,
                        vb.construction_ends_at
