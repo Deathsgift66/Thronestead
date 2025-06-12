@@ -218,8 +218,18 @@ async function loadRegions() {
   let regions = [];
   try {
     const res = await fetch('/api/kingdom/regions');
-    if (!res.ok) throw new Error('fetch failed');
-    const data = await res.json();
+    if (!res.ok) throw new Error('Network response not ok');
+
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('Invalid JSON from regions:', text);
+      regionEl.innerHTML = '<option value="">Failed to load</option>';
+      return;
+    }
+
     regions = data.regions || [];
     regions = regions.map(r => {
       if (typeof r.resource_bonus === 'string') {
@@ -276,16 +286,19 @@ async function loadAnnouncements() {
   if (!container) return;
   try {
     const res = await fetch('/api/login/announcements');
+    if (!res.ok) throw new Error('Network response not ok');
     const text = await res.text();
+    let data;
     try {
-      const data = JSON.parse(text);
-      const items = data.announcements || [];
-      container.innerHTML = items
-        .map(a => `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`)
-        .join('');
+      data = JSON.parse(text);
     } catch (e) {
       console.error('Invalid JSON from announcements:', text);
+      return;
     }
+    const items = data.announcements || [];
+    container.innerHTML = items
+      .map(a => `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`)
+      .join('');
   } catch (err) {
     console.error('Failed to load announcements', err);
   }
@@ -296,7 +309,18 @@ async function loadVIPStatus() {
     const res = await fetch('/api/kingdom/vip_status', {
       headers: { 'X-User-ID': currentUser.id }
     });
-    const data = await res.json();
+    if (!res.ok) throw new Error('Network response not ok');
+
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      console.error('Invalid JSON from vip_status:', text);
+      vipLevel = 0;
+      return;
+    }
+
     vipLevel = data.vip_level || 0;
   } catch (e) {
     vipLevel = 0;
