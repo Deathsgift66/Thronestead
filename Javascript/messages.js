@@ -9,6 +9,7 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentSession;
+let allMessages = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Validate session
@@ -23,6 +24,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (document.getElementById("message-list")) {
     await loadInbox(session);
     subscribeToNewMessages(session.user.id);
+    const filter = document.getElementById('category-filter');
+    if (filter) filter.addEventListener('change', () => filterMessages(filter.value));
+    const markBtn = document.getElementById('mark-all-read');
+    if (markBtn) markBtn.addEventListener('click', async () => {
+      if (!confirm('Mark all messages read?')) return;
+      await markAllRead();
+      await loadInbox(session);
+    });
   } else if (document.getElementById("message-container")) {
     const urlParams = new URLSearchParams(window.location.search);
     const messageId = urlParams.get("message_id");
@@ -55,35 +64,37 @@ async function loadInbox(session) {
     });
     if (!res.ok) throw new Error('Failed');
     const { messages } = await res.json();
-
-    container.innerHTML = "";
-    document.getElementById('message-count').textContent = `${messages.length} Messages`;
-    if (!messages || messages.length === 0) {
-      container.innerHTML = "<p>No messages found.</p>";
-      return;
-    }
-
-    messages.forEach(msg => {
-      const card = document.createElement("div");
-      card.classList.add("message-card");
-      if (!msg.is_read) card.classList.add('unread');
-
-      card.innerHTML = `
-        <a href="message.html?message_id=${msg.message_id}">
-          <div class="message-meta">
-            <span>From: ${escapeHTML(msg.sender || "Unknown")}</span>
-            <span>${formatDate(msg.sent_at)}</span>
-          </div>
-          <div class="message-subject">${escapeHTML((msg.subject || msg.message).substring(0, 50))}</div>
-        </a>
-      `;
-
-      container.appendChild(card);
-    });
+    allMessages = messages || [];
+    renderMessages(allMessages);
   } catch (err) {
     console.error("❌ Error loading inbox:", err);
     container.innerHTML = "<p>Failed to load messages.</p>";
   }
+}
+
+function renderMessages(list) {
+  const container = document.getElementById('message-list');
+  container.innerHTML = '';
+  document.getElementById('message-count').textContent = `${list.length} Messages`;
+  if (!list || list.length === 0) {
+    container.innerHTML = '<p>No messages found.</p>';
+    return;
+  }
+  list.forEach(msg => {
+    const card = document.createElement('div');
+    card.classList.add('message-card');
+    if (!msg.is_read) card.classList.add('unread');
+    card.innerHTML = `
+      <a href="message.html?message_id=${msg.message_id}">
+        <div class="message-meta">
+          <span>From: ${escapeHTML(msg.sender || 'Unknown')}</span>
+          <span>${formatDate(msg.sent_at)}</span>
+        </div>
+        <div class="message-subject">${escapeHTML((msg.subject || msg.message).substring(0, 50))}</div>
+      </a>`;
+    bindSwipe(card, msg.message_id);
+    container.appendChild(card);
+  });
 }
 
 function subscribeToNewMessages(uid) {
@@ -125,7 +136,7 @@ async function loadMessageView(messageId, session) {
       </div>
       <h3>${escapeHTML(data.subject || '')}</h3>
       <div class="message-body">
-        ${escapeHTML(data.message)}
+        ${formatIcons(marked.parse(data.message || ''))}
       </div>
       <div class="message-actions">
         <a href="compose.html?reply_to=${data.user_id}" class="action-btn">Reply</a>
@@ -188,6 +199,7 @@ function setupCompose(session) {
     const recipient = document.getElementById("recipient").value.trim();
     const subject = document.getElementById("subject").value.trim();
     const messageContent = document.getElementById("message-content").value.trim();
+    const category = document.getElementById("category")?.value || "player";
 
     if (!recipient || !messageContent) {
       alert("Please enter both recipient and message.");
@@ -206,7 +218,8 @@ function setupCompose(session) {
           recipient: recipient,
           subject: subject || null,
           content: messageContent,
-          sender_id: session.user.id
+          sender_id: session.user.id,
+          category: category
         })
       });
 
@@ -243,6 +256,12 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
+function formatIcons(html) {
+  return html
+    .replace(/:sword:/g, '<img src="Assets/icon-sword.svg" class="icon" alt="sword">')
+    .replace(/:gold:/g, '<img src="Assets/icon-bell.svg" class="icon" alt="gold">');
+}
+
 // ✅ Real-time subscription
 function subscribeToMessages(userId, callback) {
   supabase
@@ -253,4 +272,59 @@ function subscribeToMessages(userId, callback) {
       payload => callback(payload)
     )
     .subscribe();
+}
+
+function filterMessages(category) {
+  if (category === 'all') {
+    renderMessages(allMessages);
+  } else {
+    renderMessages(allMessages.filter(m => m.category === category));
+  }
+}
+
+async function markAllRead() {
+  try {
+    const res = await fetch('/api/messages/mark_all_read', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      }
+    });
+    if (!res.ok) throw new Error('Failed');
+    alert('All messages marked read');
+  } catch (err) {
+    console.error('❌ Error marking all read:', err);
+    alert('Failed to mark all read');
+  }
+}
+
+function bindSwipe(card, messageId) {
+  let startX;
+  card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+  card.addEventListener('touchmove', e => {
+    if (!startX) return;
+    const diff = e.touches[0].clientX - startX;
+    if (diff < -60) {
+      card.classList.add('swipe-delete');
+    }
+  });
+  card.addEventListener('touchend', async () => {
+    if (card.classList.contains('swipe-delete')) {
+      if (confirm('Delete this message?')) {
+        await fetch('/api/messages/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`,
+            'X-User-ID': currentSession.user.id
+          },
+          body: JSON.stringify({ message_id: messageId })
+        });
+        await loadInbox(currentSession);
+      }
+    }
+    card.classList.remove('swipe-delete');
+    startX = null;
+  });
 }

@@ -118,3 +118,32 @@ body {
   width: 100%;
 }
 
+.message-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.swipe-delete {
+  transform: translateX(-60px);
+  transition: transform 0.2s ease;
+}
+.swipe-delete::after {
+  content: 'Delete';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--alert);
+  color: white;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.message-body img.icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+

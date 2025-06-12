@@ -92,6 +92,7 @@ export async function submitMessage(e) {
   e.preventDefault();
   const recipient_id = document.getElementById('msg-recipient').value.trim();
   const message = document.getElementById('msg-content').value.trim();
+  const category = document.getElementById('msg-category').value;
   if (!recipient_id || !message) {
     alert('Recipient and message required');
     return;
@@ -100,7 +101,7 @@ export async function submitMessage(e) {
     const res = await fetch('/api/compose/send-message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipient_id, message })
+      body: JSON.stringify({ recipient_id, message, category })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'failed');

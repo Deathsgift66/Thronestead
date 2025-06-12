@@ -67,6 +67,7 @@ class PlayerMessage(Base):
     )
     subject = Column(Text)
     message = Column(Text)
+    category = Column(String, default="player")
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
     deleted_by_sender = Column(Boolean, default=False)

@@ -29,6 +29,7 @@ Author: Deathsgift66
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/messages.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script defer type="module" src="Javascript/messages.js"></script>
 
   <!-- Global Assets -->
@@ -63,6 +64,18 @@ Author: Deathsgift66
   <section class="alliance-members-container">
     <h2>Inbox</h2>
     <p>View your messages and communicate with other players.</p>
+
+    <div class="message-toolbar">
+      <select id="category-filter">
+        <option value="all">All</option>
+        <option value="player">Player</option>
+        <option value="alliance">Alliance</option>
+        <option value="trade">Trade</option>
+        <option value="battle">Battle</option>
+        <option value="system">System</option>
+      </select>
+      <button class="royal-button" id="mark-all-read">Mark All Read</button>
+    </div>
 
     <div id="message-count" class="message-count"></div>
 
