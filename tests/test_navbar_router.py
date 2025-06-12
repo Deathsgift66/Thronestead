@@ -54,3 +54,43 @@ def test_navbar_profile_missing_user():
         assert e.status_code == 404
     else:
         assert False
+
+
+class DummyQuery:
+    def __init__(self, count):
+        self._count = count
+
+    def filter(self, *args, **kwargs):
+        return self
+
+    def count(self):
+        return self._count
+
+
+class DummySession:
+    def __init__(self, notif_count, trade_count):
+        self._notif = DummyQuery(notif_count)
+        self._trade = DummyQuery(trade_count)
+
+    def query(self, model):
+        name = getattr(model, "__name__", "")
+        if name == "Notification":
+            return self._notif
+        if name == "TradeLog":
+            return self._trade
+        return DummyQuery(0)
+
+
+def test_navbar_counters_returns_counts():
+    tables = {
+        "player_messages": [
+            {"message_id": 1, "recipient_id": "u1", "is_read": False},
+            {"message_id": 2, "recipient_id": "u1", "is_read": False},
+        ]
+    }
+    navbar.get_supabase_client = lambda: DummyClient(tables)
+    db = DummySession(3, 5)
+    result = navbar.navbar_counters(user_id="u1", db=db)
+    assert result["unread_messages"] == 2
+    assert result["unread_notifications"] == 3
+    assert result["recent_trades"] == 5
