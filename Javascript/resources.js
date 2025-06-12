@@ -6,6 +6,7 @@ Author: Deathsgift66
 */
 
 import { supabase } from './supabaseClient.js';
+import { fetchJson } from './fetchJson.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ authGuard.js protects this page → no duplicate session check
@@ -34,15 +35,14 @@ async function loadResourcesNexus() {
 
     const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
 
-    const res = await fetch('/api/resources', { headers });
-    if (!res.ok) throw new Error('Failed');
-    const { resources: resourcesData } = await res.json();
+    const { resources: resourcesData } = await fetchJson('/api/resources', { headers });
 
     let vaultData = null;
-    const vres = await fetch('/api/vault/resources', { headers });
-    if (vres.ok) {
-      const { totals } = await vres.json();
+    try {
+      const { totals } = await fetchJson('/api/vault/resources', { headers });
       vaultData = totals;
+    } catch {
+      vaultData = null;
     }
 
     // ✅ Render resource summary
