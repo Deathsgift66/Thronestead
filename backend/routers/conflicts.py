@@ -95,3 +95,38 @@ def get_war_details(
         "attacker_score": score.get("attacker_score"),
         "defender_score": score.get("defender_score"),
     }
+
+
+@router.get("/overview")
+def list_conflict_overview(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Return a summary list of all wars with tactical details."""
+    rows = db.execute(
+        text(
+            """
+            SELECT wt.war_id, w.war_type, wt.phase, wt.battle_tick, wt.castle_hp,
+                   wt.started_at,
+                   k1.kingdom_name AS attacker_kingdom,
+                   k2.kingdom_name AS defender_kingdom,
+                   a1.name AS attacker_alliance,
+                   a2.name AS defender_alliance,
+                   ws.victor,
+                   ws.attacker_score,
+                   ws.defender_score,
+                   br.winner_side
+            FROM wars_tactical wt
+            JOIN wars w ON wt.war_id = w.war_id
+            LEFT JOIN war_scores ws ON ws.war_id = wt.war_id
+            LEFT JOIN battle_resolution_logs br ON br.war_id = wt.war_id
+            LEFT JOIN kingdoms k1 ON wt.attacker_kingdom_id = k1.kingdom_id
+            LEFT JOIN kingdoms k2 ON wt.defender_kingdom_id = k2.kingdom_id
+            LEFT JOIN alliances a1 ON k1.alliance_id = a1.alliance_id
+            LEFT JOIN alliances a2 ON k2.alliance_id = a2.alliance_id
+            ORDER BY wt.started_at DESC
+            """
+        )
+    ).fetchall()
+
+    return {"wars": [dict(r._mapping) for r in rows]}

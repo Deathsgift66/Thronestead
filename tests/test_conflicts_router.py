@@ -39,6 +39,24 @@ class DummyClient:
         return DummyTable(self.tables.get(name, []))
 
 
+class DummyResult:
+    def __init__(self, rows=None):
+        self._rows = rows or []
+
+    def fetchall(self):
+        return self._rows
+
+
+class DummyDB:
+    def __init__(self):
+        self.queries = []
+        self.rows = []
+
+    def execute(self, query, params=None):
+        self.queries.append((str(query), params))
+        return DummyResult(self.rows)
+
+
 def setup_db():
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
@@ -91,3 +109,29 @@ def test_get_war_details_denies_unrelated():
         assert e.status_code == 403
     else:
         assert False
+
+
+def test_list_conflict_overview_executes_query():
+    db = DummyDB()
+    db.rows = [
+        (
+            1,
+            "duel",
+            "live",
+            3,
+            900,
+            "2025-01-01",
+            "A",
+            "B",
+            "AllA",
+            "AllB",
+            None,
+            5,
+            4,
+            None,
+        )
+    ]
+    result = conflicts.list_conflict_overview(db=db, user_id="u1")
+    assert result["wars"][0]["war_id"] == 1
+    joined = " ".join(db.queries[0][0].lower().split())
+    assert "from wars_tactical" in joined

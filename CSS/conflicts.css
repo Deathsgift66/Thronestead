@@ -50,7 +50,7 @@ body {
 }
 
 /* Core Panel */
-.alliance-members-container {
+.conflicts-container {
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(5px);
   border-radius: 12px;
@@ -60,97 +60,124 @@ body {
   width: 100%;
   margin-bottom: 2rem;
 }
-
-.alliance-members-container h2 {
+.conflicts-container h2 {
   font-family: 'Cinzel', serif;
   color: var(--gold);
   text-shadow: 1px 1px 3px black;
   margin-bottom: 1rem;
 }
-
-.alliance-members-container p {
+.conflicts-container p {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
   color: #d8caa5;
 }
 
-/* Conflict Tabs */
-.conflict-tabs {
+/* Controls */
+.conflict-controls {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
-.conflict-tabs .tab {
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-btn {
   background: var(--accent);
   color: white;
-  font-family: 'Cinzel', serif;
-  font-weight: bold;
-  padding: 0.5rem 1.25rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   border: 1px solid var(--gold);
-  margin: 0 0.5rem;
-  cursor: pointer;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-.conflict-tabs .tab:hover {
-  background: var(--gold);
-  color: #1a1a1a;
-}
-
-.conflict-tabs .tab.active {
-  background: var(--gold);
-  color: #1a1a1a;
-}
-
-/* Tab Panels */
-.tab-panel {
-  display: none;
-  background: var(--stone-panel);
-  padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px var(--shadow);
-}
-
-.tab-panel.active {
-  display: block;
-}
-
-
-/* War Card */
-.war-card {
-  background: var(--stone-panel);
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px var(--shadow);
-  margin-bottom: 1rem;
-}
-
-.war-card h4 {
   font-family: 'Cinzel', serif;
-  color: var(--gold);
-  margin: 0 0 0.5rem 0;
-}
-
-.war-card p {
-  margin: 0.25rem 0;
-}
-
-.war-card button {
-  margin-top: 0.5rem;
-  background: var(--accent);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+#conflictSearch {
+  flex: 1;
+  max-width: 250px;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
   border: 1px solid var(--gold);
-  font-family: 'Cinzel', serif;
+  background: var(--stone-panel);
+  color: var(--parchment);
+  font-family: var(--font-body);
 }
 
-.war-card button:hover {
+/* Table */
+.table-wrapper {
+  overflow-x: auto;
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  background: var(--stone-panel);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.conflict-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  color: var(--parchment);
+}
+
+.conflict-table th,
+.conflict-table td {
+  padding: 0.6rem;
+  text-align: center;
+  border: 1px solid var(--gold);
+}
+
+.conflict-table th {
   background: var(--gold);
   color: #1a1a1a;
+  font-family: 'Cinzel', serif;
+  cursor: pointer;
+}
+
+.sortable::after {
+  content: '\25BE';
+  padding-left: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.status-alert {
+  color: gray;
+}
+
+.status-planning {
+  color: var(--warning);
+}
+
+.status-live {
+  color: var(--low-morale);
+}
+
+.status-resolved {
+  color: var(--success);
+}
+
+.progress-bar-bg {
+  background-color: var(--stone-panel);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 0.6rem;
+}
+
+.progress-bar-fill {
+  background-color: var(--gold);
+  height: 100%;
+  width: 0;
+  transition: width 0.3s ease;
 }
 
 /* Modal */
@@ -173,23 +200,10 @@ body {
   display: none;
 }
 
-/* Live Feed */
-.live-feed {
-  background: var(--dark-panel);
-  color: var(--parchment);
-  padding: 1rem;
-  border-radius: 8px;
-  width: 100%;
-  box-shadow: 0 2px 6px var(--shadow);
-  margin-bottom: 2rem;
-}
-
 @media (max-width: 768px) {
-  .conflict-tabs {
+  .conflict-controls {
     flex-direction: column;
-  }
-  .conflict-tabs .tab {
-    margin: 0.25rem 0;
+    align-items: stretch;
   }
 }
 

@@ -65,26 +65,43 @@ Author: Deathsgift66
 <main class="main-centered-container">
 
   <!-- Conflicts Hub -->
-  <section class="alliance-members-container">
+  <section class="conflicts-container">
     <h2>Conflicts</h2>
     <p>Track current and past wars between kingdoms and alliances.</p>
 
-    <div class="conflict-tabs">
-      <button class="tab active" data-tab="kingdomTab">Kingdom Wars</button>
-      <button class="tab" data-tab="allianceTab">Alliance Wars</button>
+    <div class="conflict-controls">
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="active">Active</button>
+        <button class="filter-btn" data-filter="concluded">Concluded</button>
+        <button class="filter-btn" data-filter="planning">Planning</button>
+        <button class="filter-btn" data-filter="resolution">Resolution</button>
+      </div>
+      <input type="text" id="conflictSearch" placeholder="Search by alliance or kingdom" aria-label="Search Conflicts" />
     </div>
 
-    <div id="kingdomTab" class="tab-panel active">
-      <div id="kingdomWarsList"></div>
+    <div class="table-wrapper">
+      <table id="conflictTable" class="conflict-table">
+        <thead>
+          <tr>
+            <th scope="col" data-field="war_id">War ID</th>
+            <th scope="col" data-field="attacker_alliance" class="sortable">Alliance A</th>
+            <th scope="col" data-field="defender_alliance" class="sortable">Alliance B</th>
+            <th scope="col" data-field="war_type" class="sortable">Type</th>
+            <th scope="col" data-field="started_at" class="sortable">Start Date</th>
+            <th scope="col" data-field="phase" class="sortable">Phase</th>
+            <th scope="col">Victory</th>
+            <th scope="col">Progress</th>
+            <th scope="col">Castle HP</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="conflictRows">
+          <tr><td colspan="10">Loading conflicts...</td></tr>
+        </tbody>
+      </table>
     </div>
-
-    <div id="allianceTab" class="tab-panel">
-      <div id="allianceWarsList"></div>
-    </div>
-
   </section>
-
-  <section id="liveFeed" class="live-feed"></section>
 
   <div id="war-detail-modal" class="modal hidden"></div>
 
