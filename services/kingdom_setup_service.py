@@ -12,15 +12,10 @@ START_RESOURCES = {
     "wood": 100,
     "stone": 100,
     "food": 1000,
+    "gold": 200,
 }
 
-START_BUILDINGS = [
-    "Town Center",
-    "Granary",
-    "Barracks",
-    "Farm",
-    "Warehouse",
-]
+START_BUILDINGS = []
 
 # Default noble created for every new kingdom
 DEFAULT_NOBLE_NAME = "Founding Noble"
@@ -89,8 +84,8 @@ def create_kingdom_transaction(
         db.execute(
             text(
                 """
-                INSERT INTO kingdom_resources (kingdom_id, wood, stone, food)
-                VALUES (:kid, :wood, :stone, :food)
+                INSERT INTO kingdom_resources (kingdom_id, wood, stone, food, gold)
+                VALUES (:kid, :wood, :stone, :food, :gold)
                 """
             ),
             {"kid": kingdom_id, **START_RESOURCES},
