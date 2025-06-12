@@ -18,14 +18,13 @@ CREATE TABLE public.alliance_achievement_catalogue (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT alliance_achievement_catalogue_pkey PRIMARY KEY (achievement_code)
 );
-
 CREATE TABLE public.alliance_achievements (
   alliance_id integer,
   achievement_code text,
   awarded_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT alliance_achievements_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
+  CONSTRAINT alliance_achievements_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT alliance_achievements_achievement_code_fkey FOREIGN KEY (achievement_code) REFERENCES public.alliance_achievement_catalogue(achievement_code)
 );
-
 CREATE TABLE public.alliance_activity_log (
   log_id integer NOT NULL DEFAULT nextval('alliance_activity_log_log_id_seq'::regclass),
   alliance_id integer,
@@ -37,7 +36,17 @@ CREATE TABLE public.alliance_activity_log (
   CONSTRAINT alliance_activity_log_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_activity_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
-
+CREATE TABLE public.alliance_blacklist (
+  alliance_id integer NOT NULL,
+  target_alliance_id integer NOT NULL,
+  reason text,
+  added_by uuid,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT alliance_blacklist_pkey PRIMARY KEY (alliance_id, target_alliance_id),
+  CONSTRAINT alliance_blacklist_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT alliance_blacklist_target_alliance_id_fkey FOREIGN KEY (target_alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT alliance_blacklist_added_by_fkey FOREIGN KEY (added_by) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.alliance_grants (
   grant_id integer NOT NULL DEFAULT nextval('alliance_grants_grant_id_seq'::regclass),
   alliance_id integer NOT NULL,
@@ -50,7 +59,6 @@ CREATE TABLE public.alliance_grants (
   CONSTRAINT alliance_grants_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_grants_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.alliance_loans (
   loan_id integer NOT NULL DEFAULT nextval('alliance_loans_loan_id_seq'::regclass),
   alliance_id integer NOT NULL,
@@ -70,7 +78,6 @@ CREATE TABLE public.alliance_loans (
   CONSTRAINT alliance_loans_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_loans_borrower_user_id_fkey FOREIGN KEY (borrower_user_id) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.alliance_members (
   alliance_id integer NOT NULL,
   user_id uuid NOT NULL,
@@ -84,7 +91,6 @@ CREATE TABLE public.alliance_members (
   CONSTRAINT alliance_members_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_members_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.alliance_roles(role_id)
 );
-
 CREATE TABLE public.alliance_policies (
   alliance_id integer NOT NULL,
   policy_id integer NOT NULL,
@@ -94,7 +100,6 @@ CREATE TABLE public.alliance_policies (
   CONSTRAINT alliance_policies_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_policies_policy_id_fkey FOREIGN KEY (policy_id) REFERENCES public.policies_laws_catalogue(id)
 );
-
 CREATE TABLE public.alliance_roles (
   role_id integer NOT NULL DEFAULT nextval('alliance_roles_role_id_seq'::regclass),
   alliance_id integer,
@@ -105,7 +110,17 @@ CREATE TABLE public.alliance_roles (
   CONSTRAINT alliance_roles_pkey PRIMARY KEY (role_id),
   CONSTRAINT alliance_roles_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
-
+CREATE TABLE public.alliance_surrenders (
+  surrender_id integer NOT NULL DEFAULT nextval('alliance_surrenders_surrender_id_seq'::regclass),
+  alliance_war_id integer,
+  surrendering_alliance_id integer,
+  accepted_by_alliance_id integer,
+  surrender_terms jsonb,
+  status text DEFAULT 'pending'::text,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT alliance_surrenders_pkey PRIMARY KEY (surrender_id),
+  CONSTRAINT alliance_surrenders_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
+);
 CREATE TABLE public.alliance_tax_collections (
   collection_id bigint NOT NULL DEFAULT nextval('alliance_tax_collections_collection_id_seq'::regclass),
   alliance_id integer NOT NULL,
@@ -119,7 +134,6 @@ CREATE TABLE public.alliance_tax_collections (
   CONSTRAINT alliance_tax_collections_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_tax_collections_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.alliance_tax_policies (
   alliance_id integer NOT NULL,
   resource_type text NOT NULL,
@@ -131,7 +145,6 @@ CREATE TABLE public.alliance_tax_policies (
   CONSTRAINT alliance_tax_policies_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_tax_policies_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.alliance_treaties (
   treaty_id integer NOT NULL DEFAULT nextval('alliance_treaties_treaty_id_seq'::regclass),
   alliance_id integer,
@@ -141,9 +154,9 @@ CREATE TABLE public.alliance_treaties (
   signed_at timestamp with time zone DEFAULT now(),
   CONSTRAINT alliance_treaties_pkey PRIMARY KEY (treaty_id),
   CONSTRAINT alliance_treaties_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
-  CONSTRAINT alliance_treaties_partner_alliance_id_fkey FOREIGN KEY (partner_alliance_id) REFERENCES public.alliances(alliance_id)
+  CONSTRAINT alliance_treaties_partner_alliance_id_fkey FOREIGN KEY (partner_alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT alliance_treaties_treaty_type_fkey FOREIGN KEY (treaty_type) REFERENCES public.treaty_type_catalogue(treaty_type)
 );
-
 CREATE TABLE public.alliance_vault (
   alliance_id integer NOT NULL,
   wood bigint DEFAULT 0,
@@ -179,7 +192,6 @@ CREATE TABLE public.alliance_vault (
   CONSTRAINT alliance_vault_pkey PRIMARY KEY (alliance_id),
   CONSTRAINT alliance_vault_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
-
 CREATE TABLE public.alliance_vault_transaction_log (
   transaction_id bigint NOT NULL DEFAULT nextval('alliance_vault_transaction_log_transaction_id_seq'::regclass),
   alliance_id integer NOT NULL,
@@ -193,7 +205,25 @@ CREATE TABLE public.alliance_vault_transaction_log (
   CONSTRAINT alliance_vault_transaction_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id),
   CONSTRAINT alliance_vault_transaction_log_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
-
+CREATE TABLE public.alliance_vote_participants (
+  vote_id integer,
+  user_id uuid,
+  vote_choice text,
+  voted_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT alliance_vote_participants_vote_id_fkey FOREIGN KEY (vote_id) REFERENCES public.alliance_votes(vote_id)
+);
+CREATE TABLE public.alliance_votes (
+  vote_id integer NOT NULL DEFAULT nextval('alliance_votes_vote_id_seq'::regclass),
+  alliance_id integer,
+  proposal_type text,
+  proposal_details jsonb,
+  created_by uuid,
+  created_at timestamp without time zone DEFAULT now(),
+  ends_at timestamp without time zone,
+  status text DEFAULT 'active'::text,
+  CONSTRAINT alliance_votes_pkey PRIMARY KEY (vote_id),
+  CONSTRAINT alliance_votes_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
+);
 CREATE TABLE public.alliance_war_combat_logs (
   combat_id integer NOT NULL DEFAULT nextval('alliance_war_combat_logs_combat_id_seq'::regclass),
   alliance_war_id integer,
@@ -210,7 +240,6 @@ CREATE TABLE public.alliance_war_combat_logs (
   CONSTRAINT alliance_war_combat_logs_pkey PRIMARY KEY (combat_id),
   CONSTRAINT alliance_war_combat_logs_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
 );
-
 CREATE TABLE public.alliance_war_participants (
   alliance_war_id integer NOT NULL,
   kingdom_id integer NOT NULL,
@@ -219,7 +248,6 @@ CREATE TABLE public.alliance_war_participants (
   CONSTRAINT alliance_war_participants_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id),
   CONSTRAINT alliance_war_participants_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.alliance_war_preplans (
   preplan_id integer NOT NULL DEFAULT nextval('alliance_war_preplans_preplan_id_seq'::regclass),
   alliance_war_id integer,
@@ -230,23 +258,15 @@ CREATE TABLE public.alliance_war_preplans (
   CONSTRAINT alliance_war_preplans_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id),
   CONSTRAINT alliance_war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.alliance_war_scores (
   alliance_war_id integer NOT NULL,
   attacker_score integer DEFAULT 0,
   defender_score integer DEFAULT 0,
-  attacker_kills integer DEFAULT 0,
-  defender_kills integer DEFAULT 0,
-  attacker_losses integer DEFAULT 0,
-  defender_losses integer DEFAULT 0,
-  resources_plundered integer DEFAULT 0,
-  battles_participated integer DEFAULT 0,
   victor text CHECK (victor = ANY (ARRAY['attacker'::text, 'defender'::text, 'draw'::text])),
   last_updated timestamp without time zone DEFAULT now(),
   CONSTRAINT alliance_war_scores_pkey PRIMARY KEY (alliance_war_id),
   CONSTRAINT alliance_war_scores_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
 );
-
 CREATE TABLE public.alliance_wars (
   alliance_war_id integer NOT NULL DEFAULT nextval('alliance_wars_alliance_war_id_seq'::regclass),
   attacker_alliance_id integer,
@@ -261,7 +281,6 @@ CREATE TABLE public.alliance_wars (
   CONSTRAINT alliance_wars_attacker_alliance_id_fkey FOREIGN KEY (attacker_alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_wars_defender_alliance_id_fkey FOREIGN KEY (defender_alliance_id) REFERENCES public.alliances(alliance_id)
 );
-
 CREATE TABLE public.alliances (
   alliance_id integer NOT NULL DEFAULT nextval('alliances_alliance_id_seq'::regclass),
   name text NOT NULL,
@@ -281,16 +300,22 @@ CREATE TABLE public.alliances (
   emblem_url text,
   CONSTRAINT alliances_pkey PRIMARY KEY (alliance_id)
 );
-
+CREATE TABLE public.archived_audit_log (
+  log_id bigint,
+  user_id uuid,
+  action text,
+  details text,
+  created_at timestamp with time zone
+);
 CREATE TABLE public.audit_log (
   log_id integer NOT NULL DEFAULT nextval('audit_log_log_id_seq'::regclass),
   user_id uuid,
   action text,
   details text,
   created_at timestamp with time zone DEFAULT now(),
+  kingdom_id integer,
   CONSTRAINT audit_log_pkey PRIMARY KEY (log_id)
 );
-
 CREATE TABLE public.battle_resolution_logs (
   resolution_id integer NOT NULL DEFAULT nextval('battle_resolution_logs_resolution_id_seq'::regclass),
   battle_type text NOT NULL CHECK (battle_type = ANY (ARRAY['kingdom'::text, 'alliance'::text])),
@@ -306,7 +331,6 @@ CREATE TABLE public.battle_resolution_logs (
   CONSTRAINT battle_resolution_logs_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
   CONSTRAINT battle_resolution_logs_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
 );
-
 CREATE TABLE public.black_market_listings (
   listing_id integer NOT NULL DEFAULT nextval('black_market_listings_listing_id_seq'::regclass),
   seller_id uuid,
@@ -316,7 +340,6 @@ CREATE TABLE public.black_market_listings (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT black_market_listings_pkey PRIMARY KEY (listing_id)
 );
-
 CREATE TABLE public.building_catalogue (
   building_id integer NOT NULL DEFAULT nextval('building_catalogue_building_id_seq'::regclass),
   building_name text NOT NULL,
@@ -340,7 +363,6 @@ CREATE TABLE public.building_catalogue (
   efficiency_multiplier numeric DEFAULT 1.0,
   CONSTRAINT building_catalogue_pkey PRIMARY KEY (building_id)
 );
-
 CREATE TABLE public.combat_logs (
   combat_id integer NOT NULL DEFAULT nextval('combat_logs_combat_id_seq'::regclass),
   war_id integer,
@@ -354,11 +376,10 @@ CREATE TABLE public.combat_logs (
   morale_shift double precision,
   notes text,
   timestamp timestamp with time zone DEFAULT now(),
+  treaty_trigger_context jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT combat_logs_pkey PRIMARY KEY (combat_id),
   CONSTRAINT combat_logs_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );
-CREATE INDEX combat_logs_war_id_idx ON public.combat_logs(war_id);
-
 CREATE TABLE public.game_settings (
   setting_key text NOT NULL,
   setting_value jsonb,
@@ -370,7 +391,6 @@ CREATE TABLE public.game_settings (
   updated_by uuid,
   CONSTRAINT game_settings_pkey PRIMARY KEY (setting_key)
 );
-
 CREATE TABLE public.global_events (
   event_id integer NOT NULL DEFAULT nextval('global_events_event_id_seq'::regclass),
   name text,
@@ -381,7 +401,6 @@ CREATE TABLE public.global_events (
   is_active boolean DEFAULT false,
   CONSTRAINT global_events_pkey PRIMARY KEY (event_id)
 );
-
 CREATE TABLE public.kingdom_achievement_catalogue (
   achievement_code text NOT NULL,
   name text NOT NULL,
@@ -394,14 +413,13 @@ CREATE TABLE public.kingdom_achievement_catalogue (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_achievement_catalogue_pkey PRIMARY KEY (achievement_code)
 );
-
 CREATE TABLE public.kingdom_achievements (
   kingdom_id integer,
   achievement_code text,
   awarded_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT kingdom_achievements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+  CONSTRAINT kingdom_achievements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_achievements_achievement_code_fkey FOREIGN KEY (achievement_code) REFERENCES public.kingdom_achievement_catalogue(achievement_code)
 );
-
 CREATE TABLE public.kingdom_history_log (
   log_id integer NOT NULL DEFAULT nextval('kingdom_history_log_log_id_seq'::regclass),
   kingdom_id integer,
@@ -411,16 +429,15 @@ CREATE TABLE public.kingdom_history_log (
   CONSTRAINT kingdom_history_log_pkey PRIMARY KEY (log_id),
   CONSTRAINT kingdom_history_log_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.kingdom_religion (
-  kingdom_id integer,
+  kingdom_id integer NOT NULL,
   religion_name text,
   faith_level integer DEFAULT 1,
   faith_points integer DEFAULT 0,
   blessings jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT kingdom_religion_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdom_religion_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.kingdom_research_tracking (
   kingdom_id integer NOT NULL,
   tech_code text NOT NULL,
@@ -431,7 +448,6 @@ CREATE TABLE public.kingdom_research_tracking (
   CONSTRAINT kingdom_research_tracking_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT kingdom_research_tracking_tech_code_fkey FOREIGN KEY (tech_code) REFERENCES public.tech_catalogue(tech_code)
 );
-
 CREATE TABLE public.kingdom_resources (
   kingdom_id integer NOT NULL,
   wood bigint DEFAULT 0,
@@ -464,7 +480,6 @@ CREATE TABLE public.kingdom_resources (
   CONSTRAINT kingdom_resources_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdom_resources_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.kingdom_spies (
   kingdom_id integer NOT NULL,
   spy_level integer DEFAULT 1,
@@ -482,14 +497,27 @@ CREATE TABLE public.kingdom_spies (
   CONSTRAINT kingdom_spies_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdom_spies_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
+CREATE TABLE public.kingdom_temples (
+  temple_id integer NOT NULL DEFAULT nextval('kingdom_temples_temple_id_seq'::regclass),
+  kingdom_id integer,
+  temple_name character varying,
+  temple_type character varying,
+  level integer,
+  is_major boolean,
+  constructed_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  started_by uuid,
+  CONSTRAINT kingdom_temples_pkey PRIMARY KEY (temple_id),
+  CONSTRAINT kingdom_temples_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_temples_constructed_by_fkey FOREIGN KEY (constructed_by) REFERENCES public.users(user_id),
+  CONSTRAINT kingdom_temples_started_by_fkey FOREIGN KEY (started_by) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.kingdom_titles (
   kingdom_id integer,
   title text,
   awarded_at timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_titles_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.kingdom_treaties (
   treaty_id integer NOT NULL DEFAULT nextval('kingdom_treaties_treaty_id_seq'::regclass),
   kingdom_id integer,
@@ -499,9 +527,9 @@ CREATE TABLE public.kingdom_treaties (
   signed_at timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_treaties_pkey PRIMARY KEY (treaty_id),
   CONSTRAINT kingdom_treaties_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
-  CONSTRAINT kingdom_treaties_partner_kingdom_id_fkey FOREIGN KEY (partner_kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+  CONSTRAINT kingdom_treaties_partner_kingdom_id_fkey FOREIGN KEY (partner_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_treaties_treaty_type_fkey FOREIGN KEY (treaty_type) REFERENCES public.treaty_type_catalogue(treaty_type)
 );
-
 CREATE TABLE public.kingdom_troop_slots (
   kingdom_id integer NOT NULL,
   base_slots integer DEFAULT 20,
@@ -523,7 +551,6 @@ CREATE TABLE public.kingdom_troop_slots (
   CONSTRAINT kingdom_troop_slots_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdom_troop_slots_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.kingdom_troops (
   kingdom_id integer NOT NULL,
   unit_type text NOT NULL,
@@ -541,7 +568,6 @@ CREATE TABLE public.kingdom_troops (
   CONSTRAINT kingdom_troops_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT kingdom_troops_unit_type_fkey FOREIGN KEY (unit_type) REFERENCES public.unit_stats(unit_type)
 );
-
 CREATE TABLE public.kingdom_villages (
   village_id integer NOT NULL DEFAULT nextval('kingdom_villages_village_id_seq'::regclass),
   kingdom_id integer,
@@ -551,7 +577,6 @@ CREATE TABLE public.kingdom_villages (
   CONSTRAINT kingdom_villages_pkey PRIMARY KEY (village_id),
   CONSTRAINT kingdom_villages_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
 CREATE TABLE public.kingdom_vip_status (
   user_id uuid NOT NULL,
   vip_level integer DEFAULT 0,
@@ -559,7 +584,6 @@ CREATE TABLE public.kingdom_vip_status (
   founder boolean DEFAULT false,
   CONSTRAINT kingdom_vip_status_pkey PRIMARY KEY (user_id)
 );
-
 CREATE TABLE public.kingdoms (
   kingdom_id integer NOT NULL DEFAULT nextval('kingdoms_kingdom_id_seq'::regclass),
   user_id uuid UNIQUE,
@@ -582,13 +606,27 @@ CREATE TABLE public.kingdoms (
   last_updated timestamp with time zone DEFAULT now(),
   is_npc boolean DEFAULT false,
   customizations jsonb DEFAULT '{}'::jsonb,
+  ruler_title text,
+  banner_url text,
+  emblem_url text,
   is_on_vacation boolean DEFAULT false,
   vacation_started_at timestamp with time zone,
   vacation_expires_at timestamp with time zone,
+  vacation_cooldown_until timestamp with time zone,
+  policy_change_allowed_at timestamp with time zone,
   CONSTRAINT kingdoms_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdoms_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
-
+CREATE TABLE public.noble_houses (
+  house_id integer NOT NULL DEFAULT nextval('noble_houses_house_id_seq'::regclass),
+  name text NOT NULL,
+  motto text,
+  crest text,
+  region text,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT noble_houses_pkey PRIMARY KEY (house_id)
+);
 CREATE TABLE public.notifications (
   notification_id integer NOT NULL DEFAULT nextval('notifications_notification_id_seq'::regclass),
   user_id uuid,
@@ -605,7 +643,6 @@ CREATE TABLE public.notifications (
   CONSTRAINT notifications_pkey PRIMARY KEY (notification_id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.player_messages (
   message_id integer NOT NULL DEFAULT nextval('player_messages_message_id_seq'::regclass),
   user_id uuid,
@@ -613,9 +650,9 @@ CREATE TABLE public.player_messages (
   message text,
   sent_at timestamp with time zone DEFAULT now(),
   is_read boolean DEFAULT false,
-  CONSTRAINT player_messages_pkey PRIMARY KEY (message_id)
+  CONSTRAINT player_messages_pkey PRIMARY KEY (message_id),
+  CONSTRAINT player_messages_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.policies_laws_catalogue (
   id integer NOT NULL DEFAULT nextval('policies_laws_catalogue_id_seq'::regclass),
   type text CHECK (type = ANY (ARRAY['policy'::text, 'law'::text])),
@@ -624,10 +661,19 @@ CREATE TABLE public.policies_laws_catalogue (
   effect_summary text,
   CONSTRAINT policies_laws_catalogue_pkey PRIMARY KEY (id)
 );
-
+CREATE TABLE public.policy_change_log (
+  log_id integer NOT NULL DEFAULT nextval('policy_change_log_log_id_seq'::regclass),
+  kingdom_id integer,
+  alliance_id integer,
+  policy_id integer,
+  changed_by uuid,
+  change_type text,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT policy_change_log_pkey PRIMARY KEY (log_id)
+);
 CREATE TABLE public.project_alliance_catalogue (
   project_id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
-  project_key text NOT NULL,
+  project_key text NOT NULL UNIQUE,
   project_name text NOT NULL,
   description text,
   category text,
@@ -636,11 +682,11 @@ CREATE TABLE public.project_alliance_catalogue (
   required_tech ARRAY,
   prerequisites ARRAY,
   unlocks ARRAY,
-  resource_costs jsonb DEFAULT '{}'::jsonb,
-  build_time_seconds integer DEFAULT 3600,
+  resource_costs jsonb,
+  build_time_seconds integer,
   project_duration_seconds integer,
-  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
   user_id uuid,
   modifiers jsonb DEFAULT '{}'::jsonb,
   requires_alliance_level integer DEFAULT 1,
@@ -650,7 +696,21 @@ CREATE TABLE public.project_alliance_catalogue (
   CONSTRAINT project_alliance_catalogue_pkey PRIMARY KEY (project_id),
   CONSTRAINT project_alliance_catalogue_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
-
+CREATE TABLE public.project_alliance_contributions (
+  contribution_id integer NOT NULL DEFAULT nextval('project_alliance_contributions_contribution_id_seq'::regclass),
+  alliance_id integer,
+  player_name text,
+  resource_type text,
+  amount integer,
+  timestamp timestamp with time zone DEFAULT now(),
+  project_key text,
+  user_id uuid,
+  contribution_type text,
+  CONSTRAINT project_alliance_contributions_pkey PRIMARY KEY (contribution_id),
+  CONSTRAINT project_alliance_contributions_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT project_alliance_contributions_project_key_fkey FOREIGN KEY (project_key) REFERENCES public.project_alliance_catalogue(project_key),
+  CONSTRAINT project_alliance_contributions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.project_player_catalogue (
   project_code text NOT NULL,
   name text NOT NULL,
@@ -679,7 +739,6 @@ CREATE TABLE public.project_player_catalogue (
   CONSTRAINT project_player_catalogue_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id),
   CONSTRAINT project_player_catalogue_last_modified_by_fkey FOREIGN KEY (last_modified_by) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.projects_alliance (
   project_id integer NOT NULL DEFAULT nextval('projects_alliance_project_id_seq'::regclass),
   alliance_id integer,
@@ -696,9 +755,9 @@ CREATE TABLE public.projects_alliance (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id),
   CONSTRAINT projects_alliance_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
-  CONSTRAINT projects_alliance_built_by_fkey FOREIGN KEY (built_by) REFERENCES public.users(user_id)
+  CONSTRAINT projects_alliance_built_by_fkey FOREIGN KEY (built_by) REFERENCES public.users(user_id),
+  CONSTRAINT projects_alliance_project_key_fkey FOREIGN KEY (project_key) REFERENCES public.project_alliance_catalogue(project_key)
 );
-
 CREATE TABLE public.projects_alliance_in_progress (
   progress_id integer NOT NULL DEFAULT nextval('projects_alliance_in_progress_progress_id_seq'::regclass),
   alliance_id integer,
@@ -712,7 +771,6 @@ CREATE TABLE public.projects_alliance_in_progress (
   CONSTRAINT projects_alliance_in_progress_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT projects_alliance_in_progress_built_by_fkey FOREIGN KEY (built_by) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.projects_player (
   project_id integer NOT NULL DEFAULT nextval('projects_player_project_id_seq'::regclass),
   kingdom_id integer,
@@ -724,7 +782,6 @@ CREATE TABLE public.projects_player (
   CONSTRAINT projects_player_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT projects_player_project_code_fkey FOREIGN KEY (project_code) REFERENCES public.project_player_catalogue(project_code)
 );
-
 CREATE TABLE public.quest_alliance_catalogue (
   quest_code text NOT NULL,
   name text NOT NULL,
@@ -741,7 +798,6 @@ CREATE TABLE public.quest_alliance_catalogue (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT quest_alliance_catalogue_pkey PRIMARY KEY (quest_code)
 );
-
 CREATE TABLE public.quest_alliance_contributions (
   contribution_id integer NOT NULL DEFAULT nextval('quest_alliance_contributions_contribution_id_seq'::regclass),
   alliance_id integer,
@@ -757,7 +813,6 @@ CREATE TABLE public.quest_alliance_contributions (
   CONSTRAINT quest_alliance_contributions_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_alliance_catalogue(quest_code),
   CONSTRAINT quest_alliance_contributions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.quest_alliance_tracking (
   alliance_id integer NOT NULL,
   quest_code text NOT NULL,
@@ -773,7 +828,6 @@ CREATE TABLE public.quest_alliance_tracking (
   CONSTRAINT quest_alliance_tracking_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT quest_alliance_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_alliance_catalogue(quest_code)
 );
-
 CREATE TABLE public.quest_kingdom_catalogue (
   quest_code text NOT NULL,
   name text NOT NULL,
@@ -790,7 +844,6 @@ CREATE TABLE public.quest_kingdom_catalogue (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT quest_kingdom_catalogue_pkey PRIMARY KEY (quest_code)
 );
-
 CREATE TABLE public.quest_kingdom_tracking (
   kingdom_id integer NOT NULL,
   quest_code text NOT NULL,
@@ -807,7 +860,6 @@ CREATE TABLE public.quest_kingdom_tracking (
   CONSTRAINT quest_kingdom_tracking_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT quest_kingdom_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_kingdom_catalogue(quest_code)
 );
-
 CREATE TABLE public.region_catalogue (
   region_code text NOT NULL,
   region_name text NOT NULL,
@@ -816,7 +868,6 @@ CREATE TABLE public.region_catalogue (
   troop_bonus jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT region_catalogue_pkey PRIMARY KEY (region_code)
 );
-
 CREATE TABLE public.spy_missions (
   mission_id integer NOT NULL DEFAULT nextval('spy_missions_mission_id_seq'::regclass),
   kingdom_id integer,
@@ -828,7 +879,15 @@ CREATE TABLE public.spy_missions (
   CONSTRAINT spy_missions_pkey PRIMARY KEY (mission_id),
   CONSTRAINT spy_missions_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-
+CREATE TABLE public.system_event_hooks (
+  hook_id integer NOT NULL DEFAULT nextval('system_event_hooks_hook_id_seq'::regclass),
+  event_type text,
+  payload_template jsonb,
+  endpoint_url text,
+  is_active boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT system_event_hooks_pkey PRIMARY KEY (hook_id)
+);
 CREATE TABLE public.tech_catalogue (
   tech_code text NOT NULL,
   name text NOT NULL,
@@ -848,7 +907,6 @@ CREATE TABLE public.tech_catalogue (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT tech_catalogue_pkey PRIMARY KEY (tech_code)
 );
-
 CREATE TABLE public.terrain_map (
   terrain_id integer NOT NULL DEFAULT nextval('terrain_map_terrain_id_seq'::regclass),
   war_id integer,
@@ -870,7 +928,6 @@ CREATE TABLE public.terrain_map (
   CONSTRAINT terrain_map_generated_by_fkey FOREIGN KEY (generated_by) REFERENCES public.users(user_id),
   CONSTRAINT terrain_map_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );
-
 CREATE TABLE public.trade_logs (
   trade_id integer NOT NULL DEFAULT nextval('trade_logs_trade_id_seq'::regclass),
   timestamp timestamp with time zone DEFAULT now(),
@@ -889,7 +946,6 @@ CREATE TABLE public.trade_logs (
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT trade_logs_pkey PRIMARY KEY (trade_id)
 );
-
 CREATE TABLE public.training_catalog (
   unit_id integer NOT NULL DEFAULT nextval('training_catalog_unit_id_seq'::regclass),
   unit_name text NOT NULL,
@@ -922,9 +978,10 @@ CREATE TABLE public.training_catalog (
   cost_spear integer DEFAULT 0,
   cost_horses integer DEFAULT 0,
   cost_pitchforks integer DEFAULT 0,
+  prerequisite_tech text,
+  prerequisite_castle_level integer DEFAULT 1,
   CONSTRAINT training_catalog_pkey PRIMARY KEY (unit_id)
 );
-
 CREATE TABLE public.training_history (
   history_id integer NOT NULL DEFAULT nextval('training_history_history_id_seq'::regclass),
   kingdom_id integer,
@@ -942,7 +999,6 @@ CREATE TABLE public.training_history (
   CONSTRAINT training_history_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT training_history_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES public.training_catalog(unit_id)
 );
-
 CREATE TABLE public.training_queue (
   queue_id integer NOT NULL DEFAULT nextval('training_queue_queue_id_seq'::regclass),
   kingdom_id integer,
@@ -963,7 +1019,38 @@ CREATE TABLE public.training_queue (
   CONSTRAINT training_queue_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES public.training_catalog(unit_id),
   CONSTRAINT training_queue_initiated_by_fkey FOREIGN KEY (initiated_by) REFERENCES public.users(user_id)
 );
-
+CREATE TABLE public.treaty_negotiation_log (
+  log_id integer NOT NULL DEFAULT nextval('treaty_negotiation_log_log_id_seq'::regclass),
+  treaty_id integer,
+  acting_alliance_id integer,
+  action text,
+  message text,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT treaty_negotiation_log_pkey PRIMARY KEY (log_id),
+  CONSTRAINT treaty_negotiation_log_treaty_id_fkey FOREIGN KEY (treaty_id) REFERENCES public.alliance_treaties(treaty_id)
+);
+CREATE TABLE public.treaty_type_catalogue (
+  treaty_type text NOT NULL,
+  display_name text NOT NULL,
+  description text,
+  duration_days integer DEFAULT 0,
+  is_mutual boolean DEFAULT true,
+  triggers_war_support boolean DEFAULT false,
+  allows_cancelation boolean DEFAULT true,
+  cancel_notice_days integer DEFAULT 0,
+  is_exclusive boolean DEFAULT false,
+  treaty_group text,
+  created_at timestamp with time zone DEFAULT now(),
+  last_updated timestamp with time zone DEFAULT now(),
+  join_wars boolean DEFAULT false,
+  blocks_war boolean DEFAULT false,
+  blocks_spy_ops boolean DEFAULT false,
+  enables_shared_chat boolean DEFAULT false,
+  enables_trade_bonus boolean DEFAULT false,
+  auto_renew boolean DEFAULT false,
+  exclusive_with ARRAY DEFAULT '{}'::text[],
+  CONSTRAINT treaty_type_catalogue_pkey PRIMARY KEY (treaty_type)
+);
 CREATE TABLE public.unit_counters (
   unit_type text NOT NULL,
   countered_unit_type text NOT NULL,
@@ -971,9 +1058,9 @@ CREATE TABLE public.unit_counters (
   source text DEFAULT 'base'::text,
   notes text,
   CONSTRAINT unit_counters_pkey PRIMARY KEY (unit_type, countered_unit_type),
-  CONSTRAINT unit_counters_unit_type_fkey FOREIGN KEY (unit_type) REFERENCES public.unit_stats(unit_type)
+  CONSTRAINT unit_counters_unit_type_fkey FOREIGN KEY (unit_type) REFERENCES public.unit_stats(unit_type),
+  CONSTRAINT unit_counters_countered_unit_type_fkey FOREIGN KEY (countered_unit_type) REFERENCES public.unit_stats(unit_type)
 );
-
 CREATE TABLE public.unit_movements (
   movement_id integer NOT NULL DEFAULT nextval('unit_movements_movement_id_seq'::regclass),
   war_id integer,
@@ -1000,12 +1087,9 @@ CREATE TABLE public.unit_movements (
   CONSTRAINT unit_movements_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
   CONSTRAINT unit_movements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
-CREATE INDEX unit_movements_war_id_idx ON public.unit_movements(war_id);
-
 CREATE TABLE public.unit_stats (
   unit_type text NOT NULL,
   tier integer NOT NULL,
-  version_tag text DEFAULT 'v6.12.2025.13.16',
   class text NOT NULL,
   description text,
   hp integer NOT NULL,
@@ -1030,18 +1114,18 @@ CREATE TABLE public.unit_stats (
   can_damage_castle boolean DEFAULT false,
   can_capture_tile boolean DEFAULT true,
   special_traits jsonb DEFAULT '{}'::jsonb,
+  is_meta boolean DEFAULT false,
   CONSTRAINT unit_stats_pkey PRIMARY KEY (unit_type)
 );
-
 CREATE TABLE public.unit_upgrade_paths (
-  from_unit_type text,
-  to_unit_type text,
+  from_unit_type text NOT NULL,
+  to_unit_type text NOT NULL,
   cost jsonb DEFAULT '{}'::jsonb,
   required_level integer DEFAULT 1,
+  CONSTRAINT unit_upgrade_paths_pkey PRIMARY KEY (from_unit_type, to_unit_type),
   CONSTRAINT unit_upgrade_paths_from_unit_type_fkey FOREIGN KEY (from_unit_type) REFERENCES public.unit_stats(unit_type),
   CONSTRAINT unit_upgrade_paths_to_unit_type_fkey FOREIGN KEY (to_unit_type) REFERENCES public.unit_stats(unit_type)
 );
-
 CREATE TABLE public.users (
   user_id uuid NOT NULL,
   username text NOT NULL UNIQUE,
@@ -1068,7 +1152,6 @@ CREATE TABLE public.users (
   CONSTRAINT users_pkey PRIMARY KEY (user_id),
   CONSTRAINT users_auth_user_id_fkey FOREIGN KEY (auth_user_id) REFERENCES auth.users(id)
 );
-
 CREATE TABLE public.village_buildings (
   village_id integer NOT NULL,
   building_id integer NOT NULL,
@@ -1086,7 +1169,6 @@ CREATE TABLE public.village_buildings (
   CONSTRAINT village_buildings_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_buildings_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.building_catalogue(building_id)
 );
-
 CREATE TABLE public.village_modifiers (
   village_id integer NOT NULL,
   resource_bonus jsonb DEFAULT '{}'::jsonb,
@@ -1104,7 +1186,6 @@ CREATE TABLE public.village_modifiers (
   CONSTRAINT village_modifiers_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_modifiers_applied_by_fkey FOREIGN KEY (applied_by) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.village_production (
   village_id integer NOT NULL,
   resource_type text NOT NULL,
@@ -1120,7 +1201,6 @@ CREATE TABLE public.village_production (
   CONSTRAINT village_production_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_production_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.war_preplans (
   preplan_id integer NOT NULL DEFAULT nextval('war_preplans_preplan_id_seq'::regclass),
   war_id integer,
@@ -1137,7 +1217,6 @@ CREATE TABLE public.war_preplans (
   CONSTRAINT war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT war_preplans_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.war_scores (
   war_id integer NOT NULL,
   attacker_score integer DEFAULT 0,
@@ -1147,8 +1226,6 @@ CREATE TABLE public.war_scores (
   CONSTRAINT war_scores_pkey PRIMARY KEY (war_id),
   CONSTRAINT war_scores_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );
-CREATE INDEX war_scores_war_id_idx ON public.war_scores(war_id);
-
 CREATE TABLE public.wars (
   war_id integer NOT NULL DEFAULT nextval('wars_war_id_seq'::regclass),
   attacker_id uuid,
@@ -1167,14 +1244,15 @@ CREATE TABLE public.wars (
   is_retaliation boolean DEFAULT false,
   treaty_triggered boolean DEFAULT false,
   victory_condition text DEFAULT 'score'::text,
-  outcome text,
+  outcome text CHECK (outcome = ANY (ARRAY['attacker'::text, 'defender'::text, 'draw'::text])),
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
   submitted_by uuid,
+  triggered_by_treaty boolean DEFAULT false,
+  triggering_treaty_type text,
   CONSTRAINT wars_pkey PRIMARY KEY (war_id),
   CONSTRAINT wars_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id)
 );
-
 CREATE TABLE public.wars_tactical (
   war_id integer NOT NULL DEFAULT nextval('wars_tactical_war_id_seq'::regclass),
   attacker_kingdom_id integer,
@@ -1196,10 +1274,10 @@ CREATE TABLE public.wars_tactical (
   weather text,
   submitted_by uuid,
   CONSTRAINT wars_tactical_pkey PRIMARY KEY (war_id),
-  CONSTRAINT wars_tactical_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars(war_id) ON DELETE CASCADE,
   CONSTRAINT wars_tactical_attacker_kingdom_id_fkey FOREIGN KEY (attacker_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT wars_tactical_defender_kingdom_id_fkey FOREIGN KEY (defender_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT wars_tactical_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id),
-  CONSTRAINT wars_tactical_terrain_id_fkey FOREIGN KEY (terrain_id) REFERENCES public.terrain_map(terrain_id)
+  CONSTRAINT wars_tactical_terrain_id_fkey FOREIGN KEY (terrain_id) REFERENCES public.terrain_map(terrain_id),
+  CONSTRAINT wars_tactical_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars(war_id)
 );
 ```
