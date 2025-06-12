@@ -12,6 +12,8 @@ from backend.routers.notifications import (
     mark_all_read,
     clear_all,
     cleanup_expired,
+    delete_notification,
+    latest_notifications,
 )
 
 
@@ -59,15 +61,22 @@ def test_notifications_flow():
     expired_date = datetime.utcnow() - timedelta(days=1)
     create_notification(db, uid, expires=expired_date)
     nid = create_notification(db, uid)
+    sys_id = create_notification(db, None)
 
-    res = list_notifications(uid, db)
-    assert len(res["notifications"]) == 1
-    assert res["notifications"][0]["notification_id"] == nid
+    res = list_notifications(user_id=uid, db=db)
+    ids = [n["notification_id"] for n in res["notifications"]]
+    assert nid in ids and sys_id in ids
 
     mark_read(NotificationAction(notification_id=nid), uid, db)
     notif = db.query(Notification).get(nid)
     assert notif.is_read
     assert notif.last_updated is not None
+
+    latest = latest_notifications(user_id=uid, db=db)
+    assert latest["notifications"][0]["notification_id"] in ids
+
+    delete_notification(sys_id, uid, db)
+    assert db.query(Notification).get(sys_id) is None
 
     nid2 = create_notification(db, uid)
     mark_all_read(uid, db)

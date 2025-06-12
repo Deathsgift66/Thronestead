@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       import("./navDropdown.js"),
       import("./navbar.js"),
       import("./mobileLinkBar.js"),
+      import("./notificationBell.js"),
     ]);
   }
 });
