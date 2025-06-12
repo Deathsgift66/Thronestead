@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+import json
 
 from ..data import military_state, recruitable_units
 from ..database import get_db
@@ -61,7 +62,23 @@ def list_regions(db: Session = Depends(get_db)):
         .mappings()
         .fetchall()
     )
-    return {"regions": [dict(r) for r in rows]}
+    regions = []
+    for r in rows:
+        rec = dict(r)
+        rb = rec.get("resource_bonus")
+        if isinstance(rb, str):
+            try:
+                rec["resource_bonus"] = json.loads(rb)
+            except Exception:
+                rec["resource_bonus"] = {}
+        tb = rec.get("troop_bonus")
+        if isinstance(tb, str):
+            try:
+                rec["troop_bonus"] = json.loads(tb)
+            except Exception:
+                rec["troop_bonus"] = {}
+        regions.append(rec)
+    return {"regions": regions}
 
 
 @router.post("/create")
