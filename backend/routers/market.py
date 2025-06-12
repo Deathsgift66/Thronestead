@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from ..security import verify_jwt_token
+from ..database import get_db
+from services.vacation_mode_service import check_vacation_mode
+from .progression_router import get_kingdom_id
 from pydantic import BaseModel
 
 
@@ -41,7 +44,13 @@ def my_listings(user_id: str = Depends(verify_jwt_token)):
 
 
 @router.post("/cancel_listing")
-def cancel_listing(payload: ListingAction, user_id: str = Depends(verify_jwt_token)):
+def cancel_listing(
+    payload: ListingAction,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    check_vacation_mode(db, kid)
     supabase = get_supabase_client()
     listing_res = (
         supabase.table("market_listings")

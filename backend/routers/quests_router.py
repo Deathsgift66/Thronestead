@@ -6,6 +6,7 @@ from ..database import get_db
 from backend.models import QuestKingdomTracking
 from .progression_router import get_user_id, get_kingdom_id
 from ..data import castle_progression_state
+from services.vacation_mode_service import check_vacation_mode
 
 router = APIRouter(prefix="/api/quests", tags=["quests"])
 
@@ -30,7 +31,11 @@ def _get_requirements(code: str):
 
 
 @router.post("/complete")
-async def complete_quest(payload: QuestPayload):
+async def complete_quest(
+    payload: QuestPayload,
+    db: Session = Depends(get_db),
+):
+    check_vacation_mode(db, payload.kingdom_id)
     req = _get_requirements(payload.quest_code)
     prog = castle_progression_state.get(
         payload.kingdom_id, {"castle_level": 0, "nobles": 0, "knights": 0}
