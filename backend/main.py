@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
 from .routers import (
     admin,
     alliance_members,
@@ -149,10 +151,11 @@ app.include_router(treaty_web.router)
 app.include_router(village_master_router.router)
 app.include_router(vacation_mode.router)
 
-# Mount static frontend after all API routes so that API endpoints take
-# precedence over static files.
-app.mount(
-    "/",
-    StaticFiles(directory=".", html=True),
-    name="static",
-)
+
+# Serve static frontend after API routes so that catch-all paths don't intercept
+# API endpoints. We mount the repository root, which contains the static HTML
+# pages, at the application root path.
+BASE_DIR = Path(__file__).resolve().parent.parent
+app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
+
+
