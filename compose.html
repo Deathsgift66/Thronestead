@@ -26,7 +26,7 @@ Updated: Compose interface with tabs
 <body>
 <div id="navbar-container"></div>
 <script>
-  fetch('navbar.html').then(r=>r.text()).then(html=>{document.getElementById('navbar-container').innerHTML=html;});
+  fetch('/navbar.html').then(r=>r.text()).then(html=>{document.getElementById('navbar-container').innerHTML=html;});
 </script>
 <header class="kr-top-banner">Compose</header>
 <main class="main-container">

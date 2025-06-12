@@ -42,7 +42,7 @@ Author: Deathsgift66
 <body>
   <div id="navbar-container"></div>
   <script>
-    fetch('navbar.html').then(r => r.text()).then(html => {
+    fetch('/navbar.html').then(r => r.text()).then(html => {
       document.getElementById('navbar-container').innerHTML = html;
     });
   </script>
