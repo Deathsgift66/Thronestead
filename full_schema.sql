@@ -1052,6 +1052,10 @@ CREATE TABLE public.users (
   sign_up_time time without time zone DEFAULT CURRENT_TIME,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  last_login_at timestamp with time zone,
+  last_login_ip text,
+  ip_login_alerts boolean DEFAULT false,
+  email_login_confirmations boolean DEFAULT false,
   auth_user_id uuid,
   CONSTRAINT users_pkey PRIMARY KEY (user_id),
   CONSTRAINT users_auth_user_id_fkey FOREIGN KEY (auth_user_id) REFERENCES auth.users(id)

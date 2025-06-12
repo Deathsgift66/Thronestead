@@ -17,6 +17,8 @@ class UpdatePayload(BaseModel):
     profile_picture_url: str | None = None
     theme_preference: str | None = None
     profile_banner: str | None = None
+    ip_login_alerts: bool | None = None
+    email_login_confirmations: bool | None = None
 
 
 class SessionPayload(BaseModel):
@@ -35,7 +37,8 @@ def load_profile(
                    k.kingdom_name,
                    a.name AS alliance_name,
                    c.motto, c.bio, c.theme_preference, c.profile_banner,
-                   v.vip_level, v.founder, v.expires_at
+                   v.vip_level, v.founder, v.expires_at,
+                   u.last_login_at, u.last_login_ip, u.ip_login_alerts, u.email_login_confirmations
             FROM users u
             LEFT JOIN kingdoms k ON k.user_id = u.user_id
             LEFT JOIN alliances a ON a.alliance_id = u.alliance_id
@@ -63,6 +66,10 @@ def load_profile(
         "vip_level",
         "founder",
         "expires_at",
+        "last_login_at",
+        "last_login_ip",
+        "ip_login_alerts",
+        "email_login_confirmations",
     ]
     profile = {k: row[i] for i, k in enumerate(keys)}
     session_rows = db.execute(
@@ -87,7 +94,8 @@ def update_profile(
     # fetch current values
     current = db.execute(
         text(
-            "SELECT display_name, profile_picture_url FROM users WHERE user_id = :uid"
+            "SELECT display_name, profile_picture_url, ip_login_alerts, email_login_confirmations"
+            " FROM users WHERE user_id = :uid"
         ),
         {"uid": user_id},
     ).fetchone()
@@ -100,11 +108,16 @@ def update_profile(
 
     db.execute(
         text(
-            "UPDATE users SET display_name = :dn, profile_picture_url = :pic WHERE user_id = :uid"
+            "UPDATE users SET display_name = :dn, profile_picture_url = :pic,"
+            " ip_login_alerts = COALESCE(:ip_alert, ip_login_alerts),"
+            " email_login_confirmations = COALESCE(:email_conf, email_login_confirmations)"
+            " WHERE user_id = :uid"
         ),
         {
             "dn": payload.display_name,
             "pic": payload.profile_picture_url,
+            "ip_alert": payload.ip_login_alerts,
+            "email_conf": payload.email_login_confirmations,
             "uid": user_id,
         },
     )
@@ -136,6 +149,10 @@ def update_profile(
             diffs["display_name"] = payload.display_name
         if payload.profile_picture_url != current[1]:
             diffs["profile_picture_url"] = payload.profile_picture_url
+        if payload.ip_login_alerts is not None and payload.ip_login_alerts != current[2]:
+            diffs["ip_login_alerts"] = payload.ip_login_alerts
+        if payload.email_login_confirmations is not None and payload.email_login_confirmations != current[3]:
+            diffs["email_login_confirmations"] = payload.email_login_confirmations
     if customization:
         if payload.motto != customization[0]:
             diffs["motto"] = payload.motto
