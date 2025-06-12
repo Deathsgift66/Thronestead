@@ -154,6 +154,14 @@ body {
   max-width: 600px;
   width: 100%;
   text-align: center;
+  color: var(--parchment);
+}
+
+.onboarding-container h2,
+.onboarding-container h3,
+.onboarding-container h4,
+.onboarding-container p {
+  color: var(--parchment);
 }
 
 .onboard-step {
@@ -165,6 +173,25 @@ body {
   border-radius: 6px;
   border: 1px solid var(--gold);
   margin-right: 0.5rem;
+  color: var(--parchment);
+}
+
+.onboard-step textarea {
+  color: var(--parchment);
+}
+
+.onboard-step select {
+  color: var(--parchment);
+}
+
+.region-info {
+  color: var(--parchment);
+}
+
+.onboard-step input::placeholder,
+.onboard-step textarea::placeholder {
+  color: var(--parchment);
+  opacity: 0.8;
 }
 
 .onboard-step button {
