@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..data import military_state, recruitable_units
@@ -47,6 +48,20 @@ class KingdomCreatePayload(BaseModel):
     banner_image: str | None = None
     emblem_image: str | None = None
     motto: str | None = None
+
+
+@router.get("/regions")
+def list_regions(db: Session = Depends(get_db)):
+    rows = (
+        db.execute(
+            text(
+                "SELECT region_code, region_name, description, resource_bonus, troop_bonus FROM region_catalogue ORDER BY region_name"
+            )
+        )
+        .mappings()
+        .fetchall()
+    )
+    return {"regions": [dict(r) for r in rows]}
 
 
 @router.post("/create")

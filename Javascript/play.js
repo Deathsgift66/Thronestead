@@ -210,12 +210,14 @@ async function loadRegions() {
   const infoEl = document.getElementById('region-info');
   if (!regionEl) return;
 
-  const { data: regions, error } = await supabase
-    .from('region_catalogue')
-    .select('*');
-
-  if (error) {
-    console.error('Failed to load regions', error);
+  let regions = [];
+  try {
+    const res = await fetch('/api/kingdom/regions');
+    if (!res.ok) throw new Error('fetch failed');
+    const data = await res.json();
+    regions = data.regions || [];
+  } catch (err) {
+    console.error('Failed to load regions', err);
     regionEl.innerHTML = '<option value="">Failed to load</option>';
     return;
   }
