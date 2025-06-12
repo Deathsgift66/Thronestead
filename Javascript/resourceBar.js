@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js';
+import { fetchJson } from './fetchJson.js';
 
 function injectBootstrap() {
   if (!document.querySelector('link[data-bootstrap]')) {
@@ -25,21 +26,11 @@ async function loadResources() {
 
     const token = session.access_token;
     const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
-    const res = await fetch('/api/resources', { headers });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const text = await res.text();
-    let payload;
-    try {
-      payload = JSON.parse(text);
-    } catch (e) {
-      console.error('Invalid JSON from /api/resources:', text);
-      return;
-    }
+    const payload = await fetchJson('/api/resources', { headers });
 
     updateUI(payload.resources || {});
   } catch (err) {
-    console.error('Failed to load resources', err);
+    console.error('Invalid JSON from /api/resources:', err);
   }
 }
 
