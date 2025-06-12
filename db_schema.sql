@@ -105,7 +105,9 @@ CREATE TABLE building_catalogue (
     is_repeatable     BOOLEAN DEFAULT FALSE,
     unlock_at_level   INTEGER DEFAULT 0,
     created_at        TIMESTAMPTZ DEFAULT now(),
-    last_updated      TIMESTAMPTZ DEFAULT now()
+    last_updated      TIMESTAMPTZ DEFAULT now(),
+    cost_to_produce   JSONB DEFAULT '{}'::jsonb,
+    efficiency_multiplier NUMERIC DEFAULT 1.0
 );
 
 CREATE TABLE kingdom_buildings (
