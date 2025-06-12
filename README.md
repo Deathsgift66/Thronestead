@@ -105,6 +105,18 @@ Update these values with your project credentials to enable API access.
 
 This will create all tables referenced by the frontend.
 
+After loading the base schema, apply the SQL files in the `migrations/` folder
+to keep your database up to date. These scripts also seed initial data.
+For example, run the regions migration to populate the `region_catalogue`
+table used on **play.html**:
+
+```bash
+psql -f migrations/2025_06_08_add_regions.sql
+```
+
+Without this migration the `/api/kingdom/regions` request will fail and the
+region dropdown will show "Failed to load".
+
 ---
 
 ## Testing
