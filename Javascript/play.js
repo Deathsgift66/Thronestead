@@ -221,6 +221,15 @@ async function loadRegions() {
     if (!res.ok) throw new Error('fetch failed');
     const data = await res.json();
     regions = data.regions || [];
+    regions = regions.map(r => {
+      if (typeof r.resource_bonus === 'string') {
+        try { r.resource_bonus = JSON.parse(r.resource_bonus); } catch { r.resource_bonus = {}; }
+      }
+      if (typeof r.troop_bonus === 'string') {
+        try { r.troop_bonus = JSON.parse(r.troop_bonus); } catch { r.troop_bonus = {}; }
+      }
+      return r;
+    });
   } catch (err) {
     console.error('Failed to load regions', err);
     regionEl.innerHTML = '<option value="">Failed to load</option>';
