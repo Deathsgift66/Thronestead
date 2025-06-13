@@ -117,7 +117,6 @@ function bindEvents() {
     if (emblemEl && emblemPreview) {
       emblemPreview.src = emblemEl.value;
     }
-    const mottoEl = document.getElementById('motto-input');
 
     const kingdomName = kNameEl.value.trim();
     const rulerTitle = titleEl ? titleEl.value.trim() : null;
@@ -125,7 +124,6 @@ function bindEvents() {
     const villageName = villageEl.value.trim();
     const bannerUrl = bannerEl ? bannerEl.value.trim() : null;
     const emblemUrl = emblemEl ? emblemEl.value.trim() : null;
-    const motto = mottoEl.value.trim();
 
     if (kingdomName.length < 3) {
       showToast('Kingdom name must be at least 3 characters.');
@@ -156,8 +154,7 @@ function bindEvents() {
           village_name: villageName,
           region,
           banner_url: bannerUrl || null,
-          emblem_url: emblemUrl || null,
-          motto: motto || null
+          emblem_url: emblemUrl || null
         })
       });
 
