@@ -5,9 +5,6 @@
 This file lists the complete SQL schema used by the application.
 
 ```sql
--- WARNING: This schema is for context only and is not meant to be run.
--- Table order and constraints may not be valid for execution.
-
 CREATE TABLE public.alliance_achievement_catalogue (
   achievement_code text NOT NULL,
   name text NOT NULL,
@@ -110,6 +107,9 @@ CREATE TABLE public.alliance_roles (
   permissions jsonb DEFAULT '{}'::jsonb,
   is_default boolean DEFAULT false,
   created_at timestamp without time zone DEFAULT now(),
+  can_invite boolean DEFAULT false,
+  can_kick boolean DEFAULT false,
+  can_manage_resources boolean DEFAULT false,
   CONSTRAINT alliance_roles_pkey PRIMARY KEY (role_id),
   CONSTRAINT alliance_roles_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
@@ -121,6 +121,8 @@ CREATE TABLE public.alliance_surrenders (
   surrender_terms jsonb,
   status text DEFAULT 'pending'::text,
   created_at timestamp without time zone DEFAULT now(),
+  peace_terms text,
+  gold_penalty integer DEFAULT 0,
   CONSTRAINT alliance_surrenders_pkey PRIMARY KEY (surrender_id),
   CONSTRAINT alliance_surrenders_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
 );
@@ -224,6 +226,9 @@ CREATE TABLE public.alliance_votes (
   created_at timestamp without time zone DEFAULT now(),
   ends_at timestamp without time zone,
   status text DEFAULT 'active'::text,
+  vote_type text,
+  target_id integer,
+  vote_metadata text,
   CONSTRAINT alliance_votes_pkey PRIMARY KEY (vote_id),
   CONSTRAINT alliance_votes_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
@@ -257,6 +262,9 @@ CREATE TABLE public.alliance_war_preplans (
   kingdom_id integer,
   preplan_jsonb jsonb NOT NULL,
   last_updated timestamp without time zone DEFAULT now(),
+  start_tile_x integer,
+  start_tile_y integer,
+  initial_orders text,
   CONSTRAINT alliance_war_preplans_pkey PRIMARY KEY (preplan_id),
   CONSTRAINT alliance_war_preplans_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id),
   CONSTRAINT alliance_war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
@@ -338,6 +346,8 @@ CREATE TABLE public.battle_resolution_logs (
   defender_casualties integer DEFAULT 0,
   loot_summary jsonb DEFAULT '{}'::jsonb,
   created_at timestamp without time zone DEFAULT now(),
+  gold_looted integer DEFAULT 0,
+  resources_looted text,
   CONSTRAINT battle_resolution_logs_pkey PRIMARY KEY (resolution_id),
   CONSTRAINT battle_resolution_logs_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
   CONSTRAINT battle_resolution_logs_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id)
@@ -358,7 +368,6 @@ CREATE TABLE public.building_catalogue (
   production_type text,
   production_rate integer,
   upkeep integer,
-  build_cost jsonb,
   modifiers jsonb DEFAULT '{}'::jsonb,
   category text,
   build_time_seconds integer DEFAULT 3600,
@@ -372,7 +381,50 @@ CREATE TABLE public.building_catalogue (
   last_updated timestamp with time zone DEFAULT now(),
   cost_to_produce jsonb DEFAULT '{}'::jsonb,
   efficiency_multiplier numeric DEFAULT 1.0,
+  wood_cost integer DEFAULT 0,
+  stone_cost integer DEFAULT 0,
+  iron_cost integer DEFAULT 0,
+  gold_cost integer DEFAULT 0,
+  wood_plan_cost integer DEFAULT 0,
+  iron_ingot_cost integer DEFAULT 0,
+  requires_tech_id integer,
+  build_time integer DEFAULT 0,
+  effect_description text,
+  wood integer DEFAULT 0,
+  stone integer DEFAULT 0,
+  iron_ore integer DEFAULT 0,
+  gold integer DEFAULT 0,
+  gems integer DEFAULT 0,
+  food integer DEFAULT 0,
+  coal integer DEFAULT 0,
+  livestock integer DEFAULT 0,
+  clay integer DEFAULT 0,
+  flax integer DEFAULT 0,
+  tools integer DEFAULT 0,
+  wood_planks integer DEFAULT 0,
+  refined_stone integer DEFAULT 0,
+  iron_ingots integer DEFAULT 0,
+  charcoal integer DEFAULT 0,
+  leather integer DEFAULT 0,
+  arrows integer DEFAULT 0,
+  swords integer DEFAULT 0,
+  axes integer DEFAULT 0,
+  shields integer DEFAULT 0,
+  armour integer DEFAULT 0,
+  wagon integer DEFAULT 0,
+  siege_weapons integer DEFAULT 0,
+  jewelry integer DEFAULT 0,
+  spear integer DEFAULT 0,
+  horses integer DEFAULT 0,
+  pitchforks integer DEFAULT 0,
   CONSTRAINT building_catalogue_pkey PRIMARY KEY (building_id)
+);
+CREATE TABLE public.building_costs (
+  building_id integer NOT NULL,
+  resource_type text NOT NULL,
+  amount integer NOT NULL,
+  CONSTRAINT building_costs_pkey PRIMARY KEY (building_id, resource_type),
+  CONSTRAINT building_costs_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.building_catalogue(building_id)
 );
 CREATE TABLE public.combat_logs (
   combat_id integer NOT NULL DEFAULT nextval('combat_logs_combat_id_seq'::regclass),
@@ -388,19 +440,50 @@ CREATE TABLE public.combat_logs (
   notes text,
   timestamp timestamp with time zone DEFAULT now(),
   treaty_trigger_context jsonb DEFAULT '{}'::jsonb,
+  triggered_by_treaty boolean DEFAULT false,
+  treaty_name text,
   CONSTRAINT combat_logs_pkey PRIMARY KEY (combat_id),
   CONSTRAINT combat_logs_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );
+CREATE TABLE public.game_setting_values (
+  setting_key text NOT NULL,
+  setting_value text,
+  CONSTRAINT game_setting_values_pkey PRIMARY KEY (setting_key),
+  CONSTRAINT game_setting_values_setting_key_fkey FOREIGN KEY (setting_key) REFERENCES public.game_settings(setting_key)
+);
 CREATE TABLE public.game_settings (
   setting_key text NOT NULL,
-  setting_value jsonb,
   setting_type text,
   description text,
   default_value jsonb,
   is_active boolean DEFAULT true,
   last_updated timestamp with time zone DEFAULT now(),
   updated_by uuid,
+  setting_string text,
+  setting_number numeric,
+  setting_boolean boolean DEFAULT false,
   CONSTRAINT game_settings_pkey PRIMARY KEY (setting_key)
+);
+CREATE TABLE public.global_event_conditions (
+  event_id integer NOT NULL,
+  condition_type text NOT NULL,
+  condition_target text,
+  condition_value text,
+  CONSTRAINT global_event_conditions_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.global_events(event_id)
+);
+CREATE TABLE public.global_event_effects (
+  event_id integer NOT NULL,
+  effect_type text NOT NULL,
+  target text,
+  magnitude numeric,
+  CONSTRAINT global_event_effects_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.global_events(event_id)
+);
+CREATE TABLE public.global_event_rewards (
+  event_id integer NOT NULL,
+  reward_type text NOT NULL,
+  reward_target text,
+  reward_amount numeric NOT NULL,
+  CONSTRAINT global_event_rewards_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.global_events(event_id)
 );
 CREATE TABLE public.global_events (
   event_id integer NOT NULL DEFAULT nextval('global_events_event_id_seq'::regclass),
@@ -408,8 +491,9 @@ CREATE TABLE public.global_events (
   description text,
   start_time timestamp without time zone,
   end_time timestamp without time zone,
-  impact jsonb DEFAULT '{}'::jsonb,
   is_active boolean DEFAULT false,
+  impact_type text,
+  magnitude numeric,
   CONSTRAINT global_events_pkey PRIMARY KEY (event_id)
 );
 CREATE TABLE public.kingdom_achievement_catalogue (
@@ -422,6 +506,8 @@ CREATE TABLE public.kingdom_achievement_catalogue (
   is_hidden boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
+  gold_reward integer DEFAULT 0,
+  honor_reward integer DEFAULT 0,
   CONSTRAINT kingdom_achievement_catalogue_pkey PRIMARY KEY (achievement_code)
 );
 CREATE TABLE public.kingdom_achievements (
@@ -446,6 +532,9 @@ CREATE TABLE public.kingdom_religion (
   faith_level integer DEFAULT 1,
   faith_points integer DEFAULT 0,
   blessings jsonb DEFAULT '{}'::jsonb,
+  blessing_1 text,
+  blessing_2 text,
+  blessing_3 text,
   CONSTRAINT kingdom_religion_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdom_religion_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
@@ -575,6 +664,8 @@ CREATE TABLE public.kingdom_troops (
   last_modified_by uuid,
   last_combat_at timestamp with time zone,
   last_morale integer DEFAULT 100,
+  morale_bonus numeric DEFAULT 0,
+  damage_bonus numeric DEFAULT 0,
   CONSTRAINT kingdom_troops_pkey PRIMARY KEY (kingdom_id, unit_type, unit_level),
   CONSTRAINT kingdom_troops_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT kingdom_troops_unit_type_fkey FOREIGN KEY (unit_type) REFERENCES public.unit_stats(unit_type)
@@ -625,8 +716,17 @@ CREATE TABLE public.kingdoms (
   vacation_expires_at timestamp with time zone,
   vacation_cooldown_until timestamp with time zone,
   policy_change_allowed_at timestamp with time zone,
+  banner_color text,
+  national_theme text,
   CONSTRAINT kingdoms_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdoms_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
+);
+CREATE TABLE public.message_metadata (
+  message_id integer NOT NULL,
+  key text NOT NULL,
+  value text,
+  CONSTRAINT message_metadata_pkey PRIMARY KEY (message_id, key),
+  CONSTRAINT message_metadata_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.player_messages(message_id)
 );
 CREATE TABLE public.noble_houses (
   house_id integer NOT NULL DEFAULT nextval('noble_houses_house_id_seq'::regclass),
@@ -637,6 +737,13 @@ CREATE TABLE public.noble_houses (
   description text,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT noble_houses_pkey PRIMARY KEY (house_id)
+);
+CREATE TABLE public.notification_metadata (
+  notification_id integer NOT NULL,
+  key text NOT NULL,
+  value text,
+  CONSTRAINT notification_metadata_pkey PRIMARY KEY (notification_id, key),
+  CONSTRAINT notification_metadata_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notifications(notification_id)
 );
 CREATE TABLE public.notifications (
   notification_id integer NOT NULL DEFAULT nextval('notifications_notification_id_seq'::regclass),
@@ -699,11 +806,40 @@ CREATE TABLE public.project_alliance_catalogue (
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
   user_id uuid,
-  modifiers jsonb DEFAULT '{}'::jsonb,
   requires_alliance_level integer DEFAULT 1,
   is_active boolean DEFAULT true,
   max_active_instances integer,
   expires_at timestamp with time zone,
+  wood_cost integer DEFAULT 0,
+  stone_cost integer DEFAULT 0,
+  effect_description text,
+  wood integer DEFAULT 0,
+  stone integer DEFAULT 0,
+  iron_ore integer DEFAULT 0,
+  gold integer DEFAULT 0,
+  gems integer DEFAULT 0,
+  food integer DEFAULT 0,
+  coal integer DEFAULT 0,
+  livestock integer DEFAULT 0,
+  clay integer DEFAULT 0,
+  flax integer DEFAULT 0,
+  tools integer DEFAULT 0,
+  wood_planks integer DEFAULT 0,
+  refined_stone integer DEFAULT 0,
+  iron_ingots integer DEFAULT 0,
+  charcoal integer DEFAULT 0,
+  leather integer DEFAULT 0,
+  arrows integer DEFAULT 0,
+  swords integer DEFAULT 0,
+  axes integer DEFAULT 0,
+  shields integer DEFAULT 0,
+  armour integer DEFAULT 0,
+  wagon integer DEFAULT 0,
+  siege_weapons integer DEFAULT 0,
+  jewelry integer DEFAULT 0,
+  spear integer DEFAULT 0,
+  horses integer DEFAULT 0,
+  pitchforks integer DEFAULT 0,
   CONSTRAINT project_alliance_catalogue_pkey PRIMARY KEY (project_id),
   CONSTRAINT project_alliance_catalogue_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
@@ -721,6 +857,14 @@ CREATE TABLE public.project_alliance_contributions (
   CONSTRAINT project_alliance_contributions_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT project_alliance_contributions_project_key_fkey FOREIGN KEY (project_key) REFERENCES public.project_alliance_catalogue(project_key),
   CONSTRAINT project_alliance_contributions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
+);
+CREATE TABLE public.project_modifiers (
+  source_type text NOT NULL CHECK (source_type = ANY (ARRAY['project'::text, 'catalogue'::text])),
+  source_id text NOT NULL,
+  effect_type text NOT NULL,
+  target text NOT NULL,
+  magnitude numeric,
+  CONSTRAINT project_modifiers_pkey PRIMARY KEY (source_type, source_id, effect_type, target)
 );
 CREATE TABLE public.project_player_catalogue (
   project_code text NOT NULL,
@@ -746,6 +890,35 @@ CREATE TABLE public.project_player_catalogue (
   effect_summary text,
   expires_at timestamp with time zone,
   last_modified_by uuid,
+  gold_cost integer DEFAULT 0,
+  effect_description text,
+  wood integer DEFAULT 0,
+  stone integer DEFAULT 0,
+  iron_ore integer DEFAULT 0,
+  gold integer DEFAULT 0,
+  gems integer DEFAULT 0,
+  food integer DEFAULT 0,
+  coal integer DEFAULT 0,
+  livestock integer DEFAULT 0,
+  clay integer DEFAULT 0,
+  flax integer DEFAULT 0,
+  tools integer DEFAULT 0,
+  wood_planks integer DEFAULT 0,
+  refined_stone integer DEFAULT 0,
+  iron_ingots integer DEFAULT 0,
+  charcoal integer DEFAULT 0,
+  leather integer DEFAULT 0,
+  arrows integer DEFAULT 0,
+  swords integer DEFAULT 0,
+  axes integer DEFAULT 0,
+  shields integer DEFAULT 0,
+  armour integer DEFAULT 0,
+  wagon integer DEFAULT 0,
+  siege_weapons integer DEFAULT 0,
+  jewelry integer DEFAULT 0,
+  spear integer DEFAULT 0,
+  horses integer DEFAULT 0,
+  pitchforks integer DEFAULT 0,
   CONSTRAINT project_player_catalogue_pkey PRIMARY KEY (project_code),
   CONSTRAINT project_player_catalogue_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id),
   CONSTRAINT project_player_catalogue_last_modified_by_fkey FOREIGN KEY (last_modified_by) REFERENCES public.users(user_id)
@@ -755,7 +928,6 @@ CREATE TABLE public.projects_alliance (
   alliance_id integer,
   name text NOT NULL,
   progress integer DEFAULT 0,
-  modifiers jsonb DEFAULT '{}'::jsonb,
   project_key text,
   start_time timestamp with time zone DEFAULT now(),
   end_time timestamp with time zone,
@@ -764,6 +936,7 @@ CREATE TABLE public.projects_alliance (
   built_by uuid,
   expires_at timestamp with time zone,
   last_updated timestamp with time zone DEFAULT now(),
+  active_bonus text,
   CONSTRAINT projects_alliance_pkey PRIMARY KEY (project_id),
   CONSTRAINT projects_alliance_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT projects_alliance_built_by_fkey FOREIGN KEY (built_by) REFERENCES public.users(user_id),
@@ -807,6 +980,8 @@ CREATE TABLE public.quest_alliance_catalogue (
   is_active boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
+  objective_type text,
+  reward_gold integer DEFAULT 0,
   CONSTRAINT quest_alliance_catalogue_pkey PRIMARY KEY (quest_code)
 );
 CREATE TABLE public.quest_alliance_contributions (
@@ -853,6 +1028,8 @@ CREATE TABLE public.quest_kingdom_catalogue (
   is_active boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
+  objective_type text,
+  reward_gold integer DEFAULT 0,
   CONSTRAINT quest_kingdom_catalogue_pkey PRIMARY KEY (quest_code)
 );
 CREATE TABLE public.quest_kingdom_tracking (
@@ -866,18 +1043,35 @@ CREATE TABLE public.quest_kingdom_tracking (
   last_updated timestamp with time zone DEFAULT now(),
   attempt_count integer DEFAULT 1,
   started_by uuid,
+  objective_progress integer DEFAULT 0,
+  is_complete boolean DEFAULT false,
   CONSTRAINT quest_kingdom_tracking_pkey PRIMARY KEY (kingdom_id, quest_code),
   CONSTRAINT quest_kingdom_tracking_started_by_fkey FOREIGN KEY (started_by) REFERENCES public.users(user_id),
   CONSTRAINT quest_kingdom_tracking_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT quest_kingdom_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_kingdom_catalogue(quest_code)
 );
+CREATE TABLE public.region_bonuses (
+  region_code text NOT NULL,
+  bonus_type text NOT NULL,
+  bonus_value numeric,
+  CONSTRAINT region_bonuses_pkey PRIMARY KEY (region_code, bonus_type),
+  CONSTRAINT region_bonuses_region_code_fkey FOREIGN KEY (region_code) REFERENCES public.region_catalogue(region_code)
+);
 CREATE TABLE public.region_catalogue (
   region_code text NOT NULL,
   region_name text NOT NULL,
   description text,
-  resource_bonus jsonb DEFAULT '{}'::jsonb,
-  troop_bonus jsonb DEFAULT '{}'::jsonb,
+  wood_bonus numeric DEFAULT 0,
+  iron_bonus numeric DEFAULT 0,
+  troop_attack_bonus numeric DEFAULT 0,
   CONSTRAINT region_catalogue_pkey PRIMARY KEY (region_code)
+);
+CREATE TABLE public.region_structures (
+  region_code text NOT NULL,
+  structure_type text NOT NULL,
+  structure_level integer,
+  CONSTRAINT region_structures_pkey PRIMARY KEY (region_code, structure_type),
+  CONSTRAINT region_structures_region_code_fkey FOREIGN KEY (region_code) REFERENCES public.region_catalogue(region_code)
 );
 CREATE TABLE public.spy_missions (
   mission_id integer NOT NULL DEFAULT nextval('spy_missions_mission_id_seq'::regclass),
@@ -897,6 +1091,8 @@ CREATE TABLE public.system_event_hooks (
   endpoint_url text,
   is_active boolean DEFAULT true,
   created_at timestamp without time zone DEFAULT now(),
+  event_topic text,
+  payload_template_text text,
   CONSTRAINT system_event_hooks_pkey PRIMARY KEY (hook_id)
 );
 CREATE TABLE public.tech_catalogue (
@@ -916,6 +1112,8 @@ CREATE TABLE public.tech_catalogue (
   is_active boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
+  military_bonus numeric DEFAULT 0,
+  economic_bonus numeric DEFAULT 0,
   CONSTRAINT tech_catalogue_pkey PRIMARY KEY (tech_code)
 );
 CREATE TABLE public.terrain_map (
@@ -935,6 +1133,8 @@ CREATE TABLE public.terrain_map (
   is_active boolean DEFAULT true,
   map_source text DEFAULT 'auto-generated'::text,
   map_features jsonb DEFAULT '{}'::jsonb,
+  tileset text,
+  features_summary text,
   CONSTRAINT terrain_map_pkey PRIMARY KEY (terrain_id),
   CONSTRAINT terrain_map_generated_by_fkey FOREIGN KEY (generated_by) REFERENCES public.users(user_id),
   CONSTRAINT terrain_map_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
@@ -993,6 +1193,13 @@ CREATE TABLE public.training_catalog (
   prerequisite_castle_level integer DEFAULT 1,
   CONSTRAINT training_catalog_pkey PRIMARY KEY (unit_id)
 );
+CREATE TABLE public.training_costs (
+  unit_id integer NOT NULL,
+  resource_type text NOT NULL,
+  amount integer NOT NULL,
+  CONSTRAINT training_costs_pkey PRIMARY KEY (unit_id, resource_type),
+  CONSTRAINT training_costs_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES public.training_catalog(unit_id)
+);
 CREATE TABLE public.training_history (
   history_id integer NOT NULL DEFAULT nextval('training_history_history_id_seq'::regclass),
   kingdom_id integer,
@@ -1005,6 +1212,7 @@ CREATE TABLE public.training_history (
   trained_by uuid,
   xp_awarded integer DEFAULT 0,
   modifiers_applied jsonb DEFAULT '{}'::jsonb,
+  speed_modifier numeric DEFAULT 1,
   CONSTRAINT training_history_pkey PRIMARY KEY (history_id),
   CONSTRAINT training_history_trained_by_fkey FOREIGN KEY (trained_by) REFERENCES public.users(user_id),
   CONSTRAINT training_history_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
@@ -1025,10 +1233,19 @@ CREATE TABLE public.training_queue (
   initiated_by uuid,
   priority integer DEFAULT 1,
   last_updated timestamp with time zone DEFAULT now(),
+  training_speed_multiplier numeric DEFAULT 1,
   CONSTRAINT training_queue_pkey PRIMARY KEY (queue_id),
   CONSTRAINT training_queue_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT training_queue_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES public.training_catalog(unit_id),
   CONSTRAINT training_queue_initiated_by_fkey FOREIGN KEY (initiated_by) REFERENCES public.users(user_id)
+);
+CREATE TABLE public.treaty_modifiers (
+  treaty_id integer NOT NULL,
+  effect_type text NOT NULL,
+  target text NOT NULL,
+  magnitude numeric,
+  CONSTRAINT treaty_modifiers_pkey PRIMARY KEY (treaty_id, effect_type, target),
+  CONSTRAINT treaty_modifiers_treaty_id_fkey FOREIGN KEY (treaty_id) REFERENCES public.alliance_treaties(treaty_id)
 );
 CREATE TABLE public.treaty_negotiation_log (
   log_id integer NOT NULL DEFAULT nextval('treaty_negotiation_log_log_id_seq'::regclass),
@@ -1039,6 +1256,13 @@ CREATE TABLE public.treaty_negotiation_log (
   created_at timestamp without time zone DEFAULT now(),
   CONSTRAINT treaty_negotiation_log_pkey PRIMARY KEY (log_id),
   CONSTRAINT treaty_negotiation_log_treaty_id_fkey FOREIGN KEY (treaty_id) REFERENCES public.alliance_treaties(treaty_id)
+);
+CREATE TABLE public.treaty_terms (
+  treaty_id integer NOT NULL,
+  term_type text NOT NULL,
+  value text,
+  CONSTRAINT treaty_terms_pkey PRIMARY KEY (treaty_id, term_type),
+  CONSTRAINT treaty_terms_treaty_id_fkey FOREIGN KEY (treaty_id) REFERENCES public.alliance_treaties(treaty_id)
 );
 CREATE TABLE public.treaty_type_catalogue (
   treaty_type text NOT NULL,
@@ -1094,6 +1318,10 @@ CREATE TABLE public.unit_movements (
   issued_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
+  target_tile_x integer,
+  target_tile_y integer,
+  patrol_start_x integer,
+  patrol_start_y integer,
   CONSTRAINT unit_movements_pkey PRIMARY KEY (movement_id),
   CONSTRAINT unit_movements_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
   CONSTRAINT unit_movements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
@@ -1126,6 +1354,7 @@ CREATE TABLE public.unit_stats (
   can_capture_tile boolean DEFAULT true,
   special_traits jsonb DEFAULT '{}'::jsonb,
   is_meta boolean DEFAULT false,
+  special_ability text,
   CONSTRAINT unit_stats_pkey PRIMARY KEY (unit_type)
 );
 CREATE TABLE public.unit_upgrade_paths (
@@ -1133,9 +1362,43 @@ CREATE TABLE public.unit_upgrade_paths (
   to_unit_type text NOT NULL,
   cost jsonb DEFAULT '{}'::jsonb,
   required_level integer DEFAULT 1,
+  wood integer DEFAULT 0,
+  stone integer DEFAULT 0,
+  iron_ore integer DEFAULT 0,
+  gold integer DEFAULT 0,
+  gems integer DEFAULT 0,
+  food integer DEFAULT 0,
+  coal integer DEFAULT 0,
+  livestock integer DEFAULT 0,
+  clay integer DEFAULT 0,
+  flax integer DEFAULT 0,
+  tools integer DEFAULT 0,
+  wood_planks integer DEFAULT 0,
+  refined_stone integer DEFAULT 0,
+  iron_ingots integer DEFAULT 0,
+  charcoal integer DEFAULT 0,
+  leather integer DEFAULT 0,
+  arrows integer DEFAULT 0,
+  swords integer DEFAULT 0,
+  axes integer DEFAULT 0,
+  shields integer DEFAULT 0,
+  armour integer DEFAULT 0,
+  wagon integer DEFAULT 0,
+  siege_weapons integer DEFAULT 0,
+  jewelry integer DEFAULT 0,
+  spear integer DEFAULT 0,
+  horses integer DEFAULT 0,
+  pitchforks integer DEFAULT 0,
   CONSTRAINT unit_upgrade_paths_pkey PRIMARY KEY (from_unit_type, to_unit_type),
   CONSTRAINT unit_upgrade_paths_from_unit_type_fkey FOREIGN KEY (from_unit_type) REFERENCES public.unit_stats(unit_type),
   CONSTRAINT unit_upgrade_paths_to_unit_type_fkey FOREIGN KEY (to_unit_type) REFERENCES public.unit_stats(unit_type)
+);
+CREATE TABLE public.user_setting_entries (
+  user_id uuid NOT NULL,
+  setting_key text NOT NULL,
+  setting_value text,
+  CONSTRAINT user_setting_entries_pkey PRIMARY KEY (user_id, setting_key),
+  CONSTRAINT user_setting_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.users (
   user_id uuid NOT NULL,
@@ -1160,6 +1423,8 @@ CREATE TABLE public.users (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   auth_user_id uuid,
+  active_policy_1 text,
+  active_policy_2 text,
   CONSTRAINT users_pkey PRIMARY KEY (user_id),
   CONSTRAINT users_auth_user_id_fkey FOREIGN KEY (auth_user_id) REFERENCES auth.users(id)
 );
@@ -1175,6 +1440,7 @@ CREATE TABLE public.village_buildings (
   constructed_by uuid,
   active_modifiers jsonb DEFAULT '{}'::jsonb,
   construction_status text DEFAULT 'idle'::text CHECK (construction_status = ANY (ARRAY['idle'::text, 'queued'::text, 'under_construction'::text, 'paused'::text, 'complete'::text])),
+  productivity_bonus numeric DEFAULT 0,
   CONSTRAINT village_buildings_pkey PRIMARY KEY (village_id, building_id),
   CONSTRAINT village_buildings_constructed_by_fkey FOREIGN KEY (constructed_by) REFERENCES public.users(user_id),
   CONSTRAINT village_buildings_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
@@ -1193,6 +1459,8 @@ CREATE TABLE public.village_modifiers (
   expires_at timestamp with time zone,
   applied_by uuid,
   created_at timestamp with time zone DEFAULT now(),
+  wood_output_bonus numeric DEFAULT 0,
+  troop_training_speed numeric DEFAULT 0,
   CONSTRAINT village_modifiers_pkey PRIMARY KEY (village_id),
   CONSTRAINT village_modifiers_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_modifiers_applied_by_fkey FOREIGN KEY (applied_by) REFERENCES public.users(user_id)
@@ -1208,9 +1476,16 @@ CREATE TABLE public.village_production (
   collection_method text DEFAULT 'automatic'::text,
   created_at timestamp with time zone DEFAULT now(),
   updated_by uuid,
+  seasonal_multiplier numeric DEFAULT 1,
   CONSTRAINT village_production_pkey PRIMARY KEY (village_id, resource_type),
   CONSTRAINT village_production_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_production_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(user_id)
+);
+CREATE TABLE public.vip_perk_entries (
+  vip_level integer NOT NULL,
+  perk_key text NOT NULL,
+  perk_value text,
+  CONSTRAINT vip_perk_entries_pkey PRIMARY KEY (vip_level, perk_key)
 );
 CREATE TABLE public.war_preplans (
   preplan_id integer NOT NULL DEFAULT nextval('war_preplans_preplan_id_seq'::regclass),
@@ -1223,6 +1498,9 @@ CREATE TABLE public.war_preplans (
   is_finalized boolean DEFAULT false,
   version integer DEFAULT 1,
   status text DEFAULT 'draft'::text,
+  start_tile_x integer,
+  start_tile_y integer,
+  initial_orders text,
   CONSTRAINT war_preplans_pkey PRIMARY KEY (preplan_id),
   CONSTRAINT war_preplans_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
   CONSTRAINT war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
