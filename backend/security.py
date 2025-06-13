@@ -3,7 +3,7 @@ import json
 from uuid import UUID
 from fastapi import Header, HTTPException
 
-__all__ = ["verify_jwt_token"]
+__all__ = ["verify_jwt_token", "require_user_id"]
 
 
 def verify_jwt_token(
@@ -39,3 +39,20 @@ def verify_jwt_token(
     except ValueError:
         raise HTTPException(status_code=401, detail="Invalid user ID")
     return uid
+
+
+def require_user_id(
+    x_user_id: str | None = Header(None),
+    authorization: str | None = Header(None),
+) -> str:
+    """Validate and return the X-User-ID header and optionally verify the JWT."""
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="User ID header missing")
+    try:
+        x_user_id = str(UUID(x_user_id))
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid user ID")
+    if authorization:
+        verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+    return x_user_id
+

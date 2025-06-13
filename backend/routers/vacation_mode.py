@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id, get_kingdom_id
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 from services.vacation_mode_service import (
     enter_vacation_mode,
     exit_vacation_mode,
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/api/vacation", tags=["vacation"])
 
 @router.post("/enter")
 def enter_vm(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -24,7 +25,7 @@ def enter_vm(
 
 @router.post("/exit")
 def exit_vm(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)

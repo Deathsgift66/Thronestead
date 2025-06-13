@@ -1,14 +1,13 @@
 from datetime import datetime, timedelta
 
-from uuid import UUID
-from fastapi import APIRouter
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database import get_db
 from backend.models import AllianceVault, AllianceVaultTransactionLog, User
 from services.audit_service import log_action
 from services.trade_log_service import record_trade
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 # Secondary router mirroring simplified REST style endpoints used by the
@@ -17,13 +16,6 @@ router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 alt_router = APIRouter(prefix="/api/vault", tags=["alliance_vault"])
 
 
-def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="User ID header missing")
-    try:
-        return str(UUID(x_user_id))
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
 
 
 def get_alliance_info(user_id: str, db: Session) -> tuple[int, str]:
@@ -42,7 +34,7 @@ class VaultTransaction(BaseModel):
 
 @router.get("/summary")
 def summary(
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     alliance_id, _ = get_alliance_info(user_id, db)
@@ -69,7 +61,7 @@ async def custom_board():
 @router.post("/deposit")
 def deposit(
     payload: VaultTransaction,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     alliance_id, _ = get_alliance_info(user_id, db)
@@ -119,7 +111,7 @@ def deposit(
 @router.post("/withdraw")
 def withdraw(
     payload: VaultTransaction,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     alliance_id, role = get_alliance_info(user_id, db)
@@ -173,7 +165,7 @@ def history(
     action: str | None = None,
     page: int = 1,
     days: int | None = None,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     alliance_id, _ = get_alliance_info(user_id, db)
@@ -208,17 +200,17 @@ def history(
 # consistent while allowing the frontend to use the documented routes.
 
 @alt_router.get("/resources")
-def alt_resources(user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+def alt_resources(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     return summary(user_id, db)
 
 
 @alt_router.post("/deposit")
-def alt_deposit(payload: VaultTransaction, user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+def alt_deposit(payload: VaultTransaction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     return deposit(payload, user_id, db)
 
 
 @alt_router.post("/withdraw")
-def alt_withdraw(payload: VaultTransaction, user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+def alt_withdraw(payload: VaultTransaction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     return withdraw(payload, user_id, db)
 
 
@@ -227,7 +219,7 @@ def alt_transactions(
     action: str | None = None,
     page: int = 1,
     days: int | None = None,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     return history(action, page, days, user_id, db)

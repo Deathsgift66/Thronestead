@@ -7,7 +7,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id, get_kingdom_id
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 from ..data import get_max_villages_allowed
 
 router = APIRouter(prefix="/api/kingdom/villages", tags=["villages"])
@@ -55,7 +56,7 @@ def _fetch_villages(db: Session, kid: int):
 
 @router.get("")
 async def list_villages(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """List villages for the player's kingdom."""
@@ -67,7 +68,7 @@ async def list_villages(
 @router.post("")
 async def create_village(
     payload: VillagePayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Create a new village if allowed by castle level and nobles."""
@@ -114,7 +115,7 @@ async def create_village(
 @router.get("/summary/{village_id}")
 def get_village_summary(
     village_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return key details for a single village owned by the player's kingdom."""
@@ -158,7 +159,7 @@ def get_village_summary(
 
 @router.get("/stream")
 async def stream_villages(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Stream village updates in real time using server-sent events."""

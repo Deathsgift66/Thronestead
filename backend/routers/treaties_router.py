@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id, get_kingdom_id
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 from ..data import alliance_treaties, kingdom_treaties
 
 router = APIRouter(prefix="/api", tags=["treaties"])
@@ -23,14 +24,14 @@ async def propose_alliance_treaty(payload: TreatyPayload) -> dict:
     return {"message": "Treaty proposed"}
 
 @router.get("/kingdom/treaties")
-async def list_kingdom_treaties(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+async def list_kingdom_treaties(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     return {"treaties": kingdom_treaties.get(kid, [])}
 
 @router.post("/kingdom/treaties")
 async def propose_kingdom_treaty(
     payload: TreatyPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)

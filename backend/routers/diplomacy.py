@@ -3,7 +3,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id, get_kingdom_id
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy"])
 
@@ -15,7 +16,7 @@ async def alliances():
 
 @router.get("/treaties")
 async def treaties(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)

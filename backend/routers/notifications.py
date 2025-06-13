@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
-from ..security import verify_jwt_token
+from ..security import verify_jwt_token, require_user_id
 from uuid import UUID
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -18,20 +18,6 @@ class NotificationAction(BaseModel):
     notification_id: str | None = None
 
 
-def get_current_user_id(
-    x_user_id: str | None = Header(None),
-    authorization: str | None = Header(None)
-) -> str:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="User ID header missing")
-    try:
-        x_user_id = str(UUID(x_user_id))
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
-    # verify token matches user when provided
-    if authorization:
-        verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
-    return x_user_id
 
 
 def _serialize_notification(row: Notification) -> dict:
@@ -53,7 +39,7 @@ def _serialize_notification(row: Notification) -> dict:
 @router.get("/list")
 def list_notifications(
     limit: int | None = None,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     query = (
@@ -76,7 +62,7 @@ def list_notifications(
 
 @router.get("/latest")
 def latest_notifications(
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
     limit: int = 5,
 ):
@@ -86,7 +72,7 @@ def latest_notifications(
 @router.delete("/{notification_id}")
 def delete_notification(
     notification_id: int,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     deleted = (
@@ -105,7 +91,7 @@ def delete_notification(
 
 @router.get("/stream")
 async def stream_notifications(
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Simple long-polling style stream of new notifications."""
@@ -132,7 +118,7 @@ async def stream_notifications(
 @router.post("/mark_read")
 def mark_read(
     payload: NotificationAction,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     notif = (
@@ -151,7 +137,7 @@ def mark_read(
 
 @router.post("/mark_all_read")
 def mark_all_read(
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     db.query(Notification).filter(Notification.user_id == user_id).update(
@@ -163,7 +149,7 @@ def mark_all_read(
 
 @router.post("/clear_all")
 def clear_all(
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     db.query(Notification).filter(Notification.user_id == user_id).delete()
