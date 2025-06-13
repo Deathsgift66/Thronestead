@@ -1,3 +1,11 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: preplan_editor.js
+Date: June 13, 2025
+Author: ChatGPT + Deathsgift66
+Description: Fully enhanced interactive pre-planning editor for 20x60 battlefield grid.
+*/
+
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -9,12 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pathBtn = document.getElementById('path-mode');
   const clearPathBtn = document.getElementById('clear-path');
   const scoreDiv = document.getElementById('scoreboard-display');
+
   let editMode = null;
-  let channel;
+  let channel = null;
   let plan = {};
 
-  renderGrid();
-
+  // ✅ Render the battlefield grid
   function renderGrid() {
     grid.innerHTML = '';
     for (let y = 0; y < 20; y++) {
@@ -23,102 +31,141 @@ document.addEventListener('DOMContentLoaded', async () => {
         tile.className = 'grid-tile';
         tile.dataset.x = x;
         tile.dataset.y = y;
-        tile.addEventListener('click', () => handleTile(x, y));
+
+        // Highlight based on current plan
         if (plan.patrol_path?.some(p => p.x === x && p.y === y)) {
           tile.classList.add('path');
         }
-        if (plan.fallback_point && plan.fallback_point.x === x && plan.fallback_point.y === y) {
+        if (plan.fallback_point?.x === x && plan.fallback_point?.y === y) {
           tile.classList.add('fallback');
         }
+
+        tile.addEventListener('click', () => handleTileClick(x, y));
         grid.appendChild(tile);
       }
     }
   }
 
-  function handleTile(x, y) {
+  // ✅ Handle tile click based on current mode
+  function handleTileClick(x, y) {
     if (editMode === 'fallback') {
       plan.fallback_point = { x, y };
     } else if (editMode === 'path') {
-      if (!plan.patrol_path) plan.patrol_path = [];
+      plan.patrol_path ??= [];
       plan.patrol_path.push({ x, y });
     }
     updatePlanArea();
     renderGrid();
   }
 
+  // ✅ Sync JSON view with plan object
   function updatePlanArea() {
     planArea.value = JSON.stringify(plan, null, 2);
   }
 
+  // ✅ Load the pre-existing plan for this war
   async function loadPlan() {
     const warId = warInput.value;
     if (!warId) return;
-    const res = await fetch(`/api/alliance-wars/preplan?alliance_war_id=${warId}`);
-    const data = await res.json();
-    plan = data.plan || {};
-    updatePlanArea();
-    renderGrid();
+    try {
+      const res = await fetch(`/api/alliance-wars/preplan?alliance_war_id=${warId}`);
+      const data = await res.json();
+      plan = data.plan || {};
+      updatePlanArea();
+      renderGrid();
+    } catch (err) {
+      console.error('❌ Failed to load preplan:', err);
+    }
   }
 
+  // ✅ Update scoreboard display
   async function updateScoreDisplay(score) {
     if (score) {
       scoreDiv.textContent = `${score.attacker_score} - ${score.defender_score}`;
     }
   }
 
+  // ✅ Subscribe to live score updates via Supabase channel
   async function loadScore() {
     const warId = warInput.value;
     if (!warId) return;
-    const { data, error } = await supabase
-      .from('alliance_war_scores')
-      .select('attacker_score, defender_score')
-      .eq('alliance_war_id', warId)
-      .single();
-    if (!error) updateScoreDisplay(data);
-    if (channel) await channel.unsubscribe();
-    channel = supabase
-      .channel('scores')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_war_scores', filter: `alliance_war_id=eq.${warId}` }, payload => updateScoreDisplay(payload.new))
-      .subscribe();
+    try {
+      const { data, error } = await supabase
+        .from('alliance_war_scores')
+        .select('attacker_score, defender_score')
+        .eq('alliance_war_id', warId)
+        .single();
+      if (!error) updateScoreDisplay(data);
+
+      if (channel) await channel.unsubscribe();
+
+      channel = supabase
+        .channel('war_scores_' + warId)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'alliance_war_scores',
+            filter: `alliance_war_id=eq.${warId}`
+          },
+          payload => updateScoreDisplay(payload.new)
+        )
+        .subscribe();
+    } catch (err) {
+      console.error('❌ Failed to load score:', err);
+    }
   }
 
-  warInput.addEventListener('change', async () => {
-    await loadPlan();
-    await loadScore();
-  });
-
-  fallbackBtn.addEventListener('click', () => {
-    editMode = 'fallback';
-  });
-  pathBtn.addEventListener('click', () => {
-    editMode = 'path';
-  });
+  // ✅ Button bindings
+  fallbackBtn.addEventListener('click', () => { editMode = 'fallback'; });
+  pathBtn.addEventListener('click', () => { editMode = 'path'; });
   clearPathBtn.addEventListener('click', () => {
     plan.patrol_path = [];
     renderGrid();
     updatePlanArea();
   });
 
+  // ✅ Listen for manual JSON edits
   planArea.addEventListener('input', () => {
     try {
       plan = JSON.parse(planArea.value || '{}');
       renderGrid();
     } catch {
-      // ignore invalid JSON while typing
+      // Invalid JSON in textarea - ignore and wait for valid parse
     }
   });
 
+  // ✅ Save the preplan to backend
   saveBtn.addEventListener('click', async () => {
-    const warId = warInput.value;
-    if (!warId) return alert('Enter war ID');
-    await fetch('/api/alliance-wars/preplan/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alliance_war_id: parseInt(warId, 10), preplan_jsonb: plan })
-    });
-    alert('Plan saved');
+    const warId = parseInt(warInput.value, 10);
+    if (!warId) return alert('Enter valid War ID');
+
+    try {
+      const res = await fetch('/api/alliance-wars/preplan/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alliance_war_id: warId,
+          preplan_jsonb: plan
+        })
+      });
+
+      if (!res.ok) throw new Error('Save failed');
+      alert('✅ Plan saved!');
+    } catch (err) {
+      console.error('❌ Error saving plan:', err);
+      alert('❌ Save failed.');
+    }
   });
 
+  // ✅ Reload plan and score when War ID changes
+  warInput.addEventListener('change', async () => {
+    await loadPlan();
+    await loadScore();
+  });
+
+  // ✅ Initial run
   await loadPlan();
   await loadScore();
 });
