@@ -103,8 +103,8 @@ function bindControls() {
 function bindRealtime() {
   mapChannel = supabase
     .channel('world-map')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'terrain_map' }, () => {
-      renderVisibleTiles();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'terrain_map' }, async () => {
+      await renderVisibleTiles();
     })
     .subscribe();
 }

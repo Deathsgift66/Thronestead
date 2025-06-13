@@ -306,16 +306,16 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAccountAlerts();
   loadFlaggedUsers();
 
-  setInterval(() => {
-    loadDashboardStats();
-    loadFlaggedUsers();
+  setInterval(async () => {
+    await loadDashboardStats();
+    await loadFlaggedUsers();
   }, REFRESH_MS);
 
   supabase
     .channel('admin_dashboard_alerts')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, () => {
-      loadAccountAlerts();
-      loadFlaggedUsers();
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, async () => {
+      await loadAccountAlerts();
+      await loadFlaggedUsers();
     })
     .subscribe();
 

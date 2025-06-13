@@ -81,8 +81,12 @@ async function trainSpies() {
 function subscribeRealtime() {
   realtimeChannel = supabase
     .channel('spies-' + currentUserId)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'spy_missions', filter: `kingdom_id=eq.${currentUserId}` }, loadMissions)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'kingdom_spies', filter: `kingdom_id=eq.${currentUserId}` }, loadSpies)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'spy_missions', filter: `kingdom_id=eq.${currentUserId}` }, async () => {
+      await loadMissions();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'kingdom_spies', filter: `kingdom_id=eq.${currentUserId}` }, async () => {
+      await loadSpies();
+    })
     .subscribe(status => {
       const indicator = document.getElementById('realtime-indicator');
       if (indicator) {

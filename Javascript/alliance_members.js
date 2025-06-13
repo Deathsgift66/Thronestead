@@ -163,8 +163,8 @@ function setupUIControls() {
 function setupRealtime() {
   membersChannel = supabase
     .channel('public:alliance_members')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_members' }, payload => {
-      fetchMembers();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_members' }, async () => {
+      await fetchMembers();
     })
     .subscribe();
 

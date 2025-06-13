@@ -79,7 +79,9 @@ function filterArticles() {
 function setupRealtime() {
   newsChannel = supabase
     .channel('public:news_articles')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, () => loadNewsArticles())
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, async () => {
+      await loadNewsArticles();
+    })
     .subscribe();
 }
 

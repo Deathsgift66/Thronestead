@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadHistory();
 
   // Refresh listings periodically for real-time updates
-  setInterval(loadListings, 15000);
-  setInterval(loadHistory, 30000);
+  setInterval(async () => { await loadListings(); }, 15000);
+  setInterval(async () => { await loadHistory(); }, 30000);
 });
 
 async function loadResources() {
