@@ -6,7 +6,8 @@ Author: Deathsgift66
 */
 // Centralized Supabase Client — supports BOTH .env and fallback — used by all pages
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { loadConfig } from './config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
-const { SUPABASE_URL, SUPABASE_ANON_KEY } = await loadConfig();
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase directly from the configuration constants
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export { supabase };

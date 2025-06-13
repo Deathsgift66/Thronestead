@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   announcementList = document.getElementById('announcement-list');
 
-  forgotLink = document.querySelector('.account-links a[href="forgot_password.html"]');
+  forgotLink = document.getElementById('forgot-password-link');
   modal = document.getElementById('forgot-password-modal');
   closeBtn = document.getElementById('close-forgot-btn');
   sendResetBtn = document.getElementById('send-reset-btn');
