@@ -97,7 +97,7 @@ def create_kingdom(
             payload.ruler_title,
             payload.banner_image,
             payload.emblem_image,
-            payload.motto,
+            payload.motto or "From Ashes, Kingdoms Rise",
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
