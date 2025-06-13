@@ -1,18 +1,10 @@
-from uuid import UUID
-from fastapi import APIRouter, HTTPException, Header, Depends
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from ..data import military_state, recruitable_units
+from ..security import require_user_id
 
 
-def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
-    """Require X-User-ID header for authentication."""
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="User ID header missing")
-    try:
-        return str(UUID(x_user_id))
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
 
 router = APIRouter(prefix="/api/kingdom_military", tags=["kingdom_military"])
 
@@ -34,7 +26,9 @@ def get_state():
 
 
 @router.get("/summary")
-def summary(user_id: str = Depends(get_current_user_id)):
+
+async def summary(user_id: str = Depends(require_user_id)):
+
     state = get_state()
     base = state["base_slots"]
     used = state["used_slots"]
@@ -50,12 +44,16 @@ def summary(user_id: str = Depends(get_current_user_id)):
 
 
 @router.get("/recruitable")
-def recruitable(user_id: str = Depends(get_current_user_id)):
+
+async def recruitable(user_id: str = Depends(require_user_id)):
+
     return {"units": recruitable_units}
 
 
 @router.post("/recruit")
-def recruit(payload: RecruitPayload, user_id: str = Depends(get_current_user_id)):
+
+async def recruit(payload: RecruitPayload, user_id: str = Depends(require_user_id)):
+
     state = get_state()
 
     if payload.quantity <= 0:
@@ -78,13 +76,17 @@ def recruit(payload: RecruitPayload, user_id: str = Depends(get_current_user_id)
 
 
 @router.get("/queue")
-def queue(user_id: str = Depends(get_current_user_id)):
+
+async def queue(user_id: str = Depends(require_user_id)):
+
     state = get_state()
     return {"queue": state["queue"]}
 
 
 @router.get("/history")
-def history(user_id: str = Depends(get_current_user_id)):
+
+async def history(user_id: str = Depends(require_user_id)):
+
     state = get_state()
     return {"history": state["history"]}
 

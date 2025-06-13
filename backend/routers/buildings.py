@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from services.audit_service import log_action
-from .progression_router import get_user_id, get_kingdom_id
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/buildings", tags=["buildings"])
 
@@ -28,7 +29,7 @@ def get_catalogue(db: Session = Depends(get_db)):
 @router.get("/village/{village_id}")
 def get_village_buildings(
     village_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -64,7 +65,7 @@ def get_village_buildings(
 @router.post("/construct")
 def construct_build(
     payload: BuildingActionPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -116,7 +117,7 @@ def construct_build(
 @router.post("/upgrade")
 def upgrade_build(
     payload: BuildingActionPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -171,7 +172,7 @@ def upgrade_build(
 @router.post("/cancel")
 def cancel_build(
     payload: BuildingActionPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -203,7 +204,7 @@ def cancel_build(
 @router.get("/info/{building_id}")
 def get_building_info(
     building_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     row = (
@@ -222,7 +223,7 @@ def get_building_info(
 @router.post("/reset")
 def reset_build(
     payload: BuildingActionPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Reset a building's level back to zero."""

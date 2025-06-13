@@ -8,7 +8,7 @@ except Exception:  # pragma: no cover
 from pydantic import BaseModel
 
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import require_user_id
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -27,7 +27,7 @@ class BulkAction(BaseModel):
 @router.post("/flag")
 def flag_player(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "flag_user", f"Flagged user {payload.player_id}")
@@ -37,7 +37,7 @@ def flag_player(
 @router.post("/freeze")
 def freeze_player(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "freeze_user", f"Froze user {payload.player_id}")
@@ -47,7 +47,7 @@ def freeze_player(
 @router.post("/ban")
 def ban_player(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "ban_user", f"Banned user {payload.player_id}")
@@ -62,7 +62,7 @@ def list_players(search: str | None = None):
 @router.post("/bulk_action")
 def bulk_action(
     payload: BulkAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(
@@ -77,7 +77,7 @@ def bulk_action(
 @router.post("/player_action")
 def player_action(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "admin_action", payload.alert_id or "")
@@ -88,7 +88,7 @@ def player_action(
 def get_admin_alerts(
     start: str | None = None,
     end: str | None = None,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Aggregate recent system alerts for the admin dashboard."""

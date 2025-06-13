@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException
+
 from pydantic import BaseModel
 
 from ..supabase_client import get_supabase_client
@@ -7,12 +11,6 @@ from ..security import verify_jwt_token
 router = APIRouter(prefix="/api/messages", tags=["messages"])
 
 
-def get_current_user_id(
-    authorization: str | None = Header(None),
-    x_user_id: str | None = Header(None),
-) -> str:
-    """Authenticate user via JWT headers."""
-    return verify_jwt_token(authorization, x_user_id)
 
 
 class MessagePayload(BaseModel):
@@ -104,7 +102,9 @@ def delete_message_route(
 
 
 @router.post("/mark_all_read")
-def mark_all_read(user_id: str = Depends(get_current_user_id)):
+
+async def mark_all_read(user_id: str = Depends(verify_jwt_token)):
+
     supabase = get_supabase_client()
     supabase.table("player_messages").update({"is_read": True}).eq(
         "recipient_id", user_id
@@ -113,8 +113,10 @@ def mark_all_read(user_id: str = Depends(get_current_user_id)):
 
 
 @router.post("/send")
-def send_message(
-    payload: MessagePayload, user_id: str = Depends(get_current_user_id)
+
+async def send_message(
+    payload: MessagePayload, user_id: str = Depends(verify_jwt_token)
+
 ):
     supabase = get_supabase_client()
     rec = (
@@ -145,7 +147,9 @@ def send_message(
 
 
 @router.get("/list")
-def list_messages(user_id: str = Depends(get_current_user_id)):
+
+async def list_messages(user_id: str = Depends(verify_jwt_token)):
+
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
@@ -178,7 +182,9 @@ class DeletePayload(BaseModel):
 
 
 @router.post("/delete")
-def delete_message(payload: DeletePayload, user_id: str = Depends(get_current_user_id)):
+
+async def delete_message(payload: DeletePayload, user_id: str = Depends(verify_jwt_token)):
+
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
@@ -197,7 +203,9 @@ def delete_message(payload: DeletePayload, user_id: str = Depends(get_current_us
 
 
 @router.get("/{message_id}")
-def get_message(message_id: int, user_id: str = Depends(get_current_user_id)):
+
+async def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
+
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from .progression_router import get_user_id
+from ..security import require_user_id
 
 
 from ..supabase_client import get_supabase_client
@@ -9,7 +9,9 @@ router = APIRouter(prefix="/api/news", tags=["news"])
 
 
 @router.get("/articles")
-def articles(user_id: str = Depends(get_user_id)):
+
+async def articles(user_id: str = Depends(require_user_id)):
+
     """Return the latest news articles visible to authenticated users."""
     supabase = get_supabase_client()
 

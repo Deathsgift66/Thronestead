@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .progression_router import get_user_id, get_kingdom_id
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 from ..database import get_db
 from ..data import military_state
 
 router = APIRouter(prefix="/api/overview", tags=["overview"])
 
 @router.get("/")
-def get_overview(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def get_overview(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     """Return a simple overview summary for the player's kingdom."""
     try:
         kingdom_id = get_kingdom_id(db, user_id)

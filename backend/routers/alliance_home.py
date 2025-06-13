@@ -4,14 +4,14 @@ from sqlalchemy import text
 
 from ..database import get_db
 from backend.models import User, Alliance, AllianceMember, AllianceVault
-from .progression_router import get_user_id
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance-home", tags=["alliance_home"])
 
 
 @router.get("/details")
 def alliance_details(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return aggregated alliance details for the current user."""

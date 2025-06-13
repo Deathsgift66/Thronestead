@@ -1,23 +1,15 @@
-from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from backend.models import AllianceMember, Alliance
 from services.audit_service import log_action
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])
 
 
-def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
-    """Require X-User-ID header for authenticated actions."""
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="User ID header missing")
-    try:
-        return str(UUID(x_user_id))
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
 
 
 class MemberAction(BaseModel):
@@ -48,7 +40,7 @@ class TransferLeadershipPayload(BaseModel):
 @router.get("")
 def list_members(
     alliance_id: int = 1,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     members = (
@@ -74,7 +66,7 @@ def list_members(
 @router.post("/join")
 def join(
     payload: JoinPayload,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = AllianceMember(
@@ -99,7 +91,7 @@ def join(
 @router.post("/leave")
 def leave(
     payload: MemberAction,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = (
@@ -122,7 +114,7 @@ def leave(
 @router.post("/promote")
 def promote(
     payload: RankPayload,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = (
@@ -143,7 +135,7 @@ def promote(
 @router.post("/demote")
 def demote(
     payload: RankPayload,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = (
@@ -164,7 +156,7 @@ def demote(
 @router.post("/remove")
 def remove(
     payload: MemberAction,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = (
@@ -185,7 +177,7 @@ def remove(
 @router.post("/contribute")
 def contribute(
     payload: ContributionPayload,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = db.query(AllianceMember).filter(AllianceMember.user_id == payload.user_id).first()
@@ -199,7 +191,7 @@ def contribute(
 @router.post("/apply")
 def apply_to_alliance(
     payload: JoinPayload,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = AllianceMember(
@@ -218,7 +210,7 @@ def apply_to_alliance(
 @router.post("/approve")
 def approve_member(
     payload: MemberAction,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     member = (
@@ -239,7 +231,7 @@ def approve_member(
 @router.post("/transfer_leadership")
 def transfer_leadership(
     payload: TransferLeadershipPayload,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     alliance = db.query(Alliance).filter_by(alliance_id=payload.alliance_id).first()

@@ -11,8 +11,8 @@ from services.research_service import start_research as db_start_research
 from services.research_service import list_research
 from services.kingdom_quest_service import start_quest as db_start_quest
 from services.kingdom_setup_service import create_kingdom_transaction
-from .progression_router import get_user_id, get_kingdom_id
-from ..security import verify_jwt_token
+from ..security import require_user_id, verify_jwt_token
+from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
@@ -171,7 +171,7 @@ def get_research(
 @router.post("/accept_quest")
 def accept_quest(
     payload: QuestPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     try:

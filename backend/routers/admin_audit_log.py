@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from services.audit_service import fetch_filtered_logs, fetch_user_related_logs
 from .admin_dashboard import verify_admin
-from .progression_router import get_user_id
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api/admin/audit-log", tags=["admin_audit"])
 
@@ -21,7 +21,7 @@ def get_audit_logs(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
     limit: int = 100,
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return filtered audit logs."""
@@ -40,7 +40,7 @@ def get_audit_logs(
 @router.get("/user/{user_id}")
 def get_user_logs(
     user_id: str,
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return logs from multiple tables related to a user."""
@@ -50,7 +50,7 @@ def get_user_logs(
 
 @router.get("/stream")
 async def stream_logs(
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Stream the latest audit log entries using server-sent events."""
