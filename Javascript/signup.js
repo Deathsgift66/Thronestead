@@ -3,89 +3,58 @@ Project Name: Kingmakers Rise Frontend
 File Name: signup.js
 Date: June 2, 2025
 Author: Deathsgift66
+Enhanced: ChatGPT
 */
-
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
+  const kingdomNameEl = document.getElementById('kingdomName');
+  const usernameEl = document.getElementById('username');
+
+  // ✅ Debounced availability checker
+  const check = debounce(checkAvailability, 400);
+  kingdomNameEl.addEventListener('input', check);
+  usernameEl.addEventListener('input', check);
+
+  // ✅ Bind form submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleSignup();
   });
 
-  const kingdomNameEl = document.getElementById('kingdomName');
-  const usernameEl = document.getElementById('username');
-
-  const check = debounce(checkAvailability, 400);
-  kingdomNameEl.addEventListener('input', check);
-  usernameEl.addEventListener('input', check);
-
+  // ✅ Show top kingdoms for social proof
   loadSignupStats();
 });
 
-// ✅ Handle Sign-Up
+// ✅ Signup flow handler
 async function handleSignup() {
-  const kingdomNameEl = document.getElementById('kingdomName');
-  const usernameEl = document.getElementById('username');
-  const emailEl = document.getElementById('email');
-  const passwordEl = document.getElementById('password');
-  const confirmPasswordEl = document.getElementById('confirmPassword');
-  const agreeLegalEl = document.getElementById('agreeLegal');
-  const toastEl = document.getElementById('toast');
+  const values = {
+    kingdomName: document.getElementById('kingdomName').value.trim(),
+    username: document.getElementById('username').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+    confirmPassword: document.getElementById('confirmPassword').value,
+    agreed: document.getElementById('agreeLegal').checked
+  };
 
-  // ✅ Field Values
-  const kingdomName = kingdomNameEl.value.trim();
-  const username = usernameEl.value.trim();
-  const email = emailEl.value.trim();
-  const password = passwordEl.value;
-  const confirmPassword = confirmPasswordEl.value;
-  const agreed = agreeLegalEl.checked;
-
-  // ✅ Validation
-  if (!kingdomName || kingdomName.length < 3) {
-    showToast("Kingdom Name must be at least 3 characters.");
-    return;
+  // ✅ Input validations
+  if (values.kingdomName.length < 3) return showToast("Kingdom Name must be at least 3 characters.");
+  if (values.username.length < 3) return showToast("Ruler Name must be at least 3 characters.");
+  if (!validateEmail(values.email)) return showToast("Invalid email address.");
+  if (values.password.length < 8) return showToast("Password must be at least 8 characters.");
+  if (!validatePasswordComplexity(values.password)) {
+    return showToast("Password must include lowercase, uppercase, number, and symbol.");
   }
+  if (values.password !== values.confirmPassword) return showToast("Passwords do not match.");
+  if (!values.agreed) return showToast("You must agree to the legal terms.");
 
-  if (!username || username.length < 3) {
-    showToast("Ruler Name must be at least 3 characters.");
-    return;
-  }
-
-  if (!validateEmail(email)) {
-    showToast("Invalid email address.");
-    return;
-  }
-
-  if (password.length < 8) {
-    showToast("Password must be at least 8 characters.");
-    return;
-  }
-
-  if (!validatePasswordComplexity(password)) {
-    showToast(
-      "Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ, 0123456789, !@#$%^&*()_+-=[]{};':\"|<>?,./`~."
-    );
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    showToast("Passwords do not match.");
-    return;
-  }
-
-  if (!agreed) {
-    showToast("You must agree to the legal terms.");
-    return;
-  }
-
-  // ✅ Payload
+  // ✅ Submit registration
   const payload = {
-    display_name: kingdomName,
-    kingdom_name: kingdomName,
-    username: username,
-    email: email,
-    password: password
+    display_name: values.kingdomName,
+    kingdom_name: values.kingdomName,
+    username: values.username,
+    email: values.email,
+    password: values.password
   };
 
   try {
@@ -94,103 +63,102 @@ async function handleSignup() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'registration failed');
+      throw new Error(err.detail || 'Registration failed');
     }
-  
+
     showToast("Sign-Up successful! Redirecting to login...");
-    setTimeout(() => {
-      window.location.href = 'login.html';
-    }, 1500);
+    setTimeout(() => (window.location.href = 'login.html'), 1500);
   } catch (err) {
     console.error("❌ Sign-Up error:", err);
     showToast("Sign-Up failed. Please try again.");
   }
 }
 
-// ✅ Helper: Validate Email
+// ✅ Email validation
 function validateEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ✅ Helper: Password Complexity
+// ✅ Password must have all character classes
 function validatePasswordComplexity(password) {
-  const lower = /[a-z]/;
-  const upper = /[A-Z]/;
-  const digit = /[0-9]/;
-  const special = /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]/;
-  return (
-    lower.test(password) &&
-    upper.test(password) &&
-    digit.test(password) &&
-    special.test(password)
-  );
+  const sets = [
+    /[a-z]/,  // lowercase
+    /[A-Z]/,  // uppercase
+    /[0-9]/,  // digits
+    /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]/  // special
+  ];
+  return sets.every(regex => regex.test(password));
 }
 
-// ✅ Helper: Toast
+// ✅ Visual toast alert
 function showToast(msg) {
-  const toastEl = document.getElementById('toast');
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+// ✅ Debounce helper
 function debounce(fn, delay) {
-  let t;
+  let timeout;
   return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), delay);
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), delay);
   };
 }
 
+// ✅ Realtime check name availability
 async function checkAvailability() {
   const kingdom = document.getElementById('kingdomName').value.trim();
   const user = document.getElementById('username').value.trim();
   if (!kingdom && !user) return;
+
   try {
     const res = await fetch('/api/signup/check', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kingdom_name: kingdom, username: user })
     });
+
     if (!res.ok) return;
     const data = await res.json();
-    const kMsg = document.getElementById('kingdomName-msg');
-    const uMsg = document.getElementById('username-msg');
-    if (kingdom) {
-      kMsg.textContent = data.kingdom_available ? 'Available' : 'Taken';
-      kMsg.className = 'availability ' + (data.kingdom_available ? 'available' : 'taken');
-    }
-    if (user) {
-      uMsg.textContent = data.username_available ? 'Available' : 'Taken';
-      uMsg.className = 'availability ' + (data.username_available ? 'available' : 'taken');
-    }
+    updateAvailabilityUI('kingdomName-msg', data.kingdom_available);
+    updateAvailabilityUI('username-msg', data.username_available);
   } catch (err) {
-    console.error('checkAvailability failed', err);
+    console.error("Availability check failed", err);
   }
 }
 
+function updateAvailabilityUI(id, available) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = available ? "Available" : "Taken";
+  el.className = 'availability ' + (available ? 'available' : 'taken');
+}
+
+// ✅ Load top kingdom list (social proof)
 async function loadSignupStats() {
   const panel = document.querySelector('.stats-panel');
   const list = document.getElementById('top-kingdoms-list');
   if (!panel || !list) return;
+
   try {
     const res = await fetch('/api/signup/stats');
     if (!res.ok) return;
     const data = await res.json();
-    list.innerHTML = '';
-    data.top_kingdoms.forEach(k => {
+    list.innerHTML = "";
+
+    (data.top_kingdoms || []).forEach(k => {
       const li = document.createElement('li');
-      li.textContent = `${k.kingdom_name} - Power ${k.score}`;
+      li.textContent = `${k.kingdom_name} — Power ${k.score}`;
       list.appendChild(li);
     });
+
     panel.classList.remove('hidden');
   } catch (err) {
-    console.error('loadSignupStats failed', err);
+    console.error("Stats fetch failed", err);
   }
 }
