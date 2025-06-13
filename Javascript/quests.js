@@ -19,8 +19,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'quest_kingdom_tracking' },
-      () => {
-        loadKingdomQuests();
+      async () => {
+        await loadKingdomQuests();
       }
     )
     .subscribe();

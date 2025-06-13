@@ -8,7 +8,6 @@ from backend.models import (
     AllianceMember,
     AllianceVault,
     User,
-    Kingdom,
     KingdomResources,
 )
 from ..security import verify_jwt_token

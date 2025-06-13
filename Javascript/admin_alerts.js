@@ -14,12 +14,12 @@ const REFRESH_MS = 30000;
 let realtimeSub;
 document.addEventListener('DOMContentLoaded', () => {
   loadAlerts();
-  setInterval(loadAlerts, REFRESH_MS);
+  setInterval(async () => { await loadAlerts(); }, REFRESH_MS);
 
   realtimeSub = supabase
     .channel('admin_alerts')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, () => {
-      loadAlerts();
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, async () => {
+      await loadAlerts();
     })
     .subscribe();
 

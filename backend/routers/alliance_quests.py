@@ -1,15 +1,13 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlalchemy import text
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
 from backend.models import (
     User,
-    Alliance,
     QuestAllianceCatalogue,
     QuestAllianceTracking,
     QuestAllianceContribution,

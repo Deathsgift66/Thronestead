@@ -66,6 +66,7 @@ Author: Deathsgift66
         <input type="date" id="filter-end" />
         <label for="filter-type">Type</label>
         <select id="filter-type">
+
           <option value="">All Types</option>
           <option value="war">Wars</option>
           <option value="treaty">Treaties</option>
@@ -78,7 +79,7 @@ Author: Deathsgift66
         <button onclick="fetchChangelog()">Refresh</button>
       </div>
       <div class="last-updated">Last updated: <span id="last-updated">--</span></div>
-      <ul id="changelog-list" class="timeline-feed"></ul>
+      <ul id="changelog-list" class="timeline-feed"><li>Loading...</li></ul>
     </section>
   </main>
 

@@ -61,6 +61,7 @@ Author: Deathsgift66
 
       <div id="setup-step" class="onboard-step">
         <h3>Kingdom Setup</h3>
+
         <label for="kingdom-name-input">Kingdom Name</label>
         <input type="text" id="kingdom-name-input" readonly />
         <label for="region-select">Region</label>
@@ -70,14 +71,25 @@ Author: Deathsgift66
         <div id="region-info" class="region-info"></div>
         <label for="village-name-input">Starting Village Name</label>
         <input type="text" id="village-name-input" />
+
         <div id="avatar-select-wrapper">
           <h4>Choose Your Avatar</h4>
           <div id="avatar-options" class="avatar-grid"></div>
           <div id="custom-avatar-container" class="hidden">
+
             <label for="custom-avatar-url">Custom Avatar URL</label>
             <input type="text" id="custom-avatar-url" />
+
           </div>
           <img id="avatar-preview" class="avatar-preview" src="Assets/avatars/default_avatar_emperor.png" alt="Avatar Preview" />
+          <label>Banner URL
+            <input type="text" id="banner_url" placeholder="Banner Image URL" />
+          </label>
+          <img id="banner-preview" src="Assets/profile_background.png" alt="Banner Preview" class="banner-img" />
+          <label>Emblem URL
+            <input type="text" id="emblem_url" placeholder="Emblem Image URL" />
+          </label>
+          <img id="emblem-preview" src="Assets/avatars/default_avatar_emperor.png" alt="Emblem Preview" class="emblem-img" />
         </div>
         <button id="create-kingdom-btn" class="btn">Create Kingdom</button>
       </div>
