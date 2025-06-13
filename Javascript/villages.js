@@ -1,3 +1,11 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: village_management.js
+Date: June 2, 2025
+Author: Deathsgift66
+*/
+// Village Management with Server-Sent Events & Real-Time Updates
+
 import { supabase } from './supabaseClient.js';
 
 let eventSource;
@@ -14,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// Load villages from API and render them
 async function loadVillages() {
   const listEl = document.getElementById('village-list');
   listEl.innerHTML = '<li>Loading villages...</li>';
@@ -23,6 +32,7 @@ async function loadVillages() {
     const res = await fetch('/api/kingdom/villages', {
       headers: { 'X-User-ID': user.id }
     });
+    if (!res.ok) throw new Error('Failed to load villages');
     const { villages } = await res.json();
     renderVillages(villages);
   } catch (err) {
@@ -31,6 +41,7 @@ async function loadVillages() {
   }
 }
 
+// Render the village list with safe escaping
 function renderVillages(villages) {
   const listEl = document.getElementById('village-list');
   listEl.innerHTML = '';
@@ -40,40 +51,53 @@ function renderVillages(villages) {
   }
   villages.forEach(v => {
     const li = document.createElement('li');
+    li.className = 'village-item';
     li.innerHTML = `
       <span class="village-name">${escapeHTML(v.village_name)}</span>
-      <span>${escapeHTML(v.village_type)}</span>
-      <span>${v.population} peasants</span>
-      <span>Buildings: ${v.building_count}</span>
+      <span class="village-type">${escapeHTML(v.village_type)}</span>
+      <span class="village-population">${v.population.toLocaleString()} peasants</span>
+      <span class="village-buildings">Buildings: ${v.building_count.toLocaleString()}</span>
     `;
     listEl.appendChild(li);
   });
 }
 
+// Setup Server-Sent Events connection for real-time updates
 function setupRealtime() {
   try {
     eventSource = new EventSource('/api/kingdom/villages/stream');
     eventSource.onmessage = ev => {
-      const villages = JSON.parse(ev.data);
-      renderVillages(villages);
+      try {
+        const villages = JSON.parse(ev.data);
+        renderVillages(villages);
+      } catch (e) {
+        console.error('Failed to parse SSE data', e);
+      }
+    };
+    eventSource.onerror = e => {
+      console.error('SSE connection error:', e);
     };
   } catch (err) {
-    console.error('SSE connection failed', err);
+    console.error('SSE initialization failed', err);
   }
   window.addEventListener('beforeunload', () => {
     if (eventSource) eventSource.close();
   });
 }
 
+// Create a new village via API call
 async function createVillage() {
   const nameInput = document.getElementById('village-name');
   const typeSelect = document.getElementById('village-type');
   const name = nameInput.value.trim();
   const type = typeSelect.value;
-  if (!name) return;
+  if (!name) {
+    showToast("Village name cannot be empty.");
+    return;
+  }
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    await fetch('/api/kingdom/villages', {
+    const res = await fetch('/api/kingdom/villages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,12 +105,19 @@ async function createVillage() {
       },
       body: JSON.stringify({ village_name: name, village_type: type })
     });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to create village');
+    }
     nameInput.value = '';
+    showToast("Village created successfully!");
   } catch (err) {
     console.error('Error creating village', err);
+    showToast("Failed to create village.");
   }
 }
 
+// Escape HTML entities for safety
 function escapeHTML(str) {
   return str?.toString()
     .replace(/&/g, '&amp;')
@@ -94,4 +125,20 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// Toast notification helper
+function showToast(msg) {
+  let toastEl = document.getElementById('toast');
+  if (!toastEl) {
+    toastEl = document.createElement("div");
+    toastEl.id = "toast";
+    toastEl.className = "toast-notification";
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  setTimeout(() => {
+    toastEl.classList.remove("show");
+  }, 3000);
 }
