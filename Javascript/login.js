@@ -178,7 +178,10 @@ async function loadAnnouncements() {
     const ctype = res.headers.get('content-type') || '';
     if (!ctype.includes('application/json')) {
       const text = await res.text();
-      console.error('Invalid JSON from announcements:', text);
+      console.error(
+        'Announcements endpoint returned non-JSON. Is the API running?'
+      );
+      console.debug(text.slice(0, 150));
       return;
     }
     const announcements = await res.json();
