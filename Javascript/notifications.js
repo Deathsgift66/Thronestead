@@ -3,6 +3,7 @@ Project Name: Kingmakers Rise Frontend
 File Name: notifications.js
 Date: June 2, 2025
 Author: Deathsgift66
+Updated: June 13, 2025
 */
 
 import { supabase } from './supabaseClient.js';
@@ -12,7 +13,6 @@ let notificationChannel;
 let allNotifications = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Validate session
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     window.location.href = "login.html";
@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await loadNotifications();
 
+  // ✅ Real-time notification updates
   notificationChannel = supabase
     .channel(`notifications-${session.user.id}`)
     .on('postgres_changes', {
@@ -47,10 +48,9 @@ window.addEventListener('beforeunload', () => {
   if (notificationChannel) supabase.removeChannel(notificationChannel);
 });
 
-// ✅ Load Notifications
+// ✅ Load Notifications from API
 async function loadNotifications() {
   const container = document.getElementById("notification-feed");
-
   container.innerHTML = "<p>Loading notifications...</p>";
 
   try {
@@ -60,22 +60,20 @@ async function loadNotifications() {
         'X-User-ID': currentSession.user.id
       }
     });
+
     const data = await res.json();
-
-    container.innerHTML = "";
-
     allNotifications = data.notifications || [];
-    renderNotifications(allNotifications);
 
+    renderNotifications(allNotifications);
   } catch (err) {
     console.error("❌ Error loading notifications:", err);
     container.innerHTML = "<p>Failed to load notifications.</p>";
   }
 }
 
+// ✅ Render Notification Cards
 function renderNotifications(list) {
   const container = document.getElementById("notification-feed");
-
   container.innerHTML = "";
 
   if (!list || list.length === 0) {
@@ -83,73 +81,78 @@ function renderNotifications(list) {
     return;
   }
 
+  // Unread first
+  list.sort((a, b) => (a.is_read === b.is_read) ? 0 : a.is_read ? 1 : -1);
+
   list.forEach(notification => {
-      const card = document.createElement("div");
-      card.classList.add("notification-item");
+    const card = document.createElement("div");
+    card.classList.add("notification-item");
+    if (!notification.is_read) card.classList.add("unread");
 
-      card.innerHTML = `
-        <div class="meta">
-          <strong>${escapeHTML(notification.title)}</strong> 
-          — [${escapeHTML(notification.category)} | ${escapeHTML(notification.priority)}] 
-          — ${formatDate(notification.created_at)}
-        </div>
-        <div class="message">
-          ${escapeHTML(notification.message)}
-        </div>
-        <div class="notification-actions">
-          ${notification.link_action ? `<a href="${escapeHTML(notification.link_action)}" class="action-btn">View</a>` : ""}
-          <button class="action-btn mark-read-btn" data-id="${notification.notification_id}">Mark Read</button>
-        </div>
-      `;
+    card.innerHTML = `
+      <div class="meta">
+        <strong>${escapeHTML(notification.title)}</strong> 
+        <span class="pill pill-${notification.priority.toLowerCase()}">${escapeHTML(notification.priority)}</span>
+        <span class="pill">${escapeHTML(notification.category)}</span>
+        <span class="timestamp">${formatDate(notification.created_at)}</span>
+      </div>
+      <div class="message">${escapeHTML(notification.message)}</div>
+      <div class="notification-actions">
+        ${notification.link_action ? `<a href="${escapeHTML(notification.link_action)}" class="action-btn">View</a>` : ""}
+        <button class="action-btn mark-read-btn" data-id="${notification.notification_id}">Mark Read</button>
+      </div>
+    `;
 
-      container.appendChild(card);
+    container.appendChild(card);
+  });
+
+  // ✅ Bind Mark Read Buttons
+  document.querySelectorAll(".mark-read-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const notificationId = btn.dataset.id;
+      await markNotificationRead(notificationId);
+      await loadNotifications();
     });
-
-    // ✅ Bind individual Mark Read buttons
-    document.querySelectorAll(".mark-read-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const notificationId = btn.dataset.id;
-        await markNotificationRead(notificationId);
-        await loadNotifications();
-      });
-    });
-
+  });
 }
 
-// ✅ Bind Toolbar
+// ✅ Filter by keyword
+function filterNotifications() {
+  const input = document.getElementById('notification-filter');
+  const term = input?.value.toLowerCase() || '';
+  const filtered = allNotifications.filter(n =>
+    n.title.toLowerCase().includes(term) ||
+    n.message.toLowerCase().includes(term) ||
+    n.category.toLowerCase().includes(term) ||
+    n.priority.toLowerCase().includes(term)
+  );
+  renderNotifications(filtered);
+}
+
+// ✅ Bind toolbar buttons
 function bindToolbar() {
   const buttons = document.querySelectorAll(".royal-button");
-
   buttons.forEach(btn => {
-    const text = btn.textContent.trim();
-
-    if (text === "Mark All Read") {
+    const action = btn.textContent.trim();
+    if (action === "Mark All Read") {
       btn.addEventListener("click", async () => {
-        if (!confirm("Mark all notifications as read?")) return;
-        await markAllRead();
-        await loadNotifications();
+        if (confirm("Mark all notifications as read?")) {
+          await markAllRead();
+          await loadNotifications();
+        }
       });
-    } else if (text === "Clear All") {
+    } else if (action === "Clear All") {
       btn.addEventListener("click", async () => {
-        if (!confirm("Clear all notifications? This cannot be undone.")) return;
-        await clearAllNotifications();
-        await loadNotifications();
+        if (confirm("Clear all notifications? This cannot be undone.")) {
+          await clearAllNotifications();
+          await loadNotifications();
+        }
       });
     }
   });
 }
 
-function filterNotifications() {
-  const input = document.getElementById('notification-filter');
-  if (!input) return;
-  const term = input.value.toLowerCase();
-  const filtered = allNotifications.filter(n =>
-    n.title.toLowerCase().includes(term) || n.message.toLowerCase().includes(term)
-  );
-  renderNotifications(filtered);
-}
-
-// ✅ Mark single notification read
+// ✅ Mark one notification
 async function markNotificationRead(notificationId) {
   try {
     const res = await fetch("/api/notifications/mark_read", {
@@ -163,19 +166,14 @@ async function markNotificationRead(notificationId) {
     });
 
     const result = await res.json();
-
-    if (!res.ok) {
-      throw new Error(result.error || "Failed to mark notification as read.");
-    }
-
-
+    if (!res.ok) throw new Error(result.error || "Failed");
   } catch (err) {
-    console.error("❌ Error marking notification as read:", err);
-    alert("Failed to mark notification as read.");
+    console.error("❌ Error marking notification:", err);
+    alert("Failed to mark as read.");
   }
 }
 
-// ✅ Mark All Read
+// ✅ Mark all notifications
 async function markAllRead() {
   try {
     const res = await fetch("/api/notifications/mark_all_read", {
@@ -185,22 +183,16 @@ async function markAllRead() {
         'X-User-ID': currentSession.user.id
       }
     });
-
     const result = await res.json();
-
-    if (!res.ok) {
-      throw new Error(result.error || "Failed to mark all as read.");
-    }
-
-    alert("All notifications marked as read.");
-
+    if (!res.ok) throw new Error(result.error || "Failed");
+    alert("All marked as read.");
   } catch (err) {
     console.error("❌ Error marking all read:", err);
-    alert("Failed to mark all as read.");
+    alert("Failed to mark all read.");
   }
 }
 
-// ✅ Clear All
+// ✅ Delete all notifications
 async function clearAllNotifications() {
   try {
     const res = await fetch("/api/notifications/clear_all", {
@@ -210,22 +202,16 @@ async function clearAllNotifications() {
         'X-User-ID': currentSession.user.id
       }
     });
-
     const result = await res.json();
-
-    if (!res.ok) {
-      throw new Error(result.error || "Failed to clear all notifications.");
-    }
-
+    if (!res.ok) throw new Error(result.error || "Failed");
     alert("All notifications cleared.");
-
   } catch (err) {
     console.error("❌ Error clearing notifications:", err);
     alert("Failed to clear notifications.");
   }
 }
 
-// ✅ Date formatting
+// ✅ Format date
 function formatDate(ts) {
   if (!ts) return "Unknown";
   const date = new Date(ts);
@@ -234,7 +220,7 @@ function formatDate(ts) {
   });
 }
 
-// ✅ Basic HTML escape
+// ✅ Escape dangerous input
 function escapeHTML(str) {
   if (!str) return "";
   return str
