@@ -6,7 +6,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 import json
 
-from ..data import military_state, recruitable_units
+from sqlalchemy.exc import SQLAlchemyError
+from ..data import military_state, recruitable_units, DEFAULT_REGIONS
 from ..database import get_db
 from services.research_service import start_research as db_start_research
 from services.research_service import list_research
@@ -53,15 +54,19 @@ class KingdomCreatePayload(BaseModel):
 
 @router.get("/regions")
 def list_regions(db: Session = Depends(get_db)):
-    rows = (
-        db.execute(
-            text(
-                "SELECT region_code, region_name, description, resource_bonus, troop_bonus FROM region_catalogue ORDER BY region_name"
+    try:
+        rows = (
+            db.execute(
+                text(
+                    "SELECT region_code, region_name, description, resource_bonus, troop_bonus FROM region_catalogue ORDER BY region_name"
+                )
             )
+            .mappings()
+            .fetchall()
         )
-        .mappings()
-        .fetchall()
-    )
+    except SQLAlchemyError:
+        rows = []
+
     regions = []
     for r in rows:
         rec = dict(r)
@@ -78,6 +83,10 @@ def list_regions(db: Session = Depends(get_db)):
             except Exception:
                 rec["troop_bonus"] = {}
         regions.append(rec)
+
+    if not regions:
+        regions = DEFAULT_REGIONS
+
     return {"regions": regions}
 
 
