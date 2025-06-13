@@ -8,22 +8,9 @@ Author: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
-// Initialize Supabase Client
-
 // DOM Elements
-let loginForm;
-let loginIdInput;
-let passwordInput;
-let loginButton;
-let messageContainer;
-
-// Forgot Password Modal Elements
-let forgotLink;
-let modal;
-let closeBtn;
-let sendResetBtn;
-let forgotMessage;
-let announcementList;
+let loginForm, loginIdInput, passwordInput, loginButton, messageContainer;
+let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage, announcementList;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
@@ -33,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   messageContainer = document.getElementById('message');
 
   announcementList = document.getElementById('announcement-list');
-
   forgotLink = document.getElementById('forgot-password-link');
   modal = document.getElementById('forgot-password-modal');
   closeBtn = document.getElementById('close-forgot-btn');
@@ -41,17 +27,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   forgotMessage = document.getElementById('forgot-message');
 
   if (forgotLink) {
-    forgotLink.addEventListener('click', function (e) {
+    forgotLink.addEventListener('click', e => {
       e.preventDefault();
       modal.classList.remove('hidden');
-      forgotMessage.textContent = ''; // Clear old messages
+      forgotMessage.textContent = '';
     });
   }
 
   if (closeBtn) {
-    closeBtn.addEventListener('click', function () {
-      modal.classList.add('hidden');
-    });
+    closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
   }
 
   if (sendResetBtn) {
@@ -65,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAnnouncements();
 });
 
+// 🔐 Handle login form submission
 async function handleLogin(e) {
   e.preventDefault();
   loginButton.disabled = true;
@@ -76,39 +61,36 @@ async function handleLogin(e) {
   let email = identifier;
 
   if (!isEmail(identifier)) {
-    const { data: userData, error: userErr } = await supabase
+    // Convert username to email
+    const { data: userData, error } = await supabase
       .from('users')
       .select('email')
       .eq('username', identifier)
       .single();
-    if (userErr || !userData) {
+
+    if (error || !userData) {
       showMessage('error', 'User not found.');
-      loginButton.disabled = false;
-      loginButton.textContent = 'Enter the Realm';
+      resetLoginButton();
       return;
     }
     email = userData.email;
   }
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       showMessage('error', error.message);
-    } else if (data && data.user) {
-      // ✅ Successful login — fetch progression and check setup
+    } else if (data?.user) {
       await fetchAndStorePlayerProgression(data.user.id);
 
-      const { data: details, error: fetchErr } = await supabase
+      const { data: details, error: setupErr } = await supabase
         .from('users')
         .select('setup_complete')
         .eq('user_id', data.user.id)
         .single();
 
-      if (fetchErr || !details) {
+      if (setupErr || !details) {
         showMessage('error', 'Failed to check setup status.');
         return;
       }
@@ -121,14 +103,19 @@ async function handleLogin(e) {
   } catch (err) {
     showMessage('error', `Unexpected error: ${err.message}`);
   } finally {
-    loginButton.disabled = false;
-    loginButton.textContent = 'Enter the Realm';
+    resetLoginButton();
   }
 }
 
+// 🔁 Reset button state
+function resetLoginButton() {
+  loginButton.disabled = false;
+  loginButton.textContent = 'Enter the Realm';
+}
+
+// 🧠 Handle password reset link
 async function handleReset() {
   const email = document.getElementById('forgot-email').value.trim();
-
   if (!email) {
     forgotMessage.textContent = 'Please enter a valid email.';
     return;
@@ -139,7 +126,7 @@ async function handleReset() {
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://www.kingmakersrise.com/update-password'
+      redirectTo: 'https://www.kingmakersrise.com/update-password',
     });
 
     if (error) {
@@ -155,12 +142,12 @@ async function handleReset() {
   }
 }
 
-// Helper to check if string looks like an email
+// ✅ Simple email validator
 function isEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
 }
 
-// Show message function
+// 📣 Show banner messages
 function showMessage(type, text) {
   messageContainer.textContent = text;
   messageContainer.className = `message show ${type}-message`;
@@ -170,6 +157,7 @@ function showMessage(type, text) {
   }, 5000);
 }
 
+// 🗞 Load login page announcements
 async function loadAnnouncements() {
   if (!announcementList) return;
   try {
@@ -178,9 +166,7 @@ async function loadAnnouncements() {
     const ctype = res.headers.get('content-type') || '';
     if (!ctype.includes('application/json')) {
       const text = await res.text();
-      console.error(
-        'Announcements endpoint returned non-JSON. Is the API running?'
-      );
+      console.error('❌ Announcements returned HTML instead of JSON');
       console.debug(text.slice(0, 150));
       return;
     }
@@ -191,6 +177,6 @@ async function loadAnnouncements() {
       announcementList.appendChild(li);
     });
   } catch (err) {
-    console.error('Failed to load announcements', err);
+    console.error('❌ Failed to load announcements:', err);
   }
 }
