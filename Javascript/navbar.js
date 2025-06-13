@@ -1,3 +1,15 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: navbar.js
+Date: June 2, 2025
+Author: Deathsgift66
+Updated: June 13, 2025
+Description:
+- Loads profile data into the nav bar
+- Supports real-time badge updates (unread messages/notifications)
+- Built-in error fallback and polling
+*/
+
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -5,39 +17,58 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nameEl = document.getElementById('nav-username');
   const badgeEl = document.getElementById('nav-unread');
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-
-  const headers = {
-    'X-User-ID': session.user.id,
-    Authorization: `Bearer ${session.access_token}`
-  };
-
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.warn("⚠️ No active session. Navbar profile not loaded.");
+      return;
+    }
+
+    const headers = {
+      'X-User-ID': session.user.id,
+      Authorization: `Bearer ${session.access_token}`
+    };
+
+    // Fetch basic profile info
     const res = await fetch('/api/navbar/profile', { headers });
+    if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`);
     const data = await res.json();
+
     if (nameEl) nameEl.textContent = data.username || 'Unknown';
     if (picEl && data.profile_picture_url) picEl.src = data.profile_picture_url;
-    if (badgeEl) badgeEl.textContent = data.unread_messages > 0 ? data.unread_messages : '';
+
+    // Initialize badge count
+    if (badgeEl) badgeEl.textContent = (data.unread_messages > 0) ? data.unread_messages : '';
+
+    // Begin polling for dynamic updates
     pollCounters(headers, badgeEl);
+
   } catch (err) {
-    console.error('Failed to load navbar profile', err);
+    console.error('❌ Failed to load navbar profile:', err);
+    if (nameEl) nameEl.textContent = 'Guest';
+    if (badgeEl) badgeEl.textContent = '';
   }
 });
 
+/**
+ * Poll unread counters and update badge display every 60 seconds.
+ * @param {Object} headers - Auth headers.
+ * @param {HTMLElement} badgeEl - Badge DOM element.
+ */
 async function pollCounters(headers, badgeEl) {
-  async function fetchCounters() {
+  const fetchCounters = async () => {
     try {
       const res = await fetch('/api/navbar/counters', { headers });
+      if (!res.ok) throw new Error(`Counters fetch failed: ${res.status}`);
       const data = await res.json();
-      if (badgeEl) {
-        const total = (data.unread_messages || 0) + (data.unread_notifications || 0);
-        badgeEl.textContent = total > 0 ? total : '';
-      }
+
+      const total = (data.unread_messages || 0) + (data.unread_notifications || 0);
+      if (badgeEl) badgeEl.textContent = total > 0 ? total : '';
     } catch (err) {
-      console.error('Failed to fetch counters', err);
+      console.warn('⚠️ Failed to fetch navbar counters:', err);
     }
-  }
+  };
+
   await fetchCounters();
-  setInterval(fetchCounters, 60000);
+  setInterval(fetchCounters, 60000); // Refresh every 60s
 }
