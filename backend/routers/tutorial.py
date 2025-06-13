@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from .progression_router import get_user_id
+from ..security import require_user_id
 
 
 from ..supabase_client import get_supabase_client
@@ -10,7 +10,9 @@ router = APIRouter(prefix="/api/tutorial", tags=["tutorial"])
 
 
 @router.get("/steps")
-async def steps(user_id: str = Depends(get_user_id)):
+
+async def steps(user_id: str = Depends(require_user_id)):
+
     """Return ordered tutorial steps from Supabase for the authenticated user."""
     supabase = get_supabase_client()
 

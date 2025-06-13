@@ -238,16 +238,16 @@ function updateLastUpdated() {
 }
 
 function startAutoRefresh() {
-  setInterval(() => {
-    loadMarketListings();
+  setInterval(async () => {
+    await loadMarketListings();
   }, 30000);
 }
 
 function subscribeRealtime() {
   realtimeChannel = supabase
     .channel('public:market_listings')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'market_listings' }, () => {
-      loadMarketListings();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'market_listings' }, async () => {
+      await loadMarketListings();
     })
     .subscribe(status => {
       const indicator = document.getElementById('realtime-indicator');

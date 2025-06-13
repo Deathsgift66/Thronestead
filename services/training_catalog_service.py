@@ -1,9 +1,11 @@
 """Helpers for reading the training_catalog table."""
 
+import logging
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover - fallback if SQLAlchemy missing
+except ImportError:  # pragma: no cover - fallback if SQLAlchemy missing
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 

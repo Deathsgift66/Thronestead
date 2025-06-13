@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import require_user_id
 from services.audit_service import log_action, log_alliance_activity
 
 router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
@@ -53,7 +53,7 @@ def validate_alliance_permission(db: Session, user_id: str, permission: str) -> 
 
 
 @router.get("/my-treaties")
-def get_my_treaties(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def get_my_treaties(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     aid = get_alliance_id(db, user_id)
     rows = db.execute(
         text(
@@ -86,7 +86,7 @@ def get_my_treaties(user_id: str = Depends(get_user_id), db: Session = Depends(g
 @router.post("/propose")
 def propose_treaty(
     payload: ProposePayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid = validate_alliance_permission(db, user_id, "can_manage_treaties")
@@ -112,7 +112,7 @@ def propose_treaty(
 @router.post("/respond")
 def respond_to_treaty(
     payload: RespondPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     treaty = db.execute(
@@ -150,7 +150,7 @@ def respond_to_treaty(
 def renew_treaty(
     treaty_id: int,
     end_date: str | None = None,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     row = db.execute(
@@ -181,7 +181,7 @@ def renew_treaty(
 @router.get("/view/{treaty_id}")
 def view_treaty(
     treaty_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     row = db.execute(

@@ -105,7 +105,9 @@ psql -f full_schema.sql
 
 ### Supabase Configuration
 
-Environment variables for the Supabase connection are loaded from the `.ENV` file at the project root. Copy `.env.example` to `.ENV` and update it with your credentials. The key variables are:
+Environment variables for the Supabase connection are loaded from the `.ENV` file at the project root. Copy `.env.example` to `.ENV` and update it with your credentials. Frontend pages read these values via `env.js`, which must be generated from `env.example.js`.
+
+The key variables are:
 
 ```
 SUPABASE_URL
@@ -116,7 +118,9 @@ VITE_SUPABASE_ANON_KEY
 MASTER_ROLLBACK_PASSWORD
 ```
 
-Update these values with your project credentials to enable API access.
+Update these values with your project credentials to enable API access. Then copy
+`env.example.js` to `env.js` so the frontend can access the public values at
+runtime.
 
 This will create all tables referenced by the frontend.
 

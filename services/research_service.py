@@ -3,11 +3,12 @@ from __future__ import annotations
 """Service functions for kingdom technology research tracking."""
 
 from datetime import datetime, timedelta
+import logging
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover - fallback when SQLAlchemy isn't installed
+except ImportError:  # pragma: no cover - fallback when SQLAlchemy isn't installed
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 

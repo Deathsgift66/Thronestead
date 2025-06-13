@@ -11,7 +11,8 @@ let currentSession;
 let mapChannel;
 
 const canvas = document.getElementById('world-canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas?.getContext('2d');
+if (!canvas || !ctx) throw new Error('world-canvas element missing');
 
 let zoom = 1;
 let offsetX = 0;
@@ -50,9 +51,9 @@ window.addEventListener('beforeunload', () => {
 });
 
 function bindControls() {
-  document.getElementById('zoom-in').addEventListener('click', () => { zoom = Math.min(zoom * 1.25, 10); renderVisibleTiles(); });
-  document.getElementById('zoom-out').addEventListener('click', () => { zoom = Math.max(zoom / 1.25, 0.1); renderVisibleTiles(); });
-  document.getElementById('center-map').addEventListener('click', () => { offsetX = 0; offsetY = 0; renderVisibleTiles(); });
+  document.getElementById('zoom-in')?.addEventListener('click', () => { zoom = Math.min(zoom * 1.25, 10); renderVisibleTiles(); });
+  document.getElementById('zoom-out')?.addEventListener('click', () => { zoom = Math.max(zoom / 1.25, 0.1); renderVisibleTiles(); });
+  document.getElementById('center-map')?.addEventListener('click', () => { offsetX = 0; offsetY = 0; renderVisibleTiles(); });
 
   canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
@@ -103,8 +104,8 @@ function bindControls() {
 function bindRealtime() {
   mapChannel = supabase
     .channel('world-map')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'terrain_map' }, () => {
-      renderVisibleTiles();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'terrain_map' }, async () => {
+      await renderVisibleTiles();
     })
     .subscribe();
 }

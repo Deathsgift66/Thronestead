@@ -1,21 +1,19 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlalchemy import text
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
 from backend.models import (
     User,
-    Alliance,
     QuestAllianceCatalogue,
     QuestAllianceTracking,
     QuestAllianceContribution,
 )
 from services.audit_service import log_action
-from .progression_router import get_user_id
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance-quests", tags=["alliance_quests"])
 
@@ -58,7 +56,7 @@ def get_quest_catalogue(db: Session = Depends(get_db)):
 
 @router.get("/available")
 def get_available_quests(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid, _ = get_alliance_info(user_id, db)
@@ -88,7 +86,7 @@ def get_available_quests(
 
 @router.get("/active")
 def get_active_quests(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid, _ = get_alliance_info(user_id, db)
@@ -112,7 +110,7 @@ def get_active_quests(
 
 @router.get("/completed")
 def get_completed_quests(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid, _ = get_alliance_info(user_id, db)
@@ -137,7 +135,7 @@ def get_completed_quests(
 @router.post("/start")
 def start_quest(
     payload: QuestStartPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid, role = get_alliance_info(user_id, db)
@@ -191,7 +189,7 @@ def start_quest(
 @router.get("/contributions")
 def get_contributions(
     quest_code: Optional[str] = Query(None),
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid, _ = get_alliance_info(user_id, db)
@@ -217,7 +215,7 @@ def get_contributions(
 @router.get("/detail/{quest_code}")
 def quest_detail(
     quest_code: str,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return detailed information about a specific alliance quest."""
@@ -283,7 +281,7 @@ class ProgressPayload(BaseModel):
 @router.post("/progress")
 def update_progress(
     payload: ProgressPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid, _ = get_alliance_info(user_id, db)
@@ -343,7 +341,7 @@ class ClaimPayload(BaseModel):
 @router.post("/claim")
 def claim_reward(
     payload: ClaimPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid, role = get_alliance_info(user_id, db)

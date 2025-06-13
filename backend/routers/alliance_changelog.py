@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 
 from datetime import datetime
-from .progression_router import get_user_id
+from ..security import require_user_id
 
 
 from ..supabase_client import get_supabase_client
@@ -11,9 +11,9 @@ router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"]
 
 
 @router.get("")
-async def get_alliance_changelog(
+def get_alliance_changelog(
     since: str | None = None,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
 ):
     """Return latest alliance changelog events for the player's alliance."""
     supabase = get_supabase_client()

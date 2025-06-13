@@ -64,8 +64,8 @@ function renderChangelog(list) {
     if (entry.new) li.classList.add('new-entry');
     li.innerHTML = `
       <div class="log-time">${new Date(entry.timestamp).toLocaleString()}</div>
-      <div class="log-type ${entry.event_type}">${entry.event_type}</div>
-      <div class="log-description">${entry.description}</div>
+      <div class="log-type ${escapeHTML(entry.event_type)}">${escapeHTML(entry.event_type)}</div>
+      <div class="log-description">${escapeHTML(entry.description)}</div>
     `;
     container.appendChild(li);
   });
@@ -76,3 +76,14 @@ window.addEventListener('DOMContentLoaded', fetchChangelog);
 window.addEventListener('DOMContentLoaded', () => {
   setInterval(fetchChangelog, 30000);
 });
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}

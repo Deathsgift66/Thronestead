@@ -1,4 +1,6 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Header
+
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -6,20 +8,12 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from services.progression_service import calculate_troop_slots, get_total_modifiers
-from uuid import UUID
 from ..data import get_max_villages_allowed
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api/progression", tags=["progression"])
 
 
-def get_user_id(x_user_id: str | None = Header(None)) -> str:
-    """Validate and return the X-User-ID header as a UUID string."""
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="User ID header missing")
-    try:
-        return str(UUID(x_user_id))
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
 
 
 def get_kingdom_id(db: Session, user_id: str) -> int:
@@ -43,7 +37,7 @@ class KnightPayload(BaseModel):
 
 @router.get("/castle")
 def get_castle_level(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -75,7 +69,7 @@ def get_castle_level(
 
 @router.post("/castle")
 def upgrade_castle(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -165,7 +159,7 @@ def upgrade_castle(
 
 @router.get("/nobles")
 def get_nobles(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -180,7 +174,7 @@ def get_nobles(
 @router.post("/nobles")
 def assign_noble(
     payload: NoblePayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -219,7 +213,7 @@ def assign_noble(
 
 @router.get("/knights")
 def get_knights(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -233,7 +227,7 @@ def get_knights(
 @router.post("/knights")
 def assign_knight(
     payload: KnightPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
@@ -272,7 +266,7 @@ def assign_knight(
 
 @router.post("/refresh")
 def refresh_progression(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Recalculate progression related values for the player."""
@@ -288,7 +282,7 @@ def refresh_progression(
 
 @router.get("/summary")
 def progression_summary(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return a quick overview of castle level, nobles, knights and slots."""
@@ -345,7 +339,7 @@ def progression_summary(
 
 @router.get("/modifiers")
 def get_modifiers(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return all active modifiers for the player's kingdom."""

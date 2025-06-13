@@ -40,7 +40,7 @@ def _get_requirements(code: str):
 
 
 @router.post("/start")
-async def start_project(
+def start_project(
     payload: ProjectPayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
@@ -76,7 +76,7 @@ async def start_project(
 
 
 @router.get("/status/{kingdom_id}")
-async def project_status(
+def project_status(
     kingdom_id: int,
     user_id: str = Depends(verify_jwt_token),
 ):

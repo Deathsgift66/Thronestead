@@ -1,23 +1,17 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends
 
 router = APIRouter()
 
 
-def get_current_user_id(x_user_id: str | None = Header(None)) -> str:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="User ID header missing")
-    try:
-        return str(UUID(x_user_id))
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
+from ..security import require_user_id
 
 
 from ..supabase_client import get_supabase_client
 
 
 @router.get("/api/alliance-members/view")
-def view_alliance_members(user_id: str = Depends(get_current_user_id)):
+def view_alliance_members(user_id: str = Depends(require_user_id)):
     supabase = get_supabase_client()
 
     user_res = (

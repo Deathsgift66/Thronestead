@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/login", tags=["login"])
 
 
 @router.get("/announcements", response_class=JSONResponse)
-async def get_announcements():
+def get_announcements():
     """Return the latest public announcements for the login screen."""
     supabase = get_supabase_client()
 
@@ -44,7 +44,7 @@ class EventPayload(BaseModel):
 
 
 @router.post("/event")
-async def log_login_event(
+def log_login_event(
     payload: EventPayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),

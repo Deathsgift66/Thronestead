@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends
+import logging
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 from pydantic import BaseModel
 
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import require_user_id
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -25,9 +26,9 @@ class BulkAction(BaseModel):
 
 
 @router.post("/flag")
-async def flag_player(
+def flag_player(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "flag_user", f"Flagged user {payload.player_id}")
@@ -35,9 +36,9 @@ async def flag_player(
 
 
 @router.post("/freeze")
-async def freeze_player(
+def freeze_player(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "freeze_user", f"Froze user {payload.player_id}")
@@ -45,9 +46,9 @@ async def freeze_player(
 
 
 @router.post("/ban")
-async def ban_player(
+def ban_player(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "ban_user", f"Banned user {payload.player_id}")
@@ -55,14 +56,14 @@ async def ban_player(
 
 
 @router.get("/players")
-async def list_players(search: str | None = None):
+def list_players(search: str | None = None):
     return {"players": [], "search": search}
 
 
 @router.post("/bulk_action")
-async def bulk_action(
+def bulk_action(
     payload: BulkAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(
@@ -75,9 +76,9 @@ async def bulk_action(
 
 
 @router.post("/player_action")
-async def player_action(
+def player_action(
     payload: PlayerAction,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "admin_action", payload.alert_id or "")
@@ -85,10 +86,10 @@ async def player_action(
 
 
 @router.get("/alerts")
-async def get_admin_alerts(
+def get_admin_alerts(
     start: str | None = None,
     end: str | None = None,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Aggregate recent system alerts for the admin dashboard."""

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -9,11 +7,9 @@ from backend import models
 from ..security import verify_jwt_token
 
 from ..battle_engine import (
-    BattleTickHandler,
     TerrainGenerator,
     WarState,
     Unit,
-    WarManager,
     war_manager,
 )
 

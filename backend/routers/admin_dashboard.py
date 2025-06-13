@@ -6,7 +6,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import require_user_id
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin_dashboard"])
@@ -24,7 +24,7 @@ def verify_admin(user_id: str, db: Session) -> None:
 
 @router.get("/dashboard")
 def dashboard_summary(
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ) -> dict:
     """Return basic dashboard stats and latest logs."""
@@ -56,7 +56,7 @@ def get_audit_logs(
     sort_by: str = "created_at",
     sort_dir: str = "desc",
     user_id: Optional[str] = Query(None),
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Return paginated audit logs with optional search and sorting."""
@@ -87,7 +87,7 @@ def get_audit_logs(
 def toggle_flag(
     flag_key: str,
     value: bool,
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Toggle a system flag on or off."""
@@ -111,7 +111,7 @@ def update_kingdom_field(
     kingdom_id: int,
     field: str,
     value: Any,
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Update an arbitrary kingdom field."""
@@ -130,7 +130,7 @@ def update_kingdom_field(
 
 @router.get("/flagged")
 def get_flagged_users(
-    admin_user_id: str = Depends(get_user_id),
+    admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ) -> list[dict]:
     """Return list of flagged users for review."""
@@ -151,7 +151,7 @@ class RollbackRequest(BaseModel):
 
 
 @router.post("/wars/force_end")
-def force_end_war(payload: WarAction, admin_user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def force_end_war(payload: WarAction, admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     verify_admin(admin_user_id, db)
     db.execute(text("UPDATE wars_tactical SET war_status = 'completed', is_concluded = TRUE, ended_at = NOW() WHERE war_id = :wid"), {"wid": payload.war_id})
     db.commit()
@@ -160,7 +160,7 @@ def force_end_war(payload: WarAction, admin_user_id: str = Depends(get_user_id),
 
 
 @router.post("/wars/rollback_tick")
-def rollback_combat_tick(payload: WarAction, admin_user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def rollback_combat_tick(payload: WarAction, admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     verify_admin(admin_user_id, db)
     db.execute(text("UPDATE wars_tactical SET battle_tick = battle_tick - 1 WHERE war_id = :wid AND battle_tick > 0"), {"wid": payload.war_id})
     db.execute(text("DELETE FROM combat_logs WHERE combat_id IN (SELECT combat_id FROM combat_logs WHERE war_id = :wid ORDER BY tick_number DESC LIMIT 1)"), {"wid": payload.war_id})
@@ -170,7 +170,7 @@ def rollback_combat_tick(payload: WarAction, admin_user_id: str = Depends(get_us
 
 
 @router.post("/rollback/database")
-def rollback_database(payload: RollbackRequest, admin_user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+def rollback_database(payload: RollbackRequest, admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     """Trigger a database rollback if the master password matches."""
     verify_admin(admin_user_id, db)
     master = os.getenv("MASTER_ROLLBACK_PASSWORD")

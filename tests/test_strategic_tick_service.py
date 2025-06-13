@@ -1,6 +1,5 @@
 from services.strategic_tick_service import (
     update_project_progress,
-    update_quest_progress,
     expire_treaties,
     activate_pending_wars,
     check_war_status,

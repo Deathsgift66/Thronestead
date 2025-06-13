@@ -1,12 +1,16 @@
+import logging
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover - fallback when SQLAlchemy isn't installed
+except ImportError:  # pragma: no cover - fallback when SQLAlchemy isn't installed
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 
 
-def award_achievement(db: Session, kingdom_id: int, achievement_code: str):
+def award_achievement(
+    db: Session, kingdom_id: int, achievement_code: str
+) -> dict | None:
     """Award an achievement if not already earned.
 
     Returns the reward JSON if newly awarded, otherwise ``None``.
@@ -43,7 +47,7 @@ def award_achievement(db: Session, kingdom_id: int, achievement_code: str):
     return reward_row[0] if reward_row else None
 
 
-def list_achievements(db: Session, kingdom_id: int):
+def list_achievements(db: Session, kingdom_id: int) -> list[dict]:
     """Return all achievements with unlock status for a kingdom."""
     rows = db.execute(
         text(

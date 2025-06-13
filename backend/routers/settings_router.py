@@ -6,12 +6,12 @@ from sqlalchemy.orm import Session
 
 from ..data import global_game_settings, load_game_settings
 from ..database import get_db
-from .progression_router import get_user_id
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
 @router.get("/game/settings")
-async def get_settings() -> dict:
+def get_settings() -> dict:
     """Return the currently loaded game settings."""
     return global_game_settings
 
@@ -21,9 +21,9 @@ class SettingPayload(BaseModel):
     is_active: bool = True
 
 @router.post("/admin/game_settings")
-async def update_setting(
+def update_setting(
     payload: SettingPayload,
-    admin_id: str = Depends(get_user_id),
+    admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ) -> dict:
     """Update a game setting and reload the in-memory cache."""

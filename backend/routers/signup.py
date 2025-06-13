@@ -15,7 +15,7 @@ class CheckPayload(BaseModel):
 
 
 @router.post("/check")
-async def check_availability(payload: CheckPayload):
+def check_availability(payload: CheckPayload):
     """Check if kingdom or username is available."""
     sb = get_supabase_client()
     available_kingdom = True
@@ -48,7 +48,7 @@ async def check_availability(payload: CheckPayload):
 
 
 @router.get("/stats")
-async def signup_stats():
+def signup_stats():
     """Return top kingdom stats for signup page."""
     sb = get_supabase_client()
     try:

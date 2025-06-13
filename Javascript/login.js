@@ -25,7 +25,7 @@ let sendResetBtn;
 let forgotMessage;
 let announcementList;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
   loginIdInput = document.getElementById('login-id');
   passwordInput = document.getElementById('password');
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginForm.addEventListener('submit', handleLogin);
   }
 
-  loadAnnouncements();
+  await loadAnnouncements();
 });
 
 async function handleLogin(e) {

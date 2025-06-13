@@ -14,7 +14,7 @@ let currentUser = null;
 function authFetch(url, options = {}) {
   options.headers = {
     ...(options.headers || {}),
-    'X-User-Id': currentUser?.id || ''
+    'X-User-ID': currentUser?.id || ''
   };
   return fetch(url, options);
 }
@@ -139,11 +139,11 @@ async function loadCustomBoard() {
     const textSlot = document.getElementById("custom-text-slot");
 
     imgSlot.innerHTML = data.image_url
-      ? `<img src="${data.image_url}" alt="Vault Custom Banner" class="vault-banner-image">`
+      ? `<img src="${escapeHTML(data.image_url)}" alt="Vault Custom Banner" class="vault-banner-image">`
       : "<p>No custom image set.</p>";
 
     textSlot.innerHTML = data.custom_text
-      ? `<p>${data.custom_text}</p>`
+      ? `<p>${escapeHTML(data.custom_text)}</p>`
       : "<p>No custom text set.</p>";
 
   } catch (err) {
@@ -272,4 +272,15 @@ async function loadVaultHistory() {
     console.error("❌ Error loading vault history:", err);
     tbody.innerHTML = `<tr><td colspan="6">Failed to load history.</td></tr>`;
   }
+}
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

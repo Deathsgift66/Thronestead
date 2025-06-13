@@ -10,7 +10,6 @@ from backend.routers.messages import (
     list_messages,
     get_message,
     delete_message,
-    mark_all_read,
     MessagePayload,
     DeletePayload,
 )
@@ -83,7 +82,7 @@ def test_view_message_marks_read():
     db.commit()
 
     res = messages.view_message(message_id=msg.message_id, user_id=uid1, db=db)
-    assert res["is_read"] is True
+    assert res["is_read"] == True
     assert res["sender"] == "Lancelot"
 
 
@@ -97,7 +96,7 @@ def test_delete_message_sets_flag():
 
     messages.delete_message(message_id=msg.message_id, user_id=uid1, db=db)
     row = db.query(PlayerMessage).filter_by(message_id=msg.message_id).first()
-    assert row.deleted_by_recipient is True
+    assert row.deleted_by_recipient == True
 
 
 def test_mark_all_read_updates_rows():

@@ -16,7 +16,7 @@ class ScrollPayload(BaseModel):
 
 
 @router.get("/latest")
-async def latest_scrolls(user_id: str = Depends(verify_jwt_token)):
+def latest_scrolls(user_id: str = Depends(verify_jwt_token)):
     """Return recent town crier scrolls for authenticated users."""
     supabase = get_supabase_client()
 
@@ -48,7 +48,7 @@ async def latest_scrolls(user_id: str = Depends(verify_jwt_token)):
 
 
 @router.post("/post")
-async def post_scroll(payload: ScrollPayload, user_id: str = Depends(verify_jwt_token)):
+def post_scroll(payload: ScrollPayload, user_id: str = Depends(verify_jwt_token)):
     supabase = get_supabase_client()
     prof = (
         supabase.table("users")

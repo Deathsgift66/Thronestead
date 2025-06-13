@@ -233,9 +233,9 @@ function updateLastUpdated() {
 }
 
 function startAutoRefresh() {
-  setInterval(() => {
-    loadMilitarySummary();
-    loadTrainingQueue();
+  setInterval(async () => {
+    await loadMilitarySummary();
+    await loadTrainingQueue();
     updateLastUpdated();
   }, 30000);
 }
@@ -243,9 +243,9 @@ function startAutoRefresh() {
 function subscribeRealtime() {
   realtimeChannel = supabase
     .channel('public:training_queue')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'training_queue' }, () => {
-      loadTrainingQueue();
-      loadMilitarySummary();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'training_queue' }, async () => {
+      await loadTrainingQueue();
+      await loadMilitarySummary();
     })
     .subscribe(status => {
       const indicator = document.getElementById('realtime-indicator');

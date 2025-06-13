@@ -4,7 +4,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_user_id, get_kingdom_id
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 from services.audit_service import log_action, log_alliance_activity
 from backend.models import Notification
 
@@ -49,7 +50,7 @@ class RespondPayload(BaseModel):
 @router.post("/declare")
 def declare_war(
     payload: DeclarePayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     attacker = get_alliance_id(db, user_id)
@@ -84,7 +85,7 @@ def declare_war(
 @router.post("/respond")
 def respond_war(
     payload: RespondPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid = get_alliance_id(db, user_id)
@@ -118,7 +119,7 @@ def respond_war(
 
 @router.get("/list")
 def list_wars(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     aid = get_alliance_id(db, user_id)
@@ -148,7 +149,7 @@ def list_wars(
 @router.get("/view")
 def view_war_details(
     alliance_war_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, alliance_war_id)
@@ -185,7 +186,7 @@ def view_war_details(
 def get_combat_logs(
     alliance_war_id: int,
     since_tick: int = 0,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, alliance_war_id)
@@ -207,7 +208,7 @@ def get_combat_logs(
 @router.get("/preplan")
 def get_preplan(
     alliance_war_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, alliance_war_id)
@@ -230,7 +231,7 @@ def get_preplan(
 def submit_preplan(
     alliance_war_id: int,
     preplan_jsonb: dict,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, alliance_war_id)
@@ -251,7 +252,7 @@ def submit_preplan(
 @router.get("/scoreboard")
 def get_scoreboard(
     alliance_war_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, alliance_war_id)
@@ -269,7 +270,7 @@ def get_scoreboard(
 @router.get("/participants")
 def get_participants(
     alliance_war_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, alliance_war_id)
@@ -306,7 +307,7 @@ class JoinPayload(BaseModel):
 @router.post("/join")
 def request_join(
     payload: JoinPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, payload.alliance_war_id)
@@ -338,7 +339,7 @@ class SurrenderPayload(BaseModel):
 @router.post("/surrender")
 def surrender_war(
     payload: SurrenderPayload,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, payload.alliance_war_id)
@@ -364,7 +365,7 @@ def surrender_war(
 @router.get("/summary")
 def war_summary(
     alliance_war_id: int,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     authorize_war_access(db, user_id, alliance_war_id)
