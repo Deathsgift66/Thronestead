@@ -1,34 +1,53 @@
 import { supabase } from './supabaseClient.js';
 
+const DEFAULT_BANNER = 'Assets/banner.png';
+
+/**
+ * Applies the alliance's banner, emblem, and background to matching page elements.
+ */
 async function applyAllianceAppearance() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) return;
+
     const res = await fetch('/api/alliance-home/details', {
-      headers: { 'X-User-ID': session.user.id }
+      headers: { 'X-User-ID': userId }
     });
     if (!res.ok) return;
+
     const data = await res.json();
-    const a = data.alliance;
-    if (!a) return;
+    const alliance = data.alliance;
+    if (!alliance) return;
+
+    // Set banner (or fallback)
+    const bannerURL = alliance.banner || DEFAULT_BANNER;
     document.querySelectorAll('.alliance-banner').forEach(img => {
-      img.src = a.banner || 'Assets/banner.png';
+      img.src = bannerURL;
     });
-    if (a.emblem_url) {
+
+    // Set emblem if available
+    if (alliance.emblem_url) {
       document.querySelectorAll('.alliance-emblem').forEach(img => {
-        img.src = a.emblem_url;
+        img.src = alliance.emblem_url;
       });
     }
-    if (a.banner) {
+
+    // Set background image if banner is valid
+    if (alliance.banner) {
       document.querySelectorAll('.alliance-bg').forEach(el => {
-        el.style.backgroundImage = `url(${a.banner})`;
+        el.style.backgroundImage = `url(${bannerURL})`;
         el.style.backgroundSize = 'cover';
         el.style.backgroundAttachment = 'fixed';
+        el.style.backgroundRepeat = 'no-repeat';
+        el.style.backgroundPosition = 'center';
       });
     }
+
   } catch (err) {
-    console.error('Alliance appearance failed', err);
+    console.error('❌ Alliance appearance load failed:', err);
   }
 }
 
+// Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', applyAllianceAppearance);
