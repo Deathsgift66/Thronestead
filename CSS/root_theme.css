@@ -262,8 +262,8 @@ header.kr-top-banner {
   text-align: center;
   align-items: center;
   align-content: center;
-  padding: 1rem 0;
-  font-size: 2rem;
+  padding: 0.4rem 0;
+  font-size: 1.2rem;
   background: var(--leather);
   color: var(--gold);
   border-bottom: 2px solid var(--gold);
@@ -297,7 +297,8 @@ header.kr-top-banner {
 
 @media (max-width: 600px) {
   header.kr-top-banner {
-    font-size: 1.5rem;
+    font-size: 1rem;
+    padding: 0.3rem 0;
   }
   .btn {
     padding: 0.5rem 1rem;
