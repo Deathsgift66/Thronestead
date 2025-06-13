@@ -14,7 +14,7 @@ let currentUser = null;
 function authFetch(url, options = {}) {
   options.headers = {
     ...(options.headers || {}),
-    'X-User-Id': currentUser?.id || ''
+    'X-User-ID': currentUser?.id || ''
   };
   return fetch(url, options);
 }

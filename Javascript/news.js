@@ -36,7 +36,7 @@ async function loadNewsArticles() {
 
   try {
     const res = await fetch("/api/news/articles", {
-      headers: { 'X-User-Id': currentUser.id }
+      headers: { 'X-User-ID': currentUser.id }
     });
     const data = await res.json();
 
