@@ -1,137 +1,68 @@
 /*
-Project Name: Kingmakers Rise Frontend
-File Name: donate_vip.js
-Date: June 2, 2025
-Author: Deathsgift66
+  Project Name: Kingmakers Rise Frontend
+  File: donate_vip.js
+  Updated: June 2025 by Codex
+  Description: VIP donation interface with real-time leaderboard, status rendering, and dynamic perks.
 */
-// VIP Donation Logic
 
 import { supabase } from "./supabaseClient.js";
 
-let vipStatus = null;
+let currentSession = null;
 let vipTiers = [];
 let vipChannel = null;
-let currentSession = null;
 
-async function init() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+// ------------------------------
+// DOM Ready Handler
+// ------------------------------
+document.addEventListener("DOMContentLoaded", async () => {
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     window.location.href = "login.html";
     return;
   }
+
   currentSession = session;
+  await Promise.all([loadVIPStatus(), loadVIPTiers(), loadLeaderboard()]);
+  setupRealtimeChannel();
+  bindDonationForm();
+});
 
-  await loadVIPStatus();
-  await loadVIPTiers();
-  await loadLeaderboard();
+window.addEventListener("beforeunload", () => {
+  if (vipChannel) supabase.removeChannel(vipChannel);
+});
 
+// ------------------------------
+// Real-time Leaderboard Refresh
+// ------------------------------
+function setupRealtimeChannel() {
   vipChannel = supabase
     .channel("public:vip_donations")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "vip_donations" },
-      () => {
-        loadLeaderboard();
-      },
-    )
+    .on("postgres_changes", { event: "*", schema: "public", table: "vip_donations" }, () => {
+      loadLeaderboard();
+    })
     .subscribe();
-
-  const form = document.getElementById("donation-form");
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const tierId = document.getElementById("selected-tier-id").value;
-      if (tierId) {
-        await submitVIPDonation(parseInt(tierId));
-      }
-    });
-  }
 }
 
-document.addEventListener("DOMContentLoaded", init);
-
+// ------------------------------
+// VIP Status Renderer
+// ------------------------------
 export async function loadVIPStatus() {
   try {
-    const headers = {
-      Authorization: `Bearer ${currentSession.access_token}`,
-      "X-User-ID": currentSession.user.id,
-    };
-    const res = await fetch("/api/vip/status", { headers });
-    if (!res.ok) throw new Error("failed");
-    vipStatus = await res.json();
-    renderStatus(vipStatus);
-  } catch {
-    vipStatus = null;
-  }
-}
-
-export async function loadVIPTiers() {
-  try {
-    const headers = {
-      Authorization: `Bearer ${currentSession.access_token}`,
-      "X-User-ID": currentSession.user.id,
-    };
-    const res = await fetch("/api/vip/tiers", { headers });
-    if (!res.ok) throw new Error("failed");
-    const data = await res.json();
-    vipTiers = data.tiers || [];
-    renderTiers(vipTiers);
-  } catch {
-    vipTiers = [];
-  }
-}
-
-export async function submitVIPDonation(tier_id) {
-  try {
-    const res = await fetch("/api/vip/donate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${currentSession.access_token}`,
-        "X-User-ID": currentSession.user.id,
-      },
-      body: JSON.stringify({ tier_id }),
+    const res = await fetch("/api/vip/status", {
+      headers: authHeaders()
     });
-    if (!res.ok) {
-      const err = await res.json();
-      alert(err.detail || "Failed");
-      return;
-    }
-    await loadVIPStatus();
-    document.getElementById("donation-form").hidden = true;
-    alert("VIP updated!");
+    if (!res.ok) throw new Error("Failed to fetch VIP status");
+    const status = await res.json();
+    renderStatus(status);
   } catch (err) {
-    console.error(err);
+    console.warn("VIP status unavailable", err);
   }
-}
-
-function renderTiers(tiers) {
-  const container = document.getElementById("vip-tier-cards");
-  if (!container) return;
-  container.innerHTML = "";
-  tiers.forEach((t) => {
-    const card = document.createElement("div");
-    card.className = "vip-tier-card";
-    card.innerHTML = `
-      <h3>${t.tier_name}</h3>
-      <div class="vip-price">${t.price_gold} gold</div>
-      <button class="vip-button" data-tier="${t.tier_id}">Donate</button>
-    `;
-    const btn = card.querySelector("button");
-    btn.addEventListener("click", () => {
-      document.getElementById("selected-tier-id").value = t.tier_id;
-      document.getElementById("donation-form").hidden = false;
-      renderPerks(t);
-    });
-    container.appendChild(card);
-  });
 }
 
 function renderStatus(status) {
   const banner = document.getElementById("current-status-banner");
   const founder = document.getElementById("founder-preview");
+
   if (!banner) return;
 
   if (status.founder) {
@@ -142,63 +73,149 @@ function renderStatus(status) {
     banner.innerHTML = `VIP ${status.vip_level} - expires in <span id="vip-timer"></span>`;
     renderTimer(status.expires_at);
   } else {
+    founder.hidden = true;
     banner.textContent = "No active VIP status";
   }
 }
 
+// ------------------------------
+// VIP Tier Loader and Renderer
+// ------------------------------
+export async function loadVIPTiers() {
+  try {
+    const res = await fetch("/api/vip/tiers", {
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error("Failed to fetch tiers");
+    const { tiers } = await res.json();
+    vipTiers = tiers || [];
+    renderTiers(vipTiers);
+  } catch (err) {
+    console.warn("No tiers found", err);
+    vipTiers = [];
+  }
+}
+
+function renderTiers(tiers) {
+  const container = document.getElementById("vip-tier-cards");
+  if (!container) return;
+  container.innerHTML = "";
+
+  tiers.forEach(t => {
+    const card = document.createElement("div");
+    card.className = "vip-tier-card";
+    card.innerHTML = `
+      <h3>${escapeHTML(t.tier_name)}</h3>
+      <div class="vip-price">${t.price_gold} gold</div>
+      <button class="vip-button" data-tier="${t.tier_id}">Donate</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => {
+      document.getElementById("selected-tier-id").value = t.tier_id;
+      document.getElementById("donation-form").hidden = false;
+      renderPerks(t);
+    });
+    container.appendChild(card);
+  });
+}
+
+// ------------------------------
+// Donation Submission
+// ------------------------------
+function bindDonationForm() {
+  const form = document.getElementById("donation-form");
+  if (!form) return;
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const tierId = parseInt(document.getElementById("selected-tier-id").value);
+    if (!tierId) return alert("Please select a tier.");
+    await submitVIPDonation(tierId);
+  });
+}
+
+export async function submitVIPDonation(tier_id) {
+  try {
+    const res = await fetch("/api/vip/donate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders()
+      },
+      body: JSON.stringify({ tier_id })
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.detail || "Donation failed");
+
+    await loadVIPStatus();
+    document.getElementById("donation-form").hidden = true;
+    alert("VIP status updated!");
+  } catch (err) {
+    console.error("Donation failed", err);
+    alert("Donation failed. Please try again.");
+  }
+}
+
+// ------------------------------
+// Perks and Countdown Timer
+// ------------------------------
 export function renderPerks(tier) {
   const container = document.getElementById("founder-preview");
-  if (!container) return;
-  container.innerHTML = tier.perks || "";
+  if (container) container.innerHTML = tier.perks || "No perks listed.";
 }
 
 export function renderTimer(expiry) {
   const timerEl = document.getElementById("vip-timer");
   if (!timerEl || !expiry) return;
+
   function update() {
-    const diff = new Date(expiry) - new Date();
-    if (diff <= 0) {
+    const remaining = new Date(expiry) - new Date();
+    if (remaining <= 0) {
       timerEl.textContent = "expired";
       clearInterval(interval);
       return;
     }
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff % 86400000) / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
+    const d = Math.floor(remaining / 86400000);
+    const h = Math.floor((remaining % 86400000) / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
     timerEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
   }
+
   update();
   const interval = setInterval(update, 1000);
 }
 
+// ------------------------------
+// Leaderboard Loader and Renderer
+// ------------------------------
 export async function loadLeaderboard() {
-  const container = document.getElementById("leaderboard-body");
-  if (!container) return;
-  container.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+  const table = document.getElementById("leaderboard-body");
+  if (!table) return;
+  table.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
+
   try {
-    const headers = {
-      Authorization: `Bearer ${currentSession.access_token}`,
-      "X-User-ID": currentSession.user.id,
-    };
-    const res = await fetch("/api/vip/leaders", { headers });
-    const data = await res.json();
-    renderLeaderboard(data.leaders || []);
+    const res = await fetch("/api/vip/leaders", {
+      headers: authHeaders()
+    });
+    const { leaders = [] } = await res.json();
+    renderLeaderboard(leaders);
   } catch (err) {
-    console.error(err);
-    container.innerHTML =
-      '<tr><td colspan="3">Error loading leaderboard</td></tr>';
+    console.error("Leaderboard error", err);
+    table.innerHTML = "<tr><td colspan='3'>Error loading leaderboard</td></tr>";
   }
 }
 
 function renderLeaderboard(leaders) {
-  const container = document.getElementById("leaderboard-body");
-  if (!container) return;
-  container.innerHTML = "";
-  if (!leaders.length) {
-    container.innerHTML = '<tr><td colspan="3">No donations yet.</td></tr>';
+  const table = document.getElementById("leaderboard-body");
+  if (!table) return;
+  table.innerHTML = "";
+
+  if (leaders.length === 0) {
+    table.innerHTML = "<tr><td colspan='3'>No donations yet.</td></tr>";
     return;
   }
+
   leaders.forEach((l, idx) => {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -206,20 +223,23 @@ function renderLeaderboard(leaders) {
       <td>${escapeHTML(l.username)}</td>
       <td>${l.total_donated}</td>
     `;
-    container.appendChild(row);
+    table.appendChild(row);
   });
 }
 
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+// ------------------------------
+// Utilities
+// ------------------------------
+function authHeaders() {
+  return {
+    Authorization: `Bearer ${currentSession.access_token}`,
+    "X-User-ID": currentSession.user.id
+  };
 }
 
-window.addEventListener("beforeunload", () => {
-  if (vipChannel) supabase.removeChannel(vipChannel);
-});
+function escapeHTML(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
