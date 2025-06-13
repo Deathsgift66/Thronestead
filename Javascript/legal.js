@@ -45,7 +45,8 @@ window.addEventListener('beforeunload', () => {
 });
 
 function filterDocuments() {
-  const q = document.getElementById('doc-search').value.toLowerCase();
+  const searchEl = document.getElementById('doc-search');
+  const q = searchEl ? searchEl.value.toLowerCase() : '';
   const filtered = docs.filter(d => d.title.toLowerCase().includes(q));
   renderDocuments(filtered);
 }

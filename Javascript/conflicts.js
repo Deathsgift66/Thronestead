@@ -76,7 +76,8 @@ async function loadConflicts() {
 }
 
 function applyFilters() {
-  const search = document.getElementById('conflictSearch').value.toLowerCase();
+  const searchEl = document.getElementById('conflictSearch');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
   let rows = conflicts.slice();
   if (currentFilter === 'active') rows = rows.filter(r => r.phase === 'live');
   else if (currentFilter === 'concluded') rows = rows.filter(r => r.phase === 'resolved');

@@ -40,8 +40,10 @@ async function loadDashboardStats() {
 
 // 🧑‍⚖️ Load Player List (with filters)
 async function loadPlayerList() {
-  const searchTerm = document.getElementById('search-player').value.toLowerCase();
-  const statusFilter = document.getElementById('status-filter').value;
+  const searchEl = document.getElementById('search-player');
+  const statusEl = document.getElementById('status-filter');
+  const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+  const statusFilter = statusEl ? statusEl.value : '';
   const container = document.getElementById('player-list');
   container.innerHTML = '<p>Loading players...</p>';
 
