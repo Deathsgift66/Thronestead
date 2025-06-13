@@ -1,64 +1,42 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: index.js
-Date: June 2, 2025
-Author: Deathsgift66
+Updated: 2025-06-13 by Codex
+Description: Hardened Landing Page — Dynamic CTA, News Feed, Smooth Scroll
 */
-// Hardened Landing Page — Dynamic CTA based on login state
 
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Enable smooth scroll
-  enableSmoothScroll();
-
-  // ✅ Validate session → update CTA
-  await updateHeroCTA();
-
-  // ✅ Optional: floating CTA on scroll
-  setupFloatingCTA();
-
-  // ✅ Load latest news and subscribe to updates
-  await loadNews();
-  setupNewsRealtime();
+  enableSmoothScroll();        // ✅ Smooth scrolling behavior
+  await updateHeroCTA();       // ✅ Dynamic CTA buttons
+  setupFloatingCTA();          // ✅ Sticky CTA on scroll
+  await loadNews();            // ✅ Load featured news
+  setupNewsRealtime();         // ✅ Sub to real-time news updates
 });
 
-// ✅ Update Hero CTA based on login state
+// =============================
+// 🔁 Dynamic CTA Button Binding
+// =============================
 async function updateHeroCTA() {
   const { data: { session } } = await supabase.auth.getSession();
-
-  // ✅ Main Hero Button
   const heroButton = document.querySelector(".hero-buttons a");
-
-  if (!heroButton) return; // Safety
-
-  if (session) {
-    // Logged in → "Play Now"
-    heroButton.textContent = "Play Now";
-    heroButton.href = "play.html";
-  } else {
-    // Guest → "Join the Realm"
-    heroButton.textContent = "Join the Realm";
-    heroButton.href = "signup.html";
-  }
-
-  // ✅ Bottom CTA Button
   const ctaButton = document.querySelector(".cta-section a");
 
-  if (!ctaButton) return; // Safety
+  if (heroButton) {
+    heroButton.textContent = session ? "Play Now" : "Join the Realm";
+    heroButton.href = session ? "play.html" : "signup.html";
+  }
 
-  if (session) {
-    // Logged in → "Continue Kingdom"
-    ctaButton.textContent = "Continue Kingdom";
-    ctaButton.href = "play.html";
-  } else {
-    // Guest → "Create Your Kingdom"
-    ctaButton.textContent = "Create Your Kingdom";
-    ctaButton.href = "signup.html";
+  if (ctaButton) {
+    ctaButton.textContent = session ? "Continue Kingdom" : "Create Your Kingdom";
+    ctaButton.href = session ? "play.html" : "signup.html";
   }
 }
 
-// ✅ Enable smooth scroll
+// =============================
+// 📜 Smooth Scroll for Anchors
+// =============================
 function enableSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener("click", function (e) {
@@ -71,10 +49,11 @@ function enableSmoothScroll() {
   });
 }
 
-// ✅ Floating CTA on scroll (optional polish)
+// =============================
+// 📌 Sticky CTA on Scroll
+// =============================
 function setupFloatingCTA() {
   const ctaSection = document.querySelector(".cta-section");
-
   if (!ctaSection) return;
 
   window.addEventListener("scroll", () => {
@@ -86,22 +65,31 @@ function setupFloatingCTA() {
   });
 }
 
-// ✅ Load News Articles
+// =============================
+// 📰 Load Homepage News
+// =============================
 async function loadNews() {
   const list = document.getElementById("news-list");
   if (!list) return;
   list.innerHTML = "<li>Loading news...</li>";
+
   try {
     const res = await fetch("/api/homepage/featured");
     const data = await res.json();
     list.innerHTML = "";
-    if (!data.articles || data.articles.length === 0) {
+
+    if (!data.articles?.length) {
       list.innerHTML = "<li>No news available.</li>";
       return;
     }
+
     data.articles.forEach(a => {
       const li = document.createElement("li");
-      li.innerHTML = `<strong>${escapeHTML(a.title)}</strong> <span class="date">${formatDate(a.published_at)}</span><br>${escapeHTML(a.summary)}`;
+      li.innerHTML = `
+        <strong>${escapeHTML(a.title)}</strong> 
+        <span class="date">${formatDate(a.published_at)}</span><br>
+        ${escapeHTML(a.summary)}
+      `;
       list.appendChild(li);
     });
   } catch (err) {
@@ -110,27 +98,54 @@ async function loadNews() {
   }
 }
 
-// ✅ Realtime updates via Supabase
+// =============================
+// 🔁 Supabase Realtime Sync
+// =============================
 let newsSub;
 function setupNewsRealtime() {
   const list = document.getElementById("news-list");
   if (!list) return;
   newsSub = supabase
     .channel("news_articles")
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, async () => {
-      await loadNews();
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'news_articles'
+    }, async () => {
+      await loadNews(); // Live reload on new post
     })
     .subscribe();
 }
 
+// =============================
+// 🧹 Clean up on unload
+// =============================
 window.addEventListener('beforeunload', () => {
   newsSub?.unsubscribe();
 });
 
-// ✅ Format Date
+// =============================
+// 📅 Format Date to Friendly Text
+// =============================
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
 }
 
+// =============================
+// 🛡️ Basic HTML Escaping
+// =============================
+function escapeHTML(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
