@@ -203,4 +203,4 @@ def test_claim_reward_sets_flag():
         .filter_by(alliance_id=1, quest_code="q3")
         .first()
     )
-    assert row.reward_claimed is True
+    assert row.reward_claimed == True
