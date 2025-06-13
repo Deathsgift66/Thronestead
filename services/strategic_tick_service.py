@@ -2,10 +2,12 @@ from __future__ import annotations
 
 """Automation helpers for periodic game state updates."""
 
+import logging
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover - fallback when SQLAlchemy isn't installed
+except ImportError:  # pragma: no cover - fallback when SQLAlchemy isn't installed
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 
@@ -23,8 +25,8 @@ def _log_unified(db: Session, event_type: str, details: str) -> None:
             {"et": event_type, "de": details},
         )
         db.commit()
-    except Exception:  # pragma: no cover - ignore missing table
-        pass
+    except Exception as exc:  # pragma: no cover - ignore missing table
+        logging.warning("Unified logs unavailable: %s", exc)
 
 
 def _notify_event(db: Session, event_type: str, ref_id: int, info: str = "") -> None:
@@ -38,8 +40,8 @@ def _notify_event(db: Session, event_type: str, ref_id: int, info: str = "") -> 
             {"et": event_type, "rid": ref_id, "info": info},
         )
         db.commit()
-    except Exception:  # pragma: no cover - ignore missing table
-        pass
+    except Exception as exc:  # pragma: no cover - ignore missing table
+        logging.warning("Event notification log unavailable: %s", exc)
 
 
 def update_project_progress(db: Session) -> int:

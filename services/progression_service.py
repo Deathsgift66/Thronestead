@@ -1,10 +1,12 @@
 """Utility service functions related to progression."""
 
+import logging
 from fastapi import HTTPException
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover - fallback for test environments
+except ImportError:  # pragma: no cover - fallback for test environments
     text = lambda q: q
     Session = object
 
@@ -18,7 +20,7 @@ try:
         kingdom_spies,
         global_game_settings,
     )
-except Exception:  # pragma: no cover - fallback when backend package missing
+except ImportError:  # pragma: no cover - fallback when backend package missing
     vip_levels = {}
     player_titles = {}
     prestige_scores = {}
@@ -52,7 +54,8 @@ def get_active_alliance_treaties(db: Session, alliance_id: int) -> list[dict]:
             }
             for r in rows
         ]
-    except Exception:
+    except Exception as exc:
+        logging.warning("Failed to fetch alliance treaties: %s", exc)
         return []
 
 def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
@@ -242,8 +245,8 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
                         "troop_bonus": troop or {},
                     },
                 )
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply region modifiers: %s", exc)
 
     # Completed techs ---------------------------------------------------
     try:
@@ -257,8 +260,8 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         ).fetchall()
         for (mods,) in rows:
             _merge_modifiers(total, mods or {})
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply completed tech modifiers: %s", exc)
 
     # Active temples ----------------------------------------------------
     try:
@@ -275,8 +278,8 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         ).fetchall()
         for (mods,) in rows:
             _merge_modifiers(total, mods or {})
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply temple modifiers: %s", exc)
 
     # Active kingdom projects ------------------------------------------
     try:
@@ -290,8 +293,8 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         ).fetchall()
         for (mods,) in rows:
             _merge_modifiers(total, mods or {})
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply kingdom project modifiers: %s", exc)
 
     # Active alliance projects -----------------------------------------
     try:
@@ -314,24 +317,24 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         ).fetchall()
         for (mods,) in rows:
             _merge_modifiers(total, mods or {})
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply alliance project modifiers: %s", exc)
 
     # VIP perks ---------------------------------------------------------
     try:
         level = vip_levels.get(str(kingdom_id), vip_levels.get(kingdom_id, 0))
         perks = global_game_settings.get("vip_perks", {}).get(level, {})
         _merge_modifiers(total, perks)
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply VIP perks: %s", exc)
 
     # Prestige bonuses --------------------------------------------------
     try:
         score = prestige_scores.get(str(kingdom_id), prestige_scores.get(kingdom_id, 0))
         if score:
             _merge_modifiers(total, {"combat_bonus": {"prestige": score // 100}})
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply prestige bonuses: %s", exc)
 
     # Village bonuses ---------------------------------------------------
     try:
@@ -342,29 +345,29 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         village_count = rows[0] if rows else 0
         if village_count:
             _merge_modifiers(total, {"production_bonus": {"villages": village_count}})
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply village bonuses: %s", exc)
 
     # Treaty modifiers --------------------------------------------------
     try:
         for treaty in kingdom_treaties.get(kingdom_id, []):
             _merge_modifiers(total, treaty.get("modifiers", {}))
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply treaty modifiers: %s", exc)
 
     # Spy effects -------------------------------------------------------
     try:
         spy = kingdom_spies.get(kingdom_id)
         if spy:
             _merge_modifiers(total, spy.get("modifiers", {}))
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply spy effects: %s", exc)
 
     # Global modifiers --------------------------------------------------
     try:
         if global_game_settings.get("event_modifiers"):
             _merge_modifiers(total, global_game_settings["event_modifiers"])
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("Failed to apply global modifiers: %s", exc)
 
     return total

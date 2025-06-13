@@ -99,10 +99,12 @@ spy_missions: dict[int, list[dict]] = {}
 # Global settings loaded from the database
 global_game_settings: dict[str, object] = {}
 
+import logging
+
 try:  # pragma: no cover - SQLAlchemy optional in tests
     from sqlalchemy import text
     from .database import SessionLocal
-except Exception:  # pragma: no cover - fallback when deps missing
+except ImportError:  # pragma: no cover - fallback when deps missing
     text = lambda q: q  # type: ignore
     SessionLocal = None  # type: ignore
 
@@ -121,7 +123,7 @@ def load_game_settings() -> None:
         global_game_settings.clear()
         for key, value in rows:
             global_game_settings[key] = value
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.error("Failed to load game settings: %s", exc)
     finally:
         session.close()
