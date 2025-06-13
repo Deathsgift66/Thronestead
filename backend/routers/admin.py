@@ -25,7 +25,7 @@ class BulkAction(BaseModel):
 
 
 @router.post("/flag")
-async def flag_player(
+def flag_player(
     payload: PlayerAction,
     admin_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -35,7 +35,7 @@ async def flag_player(
 
 
 @router.post("/freeze")
-async def freeze_player(
+def freeze_player(
     payload: PlayerAction,
     admin_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -45,7 +45,7 @@ async def freeze_player(
 
 
 @router.post("/ban")
-async def ban_player(
+def ban_player(
     payload: PlayerAction,
     admin_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -55,12 +55,12 @@ async def ban_player(
 
 
 @router.get("/players")
-async def list_players(search: str | None = None):
+def list_players(search: str | None = None):
     return {"players": [], "search": search}
 
 
 @router.post("/bulk_action")
-async def bulk_action(
+def bulk_action(
     payload: BulkAction,
     admin_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -75,7 +75,7 @@ async def bulk_action(
 
 
 @router.post("/player_action")
-async def player_action(
+def player_action(
     payload: PlayerAction,
     admin_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -85,7 +85,7 @@ async def player_action(
 
 
 @router.get("/alerts")
-async def get_admin_alerts(
+def get_admin_alerts(
     start: str | None = None,
     end: str | None = None,
     admin_id: str = Depends(get_user_id),

@@ -1,4 +1,3 @@
-import asyncio
 from backend.routers import changelog
 
 class DummyTable:
@@ -27,6 +26,6 @@ def test_returns_sorted_entries():
     ]
     client = DummyClient({'game_changelog': entries})
     changelog.get_supabase_client = lambda: client
-    result = asyncio.run(changelog.get_changelog(user_id='u1'))
+    result = changelog.get_changelog(user_id='u1')
     assert result['entries'][0]['version'] == '1.1.0'
     assert len(result['entries']) == 2

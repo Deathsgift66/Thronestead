@@ -9,12 +9,12 @@ router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy"])
 
 
 @router.get("/alliances")
-async def alliances():
+def alliances():
     return {"alliances": []}
 
 
 @router.get("/treaties")
-async def treaties(
+def treaties(
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
@@ -29,6 +29,6 @@ async def treaties(
 
 
 @router.get("/conflicts")
-async def diplomacy_conflicts():
+def diplomacy_conflicts():
     return {"conflicts": []}
 

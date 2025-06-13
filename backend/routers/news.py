@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api/news", tags=["news"])
 
 
 @router.get("/articles")
-async def articles(user_id: str = Depends(get_user_id)):
+def articles(user_id: str = Depends(get_user_id)):
     """Return the latest news articles visible to authenticated users."""
     supabase = get_supabase_client()
 

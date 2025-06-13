@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 from fastapi import HTTPException
 
@@ -48,7 +47,7 @@ def test_latest_invalid_user():
     client = DummyClient({"users": []})
     town_criers.get_supabase_client = lambda: client
     with pytest.raises(HTTPException):
-        asyncio.run(town_criers.latest_scrolls(user_id="u1"))
+        town_criers.latest_scrolls(user_id="u1")
 
 
 def test_post_and_fetch():
@@ -56,8 +55,6 @@ def test_post_and_fetch():
     client = DummyClient(tables)
     town_criers.get_supabase_client = lambda: client
 
-    asyncio.run(
-        town_criers.post_scroll(town_criers.ScrollPayload(title="T", body="B"), user_id="u1")
-    )
-    res = asyncio.run(town_criers.latest_scrolls(user_id="u1"))
+    town_criers.post_scroll(town_criers.ScrollPayload(title="T", body="B"), user_id="u1")
+    res = town_criers.latest_scrolls(user_id="u1")
     assert res["scrolls"][0]["title"] == "T"

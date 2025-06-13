@@ -54,7 +54,7 @@ def _fetch_villages(db: Session, kid: int):
 
 
 @router.get("")
-async def list_villages(
+def list_villages(
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
@@ -65,7 +65,7 @@ async def list_villages(
 
 
 @router.post("")
-async def create_village(
+def create_village(
     payload: VillagePayload,
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),

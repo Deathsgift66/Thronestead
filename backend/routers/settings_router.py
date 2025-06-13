@@ -10,7 +10,7 @@ from .progression_router import get_user_id
 router = APIRouter(prefix="/api", tags=["settings"])
 
 @router.get("/game/settings")
-async def get_settings() -> dict:
+def get_settings() -> dict:
     """Return the currently loaded game settings."""
     return global_game_settings
 
@@ -20,7 +20,7 @@ class SettingPayload(BaseModel):
     is_active: bool = True
 
 @router.post("/admin/game_settings")
-async def update_setting(
+def update_setting(
     payload: SettingPayload,
     admin_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),

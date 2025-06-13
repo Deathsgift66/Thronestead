@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"]
 
 
 @router.get("")
-async def get_alliance_changelog(
+def get_alliance_changelog(
     since: str | None = None,
     user_id: str = Depends(get_user_id),
 ):

@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api/changelog", tags=["changelog"])
 
 
 @router.get("")
-async def get_changelog(user_id: str = Depends(verify_jwt_token)):
+def get_changelog(user_id: str = Depends(verify_jwt_token)):
     """Return the public game changelog sorted by most recent."""
     supabase = get_supabase_client()
 
