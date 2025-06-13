@@ -1,13 +1,13 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: forgot_password.js
-Date: June 2, 2025
-Author: Deathsgift66
-Updated: Enhanced interactivity and Supabase tips
+Updated: 2025-06-13 by Codex
+Description: Secure password reset flow with Supabase integration
 */
 
 import { supabase } from './supabaseClient.js';
 
+// DOM Elements
 const requestForm = document.getElementById('request-form');
 const emailInput = document.getElementById('email');
 const codePanel = document.getElementById('code-panel');
@@ -20,50 +20,55 @@ const strengthMeter = document.getElementById('strength-meter');
 const tipsPanel = document.getElementById('tips-panel');
 const tipsList = document.getElementById('tips-list');
 
-requestForm.addEventListener('submit', (e) => {
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  loadSecurityTips();
+});
+requestForm.addEventListener('submit', e => {
   e.preventDefault();
   submitForgotRequest();
 });
-
 document.getElementById('verify-code-btn').addEventListener('click', submitResetCode);
 document.getElementById('set-password-btn').addEventListener('click', submitNewPassword);
 newPasswordInput.addEventListener('input', updateStrengthMeter);
 
+// ==========================
+// Step 1: Request Reset Code
+// ==========================
 async function submitForgotRequest() {
   const email = emailInput.value.trim();
-  if (!email) {
-    renderStatusMessage('Please enter a valid email.', true);
-    return;
-  }
+  if (!email) return renderStatusMessage('Please enter a valid email.', true);
+
   try {
     const res = await fetch('/api/auth/request-password-reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
-    if (res.ok) {
-      renderStatusMessage('If the email exists, a reset link has been sent.', false);
-    } else {
-      const data = await res.json();
-      renderStatusMessage(data.detail || 'Error sending reset request.', true);
-    }
+
+    const msg = res.ok
+      ? 'If the email exists, a reset link has been sent.'
+      : (await res.json())?.detail || 'Error sending reset request.';
+    renderStatusMessage(msg, !res.ok);
   } catch (err) {
     renderStatusMessage(err.message, true);
   }
 }
 
+// ==============================
+// Step 2: Verify Reset Code
+// ==============================
 async function submitResetCode() {
   const code = resetCodeInput.value.trim();
-  if (!code) {
-    renderStatusMessage('Enter the reset code.', true);
-    return;
-  }
+  if (!code) return renderStatusMessage('Enter the reset code.', true);
+
   try {
     const res = await fetch('/api/auth/verify-reset-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
     });
+
     if (res.ok) {
       codePanel.classList.add('hidden');
       newPassPanel.classList.remove('hidden');
@@ -77,31 +82,28 @@ async function submitResetCode() {
   }
 }
 
-function validatePasswordMatch() {
-  return newPasswordInput.value === confirmPasswordInput.value;
-}
-
+// ================================
+// Step 3: Set New Password
+// ================================
 async function submitNewPassword() {
+  const code = resetCodeInput.value.trim();
+  const new_password = newPasswordInput.value.trim();
+  const confirm_password = confirmPasswordInput.value.trim();
+
   if (!validatePasswordMatch()) {
-    renderStatusMessage('Passwords do not match.', true);
-    return;
+    return renderStatusMessage('Passwords do not match.', true);
   }
-  const payload = {
-    code: resetCodeInput.value.trim(),
-    new_password: newPasswordInput.value,
-    confirm_password: confirmPasswordInput.value
-  };
+
   try {
     const res = await fetch('/api/auth/set-new-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ code, new_password, confirm_password })
     });
+
     if (res.ok) {
       renderStatusMessage('Password updated! Redirecting...', false);
-      setTimeout(() => {
-        window.location.href = 'login.html';
-      }, 8000);
+      setTimeout(() => window.location.href = 'login.html', 5000);
     } else {
       const data = await res.json();
       renderStatusMessage(data.detail || 'Error updating password.', true);
@@ -111,44 +113,62 @@ async function submitNewPassword() {
   }
 }
 
-function renderStatusMessage(msg, isError) {
-  statusBanner.textContent = msg;
-  statusBanner.classList.remove('success-banner', 'error-banner');
-  statusBanner.classList.add(isError ? 'error-banner' : 'success-banner');
+// =======================
+// UI Helpers
+// =======================
+function validatePasswordMatch() {
+  return newPasswordInput.value === confirmPasswordInput.value;
 }
 
-function calculateStrength(pw) {
+function renderStatusMessage(message, isError = false) {
+  statusBanner.textContent = message;
+  statusBanner.className = isError ? 'error-banner' : 'success-banner';
+}
+
+// =======================
+// Password Strength Meter
+// =======================
+function updateStrengthMeter() {
+  const pw = newPasswordInput.value;
+  const score = calculateStrength(pw);
+  const percent = (score / 5) * 100;
+  const color = score >= 4 ? 'var(--success)' : score >= 3 ? 'var(--warning)' : 'var(--error)';
+
+  strengthMeter.innerHTML = `
+    <div class="strength-meter-bar" style="width:${percent}%; background:${color};"></div>
+  `;
+}
+
+function calculateStrength(password) {
   let score = 0;
-  if (pw.length >= 12) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
   return score;
 }
 
-function updateStrengthMeter() {
-  const score = calculateStrength(newPasswordInput.value);
-  const percent = (score / 5) * 100;
-  const color = score >= 4 ? 'var(--success)' : score >= 3 ? 'var(--warning)' : 'var(--error)';
-  strengthMeter.innerHTML = `<div class="strength-meter-bar" style="width:${percent}%;background:${color}"></div>`;
-}
-
+// ===========================
+// Security Tips Loader
+// ===========================
 async function loadSecurityTips() {
   try {
-    const { data, error } = await supabase.from('security_tips').select('tip').limit(5);
+    const { data, error } = await supabase
+      .from('security_tips')
+      .select('tip')
+      .limit(5);
+
     if (error) throw error;
+
     tipsList.innerHTML = '';
-    data.forEach(row => {
+    (data || []).forEach(row => {
       const li = document.createElement('li');
       li.textContent = row.tip;
       tipsList.appendChild(li);
     });
     tipsPanel.classList.remove('hidden');
-  } catch (err) {
-    console.warn('Failed to load tips');
+  } catch {
+    console.warn('⚠️ Unable to load security tips from Supabase.');
   }
 }
-
-document.addEventListener('DOMContentLoaded', loadSecurityTips);
-
