@@ -34,12 +34,41 @@ async function loadResources() {
   }
 }
 
+const RESOURCES = [
+  { key: 'gold', icon: '💰' },
+  { key: 'gems', icon: '💎' },
+  { key: 'wood', icon: '🌲' },
+  { key: 'stone', icon: '🪨' },
+  { key: 'iron_ore', icon: '⛏' },
+  { key: 'food', icon: '🍞' },
+  { key: 'coal', icon: '🔥' },
+  { key: 'livestock', icon: '🐄' },
+  { key: 'clay', icon: '🧱' },
+  { key: 'flax', icon: '🌾' },
+  { key: 'tools', icon: '🛠' },
+  { key: 'wood_planks', icon: '🪵' },
+  { key: 'refined_stone', icon: '🧱' },
+  { key: 'iron_ingots', icon: '🔩' },
+  { key: 'charcoal', icon: '🔥' },
+  { key: 'leather', icon: '👞' },
+  { key: 'arrows', icon: '🏹' },
+  { key: 'swords', icon: '🗡' },
+  { key: 'axes', icon: '🪓' },
+  { key: 'shields', icon: '🛡' },
+  { key: 'armour', icon: '🥋' },
+  { key: 'wagon', icon: '🚚' },
+  { key: 'siege_weapons', icon: '🏰' },
+  { key: 'jewelry', icon: '💍' },
+  { key: 'spear', icon: '🔱' },
+  { key: 'horses', icon: '🐎' },
+  { key: 'pitchforks', icon: '🍴' }
+];
+
 function updateUI(data) {
-  const keys = ['gold','gems','wood','stone','iron_ore','food'];
-  keys.forEach(k => {
-    const el = document.getElementById(`res-${k}`);
-    if (el && data[k] !== undefined) {
-      el.textContent = data[k];
+  RESOURCES.forEach(({ key }) => {
+    const el = document.getElementById(`res-${key}`);
+    if (el && data[key] !== undefined) {
+      el.textContent = data[key];
     }
   });
 }
@@ -48,27 +77,18 @@ function createBar() {
   const bar = document.createElement('div');
   bar.id = 'resource-bar';
   bar.className = 'resource-bar';
-  bar.innerHTML = `
-    <a href="market.html?resource=gold" data-bs-toggle="tooltip" title="Gold">
-      <span class="resource-icon">💰</span> <span id="res-gold">0</span>
-    </a>
-    <a href="market.html?resource=gems" data-bs-toggle="tooltip" title="Gems">
-      <span class="resource-icon">💎</span> <span id="res-gems">0</span>
-    </a>
-    <a href="market.html?resource=wood" data-bs-toggle="tooltip" title="Wood">
-      <span class="resource-icon">🌲</span> <span id="res-wood">0</span>
-    </a>
-    <a href="market.html?resource=stone" data-bs-toggle="tooltip" title="Stone">
-      <span class="resource-icon">🪨</span> <span id="res-stone">0</span>
-    </a>
-    <a href="market.html?resource=iron_ore" data-bs-toggle="tooltip" title="Iron Ore">
-      <span class="resource-icon">⛏</span> <span id="res-iron_ore">0</span>
-    </a>
-    <a href="market.html?resource=food" data-bs-toggle="tooltip" title="Food">
-      <span class="resource-icon">🍞</span> <span id="res-food">0</span>
-    </a>
-  `;
-  document.body.appendChild(bar);
+  bar.innerHTML = RESOURCES.map(r =>
+    `<a href="market.html?resource=${r.key}" data-bs-toggle="tooltip" title="${r.key.replace(/_/g,' ')}">` +
+    `<span class="resource-icon">${r.icon}</span> <span id="res-${r.key}">0</span>` +
+    `</a>`
+  ).join(' ');
+
+  const banner = document.querySelector('header.kr-top-banner');
+  if (banner && banner.parentNode) {
+    banner.insertAdjacentElement('afterend', bar);
+  } else {
+    document.body.prepend(bar);
+  }
   if (window.bootstrap) {
     const triggers = bar.querySelectorAll('[data-bs-toggle="tooltip"]');
     triggers.forEach(el => new window.bootstrap.Tooltip(el));
