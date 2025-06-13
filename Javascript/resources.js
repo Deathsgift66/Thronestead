@@ -3,25 +3,24 @@ Project Name: Kingmakers Rise Frontend
 File Name: resources.js
 Date: June 2, 2025
 Author: Deathsgift66
+Enhancer: ChatGPT
 */
 
 import { supabase } from './supabaseClient.js';
 import { fetchJson } from './fetchJson.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js protects this page → no duplicate session check
-  // ✅ Initial load
   await loadResourcesNexus();
 });
 
-// ✅ Load Resources Nexus
+// ✅ Load the full Resources Nexus page content
 async function loadResourcesNexus() {
   const summaryEl = document.getElementById('resource-summary');
   const resourceTableEl = document.getElementById('resource-table');
   const vaultTableEl = document.getElementById('vault-table');
   const simulatorsEl = document.getElementById('simulators');
 
-  // Placeholders
+  // Initial placeholders
   summaryEl.innerHTML = "<p>Loading resource summary...</p>";
   resourceTableEl.innerHTML = "<p>Loading resources...</p>";
   vaultTableEl.innerHTML = "<p>Loading vault...</p>";
@@ -30,13 +29,15 @@ async function loadResourcesNexus() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const uid = session?.user?.id;
-    if (!uid) throw new Error('No user');
-    const token = session.access_token;
+    if (!uid) throw new Error('User not authenticated');
 
+    const token = session.access_token;
     const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
 
+    // ✅ Load kingdom resources
     const { resources: resourcesData } = await fetchJson('/api/resources', { headers });
 
+    // ✅ Attempt alliance vault fetch
     let vaultData = null;
     try {
       const { totals } = await fetchJson('/api/vault/resources', { headers });
@@ -45,19 +46,10 @@ async function loadResourcesNexus() {
       vaultData = null;
     }
 
-    // ✅ Render resource summary
     renderResourceSummary(resourcesData);
-
-    // ✅ Render resource table
     renderResourceTable(resourcesData);
-
-    // ✅ Render vault table
     renderVaultTable(vaultData);
-
-    // ✅ Render simulators panel
     renderSimulators();
-
-    // ✅ Subscribe to realtime updates
     subscribeToResourceUpdates();
 
   } catch (err) {
@@ -66,14 +58,14 @@ async function loadResourcesNexus() {
   }
 }
 
-// ✅ Render Resource Summary
+// ✅ Display a total resource summary
 function renderResourceSummary(resources) {
   const summaryEl = document.getElementById('resource-summary');
   summaryEl.innerHTML = "";
 
   const totalResources = Object.entries(resources)
     .filter(([key]) => key !== "kingdom_id")
-    .reduce((sum, [key, value]) => sum + value, 0);
+    .reduce((sum, [_, val]) => sum + (val || 0), 0);
 
   summaryEl.innerHTML = `
     <h3>Total Resources</h3>
@@ -81,99 +73,99 @@ function renderResourceSummary(resources) {
   `;
 }
 
-// ✅ Render Resource Table
+// ✅ Show per-resource stats
 function renderResourceTable(resources) {
   const tableEl = document.getElementById('resource-table');
   tableEl.innerHTML = "";
 
   const resourceEntries = Object.entries(resources)
-    .filter(([key]) => key !== "kingdom_id")
-    .sort(([aKey], [bKey]) => aKey.localeCompare(bKey));
+    .filter(([k]) => k !== "kingdom_id")
+    .sort(([a], [b]) => a.localeCompare(b));
 
-  resourceEntries.forEach(([resource, amount]) => {
+  resourceEntries.forEach(([key, value]) => {
     const card = document.createElement("div");
-    card.classList.add("resource-card");
-
+    card.className = "resource-card";
     card.innerHTML = `
-      <h4>${formatResourceName(resource)}</h4>
-      <p>Amount: ${formatNumber(amount)}</p>
+      <h4>${formatResourceName(key)}</h4>
+      <p>Amount: ${formatNumber(value)}</p>
     `;
-
     tableEl.appendChild(card);
   });
 }
 
-// ✅ Render Vault Table
-function renderVaultTable(vaultData) {
+// ✅ Show alliance vault holdings
+function renderVaultTable(vault) {
   const vaultEl = document.getElementById('vault-table');
   vaultEl.innerHTML = "";
 
-  if (!vaultData) {
+  if (!vault) {
     vaultEl.innerHTML = "<p>You are not in an alliance, or no vault data found.</p>";
     return;
   }
 
-  const vaultEntries = Object.entries(vaultData)
-    .filter(([key]) => key !== "alliance_id")
-    .sort(([aKey], [bKey]) => aKey.localeCompare(bKey));
+  const entries = Object.entries(vault)
+    .filter(([k]) => k !== "alliance_id")
+    .sort(([a], [b]) => a.localeCompare(b));
 
-  vaultEntries.forEach(([resource, amount]) => {
+  entries.forEach(([key, value]) => {
     const card = document.createElement("div");
-    card.classList.add("vault-card");
-
+    card.className = "vault-card";
     card.innerHTML = `
-      <h4>${formatResourceName(resource)}</h4>
-      <p>Amount: ${formatNumber(amount)}</p>
+      <h4>${formatResourceName(key)}</h4>
+      <p>Amount: ${formatNumber(value)}</p>
     `;
-
     vaultEl.appendChild(card);
   });
 }
 
-// ✅ Render Simulators
+// ✅ Provide simulator section (stub)
 function renderSimulators() {
-  const simulatorsEl = document.getElementById('simulators');
-  simulatorsEl.innerHTML = "";
+  const el = document.getElementById('simulators');
+  el.innerHTML = "";
 
-  const simulatorPanel = document.createElement("div");
-  simulatorPanel.classList.add("simulator-panel");
+  const panel = document.createElement("div");
+  panel.className = "simulator-panel";
 
-  simulatorPanel.innerHTML = `
+  panel.innerHTML = `
     <h3>Resource Simulators</h3>
-    <p>Production estimators, trade calculators and efficiency tools.</p>
+    <p class="text-muted">Estimate production rates, trade values, and net efficiency.</p>
+    <ul>
+      <li><a href="#">🔧 Production Efficiency Simulator</a></li>
+      <li><a href="#">📈 Market Value Calculator</a></li>
+      <li><a href="#">⚖️ Trade Ratio Evaluator</a></li>
+    </ul>
   `;
 
-  simulatorsEl.appendChild(simulatorPanel);
+  el.appendChild(panel);
 }
 
-// ✅ Helper: Format Resource Name
-function formatResourceName(resourceKey) {
-  return resourceKey
+// ✅ Format resource keys to display-friendly names
+function formatResourceName(key) {
+  return key
     .replace(/_/g, " ")
-    .replace(/\b\w/g, c => c.toUpperCase());
+    .replace(/\b\w/g, char => char.toUpperCase());
 }
 
-// ✅ Helper: Format Number
+// ✅ Thousands separator
 function formatNumber(num) {
-  return num.toLocaleString();
+  return (num ?? 0).toLocaleString();
 }
 
-// ✅ Helper: Toast
-function showToast(msg) {
+// ✅ Toast for user notifications
+function showToast(message) {
   const toastEl = document.getElementById('toast');
-  toastEl.textContent = msg;
+  if (!toastEl) return;
+  toastEl.textContent = message;
   toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
+  setTimeout(() => toastEl.classList.remove("show"), 3000);
 }
 
-// ✅ Realtime subscriptions
+// ✅ Realtime sync with Supabase channels
 function subscribeToResourceUpdates() {
   supabase.auth.getUser().then(({ data }) => {
     const uid = data?.user?.id;
     if (!uid) return;
+
     supabase
       .from('users')
       .select('kingdom_id, alliance_id')
@@ -182,24 +174,32 @@ function subscribeToResourceUpdates() {
       .then(({ data }) => {
         const kid = data?.kingdom_id;
         const aid = data?.alliance_id;
+
         if (kid) {
           supabase
-            .channel('kr-resources-' + kid)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'kingdom_resources', filter: `kingdom_id=eq.${kid}` }, (payload) => {
-              if (payload.new) {
-                renderResourceSummary(payload.new);
-                renderResourceTable(payload.new);
-              }
+            .channel(`kr-resources-${kid}`)
+            .on('postgres_changes', {
+              event: '*',
+              schema: 'public',
+              table: 'kingdom_resources',
+              filter: `kingdom_id=eq.${kid}`
+            }, (payload) => {
+              renderResourceSummary(payload.new);
+              renderResourceTable(payload.new);
             })
             .subscribe();
         }
+
         if (aid) {
           supabase
-            .channel('kr-vault-' + aid)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_vault', filter: `alliance_id=eq.${aid}` }, (payload) => {
-              if (payload.new) {
-                renderVaultTable(payload.new);
-              }
+            .channel(`kr-vault-${aid}`)
+            .on('postgres_changes', {
+              event: '*',
+              schema: 'public',
+              table: 'alliance_vault',
+              filter: `alliance_id=eq.${aid}`
+            }, (payload) => {
+              renderVaultTable(payload.new);
             })
             .subscribe();
         }
