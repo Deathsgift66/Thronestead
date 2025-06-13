@@ -91,6 +91,9 @@ python main.py
 When the backend is not running the static server used by `npm run serve` will
 return `index.html` for requests under `/api`, leading to browser console errors
 like `Invalid JSON from /api/resources`.
+If the API is up you can verify everything works by visiting
+`http://localhost:8000/api/progression/summary` in your browser. A JSON object
+should be returned.
 
 ---
 
@@ -121,6 +124,11 @@ MASTER_ROLLBACK_PASSWORD
 Update these values with your project credentials to enable API access. Then copy
 `env.example.js` to `env.js` so the frontend can access the public values at
 runtime.
+
+When calling Supabase REST endpoints directly you must include the project's
+`apikey` and a valid `Authorization` bearer token in the request headers. The
+included JavaScript modules rely on the Supabase client which sets these
+automatically.
 
 This will create all tables referenced by the frontend.
 

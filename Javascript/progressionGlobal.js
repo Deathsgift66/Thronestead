@@ -11,8 +11,11 @@ export async function fetchAndStorePlayerProgression(userId) {
     const res = await fetch('/api/progression/summary', {
       headers: { 'X-User-ID': userId }
     });
+    if (!res.ok ||
+        !res.headers.get('content-type')?.includes('application/json')) {
+      throw new Error('Invalid response from backend');
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch progression');
 
     window.playerProgression = {
       castleLevel: data.castle_level,
