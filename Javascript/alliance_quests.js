@@ -28,8 +28,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'quest_alliance_tracking' },
-      () => {
-        loadQuests(currentFilter);
+      async () => {
+        await loadQuests(currentFilter);
       }
     )
     .subscribe();
@@ -150,19 +150,19 @@ async function loadQuests(status) {
 
       card.innerHTML = `
         <div class="quest-header">
-          <span class="quest-title" title="${q.goal_desc}">${q.title}</span>
-          <span class="quest-type">[${q.type}]</span>
+          <span class="quest-title" title="${escapeHTML(q.goal_desc)}">${escapeHTML(q.title)}</span>
+          <span class="quest-type">[${escapeHTML(q.type)}]</span>
         </div>
-        <p class="quest-lore">${q.lore}</p>
-        <p class="quest-details">${q.goal_desc}</p>
+        <p class="quest-lore">${escapeHTML(q.lore)}</p>
+        <p class="quest-details">${escapeHTML(q.goal_desc)}</p>
         <div class="quest-progress">
           <div class="quest-progress-bar">
             <div class="quest-progress-bar-inner" style="width: ${q.progress}%"></div>
           </div>
           <span class="progress-label">${q.progress}%</span>
         </div>
-        <div class="quest-rewards">🎁 Rewards: ${q.reward_gold} gold${q.reward_item ? ", " + q.reward_item : ""}</div>
-        ${q.leader_note ? `<div class="quest-leader-note">🖋 Leader Note: ${q.leader_note}</div>` : ""}
+        <div class="quest-rewards">🎁 Rewards: ${q.reward_gold} gold${q.reward_item ? ", " + escapeHTML(q.reward_item) : ""}</div>
+        ${q.leader_note ? `<div class="quest-leader-note">🖋 Leader Note: ${escapeHTML(q.leader_note)}</div>` : ""}
         <div class="quest-actions">
           <button class="view-quest-btn" data-code="${q.quest_code}">📜 View Details</button>
         </div>
@@ -204,9 +204,9 @@ async function loadQuests(status) {
 function openQuestModal(q) {
   const modal = document.getElementById("quest-modal");
 
-  document.getElementById("modal-quest-title").textContent = q.name || q.title;
-  document.querySelector(".quest-type-modal").textContent = q.category ? `[${q.category}]` : q.type ? `[${q.type}]` : '';
-  document.getElementById("modal-quest-description").textContent = q.description || q.lore || '';
+  document.getElementById("modal-quest-title").textContent = q.name ? escapeHTML(q.name) : escapeHTML(q.title);
+  document.querySelector(".quest-type-modal").textContent = q.category ? `[${escapeHTML(q.category)}]` : q.type ? `[${escapeHTML(q.type)}]` : '';
+  document.getElementById("modal-quest-description").textContent = q.description ? escapeHTML(q.description) : q.lore ? escapeHTML(q.lore) : '';
 
   // Contributions
   const contribList = document.getElementById("modal-quest-contributions");
@@ -277,5 +277,16 @@ function openQuestModal(q) {
 
   // Open modal
   modal.classList.add("open");
+}
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 

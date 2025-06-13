@@ -15,31 +15,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadPlayerTable();
 
   // ✅ Bind filter search button
-  document.getElementById("search-button").addEventListener("click", async () => {
+  document.getElementById("search-button")?.addEventListener("click", async () => {
     await loadPlayerTable();
   });
-  document.getElementById("search-reset").addEventListener("click", async () => {
-    document.getElementById("search-input").value = "";
+  document.getElementById("search-reset")?.addEventListener("click", async () => {
+    const input = document.getElementById("search-input");
+    if (input) input.value = "";
     await loadPlayerTable();
   });
 
   // ✅ Bind bulk actions
-  document.getElementById("bulk-ban").addEventListener("click", async () => {
+  document.getElementById("bulk-ban")?.addEventListener("click", async () => {
     await handleBulkAction("ban");
   });
-  document.getElementById("bulk-flag").addEventListener("click", async () => {
+  document.getElementById("bulk-flag")?.addEventListener("click", async () => {
     await handleBulkAction("flag");
   });
-  document.getElementById("bulk-logout").addEventListener("click", async () => {
+  document.getElementById("bulk-logout")?.addEventListener("click", async () => {
     await handleBulkAction("logout");
   });
-  document.getElementById("bulk-reset-password").addEventListener("click", async () => {
+  document.getElementById("bulk-reset-password")?.addEventListener("click", async () => {
     await handleBulkAction("reset_password");
   });
 
   // ✅ Bind modal close
-  document.getElementById("modal-close-btn").addEventListener("click", () => {
-    document.getElementById("admin-modal").classList.add("hidden");
+  document.getElementById("modal-close-btn")?.addEventListener("click", () => {
+    document.getElementById("admin-modal")?.classList.add("hidden");
   });
 
   // ✅ Real-time updates
@@ -60,7 +61,7 @@ window.addEventListener('beforeunload', () => {
 // ✅ Load Player Table
 async function loadPlayerTable() {
   const tableBody = document.querySelector("#player-table tbody");
-  const query = document.getElementById("search-input").value.trim();
+  const query = document.getElementById("search-input")?.value.trim() || "";
 
   tableBody.innerHTML = "<tr><td colspan='8'>Loading players...</td></tr>";
 

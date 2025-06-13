@@ -191,10 +191,10 @@ function displayAchievementDetail(ach) {
     : 'None';
 
   modal.innerHTML = `
-    <h2>${!ach.is_hidden || ach.is_unlocked ? ach.name : '???'}</h2>
-    <p>${!ach.is_hidden || ach.is_unlocked ? ach.description : 'Unlock to reveal details.'}</p>
-    <p>Category: ${ach.category || 'N/A'}</p>
-    <p>Reward: ${reward}</p>
+    <h2>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.name) : '???'}</h2>
+    <p>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.description) : 'Unlock to reveal details.'}</p>
+    <p>Category: ${escapeHTML(ach.category || 'N/A')}</p>
+    <p>Reward: ${escapeHTML(reward)}</p>
     <p>Status: ${ach.is_unlocked ? 'Unlocked' : 'Locked'}</p>
     ${ach.awarded_at ? `<p>Earned on: ${new Date(ach.awarded_at).toLocaleString()}</p>` : ''}
     <button class="action-btn" id="close-achievement-modal">Close</button>
@@ -239,4 +239,15 @@ function subscribeToUpdates(kid) {
       }
     )
     .subscribe();
+}
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

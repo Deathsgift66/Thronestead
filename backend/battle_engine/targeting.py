@@ -1,7 +1,5 @@
 """Utilities for selecting combat targets and applying unit counters."""
 
-from __future__ import annotations
-
 from typing import Any, Dict, List
 
 # Database interface for counters

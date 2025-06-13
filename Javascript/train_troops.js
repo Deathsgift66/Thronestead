@@ -224,7 +224,7 @@ async function trainTroop(unitId) {
         unit_name: troop.unit_name,
         quantity: 10,
         base_training_seconds: troop.training_time || 60,
-      });
+      })
     });
 
     const result = await res.json();
