@@ -5,6 +5,9 @@
 This file lists the complete SQL schema used by the application.
 
 ```sql
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
 CREATE TABLE public.alliance_achievement_catalogue (
   achievement_code text NOT NULL,
   name text NOT NULL,
@@ -299,6 +302,14 @@ CREATE TABLE public.alliances (
   projects_active integer DEFAULT 0,
   emblem_url text,
   CONSTRAINT alliances_pkey PRIMARY KEY (alliance_id)
+);
+CREATE TABLE public.announcements (
+  announcement_id integer NOT NULL DEFAULT nextval('announcements_announcement_id_seq'::regclass),
+  title text NOT NULL,
+  content text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  visible boolean DEFAULT true,
+  CONSTRAINT announcements_pkey PRIMARY KEY (announcement_id)
 );
 CREATE TABLE public.archived_audit_log (
   log_id bigint,
