@@ -24,7 +24,7 @@ def seasonal_data(user_id: str = Depends(verify_jwt_token)):
     forecast_res = (
         client.table("seasonal_effects")
         .select("*")
-        .order("start_date", {"ascending": True})
+        .order("start_date", ascending=True)
         .limit(4)
         .execute()
     )
