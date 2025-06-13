@@ -7,6 +7,37 @@ Author: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
 
+const RESOURCE_KEYS = [
+  'wood',
+  'stone',
+  'iron_ore',
+  'gold',
+  'gems',
+  'food',
+  'coal',
+  'livestock',
+  'clay',
+  'flax',
+  'tools',
+  'wood_planks',
+  'refined_stone',
+  'iron_ingots',
+  'charcoal',
+  'leather',
+  'arrows',
+  'swords',
+  'axes',
+  'shields',
+  'armour',
+  'wagon',
+  'siege_weapons',
+  'jewelry',
+  'spear',
+  'horses',
+  'pitchforks',
+  'gold_cost'
+];
+
 let currentSession = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -110,7 +141,7 @@ async function loadProjects() {
         <p>${escapeHTML(project.description)}</p>
         <p class="category">${escapeHTML(project.category || "")}</p>
         <p>${escapeHTML(project.effect_summary || "")}</p>
-        <p>Cost: ${formatCost(project.cost)}</p>
+        <p>Cost: ${formatCostFromColumns(project)}</p>
         <p>Build Time: ${formatTime(project.build_time_seconds || 0)}</p>
         ${project.project_duration_seconds ? `<p>Duration: ${formatTime(project.project_duration_seconds)}</p>` : ''}
         <p>Power Score: ${project.power_score}</p>
@@ -195,16 +226,28 @@ async function loadProjects() {
 
 // ✅ Check if player has enough resources
 function hasSufficientResources(resources, project) {
-  const costs = project.cost || {};
+  const costs = {};
+  RESOURCE_KEYS.forEach(k => {
+    const val = project[k];
+    if (typeof val === 'number' && val > 0) {
+      const key = k.replace(/_cost$/, '');
+      costs[key] = val;
+    }
+  });
   return Object.entries(costs).every(([res, amt]) => (resources[res] || 0) >= amt);
 }
 
 // ✅ Format cost object
-function formatCost(cost) {
-  if (!cost) return 'None';
-  return Object.entries(cost)
-    .map(([res, amt]) => `${amt} ${escapeHTML(res)}`)
-    .join(', ');
+function formatCostFromColumns(project) {
+  const parts = [];
+  RESOURCE_KEYS.forEach(k => {
+    const val = project[k];
+    if (typeof val === 'number' && val > 0) {
+      const key = k.replace(/_cost$/, '');
+      parts.push(`${val} ${escapeHTML(key)}`);
+    }
+  });
+  return parts.join(', ') || 'None';
 }
 
 // ✅ Start countdown timers

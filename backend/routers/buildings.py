@@ -43,17 +43,14 @@ def get_village_buildings(
         db.execute(
             text(
                 """
-                SELECT bc.building_id, bc.building_name, bc.category, bc.description,
-                       bc.production_type, bc.build_cost, bc.modifiers,
-                       bc.build_time_seconds,
-                       COALESCE(vb.level, 0) AS level,
+                SELECT bc.*, COALESCE(vb.level, 0) AS level,
                        vb.is_under_construction, vb.construction_started_at,
                        vb.construction_ends_at
-                FROM building_catalogue bc
-                LEFT JOIN village_buildings vb
-                  ON vb.building_id = bc.building_id
-                 AND vb.village_id = :vid
-                ORDER BY bc.building_id
+                  FROM building_catalogue bc
+                  LEFT JOIN village_buildings vb
+                         ON vb.building_id = bc.building_id
+                        AND vb.village_id = :vid
+                 ORDER BY bc.building_id
                 """
             ),
             {"vid": village_id},
