@@ -11,7 +11,7 @@ Author: Deathsgift66
 
 .kr-navbar {
   position: relative;
-  z-index: 999;
+  z-index: 1100;
   background: linear-gradient(to right, var(--ink), #18140f);
   background-size: cover;
   background-blend-mode: overlay;
