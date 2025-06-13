@@ -3,16 +3,16 @@ Project Name: Kingmakers Rise Frontend
 File Name: temples.js
 Date: June 2, 2025
 Author: Deathsgift66
+Enhanced by: Codex (June 13, 2025)
 */
 
 import { supabase } from './supabaseClient.js';
 
-let currentSession;
-let currentKingdomId;
-let templeChannel;
+let currentSession = null;
+let currentKingdomId = null;
+let templeChannel = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js protects this page → no duplicate session check
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     window.location.href = "login.html";
@@ -21,18 +21,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentSession = session;
 
+  // Get kingdom ID
   const { data: userData } = await supabase
     .from('users')
     .select('kingdom_id')
     .eq('user_id', session.user.id)
     .single();
-  currentKingdomId = userData?.kingdom_id;
 
-  if (currentKingdomId) {
-    subscribeToTempleUpdates(currentKingdomId);
+  currentKingdomId = userData?.kingdom_id;
+  if (!currentKingdomId) {
+    showToast("Kingdom not found.");
+    return;
   }
 
-  // ✅ Initial load
+  subscribeToTempleUpdates(currentKingdomId);
   await loadTemplesNexus();
 });
 
@@ -40,39 +42,23 @@ window.addEventListener('beforeunload', () => {
   if (templeChannel) supabase.removeChannel(templeChannel);
 });
 
-// ✅ Load Temples Nexus
+// ✅ Main Loader
 async function loadTemplesNexus() {
   const overviewEl = document.getElementById('temple-overview-content');
   const favorBarEl = document.querySelector('.favor-bar-fill');
   const constructionEl = document.getElementById('temple-construction-options');
   const templeListEl = document.getElementById('temple-list-content');
 
-  // Placeholders
+  // Loading placeholders
   overviewEl.innerHTML = "<p>Loading temple overview...</p>";
   favorBarEl.style.width = '0%';
   constructionEl.innerHTML = "<p>Loading construction options...</p>";
   templeListEl.innerHTML = "<p>Loading your temples...</p>";
 
   try {
-    let uid = currentSession?.user.id;
-    if (!uid) {
-      const { data: { user } } = await supabase.auth.getUser();
-      uid = user.id;
-    }
-
-    if (!currentKingdomId) {
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('kingdom_id')
-        .eq('user_id', uid)
-        .single();
-      if (userError) throw userError;
-      currentKingdomId = userData.kingdom_id;
-    }
-
     const kingdomId = currentKingdomId;
 
-    // ✅ Load kingdom temples
+    // 🔹 Fetch temples
     const { data: templesData, error: templesError } = await supabase
       .from('kingdom_temples')
       .select('*')
@@ -80,7 +66,7 @@ async function loadTemplesNexus() {
 
     if (templesError) throw templesError;
 
-    // ✅ Load divine favor (assumed field)
+    // 🔹 Fetch divine favor
     const { data: favorData, error: favorError } = await supabase
       .from('kingdoms')
       .select('divine_favor')
@@ -89,101 +75,95 @@ async function loadTemplesNexus() {
 
     if (favorError) throw favorError;
 
-    // ✅ Split major / sub temples
     const majorTemple = templesData.find(t => t.is_major);
     const subTemples = templesData.filter(t => !t.is_major);
 
-    // ✅ Render major temple overview
     renderTempleOverview(majorTemple);
-
-    // ✅ Render favor bar
     renderFavorBar(favorData.divine_favor);
-
-    // ✅ Render construction options
     renderConstructionOptions();
-
-    // ✅ Render your temples list
     renderTempleList(subTemples);
 
   } catch (err) {
-    console.error("❌ Error loading Temples Nexus:", err);
+    console.error("❌ Temple Load Error:", err);
     showToast("Failed to load Temples Nexus.");
   }
 }
 
-// ✅ Render Temple Overview
+// ✅ Render Major Temple
 function renderTempleOverview(temple) {
-  const overviewEl = document.getElementById('temple-overview-content');
-  overviewEl.innerHTML = "";
+  const el = document.getElementById('temple-overview-content');
+  el.innerHTML = "";
 
   if (!temple) {
-    overviewEl.innerHTML = "<p>No major temple constructed yet.</p>";
+    el.innerHTML = "<p>No major temple constructed yet.</p>";
     return;
   }
 
-  const card = document.createElement("div");
-  card.classList.add("temple-card");
-
-  card.innerHTML = `
+  const div = document.createElement("div");
+  div.className = "temple-card";
+  div.innerHTML = `
     <h3>${escapeHTML(temple.temple_name)}</h3>
     <p>Level: ${temple.level}</p>
     <p>Type: ${escapeHTML(temple.temple_type)}</p>
   `;
-
-  overviewEl.appendChild(card);
+  el.appendChild(div);
 }
 
-// ✅ Render Favor Bar
-function renderFavorBar(favorValue) {
-  const favorBarEl = document.querySelector('.favor-bar-fill');
-  const clampedFavor = Math.min(Math.max(favorValue, 0), 100);
-  favorBarEl.style.width = `${clampedFavor}%`;
-  favorBarEl.textContent = `${clampedFavor}%`;
+// ✅ Render Divine Favor Bar
+function renderFavorBar(favor) {
+  const el = document.querySelector('.favor-bar-fill');
+  const safeVal = Math.min(Math.max(favor, 0), 100);
+  el.style.width = `${safeVal}%`;
+  el.textContent = `${safeVal}%`;
 }
 
 // ✅ Render Construction Options
 function renderConstructionOptions() {
-  const constructionEl = document.getElementById('temple-construction-options');
-  constructionEl.innerHTML = "";
+  const el = document.getElementById('temple-construction-options');
+  el.innerHTML = "";
 
-  const templeTypes = ["Temple of Light", "Temple of War", "Temple of Wisdom", "Temple of Nature"];
+  const types = [
+    "Temple of Light",
+    "Temple of War",
+    "Temple of Wisdom",
+    "Temple of Nature"
+  ];
 
-  templeTypes.forEach(type => {
+  types.forEach(type => {
     const btn = document.createElement("button");
-    btn.classList.add("action-btn");
+    btn.className = "action-btn";
     btn.textContent = `Construct ${type}`;
     btn.addEventListener("click", () => constructTemple(type));
-    constructionEl.appendChild(btn);
+    el.appendChild(btn);
   });
 }
 
-// ✅ Render Your Temples List
+// ✅ Render Sub-Temples
 function renderTempleList(subTemples) {
-  const templeListEl = document.getElementById('temple-list-content');
-  templeListEl.innerHTML = "";
+  const el = document.getElementById('temple-list-content');
+  el.innerHTML = "";
 
   if (subTemples.length === 0) {
-    templeListEl.innerHTML = "<p>No sub-temples constructed yet.</p>";
+    el.innerHTML = "<p>No sub-temples constructed yet.</p>";
     return;
   }
 
-  subTemples.forEach(temple => {
+  subTemples.forEach(t => {
     const card = document.createElement("div");
-    card.classList.add("temple-card");
-
+    card.className = "temple-card";
     card.innerHTML = `
-      <h4>${escapeHTML(temple.temple_name)}</h4>
-      <p>Level: ${temple.level}</p>
-      <p>Type: ${escapeHTML(temple.temple_type)}</p>
+      <h4>${escapeHTML(t.temple_name)}</h4>
+      <p>Level: ${t.level}</p>
+      <p>Type: ${escapeHTML(t.temple_type)}</p>
     `;
-
-    templeListEl.appendChild(card);
+    el.appendChild(card);
   });
 }
 
+// ✅ Realtime Updates
 function subscribeToTempleUpdates(kid) {
   templeChannel = supabase
-    .channel('temples-' + kid)
+    .channel(`temples-${kid}`)
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
@@ -195,9 +175,9 @@ function subscribeToTempleUpdates(kid) {
     .subscribe();
 }
 
-// ✅ Construct Temple Action
-async function constructTemple(templeType) {
-  if (!confirm(`Construct a new "${templeType}"?`)) return;
+// ✅ Construct Temple Handler
+async function constructTemple(type) {
+  if (!confirm(`Construct a new "${type}"?`)) return;
 
   try {
     const res = await fetch("/api/kingdom/construct_temple", {
@@ -207,43 +187,36 @@ async function constructTemple(templeType) {
         'Authorization': `Bearer ${currentSession.access_token}`,
         'X-User-ID': currentSession.user.id
       },
-      body: JSON.stringify({ temple_type: templeType })
+      body: JSON.stringify({ temple_type: type })
     });
 
     const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Failed to construct temple");
 
-    if (!res.ok) throw new Error(result.error || "Failed to construct temple.");
-
-    showToast(`Temple "${templeType}" constructed!`);
+    showToast(`Temple "${type}" constructed!`);
     await loadTemplesNexus();
 
   } catch (err) {
-    console.error("❌ Error constructing temple:", err);
+    console.error("❌ Construct Temple Error:", err);
     showToast("Failed to construct temple.");
   }
 }
 
-// ✅ Helper: Toast
+// ✅ Toast Notification Utility
 function showToast(msg) {
-  let toastEl = document.getElementById('toast');
-
-  // Inject toast if not present
-  if (!toastEl) {
-    toastEl = document.createElement("div");
-    toastEl.id = "toast";
-    toastEl.className = "toast-notification";
-    document.body.appendChild(toastEl);
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast-notification';
+    document.body.appendChild(el);
   }
-
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 3000);
 }
 
-// ✅ Helper: Escape HTML
+// ✅ HTML Escaper
 function escapeHTML(str) {
   if (!str) return "";
   return str
