@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: resourceBar.js
-Author: Deathsgift66 (Enhanced by ChatGPT)
-Description: Injects a persistent resource bar UI and syncs live resource values from backend.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: resourceBar.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { fetchJson } from './fetchJson.js'; // Custom wrapper for JSON fetch
 

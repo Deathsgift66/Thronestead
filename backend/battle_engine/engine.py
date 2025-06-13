@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: engine.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import random
 from dataclasses import dataclass, field
 from enum import Enum

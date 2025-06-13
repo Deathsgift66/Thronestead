@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_admin_alerts_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from backend.routers.admin import get_admin_alerts
 
 class DummyResult:

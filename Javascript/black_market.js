@@ -1,10 +1,7 @@
-/*
-Project: Kingmakers Rise
-File: black_market.js
-Purpose: Scalable Black Market Interface (buyer/seller/admin-ready)
-Author: Deathsgift66 + GPT-4 (June 2025)
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: black_market.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let listings = [];

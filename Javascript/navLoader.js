@@ -1,18 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: navLoader.js
-Date: June 2, 2025
-Author: Deathsgift66
-Updated: June 13, 2025
-Enhancements:
-- Error fallback and retry support
-- Defensive DOM targeting
-- Parallel async module injection
-- Initialization confirmation logging
-- Resilient loading for offline/dev states
-- Modular future expansion via plugin hook
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: navLoader.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 document.addEventListener("DOMContentLoaded", () => {
   const NAVBAR_PATH = "/navbar.html";
   const MAX_RETRIES = 3;

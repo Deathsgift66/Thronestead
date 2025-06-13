@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: db.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Lightweight database helper used by the battle engine."""
 
 from typing import Any, Iterable, List, Mapping

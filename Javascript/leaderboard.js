@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: leaderboard.js
-Author: Deathsgift66
-Date: June 2, 2025
-Description: Dynamic, multi-tabbed leaderboard with alliance application modal
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: leaderboard.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentTab = "kingdoms";

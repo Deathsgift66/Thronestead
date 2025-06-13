@@ -1,9 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: battle_live.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
+// Project Name: Kingmakers Rise©
+// File Name: battle_live.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // Live Battle Viewer — fetches terrain, units and combat logs
 
 import { supabase } from './supabaseClient.js';

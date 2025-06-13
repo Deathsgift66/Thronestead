@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_account_settings_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))

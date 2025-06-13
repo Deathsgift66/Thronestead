@@ -1,9 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: audit_log.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
+// Project Name: Kingmakers Rise©
+// File Name: audit_log.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // Hardened Admin Audit Log Page — with Supabase auth, loading, error handling, and formatting
 
 import { supabase } from './supabaseClient.js';

@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_trade_log_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from services.trade_log_service import record_trade, update_trade_status
 
 

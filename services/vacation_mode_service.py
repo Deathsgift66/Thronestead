@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: vacation_mode_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException

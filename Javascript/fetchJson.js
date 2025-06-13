@@ -1,3 +1,7 @@
+// Project Name: Kingmakers Rise©
+// File Name: fetchJson.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 export async function fetchJson(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);

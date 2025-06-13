@@ -1,9 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: battle_replay.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
+// Project Name: Kingmakers Rise©
+// File Name: battle_replay.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // Battle Replay module with timeline playback
 
 import { supabase } from './supabaseClient.js';

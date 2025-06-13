@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: market.js (Final Full Export)
-Author: Deathsgift66
-Version: Future-Ready
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: market.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentUserId = null;

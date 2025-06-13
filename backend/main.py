@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: main.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path

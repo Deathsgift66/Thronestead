@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: strategic_tick_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from __future__ import annotations
 
 """Automation helpers for periodic game state updates."""

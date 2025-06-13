@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_public_config_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import os
 import asyncio
 from backend.routers import public_config

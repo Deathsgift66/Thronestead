@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: mobileLinkBar.js
-Date: June 2, 2025
-Author: Deathsgift66
-Updated: Fully enhanced with accessibility, animation, overlay, and keyboard support
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: mobileLinkBar.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 document.addEventListener('DOMContentLoaded', () => {
   const toggleBtn = document.getElementById('mobile-menu-btn');
   const dropdown = document.querySelector('.dropdown-toggle');

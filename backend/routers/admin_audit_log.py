@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: admin_audit_log.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from typing import Optional
 from datetime import datetime
 import json

@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: tax_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from __future__ import annotations
 
 """Service functions for alliance tax collections."""

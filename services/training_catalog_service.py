@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: training_catalog_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Helpers for reading the training_catalog table."""
 
 import logging

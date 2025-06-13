@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: admin_alerts.js
-Date: June 13, 2025
-Author: Deathsgift66 (Optimized by GPT)
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: admin_alerts.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 const REFRESH_MS = 30000;

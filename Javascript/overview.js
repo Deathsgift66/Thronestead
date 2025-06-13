@@ -1,9 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: overview.js
-Date: June 13, 2025
-Author: Deathsgift66 / Enhanced by ChatGPT
-*/
+// Project Name: Kingmakers Rise©
+// File Name: overview.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // Kingdom Overview — Summary + Resources + Military + Quests + Modifiers
 
 import { supabase } from './supabaseClient.js';

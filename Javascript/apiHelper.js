@@ -1,3 +1,7 @@
+// Project Name: Kingmakers Rise©
+// File Name: apiHelper.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // Global Fetch Override for Kingmaker’s Rise
 // Shows loading spinner + error toast on failed API calls
 // Handles dev/prod routing via API_BASE

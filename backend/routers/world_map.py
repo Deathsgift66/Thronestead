@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: world_map.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 

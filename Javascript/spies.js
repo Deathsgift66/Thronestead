@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: spies.js
-Date: June 13, 2025
-Author: Deathsgift66 (Enhanced by Codex)
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: spies.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentUserId = null;

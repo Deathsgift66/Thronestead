@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_tax_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from services.tax_service import collect_alliance_tax
 
 

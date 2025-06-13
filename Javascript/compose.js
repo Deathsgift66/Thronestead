@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: compose.js
-Updated: 2025-06-13 by Codex
-Purpose: Modular compose system supporting messages, announcements, treaties, and war declarations.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: compose.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let session = null;

@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: targeting.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Utilities for selecting combat targets and applying unit counters."""
 
 from typing import Any, Dict, List

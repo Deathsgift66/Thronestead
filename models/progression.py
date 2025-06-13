@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: progression.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from backend.db_base import Base

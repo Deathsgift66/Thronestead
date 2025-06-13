@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_alliance_vault_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import uuid
 import pytest
 from fastapi import HTTPException

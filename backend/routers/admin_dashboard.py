@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: admin_dashboard.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import os
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text

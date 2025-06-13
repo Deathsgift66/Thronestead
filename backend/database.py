@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: database.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Optional SQLAlchemy database engine for migrations and tests."""
 
 import logging

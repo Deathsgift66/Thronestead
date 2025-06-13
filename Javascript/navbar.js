@@ -1,15 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: navbar.js
-Date: June 2, 2025
-Author: Deathsgift66
-Updated: June 13, 2025
-Description:
-- Loads profile data into the nav bar
-- Supports real-time badge updates (unread messages/notifications)
-- Built-in error fallback and polling
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: navbar.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {

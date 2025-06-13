@@ -1,14 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: news.js
-Date: June 2, 2025
-Author: Deathsgift66
-Updated: June 13, 2025
-Description:
-- Displays latest news from the backend
-- Supports search filtering and real-time refresh
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: news.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentUser = null;

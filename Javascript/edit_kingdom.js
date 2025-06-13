@@ -1,10 +1,7 @@
-/*
-  Project: Kingmakers Rise
-  File: kingdom_edit.js
-  Purpose: Manages kingdom settings (name, title, region, banners, etc.) with validation and live preview.
-  Updated: June 2025 by Codex
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: edit_kingdom.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let userId = null;

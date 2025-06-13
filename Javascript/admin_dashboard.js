@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: admin_dashboard.js
-Date: June 13, 2025
-Author: Deathsgift66 (Finalized by GPT)
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: admin_dashboard.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 const REFRESH_MS = 30000;

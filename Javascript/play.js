@@ -1,10 +1,7 @@
-/*
-  Project Name: Kingmakers Rise Frontend
-  File Name: play.js (enhanced)
-  Description: Full onboarding flow with avatar, region, and announcement loading.
-  Author: Deathsgift66 + ChatGPT, June 13, 2025
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: play.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentUser = null;

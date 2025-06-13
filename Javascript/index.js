@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: index.js
-Updated: 2025-06-13 by Codex
-Description: Hardened Landing Page — Dynamic CTA, News Feed, Smooth Scroll
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: index.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {

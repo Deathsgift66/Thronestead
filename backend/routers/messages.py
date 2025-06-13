@@ -1,4 +1,7 @@
-
+# Project Name: Kingmakers Rise©
+# File Name: messages.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException

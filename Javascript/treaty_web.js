@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: treaty_network.js
-Author: Deathsgift66
-Enhanced: June 2025
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: treaty_web.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 

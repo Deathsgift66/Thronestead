@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: progression_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Utility service functions related to progression."""
 
 import logging

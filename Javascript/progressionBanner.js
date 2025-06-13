@@ -1,11 +1,7 @@
-/*
-  Project Name: Kingmakers Rise Frontend
-  File Name: progressionBanner.js
-  Date: June 13, 2025
-  Author: Deathsgift66 + ChatGPT Enhancements
-  Description: Renders a small fixed banner showing player progression stats.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: progressionBanner.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { loadPlayerProgressionFromStorage } from './progressionGlobal.js';
 
 // ✅ Render the fixed banner using `window.playerProgression`

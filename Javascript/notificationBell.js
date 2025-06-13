@@ -1,13 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: notificationBell.js
-Date: June 2, 2025
-Author: ChatGPT
-Updated: June 13, 2025
-Description:
-Handles real-time notification bell dropdown and unread counter for navbar.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: notificationBell.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {

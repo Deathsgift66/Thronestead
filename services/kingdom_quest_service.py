@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: kingdom_quest_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Service functions for kingdom quest tracking."""
 
 from datetime import datetime, timedelta

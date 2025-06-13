@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: tutorial.js
-Author: Deathsgift66
-Updated: June 13, 2025 by Codex
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: tutorial.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentUser = null;
