@@ -16,7 +16,8 @@ Author: Deathsgift66
   background-size: cover;
   background-blend-mode: overlay;
   border-bottom: 3px solid var(--leather);
-  padding: 1.25rem 2rem;
+  /* Reduce navbar vertical padding to roughly half */
+  padding: 0.6rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
