@@ -161,17 +161,19 @@ async function loadAnnouncements() {
   if (!announcementList) return;
   try {
     const res = await fetch('/api/login/announcements');
-    const text = await res.text();
-    try {
-      const data = JSON.parse(text);
-      data.announcements.forEach((a) => {
-        const li = document.createElement('li');
-        li.textContent = `${a.title} - ${a.content}`;
-        announcementList.appendChild(li);
-      });
-    } catch (e) {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const ctype = res.headers.get('content-type') || '';
+    if (!ctype.includes('application/json')) {
+      const text = await res.text();
       console.error('Invalid JSON from announcements:', text);
+      return;
     }
+    const announcements = await res.json();
+    announcements.forEach((a) => {
+      const li = document.createElement('li');
+      li.textContent = `${a.title} - ${a.content}`;
+      announcementList.appendChild(li);
+    });
   } catch (err) {
     console.error('Failed to load announcements', err);
   }
