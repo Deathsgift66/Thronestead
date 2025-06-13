@@ -61,18 +61,18 @@ Author: Deathsgift66
 
       <div id="setup-step" class="onboard-step">
         <h3>Kingdom Setup</h3>
-        <input type="text" id="kingdom-name-input" placeholder="Kingdom Name" readonly />
-        <input type="text" id="ruler-title-input" placeholder="Ruler Title (optional)" />
-        <select id="region-select">
+        <input type="text" id="kingdom-name-input" placeholder="Kingdom Name" aria-label="Kingdom name" readonly />
+        <input type="text" id="ruler-title-input" placeholder="Ruler Title (optional)" aria-label="Ruler title (optional)" />
+        <select id="region-select" aria-label="Select region">
           <option value="">Select Region</option>
         </select>
         <div id="region-info" class="region-info"></div>
-        <input type="text" id="village-name-input" placeholder="Starting Village Name" />
+        <input type="text" id="village-name-input" placeholder="Starting Village Name" aria-label="Starting village name" />
         <div id="avatar-select-wrapper">
           <h4>Choose Your Avatar</h4>
           <div id="avatar-options" class="avatar-grid"></div>
           <div id="custom-avatar-container" class="hidden">
-            <input type="text" id="custom-avatar-url" placeholder="Custom Avatar URL" />
+            <input type="text" id="custom-avatar-url" placeholder="Custom Avatar URL" aria-label="Custom avatar URL" />
           </div>
           <img id="avatar-preview" class="avatar-preview" src="Assets/avatars/default_avatar_emperor.png" alt="Avatar Preview" />
           <label>Banner URL
