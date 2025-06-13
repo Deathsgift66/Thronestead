@@ -1,16 +1,17 @@
 .resource-bar {
-  position: fixed;
-  bottom: 0;
+  position: sticky;
+  top: 0;
   left: 0;
   right: 0;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.5rem;
   background: rgba(0, 0, 0, 0.75);
   color: var(--parchment);
   padding: 0.25rem 1rem;
   z-index: 1031;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 .resource-bar a {
   color: var(--parchment);
