@@ -1,17 +1,17 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: policies_laws.js
-Date: June 2, 2025
-Author: Deathsgift66
+Date: June 13, 2025
+Author: Deathsgift66 + ChatGPT
 */
 
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js already protects this page → no duplicate session check
-  // ✅ Initial load
   await loadPoliciesAndLaws();
 });
+
+let debounceTimer = null;
 
 // ✅ Load Policies and Laws
 async function loadPoliciesAndLaws() {
@@ -19,68 +19,58 @@ async function loadPoliciesAndLaws() {
   const lawContainer = document.querySelector(".law-options");
   const summaryContainer = document.getElementById("summary-content");
 
-  // Placeholders while loading
   policyContainer.innerHTML = "<p>Loading policies...</p>";
   lawContainer.innerHTML = "<p>Loading laws...</p>";
   summaryContainer.innerHTML = "<p>Building summary...</p>";
 
   try {
-    // ✅ Auth token for backend requests
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     const uid = session?.user?.id;
+
     const headers = {
       'Authorization': `Bearer ${token}`,
       'X-User-ID': uid,
       'Content-Type': 'application/json'
     };
 
-    // ✅ Load user profile
     const userRes = await fetch('/api/policies-laws/user', { headers });
-    if (!userRes.ok) throw new Error('Failed to load user data');
     const userData = await userRes.json();
 
     const activePolicy = userData.active_policy;
     const activeLaws = userData.active_laws || [];
 
-    // ✅ Load catalog
     const catRes = await fetch('/api/policies-laws/catalogue', { headers });
-    if (!catRes.ok) throw new Error('Failed to load catalogue');
     const { entries: catalogData } = await catRes.json();
 
-    // Separate policies and laws
-    const policies = catalogData.filter(item => item.type === "policy");
-    const laws = catalogData.filter(item => item.type === "law");
+    const policies = catalogData.filter(e => e.type === "policy");
+    const laws = catalogData.filter(e => e.type === "law");
 
-    // ✅ Render Policies
     policyContainer.innerHTML = "";
-    policies.forEach(policy => {
+    lawContainer.innerHTML = "";
+
+    // 🔹 Render Policies
+    for (const policy of policies) {
       const card = document.createElement("div");
-      card.classList.add("policy-card");
+      card.className = "policy-card";
+      if (policy.id === activePolicy) card.classList.add("active-policy");
 
       card.innerHTML = `
         <span class="glow"></span>
         <h3>${escapeHTML(policy.name)}</h3>
         <p>${escapeHTML(policy.description)}</p>
-        <p>Category: ${escapeHTML(policy.category || '')}</p>
-        <p>Requires Castle Level: ${policy.unlock_at_level}</p>
-        <p>Effect: ${escapeHTML(policy.effect_summary)}</p>
-        <button class="action-btn policy-select-btn" data-id="${policy.id}">Select Policy</button>
+        <p><strong>Category:</strong> ${escapeHTML(policy.category)}</p>
+        <p><strong>Unlock:</strong> Castle Lvl ${policy.unlock_at_level}</p>
+        <p><strong>Effect:</strong> ${escapeHTML(policy.effect_summary)}</p>
+        <button class="action-btn policy-select-btn" data-id="${policy.id}">Select</button>
       `;
-
-      // Highlight active
-      if (policy.id === activePolicy) {
-        card.classList.add("active-policy");
-      }
-
       policyContainer.appendChild(card);
-    });
+    }
 
-    // ✅ Render Laws
-    lawContainer.innerHTML = "";
-    laws.forEach(law => {
+    // 🔹 Render Laws
+    for (const law of laws) {
       const card = document.createElement("div");
-      card.classList.add("law-card");
+      card.className = "law-card";
 
       const isActive = activeLaws.includes(law.id);
 
@@ -88,123 +78,109 @@ async function loadPoliciesAndLaws() {
         <span class="glow"></span>
         <h3>${escapeHTML(law.name)}</h3>
         <p>${escapeHTML(law.description)}</p>
-        <p>Category: ${escapeHTML(law.category || '')}</p>
-        <p>Requires Castle Level: ${law.unlock_at_level}</p>
-        <p>Effect: ${escapeHTML(law.effect_summary)}</p>
-        <label>
-          <input type="checkbox" class="law-toggle" data-id="${law.id}" ${isActive ? "checked" : ""}>
-          Active
-        </label>
+        <p><strong>Category:</strong> ${escapeHTML(law.category)}</p>
+        <p><strong>Unlock:</strong> Castle Lvl ${law.unlock_at_level}</p>
+        <p><strong>Effect:</strong> ${escapeHTML(law.effect_summary)}</p>
+        <label><input type="checkbox" class="law-toggle" data-id="${law.id}" ${isActive ? "checked" : ""}> Active</label>
       `;
-
       lawContainer.appendChild(card);
-    });
+    }
 
-    // ✅ Bind policy select buttons
+    // 🔘 Bind policy selectors
     document.querySelectorAll(".policy-select-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
-        const policyId = btn.dataset.id;
+        const policyId = parseInt(btn.dataset.id);
+        btn.disabled = true;
         try {
           const res = await fetch('/api/policies-laws/policy', {
             method: 'POST',
             headers,
-            body: JSON.stringify({ policy_id: parseInt(policyId) })
+            body: JSON.stringify({ policy_id: policyId })
           });
-          if (!res.ok) throw new Error('request failed');
-          alert("Policy updated!");
+          if (!res.ok) throw new Error('Policy change failed');
+          alert("✅ Policy updated!");
           await loadPoliciesAndLaws();
         } catch (err) {
-          console.error("❌ Error updating policy:", err);
-          alert("Failed to update policy.");
+          console.error("❌", err);
+          alert("Failed to change policy.");
+        } finally {
+          btn.disabled = false;
         }
       });
     });
 
-    // ✅ Bind law toggles
+    // 🔘 Bind law toggles with debounce
     document.querySelectorAll(".law-toggle").forEach(toggle => {
-      toggle.addEventListener("change", async () => {
-        const lawId = parseInt(toggle.dataset.id);
-        let updatedLaws = [...activeLaws];
-
-        if (toggle.checked) {
-          if (!updatedLaws.includes(lawId)) updatedLaws.push(lawId);
-        } else {
-          updatedLaws = updatedLaws.filter(id => id !== lawId);
-        }
-
-        try {
-          const res = await fetch('/api/policies-laws/laws', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ law_ids: updatedLaws })
-          });
-          if (!res.ok) throw new Error('request failed');
-          alert("Laws updated!");
-          await loadPoliciesAndLaws();
-        } catch (err) {
-          console.error("❌ Error updating laws:", err);
-          alert("Failed to update laws.");
-        }
+      toggle.addEventListener("change", () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => updateLawToggles(headers), 300);
       });
     });
 
-    // ✅ Update summary
     updateSummary(activePolicy, activeLaws, policies, laws);
 
   } catch (err) {
-    console.error("❌ Error loading policies/laws:", err);
-    policyContainer.innerHTML = "<p>Failed to load policies.</p>";
-    lawContainer.innerHTML = "<p>Failed to load laws.</p>";
-    summaryContainer.innerHTML = "<p>Failed to build summary.</p>";
+    console.error("❌ Failed to load:", err);
+    policyContainer.innerHTML = "<p>❌ Error loading policies.</p>";
+    lawContainer.innerHTML = "<p>❌ Error loading laws.</p>";
+    summaryContainer.innerHTML = "<p>❌ Error loading summary.</p>";
   }
 }
 
-// ✅ Update Summary Panel
-function updateSummary(activePolicyId, activeLawsIds, policies, laws) {
-  const summaryContainer = document.getElementById("summary-content");
+// ✅ Law Update Logic
+async function updateLawToggles(headers) {
+  const toggles = document.querySelectorAll(".law-toggle");
+  const selected = Array.from(toggles)
+    .filter(t => t.checked)
+    .map(t => parseInt(t.dataset.id));
 
-  summaryContainer.innerHTML = "";
+  try {
+    const res = await fetch('/api/policies-laws/laws', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ law_ids: selected })
+    });
 
-  const summaryList = document.createElement("ul");
-
-  // Active policy
-  const activePolicy = policies.find(p => p.id === activePolicyId);
-  if (activePolicy) {
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>Policy:</strong> ${escapeHTML(activePolicy.name)} — ${escapeHTML(activePolicy.effect_summary)}`;
-    summaryList.appendChild(li);
-  } else {
-    const li = document.createElement("li");
-    li.innerHTML = "<strong>Policy:</strong> None selected.";
-    summaryList.appendChild(li);
+    if (!res.ok) throw new Error('Failed');
+    alert("✅ Laws updated!");
+    await loadPoliciesAndLaws();
+  } catch (err) {
+    console.error("❌ Updating laws failed:", err);
+    alert("Could not update laws.");
   }
+}
 
-  // Active laws
-  if (activeLawsIds.length > 0) {
+// ✅ Summary Builder
+function updateSummary(activePolicyId, activeLawsIds, policies, laws) {
+  const container = document.getElementById("summary-content");
+  container.innerHTML = "";
+
+  const ul = document.createElement("ul");
+
+  const policy = policies.find(p => p.id === activePolicyId);
+  ul.innerHTML += `<li><strong>Policy:</strong> ${
+    policy ? `${escapeHTML(policy.name)} — ${escapeHTML(policy.effect_summary)}` : "None selected"
+  }</li>`;
+
+  if (activeLawsIds.length === 0) {
+    ul.innerHTML += "<li><strong>Laws:</strong> None selected.</li>";
+  } else {
     activeLawsIds.forEach(id => {
       const law = laws.find(l => l.id === id);
       if (law) {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>Law:</strong> ${escapeHTML(law.name)} — ${escapeHTML(law.effect_summary)}`;
-        summaryList.appendChild(li);
+        ul.innerHTML += `<li><strong>Law:</strong> ${escapeHTML(law.name)} — ${escapeHTML(law.effect_summary)}</li>`;
       }
     });
-  } else {
-    const li = document.createElement("li");
-    li.innerHTML = "<strong>Laws:</strong> None selected.";
-    summaryList.appendChild(li);
   }
 
-  summaryContainer.appendChild(summaryList);
+  container.appendChild(ul);
 }
 
-// ✅ Basic HTML escape
+// ✅ HTML Escape
 function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return str?.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
 }
