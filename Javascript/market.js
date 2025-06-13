@@ -1,44 +1,36 @@
 /*
 Project Name: Kingmakers Rise Frontend
-File Name: market.js
-Date: June 2, 2025
+File Name: market.js (Final Full Export)
 Author: Deathsgift66
+Version: Future-Ready
 */
 
 import { supabase } from './supabaseClient.js';
 
 let currentUserId = null;
+let isAdmin = false;
 let realtimeChannel = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
+// ✅ Main Initialization
 
-  // ✅ Validate session
+document.addEventListener("DOMContentLoaded", async () => {
+  // ✅ Session & Role
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
+  if (!session) return (window.location.href = "login.html");
   currentUserId = session.user.id;
 
-  // ✅ Setup tabs
-  setupTabs();
+  const { data: userMeta } = await supabase.from('users').select('is_admin').eq('user_id', currentUserId).single();
+  isAdmin = userMeta?.is_admin || false;
 
+  setupTabs();
+  setupCreateListingModal();
   subscribeRealtime();
   startAutoRefresh();
 
-  // ✅ Load default tab → Browse Listings
   await loadMarketListings();
 });
 
-// ✅ Setup Tabs
+// ✅ Tabs Logic
 function setupTabs() {
   const tabButtons = document.querySelectorAll(".tab");
   const tabPanels = document.querySelectorAll(".tab-panel");
@@ -46,24 +38,58 @@ function setupTabs() {
   tabButtons.forEach(btn => {
     btn.addEventListener("click", async () => {
       const targetId = btn.getAttribute("data-tab");
-
-      // Toggle active state
       tabButtons.forEach(b => b.classList.remove("active"));
       tabPanels.forEach(panel => panel.classList.add("hidden"));
-
       btn.classList.add("active");
       document.getElementById(targetId).classList.remove("hidden");
 
-      // Load corresponding data
-      if (targetId === "market-listings") {
-        await loadMarketListings();
-      } else if (targetId === "my-listings") {
-        await loadMyListings();
-      } else if (targetId === "trade-history") {
-        await loadTradeHistory();
-      }
+      if (targetId === "market-listings") await loadMarketListings();
+      if (targetId === "my-listings") await loadMyListings();
+      if (targetId === "trade-history") await loadTradeHistory();
     });
   });
+}
+
+// ✅ Modal for Creating New Listings
+function setupCreateListingModal() {
+  const btn = document.getElementById('open-create-listing');
+  const modal = document.getElementById('create-listing-modal');
+  const close = document.getElementById('close-create-listing');
+
+  if (btn && modal && close) {
+    btn.addEventListener('click', () => modal.classList.remove('hidden'));
+    close.addEventListener('click', () => modal.classList.add('hidden'));
+
+    const form = document.getElementById('create-listing-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const item = document.getElementById('listing-item').value;
+      const qty = parseInt(document.getElementById('listing-qty').value);
+      const price = parseInt(document.getElementById('listing-price').value);
+
+      if (!item || qty <= 0 || price <= 0) return alert("Invalid values");
+
+      try {
+        const res = await fetch('/api/market/create_listing', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': currentUserId
+          },
+          body: JSON.stringify({ item_name: item, quantity: qty, price })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to create listing");
+        modal.classList.add('hidden');
+        alert("Listing created!");
+        await loadMyListings();
+      } catch (err) {
+        console.error("Listing creation error:", err);
+        alert(err.message);
+      }
+    });
+  }
 }
 
 // ✅ Load Market Listings
@@ -76,99 +102,86 @@ async function loadMarketListings() {
       headers: { 'X-User-ID': currentUserId }
     });
     const data = await res.json();
-
     container.innerHTML = "";
 
-    if (!data.listings || data.listings.length === 0) {
-      container.innerHTML = "<p>No active listings found.</p>";
-      return;
+    if (!data.listings?.length) {
+      return (container.innerHTML = "<p>No listings available.</p>");
     }
 
     const list = document.createElement("ul");
-
-    data.listings.forEach(listing => {
+    data.listings.forEach(l => {
       const li = document.createElement("li");
       li.innerHTML = `
-        <strong>${escapeHTML(listing.item_name)}</strong> — ${listing.quantity} units @ ${listing.price} gold/unit 
-        <br> Seller: ${escapeHTML(listing.seller_name)}
+        <strong>${escapeHTML(l.item_name)}</strong> — ${l.quantity} @ ${l.price}g/unit
+        <br> Seller: ${escapeHTML(l.seller_name)}
+        ${isAdmin ? `<button class='danger-btn' data-id='${l.listing_id}'>Remove</button>` : ''}
       `;
       list.appendChild(li);
     });
-
     container.appendChild(list);
-    updateLastUpdated();
+
+    if (isAdmin) {
+      container.querySelectorAll(".danger-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.dataset.id;
+          if (confirm("Remove this listing?")) {
+            await fetch(`/api/market/admin_remove_listing`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-User-ID': currentUserId },
+              body: JSON.stringify({ listing_id: id })
+            });
+            await loadMarketListings();
+          }
+        });
+      });
+    }
+
   } catch (err) {
-    console.error("❌ Error loading market listings:", err);
-    container.innerHTML = "<p>Failed to load market listings.</p>";
+    console.error("❌ Listing load error:", err);
+    container.innerHTML = "<p>Error loading listings.</p>";
   }
+  updateLastUpdated();
 }
 
 // ✅ Load My Listings
 async function loadMyListings() {
   const container = document.getElementById("my-listings");
-  container.innerHTML = "<p>Loading your listings...</p>";
-
+  container.innerHTML = "<p>Loading...</p>";
   try {
     const res = await fetch("/api/market/my_listings", {
       headers: { 'X-User-ID': currentUserId }
     });
     const data = await res.json();
-
     container.innerHTML = "";
 
-    if (!data.listings || data.listings.length === 0) {
-      container.innerHTML = "<p>You have no active listings.</p>";
-      return;
+    if (!data.listings?.length) {
+      return (container.innerHTML = "<p>No active listings.</p>");
     }
 
     const list = document.createElement("ul");
-
-    data.listings.forEach(listing => {
+    data.listings.forEach(l => {
       const li = document.createElement("li");
       li.innerHTML = `
-        <strong>${escapeHTML(listing.item_name)}</strong> — ${listing.quantity} units @ ${listing.price} gold/unit 
-        <br> <button class="action-btn cancel-btn" data-listing-id="${listing.listing_id}">Cancel</button>
-      `;
+        ${escapeHTML(l.item_name)} — ${l.quantity} @ ${l.price}g
+        <button class='cancel-btn' data-id='${l.listing_id}'>Cancel</button>`;
       list.appendChild(li);
     });
-
     container.appendChild(list);
 
-    // ✅ Bind Cancel buttons
-    document.querySelectorAll(".cancel-btn").forEach(btn => {
+    container.querySelectorAll(".cancel-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
-        const listingId = btn.dataset.listingId;
-
-        if (!confirm("Are you sure you want to cancel this listing?")) {
-          return;
-        }
-
-        try {
-          const res = await fetch("/api/market/cancel_listing", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", 'X-User-ID': currentUserId },
-            body: JSON.stringify({ listing_id: listingId })
-          });
-
-          const result = await res.json();
-
-          if (!res.ok) {
-            throw new Error(result.error || "Failed to cancel listing.");
-          }
-
-          alert(result.message || "Listing canceled.");
-          await loadMyListings();
-
-        } catch (err) {
-          console.error("❌ Error cancelling listing:", err);
-          alert("Failed to cancel listing.");
-        }
+        const id = btn.dataset.id;
+        if (!confirm("Cancel this listing?")) return;
+        await fetch("/api/market/cancel_listing", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-ID': currentUserId },
+          body: JSON.stringify({ listing_id: id })
+        });
+        await loadMyListings();
       });
     });
-
   } catch (err) {
-    console.error("❌ Error loading my listings:", err);
-    container.innerHTML = "<p>Failed to load your listings.</p>";
+    container.innerHTML = "<p>Failed to load.</p>";
   }
   updateLastUpdated();
 }
@@ -176,7 +189,7 @@ async function loadMyListings() {
 // ✅ Load Trade History
 async function loadTradeHistory() {
   const container = document.getElementById("trade-history");
-  container.innerHTML = "<p>Loading trade history...</p>";
+  container.innerHTML = "<p>Loading...</p>";
 
   try {
     const res = await fetch("/api/market/history", {
@@ -184,52 +197,37 @@ async function loadTradeHistory() {
     });
     const data = await res.json();
 
-    container.innerHTML = "";
-
-    if (!data.trades || data.trades.length === 0) {
-      container.innerHTML = "<p>No trade history found.</p>";
-      return;
+    if (!data.trades?.length) {
+      return (container.innerHTML = "<p>No trades found.</p>");
     }
 
     const list = document.createElement("ul");
-
-    data.trades.forEach(trade => {
+    data.trades.forEach(tr => {
       const li = document.createElement("li");
       li.innerHTML = `
-        <strong>${escapeHTML(trade.item_name)}</strong> — ${trade.quantity} units @ ${trade.price} gold/unit 
-        <br> Buyer: ${escapeHTML(trade.buyer_name)} — Seller: ${escapeHTML(trade.seller_name)} 
-        <br> Completed: ${formatTimestamp(trade.completed_at)}
+        ${escapeHTML(tr.item_name)} — ${tr.quantity} @ ${tr.price}g
+        <br>Buyer: ${escapeHTML(tr.buyer_name)} — Seller: ${escapeHTML(tr.seller_name)}
+        <br>Completed: ${formatTimestamp(tr.completed_at)}
       `;
       list.appendChild(li);
     });
-
+    container.innerHTML = "";
     container.appendChild(list);
-    updateLastUpdated();
   } catch (err) {
-    console.error("❌ Error loading trade history:", err);
-    container.innerHTML = "<p>Failed to load trade history.</p>";
+    container.innerHTML = "<p>Error loading trade history.</p>";
   }
+  updateLastUpdated();
 }
 
-// ✅ Format Timestamp
-function formatTimestamp(ts) {
-  if (!ts) return "Unknown";
-  const date = new Date(ts);
-  return date.toLocaleString(undefined, {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit"
+function subscribeRealtime() {
+  realtimeChannel = supabase
+    .channel('public:market_listings')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'market_listings' }, loadMarketListings)
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
   });
-}
-
-// ✅ Basic HTML escape
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
 
 function updateLastUpdated() {
@@ -237,32 +235,16 @@ function updateLastUpdated() {
   if (el) el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
 }
 
-function startAutoRefresh() {
-  setInterval(async () => {
-    await loadMarketListings();
-  }, 30000);
+function formatTimestamp(ts) {
+  if (!ts) return "Unknown";
+  const d = new Date(ts);
+  return d.toLocaleString();
 }
 
-function subscribeRealtime() {
-  realtimeChannel = supabase
-    .channel('public:market_listings')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'market_listings' }, async () => {
-      await loadMarketListings();
-    })
-    .subscribe(status => {
-      const indicator = document.getElementById('realtime-indicator');
-      if (indicator) {
-        if (status === 'SUBSCRIBED') {
-          indicator.textContent = 'Live';
-          indicator.className = 'connected';
-        } else {
-          indicator.textContent = 'Offline';
-          indicator.className = 'disconnected';
-        }
-      }
-    });
+function escapeHTML(str) {
+  return str ? String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;") : "";
+}
 
-  window.addEventListener('beforeunload', () => {
-    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-  });
+function startAutoRefresh() {
+  setInterval(() => loadMarketListings(), 30000);
 }
