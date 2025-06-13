@@ -1,6 +1,14 @@
-import { supabase } from './supabaseClient.js';
-import { fetchJson } from './fetchJson.js';
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: resourceBar.js
+Author: Deathsgift66 (Enhanced by ChatGPT)
+Description: Injects a persistent resource bar UI and syncs live resource values from backend.
+*/
 
+import { supabase } from './supabaseClient.js';
+import { fetchJson } from './fetchJson.js'; // Custom wrapper for JSON fetch
+
+// Dynamically load Bootstrap 5.3 if not already loaded
 function injectBootstrap() {
   if (!document.querySelector('link[data-bootstrap]')) {
     const link = document.createElement('link');
@@ -9,6 +17,7 @@ function injectBootstrap() {
     link.setAttribute('data-bootstrap', 'true');
     document.head.appendChild(link);
   }
+
   if (!document.querySelector('script[data-bootstrap]')) {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js';
@@ -18,6 +27,49 @@ function injectBootstrap() {
   }
 }
 
+// List of resource keys and their emoji icons
+const RESOURCES = [
+  { key: 'gold', icon: '💰' }, { key: 'gems', icon: '💎' }, { key: 'wood', icon: '🌲' },
+  { key: 'stone', icon: '🪨' }, { key: 'iron_ore', icon: '⛏' }, { key: 'food', icon: '🍞' },
+  { key: 'coal', icon: '🔥' }, { key: 'livestock', icon: '🐄' }, { key: 'clay', icon: '🧱' },
+  { key: 'flax', icon: '🌾' }, { key: 'tools', icon: '🛠' }, { key: 'wood_planks', icon: '🪵' },
+  { key: 'refined_stone', icon: '🧱' }, { key: 'iron_ingots', icon: '🔩' }, { key: 'charcoal', icon: '🔥' },
+  { key: 'leather', icon: '👞' }, { key: 'arrows', icon: '🏹' }, { key: 'swords', icon: '🗡' },
+  { key: 'axes', icon: '🪓' }, { key: 'shields', icon: '🛡' }, { key: 'armour', icon: '🥋' },
+  { key: 'wagon', icon: '🚚' }, { key: 'siege_weapons', icon: '🏰' }, { key: 'jewelry', icon: '💍' },
+  { key: 'spear', icon: '🔱' }, { key: 'horses', icon: '🐎' }, { key: 'pitchforks', icon: '🍴' }
+];
+
+// Create and inject the resource bar into the page
+function createBar() {
+  const bar = document.createElement('div');
+  bar.id = 'resource-bar';
+  bar.className = 'resource-bar d-flex flex-wrap justify-content-center gap-2 py-1 bg-dark text-white fs-sm';
+
+  bar.innerHTML = RESOURCES.map(({ key, icon }) => `
+    <a href="market.html?resource=${key}" 
+       class="text-white text-decoration-none"
+       data-bs-toggle="tooltip" 
+       title="${key.replace(/_/g, ' ')}">
+      <span class="resource-icon">${icon}</span> 
+      <span id="res-${key}">0</span>
+    </a>`).join('');
+
+  const banner = document.querySelector('header.kr-top-banner');
+  if (banner && banner.parentNode) {
+    banner.insertAdjacentElement('afterend', bar);
+  } else {
+    document.body.prepend(bar);
+  }
+
+  // Initialize tooltips after Bootstrap loads
+  if (window.bootstrap) {
+    const tooltips = bar.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(el => new window.bootstrap.Tooltip(el));
+  }
+}
+
+// Fetch and update live resource values from server
 async function loadResources() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -30,40 +82,11 @@ async function loadResources() {
 
     updateUI(payload.resources || {});
   } catch (err) {
-    console.error('Invalid JSON from /api/resources:', err);
+    console.error('❌ Failed to fetch resource data:', err);
   }
 }
 
-const RESOURCES = [
-  { key: 'gold', icon: '💰' },
-  { key: 'gems', icon: '💎' },
-  { key: 'wood', icon: '🌲' },
-  { key: 'stone', icon: '🪨' },
-  { key: 'iron_ore', icon: '⛏' },
-  { key: 'food', icon: '🍞' },
-  { key: 'coal', icon: '🔥' },
-  { key: 'livestock', icon: '🐄' },
-  { key: 'clay', icon: '🧱' },
-  { key: 'flax', icon: '🌾' },
-  { key: 'tools', icon: '🛠' },
-  { key: 'wood_planks', icon: '🪵' },
-  { key: 'refined_stone', icon: '🧱' },
-  { key: 'iron_ingots', icon: '🔩' },
-  { key: 'charcoal', icon: '🔥' },
-  { key: 'leather', icon: '👞' },
-  { key: 'arrows', icon: '🏹' },
-  { key: 'swords', icon: '🗡' },
-  { key: 'axes', icon: '🪓' },
-  { key: 'shields', icon: '🛡' },
-  { key: 'armour', icon: '🥋' },
-  { key: 'wagon', icon: '🚚' },
-  { key: 'siege_weapons', icon: '🏰' },
-  { key: 'jewelry', icon: '💍' },
-  { key: 'spear', icon: '🔱' },
-  { key: 'horses', icon: '🐎' },
-  { key: 'pitchforks', icon: '🍴' }
-];
-
+// Populate each resource value into the bar
 function updateUI(data) {
   RESOURCES.forEach(({ key }) => {
     const el = document.getElementById(`res-${key}`);
@@ -73,30 +96,10 @@ function updateUI(data) {
   });
 }
 
-function createBar() {
-  const bar = document.createElement('div');
-  bar.id = 'resource-bar';
-  bar.className = 'resource-bar';
-  bar.innerHTML = RESOURCES.map(r =>
-    `<a href="market.html?resource=${r.key}" data-bs-toggle="tooltip" title="${r.key.replace(/_/g,' ')}">` +
-    `<span class="resource-icon">${r.icon}</span> <span id="res-${r.key}">0</span>` +
-    `</a>`
-  ).join(' ');
-
-  const banner = document.querySelector('header.kr-top-banner');
-  if (banner && banner.parentNode) {
-    banner.insertAdjacentElement('afterend', bar);
-  } else {
-    document.body.prepend(bar);
-  }
-  if (window.bootstrap) {
-    const triggers = bar.querySelectorAll('[data-bs-toggle="tooltip"]');
-    triggers.forEach(el => new window.bootstrap.Tooltip(el));
-  }
-}
-
+// Initialize everything once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   injectBootstrap();
   createBar();
   loadResources();
+  setInterval(loadResources, 60000); // Auto-refresh every 60s
 });
