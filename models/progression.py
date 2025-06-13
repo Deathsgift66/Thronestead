@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from backend.db_base import Base
 

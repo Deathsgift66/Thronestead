@@ -17,7 +17,6 @@ from backend.routers.alliance_projects import (
     get_available_projects,
     start_alliance_project,
     contribute_to_project,
-    project_leaderboard,
     StartPayload,
     ContributionPayload,
     get_in_progress_projects,

@@ -9,11 +9,9 @@ from backend import models
 from ..security import verify_jwt_token
 
 from ..battle_engine import (
-    BattleTickHandler,
     TerrainGenerator,
     WarState,
     Unit,
-    WarManager,
     war_manager,
 )
 
