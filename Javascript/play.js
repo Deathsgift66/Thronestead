@@ -1,8 +1,8 @@
 /*
-Project Name: Kingmakers Rise Frontend
-File Name: play.js
-Date: June 2, 2025
-Author: Deathsgift66
+  Project Name: Kingmakers Rise Frontend
+  File Name: play.js (rewritten)
+  Description: Handles onboarding setup, region/announcement loading, and kingdom creation.
+  Author: Rewritten by OpenAI, June 13, 2025
 */
 
 import { supabase } from './supabaseClient.js';
@@ -10,6 +10,7 @@ import { supabase } from './supabaseClient.js';
 let currentUser = null;
 let kingdomId = null;
 let authToken = '';
+let vipLevel = 0;
 const regionMap = {};
 const avatarList = [
   'Assets/avatars/Default_avatar_english_king.png',
@@ -25,14 +26,11 @@ const avatarList = [
   'Assets/avatars/default_avatar_nubian_queen.png'
 ];
 let selectedAvatar = avatarList[0];
-let vipLevel = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-    return;
-  }
+  if (!session) return redirectTo('login.html');
+
   currentUser = session.user;
   authToken = session.access_token;
 
@@ -43,31 +41,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     .maybeSingle();
 
   if (error) {
-    console.error('❌ Error loading profile:', error);
+    console.error('Profile error:', error);
     showToast('Failed to load profile.');
     return;
   }
 
-  if (profile && profile.setup_complete) {
-    window.location.href = 'overview.html';
-    return;
-  }
+  if (profile?.setup_complete) return redirectTo('overview.html');
+
+  kingdomId = profile?.kingdom_id ?? null;
+  const displayName = profile?.display_name || profile?.kingdom_name || currentUser.user_metadata.display_name;
+  document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(displayName)}!`;
 
   const nameInput = document.getElementById('kingdom-name-input');
-
-  if (profile) {
-    kingdomId = profile.kingdom_id;
-    const greetName = profile.display_name || profile.kingdom_name;
-    document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(greetName || currentUser.user_metadata.display_name)}!`;
-    if (nameInput) {
-      nameInput.value = profile.kingdom_name || profile.display_name || currentUser.user_metadata.display_name;
-    }
-  } else {
-    document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(currentUser.user_metadata.display_name)}!`;
-    if (nameInput) nameInput.value = currentUser.user_metadata.display_name;
+  if (nameInput) {
+    nameInput.value = displayName;
+    nameInput.readOnly = true;
   }
-
-  if (nameInput) nameInput.readOnly = true;
 
   await loadVIPStatus();
   await loadRegions();
@@ -76,126 +65,86 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindEvents();
 });
 
+function redirectTo(url) {
+  window.location.href = url;
+}
+
 function bindEvents() {
   const createBtn = document.getElementById('create-kingdom-btn');
-  const bannerPreview = document.getElementById('banner-preview');
-  const emblemPreview = document.getElementById('emblem-preview');
-  const bannerEl = document.getElementById('banner_url');
-  const emblemEl = document.getElementById('emblem_url');
-  const customAvatarEl = document.getElementById('custom-avatar-url');
-
-  if (customAvatarEl) {
-    customAvatarEl.addEventListener('input', () => {
-      selectedAvatar = customAvatarEl.value.trim() || avatarList[0];
-      document.getElementById('avatar-preview').src = selectedAvatar;
-    });
-  }
-
-  if (bannerEl && bannerPreview) {
-    bannerEl.addEventListener('input', () => {
-      bannerPreview.src = bannerEl.value.trim();
-    });
-  }
-  if (emblemEl && emblemPreview) {
-    emblemEl.addEventListener('input', () => {
-      emblemPreview.src = emblemEl.value.trim();
-    });
-  }
-
   if (!createBtn) return;
 
   createBtn.addEventListener('click', async () => {
-    const kNameEl = document.getElementById('kingdom-name-input');
-    const titleEl = document.getElementById('ruler-title-input');
-    const regionEl = document.getElementById('region-select');
-    const villageEl = document.getElementById('village-name-input');
-    const bannerEl = document.getElementById('banner_url');
-    const emblemEl = document.getElementById('emblem_url');
-    if (bannerEl && bannerPreview) {
-      bannerPreview.src = bannerEl.value;
-    }
-    if (emblemEl && emblemPreview) {
-      emblemPreview.src = emblemEl.value;
-    }
+    const kingdomName = document.getElementById('kingdom-name-input')?.value.trim();
+    const rulerTitle = document.getElementById('ruler-title-input')?.value.trim() || null;
+    const region = document.getElementById('region-select')?.value;
+    const villageName = document.getElementById('village-name-input')?.value.trim();
+    const bannerUrl = document.getElementById('banner_url')?.value.trim() || null;
+    const emblemUrl = document.getElementById('emblem_url')?.value.trim() || null;
 
-    const kingdomName = kNameEl.value.trim();
-    const rulerTitle = titleEl ? titleEl.value.trim() : null;
-    const region = regionEl.value;
-    const villageName = villageEl.value.trim();
-    const bannerUrl = bannerEl ? bannerEl.value.trim() : null;
-    const emblemUrl = emblemEl ? emblemEl.value.trim() : null;
-
-    if (kingdomName.length < 3) {
-      showToast('Kingdom name must be at least 3 characters.');
-      return;
-    }
-    if (!region) {
-      showToast('Please select a region.');
-      return;
-    }
-    if (villageName.length < 3) {
-      showToast('Village name must be at least 3 characters.');
-      return;
-    }
+    if (!validateInputs(kingdomName, villageName, region)) return;
 
     createBtn.disabled = true;
 
     try {
-      const res = await fetch('/api/kingdom/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-ID': currentUser.id,
-          Authorization: `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          kingdom_name: kingdomName,
-          ruler_title: rulerTitle || null,
-          village_name: villageName,
-          region,
-          banner_url: bannerUrl || null,
-          emblem_url: emblemUrl || null
-        })
+      await safeJSONPost('/api/kingdom/create', {
+        kingdom_name: kingdomName,
+        ruler_title: rulerTitle,
+        village_name: villageName,
+        region,
+        banner_url: bannerUrl,
+        emblem_url: emblemUrl
       });
 
-      if (!res.ok) throw new Error('Request failed');
-
-      await fetch('/api/account/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-ID': currentUser.id,
-          Authorization: `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          display_name: kingdomName,
-          profile_picture_url: selectedAvatar
-        })
+      await safeJSONPost('/api/account/update', {
+        display_name: kingdomName,
+        profile_picture_url: selectedAvatar
       });
 
       showToast('Kingdom created!');
-      setTimeout(() => {
-        window.location.href = 'overview.html';
-      }, 1500);
+      setTimeout(() => redirectTo('overview.html'), 1500);
     } catch (err) {
       console.error('❌ Error creating kingdom:', err);
       showToast('Failed to create kingdom.');
       createBtn.disabled = false;
     }
   });
+
+  const customAvatarEl = document.getElementById('custom-avatar-url');
+  const avatarPreview = document.getElementById('avatar-preview');
+  if (customAvatarEl && avatarPreview) {
+    customAvatarEl.addEventListener('input', () => {
+      selectedAvatar = customAvatarEl.value.trim() || avatarList[0];
+      avatarPreview.src = selectedAvatar;
+    });
+  }
+
+  ['banner_url', 'emblem_url'].forEach(id => {
+    const input = document.getElementById(id);
+    const preview = document.getElementById(`${id.replace('_url', '')}-preview`);
+    if (input && preview) {
+      input.addEventListener('input', () => preview.src = input.value.trim());
+    }
+  });
+}
+
+function validateInputs(name, village, region) {
+  if (!name || name.length < 3) return showToast('Kingdom name must be at least 3 characters.');
+  if (!region) return showToast('Please select a region.');
+  if (!village || village.length < 3) return showToast('Village name must be at least 3 characters.');
+  return true;
 }
 
 function showToast(msg) {
-  let toastEl = document.getElementById('toast');
-  if (!toastEl) {
-    toastEl = document.createElement('div');
-    toastEl.id = 'toast';
-    toastEl.className = 'toast-notification';
-    document.body.appendChild(toastEl);
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast-notification';
+    document.body.appendChild(el);
   }
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 3000);
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
 }
 
 function escapeHTML(str) {
@@ -207,127 +156,118 @@ function escapeHTML(str) {
     .replace(/'/g, '&#039;');
 }
 
+async function safeJSONGet(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+  const type = res.headers.get('content-type') || '';
+  if (!type.includes('application/json')) {
+    const text = await res.text();
+    throw new Error(`Invalid JSON: ${text.slice(0, 100)}`);
+  }
+  return res.json();
+}
+
+async function safeJSONPost(url, data) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-ID': currentUser.id,
+      Authorization: `Bearer ${authToken}`
+    },
+    body: JSON.stringify(data)
+  });
+
+  if (!res.ok) throw new Error(`POST failed: ${res.status}`);
+  const type = res.headers.get('content-type') || '';
+  if (!type.includes('application/json')) {
+    const text = await res.text();
+    throw new Error(`Invalid JSON in response: ${text}`);
+  }
+
+  return res.json();
+}
+
 async function loadRegions() {
   const regionEl = document.getElementById('region-select');
   const infoEl = document.getElementById('region-info');
-  if (!regionEl) return;
+  if (!regionEl || !infoEl) return;
 
-  let regions = [];
   try {
-    const res = await fetch('/api/kingdom/regions');
-    if (!res.ok) throw new Error('Network response not ok');
+    const { regions = [] } = await safeJSONGet('/api/kingdom/regions');
+    regionEl.innerHTML = '<option value="">Select Region</option>';
 
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error('Invalid JSON from regions:', text);
-      regionEl.innerHTML = '<option value="">Failed to load</option>';
-      return;
-    }
+    regions.forEach(region => {
+      region.resource_bonus = parseMaybeJSON(region.resource_bonus);
+      region.troop_bonus = parseMaybeJSON(region.troop_bonus);
+      regionMap[region.region_code] = region;
 
-    regions = data.regions || [];
-    regions = regions.map(r => {
-      if (typeof r.resource_bonus === 'string') {
-        try { r.resource_bonus = JSON.parse(r.resource_bonus); } catch { r.resource_bonus = {}; }
+      const opt = document.createElement('option');
+      opt.value = region.region_code;
+      opt.textContent = region.region_name;
+      regionEl.appendChild(opt);
+    });
+
+    regionEl.addEventListener('change', () => {
+      const region = regionMap[regionEl.value];
+      infoEl.innerHTML = '';
+      if (!region) return;
+
+      let html = region.description ? `<p>${escapeHTML(region.description)}</p>` : '';
+      if (region.resource_bonus && Object.keys(region.resource_bonus).length) {
+        html += '<ul>' + Object.entries(region.resource_bonus)
+          .map(([res, amt]) => `<li>${escapeHTML(res)}: ${amt > 0 ? '+' : ''}${amt}%</li>`).join('') + '</ul>';
       }
-      if (typeof r.troop_bonus === 'string') {
-        try { r.troop_bonus = JSON.parse(r.troop_bonus); } catch { r.troop_bonus = {}; }
+      if (region.troop_bonus && Object.keys(region.troop_bonus).length) {
+        html += '<ul>' + Object.entries(region.troop_bonus)
+          .map(([stat, val]) => `<li>${escapeHTML(stat)}: ${val > 0 ? '+' : ''}${val}%</li>`).join('') + '</ul>';
       }
-      return r;
+      infoEl.innerHTML = html;
     });
   } catch (err) {
-    console.error('Failed to load regions', err);
-    regionEl.innerHTML = '<option value="">Failed to load</option>';
-    return;
+    console.error('Failed to load regions:', err);
+    regionEl.innerHTML = '<option value="">Failed to load regions</option>';
   }
-
-  regionEl.innerHTML = '<option value="">Select Region</option>';
-  regions.forEach(r => {
-    regionMap[r.region_code] = r;
-    const opt = document.createElement('option');
-    opt.value = r.region_code;
-    opt.textContent = r.region_name || r.region_code;
-    regionEl.appendChild(opt);
-  });
-
-  regionEl.addEventListener('change', () => {
-    const code = regionEl.value;
-    infoEl.innerHTML = '';
-    if (!code) return;
-    const r = regionMap[code];
-    if (!r) return;
-    let html = '';
-    if (r.description) html += `<p>${escapeHTML(r.description)}</p>`;
-    if (r.resource_bonus && Object.keys(r.resource_bonus).length > 0) {
-      html += '<ul>';
-      for (const [res, amt] of Object.entries(r.resource_bonus)) {
-        html += `<li>${escapeHTML(res)}: ${amt > 0 ? '+' : ''}${amt}%</li>`;
-      }
-      html += '</ul>';
-    }
-    if (r.troop_bonus && Object.keys(r.troop_bonus).length > 0) {
-      html += '<ul>';
-      for (const [stat, val] of Object.entries(r.troop_bonus)) {
-        html += `<li>${escapeHTML(stat)}: ${val > 0 ? '+' : ''}${val}%</li>`;
-      }
-      html += '</ul>';
-    }
-    infoEl.innerHTML = html;
-  });
 }
 
 async function loadAnnouncements() {
   const container = document.getElementById('announcements');
   if (!container) return;
   try {
-    const res = await fetch('/api/login/announcements');
-    if (!res.ok) throw new Error('Network response not ok');
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error('Invalid JSON from announcements:', text);
-      return;
-    }
-    const items = data.announcements || [];
-    container.innerHTML = items
-      .map(a => `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`)
-      .join('');
+    const { announcements = [] } = await safeJSONGet('/api/login/announcements');
+    container.innerHTML = announcements.map(a =>
+      `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`
+    ).join('');
   } catch (err) {
-    console.error('Failed to load announcements', err);
+    console.error('Failed to load announcements:', err);
+    container.innerHTML = '<p>Error loading announcements.</p>';
   }
 }
 
 async function loadVIPStatus() {
   try {
-    const res = await fetch('/api/kingdom/vip_status', {
+    const data = await fetch('/api/kingdom/vip_status', {
       headers: { 'X-User-ID': currentUser.id }
     });
-    if (!res.ok) throw new Error('Network response not ok');
 
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (err) {
-      console.error('Invalid JSON from vip_status:', text);
-      vipLevel = 0;
-      return;
-    }
+    if (!data.ok) return;
 
-    vipLevel = data.vip_level || 0;
-  } catch (e) {
-    vipLevel = 0;
+    const contentType = data.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return;
+
+    const json = await data.json();
+    vipLevel = json.vip_level || 0;
+  } catch (err) {
+    console.error('VIP status fetch failed:', err);
   }
 }
 
 function renderAvatarOptions() {
   const container = document.getElementById('avatar-options');
-  const customContainer = document.getElementById('custom-avatar-container');
-  if (!container) return;
+  const preview = document.getElementById('avatar-preview');
+  const custom = document.getElementById('custom-avatar-container');
+  if (!container || !preview) return;
+
   container.innerHTML = '';
   avatarList.forEach(src => {
     const img = document.createElement('img');
@@ -336,16 +276,23 @@ function renderAvatarOptions() {
     img.className = 'avatar-option';
     img.addEventListener('click', () => {
       selectedAvatar = src;
-      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.avatar-option').forEach(i => i.classList.remove('selected'));
       img.classList.add('selected');
-      document.getElementById('avatar-preview').src = src;
+      preview.src = src;
     });
     container.appendChild(img);
   });
-  document.getElementById('avatar-preview').src = selectedAvatar;
+
+  preview.src = selectedAvatar;
   const first = container.querySelector('.avatar-option');
   if (first) first.classList.add('selected');
-  if (vipLevel > 0 && customContainer) {
-    customContainer.classList.remove('hidden');
+  if (vipLevel > 0 && custom) custom.classList.remove('hidden');
+}
+
+function parseMaybeJSON(raw) {
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw || {};
+  } catch {
+    return {};
   }
 }
