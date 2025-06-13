@@ -113,11 +113,11 @@ async function renderMembers(data) {
     const showFull = member.same_alliance;
 
     row.innerHTML = `
-      <td data-label="Crest"><img src="../images/crests/${member.crest || 'default.png'}" alt="Crest" class="crest-icon"></td>
-      <td data-label="Name"><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${member.username}</a>${member.is_vip ? ' ⭐' : ''}</td>
-      <td data-label="Rank" title="${RANK_TOOLTIPS[member.rank] || ''}">${member.rank}</td>
-      <td data-label="Role">${showFull ? (member.role || '—') : '—'}</td>
-      <td data-label="Status">${showFull ? member.status : '—'}</td>
+      <td data-label="Crest"><img src="../images/crests/${escapeHTML(member.crest || 'default.png')}" alt="Crest" class="crest-icon"></td>
+      <td data-label="Name"><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}</td>
+      <td data-label="Rank" title="${escapeHTML(RANK_TOOLTIPS[member.rank] || '')}">${escapeHTML(member.rank)}</td>
+      <td data-label="Role">${showFull ? escapeHTML(member.role || '—') : '—'}</td>
+      <td data-label="Status">${showFull ? escapeHTML(member.status) : '—'}</td>
       <td data-label="Contribution">${showFull ? member.contribution : '—'}</td>
       <td data-label="Economy">${showFull ? member.economy_score : '—'}</td>
       <td data-label="Military">${showFull ? member.military_score : '—'}</td>
@@ -266,4 +266,15 @@ function setupLogout() {
     sessionStorage.clear();
     window.location.href = 'index.html';
   });
+}
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

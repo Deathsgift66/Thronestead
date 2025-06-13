@@ -46,7 +46,7 @@ async function loadUserProfile() {
   info.sessions.forEach((s) => {
     const row = document.createElement('tr');
     row.id = `session-${s.session_id}`;
-    row.innerHTML = `<td>${s.device}</td><td>${s.last_seen}</td><td><button class="logout-session" data-id="${s.session_id}">Logout</button></td>`;
+    row.innerHTML = `<td>${escapeHTML(s.device)}</td><td>${escapeHTML(s.last_seen)}</td><td><button class="logout-session" data-id="${s.session_id}">Logout</button></td>`;
     tbody.appendChild(row);
   });
 }
@@ -201,6 +201,17 @@ function showToast(msg) {
   }, 3000);
 }
 
+
+// Basic HTML escaping to sanitize dynamic content
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
 function setValue(id, value) {
   const el = document.getElementById(id);
   if (el) el.value = value;
@@ -214,4 +225,5 @@ function setSrc(id, value) {
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+
 }

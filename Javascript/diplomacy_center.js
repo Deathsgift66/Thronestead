@@ -49,9 +49,9 @@ async function loadTreaties(uid) {
   data.forEach(t => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${t.treaty_type}</td>
-      <td>${t.partner_name}</td>
-      <td>${t.status}</td>
+      <td>${escapeHTML(t.treaty_type)}</td>
+      <td>${escapeHTML(t.partner_name)}</td>
+      <td>${escapeHTML(t.status)}</td>
       <td>${t.signed_at ? new Date(t.signed_at).toLocaleDateString() : ''}</td>
       <td>${t.end_date ? new Date(t.end_date).toLocaleDateString() : ''}</td>
       <td>
@@ -106,4 +106,15 @@ async function respondTreaty(tid, action) {
     });
   }
   loadTreaties(session.user.id);
+}
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
