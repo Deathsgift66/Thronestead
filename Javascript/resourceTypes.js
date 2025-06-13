@@ -1,3 +1,4 @@
+// ✅ Exportable list of all normalized resource types used in Kingmaker's Rise
 export const RESOURCE_TYPES = [
   "Wood",
   "Stone",
@@ -11,7 +12,7 @@ export const RESOURCE_TYPES = [
   "Flax",
   "Tools",
   "Wood Planks",
-  "refined Stone",
+  "Refined Stone",     // 🔁 Capitalization fixed
   "Iron Ingots",
   "Charcoal",
   "Leather",
@@ -19,11 +20,11 @@ export const RESOURCE_TYPES = [
   "Swords",
   "Axes",
   "Shields",
-  "Armor",
+  "Armor",             // 🔁 American spelling used consistently
   "Wagon",
   "Siege Weapons",
   "Jewelry",
   "Spear",
   "Horses",
-  "pitchforks"
+  "Pitchforks"         // 🔁 Capitalization fixed
 ];
