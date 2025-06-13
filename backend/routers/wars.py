@@ -18,7 +18,7 @@ class DeclarePayload(BaseModel):
 
 
 @router.post("/declare")
-async def declare_war(
+def declare_war(
     payload: DeclarePayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),

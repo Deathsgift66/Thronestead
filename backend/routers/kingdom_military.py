@@ -34,7 +34,7 @@ def get_state():
 
 
 @router.get("/summary")
-async def summary(user_id: str = Depends(get_current_user_id)):
+def summary(user_id: str = Depends(get_current_user_id)):
     state = get_state()
     base = state["base_slots"]
     used = state["used_slots"]
@@ -50,12 +50,12 @@ async def summary(user_id: str = Depends(get_current_user_id)):
 
 
 @router.get("/recruitable")
-async def recruitable(user_id: str = Depends(get_current_user_id)):
+def recruitable(user_id: str = Depends(get_current_user_id)):
     return {"units": recruitable_units}
 
 
 @router.post("/recruit")
-async def recruit(payload: RecruitPayload, user_id: str = Depends(get_current_user_id)):
+def recruit(payload: RecruitPayload, user_id: str = Depends(get_current_user_id)):
     state = get_state()
 
     if payload.quantity <= 0:
@@ -78,13 +78,13 @@ async def recruit(payload: RecruitPayload, user_id: str = Depends(get_current_us
 
 
 @router.get("/queue")
-async def queue(user_id: str = Depends(get_current_user_id)):
+def queue(user_id: str = Depends(get_current_user_id)):
     state = get_state()
     return {"queue": state["queue"]}
 
 
 @router.get("/history")
-async def history(user_id: str = Depends(get_current_user_id)):
+def history(user_id: str = Depends(get_current_user_id)):
     state = get_state()
     return {"history": state["history"]}
 

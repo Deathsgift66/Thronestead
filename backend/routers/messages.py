@@ -23,7 +23,7 @@ class MessagePayload(BaseModel):
 
 
 @router.get("/inbox")
-async def list_inbox(user_id: str = Depends(verify_jwt_token)):
+def list_inbox(user_id: str = Depends(verify_jwt_token)):
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
@@ -53,7 +53,7 @@ async def list_inbox(user_id: str = Depends(verify_jwt_token)):
 
 
 @router.get("/view/{message_id}")
-async def view_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
+def view_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
@@ -82,7 +82,7 @@ async def view_message(message_id: int, user_id: str = Depends(verify_jwt_token)
 
 
 @router.post("/delete/{message_id}")
-async def delete_message_route(
+def delete_message_route(
     message_id: int, user_id: str = Depends(verify_jwt_token)
 ):
     supabase = get_supabase_client()
@@ -104,7 +104,7 @@ async def delete_message_route(
 
 
 @router.post("/mark_all_read")
-async def mark_all_read(user_id: str = Depends(get_current_user_id)):
+def mark_all_read(user_id: str = Depends(get_current_user_id)):
     supabase = get_supabase_client()
     supabase.table("player_messages").update({"is_read": True}).eq(
         "recipient_id", user_id
@@ -113,7 +113,7 @@ async def mark_all_read(user_id: str = Depends(get_current_user_id)):
 
 
 @router.post("/send")
-async def send_message(
+def send_message(
     payload: MessagePayload, user_id: str = Depends(get_current_user_id)
 ):
     supabase = get_supabase_client()
@@ -145,7 +145,7 @@ async def send_message(
 
 
 @router.get("/list")
-async def list_messages(user_id: str = Depends(get_current_user_id)):
+def list_messages(user_id: str = Depends(get_current_user_id)):
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
@@ -178,7 +178,7 @@ class DeletePayload(BaseModel):
 
 
 @router.post("/delete")
-async def delete_message(payload: DeletePayload, user_id: str = Depends(get_current_user_id)):
+def delete_message(payload: DeletePayload, user_id: str = Depends(get_current_user_id)):
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
@@ -197,7 +197,7 @@ async def delete_message(payload: DeletePayload, user_id: str = Depends(get_curr
 
 
 @router.get("/{message_id}")
-async def get_message(message_id: int, user_id: str = Depends(get_current_user_id)):
+def get_message(message_id: int, user_id: str = Depends(get_current_user_id)):
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")

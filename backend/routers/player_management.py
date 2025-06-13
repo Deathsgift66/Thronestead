@@ -22,7 +22,7 @@ class PlayerAction(BaseModel):
 
 
 @router.get("/players")
-async def players(
+def players(
     search: str | None = None,
     user_id: str = Depends(verify_jwt_token),
 ):
@@ -51,7 +51,7 @@ async def players(
 
 
 @router.post("/bulk_action")
-async def bulk_action(
+def bulk_action(
     payload: BulkAction,
     user_id: str = Depends(verify_jwt_token),
 ):
@@ -70,7 +70,7 @@ async def bulk_action(
 
 
 @router.post("/player_action")
-async def player_action(
+def player_action(
     payload: PlayerAction,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),

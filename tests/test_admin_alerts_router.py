@@ -1,4 +1,3 @@
-import asyncio
 from backend.routers.admin import get_admin_alerts
 
 class DummyResult:
@@ -16,7 +15,7 @@ class DummyDB:
 
 def test_filters_included_in_query():
     db = DummyDB()
-    asyncio.run(get_admin_alerts(start="2025-01-01", end="2025-01-02", admin_id="a1", db=db))
+    get_admin_alerts(start="2025-01-01", end="2025-01-02", admin_id="a1", db=db)
     joined = " ".join(db.queries[0][0].split()).lower()
     assert "created_at >= :start" in joined
     assert db.queries[0][1]["start"] == "2025-01-01"

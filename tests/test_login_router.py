@@ -1,4 +1,3 @@
-import asyncio
 from backend.routers import login_routes
 from fastapi.responses import JSONResponse
 import json
@@ -26,7 +25,7 @@ def test_announcements_returned():
         {"id": 1, "title": "Welcome", "content": "Greetings", "created_at": "2025-01-01"}
     ]
     login_routes.get_supabase_client = lambda: DummyClient({"announcements": rows})
-    resp = asyncio.run(login_routes.get_announcements())
+    resp = login_routes.get_announcements()
     assert isinstance(resp, JSONResponse)
     data = json.loads(resp.body.decode())
     assert data["announcements"][0]["title"] == "Welcome"

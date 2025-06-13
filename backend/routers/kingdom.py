@@ -107,17 +107,17 @@ def get_state():
 
 
 @router.post("/start_project")
-async def start_project(payload: ProjectPayload):
+def start_project(payload: ProjectPayload):
     return {"message": "Project started", "project": payload.project}
 
 
 @router.get("/overview")
-async def overview():
+def overview():
     return {"overview": "data"}
 
 
 @router.get("/summary")
-async def kingdom_summary():
+def kingdom_summary():
     state = get_state()
     resources = {
         "gold": 1000,
@@ -138,7 +138,7 @@ async def kingdom_summary():
 
 
 @router.post("/start_research")
-async def start_research(
+def start_research(
     payload: ResearchPayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
@@ -158,7 +158,7 @@ async def start_research(
 
 
 @router.get("/research")
-async def get_research(
+def get_research(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
@@ -169,7 +169,7 @@ async def get_research(
 
 
 @router.post("/accept_quest")
-async def accept_quest(
+def accept_quest(
     payload: QuestPayload,
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -235,7 +235,7 @@ def list_temples(
 
 
 @router.post("/train_troop")
-async def train_troop(payload: TrainPayload):
+def train_troop(payload: TrainPayload):
     state = get_state()
 
     if payload.quantity <= 0:

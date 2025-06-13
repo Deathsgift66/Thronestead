@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api/kingdom/achievements", tags=["kingdom_achievemen
 
 
 @router.get("")
-async def get_achievements(
+def get_achievements(
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):

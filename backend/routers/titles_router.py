@@ -19,7 +19,7 @@ class ActiveTitlePayload(BaseModel):
 
 
 @router.get("/titles")
-async def list_titles_endpoint(
+def list_titles_endpoint(
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
@@ -28,7 +28,7 @@ async def list_titles_endpoint(
 
 
 @router.post("/titles")
-async def award_title_endpoint(
+def award_title_endpoint(
     payload: TitlePayload,
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -39,7 +39,7 @@ async def award_title_endpoint(
 
 
 @router.post("/active_title")
-async def set_active_title_endpoint(
+def set_active_title_endpoint(
     payload: ActiveTitlePayload,
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
@@ -50,5 +50,5 @@ async def set_active_title_endpoint(
 
 
 @router.get("/prestige")
-async def get_prestige(user_id: str = Depends(get_user_id)):
+def get_prestige(user_id: str = Depends(get_user_id)):
     return {"prestige_score": prestige_scores.get(user_id, 0)}
