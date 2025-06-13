@@ -5,7 +5,6 @@ Date: June 2, 2025
 Author: Deathsgift66
 */
 
-import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
@@ -90,36 +89,16 @@ async function handleSignup() {
   };
 
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email: payload.email,
-      password: payload.password,
-      options: {
-        data: {
-          display_name: payload.display_name,
-          username: payload.username
-        }
-      }
+    const res = await fetch('/api/signup/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-
-    if (error) {
-      throw new Error(error.message);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'registration failed');
     }
-
-    const userId = data?.user?.id;
-    if (userId) {
-      await fetch('/api/signup/create_user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          username: payload.username,
-          display_name: payload.display_name,
-          kingdom_name: payload.kingdom_name,
-          email: payload.email
-        })
-      });
-    }
-
+  
     showToast("Sign-Up successful! Redirecting to login...");
     setTimeout(() => {
       window.location.href = 'login.html';

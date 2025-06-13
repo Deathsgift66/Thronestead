@@ -98,3 +98,53 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
     )
     db.commit()
     return {"status": "created"}
+
+
+class RegisterPayload(BaseModel):
+    email: str
+    password: str
+    username: str
+    kingdom_name: str
+    display_name: str
+
+
+@router.post("/register")
+def register(payload: RegisterPayload, db: Session = Depends(get_db)):
+    """Create auth user and corresponding profile."""
+    sb = get_supabase_client()
+    try:
+        res = sb.auth.admin.create_user(
+            email=payload.email,
+            password=payload.password,
+            user_metadata={
+                "display_name": payload.display_name,
+                "username": payload.username,
+            },
+        )
+    except Exception as exc:  # pragma: no cover - network/db errors
+        raise HTTPException(status_code=500, detail="failed to create auth user") from exc
+
+    uid = (
+        getattr(res, "user", None) and getattr(res.user, "id", None)
+    ) or getattr(res, "id", None)
+    if not uid:
+        raise HTTPException(status_code=500, detail="signup failed")
+
+    db.execute(
+        text(
+            """
+            INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id)
+            VALUES (:uid, :username, :display, :kingdom, :email, :uid)
+            ON CONFLICT (user_id) DO NOTHING
+            """
+        ),
+        {
+            "uid": uid,
+            "username": payload.username,
+            "display": payload.display_name,
+            "kingdom": payload.kingdom_name,
+            "email": payload.email,
+        },
+    )
+    db.commit()
+    return {"user_id": uid}
