@@ -1,15 +1,15 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: changelog.js
-Date: June 2, 2025
-Author: Deathsgift66
+Updated: 2025-06-13 by Codex
+Description: Real-time changelog viewer with Supabase integration, expandable for filters and search.
 */
-// Hardened Changelog Page — Clean version history display
 
 import { supabase } from './supabaseClient.js';
 
 let realtimeSub;
 
+// ✅ Unified auth header fetch
 async function authHeaders() {
   const [{ data: { user } }, { data: { session } }] = await Promise.all([
     supabase.auth.getUser(),
@@ -22,8 +22,12 @@ async function authHeaders() {
   };
 }
 
+// ✅ Entry point
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return window.location.href = "login.html";
+
+  // ✅ Bind logout button
   const logoutBtn = document.getElementById("logout-btn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
@@ -32,78 +36,74 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ✅ Validate session
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  // ✅ Initial load
   await loadChangelog();
   setupRealtime();
 
-  const refreshBtn = document.getElementById('refresh-log');
-  if (refreshBtn) refreshBtn.addEventListener('click', loadChangelog);
+  // ✅ Optional refresh button
+  document.getElementById('refresh-log')?.addEventListener('click', loadChangelog);
 });
 
-// ✅ Load Changelog Entries
+// ✅ Load and render all changelog entries
 async function loadChangelog() {
   const container = document.getElementById("changelog-entries");
-
   container.innerHTML = "<p>Loading changelog...</p>";
 
   try {
     const res = await fetch("/api/changelog", { headers: await authHeaders() });
     const data = await res.json();
-
     container.innerHTML = "";
 
-    if (!data.entries || data.entries.length === 0) {
+    const entries = data.entries || [];
+    if (!entries.length) {
       container.innerHTML = "<p>No changelog entries available.</p>";
       return;
     }
 
-    data.entries.forEach(entry => {
-      const entryDiv = document.createElement("div");
-      entryDiv.classList.add("changelog-entry");
-
-      // Format version header
-      const versionHeader = document.createElement("h3");
-      versionHeader.textContent = `Version ${escapeHTML(entry.version)} — ${formatDate(entry.date)}`;
-
-      // Format changes list
-      const ul = document.createElement("ul");
-      if (Array.isArray(entry.changes)) {
-        entry.changes.forEach(change => {
-          const li = document.createElement("li");
-          li.textContent = change;
-          ul.appendChild(li);
-        });
-      } else {
-        const li = document.createElement("li");
-        li.textContent = "No changes listed.";
-        ul.appendChild(li);
-      }
-
-      // Assemble entry
-      entryDiv.appendChild(versionHeader);
-      entryDiv.appendChild(ul);
-      container.appendChild(entryDiv);
-    });
-
+    entries.forEach(entry => renderEntry(entry, container));
   } catch (err) {
     console.error("❌ Error loading changelog:", err);
     container.innerHTML = "<p>Failed to load changelog.</p>";
   }
 }
 
+// ✅ Format and render a single changelog entry
+function renderEntry(entry, container) {
+  const entryDiv = document.createElement("div");
+  entryDiv.classList.add("changelog-entry");
+
+  const version = document.createElement("h3");
+  version.textContent = `Version ${escapeHTML(entry.version)} — ${formatDate(entry.date)}`;
+  entryDiv.appendChild(version);
+
+  // Optionally display tags (future use)
+  if (entry.tags?.length) {
+    const tagSpan = document.createElement("span");
+    tagSpan.className = "changelog-tags";
+    tagSpan.textContent = entry.tags.join(', ');
+    entryDiv.appendChild(tagSpan);
+  }
+
+  // Format list of changes
+  const list = document.createElement("ul");
+  (entry.changes || []).forEach(change => {
+    const li = document.createElement("li");
+    li.textContent = change;
+    list.appendChild(li);
+  });
+
+  entryDiv.appendChild(list);
+  container.appendChild(entryDiv);
+}
+
+// ✅ Set up Supabase real-time subscription for new changelog entries
 function setupRealtime() {
   realtimeSub = supabase
-    .channel('game_changelog')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_changelog' }, async () => {
-      await loadChangelog();
-    })
+    .channel('public:game_changelog')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'game_changelog'
+    }, loadChangelog)
     .subscribe();
 }
 
@@ -111,7 +111,7 @@ window.addEventListener('beforeunload', () => {
   realtimeSub?.unsubscribe();
 });
 
-// ✅ Format Date (YYYY-MM-DD → MM/DD/YYYY)
+// ✅ Format ISO date to locale-friendly string
 function formatDate(dateStr) {
   if (!dateStr) return "Unknown";
   const date = new Date(dateStr);
@@ -120,13 +120,14 @@ function formatDate(dateStr) {
   });
 }
 
-// ✅ Basic HTML escape
+// ✅ HTML sanitization
 function escapeHTML(str) {
-  if (!str) return "";
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    ? String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+    : "";
 }
