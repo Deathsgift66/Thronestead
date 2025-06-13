@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
-from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
