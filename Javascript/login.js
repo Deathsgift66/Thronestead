@@ -98,14 +98,24 @@ async function handleLogin(e) {
 
     if (error) {
       showMessage('error', error.message);
-    } else {
-      // ✅ Successful login — fetch progression and redirect
-      if (data && data.user) {
-        await fetchAndStorePlayerProgression(data.user.id);
+    } else if (data && data.user) {
+      // ✅ Successful login — fetch progression and check setup
+      await fetchAndStorePlayerProgression(data.user.id);
+
+      const { data: details, error: fetchErr } = await supabase
+        .from('users')
+        .select('setup_complete')
+        .eq('user_id', data.user.id)
+        .single();
+
+      if (fetchErr || !details) {
+        showMessage('error', 'Failed to check setup status.');
+        return;
       }
+
       showMessage('success', 'Login successful! Redirecting...');
       setTimeout(() => {
-        window.location.href = 'play.html';
+        window.location.href = details.setup_complete ? 'overview.html' : 'play.html';
       }, 1200);
     }
   } catch (err) {
