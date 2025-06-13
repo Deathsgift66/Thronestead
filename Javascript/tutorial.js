@@ -50,7 +50,7 @@ async function loadSteps() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const res = await fetch('/api/tutorial/steps', {
-      headers: { 'X-User-Id': currentUser.id }
+      headers: { 'X-User-ID': currentUser.id }
     });
     const data = await res.json();
     renderSteps(data.steps || []);

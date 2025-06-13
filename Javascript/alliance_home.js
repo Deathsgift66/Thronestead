@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function fetchAllianceDetails(userId) {
   try {
     const res = await fetch('/api/alliance-home/details', {
-      headers: { 'X-User-Id': userId }
+      headers: { 'X-User-ID': userId }
     });
     if (!res.ok) throw new Error('Request failed');
     const data = await res.json();
