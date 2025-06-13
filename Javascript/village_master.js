@@ -22,74 +22,70 @@ document.addEventListener("DOMContentLoaded", async () => {
   showToast("Sovereign’s Grand Overseer loaded!");
 });
 
-// ✅ Validate VIP Access
+// ✅ Validate VIP Access - ensure user is VIP Tier 2+
 async function validateVIPAccess() {
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('vip_tier')
+      .eq('user_id', user.id)
+      .single();
 
-  const { data: profile, error } = await supabase
-    .from('users')
-    .select('vip_tier')
-    .eq('user_id', user.id)
-    .single();
+    if (error) throw error;
 
-  if (error) {
-    console.error("❌ Error validating VIP access:", error);
+    if (!profile.vip_tier || profile.vip_tier < 2) {
+      alert("Access Denied: VIP Tier 2 Required.");
+      window.location.href = "play.html";
+    }
+  } catch (err) {
+    console.error("❌ Error validating VIP access:", err);
     showToast("Failed to validate VIP access.");
-    return;
-  }
-
-  if (!profile.vip_tier || profile.vip_tier < 2) {
-    alert("Access Denied: VIP Tier 2 Required.");
-    window.location.href = "play.html";
   }
 }
 
-// ✅ Load All Villages
+// ✅ Load all villages for current kingdom
 async function loadVillages() {
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('kingdom_id')
+      .eq('user_id', user.id)
+      .single();
 
-  const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select('kingdom_id')
-    .eq('user_id', user.id)
-    .single();
+    if (profileError) throw profileError;
 
-  if (profileError) {
-    console.error("❌ Error loading profile:", profileError);
-    showToast("Failed to load profile.");
-    return;
-  }
+    currentKingdomId = profile.kingdom_id;
 
-  const kingdomId = profile.kingdom_id;
-  currentKingdomId = kingdomId;
+    const { data: villages, error: villagesError } = await supabase
+      .from('villages')
+      .select('*')
+      .eq('kingdom_id', currentKingdomId)
+      .order('village_name', { ascending: true });
 
-  const { data: villages, error: villagesError } = await supabase
-    .from('villages')
-    .select('*')
-    .eq('kingdom_id', kingdomId)
-    .order('village_name', { ascending: true });
+    if (villagesError) throw villagesError;
 
-  if (villagesError) {
-    console.error("❌ Error loading villages:", villagesError);
+    const gridEl = document.getElementById('village-grid');
+    gridEl.innerHTML = "";
+
+    if (villages.length === 0) {
+      gridEl.innerHTML = "<p>You do not have any villages.</p>";
+      return;
+    }
+
+    villages.forEach(village => {
+      const card = SovereignUtils.createVillageCard(village);
+      gridEl.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error("❌ Error loading villages:", err);
     showToast("Failed to load villages.");
-    return;
   }
-
-  const gridEl = document.getElementById('village-grid');
-  gridEl.innerHTML = "";
-
-  if (villages.length === 0) {
-    gridEl.innerHTML = "<p>You do not have any villages.</p>";
-    return;
-  }
-
-  villages.forEach(village => {
-    const card = SovereignUtils.createVillageCard(village);
-    gridEl.appendChild(card);
-  });
 }
 
-// ✅ Populate Mass Actions Panel
+// ✅ Populate Mass Actions Panel with async placeholders
 function populateMassActionsPanel() {
   const panelEl = document.querySelector('.mass-actions-panel');
   panelEl.innerHTML = `
@@ -99,7 +95,7 @@ function populateMassActionsPanel() {
   `;
 }
 
-// ✅ Populate Controls Panel
+// ✅ Populate Controls Panel with filters and sort options
 function populateControlsPanel() {
   const panelEl = document.querySelector('.controls-panel');
   panelEl.innerHTML = `
@@ -117,9 +113,10 @@ function populateControlsPanel() {
   `;
 }
 
-// ✅ Setup Ambient Toggle
+// ✅ Setup ambient audio toggle with state feedback
 function setupAmbientToggle() {
   const ambientToggle = document.getElementById('ambient-toggle');
+  if (!ambientToggle) return;
 
   ambientToggle.addEventListener('click', () => {
     const isActive = ambientToggle.classList.toggle('active');
@@ -133,66 +130,71 @@ function setupAmbientToggle() {
   });
 }
 
-// ✅ Mass Action: Bulk Upgrade All
+// ✅ Mass Action: Bulk Upgrade All buildings (stub async example)
 async function bulkUpgradeAll() {
   showToast("Initiating bulk upgrade of all buildings...");
-  // Simulate action — hook to your API
+  // TODO: Replace with real API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   showToast("Bulk upgrade complete!");
 }
 
-// ✅ Mass Action: Queue Troops
+// ✅ Mass Action: Queue Troops in all villages (stub async example)
 async function bulkQueueTraining() {
   showToast("Queuing troops in all villages...");
-  // Simulate action — hook to your API
+  // TODO: Replace with real API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   showToast("Troop training queues started!");
 }
 
-// ✅ Mass Action: Harvest All
+// ✅ Mass Action: Harvest all village resources (stub async example)
 async function bulkHarvest() {
   showToast("Harvesting resources from all villages...");
-  // Simulate action — hook to your API
+  // TODO: Replace with real API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   showToast("Resources harvested!");
 }
 
-// ✅ Filter Villages
+// ✅ Filter villages by empty state toggle
 function filterVillages() {
   const hideEmpty = document.getElementById('filter-empty-villages').checked;
   const cards = document.querySelectorAll('.village-card');
-
   cards.forEach(card => {
     const isEmpty = card.getAttribute('data-empty') === "true";
     card.style.display = (hideEmpty && isEmpty) ? "none" : "block";
   });
 }
 
-// ✅ Sort Villages
+// ✅ Sort villages using SovereignUtils helper
 function sortVillages() {
   const sortBy = document.getElementById('sortVillages').value;
   SovereignUtils.sortVillageGrid(sortBy);
 }
 
-// ✅ Load Overview via API
+// ✅ Load Village Overview Stats from API
 async function loadVillageOverview() {
-  const { data: { user } } = await supabase.auth.getUser();
-  const res = await fetch('/api/village-master/overview', {
-    headers: { 'X-User-ID': user.id }
-  });
-  if (!res.ok) return;
-  const data = await res.json();
-  const statsEl = document.getElementById('village-stats');
-  statsEl.innerHTML = '';
-  data.overview.forEach(v => {
-    const div = document.createElement('div');
-    div.className = 'village-stat';
-    div.textContent = `${v.village_name}: buildings ${v.building_count}, levels ${v.total_level}`;
-    statsEl.appendChild(div);
-  });
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch('/api/village-master/overview', {
+      headers: { 'X-User-ID': user.id }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const statsEl = document.getElementById('village-stats');
+    statsEl.innerHTML = '';
+
+    data.overview.forEach(v => {
+      const div = document.createElement('div');
+      div.className = 'village-stat';
+      div.textContent = `${v.village_name}: buildings ${v.building_count}, levels ${v.total_level}`;
+      statsEl.appendChild(div);
+    });
+  } catch (err) {
+    console.error('❌ Error loading village overview:', err);
+  }
 }
 
-// ✅ Realtime Updates
+// ✅ Subscribe to real-time village changes for current kingdom
 function subscribeVillageRealtime(kingdomId) {
   realtimeChannel = supabase
     .channel('villages-' + kingdomId)
@@ -222,7 +224,7 @@ function subscribeVillageRealtime(kingdomId) {
   });
 }
 
-// ✅ Toast Helper
+// ✅ Toast notification helper — reusable throughout your app
 function showToast(msg) {
   let toastEl = document.getElementById('toast');
   if (!toastEl) {
