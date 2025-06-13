@@ -99,7 +99,10 @@ async function handleLogin(e) {
     if (error) {
       showMessage('error', error.message);
     } else {
-      // ✅ Successful login — simply redirect to setup/play page
+      // ✅ Successful login — fetch progression and redirect
+      if (data && data.user) {
+        await fetchAndStorePlayerProgression(data.user.id);
+      }
       showMessage('success', 'Login successful! Redirecting...');
       setTimeout(() => {
         window.location.href = 'play.html';
