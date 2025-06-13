@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from backend.routers import resources
 from backend.routers import login_routes as announcements
 from backend.routers import region
+from backend.routers import progression_router
 
 
 app = FastAPI()
@@ -15,6 +16,7 @@ app = FastAPI()
 app.include_router(resources.router)
 app.include_router(announcements.router)
 app.include_router(region.router)
+app.include_router(progression_router.router)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual start
