@@ -21,7 +21,6 @@ let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 
 const TILE_SIZE = 32;
-const VIEW_RADIUS = 100;
 const TERRAIN_COLORS = {
   plains: '#c2b280',
   forest: '#228b22',
@@ -41,28 +40,56 @@ window.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   currentSession = session;
+  resizeCanvas();
   await renderVisibleTiles();
   bindRealtime();
   bindControls();
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    renderVisibleTiles();
+  });
 });
 
 window.addEventListener('beforeunload', () => {
   if (mapChannel) supabase.removeChannel(mapChannel);
 });
 
+// Adjust canvas size to viewport
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
 function bindControls() {
-  document.getElementById('zoom-in')?.addEventListener('click', () => { zoom = Math.min(zoom * 1.25, 10); renderVisibleTiles(); });
-  document.getElementById('zoom-out')?.addEventListener('click', () => { zoom = Math.max(zoom / 1.25, 0.1); renderVisibleTiles(); });
-  document.getElementById('center-map')?.addEventListener('click', () => { offsetX = 0; offsetY = 0; renderVisibleTiles(); });
+  document.getElementById('zoom-in')?.addEventListener('click', () => {
+    zoom = Math.min(zoom * 1.25, 10);
+    renderVisibleTiles();
+  });
+  document.getElementById('zoom-out')?.addEventListener('click', () => {
+    zoom = Math.max(zoom / 1.25, 0.1);
+    renderVisibleTiles();
+  });
+  document.getElementById('center-map')?.addEventListener('click', () => {
+    offsetX = 0;
+    offsetY = 0;
+    renderVisibleTiles();
+  });
 
   canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     dragStart.x = e.clientX;
     dragStart.y = e.clientY;
+    canvas.style.cursor = 'grabbing';
   });
 
-  canvas.addEventListener('mouseup', () => { isDragging = false; });
-  canvas.addEventListener('mouseleave', () => { isDragging = false; });
+  canvas.addEventListener('mouseup', () => {
+    isDragging = false;
+    canvas.style.cursor = 'grab';
+  });
+  canvas.addEventListener('mouseleave', () => {
+    isDragging = false;
+    canvas.style.cursor = 'grab';
+  });
 
   canvas.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
@@ -72,6 +99,8 @@ function bindControls() {
     dragStart.y = e.clientY;
     renderVisibleTiles();
   });
+
+  canvas.style.cursor = 'grab';
 
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
@@ -87,6 +116,7 @@ function bindControls() {
       window.location.href = 'index.html';
     });
   } else {
+    // Wait for logout btn if loaded dynamically
     const waitId = setInterval(() => {
       const btn = document.getElementById('logout-btn');
       if (btn) {
@@ -111,25 +141,32 @@ function bindRealtime() {
 }
 
 async function renderVisibleTiles() {
+  if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const cols = Math.floor(canvas.width / (TILE_SIZE * zoom)) + 2;
   const rows = Math.floor(canvas.height / (TILE_SIZE * zoom)) + 2;
   const startX = Math.floor(-offsetX / TILE_SIZE) - Math.floor(cols / 2);
   const startY = Math.floor(-offsetY / TILE_SIZE) - Math.floor(rows / 2);
 
-  const res = await fetch('/api/world-map/tiles', {
-    headers: {
-      'Authorization': `Bearer ${currentSession.access_token}`,
-      'X-User-ID': currentSession.user.id
-    }
-  });
-  if (!res.ok) return console.error('Tile fetch failed');
-  const mapRow = await res.json();
+  try {
+    const res = await fetch('/api/world-map/tiles', {
+      headers: {
+        'Authorization': `Bearer ${currentSession.access_token}`,
+        'X-User-ID': currentSession.user.id
+      }
+    });
+    if (!res.ok) throw new Error('Tile fetch failed');
+    const mapRow = await res.json();
 
-  const tiles = (mapRow?.tile_map?.tiles || [])
-    .filter(t => t.x >= startX && t.x <= startX + cols &&
-                t.y >= startY && t.y <= startY + rows);
-  tiles.forEach(tile => drawTile(tile));
+    const tiles = (mapRow?.tile_map?.tiles || [])
+      .filter(t => t.x >= startX && t.x <= startX + cols &&
+                  t.y >= startY && t.y <= startY + rows);
+
+    tiles.forEach(drawTile);
+
+  } catch (err) {
+    console.error('Failed to render tiles:', err);
+  }
 }
 
 function drawTile(tile) {
