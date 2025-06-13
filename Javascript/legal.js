@@ -36,7 +36,9 @@ async function loadDocuments() {
 function setupRealtime() {
   realtimeSub = supabase
     .channel('legal_documents')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'legal_documents' }, loadDocuments)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'legal_documents' }, async () => {
+      await loadDocuments();
+    })
     .subscribe();
 }
 
@@ -45,7 +47,8 @@ window.addEventListener('beforeunload', () => {
 });
 
 function filterDocuments() {
-  const q = document.getElementById('doc-search').value.toLowerCase();
+  const searchEl = document.getElementById('doc-search');
+  const q = searchEl ? searchEl.value.toLowerCase() : '';
   const filtered = docs.filter(d => d.title.toLowerCase().includes(q));
   renderDocuments(filtered);
 }

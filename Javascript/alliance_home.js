@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function fetchAllianceDetails(userId) {
   try {
     const res = await fetch('/api/alliance-home/details', {
-      headers: { 'X-User-Id': userId }
+      headers: { 'X-User-ID': userId }
     });
     if (!res.ok) throw new Error('Request failed');
     const data = await res.json();
@@ -69,7 +69,7 @@ function renderProjects(projects) {
   projects.forEach(p => {
     const div = document.createElement('div');
     div.classList.add('project-bar');
-    div.innerHTML = `<label>${p.name}</label><progress value="${p.progress}" max="100"></progress> <span>${p.progress}%</span>`;
+    div.innerHTML = `<label>${escapeHTML(p.name)}</label><progress value="${p.progress}" max="100"></progress> <span>${p.progress}%</span>`;
     container.appendChild(div);
   });
 }
@@ -81,11 +81,11 @@ function renderMembers(members) {
   members.forEach(m => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td><img src="../images/crests/${m.crest || 'default.png'}" alt="Crest" class="crest"></td>
-      <td>${m.username}</td>
-      <td>${m.rank}</td>
+      <td><img src="../images/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest" class="crest"></td>
+      <td>${escapeHTML(m.username)}</td>
+      <td>${escapeHTML(m.rank)}</td>
       <td>${m.contribution}</td>
-      <td>${m.status}</td>`;
+      <td>${escapeHTML(m.status)}</td>`;
     body.appendChild(row);
   });
 }
@@ -123,7 +123,7 @@ function renderQuests(quests) {
   quests.forEach(q => {
     const card = document.createElement('div');
     card.classList.add('quest-card');
-    card.innerHTML = `<strong>${q.name}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${q.progress}%"></div></div>`;
+    card.innerHTML = `<strong>${escapeHTML(q.name)}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${q.progress}%"></div></div>`;
     container.appendChild(card);
   });
 }
@@ -233,4 +233,15 @@ function addActivityEntry(entry) {
   li.textContent = `[${formatDate(entry.created_at)}] ${entry.user_id}: ${entry.description}`;
   list.prepend(li);
   if (list.children.length > 20) list.removeChild(list.lastChild);
+}
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

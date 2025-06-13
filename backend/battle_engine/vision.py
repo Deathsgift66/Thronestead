@@ -1,7 +1,5 @@
 """Utility functions for unit vision calculations."""
 
-from __future__ import annotations
-
 from typing import Any, Dict, List
 
 # Database interface for unit vision updates

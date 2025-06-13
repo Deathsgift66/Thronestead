@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadHistory();
 
   // Refresh listings periodically for real-time updates
-  setInterval(loadListings, 15000);
-  setInterval(loadHistory, 30000);
+  setInterval(async () => { await loadListings(); }, 15000);
+  setInterval(async () => { await loadHistory(); }, 30000);
 });
 
 async function loadResources() {
@@ -67,8 +67,10 @@ async function loadListings() {
 }
 
 function renderListings() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const sort = document.getElementById('sortSelect').value;
+  const searchEl = document.getElementById('searchInput');
+  const sortEl = document.getElementById('sortSelect');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
+  const sort = sortEl ? sortEl.value : '';
   let filtered = listings.filter(l => l.item_name.toLowerCase().includes(search));
   if (sort === 'price') filtered.sort((a,b)=>a.price_per_unit-b.price_per_unit);
   if (sort === 'quantity') filtered.sort((a,b)=>b.stock_remaining-a.stock_remaining);
