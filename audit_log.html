@@ -71,10 +71,15 @@ Author: Deathsgift66
     <p>Track all significant administrative actions and changes in Kingmaker's Rise.</p>
 
     <form id="audit-filter-form" class="audit-filter-form" aria-label="Filter Logs">
-      <input id="filter-user" type="text" placeholder="User ID" />
-      <input id="filter-action" type="text" placeholder="Action" />
+      <label for="filter-user">User ID</label>
+      <input id="filter-user" type="text" />
+      <label for="filter-action">Action</label>
+      <input id="filter-action" type="text" />
+      <label for="filter-from">From</label>
       <input id="filter-from" type="date" />
+      <label for="filter-to">To</label>
       <input id="filter-to" type="date" />
+      <label for="filter-limit">Limit</label>
       <input id="filter-limit" type="number" value="100" min="1" />
       <button type="submit">Apply</button>
     </form>
