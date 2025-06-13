@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ✅ Load News Articles
 async function loadNewsArticles() {
   const container = document.getElementById('articles');
+  if (!container) return;
 
   container.innerHTML = "<p>Loading news articles...</p>";
 
@@ -50,6 +51,7 @@ async function loadNewsArticles() {
 
 function renderArticles(articles) {
   const container = document.getElementById('articles');
+  if (!container) return;
   container.innerHTML = '';
   if (!articles.length) {
     container.innerHTML = '<p>No news articles found.</p>';
@@ -70,7 +72,8 @@ function renderArticles(articles) {
 }
 
 function filterArticles() {
-  const term = document.getElementById('search-input').value.toLowerCase();
+  const searchEl = document.getElementById('search-input');
+  const term = searchEl ? searchEl.value.toLowerCase() : '';
   document.querySelectorAll('.news-article-card').forEach(card => {
     card.style.display = card.dataset.title.includes(term) ? '' : 'none';
   });
