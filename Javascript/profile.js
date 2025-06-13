@@ -1,19 +1,18 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: profile.js
-Date: June 2, 2025
-Author: Deathsgift66
+Date: June 13, 2025
+Author: Deathsgift66 + GPT Enhancements
+Description: Loads and renders player profile, customization, and activity logs.
 */
 
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js already protects this page → no duplicate session check
-  // ✅ Initial load
   await loadPlayerProfile();
 });
 
-// ✅ Load Player Profile
+// ✅ Main Profile Loader
 async function loadPlayerProfile() {
   const avatarImg = document.getElementById("profile-picture");
   const playerNameEl = document.getElementById("player-name");
@@ -24,14 +23,12 @@ async function loadPlayerProfile() {
   const titlesListEl = document.getElementById("titles-list");
   const customizationContainer = document.getElementById("profile-customization-content");
 
-  // Placeholders while loading
   playerNameEl.textContent = "Loading...";
   kingdomNameEl.textContent = "Loading...";
   mottoEl.textContent = "Loading...";
   customizationContainer.innerHTML = "<p>Loading customization options...</p>";
 
   try {
-    // ✅ Load user profile via API for security
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 
@@ -40,77 +37,66 @@ async function loadPlayerProfile() {
       'X-User-ID': session.user.id
     };
 
-    const res = await fetch('/api/profile/overview', { headers });
-    const overview = await res.json();
-    if (!res.ok) throw new Error(overview.detail || 'Failed to load');
+    // ✅ Load profile overview
+    const profileRes = await fetch('/api/profile/overview', { headers });
+    const overview = await profileRes.json();
+    if (!profileRes.ok) throw new Error(overview.detail || 'Profile load failed');
+
     const data = overview.user || {};
+    avatarImg.src = data.profile_avatar_url || "../Assets/avatars/default_avatar_emperor.png";
+    avatarImg.alt = `${data.username || 'Player'}'s Avatar`;
 
-    // ✅ Render avatar
-    if (data.profile_avatar_url) {
-      avatarImg.src = data.profile_avatar_url;
-      avatarImg.alt = `${data.username}'s Avatar`;
-    } else {
-      avatarImg.src = "../Assets/avatars/default_avatar_emperor.png";
-      avatarImg.alt = "Default Avatar";
-    }
-
-    // ✅ Render profile info
     playerNameEl.textContent = data.username || "Unnamed Player";
     kingdomNameEl.textContent = data.kingdom_name || "Unnamed Kingdom";
     mottoEl.textContent = data.profile_bio || "No motto set.";
 
-    // ✅ VIP badge via API
+    // ✅ VIP badge
     try {
       const vipRes = await fetch('/api/kingdom/vip_status', { headers });
       const vipData = await vipRes.json();
       const lvl = vipData.vip_level || 0;
-      if (lvl > 0) {
-        vipBadgeEl.style.display = 'inline-block';
-        vipBadgeEl.textContent = `VIP ${lvl}`;
-      } else {
-        vipBadgeEl.style.display = 'none';
-      }
-    } catch (e) {
+      vipBadgeEl.textContent = lvl > 0 ? `VIP ${lvl}` : '';
+      vipBadgeEl.style.display = lvl > 0 ? 'inline-block' : 'none';
+    } catch {
       vipBadgeEl.style.display = 'none';
     }
 
-    // Prestige and titles
+    // ✅ Prestige + Titles
     try {
       const [prestigeRes, titlesRes] = await Promise.all([
         fetch('/api/kingdom/prestige', { headers }),
         fetch('/api/kingdom/titles', { headers })
       ]);
-      const prestigeData = await prestigeRes.json();
-      const titlesData = await titlesRes.json();
-      prestigeEl.textContent = `Prestige: ${prestigeData.prestige_score || 0}`;
+      const prestige = await prestigeRes.json();
+      const titles = await titlesRes.json();
+
+      prestigeEl.textContent = `Prestige: ${prestige.prestige_score ?? 0}`;
       titlesListEl.innerHTML = '';
-      (titlesData.titles || []).forEach(t => {
+      (titles.titles || []).forEach(title => {
         const li = document.createElement('li');
-        li.textContent = t;
+        li.textContent = title;
         titlesListEl.appendChild(li);
       });
-    } catch (e) {
+    } catch {
       prestigeEl.textContent = 'Prestige: --';
       titlesListEl.innerHTML = '';
     }
 
-    // ✅ Render customization options
-    // In future this can load from `profile_customization_catalogue` table
-  customizationContainer.innerHTML = `
+    // ✅ Profile customization
+    customizationContainer.innerHTML = `
       <h3>Customize Profile</h3>
-      <button class="action-btn">Change Avatar</button>
-      <button class="action-btn">Change Banner</button>
-      <button class="action-btn">Change Border</button>
-      <button class="action-btn">Edit Motto</button>
+      <button class="action-btn" id="edit-avatar-btn">Change Avatar</button>
+      <button class="action-btn" id="edit-banner-btn">Change Banner</button>
+      <button class="action-btn" id="edit-border-btn">Change Border</button>
+      <button class="action-btn" id="edit-motto-btn">Edit Motto</button>
     `;
+    customizationContainer.querySelectorAll(".action-btn").forEach(btn =>
+      btn.addEventListener("click", () =>
+        alert('🛠️ This customization feature is coming soon.')
+      )
+    );
 
-    // Example: Bind Edit Motto button
-    customizationContainer.querySelectorAll(".action-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        alert('Profile customization will be available in a future update.');
-      });
-    });
-
+    // ✅ Activity log + real-time updates
     await loadRecentActions(session.user.id);
     subscribeRecentActions(session.user.id);
 
@@ -123,48 +109,59 @@ async function loadPlayerProfile() {
   }
 }
 
+// ✅ Load Recent Activity Log
 async function loadRecentActions(userId) {
   const tbody = document.getElementById('recent-log-body');
   if (!tbody) return;
+
   tbody.innerHTML = `<tr><td colspan="3">Loading...</td></tr>`;
 
   try {
     const res = await fetch(`/api/audit-log?user_id=${encodeURIComponent(userId)}&limit=10`);
     const data = await res.json();
+
     tbody.innerHTML = '';
-    if (!data.logs || data.logs.length === 0) {
+    if (!data.logs?.length) {
       tbody.innerHTML = `<tr><td colspan="3">No recent activity.</td></tr>`;
       return;
     }
+
     data.logs.forEach(log => {
       const row = document.createElement('tr');
-      const time = log.created_at || log.time;
       row.innerHTML = `
-        <td>${formatTimestamp(time)}</td>
+        <td>${formatTimestamp(log.created_at)}</td>
         <td>${escapeHTML(log.action)}</td>
         <td>${escapeHTML(log.details)}</td>
       `;
       tbody.appendChild(row);
     });
   } catch (err) {
-    console.error('Error loading recent actions:', err);
+    console.error("❌ Error loading audit log:", err);
     tbody.innerHTML = `<tr><td colspan="3">Failed to load.</td></tr>`;
   }
 }
 
-let auditChannel;
+// ✅ Subscribe to real-time audit log updates
+let auditChannel = null;
+
 function subscribeRecentActions(userId) {
   if (auditChannel) supabase.removeChannel(auditChannel);
   auditChannel = supabase
-    .channel(`audit_log:${userId}`)
+    .channel(`audit_log:user:${userId}`)
     .on(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'audit_log', filter: `user_id=eq.${userId}` },
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'audit_log',
+        filter: `user_id=eq.${userId}`
+      },
       payload => addAuditEntry(payload.new)
     )
     .subscribe();
 }
 
+// ✅ Add new audit entry live
 function addAuditEntry(entry) {
   const tbody = document.getElementById('recent-log-body');
   if (!tbody) return;
@@ -175,24 +172,30 @@ function addAuditEntry(entry) {
     <td>${escapeHTML(entry.details)}</td>
   `;
   tbody.prepend(row);
-  if (tbody.rows.length > 10) tbody.deleteRow(-1);
+  if (tbody.rows.length > 10) tbody.deleteRow(-1); // Keep at 10 max
 }
 
+// ✅ Timestamp Formatter
 function formatTimestamp(timestamp) {
   if (!timestamp) return 'Unknown';
   const date = new Date(timestamp);
   return date.toLocaleString(undefined, {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
   });
 }
 
+// ✅ HTML Escape Utility
 function escapeHTML(str) {
   if (!str) return '';
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
