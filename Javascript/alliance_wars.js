@@ -4,7 +4,6 @@ File Name: alliance_wars.js
 Date: June 2, 2025
 Author: Deathsgift66
 */
-// Modern Card-Based Alliance Wars Board — Matches alliance_wars.html perfectly
 
 import { supabase } from './supabaseClient.js';
 
@@ -12,121 +11,69 @@ let currentWarId = null;
 let combatInterval = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
+  // ✅ Logout binding
+  document.getElementById("logout-btn")?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "index.html";
+  });
 
-  // ✅ Initial load
+  // ✅ Init
   initTabs();
   await loadCustomBoard();
   await loadAllianceWars();
   await loadPendingWars();
-  const declareBtn = document.getElementById('declare-alliance-war-btn');
-  if (declareBtn) {
-    declareBtn.addEventListener('click', submitDeclareWar);
-  }
+
+  document.getElementById('declare-alliance-war-btn')?.addEventListener('click', submitDeclareWar);
 });
 
-// ✅ Load Alliance Custom Board (image + text)
+// ✅ Load Alliance War Banner and Lore
 async function loadCustomBoard() {
   try {
     const res = await fetch("/api/alliance-vault/custom-board");
     const data = await res.json();
 
-    const imgSlot = document.getElementById("custom-image-slot");
-    const textSlot = document.getElementById("custom-text-slot");
-
-    imgSlot.innerHTML = data.image_url
+    document.getElementById("custom-image-slot").innerHTML = data.image_url
       ? `<img src="${escapeHTML(data.image_url)}" alt="Alliance War Banner" class="war-board-image">`
       : "<p>No custom image set.</p>";
 
-    textSlot.innerHTML = data.custom_text
+    document.getElementById("custom-text-slot").innerHTML = data.custom_text
       ? `<p>${escapeHTML(data.custom_text)}</p>`
       : "<p>No custom text set.</p>";
-
   } catch (err) {
     console.error("❌ Error loading custom board:", err);
-    document.getElementById("custom-image-slot").innerHTML = "<p>Error loading image.</p>";
-    document.getElementById("custom-text-slot").innerHTML = "<p>Error loading text.</p>";
   }
 }
 
-// ✅ Load Alliance Wars
+// ✅ Load All Active and Completed Wars
 async function loadAllianceWars() {
   const container = document.getElementById("wars-container");
   container.innerHTML = "<p>Loading alliance wars...</p>";
 
   try {
-    const res = await fetch('/api/alliance-wars/active');
-    const globalData = await res.json();
-    const res2 = await fetch('/api/alliance-wars/list');
-    const data = await res2.json();
+    const [activeRes, fullRes] = await Promise.all([
+      fetch('/api/alliance-wars/active'),
+      fetch('/api/alliance-wars/list')
+    ]);
+    const activeWars = (await activeRes.json()).wars || [];
+    const allWars = await fullRes.json();
 
     container.innerHTML = "";
 
-    // Render Active Wars
-    const activeList = globalData.wars || data.active_wars || [];
-    if (activeList.length > 0) {
-      const activeHeader = document.createElement("h3");
-      activeHeader.textContent = "⚔️ Active Wars";
-      container.appendChild(activeHeader);
-
-      activeList.forEach(war => {
-        const card = document.createElement("div");
-        card.classList.add("war-card");
-
-        card.innerHTML = `
-          <h4>${escapeHTML(war.opponent)}</h4>
-          <p>Type: <strong>${escapeHTML(war.type)}</strong></p>
-          <p>Status: <strong>${escapeHTML(war.status)}</strong></p>
-          <p>Started: <strong>${escapeHTML(war.started)}</strong></p>
-          <p>Turns Left: <strong>${escapeHTML(String(war.turns_left))}</strong></p>
-          <div class="war-actions">
-            <button class="action-btn view-war-btn" data-war='${JSON.stringify(war)}'>View</button>
-          </div>
-        `;
-
-        container.appendChild(card);
-      });
+    // Active
+    if (activeWars.length > 0) {
+      container.innerHTML += `<h3>⚔️ Active Wars</h3>`;
+      activeWars.forEach(renderWarCard(container, true));
     } else {
-      const noActive = document.createElement("p");
-      noActive.textContent = "No active wars.";
-      container.appendChild(noActive);
+      container.innerHTML += `<p>No active wars.</p>`;
     }
 
-    // Render Past Wars
-    if (data.completed_wars && data.completed_wars.length > 0) {
-      const pastHeader = document.createElement("h3");
-      pastHeader.textContent = "🏅 Past Wars";
-      container.appendChild(pastHeader);
-
-      data.completed_wars.forEach(war => {
-        const card = document.createElement("div");
-        card.classList.add("war-card");
-
-        card.innerHTML = `
-          <h4>${escapeHTML(war.opponent)}</h4>
-          <p>Result: <strong>${escapeHTML(war.result)}</strong></p>
-          <p>Ended: <strong>${escapeHTML(war.ended)}</strong></p>
-          <div class="war-actions">
-            <button class="action-btn view-war-btn" data-war='${JSON.stringify(war)}'>View</button>
-          </div>
-        `;
-
-        container.appendChild(card);
-      });
-    } else {
-      const noPast = document.createElement("p");
-      noPast.textContent = "No past wars.";
-      container.appendChild(noPast);
+    // Completed
+    if (allWars.completed_wars?.length > 0) {
+      container.innerHTML += `<h3>🏅 Past Wars</h3>`;
+      allWars.completed_wars.forEach(renderWarCard(container, false));
     }
 
-    // Add View button listeners
+    // View War Listeners
     document.querySelectorAll(".view-war-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const war = JSON.parse(btn.dataset.war);
@@ -140,31 +87,49 @@ async function loadAllianceWars() {
   }
 }
 
-// ✅ View War Details (Modal or Navigate)
+// ✅ Render War Card
+function renderWarCard(container, isActive) {
+  return war => {
+    const card = document.createElement("div");
+    card.className = "war-card";
+    card.innerHTML = `
+      <h4>${escapeHTML(war.opponent)}</h4>
+      ${isActive
+        ? `<p>Status: <strong>${escapeHTML(war.status)}</strong></p>
+           <p>Turns Left: <strong>${escapeHTML(String(war.turns_left))}</strong></p>`
+        : `<p>Result: <strong>${escapeHTML(war.result)}</strong></p>`}
+      <p>Type: <strong>${escapeHTML(war.type)}</strong></p>
+      <p>${isActive ? "Started" : "Ended"}: <strong>${escapeHTML(war.started || war.ended)}</strong></p>
+      <div class="war-actions">
+        <button class="action-btn view-war-btn" data-war='${JSON.stringify(war)}'>View</button>
+      </div>`;
+    container.appendChild(card);
+  };
+}
+
+// ✅ View War Details → Loads battle map, overview, logs, participants
 async function viewWarDetails(war) {
   currentWarId = war.alliance_war_id || war.id;
   switchTab('tab-overview');
   try {
     const res = await fetch(`/api/alliance-wars/view?alliance_war_id=${currentWarId}`);
-    const data = await res.json();
-    renderWarOverview(data.war, data.score);
-    renderBattleMap(data.map?.tile_map || []);
+    const { war: w, score, map } = await res.json();
+    renderWarOverview(w, score);
+    renderBattleMap(map?.tile_map || []);
     await loadCombatLogs();
     await loadScoreboard();
     await loadParticipants();
     startCombatPolling();
   } catch (err) {
-    console.error('Error loading war details:', err);
+    console.error("Error loading war details:", err);
   }
 }
 
+// ✅ Overview Details
 function renderWarOverview(war, score) {
-  const container = document.getElementById('war-overview');
-  if (!war) {
-    container.textContent = 'No data.';
-    return;
-  }
-  container.innerHTML = `
+  const el = document.getElementById('war-overview');
+  if (!war) return el.textContent = 'No data.';
+  el.innerHTML = `
     <p><strong>Attacker:</strong> ${escapeHTML(war.attacker_alliance_id)}</p>
     <p><strong>Defender:</strong> ${escapeHTML(war.defender_alliance_id)}</p>
     <p><strong>Status:</strong> ${escapeHTML(war.war_status)}</p>
@@ -174,227 +139,165 @@ function renderWarOverview(war, score) {
     <button id="join-war-btn" class="action-btn">Join War</button>
     <button id="surrender-btn" class="action-btn">Surrender</button>
   `;
-  document.getElementById('join-war-btn').addEventListener('click', () => joinWar('attacker'));
-  document.getElementById('surrender-btn').addEventListener('click', surrenderWar);
+  document.getElementById('join-war-btn').onclick = () => joinWar('attacker');
+  document.getElementById('surrender-btn').onclick = surrenderWar;
 }
 
+// ✅ Grid Map
+function renderBattleMap(tileMap) {
+  const battleMap = document.getElementById('battle-map');
+  battleMap.innerHTML = '';
+  const height = tileMap.length;
+  const width = tileMap[0]?.length || 60;
+  battleMap.style.gridTemplateColumns = `repeat(${width}, 20px)`;
+  tileMap.flat().forEach(type => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.style.backgroundColor = {
+      forest: '#228B22', river: '#1E90FF', hill: '#8B4513'
+    }[type] || '#ccc';
+    battleMap.appendChild(tile);
+  });
+}
+
+// ✅ Logs
 async function loadCombatLogs() {
   if (!currentWarId) return;
   try {
     const res = await fetch(`/api/alliance-wars/combat-log?alliance_war_id=${currentWarId}`);
-    const data = await res.json();
-    renderCombatLog(data.combat_logs || data.logs || data);
+    const logs = (await res.json()).combat_logs || [];
+    const logEl = document.getElementById('combat-log');
+    logEl.innerHTML = '<strong>Combat Log:</strong><hr>' + logs.map(l =>
+      `<div>[Tick ${l.tick_number}] ${l.event_type} — ${l.notes}</div>`).join('');
   } catch (err) {
-    console.error('Error loading combat logs:', err);
+    console.error("Combat log error:", err);
   }
 }
 
-function renderBattleMap(tileMap) {
-  const battleMap = document.getElementById('battle-map');
-  if (!battleMap) return;
-  battleMap.innerHTML = '';
-  const height = tileMap.length || 20;
-  const width = tileMap[0]?.length || 60;
-  battleMap.style.gridTemplateColumns = `repeat(${width}, 20px)`;
-  for (let r = 0; r < height; r++) {
-    for (let c = 0; c < width; c++) {
-      const tile = document.createElement('div');
-      tile.className = 'tile';
-      const type = tileMap[r]?.[c];
-      if (type === 'forest') tile.style.backgroundColor = '#228B22';
-      else if (type === 'river') tile.style.backgroundColor = '#1E90FF';
-      else if (type === 'hill') tile.style.backgroundColor = '#8B4513';
-      battleMap.appendChild(tile);
-    }
-  }
-}
-
-function renderCombatLog(logs) {
-  const div = document.getElementById('combat-log');
-  if (!div) return;
-  div.innerHTML = '<strong>Combat Log:</strong><hr>';
-  (logs || []).forEach(log => {
-    const line = document.createElement('div');
-    line.innerText = `[Tick ${log.tick_number}] ${log.event_type} — ${log.notes}`;
-    div.appendChild(line);
-  });
-}
-
+// ✅ Score
 async function loadScoreboard() {
-  if (!currentWarId) return;
   try {
     const res = await fetch(`/api/alliance-wars/scoreboard?alliance_war_id=${currentWarId}`);
-    const data = await res.json();
-    renderScoreboard(data.score || data);
+    renderScoreboard(await res.json());
   } catch (err) {
-    console.error('Error loading scoreboard:', err);
+    console.error("Scoreboard error:", err);
   }
 }
 
 function renderScoreboard(score) {
-  const container = document.getElementById('scoreboard');
-  if (!container) return;
-  if (!score) {
-    container.textContent = 'No score data.';
-    return;
-  }
-  container.innerHTML = `
+  document.getElementById('scoreboard').innerHTML = `
     <table class="score-table">
       <tr><th>Side</th><th>Score</th><th>Kills</th><th>Losses</th></tr>
-      <tr><td>Attacker</td><td>${escapeHTML(String(score.attacker_score ?? 0))}</td><td>${escapeHTML(String(score.attacker_kills ?? 0))}</td><td>${escapeHTML(String(score.attacker_losses ?? 0))}</td></tr>
-      <tr><td>Defender</td><td>${escapeHTML(String(score.defender_score ?? 0))}</td><td>${escapeHTML(String(score.defender_kills ?? 0))}</td><td>${escapeHTML(String(score.defender_losses ?? 0))}</td></tr>
-      <tr><th colspan="2">Resources Plundered</th><td colspan="2">${escapeHTML(String(score.resources_plundered ?? 0))}</td></tr>
-      <tr><th colspan="2">Battles Participated</th><td colspan="2">${escapeHTML(String(score.battles_participated ?? 0))}</td></tr>
-    </table>
-  `;
+      <tr><td>Attacker</td><td>${score.attacker_score}</td><td>${score.attacker_kills}</td><td>${score.attacker_losses}</td></tr>
+      <tr><td>Defender</td><td>${score.defender_score}</td><td>${score.defender_kills}</td><td>${score.defender_losses}</td></tr>
+      <tr><th colspan="2">Resources Plundered</th><td colspan="2">${score.resources_plundered}</td></tr>
+      <tr><th colspan="2">Battles Participated</th><td colspan="2">${score.battles_participated}</td></tr>
+    </table>`;
 }
 
+// ✅ Participants
 async function loadParticipants() {
-  if (!currentWarId) return;
-  try {
-    const { data, error } = await supabase
-      .from('alliance_war_participants')
-      .select('kingdom_id, role')
-      .eq('alliance_war_id', currentWarId);
-    if (error) throw error;
-    renderParticipants(data);
-  } catch (err) {
-    console.error('Error loading participants:', err);
-  }
+  const { data } = await supabase
+    .from('alliance_war_participants')
+    .select('kingdom_id, role')
+    .eq('alliance_war_id', currentWarId);
+  renderParticipants(data || []);
 }
 
 function renderParticipants(list) {
-  const container = document.getElementById('participants');
-  if (!container) return;
-  if (!list || list.length === 0) {
-    container.textContent = 'No participants.';
-    return;
-  }
   const attackers = list.filter(p => p.role === 'attacker');
   const defenders = list.filter(p => p.role === 'defender');
-  container.innerHTML = `
-    <div class="participant-list"><h4>Attackers</h4>${attackers.map(p => `<div>${escapeHTML(p.kingdom_id)}</div>`).join('')}</div>
-    <div class="participant-list"><h4>Defenders</h4>${defenders.map(p => `<div>${escapeHTML(p.kingdom_id)}</div>`).join('')}</div>
-  `;
+  document.getElementById('participants').innerHTML = `
+    <div class="participant-list"><h4>Attackers</h4>${attackers.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>
+    <div class="participant-list"><h4>Defenders</h4>${defenders.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>`;
 }
 
+// ✅ Live Polling
 function startCombatPolling() {
   stopCombatPolling();
-  combatInterval = setInterval(async () => {
-    if (document.getElementById('tab-live').classList.contains('active')) {
-      await loadCombatLogs();
-      await loadScoreboard();
+  combatInterval = setInterval(() => {
+    if (document.getElementById('tab-live')?.classList.contains('active')) {
+      loadCombatLogs();
+      loadScoreboard();
     }
   }, 5000);
 }
-
 function stopCombatPolling() {
-  if (combatInterval) {
-    clearInterval(combatInterval);
-    combatInterval = null;
-  }
+  if (combatInterval) clearInterval(combatInterval);
 }
 
+// ✅ Tab Switching
 function initTabs() {
-  document.querySelectorAll('.tab-button').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
+  document.querySelectorAll('.tab-button').forEach(btn =>
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+}
+function switchTab(id) {
+  document.querySelectorAll('.tab-button, .tab-section').forEach(el =>
+    el.classList.toggle('active', el.dataset.tab === id || el.id === id));
+  if (id !== 'tab-live') stopCombatPolling();
 }
 
+// ✅ Declare War
 async function submitDeclareWar() {
-  const target = document.getElementById('target-alliance-id').value.trim();
-  if (!target) return;
-  try {
-    await fetch('/api/alliance-wars/declare', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ defender_alliance_id: parseInt(target) })
-    });
-    document.getElementById('target-alliance-id').value = '';
-    await loadAllianceWars();
-    await loadPendingWars();
-  } catch (err) {
-    console.error('Error declaring alliance war:', err);
-  }
+  const id = parseInt(document.getElementById('target-alliance-id').value.trim(), 10);
+  if (!id) return;
+  await fetch('/api/alliance-wars/declare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ defender_alliance_id: id })
+  });
+  await loadAllianceWars();
+  await loadPendingWars();
 }
 
+// ✅ Accept Pending
 async function loadPendingWars() {
   const container = document.getElementById('pending-wars-list');
-  if (!container) return;
   container.innerHTML = 'Loading...';
-  try {
-    const res = await fetch('/api/alliance-wars/list');
-    const data = await res.json();
-    const pending = (data.upcoming_wars || []).filter(w => w.war_status === 'pending');
-    container.innerHTML = '';
-    if (pending.length === 0) {
-      container.textContent = 'No pending wars.';
-      return;
-    }
-    pending.forEach(w => {
-      const row = document.createElement('div');
-      row.innerHTML = `War ${escapeHTML(w.alliance_war_id)} vs ${w.attacker_alliance_id === w.defender_alliance_id ? '' : escapeHTML(w.attacker_alliance_id)} <button class="accept-war-btn" data-id="${w.alliance_war_id}">Accept</button>`;
-      container.appendChild(row);
-    });
-    document.querySelectorAll('.accept-war-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await fetch('/api/alliance-wars/respond', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ alliance_war_id: parseInt(btn.dataset.id), action: 'accept' })
-        });
-        await loadAllianceWars();
-        await loadPendingWars();
+  const res = await fetch('/api/alliance-wars/list');
+  const data = await res.json();
+  const pending = (data.upcoming_wars || []).filter(w => w.war_status === 'pending');
+  container.innerHTML = pending.length === 0
+    ? 'No pending wars.'
+    : pending.map(w =>
+      `<div>War ${w.alliance_war_id} vs ${w.attacker_alliance_id}
+        <button class="accept-war-btn" data-id="${w.alliance_war_id}">Accept</button></div>`
+    ).join('');
+  document.querySelectorAll('.accept-war-btn').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      await fetch('/api/alliance-wars/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alliance_war_id: parseInt(btn.dataset.id), action: 'accept' })
       });
-    });
-  } catch (err) {
-    console.error('Error loading pending wars:', err);
-    container.textContent = 'Failed to load.';
-  }
+      await loadAllianceWars();
+      await loadPendingWars();
+    }));
 }
 
-function switchTab(id) {
-  document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-  document.querySelectorAll('.tab-section').forEach(s => s.classList.toggle('active', s.id === id));
-  if (id !== 'tab-live') {
-    stopCombatPolling();
-  }
-}
-
+// ✅ Join/Surrender
 async function joinWar(side) {
-  if (!currentWarId) return;
-  try {
-    await fetch('/api/alliance-wars/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alliance_war_id: currentWarId, side })
-    });
-    await loadParticipants();
-    await loadScoreboard();
-  } catch (err) {
-    console.error('Error joining war:', err);
-  }
+  await fetch('/api/alliance-wars/join', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alliance_war_id: currentWarId, side })
+  });
+  await loadParticipants();
+  await loadScoreboard();
 }
-
 async function surrenderWar() {
-  if (!currentWarId) return;
-  try {
-    await fetch('/api/alliance-wars/surrender', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alliance_war_id: currentWarId, side: 'attacker' })
-    });
-    await loadAllianceWars();
-    await viewWarDetails({ alliance_war_id: currentWarId });
-  } catch (err) {
-    console.error('Error surrendering:', err);
-  }
+  await fetch('/api/alliance-wars/surrender', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alliance_war_id: currentWarId, side: 'attacker' })
+  });
+  await loadAllianceWars();
+  await viewWarDetails({ alliance_war_id: currentWarId });
 }
 
-// ✅ Helper: Escape HTML
+// ✅ Escape
 function escapeHTML(str) {
-  if (!str) return '';
-  return String(str)
+  return String(str || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
