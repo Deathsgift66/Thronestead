@@ -3,6 +3,7 @@ Project Name: Kingmakers Rise Frontend
 File Name: seasonal_effects.js
 Date: June 2, 2025
 Author: Deathsgift66
+Enhancer: ChatGPT
 */
 
 import { supabase } from './supabaseClient.js';
@@ -15,20 +16,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ✅ Load Seasonal Effects Nexus
 async function loadSeasonalEffects(session) {
-  const modifiersEl = document.getElementById('active-modifiers');
-  const timerEl = document.getElementById('season-timer');
-  const wheelEl = document.getElementById('forecast-wheel');
-  const loreEl = document.getElementById('lore-scroll');
-  const impactEl = document.getElementById('kingdom-impact');
-  const marketEl = document.getElementById('market-projections');
+  const ui = {
+    modifiers: document.getElementById('active-modifiers'),
+    timer: document.getElementById('season-timer'),
+    wheel: document.getElementById('forecast-wheel'),
+    lore: document.getElementById('lore-scroll'),
+    impact: document.getElementById('kingdom-impact'),
+    market: document.getElementById('market-projections')
+  };
 
-  // Placeholders
-  modifiersEl.innerHTML = "<p>Loading active modifiers...</p>";
-  timerEl.innerHTML = "<p>Loading season timer...</p>";
-  wheelEl.innerHTML = "<p>Loading forecast wheel...</p>";
-  loreEl.innerHTML = "<p>Loading lore scroll...</p>";
-  impactEl.innerHTML = "<p>Loading kingdom impact...</p>";
-  marketEl.innerHTML = "<p>Loading market projections...</p>";
+  // Set placeholders
+  Object.entries(ui).forEach(([_, el]) => {
+    el.innerHTML = `<p>Loading...</p>`;
+  });
 
   try {
     const res = await fetch('/api/seasonal-effects', {
@@ -37,17 +37,16 @@ async function loadSeasonalEffects(session) {
         'X-User-ID': session.user.id
       }
     });
-    const { current: seasonData, forecast: forecastData } = await res.json();
 
-    renderActiveModifiers(seasonData);
-    renderSeasonTimer(seasonData.ends_at);
-    renderForecastWheel(forecastData, seasonData.season_code);
-    renderLoreScroll(seasonData);
-    renderKingdomImpact(seasonData);
-    renderMarketProjections(seasonData);
+    const { current, forecast } = await res.json();
 
-    // ✅ Start countdown timer
-    startSeasonCountdown(seasonData.ends_at);
+    renderActiveModifiers(current);
+    renderSeasonTimer(current.ends_at);
+    renderForecastWheel(forecast, current.season_code);
+    renderLoreScroll(current);
+    renderKingdomImpact(current);
+    renderMarketProjections(current);
+    startSeasonCountdown(current.ends_at);
 
   } catch (err) {
     console.error("❌ Error loading Seasonal Effects Nexus:", err);
@@ -57,147 +56,146 @@ async function loadSeasonalEffects(session) {
 
 // ✅ Render Active Modifiers
 function renderActiveModifiers(season) {
-  const modifiersEl = document.getElementById('active-modifiers');
-  modifiersEl.innerHTML = "";
+  const container = document.getElementById('active-modifiers');
+  container.innerHTML = '';
 
-  const modifiers = [
-    { name: "Agriculture", effect: season.agriculture_modifier },
-    { name: "Military", effect: season.military_modifier },
-    { name: "Trade", effect: season.trade_modifier },
-    { name: "Morale", effect: season.morale_modifier },
-    { name: "Research", effect: season.research_modifier }
+  const fields = [
+    ["Agriculture", season.agriculture_modifier],
+    ["Military", season.military_modifier],
+    ["Trade", season.trade_modifier],
+    ["Morale", season.morale_modifier],
+    ["Research", season.research_modifier]
   ];
 
-  modifiers.forEach(mod => {
-    const card = document.createElement("div");
-    card.classList.add("modifier-card");
-
+  fields.forEach(([label, value]) => {
+    const card = document.createElement('div');
+    card.className = 'modifier-card';
     card.innerHTML = `
-      <h4>${escapeHTML(mod.name)}</h4>
-      <p>Effect: ${mod.effect >= 0 ? "+" : ""}${mod.effect}%</p>
+      <h4>${escapeHTML(label)}</h4>
+      <p>Effect: ${value >= 0 ? '+' : ''}${value}%</p>
     `;
-
-    modifiersEl.appendChild(card);
+    container.appendChild(card);
   });
 }
 
-// ✅ Render Season Timer
+// ✅ Render Countdown Timer Section
 function renderSeasonTimer(endsAt) {
-  const timerEl = document.getElementById('season-timer');
-  timerEl.innerHTML = `
+  const el = document.getElementById('season-timer');
+  const secondsLeft = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
+
+  el.innerHTML = `
     <h3>Time Remaining</h3>
-    <p><span id="season-countdown">${formatTime(Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000)))}</span></p>
+    <p><span id="season-countdown">${formatTime(secondsLeft)}</span></p>
   `;
 }
 
-// ✅ Render Forecast Wheel
-function renderForecastWheel(forecast, currentSeasonCode) {
-  const wheelEl = document.getElementById('forecast-wheel');
-  wheelEl.innerHTML = "";
+// ✅ Render Forecast Wheel (Clickable Cards)
+function renderForecastWheel(forecast, currentCode) {
+  const container = document.getElementById('forecast-wheel');
+  container.innerHTML = '';
 
   forecast.forEach(season => {
-    const card = document.createElement("div");
-    card.classList.add("forecast-card");
-    if (season.season_code === currentSeasonCode) {
-      card.classList.add("current-season");
+    const card = document.createElement('div');
+    card.className = 'forecast-card';
+    if (season.season_code === currentCode) {
+      card.classList.add('current-season');
     }
-
     card.innerHTML = `
       <h4>${escapeHTML(season.name)}</h4>
       <p>Starts: ${new Date(season.start_date).toLocaleDateString()}</p>
     `;
-
     card.addEventListener('click', () => openForecastModal(season));
-
-    wheelEl.appendChild(card);
+    container.appendChild(card);
   });
 }
 
-// ✅ Render Lore Scroll
+// ✅ Render Lore Scroll Section
 function renderLoreScroll(season) {
-  const loreEl = document.getElementById('lore-scroll');
-  loreEl.innerHTML = `
+  const el = document.getElementById('lore-scroll');
+  el.innerHTML = `
     <h3>${escapeHTML(season.name)} Lore</h3>
-    <p>${escapeHTML(season.lore_text || "No lore available.")}</p>
+    <p>${escapeHTML(season.lore_text || 'No lore available.')}</p>
   `;
 }
 
-// ✅ Render Kingdom Impact
+// ✅ Render Kingdom-Specific Effects Summary
 function renderKingdomImpact(season) {
-  const impactEl = document.getElementById('kingdom-impact');
-  impactEl.innerHTML = `
+  const el = document.getElementById('kingdom-impact');
+  el.innerHTML = `
     <h3>Kingdom Impact</h3>
     <ul>
-      <li>Food Production: ${season.agriculture_modifier >= 0 ? "+" : ""}${season.agriculture_modifier}%</li>
-      <li>Military Strength: ${season.military_modifier >= 0 ? "+" : ""}${season.military_modifier}%</li>
-      <li>Trade Revenue: ${season.trade_modifier >= 0 ? "+" : ""}${season.trade_modifier}%</li>
-      <li>Kingdom Morale: ${season.morale_modifier >= 0 ? "+" : ""}${season.morale_modifier}%</li>
-      <li>Research Speed: ${season.research_modifier >= 0 ? "+" : ""}${season.research_modifier}%</li>
+      <li>Food Production: ${fmtSigned(season.agriculture_modifier)}%</li>
+      <li>Military Strength: ${fmtSigned(season.military_modifier)}%</li>
+      <li>Trade Revenue: ${fmtSigned(season.trade_modifier)}%</li>
+      <li>Kingdom Morale: ${fmtSigned(season.morale_modifier)}%</li>
+      <li>Research Speed: ${fmtSigned(season.research_modifier)}%</li>
     </ul>
   `;
 }
 
-// ✅ Render Market Projections
+// ✅ Render Market Predictions
 function renderMarketProjections(season) {
-  const marketEl = document.getElementById('market-projections');
-  marketEl.innerHTML = `
+  const el = document.getElementById('market-projections');
+  el.innerHTML = `
     <h3>Market Projections</h3>
-    <p>${escapeHTML(season.market_projections || "No market projections available.")}</p>
+    <p>${escapeHTML(season.market_projections || 'No market projections available.')}</p>
   `;
 }
 
-// ✅ Start Countdown Timer
+// ✅ Animate Countdown
 function startSeasonCountdown(endsAt) {
   const countdownEl = document.getElementById('season-countdown');
+  if (!countdownEl) return;
 
   const update = () => {
     const remaining = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
     countdownEl.textContent = formatTime(remaining);
-
-    if (remaining > 0) {
-      requestAnimationFrame(update);
-    } else {
-      countdownEl.textContent = "Season Ended!";
-    }
+    if (remaining > 0) requestAnimationFrame(update);
+    else countdownEl.textContent = "Season Ended!";
   };
 
   update();
 }
 
+// ✅ Modal for Forecast Preview
 function openForecastModal(season) {
   const overlay = document.getElementById('forecast-modal');
   const body = document.getElementById('forecast-modal-body');
+
   body.innerHTML = `
     <h3>${escapeHTML(season.name)}</h3>
     <p>${escapeHTML(season.lore_text || 'No details')}</p>
   `;
+
   overlay.classList.remove('hidden');
   document.getElementById('close-forecast-modal').onclick = () => {
     overlay.classList.add('hidden');
   };
 }
 
-// ✅ Helper: Format Time
+// ✅ Time Formatting (h m s)
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-
   return `${h}h ${m}m ${s}s`;
 }
 
-// ✅ Helper: Toast
-function showToast(msg) {
-  const toastEl = document.getElementById('toast');
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
+// ✅ Sign Formatter
+function fmtSigned(val) {
+  return (val >= 0 ? '+' : '') + val;
 }
 
-// ✅ Helper: Escape HTML
+// ✅ Toast Display
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ✅ Escape HTML to prevent injection
 function escapeHTML(str) {
   if (!str) return "";
   return str
