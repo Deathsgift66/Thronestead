@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -13,32 +14,37 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/login", tags=["login"])
 
 
-@router.get("/announcements")
+@router.get("/announcements", response_class=JSONResponse)
 async def get_announcements():
-    """Return recent login announcements."""
+    """Return the latest public announcements for the login screen."""
     supabase = get_supabase_client()
+
     try:
         res = (
-            supabase.table("login_announcements")
-            .select("id,title,content,created_at")
+            supabase.table("announcements")
+            .select("title,content,created_at")
             .order("created_at", desc=True)
-            .limit(5)
+            .limit(10)
             .execute()
         )
     except Exception as e:  # pragma: no cover - network/db errors
-        raise HTTPException(status_code=500, detail="Failed to fetch announcements") from e
+        print("❌ Error loading announcements:", e)
+        raise HTTPException(status_code=500, detail="Server error loading announcements.") from e
+
+    if getattr(res, "status_code", 200) >= 400:
+        raise HTTPException(status_code=500, detail="Failed to fetch announcements.")
 
     rows = getattr(res, "data", res) or []
-    data = [
+    announcements = [
         {
-            "id": r.get("id"),
-            "title": r.get("title"),
-            "content": r.get("content"),
+            "title": r.get("title", "Untitled"),
+            "content": r.get("content", ""),
             "created_at": r.get("created_at"),
         }
         for r in rows
     ]
-    return {"announcements": data}
+
+    return JSONResponse(content={"announcements": announcements}, status_code=200)
 
 
 class EventPayload(BaseModel):
