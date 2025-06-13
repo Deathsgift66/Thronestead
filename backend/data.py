@@ -38,6 +38,38 @@ castle_progression_state = {
     }
 }
 
+# Default regions used when the database table is missing or empty
+DEFAULT_REGIONS = [
+    {
+        "region_code": "north",
+        "region_name": "Northlands",
+        "description": "Cold and rugged with hardy people.",
+        "resource_bonus": {"wood": 50},
+        "troop_bonus": {"infantry_hp": 2},
+    },
+    {
+        "region_code": "south",
+        "region_name": "Southlands",
+        "description": "Fertile fields and warm climate.",
+        "resource_bonus": {"food": 100},
+        "troop_bonus": {"cavalry_speed": 1},
+    },
+    {
+        "region_code": "east",
+        "region_name": "Eastreach",
+        "description": "Rich trade routes and culture.",
+        "resource_bonus": {"gold": 20},
+        "troop_bonus": {"archer_damage": 3},
+    },
+    {
+        "region_code": "west",
+        "region_name": "Westvale",
+        "description": "Frontier lands full of stone.",
+        "resource_bonus": {"stone": 50},
+        "troop_bonus": {},
+    },
+]
+
 # Active kingdom projects keyed by kingdom_id
 kingdom_projects: dict[int, list[dict]] = {}
 

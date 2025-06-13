@@ -129,8 +129,9 @@ table used on **play.html**:
 psql -f migrations/2025_06_08_add_regions.sql
 ```
 
-Without this migration the `/api/kingdom/regions` request will fail and the
-region dropdown will show "Failed to load".
+Without this migration the `/api/kingdom/regions` request will fall back to
+sample regions bundled with the backend, so the dropdown will work but won't
+reflect any custom data you expected.
 
 ---
 
