@@ -1,39 +1,38 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: admin_alerts.js
-Date: June 2, 2025
-Author: Deathsgift66
+Date: June 13, 2025
+Author: Deathsgift66 (Optimized by GPT)
 */
 
 import { supabase } from './supabaseClient.js';
 
 const REFRESH_MS = 30000;
-
-
-// ✅ On page load
 let realtimeSub;
+
+// ✅ Initialize alert loading and realtime subscription
 document.addEventListener('DOMContentLoaded', () => {
   loadAlerts();
-  setInterval(async () => { await loadAlerts(); }, REFRESH_MS);
+  setInterval(loadAlerts, REFRESH_MS);
 
   realtimeSub = supabase
     .channel('admin_alerts')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, async () => {
-      await loadAlerts();
-    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, loadAlerts)
     .subscribe();
 
-  document.getElementById('refresh-alerts').addEventListener('click', loadAlerts);
-  document.getElementById('clear-filters').addEventListener('click', clearFilters);
+  document.getElementById('refresh-alerts')?.addEventListener('click', loadAlerts);
+  document.getElementById('clear-filters')?.addEventListener('click', clearFilters);
 });
 
+// ✅ Cleanup on page unload
 window.addEventListener('beforeunload', () => {
   realtimeSub?.unsubscribe();
 });
 
-// ✅ Load alerts from database
+// ✅ Load and render all alert categories
 async function loadAlerts() {
   const container = document.getElementById('alerts-feed');
+  if (!container) return;
   container.innerHTML = '<p>Loading alerts...</p>';
 
   try {
@@ -47,20 +46,19 @@ async function loadAlerts() {
     renderCategory(container, 'Diplomacy', data.treaty_activity);
     renderCategory(container, 'Audit Log', data.audit);
     renderCategory(container, 'Admin Actions', data.admin_actions);
+
+    attachActionHandlers(); // ⬅️ Re-bind action buttons after render
   } catch (err) {
     console.error('❌ Failed to load alerts:', err);
     container.innerHTML = '<p>Error loading alerts. Please try again later.</p>';
   }
 }
 
-// ✅ Attach handlers for action buttons
+// ✅ Handle action buttons like flag/freeze/ban/dismiss
 function attachActionHandlers() {
   document.querySelectorAll('.action-buttons .action-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      const action = btn.dataset.action;
-      const alertId = btn.dataset.id;
-      const playerId = btn.dataset.player;
-
+    btn.addEventListener('click', async () => {
+      const { action, id: alertId, player: playerId } = btn.dataset;
       try {
         switch (action) {
           case 'flag': await flagPlayer(playerId, alertId); break;
@@ -68,9 +66,7 @@ function attachActionHandlers() {
           case 'ban': await banPlayer(playerId, alertId); break;
           case 'dismiss': await dismissAlert(alertId); break;
         }
-
-        // After action, reload
-        await loadAlerts();
+        await loadAlerts(); // reload after action
       } catch (err) {
         console.error(`❌ Action failed [${action}] for alert ${alertId}:`, err);
         alert(`❌ Action failed: ${err.message}`);
@@ -79,7 +75,7 @@ function attachActionHandlers() {
   });
 }
 
-// ✅ Action handlers (production-ready)
+// ✅ Action API endpoints
 async function flagPlayer(playerId, alertId) {
   await postAdminAction('/api/admin/flag', { player_id: playerId, alert_id: alertId });
   alert('✅ Player flagged.');
@@ -101,33 +97,26 @@ async function dismissAlert(alertId) {
   alert('✅ Alert dismissed.');
 }
 
-// ✅ Helper to post to admin API endpoints
+// ✅ Utility to send admin actions to API
 async function postAdminAction(endpoint, payload) {
-  const response = await fetch(endpoint, {
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Server error: ${errText}`);
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Server error: ${errorText}`);
   }
 }
 
 // =====================
-// Utility Functions
+// 🔧 UI & Utility
 // =====================
+
 function getFilters() {
-  const entries = [
-    ['start', document.getElementById('filter-start').value],
-    ['end', document.getElementById('filter-end').value],
-    ['type', document.getElementById('filter-alert-type').value],
-    ['severity', document.getElementById('filter-severity').value],
-    ['kingdom', document.getElementById('filter-kingdom').value],
-    ['alliance', document.getElementById('filter-alliance').value],
-  ];
-  return Object.fromEntries(entries.filter(([, v]) => v));
+  const fields = ['start', 'end', 'type', 'severity', 'kingdom', 'alliance'];
+  return Object.fromEntries(fields.map(f => [f, document.getElementById(`filter-${f}`)?.value]).filter(([, v]) => v));
 }
 
 function clearFilters() {
@@ -135,32 +124,52 @@ function clearFilters() {
   loadAlerts();
 }
 
+// ✅ Render alert section
 function renderCategory(container, title, items) {
   if (!items || items.length === 0) return;
+
   const section = document.createElement('div');
   section.className = 'alert-category';
-  const h = document.createElement('h3');
-  h.textContent = title;
-  section.appendChild(h);
+
+  const header = document.createElement('h3');
+  header.textContent = title;
+  section.appendChild(header);
 
   items.forEach(item => {
     const div = document.createElement('div');
     div.className = 'alert-item ' + mapSeverity(item.severity || item.priority);
     div.textContent = formatItem(item);
+
+    if (item.alert_id || item.player_id) {
+      const actions = document.createElement('div');
+      actions.className = 'action-buttons';
+      ['flag', 'freeze', 'ban', 'dismiss'].forEach(action => {
+        const btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+        btn.dataset.action = action;
+        btn.dataset.id = item.alert_id || item.id;
+        btn.dataset.player = item.player_id;
+        actions.appendChild(btn);
+      });
+      div.appendChild(actions);
+    }
+
     section.appendChild(div);
   });
 
   container.appendChild(section);
 }
 
+// ✅ Severity → CSS mapping
 function mapSeverity(sev) {
-  if (!sev) return 'severity-low';
-  const s = String(sev).toLowerCase();
+  const s = String(sev || '').toLowerCase();
   if (s.includes('high') || s.includes('critical')) return 'severity-high';
   if (s.includes('medium')) return 'severity-medium';
   return 'severity-low';
 }
 
+// ✅ Format alert item for display
 function formatItem(item) {
   if (item.message) return `[${item.event_type || 'log'}] ${item.message}`;
   if (item.action && item.details) return `${item.action} - ${item.details}`;
