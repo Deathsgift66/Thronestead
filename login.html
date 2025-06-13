@@ -50,8 +50,8 @@ Author: Deathsgift66
   <p class="login-subtitle">Enter the Realm</p>
 
   <form id="login-form" class="login-form">
-    <input type="text" id="login-id" name="login-id" placeholder="Email or Ruler Name" required />
-    <input type="password" id="password" name="password" placeholder="Secret Passphrase" required />
+    <input type="text" id="login-id" name="login-id" placeholder="Email or Ruler Name" aria-label="Login ID" required />
+    <input type="password" id="password" name="password" placeholder="Secret Passphrase" aria-label="Password" required />
     <button type="submit" class="royal-button">Enter the Realm</button>
   </form>
 
@@ -75,7 +75,7 @@ Author: Deathsgift66
   <div class="modal-content">
     <h2>Forgot Password</h2>
     <p>Enter your account email to receive a reset link.</p>
-    <input type="email" id="forgot-email" placeholder="Your Royal Email" required />
+    <input type="email" id="forgot-email" placeholder="Your Royal Email" aria-label="Account Email" required />
     <button id="send-reset-btn" class="royal-button">Send Reset Link</button>
     <div id="forgot-message" class="message"></div>
     <button id="close-forgot-btn" class="royal-button">Close</button>
