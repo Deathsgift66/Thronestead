@@ -30,8 +30,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   treatyChannel = supabase
     .channel('public:alliance_treaties')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, payload => {
-      loadTreatyTabs();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, async () => {
+      await loadTreatyTabs();
     })
     .subscribe();
 

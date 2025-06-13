@@ -28,8 +28,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'quest_alliance_tracking' },
-      () => {
-        loadQuests(currentFilter);
+      async () => {
+        await loadQuests(currentFilter);
       }
     )
     .subscribe();

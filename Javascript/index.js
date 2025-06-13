@@ -117,7 +117,9 @@ function setupNewsRealtime() {
   if (!list) return;
   newsSub = supabase
     .channel("news_articles")
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, loadNews)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, async () => {
+      await loadNews();
+    })
     .subscribe();
 }
 

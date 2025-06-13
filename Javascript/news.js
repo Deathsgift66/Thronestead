@@ -31,12 +31,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ✅ Load News Articles
 async function loadNewsArticles() {
   const container = document.getElementById('articles');
+  if (!container) return;
 
   container.innerHTML = "<p>Loading news articles...</p>";
 
   try {
     const res = await fetch("/api/news/articles", {
-      headers: { 'X-User-Id': currentUser.id }
+      headers: { 'X-User-ID': currentUser.id }
     });
     const data = await res.json();
 
@@ -50,6 +51,7 @@ async function loadNewsArticles() {
 
 function renderArticles(articles) {
   const container = document.getElementById('articles');
+  if (!container) return;
   container.innerHTML = '';
   if (!articles.length) {
     container.innerHTML = '<p>No news articles found.</p>';
@@ -70,7 +72,8 @@ function renderArticles(articles) {
 }
 
 function filterArticles() {
-  const term = document.getElementById('search-input').value.toLowerCase();
+  const searchEl = document.getElementById('search-input');
+  const term = searchEl ? searchEl.value.toLowerCase() : '';
   document.querySelectorAll('.news-article-card').forEach(card => {
     card.style.display = card.dataset.title.includes(term) ? '' : 'none';
   });
@@ -79,7 +82,9 @@ function filterArticles() {
 function setupRealtime() {
   newsChannel = supabase
     .channel('public:news_articles')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, () => loadNewsArticles())
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_articles' }, async () => {
+      await loadNewsArticles();
+    })
     .subscribe();
 }
 

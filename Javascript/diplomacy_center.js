@@ -18,9 +18,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   treatyChannel = supabase
     .channel('public:alliance_treaties')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, () => {
-      loadSummary(uid);
-      loadTreaties(uid);
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, async () => {
+      await loadSummary(uid);
+      await loadTreaties(uid);
     })
     .subscribe();
 });

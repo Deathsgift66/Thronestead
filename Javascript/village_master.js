@@ -199,9 +199,9 @@ function subscribeVillageRealtime(kingdomId) {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'kingdom_villages', filter: `kingdom_id=eq.${kingdomId}` },
-      () => {
-        loadVillages();
-        loadVillageOverview();
+      async () => {
+        await loadVillages();
+        await loadVillageOverview();
       }
     )
     .subscribe(status => {

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Lightweight database helper used by the battle engine."""
 
 from typing import Any, Iterable, List, Mapping

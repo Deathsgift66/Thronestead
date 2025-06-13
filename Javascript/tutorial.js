@@ -50,7 +50,7 @@ async function loadSteps() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const res = await fetch('/api/tutorial/steps', {
-      headers: { 'X-User-Id': currentUser.id }
+      headers: { 'X-User-ID': currentUser.id }
     });
     const data = await res.json();
     renderSteps(data.steps || []);
@@ -77,7 +77,9 @@ function renderSteps(steps) {
 function setupRealtime() {
   tutorialChannel = supabase
     .channel('public:tutorial_steps')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tutorial_steps' }, () => loadSteps())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tutorial_steps' }, async () => {
+      await loadSteps();
+    })
     .subscribe();
 }
 

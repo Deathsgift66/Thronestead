@@ -37,9 +37,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const messageId = urlParams.get("message_id");
     if (messageId) {
       await loadMessageView(messageId, session);
-      subscribeToMessages(session.user.id, (payload) => {
+      subscribeToMessages(session.user.id, async (payload) => {
         if (payload.new.message_id === parseInt(messageId)) {
-          loadMessageView(messageId, session);
+          await loadMessageView(messageId, session);
         }
       });
     } else {
@@ -103,10 +103,10 @@ function subscribeToNewMessages(uid) {
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'player_messages', filter: `recipient_id=eq.${uid}` },
-      payload => {
+      async () => {
         // Simple refresh on new message
         if (currentSession) {
-          loadInbox(currentSession);
+          await loadInbox(currentSession);
         }
       }
     )
@@ -269,7 +269,9 @@ function subscribeToMessages(userId, callback) {
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'player_messages', filter: `recipient_id=eq.${userId}` },
-      payload => callback(payload)
+      async payload => {
+        await callback(payload);
+      }
     )
     .subscribe();
 }

@@ -137,10 +137,10 @@ async function renderMembers(data) {
 }
 
 function setupUIControls() {
-  document.getElementById('apply-sort').addEventListener('click', () => {
-    const keyword = document.getElementById('member-search').value.toLowerCase();
-    const sortBy = document.getElementById('sort-by').value;
-    const direction = document.getElementById('sort-direction').value;
+  document.getElementById('apply-sort')?.addEventListener('click', () => {
+    const keyword = document.getElementById('member-search')?.value.toLowerCase() || '';
+    const sortBy = document.getElementById('sort-by')?.value || '';
+    const direction = document.getElementById('sort-direction')?.value || 'asc';
 
     let filtered = members.filter(m => m.username.toLowerCase().includes(keyword));
 
@@ -163,8 +163,8 @@ function setupUIControls() {
 function setupRealtime() {
   membersChannel = supabase
     .channel('public:alliance_members')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_members' }, payload => {
-      fetchMembers();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_members' }, async () => {
+      await fetchMembers();
     })
     .subscribe();
 

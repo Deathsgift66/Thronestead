@@ -280,10 +280,10 @@ function renderParticipants(list) {
 
 function startCombatPolling() {
   stopCombatPolling();
-  combatInterval = setInterval(() => {
+  combatInterval = setInterval(async () => {
     if (document.getElementById('tab-live').classList.contains('active')) {
-      loadCombatLogs();
-      loadScoreboard();
+      await loadCombatLogs();
+      await loadScoreboard();
     }
   }, 5000);
 }
