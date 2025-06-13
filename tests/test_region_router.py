@@ -1,0 +1,53 @@
+import asyncio
+from fastapi import HTTPException
+from backend.routers import region
+
+
+class DummyTable:
+    def __init__(self, data=None, error=None):
+        self._data = data or []
+        self.error = error
+
+    def select(self, *_args):
+        return self
+
+    def execute(self):
+        if self.error:
+            return {"error": self.error}
+        return {"data": self._data}
+
+
+class DummyClient:
+    def __init__(self, tables):
+        self.tables = tables
+
+    def table(self, name):
+        return self.tables.get(name, DummyTable())
+
+
+def test_get_regions_success():
+    rows = [
+        {
+            "region_code": "north",
+            "region_name": "North",
+            "description": "cold",
+            "resource_bonus": {"iron": 10},
+            "troop_bonus": {"defense": 5},
+        }
+    ]
+    client = DummyClient({"region_catalogue": DummyTable(data=rows)})
+    region.get_supabase_client = lambda: client
+    result = asyncio.run(region.get_regions())
+    assert result["regions"][0]["region_code"] == "north"
+
+
+def test_get_regions_error():
+    client = DummyClient({"region_catalogue": DummyTable(error="fail")})
+    region.get_supabase_client = lambda: client
+    try:
+        asyncio.run(region.get_regions())
+    except HTTPException as e:
+        assert e.status_code == 500
+    else:
+        assert False, "Expected HTTPException"
+
