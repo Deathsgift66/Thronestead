@@ -1,8 +1,8 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: player_management.js
-Date: June 2, 2025
-Author: Deathsgift66
+Date: June 13, 2025
+Author: Deathsgift66 + ChatGPT
 */
 
 import { supabase } from './supabaseClient.js';
@@ -10,75 +10,57 @@ import { supabase } from './supabaseClient.js';
 let playerChannel;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Rely on authGuard.js — no duplicate session checks needed
-  // ✅ Initial load
   await loadPlayerTable();
 
-  // ✅ Bind filter search button
-  document.getElementById("search-button")?.addEventListener("click", async () => {
-    await loadPlayerTable();
-  });
-  document.getElementById("search-reset")?.addEventListener("click", async () => {
+  document.getElementById("search-button")?.addEventListener("click", loadPlayerTable);
+  document.getElementById("search-reset")?.addEventListener("click", () => {
     const input = document.getElementById("search-input");
     if (input) input.value = "";
-    await loadPlayerTable();
+    loadPlayerTable();
   });
 
-  // ✅ Bind bulk actions
-  document.getElementById("bulk-ban")?.addEventListener("click", async () => {
-    await handleBulkAction("ban");
-  });
-  document.getElementById("bulk-flag")?.addEventListener("click", async () => {
-    await handleBulkAction("flag");
-  });
-  document.getElementById("bulk-logout")?.addEventListener("click", async () => {
-    await handleBulkAction("logout");
-  });
-  document.getElementById("bulk-reset-password")?.addEventListener("click", async () => {
-    await handleBulkAction("reset_password");
+  const bulkActions = {
+    "bulk-ban": "ban",
+    "bulk-flag": "flag",
+    "bulk-logout": "logout",
+    "bulk-reset-password": "reset_password"
+  };
+
+  Object.entries(bulkActions).forEach(([btnId, action]) => {
+    document.getElementById(btnId)?.addEventListener("click", () => handleBulkAction(action));
   });
 
-  // ✅ Bind modal close
-  document.getElementById("modal-close-btn")?.addEventListener("click", () => {
-    document.getElementById("admin-modal")?.classList.add("hidden");
-  });
+  document.getElementById("modal-close-btn")?.addEventListener("click", () =>
+    document.getElementById("admin-modal")?.classList.add("hidden")
+  );
 
-  // ✅ Real-time updates
+  // ✅ Supabase real-time channel
   playerChannel = supabase
     .channel('players')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, async () => {
-      await loadPlayerTable();
-    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, loadPlayerTable)
     .subscribe();
 });
 
 window.addEventListener('beforeunload', () => {
-  if (playerChannel) {
-    playerChannel.unsubscribe();
-  }
+  if (playerChannel) playerChannel.unsubscribe();
 });
 
 // ✅ Load Player Table
 async function loadPlayerTable() {
   const tableBody = document.querySelector("#player-table tbody");
   const query = document.getElementById("search-input")?.value.trim() || "";
-
   tableBody.innerHTML = "<tr><td colspan='8'>Loading players...</td></tr>";
 
   try {
     const res = await fetch(`/api/admin/players?search=${encodeURIComponent(query)}`);
-    const data = await res.json();
+    const { players } = await res.json();
 
-    tableBody.innerHTML = "";
+    tableBody.innerHTML = players?.length
+      ? ''
+      : "<tr><td colspan='8'>No players found.</td></tr>";
 
-    if (!data.players || data.players.length === 0) {
-      tableBody.innerHTML = "<tr><td colspan='8'>No players found.</td></tr>";
-      return;
-    }
-
-    data.players.forEach(player => {
+    players.forEach(player => {
       const row = document.createElement("tr");
-
       row.innerHTML = `
         <td><input type="checkbox" class="player-select" data-id="${player.user_id}"></td>
         <td>${escapeHTML(player.user_id)}</td>
@@ -94,34 +76,10 @@ async function loadPlayerTable() {
           <button class="action-btn history-btn" data-id="${player.user_id}">History</button>
         </td>
       `;
-
       tableBody.appendChild(row);
     });
 
-    // ✅ Bind action buttons
-    document.querySelectorAll(".flag-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        await showModalConfirm("Flag Player", btn.dataset.id, "flag");
-      });
-    });
-
-    document.querySelectorAll(".freeze-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        await showModalConfirm("Freeze Player", btn.dataset.id, "freeze");
-      });
-    });
-
-    document.querySelectorAll(".ban-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        await showModalConfirm("Ban Player", btn.dataset.id, "ban");
-      });
-    });
-
-    document.querySelectorAll(".history-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        await showModalConfirm("View Player History", btn.dataset.id, "history");
-      });
-    });
+    rebindActionButtons();
 
   } catch (err) {
     console.error("❌ Error loading player table:", err);
@@ -129,39 +87,39 @@ async function loadPlayerTable() {
   }
 }
 
+function rebindActionButtons() {
+  const bindAction = (selector, actionName) => {
+    document.querySelectorAll(selector).forEach(btn =>
+      btn.addEventListener("click", () => showModalConfirm(`${capitalize(actionName)} Player`, btn.dataset.id, actionName))
+    );
+  };
+
+  bindAction(".flag-btn", "flag");
+  bindAction(".freeze-btn", "freeze");
+  bindAction(".ban-btn", "ban");
+  bindAction(".history-btn", "history");
+}
+
 // ✅ Handle Bulk Action
 async function handleBulkAction(action) {
   const selected = Array.from(document.querySelectorAll(".player-select:checked")).map(cb => cb.dataset.id);
-
-  if (selected.length === 0) {
-    alert("Please select at least one player.");
-    return;
-  }
-
+  if (!selected.length) return alert("Please select at least one player.");
   if (!confirm(`Perform "${action}" on ${selected.length} players?`)) return;
 
   try {
     const res = await fetch("/api/admin/bulk_action", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action,
-        player_ids: selected
-      })
+      body: JSON.stringify({ action, player_ids: selected })
     });
-
     const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Bulk action failed.");
 
-    if (!res.ok) {
-      throw new Error(result.error || "Bulk action failed.");
-    }
-
-    alert(result.message || `Bulk action "${action}" completed.`);
+    alert(result.message || `Bulk "${action}" completed.`);
     await loadPlayerTable();
-
   } catch (err) {
-    console.error(`❌ Error performing bulk ${action}:`, err);
-    alert(`Failed to perform bulk ${action}.`);
+    console.error(`❌ Bulk ${action} failed:`, err);
+    alert(`Failed to perform "${action}".`);
   }
 }
 
@@ -173,49 +131,43 @@ async function showModalConfirm(title, userId, action) {
   const confirmBtn = document.getElementById("modal-confirm-btn");
 
   modalTitle.textContent = title;
-  modalBody.innerHTML = `Are you sure you want to perform "<strong>${action}</strong>" on player ID: <strong>${escapeHTML(userId)}</strong>?`;
+  modalBody.innerHTML = `Are you sure you want to <strong>${escapeHTML(action)}</strong> player ID <strong>${escapeHTML(userId)}</strong>?`;
 
   modal.classList.remove("hidden");
 
-  // ✅ Clean previous listener
-  confirmBtn.replaceWith(confirmBtn.cloneNode(true));
-  const newConfirmBtn = document.getElementById("modal-confirm-btn");
+  const newConfirmBtn = confirmBtn.cloneNode(true);
+  confirmBtn.replaceWith(newConfirmBtn);
 
   newConfirmBtn.addEventListener("click", async () => {
     try {
       const res = await fetch("/api/admin/player_action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          player_id: userId
-        })
+        body: JSON.stringify({ action, player_id: userId })
       });
 
       const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.error || "Action failed.");
-      }
+      if (!res.ok) throw new Error(result.error || "Action failed.");
 
       alert(result.message || `Action "${action}" completed.`);
       modal.classList.add("hidden");
       await loadPlayerTable();
-
     } catch (err) {
-      console.error(`❌ Error performing ${action}:`, err);
-      alert(`Failed to perform "${action}".`);
+      console.error(`❌ ${action} failed:`, err);
+      alert(`Failed to ${action}.`);
     }
   });
 }
 
-// ✅ Basic HTML escape
+// ✅ Escape HTML
 function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return str?.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
