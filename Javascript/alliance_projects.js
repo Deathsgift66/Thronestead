@@ -1,5 +1,41 @@
 import { supabase } from './supabaseClient.js';
 
+const RESOURCE_KEYS = [
+  'wood',
+  'stone',
+  'iron_ore',
+  'gold',
+  'gems',
+  'food',
+  'coal',
+  'livestock',
+  'clay',
+  'flax',
+  'tools',
+  'wood_planks',
+  'refined_stone',
+  'iron_ingots',
+  'charcoal',
+  'leather',
+  'arrows',
+  'swords',
+  'axes',
+  'shields',
+  'armour',
+  'wagon',
+  'siege_weapons',
+  'jewelry',
+  'spear',
+  'horses',
+  'pitchforks',
+  'wood_cost',
+  'stone_cost',
+  'iron_cost',
+  'gold_cost',
+  'wood_plan_cost',
+  'iron_ingot_cost'
+];
+
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
   await loadAllLists();
@@ -64,7 +100,7 @@ function renderAvailable(list) {
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)}</h3>
       <p>${escapeHTML(p.description || '')}</p>
-      <p>Costs: ${formatCosts(p.resource_costs)}</p>
+      <p>Costs: ${formatCostFromColumns(p)}</p>
       <p>Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
       <button class="action-btn start-btn" data-key="${p.project_code}">Start</button>
     `;
@@ -224,11 +260,17 @@ function formatTime(seconds) {
   return `${h}h ${m}m ${s}s`;
 }
 
-function formatCosts(obj) {
-  if (!obj) return 'N/A';
-  return Object.entries(obj)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join(', ');
+
+function formatCostFromColumns(obj) {
+  const parts = [];
+  RESOURCE_KEYS.forEach(key => {
+    const val = obj[key];
+    if (typeof val === 'number' && val > 0) {
+      const label = key.replace(/_cost$/, '');
+      parts.push(`${val} ${escapeHTML(label)}`);
+    }
+  });
+  return parts.join(', ') || 'N/A';
 }
 
 function escapeHTML(str) {

@@ -7,6 +7,42 @@ Updated: 2025-06-03 by Codex
 
 import { supabase } from './supabaseClient.js';
 
+const RESOURCE_KEYS = [
+  'wood',
+  'stone',
+  'iron_ore',
+  'gold',
+  'gems',
+  'food',
+  'coal',
+  'livestock',
+  'clay',
+  'flax',
+  'tools',
+  'wood_planks',
+  'refined_stone',
+  'iron_ingots',
+  'charcoal',
+  'leather',
+  'arrows',
+  'swords',
+  'axes',
+  'shields',
+  'armour',
+  'wagon',
+  'siege_weapons',
+  'jewelry',
+  'spear',
+  'horses',
+  'pitchforks',
+  'wood_cost',
+  'stone_cost',
+  'iron_cost',
+  'gold_cost',
+  'wood_plan_cost',
+  'iron_ingot_cost'
+];
+
 let currentVillage = null;
 let timerHandle = null;
 let modal, modalName, modalDesc, modalCost;
@@ -203,7 +239,7 @@ async function showBuildingInfo(bid) {
     const { building } = await res.json();
     modalName.textContent = building.building_name;
     modalDesc.textContent = building.description || '';
-    modalCost.textContent = JSON.stringify(building.build_cost, null, 2);
+    modalCost.textContent = formatCostFromColumns(building);
     modal.classList.remove('hidden');
   } catch (err) {
     console.error('Failed to load building info', err);
@@ -218,4 +254,16 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function formatCostFromColumns(obj) {
+  const parts = [];
+  RESOURCE_KEYS.forEach(key => {
+    const val = obj[key];
+    if (typeof val === 'number' && val > 0) {
+      const label = key.replace(/_cost$/, '');
+      parts.push(`${val} ${escapeHTML(label)}`);
+    }
+  });
+  return parts.join(', ') || 'N/A';
 }
