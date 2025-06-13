@@ -1,11 +1,12 @@
 """Service functions for kingdom quest tracking."""
 
 from datetime import datetime, timedelta
+import logging
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 

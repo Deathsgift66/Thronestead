@@ -1,7 +1,9 @@
+import logging
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover - SQLAlchemy optional
+except ImportError:  # pragma: no cover - SQLAlchemy optional
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 from datetime import datetime

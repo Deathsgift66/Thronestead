@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException
+import logging
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except Exception:  # pragma: no cover - fallback for tests
+except ImportError:  # pragma: no cover - fallback for tests
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
 
