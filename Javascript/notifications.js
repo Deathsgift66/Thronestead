@@ -30,8 +30,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       schema: 'public',
       table: 'notifications',
       filter: `user_id=eq.${session.user.id}`
-    }, () => {
-      loadNotifications();
+    }, async () => {
+      await loadNotifications();
     })
     .subscribe();
 

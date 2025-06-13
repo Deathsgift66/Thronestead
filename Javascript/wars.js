@@ -33,9 +33,9 @@ function setupControls() {
 function subscribeToWarUpdates() {
   supabase
     .channel('public:wars')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'wars' }, payload => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'wars' }, async payload => {
       appendWarEvent(`${payload.new.attacker_name} vs ${payload.new.defender_name} — ${payload.new.status}`);
-      loadWars();
+      await loadWars();
     })
     .subscribe();
 }

@@ -223,8 +223,8 @@ function updateLastUpdated() {
 }
 
 function startAutoRefresh() {
-  setInterval(() => {
-    loadTradeLogs();
+  setInterval(async () => {
+    await loadTradeLogs();
   }, 30000);
 }
 
@@ -234,8 +234,8 @@ function subscribeRealtime() {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'trade_logs' },
-      () => {
-        loadTradeLogs();
+      async () => {
+        await loadTradeLogs();
       }
     )
     .subscribe(status => {

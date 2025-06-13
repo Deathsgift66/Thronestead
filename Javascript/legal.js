@@ -36,7 +36,9 @@ async function loadDocuments() {
 function setupRealtime() {
   realtimeSub = supabase
     .channel('legal_documents')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'legal_documents' }, loadDocuments)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'legal_documents' }, async () => {
+      await loadDocuments();
+    })
     .subscribe();
 }
 

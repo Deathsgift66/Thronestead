@@ -68,8 +68,8 @@ async function loadResearchNexus() {
           schema: 'public',
           table: 'kingdom_research_tracking',
           filter: `kingdom_id=eq.${kingdomId}`
-        }, () => {
-          loadResearchNexus();
+        }, async () => {
+          await loadResearchNexus();
         })
         .subscribe();
     }

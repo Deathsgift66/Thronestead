@@ -77,7 +77,9 @@ function renderSteps(steps) {
 function setupRealtime() {
   tutorialChannel = supabase
     .channel('public:tutorial_steps')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tutorial_steps' }, () => loadSteps())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tutorial_steps' }, async () => {
+      await loadSteps();
+    })
     .subscribe();
 }
 
