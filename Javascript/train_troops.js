@@ -4,111 +4,91 @@ File Name: train_troops.js
 Date: June 2, 2025
 Author: Deathsgift66
 */
-// Grand Muster Hall — Train Troops Page Controller
 
 import { supabase } from './supabaseClient.js';
 
 let accessToken = null;
 let userId = null;
-
 let troopLookup = new Map();
 let timerHandles = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js protects this page → no duplicate session check
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-    return;
-  }
+  if (!session) return window.location.href = 'login.html';
+
   accessToken = session.access_token;
   userId = session.user.id;
+
   initToggleButtons();
   await loadGrandMusterHall();
   setInterval(loadGrandMusterHall, 30000);
 });
 
-// ✅ Initialize Toggle Buttons
+// ✅ UI Toggles
 function initToggleButtons() {
-  document.getElementById('toggleFilters').addEventListener('click', () => {
-    document.getElementById('sidebar-panel').classList.toggle('hidden');
-  });
-
-  document.getElementById('toggleQueue').addEventListener('click', () => {
-    const queueSection = document.getElementById('training-queue');
-    const historySection = document.getElementById('training-history');
-    queueSection.classList.toggle('hidden');
-    historySection.classList.toggle('hidden');
+  document.getElementById('toggleFilters')?.addEventListener('click', () =>
+    document.getElementById('sidebar-panel').classList.toggle('hidden')
+  );
+  document.getElementById('toggleQueue')?.addEventListener('click', () => {
+    document.getElementById('training-queue').classList.toggle('hidden');
+    document.getElementById('training-history').classList.toggle('hidden');
   });
 }
 
-// ✅ Load Grand Muster Hall
+// ✅ Load All Troop Systems
 async function loadGrandMusterHall() {
   const catalogueEl = document.getElementById('troop-catalogue');
   const queueEl = document.getElementById('training-queue');
   const historyEl = document.getElementById('training-history');
 
-  // ✅ Clear sections
   catalogueEl.innerHTML = "<p>Loading troop catalogue...</p>";
   queueEl.innerHTML = "<p>Loading training queue...</p>";
   historyEl.innerHTML = "<p>Loading training history...</p>";
 
   try {
-    // ✅ Load user
     const { data: { user } } = await supabase.auth.getUser();
-
-    const { data: userData, error: userError } = await supabase
+    const { data: userData } = await supabase
       .from('users')
       .select('kingdom_id')
       .eq('user_id', user.id)
       .single();
 
-    if (userError) throw userError;
-
     const kingdomId = userData.kingdom_id;
-
-    // ✅ Load troops from training_catalog via API
     const headers = { Authorization: `Bearer ${accessToken}`, 'X-User-ID': userId };
+
     const troopsRes = await fetch('/api/training_catalog', { headers });
     if (!troopsRes.ok) throw new Error('Failed to load catalog');
-    const { catalog: troopsData } = await troopsRes.json();
+    const { catalog } = await troopsRes.json();
 
-    // ✅ Load training queue
-    const { data: queueData, error: queueError } = await supabase
+    const { data: queue } = await supabase
       .from('training_queue')
       .select('*')
       .eq('kingdom_id', kingdomId)
       .order('training_ends_at', { ascending: true });
 
-    if (queueError) throw queueError;
-
-    // ✅ Load training history (assuming a table `training_history`)
-    const { data: historyData, error: historyError } = await supabase
+    const { data: history } = await supabase
       .from('training_history')
       .select('*')
       .eq('kingdom_id', kingdomId)
       .order('completed_at', { descending: true })
       .limit(20);
 
-    if (historyError) throw historyError;
-
-    // ✅ Render sections
-    renderTroopCatalogue(troopsData);
-    renderTrainingQueue(queueData);
-    renderTrainingHistory(historyData);
+    renderTroopCatalogue(catalog);
+    renderTrainingQueue(queue || []);
+    renderTrainingHistory(history || []);
 
   } catch (err) {
-    console.error("❌ Error loading Grand Muster Hall:", err);
-    showToast("Failed to load Grand Muster Hall.");
+    console.error("❌ Grand Muster Hall Error:", err);
+    showToast("Failed to load troop systems.");
   }
 }
 
-// ✅ Render Troop Catalogue
+// ✅ Catalogue Renderer
 function renderTroopCatalogue(troops) {
   const catalogueEl = document.getElementById('troop-catalogue');
   catalogueEl.innerHTML = "";
 
-  if (troops.length === 0) {
+  if (!troops?.length) {
     catalogueEl.innerHTML = "<p>No troop types available.</p>";
     return;
   }
@@ -116,8 +96,7 @@ function renderTroopCatalogue(troops) {
   troops.forEach(troop => {
     troopLookup.set(troop.unit_id, troop);
     const card = document.createElement("div");
-    card.classList.add("troop-card");
-
+    card.className = "troop-card";
     card.innerHTML = `
       <h3>${escapeHTML(troop.unit_name)}</h3>
       <p>Tier: ${troop.tier}</p>
@@ -125,25 +104,23 @@ function renderTroopCatalogue(troops) {
       <p>Cost per Unit: ${formatResourceCosts(troop)}</p>
       <button class="action-btn" onclick="trainTroop(${troop.unit_id})">Train 10 Units</button>
     `;
-
     catalogueEl.appendChild(card);
   });
 }
 
-// ✅ Render Training Queue
+// ✅ Queue Renderer
 function renderTrainingQueue(queue) {
   const queueEl = document.getElementById('training-queue');
   queueEl.innerHTML = "";
 
-  if (queue.length === 0) {
+  if (!queue.length) {
     queueEl.innerHTML = "<p>No troops currently in training queue.</p>";
     return;
   }
 
   queue.forEach(entry => {
     const card = document.createElement("div");
-    card.classList.add("queue-card");
-
+    card.className = "queue-card";
     const endMs = new Date(entry.training_ends_at).getTime();
     const endsIn = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
 
@@ -153,166 +130,152 @@ function renderTrainingQueue(queue) {
       <p>Ends In: <span class="countdown">${formatTime(endsIn)}</span></p>
       <button class="action-btn cancel-btn" data-qid="${entry.queue_id}">Cancel</button>
     `;
-
     queueEl.appendChild(card);
   });
+
   queueEl.querySelectorAll('.cancel-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const qid = parseInt(btn.dataset.qid, 10);
-      cancelTraining(qid);
-    });
+    btn.addEventListener('click', () => cancelTraining(+btn.dataset.qid));
   });
+
   startQueueTimers();
 }
 
-// ✅ Render Training History
+// ✅ History Renderer
 function renderTrainingHistory(history) {
   const historyEl = document.getElementById('training-history');
   historyEl.innerHTML = "";
 
-  if (history.length === 0) {
+  if (!history.length) {
     historyEl.innerHTML = "<p>No completed training history yet.</p>";
     return;
   }
 
   history.forEach(entry => {
     const card = document.createElement("div");
-    card.classList.add("history-card");
-
+    card.className = "history-card";
     card.innerHTML = `
       <h4>${escapeHTML(entry.unit_name)} x ${entry.quantity}</h4>
       <p>[${new Date(entry.completed_at).toLocaleString()}] (source: ${escapeHTML(entry.source)})</p>
       ${entry.xp_awarded ? `<p>XP Awarded: ${entry.xp_awarded}</p>` : ""}
     `;
-
     historyEl.appendChild(card);
   });
 }
 
+// ✅ Live Countdown Updates
 function startQueueTimers() {
-  timerHandles.forEach(id => clearInterval(id));
+  timerHandles.forEach(clearInterval);
   timerHandles = [];
+
   document.querySelectorAll('.queue-card[data-end]').forEach(card => {
-    const end = parseInt(card.dataset.end, 10);
+    const end = +card.dataset.end;
     const span = card.querySelector('.countdown');
     if (!span) return;
+
     const update = () => {
       const secs = Math.max(0, Math.floor((end - Date.now()) / 1000));
       span.textContent = formatTime(secs);
     };
     update();
-    const id = setInterval(update, 1000);
-    timerHandles.push(id);
+    timerHandles.push(setInterval(update, 1000));
   });
 }
 
 // ✅ Train Troop Action
 async function trainTroop(unitId) {
-  if (!confirm(`Train 10 units of this troop?`)) return;
-
+  if (!confirm("Train 10 units of this troop?")) return;
   try {
-    const troop = troopLookup.get(unitId) || {};
-    const res = await fetch("/api/training_queue/start", {
-      method: "POST",
+    const troop = troopLookup.get(unitId);
+    const res = await fetch('/api/training_queue/start', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
         'X-User-ID': userId
       },
       body: JSON.stringify({
         unit_id: unitId,
         unit_name: troop.unit_name,
         quantity: 10,
-        base_training_seconds: troop.training_time || 60,
+        base_training_seconds: troop.training_time || 60
       })
     });
 
     const result = await res.json();
-
-    if (!res.ok) throw new Error(result.error || "Failed to train troop.");
-
+    if (!res.ok) throw new Error(result.error || "Training failed.");
     showToast("Troop training started!");
     await loadGrandMusterHall();
 
   } catch (err) {
-    console.error("❌ Error training troop:", err);
+    console.error("❌ Training Error:", err);
     showToast(err.message || "Failed to train troop.");
   }
 }
 
+// ✅ Cancel Training
 async function cancelTraining(queueId) {
-  if (!confirm('Cancel this training order?')) return;
+  if (!confirm("Cancel this training order?")) return;
   try {
     const res = await fetch('/api/training_queue/cancel', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         'X-User-ID': userId
       },
       body: JSON.stringify({ queue_id: queueId })
     });
+
     const result = await res.json();
-    if (!res.ok) throw new Error(result.error || 'Failed');
-    showToast(result.message || 'Training cancelled');
+    if (!res.ok) throw new Error(result.error || "Failed");
+    showToast(result.message || "Training cancelled.");
     await loadGrandMusterHall();
+
   } catch (err) {
-    console.error('❌ Error cancelling training:', err);
-    showToast(err.message || 'Failed to cancel');
+    console.error("❌ Cancel Error:", err);
+    showToast(err.message || "Failed to cancel.");
   }
 }
 
-// ✅ Helper: Format Resource Costs
+// ✅ Format Cost Summary
 function formatResourceCosts(troop) {
-  // Assumes troop has fields: cost_gold, cost_food, cost_iron, etc.
-  const costs = [];
-
-  if (troop.cost_gold) costs.push(`Gold: ${troop.cost_gold}`);
-  if (troop.cost_food) costs.push(`Food: ${troop.cost_food}`);
-  if (troop.cost_iron) costs.push(`Iron: ${troop.cost_iron}`);
-  if (troop.cost_wood) costs.push(`Wood: ${troop.cost_wood}`);
-  if (troop.cost_horses) costs.push(`Horses: ${troop.cost_horses}`);
-  // Add more as needed
-
+  const keys = Object.keys(troop).filter(k => k.startsWith("cost_"));
+  const costs = keys.map(k => {
+    const label = k.replace("cost_", "").replace(/_/g, " ");
+    return `${capitalize(label)}: ${troop[k]}`;
+  });
   return costs.join(" | ") || "N/A";
 }
 
-// ✅ Helper: Format Time (seconds → h m s)
+// ✅ Utilities
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-
   return `${h}h ${m}m ${s}s`;
 }
 
-// ✅ Helper: Toast
 function showToast(msg) {
-  let toastEl = document.getElementById('toast');
-
-  // Inject toast if not present
-  if (!toastEl) {
-    toastEl = document.createElement("div");
-    toastEl.id = "toast";
-    toastEl.className = "toast-notification";
-    document.body.appendChild(toastEl);
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toast";
+    toast.className = "toast-notification";
+    document.body.appendChild(toast);
   }
-
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-// ✅ Helper: Escape HTML
 function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return str?.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;") || "";
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
