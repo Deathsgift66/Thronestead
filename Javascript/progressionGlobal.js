@@ -1,43 +1,55 @@
 /*
-Project Name: Kingmakers Rise Frontend
-File Name: progressionGlobal.js
-Created: 2025-06-02
-Author: Deathsgift66 (modified by Codex)
+  Project Name: Kingmakers Rise Frontend
+  File Name: progressionGlobal.js
+  Created: 2025-06-02
+  Author: Deathsgift66 (Enhanced by ChatGPT)
+  Description: Global player progression state management with session storage fallback.
 */
 
-// Utility to fetch player progression summary and store globally
+// ✅ Fetch progression summary from backend API and store globally + in sessionStorage
 export async function fetchAndStorePlayerProgression(userId) {
   try {
     const res = await fetch('/api/progression/summary', {
       headers: { 'X-User-ID': userId }
     });
+
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch progression');
 
-    window.playerProgression = {
-      castleLevel: data.castle_level,
-      maxVillages: data.max_villages,
-      availableNobles: data.nobles_available,
-      totalNobles: data.nobles_total,
-      availableKnights: data.knights_available,
-      totalKnights: data.knights_total,
-      troopSlots: data.troop_slots
+    const structured = {
+      castleLevel: data.castle_level || 1,
+      maxVillages: data.max_villages || 1,
+      availableNobles: data.nobles_available || 0,
+      totalNobles: data.nobles_total || 0,
+      availableKnights: data.knights_available || 0,
+      totalKnights: data.knights_total || 0,
+      troopSlots: data.troop_slots || { used: 0, available: 0 }
     };
-    sessionStorage.setItem('playerProgression', JSON.stringify(window.playerProgression));
+
+    window.playerProgression = structured;
+    sessionStorage.setItem('playerProgression', JSON.stringify(structured));
   } catch (err) {
-    console.error('Failed to load player progression', err);
+    console.error('❌ Failed to load player progression:', err);
+    window.playerProgression = null;
+    sessionStorage.removeItem('playerProgression');
   }
 }
 
-// Load progression from sessionStorage if available
+// ✅ Load from sessionStorage into global state
 export function loadPlayerProgressionFromStorage() {
   const stored = sessionStorage.getItem('playerProgression');
-  if (stored) {
-    try {
-      window.playerProgression = JSON.parse(stored);
-    } catch (err) {
-      console.error('Failed to parse stored progression', err);
-      sessionStorage.removeItem('playerProgression');
+  if (!stored) return;
+
+  try {
+    const parsed = JSON.parse(stored);
+    if (typeof parsed === 'object' && parsed.castleLevel) {
+      window.playerProgression = parsed;
+    } else {
+      throw new Error('Invalid structure');
     }
+  } catch (err) {
+    console.error('❌ Failed to parse stored progression:', err);
+    window.playerProgression = null;
+    sessionStorage.removeItem('playerProgression');
   }
 }
