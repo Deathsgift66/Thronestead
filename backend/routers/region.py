@@ -17,16 +17,6 @@ async def get_regions():
     if getattr(res, "error", None):
         raise HTTPException(status_code=500, detail="Error fetching regions")
 
-    rows = getattr(res, "data", res) or []
-    regions = [
-        {
-            "region_code": r.get("region_code"),
-            "region_name": r.get("region_name"),
-            "description": r.get("description") or "",
-            "resource_bonus": r.get("resource_bonus") or {},
-            "troop_bonus": r.get("troop_bonus") or {},
-        }
-        for r in rows
-    ]
+    regions = getattr(res, "data", res) or []
 
-    return {"regions": regions}
+    return JSONResponse(content=regions)

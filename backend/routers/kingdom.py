@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-import json
 
 from sqlalchemy.exc import SQLAlchemyError
 from ..data import military_state, recruitable_units, DEFAULT_REGIONS
@@ -58,7 +58,7 @@ def list_regions(db: Session = Depends(get_db)):
         rows = (
             db.execute(
                 text(
-                    "SELECT region_code, region_name, description, resource_bonus, troop_bonus FROM region_catalogue ORDER BY region_name"
+                    "SELECT * FROM region_catalogue ORDER BY region_name"
                 )
             )
             .mappings()
@@ -67,27 +67,9 @@ def list_regions(db: Session = Depends(get_db)):
     except SQLAlchemyError:
         rows = []
 
-    regions = []
-    for r in rows:
-        rec = dict(r)
-        rb = rec.get("resource_bonus")
-        if isinstance(rb, str):
-            try:
-                rec["resource_bonus"] = json.loads(rb)
-            except Exception:
-                rec["resource_bonus"] = {}
-        tb = rec.get("troop_bonus")
-        if isinstance(tb, str):
-            try:
-                rec["troop_bonus"] = json.loads(tb)
-            except Exception:
-                rec["troop_bonus"] = {}
-        regions.append(rec)
+    regions = [dict(r) for r in rows] or DEFAULT_REGIONS
 
-    if not regions:
-        regions = DEFAULT_REGIONS
-
-    return {"regions": regions}
+    return JSONResponse(content=regions)
 
 
 @router.post("/create")

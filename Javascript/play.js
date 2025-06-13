@@ -194,12 +194,10 @@ async function loadRegions() {
   if (!regionEl || !infoEl) return;
 
   try {
-    const { regions = [] } = await safeJSONGet('/api/kingdom/regions');
+    const regions = await safeJSONGet('/api/kingdom/regions');
     regionEl.innerHTML = '<option value="">Select Region</option>';
 
     regions.forEach(region => {
-      region.resource_bonus = parseMaybeJSON(region.resource_bonus);
-      region.troop_bonus = parseMaybeJSON(region.troop_bonus);
       regionMap[region.region_code] = region;
 
       const opt = document.createElement('option');
@@ -234,7 +232,7 @@ async function loadAnnouncements() {
   const container = document.getElementById('announcements');
   if (!container) return;
   try {
-    const { announcements = [] } = await safeJSONGet('/api/login/announcements');
+    const announcements = await safeJSONGet('/api/login/announcements');
     container.innerHTML = announcements.map(a =>
       `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`
     ).join('');
@@ -289,10 +287,3 @@ function renderAvatarOptions() {
   if (vipLevel > 0 && custom) custom.classList.remove('hidden');
 }
 
-function parseMaybeJSON(raw) {
-  try {
-    return typeof raw === 'string' ? JSON.parse(raw) : raw || {};
-  } catch {
-    return {};
-  }
-}

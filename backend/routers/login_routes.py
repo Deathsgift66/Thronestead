@@ -34,17 +34,9 @@ async def get_announcements():
     if getattr(res, "status_code", 200) >= 400:
         raise HTTPException(status_code=500, detail="Failed to fetch announcements.")
 
-    rows = getattr(res, "data", res) or []
-    announcements = [
-        {
-            "title": r.get("title", "Untitled"),
-            "content": r.get("content", ""),
-            "created_at": r.get("created_at"),
-        }
-        for r in rows
-    ]
+    announcements = getattr(res, "data", res) or []
 
-    return JSONResponse(content={"announcements": announcements}, status_code=200)
+    return JSONResponse(content=announcements, status_code=200)
 
 
 class EventPayload(BaseModel):
