@@ -17,16 +17,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ✅ Setup Page Controls
 function setupControls() {
-  // Declare War Button
-  document.getElementById('declareWarButton').addEventListener('click', () => {
-    openDeclareWarModal();
-  });
+  const declareWarBtn = document.getElementById('declareWarButton');
+  if (declareWarBtn) {
+    declareWarBtn.addEventListener('click', openDeclareWarModal);
+  }
 
-  // Refresh Wars Button
-  document.getElementById('refreshWarsButton').addEventListener('click', async () => {
-    showToast("Refreshing active wars...");
-    await loadWars();
-  });
+  const refreshWarsBtn = document.getElementById('refreshWarsButton');
+  if (refreshWarsBtn) {
+    refreshWarsBtn.addEventListener('click', async () => {
+      showToast("Refreshing active wars...");
+      await loadWars();
+    });
+  }
 }
 
 // ✅ Subscribe to Supabase real-time updates
@@ -34,12 +36,15 @@ function subscribeToWarUpdates() {
   supabase
     .channel('public:wars')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'wars' }, async payload => {
-      appendWarEvent(`${payload.new.attacker_name} vs ${payload.new.defender_name} — ${payload.new.status}`);
+      if (payload.new) {
+        appendWarEvent(`${escapeHTML(payload.new.attacker_name)} vs ${escapeHTML(payload.new.defender_name)} — ${escapeHTML(payload.new.status)}`);
+      }
       await loadWars();
     })
     .subscribe();
 }
 
+// Append a new event message at the top of war feed
 function appendWarEvent(msg) {
   const feed = document.getElementById('war-feed');
   if (!feed) return;
@@ -74,9 +79,9 @@ async function loadWars() {
       const card = document.createElement('div');
       card.classList.add('war-card');
       card.innerHTML = `
-        <h3>${war.attacker_name} ⚔️ ${war.defender_name}</h3>
-        <p class="war-reason">${war.war_reason || ''}</p>
-        <p>Status: ${war.status}</p>
+        <h3>${escapeHTML(war.attacker_name)} ⚔️ ${escapeHTML(war.defender_name)}</h3>
+        <p class="war-reason">${escapeHTML(war.war_reason || '')}</p>
+        <p>Status: ${escapeHTML(war.status)}</p>
         <p>Start: ${new Date(war.start_date).toLocaleString()}</p>
         <p>Score: ${war.attacker_score} - ${war.defender_score}</p>
         <button class="action-btn" onclick="openWarDetailModal(${war.war_id})">View Details</button>
@@ -94,44 +99,48 @@ async function loadWars() {
 // ✅ Open Declare War Modal
 function openDeclareWarModal() {
   const modal = document.getElementById('declare-war-modal');
+  if (!modal) return;
+
   modal.classList.remove('hidden');
 
-  // Inject form if empty
   if (!modal.querySelector('form')) {
     modal.innerHTML = `
       <div class="modal-content">
         <h3>Declare War</h3>
         <form id="declare-war-form">
-          <label>Target Kingdom ID:
-            <input type="number" id="target-kingdom-id" required />
-          </label>
-          <label>War Reason:
-            <input type="text" id="war-reason" required />
-          </label>
+          <label for="target-kingdom-id">Target Kingdom ID:</label>
+          <input type="number" id="target-kingdom-id" name="target-kingdom-id" required />
+          <label for="war-reason">War Reason:</label>
+          <input type="text" id="war-reason" name="war-reason" required />
           <button type="submit" class="action-btn">Declare</button>
-          <button type="button" class="action-btn" onclick="closeDeclareWarModal()">Cancel</button>
+          <button type="button" class="action-btn" id="declare-war-cancel">Cancel</button>
         </form>
       </div>
     `;
 
-    // Bind form submit
-    document.getElementById('declare-war-form').addEventListener('submit', async (e) => {
+    const form = modal.querySelector('#declare-war-form');
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       await submitDeclareWar();
     });
+
+    const cancelBtn = modal.querySelector('#declare-war-cancel');
+    cancelBtn.addEventListener('click', closeDeclareWarModal);
   }
 }
 
 // ✅ Close Declare War Modal
 function closeDeclareWarModal() {
   const modal = document.getElementById('declare-war-modal');
-  modal.classList.add('hidden');
+  if (modal) modal.classList.add('hidden');
 }
 
 // ✅ Submit Declare War
 async function submitDeclareWar() {
-  const targetId = document.getElementById('target-kingdom-id').value.trim();
-  const reason = document.getElementById('war-reason').value.trim();
+  const targetInput = document.getElementById('target-kingdom-id');
+  const reasonInput = document.getElementById('war-reason');
+  const targetId = targetInput?.value.trim();
+  const reason = reasonInput?.value.trim();
 
   if (!targetId || !reason) {
     showToast("Please fill in all fields.");
@@ -143,7 +152,7 @@ async function submitDeclareWar() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        target_kingdom_id: parseInt(targetId),
+        target_kingdom_id: parseInt(targetId, 10),
         war_reason: reason
       })
     });
@@ -165,30 +174,36 @@ async function submitDeclareWar() {
 // ✅ Open War Detail Modal
 async function openWarDetailModal(warId) {
   const modal = document.getElementById('war-detail-modal');
-  modal.classList.remove('hidden');
+  if (!modal) return;
 
+  modal.classList.remove('hidden');
   modal.innerHTML = `
     <div class="modal-content">
       <h3>War Details</h3>
       <p>Loading war details...</p>
-      <button type="button" class="action-btn" onclick="closeWarDetailModal()">Close</button>
+      <button type="button" class="action-btn" id="war-detail-close">Close</button>
     </div>
   `;
 
+  const closeBtn = modal.querySelector('#war-detail-close');
+  closeBtn.addEventListener('click', closeWarDetailModal);
+
   try {
     const res = await fetch(`/api/wars/view?war_id=${warId}`);
+    if (!res.ok) throw new Error('Failed to load war details');
     const { war } = await res.json();
-    if (!res.ok) throw new Error('Failed to load');
 
     const content = modal.querySelector('.modal-content');
     content.innerHTML = `
-      <h3>${war.attacker_name} ⚔️ ${war.defender_name}</h3>
-      <p>Status: ${war.status}</p>
+      <h3>${escapeHTML(war.attacker_name)} ⚔️ ${escapeHTML(war.defender_name)}</h3>
+      <p>Status: ${escapeHTML(war.status)}</p>
       <p>Start Date: ${new Date(war.start_date).toLocaleString()}</p>
       <p>Score: ${war.attacker_score} - ${war.defender_score}</p>
-      <p>Reason: ${war.war_reason || "Unknown"}</p>
-      <button type="button" class="action-btn" onclick="closeWarDetailModal()">Close</button>
+      <p>Reason: ${escapeHTML(war.war_reason || "Unknown")}</p>
+      <button type="button" class="action-btn" id="war-detail-close-btn">Close</button>
     `;
+
+    content.querySelector('#war-detail-close-btn').addEventListener('click', closeWarDetailModal);
 
   } catch (err) {
     console.error("❌ Error loading war details:", err);
@@ -199,7 +214,7 @@ async function openWarDetailModal(warId) {
 // ✅ Close War Detail Modal
 function closeWarDetailModal() {
   const modal = document.getElementById('war-detail-modal');
-  modal.classList.add('hidden');
+  if (modal) modal.classList.add('hidden');
 }
 
 // ✅ Toast Helper
@@ -218,4 +233,15 @@ function showToast(msg) {
   setTimeout(() => {
     toastEl.classList.remove("show");
   }, 3000);
+}
+
+// ✅ Basic HTML Escape
+function escapeHTML(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
