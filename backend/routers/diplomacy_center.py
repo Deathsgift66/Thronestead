@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
-from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from ..database import get_db

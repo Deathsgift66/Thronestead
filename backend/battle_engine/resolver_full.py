@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Full combat resolver processing kingdom and alliance wars."""
 
 from typing import Any, Dict, List
