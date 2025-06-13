@@ -1,18 +1,35 @@
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: compose.js
+Updated: 2025-06-13 by Codex
+Purpose: Modular compose system supporting messages, announcements, treaties, and war declarations.
+*/
+
 import { supabase } from './supabaseClient.js';
 
+let session = null;
+let user = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-    return;
-  }
+  const { data: authData } = await supabase.auth.getSession();
+  if (!authData?.session) return (window.location.href = 'login.html');
+  session = authData.session;
+
+  const userData = await supabase.auth.getUser();
+  user = userData?.data?.user || null;
+
   setupTabs();
-  bindForms();
+  bindFormHandlers();
+  preloadDrafts();
 });
 
+// ===============================
+// Tabs Setup
+// ===============================
 function setupTabs() {
   const tabs = document.querySelectorAll('.tab');
   const contents = document.querySelectorAll('.tab-content');
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
@@ -23,164 +40,157 @@ function setupTabs() {
   });
 }
 
-function bindForms() {
-  document.getElementById('message-form').addEventListener('submit', submitMessage);
-  document.getElementById('notice-form').addEventListener('submit', submitNotification);
-  document.getElementById('treaty-form').addEventListener('submit', submitTreatyProposal);
-  document.getElementById('war-form').addEventListener('submit', submitWarDeclaration);
+// ===============================
+// Form Binding
+// ===============================
+function bindFormHandlers() {
+  bindForm('message-form', submitMessage, ['msg-recipient', 'msg-content']);
+  bindForm('notice-form', submitNotification, ['notice-title', 'notice-message']);
+  bindForm('treaty-form', submitTreatyProposal, ['treaty-partner', 'treaty-type']);
+  bindForm('war-form', submitWarDeclaration, ['war-defender', 'war-reason']);
 
+  // Recipient Auto-Suggest
   const recipientInput = document.getElementById('msg-recipient');
-  recipientInput.addEventListener('input', () => loadRecipientSuggestions(recipientInput.value));
-  if (recipientInput.value) loadRecipientSuggestions(recipientInput.value);
+  recipientInput?.addEventListener('input', () => loadRecipientSuggestions(recipientInput.value));
 
-  // Draft saving
-  ['msg-recipient','msg-content','notice-title','notice-message','notice-category','notice-link','treaty-partner','treaty-type','war-defender','war-reason']
-    .forEach(id => setupDraft(id));
+  // Previews
+  const livePreviews = {
+    'msg-content': 'msg-preview',
+    'notice-message': 'notice-preview',
+    'treaty-type': 'treaty-preview',
+    'war-reason': 'war-preview'
+  };
 
-  // Live previews
-  document.getElementById('msg-content').addEventListener('input', () => {
-    const val = document.getElementById('msg-content').value;
-    document.getElementById('msg-preview').textContent = `${val.length} chars\n${val}`;
-  });
-  document.getElementById('notice-message').addEventListener('input', () => {
-    document.getElementById('notice-preview').textContent = document.getElementById('notice-message').value;
-  });
-  document.getElementById('treaty-type').addEventListener('input', () => {
-    document.getElementById('treaty-preview').textContent = document.getElementById('treaty-type').value;
-  });
-  document.getElementById('war-reason').addEventListener('input', () => {
-    document.getElementById('war-preview').textContent = document.getElementById('war-reason').value;
+  Object.entries(livePreviews).forEach(([inputId, previewId]) => {
+    const el = document.getElementById(inputId);
+    el?.addEventListener('input', () => {
+      const val = el.value || '';
+      document.getElementById(previewId).textContent = val.length ? `${val.length} chars\n${val}` : '';
+    });
   });
 }
 
-function storageKey(id) { return `compose-${id}`; }
-function setupDraft(id) {
+// Bind form + auto save draft
+function bindForm(formId, handler, draftFields = []) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+  form.addEventListener('submit', handler);
+
+  draftFields.forEach(fieldId => setupDraftPersistence(fieldId));
+}
+
+// ===============================
+// Draft Persistence
+// ===============================
+function setupDraftPersistence(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.value = localStorage.getItem(storageKey(id)) || '';
-  el.addEventListener('input', () => {
-    localStorage.setItem(storageKey(id), el.value);
-  });
+  const key = `compose-${id}`;
+  el.value = localStorage.getItem(key) || '';
+  el.addEventListener('input', () => localStorage.setItem(key, el.value));
 }
 
-// Fetch recipient suggestions from Supabase
+function clearDraft(ids) {
+  ids.forEach(id => localStorage.removeItem(`compose-${id}`));
+}
+
+// ===============================
+// Suggestion Helpers
+// ===============================
 async function loadRecipientSuggestions(query) {
-  if (!query) {
-    document.getElementById('recipient-list').innerHTML = '';
-    return;
-  }
+  const list = document.getElementById('recipient-list');
+  if (!query) return (list.innerHTML = '');
+
   const { data, error } = await supabase
     .from('users')
     .select('user_id, username')
     .ilike('username', `${query}%`)
     .limit(5);
+
   if (error) {
-    console.error('Suggestion error', error);
+    console.error('Recipient search failed', error);
     return;
   }
-  const list = document.getElementById('recipient-list');
+
   list.innerHTML = '';
-  (data || []).forEach(u => {
+  (data || []).forEach(user => {
     const opt = document.createElement('option');
-    opt.value = u.user_id;
-    opt.textContent = u.username;
+    opt.value = user.user_id;
+    opt.textContent = user.username;
     list.appendChild(opt);
   });
 }
 
+// ===============================
+// Submit Actions
+// ===============================
 export async function submitMessage(e) {
   e.preventDefault();
-  const recipient_id = document.getElementById('msg-recipient').value.trim();
-  const message = document.getElementById('msg-content').value.trim();
-  const category = document.getElementById('msg-category').value;
-  if (!recipient_id || !message) {
-    alert('Recipient and message required');
-    return;
-  }
-  try {
-    const res = await fetch('/api/compose/send-message', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipient_id, message, category })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'failed');
+  const recipient_id = val('msg-recipient');
+  const message = val('msg-content');
+  const category = val('msg-category');
+  if (!recipient_id || !message) return alert('Recipient and message required');
+
+  const res = await send('/api/compose/send-message', { recipient_id, message, category });
+  if (res) {
     alert('Message sent');
-    localStorage.removeItem(storageKey('msg-recipient'));
-    localStorage.removeItem(storageKey('msg-content'));
-  } catch (err) {
-    console.error(err);
-    alert('Failed to send message');
+    clearDraft(['msg-recipient', 'msg-content']);
   }
 }
 
 export async function submitNotification(e) {
   e.preventDefault();
-  const title = document.getElementById('notice-title').value.trim();
-  const message = document.getElementById('notice-message').value.trim();
-  const category = document.getElementById('notice-category').value.trim();
-  const link_action = document.getElementById('notice-link').value.trim();
-  if (!title || !message) {
-    alert('Title and message required');
-    return;
-  }
-  try {
-    const res = await fetch('/api/compose/send-notification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, message, category, link_action })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'failed');
-    alert('Notification sent');
-  } catch (err) {
-    console.error(err);
-    alert('Failed to send notification');
-  }
+  const title = val('notice-title');
+  const message = val('notice-message');
+  const category = val('notice-category');
+  const link_action = val('notice-link');
+  if (!title || !message) return alert('Title and message required');
+
+  const res = await send('/api/compose/send-notification', { title, message, category, link_action });
+  if (res) alert('Notification sent');
 }
 
 export async function submitTreatyProposal(e) {
   e.preventDefault();
-  const partner_alliance_id = document.getElementById('treaty-partner').value.trim();
-  const treaty_type = document.getElementById('treaty-type').value.trim();
-  if (!partner_alliance_id || !treaty_type) {
-    alert('Partner and treaty type required');
-    return;
-  }
-  try {
-    const res = await fetch('/api/compose/propose-treaty', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ partner_alliance_id, treaty_type })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'failed');
-    alert('Treaty proposal sent');
-  } catch (err) {
-    console.error(err);
-    alert('Failed to propose treaty');
-  }
+  const partner_alliance_id = val('treaty-partner');
+  const treaty_type = val('treaty-type');
+  if (!partner_alliance_id || !treaty_type) return alert('Partner and treaty type required');
+
+  const res = await send('/api/compose/propose-treaty', { partner_alliance_id, treaty_type });
+  if (res) alert('Treaty proposal sent');
 }
 
 export async function submitWarDeclaration(e) {
   e.preventDefault();
-  const defender_id = document.getElementById('war-defender').value.trim();
-  const war_reason = document.getElementById('war-reason').value.trim();
-  if (!defender_id || !war_reason) {
-    alert('Defender and reason required');
-    return;
-  }
+  const defender_id = val('war-defender');
+  const war_reason = val('war-reason');
+  if (!defender_id || !war_reason) return alert('Defender and reason required');
+
+  const res = await send('/api/compose/declare-war', { defender_id, war_reason });
+  if (res) alert('War declaration sent');
+}
+
+// ===============================
+// Utility
+// ===============================
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+async function send(endpoint, payload) {
   try {
-    const res = await fetch('/api/compose/declare-war', {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ defender_id, war_reason })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'failed');
-    alert('War declaration sent');
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return true;
   } catch (err) {
-    console.error(err);
-    alert('Failed to declare war');
+    console.error(`❌ ${endpoint}:`, err);
+    alert('Request failed.');
+    return false;
   }
 }
