@@ -1,8 +1,9 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: kingdom_military.js
-Date: June 2, 2025
 Author: Deathsgift66
+Updated: June 13, 2025
+Description: Fully hardened military overview and training handler with live syncing
 */
 
 import { supabase } from './supabaseClient.js';
@@ -10,8 +11,8 @@ import { supabase } from './supabaseClient.js';
 let currentUserId = null;
 let realtimeChannel = null;
 
+// Initialize logic
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
@@ -20,18 +21,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ✅ Validate session
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
+  if (!session) return (window.location.href = "login.html");
+
   currentUserId = session.user.id;
 
   subscribeRealtime();
   startAutoRefresh();
 
-  // ✅ Initial load
   await loadMilitarySummary();
   await loadRecruitableUnits();
   await loadTrainingQueue();
@@ -39,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateLastUpdated();
 });
 
-// ✅ Load Military Summary
+// 🔍 Load current troop stats
 async function loadMilitarySummary() {
   const container = document.getElementById("military-summary");
   container.innerHTML = "<p>Loading military summary...</p>";
@@ -47,7 +44,6 @@ async function loadMilitarySummary() {
   try {
     const res = await fetch("/api/kingdom_military/summary", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
-
     container.innerHTML = `
       <p><strong>Total Troops:</strong> ${data.total_troops}</p>
       <p><strong>Base Slots:</strong> ${data.base_slots}</p>
@@ -56,13 +52,14 @@ async function loadMilitarySummary() {
       <p><strong>Usable Slots:</strong> ${data.usable_slots}</p>
     `;
   } catch (err) {
-    console.error("❌ Error loading military summary:", err);
+    console.error("❌ Military summary error:", err);
     container.innerHTML = "<p>Failed to load military summary.</p>";
   }
+
   updateLastUpdated();
 }
 
-// ✅ Load Recruitable Units
+// 🧱 Load all eligible units for recruitment
 async function loadRecruitableUnits() {
   const container = document.getElementById("unit-list");
   container.innerHTML = "<p>Loading recruitable units...</p>";
@@ -73,7 +70,7 @@ async function loadRecruitableUnits() {
 
     container.innerHTML = "";
 
-    if (!data.units || data.units.length === 0) {
+    if (!data.units?.length) {
       container.innerHTML = "<p>No recruitable units available.</p>";
       return;
     }
@@ -81,7 +78,6 @@ async function loadRecruitableUnits() {
     data.units.forEach(unit => {
       const card = document.createElement("div");
       card.classList.add("unit-card");
-
       card.innerHTML = `
         <h4>${escapeHTML(unit.name)}</h4>
         <p>Type: ${escapeHTML(unit.type)}</p>
@@ -89,21 +85,15 @@ async function loadRecruitableUnits() {
         <p>Training Time: ${unit.training_time} seconds</p>
         <button class="action-btn recruit-btn" data-unit-id="${unit.id}">Recruit</button>
       `;
-
       container.appendChild(card);
     });
 
-    // ✅ Bind Recruit buttons
     document.querySelectorAll(".recruit-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const unitId = btn.dataset.unitId;
         const qty = prompt("How many units do you want to recruit?");
         const qtyInt = parseInt(qty);
-
-        if (!qtyInt || qtyInt <= 0) {
-          alert("Invalid quantity.");
-          return;
-        }
+        if (!qtyInt || qtyInt <= 0) return alert("Invalid quantity.");
 
         try {
           const res = await fetch("/api/kingdom_military/recruit", {
@@ -113,28 +103,25 @@ async function loadRecruitableUnits() {
           });
 
           const result = await res.json();
-
-          if (!res.ok) {
-            throw new Error(result.error || "Recruitment failed.");
-          }
+          if (!res.ok) throw new Error(result.error || "Recruitment failed.");
 
           alert(result.message || "Units queued for training.");
           await loadMilitarySummary();
           await loadTrainingQueue();
         } catch (err) {
-          console.error("❌ Error recruiting units:", err);
+          console.error("❌ Recruitment error:", err);
           alert(err.message || "Recruitment failed.");
         }
       });
     });
 
   } catch (err) {
-    console.error("❌ Error loading recruitable units:", err);
+    console.error("❌ Recruitable units error:", err);
     container.innerHTML = "<p>Failed to load recruitable units.</p>";
   }
 }
 
-// ✅ Load Training Queue
+// 🧪 Load current training queue
 async function loadTrainingQueue() {
   const container = document.getElementById("training-queue");
   container.innerHTML = "<p>Loading training queue...</p>";
@@ -145,30 +132,27 @@ async function loadTrainingQueue() {
 
     container.innerHTML = "";
 
-    if (!data.queue || data.queue.length === 0) {
+    if (!data.queue?.length) {
       container.innerHTML = "<p>No active training queue.</p>";
       return;
     }
 
     const list = document.createElement("ul");
-
     data.queue.forEach(entry => {
       const li = document.createElement("li");
       li.textContent = `${escapeHTML(entry.unit_name)} x${entry.quantity} — Ends: ${formatTimestamp(entry.training_ends_at)}`;
-
-      // Optional: add Dismiss button here if desired
       list.appendChild(li);
     });
-
     container.appendChild(list);
   } catch (err) {
-    console.error("❌ Error loading training queue:", err);
+    console.error("❌ Training queue error:", err);
     container.innerHTML = "<p>Failed to load training queue.</p>";
   }
+
   updateLastUpdated();
 }
 
-// ✅ Load Training History
+// 🕰️ Load completed training history
 async function loadTrainingHistory() {
   const container = document.getElementById("training-history");
   container.innerHTML = "<p>Loading training history...</p>";
@@ -179,34 +163,44 @@ async function loadTrainingHistory() {
 
     container.innerHTML = "";
 
-    if (!data.history || data.history.length === 0) {
+    if (!data.history?.length) {
       container.innerHTML = "<p>No training history available.</p>";
       return;
     }
 
     const list = document.createElement("ul");
-
     data.history.forEach(entry => {
       const li = document.createElement("li");
       li.textContent = `[${formatTimestamp(entry.completed_at)}] Trained ${entry.quantity} ${escapeHTML(entry.unit_name)} (source: ${entry.source})`;
       list.appendChild(li);
     });
-
     container.appendChild(list);
   } catch (err) {
-    console.error("❌ Error loading training history:", err);
+    console.error("❌ Training history error:", err);
     container.innerHTML = "<p>Failed to load training history.</p>";
   }
+
   updateLastUpdated();
 }
 
-// ✅ Format Cost
+// 📦 Format cost object to string
 function formatCost(costObj) {
   if (!costObj || typeof costObj !== "object") return "Unknown";
-  return Object.entries(costObj).map(([resource, amount]) => `${amount} ${resource}`).join(", ");
+  return Object.entries(costObj).map(([k, v]) => `${v} ${k}`).join(", ");
 }
 
-// ✅ Format Timestamp
+// 🧼 Sanitize display text
+function escapeHTML(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ⏱ Format timestamps to readable string
 function formatTimestamp(ts) {
   if (!ts) return "Unknown";
   const date = new Date(ts);
@@ -216,22 +210,13 @@ function formatTimestamp(ts) {
   });
 }
 
-// ✅ Basic HTML escape
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
+// 🕓 Update timestamp label
 function updateLastUpdated() {
-  const el = document.getElementById('last-updated');
-  if (el) el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+  const el = document.getElementById("last-updated");
+  if (el) el.textContent = "Last updated: " + new Date().toLocaleTimeString();
 }
 
+// ♻️ Auto-refresh training state
 function startAutoRefresh() {
   setInterval(async () => {
     await loadMilitarySummary();
@@ -240,27 +225,23 @@ function startAutoRefresh() {
   }, 30000);
 }
 
+// 📡 Live Supabase sync for training queue
 function subscribeRealtime() {
   realtimeChannel = supabase
-    .channel('public:training_queue')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'training_queue' }, async () => {
+    .channel("public:training_queue")
+    .on("postgres_changes", { event: "*", schema: "public", table: "training_queue" }, async () => {
       await loadTrainingQueue();
       await loadMilitarySummary();
     })
     .subscribe(status => {
-      const indicator = document.getElementById('realtime-indicator');
+      const indicator = document.getElementById("realtime-indicator");
       if (indicator) {
-        if (status === 'SUBSCRIBED') {
-          indicator.textContent = 'Live';
-          indicator.className = 'connected';
-        } else {
-          indicator.textContent = 'Offline';
-          indicator.className = 'disconnected';
-        }
+        indicator.textContent = status === "SUBSCRIBED" ? "Live" : "Offline";
+        indicator.className = status === "SUBSCRIBED" ? "connected" : "disconnected";
       }
     });
 
-  window.addEventListener('beforeunload', () => {
+  window.addEventListener("beforeunload", () => {
     if (realtimeChannel) supabase.removeChannel(realtimeChannel);
   });
 }
