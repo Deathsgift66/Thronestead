@@ -3,98 +3,74 @@ Project Name: Kingmakers Rise Frontend
 File Name: town_criers.js
 Date: June 2, 2025
 Author: Deathsgift66
+Enhanced by: Codex - June 13, 2025
 */
 
 import { supabase } from './supabaseClient.js';
 
+let scrollChannel = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ authGuard.js protects this page → no duplicate session check
   initTabs();
-  await loadBoard();
-  await loadYourScrolls();
+  await Promise.all([
+    loadBoard(),
+    loadYourScrolls()
+  ]);
   subscribeToScrolls();
 
-  // ✅ Bind compose form
   const composeForm = document.getElementById('compose-form');
-  composeForm.addEventListener('submit', async (e) => {
+  composeForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     await submitScroll();
   });
 });
 
-// ✅ Tabs
+// ✅ UI Tabs Handler
 function initTabs() {
-  const tabButtons = document.querySelectorAll('.tab-button');
-  const tabSections = document.querySelectorAll('.tab-section');
-
-  tabButtons.forEach(btn => {
+  document.querySelectorAll('.tab-button').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.getAttribute('data-tab');
-
-      tabButtons.forEach(b => b.classList.remove('active'));
-      tabSections.forEach(section => section.classList.remove('active'));
-
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById(target).classList.add('active');
+      document.getElementById(target)?.classList.add('active');
     });
   });
 }
 
-// ✅ Load Board Feed
+// ✅ Load Global Bulletin
 async function loadBoard() {
   const boardEl = document.getElementById('board-feed');
   boardEl.innerHTML = "<p>Loading board feed...</p>";
 
   try {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
+    const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch('/api/town-criers/latest', {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id,
+        'X-User-ID': session.user.id
       }
     });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.detail || 'Error');
+    const { scrolls = [] } = await res.json();
 
-    boardEl.innerHTML = "";
-
-    const data = result.scrolls || [];
-    if (data.length === 0) {
-      boardEl.innerHTML = "<p>No scrolls posted yet.</p>";
-      return;
-    }
-
-    data.forEach(scroll => {
-      const card = document.createElement("div");
-      card.classList.add("scroll-card");
-
-      card.innerHTML = `
-        <h4>${escapeHTML(scroll.title)}</h4>
-        <p>${escapeHTML(scroll.body)}</p>
-        <small>Posted by: ${escapeHTML(scroll.author_display_name || 'Unknown')} • ${new Date(scroll.created_at).toLocaleString()}</small>
-      `;
-
-      boardEl.appendChild(card);
-    });
+    boardEl.innerHTML = scrolls.length
+      ? scrolls.map(renderScrollCard).join('')
+      : "<p>No scrolls posted yet.</p>";
 
   } catch (err) {
-    console.error("❌ Error loading board feed:", err);
+    console.error("❌ Board Feed Error:", err);
     showToast("Failed to load board feed.");
   }
 }
 
-// ✅ Load Your Scrolls
+// ✅ Load Personal Scrolls
 async function loadYourScrolls() {
   const yourEl = document.getElementById('your-scrolls');
   yourEl.innerHTML = "<p>Loading your scrolls...</p>";
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-
-    const { data, error } = await supabase
+    const { data = [], error } = await supabase
       .from('town_crier_scrolls')
       .select('*')
       .eq('author_id', user.id)
@@ -102,44 +78,41 @@ async function loadYourScrolls() {
 
     if (error) throw error;
 
-    yourEl.innerHTML = "";
-
-    if (data.length === 0) {
-      yourEl.innerHTML = "<p>You have not posted any scrolls yet.</p>";
-      return;
-    }
-
-    data.forEach(scroll => {
-      const card = document.createElement("div");
-      card.classList.add("scroll-card");
-
-      card.innerHTML = `
-        <h4>${escapeHTML(scroll.title)}</h4>
-        <p>${escapeHTML(scroll.body)}</p>
-        <small>Posted: ${new Date(scroll.created_at).toLocaleString()}</small>
-      `;
-
-      yourEl.appendChild(card);
-    });
+    yourEl.innerHTML = data.length
+      ? data.map(renderScrollCard).join('')
+      : "<p>You have not posted any scrolls yet.</p>";
 
   } catch (err) {
-    console.error("❌ Error loading your scrolls:", err);
+    console.error("❌ Your Scrolls Error:", err);
     showToast("Failed to load your scrolls.");
   }
 }
 
-// ✅ Real-time Updates
-let scrollChannel;
+// ✅ Scroll Card Renderer
+function renderScrollCard(scroll) {
+  const author = escapeHTML(scroll.author_display_name || 'Unknown');
+  const title = escapeHTML(scroll.title);
+  const body = escapeHTML(scroll.body);
+  const date = new Date(scroll.created_at).toLocaleString();
+
+  return `
+    <div class="scroll-card">
+      <h4>${title}</h4>
+      <p>${body}</p>
+      <small>Posted by: ${author} • ${date}</small>
+    </div>
+  `;
+}
+
+// ✅ Real-Time Subscription
 function subscribeToScrolls() {
   scrollChannel = supabase
     .channel('public:town_crier_scrolls')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'town_crier_scrolls' },
-      async () => {
-        await loadBoard();
-      }
-    )
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'town_crier_scrolls'
+    }, loadBoard)
     .subscribe();
 
   window.addEventListener('beforeunload', () => {
@@ -147,86 +120,70 @@ function subscribeToScrolls() {
   });
 }
 
-// ✅ Submit Scroll
+// ✅ Submit New Scroll
 async function submitScroll() {
   const titleEl = document.getElementById('scroll-title');
   const bodyEl = document.getElementById('scroll-body');
-
   const title = titleEl.value.trim();
   const body = bodyEl.value.trim();
 
-  if (!title || title.length < 3) {
-    showToast("Title must be at least 3 characters.");
-    return;
-  }
-
-  if (!body || body.length < 10) {
-    showToast("Body must be at least 10 characters.");
-    return;
-  }
+  if (title.length < 3) return showToast("Title must be at least 3 characters.");
+  if (body.length < 10) return showToast("Body must be at least 10 characters.");
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    const payload = { title, body };
-
     const res = await fetch('/api/town-criers/post', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id,
+        'X-User-ID': session.user.id
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ title, body })
     });
 
     if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.detail || 'Error');
+      const { detail } = await res.json();
+      throw new Error(detail || "Failed");
     }
 
     showToast("Scroll posted successfully!");
-
-    // Clear form
     titleEl.value = "";
     bodyEl.value = "";
 
-    // Reload feeds
-    await loadBoard();
-    await loadYourScrolls();
+    await Promise.all([
+      loadBoard(),
+      loadYourScrolls()
+    ]);
 
   } catch (err) {
-    console.error("❌ Error submitting scroll:", err);
+    console.error("❌ Submit Scroll Error:", err);
     showToast("Failed to submit scroll.");
   }
 }
 
-// ✅ Helper: Toast
-function showToast(msg) {
+// ✅ Toast Utility
+function showToast(message) {
   let toastEl = document.getElementById('toast');
-
-  // Inject toast if not present
   if (!toastEl) {
-    toastEl = document.createElement("div");
-    toastEl.id = "toast";
-    toastEl.className = "toast-notification";
+    toastEl = document.createElement('div');
+    toastEl.id = 'toast';
+    toastEl.className = 'toast-notification';
     document.body.appendChild(toastEl);
   }
 
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 3000);
 }
 
-// ✅ Helper: Escape HTML
+// ✅ Escape HTML
 function escapeHTML(str) {
-  if (!str) return "";
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    ? str.replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;")
+    : "";
 }
