@@ -1,4 +1,10 @@
-// Treaty Web visualization using D3.js
+/*
+Project Name: Kingmakers Rise Frontend
+File Name: treaty_network.js
+Author: Deathsgift66
+Enhanced: June 2025
+*/
+
 import { supabase } from './supabaseClient.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 
@@ -7,31 +13,36 @@ let svg, linkGroup, nodeGroup, simulation;
 const typeColor = {
   MDP: 'blue',
   protection: 'green',
-  NAP: 'yellow',
+  NAP: 'gold',
   war: 'red'
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
   initControls();
   await loadNetwork();
+  window.addEventListener('resize', resizeGraph);
 });
 
+// ✅ Load Network Data from API
 async function loadNetwork() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const headers = session ? { 'X-User-ID': session.user.id } : {};
     const res = await fetch('/api/alliances/treaty-network', { headers });
     const data = await res.json();
+
     rawData.nodes = data.nodes || [];
     rawData.links = data.edges || [];
+
     renderGraph();
     showToast('Treaty network loaded');
   } catch (err) {
-    console.error('Failed to load treaty network', err);
+    console.error('❌ Failed to load treaty network:', err);
     showToast('Failed to load network');
   }
 }
 
+// ✅ Initialize SVG + Force Layout
 function renderGraph() {
   const container = document.getElementById('network');
   container.innerHTML = '';
@@ -46,7 +57,7 @@ function renderGraph() {
   const zoomGroup = svg.append('g');
   svg.call(d3.zoom().on('zoom', e => zoomGroup.attr('transform', e.transform)));
 
-  linkGroup = zoomGroup.append('g').attr('stroke-opacity', 0.6);
+  linkGroup = zoomGroup.append('g').attr('stroke-opacity', 0.7);
   nodeGroup = zoomGroup.append('g');
 
   simulation = d3.forceSimulation(rawData.nodes)
@@ -57,23 +68,34 @@ function renderGraph() {
   updateGraph();
 }
 
+// ✅ D3 Graph Update Function
 function updateGraph() {
   const active = Array.from(document.querySelectorAll('.filter-btn.active'))
     .map(b => b.dataset.type);
-  const links = rawData.links.filter(l => active.includes(l.type));
+  const filteredLinks = rawData.links.filter(l => active.includes(l.type));
 
-  const linkSel = linkGroup.selectAll('line').data(links, d => d.treaty_id);
+  // Update Links
+  const linkSel = linkGroup.selectAll('line')
+    .data(filteredLinks, d => d.treaty_id);
+
   linkSel.exit().remove();
+
   const linkEnter = linkSel.enter().append('line')
     .attr('stroke-width', 2)
     .attr('stroke', d => typeColor[d.type] || '#999')
     .attr('class', d => d.type === 'war' && d.status === 'active' ? 'war-active' : null);
-  linkEnter.append('title').text(d => `${d.type} - ${d.date_signed || 'pending'}`);
+
+  linkEnter.append('title').text(d => `${d.type.toUpperCase()} – ${d.date_signed || 'Pending'}`);
   linkSel.merge(linkEnter);
 
-  const nodeSel = nodeGroup.selectAll('g').data(rawData.nodes, d => d.alliance_id);
+  // Update Nodes
+  const nodeSel = nodeGroup.selectAll('g')
+    .data(rawData.nodes, d => d.alliance_id);
+
   nodeSel.exit().remove();
+
   const nodeEnter = nodeSel.enter().append('g')
+    .attr('tabindex', 0)
     .on('click', (e, d) => {
       window.location.href = `alliance_home.html?aid=${d.alliance_id}`;
     });
@@ -83,21 +105,24 @@ function updateGraph() {
     .attr('fill', '#ccc');
 
   nodeEnter.append('image')
-    .attr('href', d => d.emblem_url)
+    .attr('href', d => d.emblem_url || 'assets/emblem-default.png')
     .attr('width', 40)
     .attr('height', 40)
     .attr('x', -20)
     .attr('y', -20)
     .attr('clip-path', 'circle(20px at 20px 20px)');
 
-  nodeEnter.append('title').text(d => `${d.name} (Lv ${d.level})`);
+  nodeEnter.append('title')
+    .text(d => `${d.name} (Lv ${d.level})`);
+
   nodeSel.merge(nodeEnter);
 
   simulation.nodes(rawData.nodes).on('tick', ticked);
-  simulation.force('link').links(links);
+  simulation.force('link').links(filteredLinks);
   simulation.alpha(1).restart();
 }
 
+// ✅ Force Tick Layout
 function ticked() {
   linkGroup.selectAll('line')
     .attr('x1', d => d.source.x)
@@ -109,9 +134,21 @@ function ticked() {
     .attr('transform', d => `translate(${d.x},${d.y})`);
 }
 
+// ✅ Resize on Window
+function resizeGraph() {
+  if (!svg) return;
+  const container = document.getElementById('network');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  svg.attr('width', width).attr('height', height);
+  simulation.force('center', d3.forceCenter(width / 2, height / 2)).alpha(0.5).restart();
+}
+
+// ✅ Controls and Filters
 function initControls() {
-  document.getElementById('refreshGraph').addEventListener('click', loadNetwork);
-  document.getElementById('toggleLegend').addEventListener('click', toggleLegend);
+  document.getElementById('refreshGraph')?.addEventListener('click', loadNetwork);
+  document.getElementById('toggleLegend')?.addEventListener('click', toggleLegend);
+
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       btn.classList.toggle('active');
@@ -120,6 +157,7 @@ function initControls() {
   });
 }
 
+// ✅ Toggle Legend Panel
 function toggleLegend() {
   let legend = document.getElementById('legend-panel');
   if (!legend) {
@@ -129,16 +167,17 @@ function toggleLegend() {
     legend.innerHTML = `
       <h4>Treaty Types</h4>
       <ul>
-        <li><span style="color: blue;">MDP</span></li>
-        <li><span style="color: green;">Protection</span></li>
-        <li><span style="color: yellow;">NAP</span></li>
-        <li><span style="color: red;">War</span></li>
+        <li><span style="color: blue;">&#9679;</span> MDP</li>
+        <li><span style="color: green;">&#9679;</span> Protection</li>
+        <li><span style="color: gold;">&#9679;</span> NAP</li>
+        <li><span style="color: red;">&#9679;</span> War</li>
       </ul>`;
     document.body.appendChild(legend);
   }
   legend.classList.toggle('hidden');
 }
 
+// ✅ Toast System
 function showToast(msg) {
   let toastEl = document.getElementById('toast');
   if (!toastEl) {
@@ -148,7 +187,6 @@ function showToast(msg) {
     document.body.appendChild(toastEl);
   }
   toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 3000);
+  toastEl.classList.add("show");
+  setTimeout(() => toastEl.classList.remove("show"), 3000);
 }
-
