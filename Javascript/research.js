@@ -1,65 +1,87 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: research.js
-Date: June 2, 2025
-Author: Deathsgift66
+Author: Deathsgift66 (Enhanced by ChatGPT)
+Description: Handles research tech tree rendering, activation, real-time updates, and encyclopedia entries.
 */
 
 import { supabase } from './supabaseClient.js';
 
-let currentSession;
-let researchChannel;
+let currentSession = null;
+let researchChannel = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Validate session
+// Utility to escape HTML from strings to prevent XSS
+function escapeHTML(str) {
+  return str ? String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;") : '';
+}
+
+// Format seconds into human-readable string
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h}h ${m}m ${s}s`;
+}
+
+// Toast notification handler
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Countdown updater for active research
+function startCountdownTimers() {
+  const countdowns = document.querySelectorAll('.countdown');
+  countdowns.forEach(el => {
+    const endTime = new Date(el.dataset.endsAt).getTime();
+    const update = () => {
+      const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+      el.textContent = formatTime(remaining);
+      if (remaining > 0) requestAnimationFrame(update);
+      else el.textContent = 'Completed!';
+    };
+    update();
+  });
+}
+
+// Initialize page once DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
-
+  if (!session) return location.href = 'login.html';
   currentSession = session;
-
-  // ✅ Initial load
-  await loadResearchNexus();
+  await loadResearchData();
 });
 
 window.addEventListener('beforeunload', () => {
   if (researchChannel) supabase.removeChannel(researchChannel);
 });
 
-// ✅ Load Research Nexus
-async function loadResearchNexus() {
-  const treeEl = document.getElementById('tech-tree');
-  const detailsEl = document.getElementById('tech-details');
+// Load all research-related UI
+async function loadResearchData() {
+  const tree = document.getElementById('tech-tree');
+  const filters = document.getElementById('tech-filters');
+  const details = document.getElementById('tech-details');
   const activeEl = document.getElementById('active-research');
-  const filtersEl = document.getElementById('tech-filters');
-  const encyclopediaEl = document.getElementById('encyclopedia');
   const completedEl = document.getElementById('completed-research');
-  const toastEl = document.getElementById('toast');
+  const encyclopediaEl = document.getElementById('encyclopedia');
 
-  // Placeholders
-  treeEl.innerHTML = "<p>Loading tech tree...</p>";
-  detailsEl.innerHTML = "<p>Select a technology to view details.</p>";
-  activeEl.innerHTML = "<p>Loading active research...</p>";
-  filtersEl.innerHTML = "<p>Loading filters...</p>";
-  encyclopediaEl.innerHTML = "<p>Loading encyclopedia...</p>";
-  completedEl.innerHTML = "<p>Loading completed research...</p>";
+  [tree, filters, details, activeEl, completedEl, encyclopediaEl].forEach(el => {
+    if (el) el.innerHTML = '<p>Loading...</p>';
+  });
 
   try {
-    // ✅ Load user
     const { data: { user } } = await supabase.auth.getUser();
+    const { data: userRow } = await supabase
+      .from('users').select('kingdom_id').eq('user_id', user.id).single();
+    const kingdomId = userRow.kingdom_id;
 
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('kingdom_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (userError) throw userError;
-
-    const kingdomId = userData.kingdom_id;
-
+    // Subscribe to live research updates
     if (!researchChannel) {
       researchChannel = supabase
         .channel(`research-${kingdomId}`)
@@ -68,302 +90,213 @@ async function loadResearchNexus() {
           schema: 'public',
           table: 'kingdom_research_tracking',
           filter: `kingdom_id=eq.${kingdomId}`
-        }, async () => {
-          await loadResearchNexus();
-        })
+        }, loadResearchData)
         .subscribe();
     }
 
-    // ✅ Load tech catalogue
-    const { data: catalogueData, error: catalogueError } = await supabase
-      .from('tech_catalogue')
-      .select('*')
-      .eq('is_active', true)
-      .order('tier', { ascending: true })
-      .order('name', { ascending: true });
+    const [{ data: techs }, trackingRes] = await Promise.all([
+      supabase.from('tech_catalogue')
+        .select('*')
+        .eq('is_active', true)
+        .order('tier', { ascending: true }),
 
-    if (catalogueError) throw catalogueError;
+      fetch('/api/kingdom/research', {
+        headers: {
+          'Authorization': `Bearer ${currentSession.access_token}`,
+          'X-User-ID': currentSession.user.id
+        }
+      })
+    ]);
 
-    // ✅ Load kingdom research tracking via API
-    const res = await fetch('/api/kingdom/research', {
-      headers: {
-        'Authorization': `Bearer ${currentSession.access_token}`,
-        'X-User-ID': currentSession.user.id
-      }
-    });
-    const apiData = await res.json();
-    if (!res.ok) throw new Error(apiData.detail || 'Failed to load research');
-    const trackingData = apiData.research;
+    const tracking = await trackingRes.json();
+    const completed = tracking.research.filter(r => r.status === 'completed');
+    const active = tracking.research.find(r => r.status === 'active');
 
-    // ✅ Separate completed and active research
-    const activeResearch = trackingData.find(t => t.status === "active");
-    const completedResearch = trackingData.filter(t => t.status === "completed");
-
-    // ✅ Render filters
-    renderTechFilters(catalogueData);
-
-    // ✅ Render tech tree
-    renderTechTree(catalogueData, trackingData);
-
-    // ✅ Render active research
-    renderActiveResearch(activeResearch, catalogueData);
-
-    // ✅ Render completed research
-    renderCompletedResearch(completedResearch, catalogueData);
-
-    // ✅ Render encyclopedia
-    renderEncyclopedia(completedResearch, catalogueData);
-
-    // ✅ Start timers
+    renderFilters(techs);
+    renderTree(techs, tracking.research);
+    renderDetails(); // default blank
+    renderActive(active, techs);
+    renderCompleted(completed, techs);
+    renderEncyclopedia(completed, techs);
     startCountdownTimers();
 
   } catch (err) {
-    console.error("❌ Error loading Research Nexus:", err);
-    showToast("Failed to load Research Nexus.");
+    console.error("❌ Failed to load research:", err);
+    showToast("Failed to load research tree.");
   }
 }
 
-// ✅ Render Tech Filters
-function renderTechFilters(catalogue) {
-  const filtersEl = document.getElementById('tech-filters');
-  filtersEl.innerHTML = "";
+// Render category filter buttons
+function renderFilters(techs) {
+  const filters = document.getElementById('tech-filters');
+  if (!filters) return;
 
-  const categories = [...new Set(catalogue.map(t => t.category))].sort();
-
-  categories.forEach(category => {
-    const btn = document.createElement("button");
-    btn.classList.add("action-btn");
-    btn.textContent = category;
-    btn.addEventListener("click", () => filterTechTree(category));
-    filtersEl.appendChild(btn);
+  filters.innerHTML = '';
+  const categories = Array.from(new Set(techs.map(t => t.category))).sort();
+  [...categories, 'ALL'].forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn';
+    btn.textContent = cat;
+    btn.onclick = () => filterByCategory(cat);
+    filters.appendChild(btn);
   });
-
-  // Add "Show All"
-  const showAllBtn = document.createElement("button");
-  showAllBtn.classList.add("action-btn");
-  showAllBtn.textContent = "Show All";
-  showAllBtn.addEventListener("click", () => filterTechTree("ALL"));
-  filtersEl.appendChild(showAllBtn);
 }
 
-// ✅ Render Tech Tree
-function renderTechTree(catalogue, tracking) {
-  const treeEl = document.getElementById('tech-tree');
-  treeEl.innerHTML = "";
+// Render the tech nodes into the tree
+function renderTree(techs, tracking) {
+  const tree = document.getElementById('tech-tree');
+  if (!tree) return;
 
-  catalogue.forEach(tech => {
-    const isCompleted = tracking.some(t => t.tech_code === tech.tech_code && t.status === "completed");
-    const isActive = tracking.some(t => t.tech_code === tech.tech_code && t.status === "active");
-    const completedCodes = tracking.filter(t => t.status === "completed").map(t => t.tech_code);
-    const prereqs = tech.prerequisites || [];
-    const isUnlocked = prereqs.every(p => completedCodes.includes(p));
+  tree.innerHTML = '';
+  const completedCodes = tracking.filter(t => t.status === 'completed').map(t => t.tech_code);
+  const activeCodes = tracking.filter(t => t.status === 'active').map(t => t.tech_code);
 
-    const node = document.createElement("div");
-    node.classList.add("tech-node");
+  techs.forEach(tech => {
+    const node = document.createElement('div');
+    node.className = 'tech-node';
     node.dataset.code = tech.tech_code;
+    node.dataset.category = tech.category;
 
-    if (isCompleted) node.classList.add("completed");
-    if (isActive) node.classList.add("active");
-    if (!isUnlocked && !isCompleted && !isActive) node.classList.add("locked");
+    const isCompleted = completedCodes.includes(tech.tech_code);
+    const isActive = activeCodes.includes(tech.tech_code);
+    const unlocked = (tech.prerequisites || []).every(p => completedCodes.includes(p));
+
+    if (isCompleted) node.classList.add('completed');
+    else if (isActive) node.classList.add('active');
+    else if (!unlocked) node.classList.add('locked');
 
     node.innerHTML = `
       <h4>${escapeHTML(tech.name)}</h4>
-      <p>Tier: ${tech.tier}</p>
-      <p>Category: ${escapeHTML(tech.category)}</p>
+      <p>Tier ${tech.tier}</p>
+      <p>${escapeHTML(tech.category)}</p>
     `;
-
-    node.addEventListener("click", () => showTechDetails(tech, isCompleted, isActive));
-    treeEl.appendChild(node);
+    node.onclick = () => renderDetails(tech, isCompleted, isActive, unlocked);
+    tree.appendChild(node);
   });
 }
 
-// ✅ Show Tech Details
-function showTechDetails(tech, isCompleted, isActive) {
-  const detailsEl = document.getElementById('tech-details');
-  const completedCodes = Array.from(document.querySelectorAll('.tech-node.completed')).map(n => n.dataset.code);
-  const prereqs = tech.prerequisites || [];
-  const unlocked = prereqs.every(p => completedCodes.includes(p));
+// Filter nodes by category
+function filterByCategory(category) {
+  document.querySelectorAll('.tech-node').forEach(el => {
+    const match = category === 'ALL' || el.dataset.category === category;
+    el.style.display = match ? 'block' : 'none';
+  });
+}
 
-  detailsEl.innerHTML = `
+// Show tech details and allow research activation
+function renderDetails(tech = null, isCompleted = false, isActive = false, unlocked = false) {
+  const details = document.getElementById('tech-details');
+  if (!details) return;
+
+  if (!tech) {
+    details.innerHTML = '<p>Select a technology to see details.</p>';
+    return;
+  }
+
+  const prereqs = tech.prerequisites || [];
+  const prereqList = prereqs.map(p => `<span class="prereq">${escapeHTML(p)}</span>`).join(', ') || 'None';
+
+  details.innerHTML = `
     <h3>${escapeHTML(tech.name)}</h3>
     <p>${escapeHTML(tech.description)}</p>
-    <p>Tier: ${tech.tier}</p>
-    <p>Category: ${escapeHTML(tech.category)}</p>
-    <p>Status: ${isCompleted ? "Completed" : isActive ? "In Progress" : unlocked ? "Unlocked" : "Locked"}</p>
-    ${prereqs.length ? `<p>Prerequisites: ${prereqs.map(p => `<span class="prereq${completedCodes.includes(p) ? ' done' : ''}">${escapeHTML(p)}</span>`).join(', ')}</p>` : ''}
-    <p>Duration: ${tech.duration_hours}h</p>
-    ${!isCompleted && !isActive && unlocked ? `<button class="action-btn" id="start-research-btn">Start Research</button>` : ""}
+    <p><strong>Category:</strong> ${escapeHTML(tech.category)}</p>
+    <p><strong>Tier:</strong> ${tech.tier}</p>
+    <p><strong>Prerequisites:</strong> ${prereqList}</p>
+    <p><strong>Duration:</strong> ${tech.duration_hours}h</p>
+    <p><strong>Status:</strong> ${isCompleted ? 'Completed' : isActive ? 'In Progress' : unlocked ? 'Unlocked' : 'Locked'}</p>
+    ${(!isCompleted && !isActive && unlocked)
+      ? `<button id="start-research" class="action-btn">Start Research</button>`
+      : ''}
   `;
 
-  if (!isCompleted && !isActive && unlocked) {
-    document.getElementById('start-research-btn').addEventListener("click", async () => {
-      if (!confirm(`Start research on "${tech.name}"?`)) return;
-
+  if (unlocked && !isCompleted && !isActive) {
+    document.getElementById('start-research').onclick = async () => {
       try {
-        const res = await fetch("/api/kingdom/start_research", {
-          method: "POST",
+        const res = await fetch('/api/kingdom/start_research', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentSession.access_token}`,
-            "X-User-ID": currentSession.user.id
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`,
+            'X-User-ID': currentSession.user.id
           },
           body: JSON.stringify({ tech_code: tech.tech_code })
         });
-
         const result = await res.json();
-
-        if (!res.ok) throw new Error(result.error || "Failed to start research.");
-
-        showToast("Research started!");
-        await loadResearchNexus();
-
+        if (!res.ok) throw new Error(result.error || 'Failed');
+        showToast('Research started!');
+        await loadResearchData();
       } catch (err) {
-        console.error("❌ Error starting research:", err);
-        showToast("Failed to start research.");
-      }
-    });
-  }
-}
-
-// ✅ Filter Tech Tree
-function filterTechTree(category) {
-  const allNodes = document.querySelectorAll('.tech-node');
-
-  allNodes.forEach(node => {
-    if (category === "ALL") {
-      node.style.display = "block";
-    } else {
-      const nodeCategory = node.querySelector("p:nth-child(3)").textContent.replace("Category: ", "");
-      node.style.display = nodeCategory === category ? "block" : "none";
-    }
-  });
-}
-
-// ✅ Render Active Research
-function renderActiveResearch(activeResearch, catalogue) {
-  const activeEl = document.getElementById('active-research');
-  activeEl.innerHTML = "";
-
-  if (!activeResearch) {
-    activeEl.innerHTML = "<p>No active research.</p>";
-    return;
-  }
-
-  const techDef = catalogue.find(t => t.tech_code === activeResearch.tech_code);
-  const remainingTime = Math.max(0, Math.floor((new Date(activeResearch.ends_at).getTime() - Date.now()) / 1000));
-
-  const card = document.createElement("div");
-  card.classList.add("tech-card");
-
-  card.innerHTML = `
-    <h3>${escapeHTML(techDef?.name || activeResearch.tech_code)}</h3>
-    <p>${escapeHTML(techDef?.description || "")}</p>
-    <p>Time Remaining: <span class="countdown" data-ends-at="${activeResearch.ends_at}">${formatTime(remainingTime)}</span></p>
-  `;
-
-  activeEl.appendChild(card);
-}
-
-// ✅ Render Completed Research
-function renderCompletedResearch(completedResearch, catalogue) {
-  const completedEl = document.getElementById('completed-research');
-  completedEl.innerHTML = "";
-
-  if (completedResearch.length === 0) {
-    completedEl.innerHTML = "<p>No completed research.</p>";
-    return;
-  }
-
-  completedResearch.forEach(r => {
-    const techDef = catalogue.find(t => t.tech_code === r.tech_code);
-
-    const card = document.createElement("div");
-    card.classList.add("tech-card");
-
-    card.innerHTML = `
-      <h3>${escapeHTML(techDef?.name || r.tech_code)}</h3>
-      <p>${escapeHTML(techDef?.description || "")}</p>
-      <p>Completed on: ${new Date(r.ends_at).toLocaleString()}</p>
-    `;
-
-    completedEl.appendChild(card);
-  });
-}
-
-// ✅ Render Encyclopedia
-function renderEncyclopedia(completedResearch, catalogue) {
-  const encyclopediaEl = document.getElementById('encyclopedia');
-  encyclopediaEl.innerHTML = "";
-
-  if (completedResearch.length === 0) {
-    encyclopediaEl.innerHTML = "<p>No unlocked technologies yet.</p>";
-    return;
-  }
-
-  completedResearch.forEach(r => {
-    const techDef = catalogue.find(t => t.tech_code === r.tech_code);
-
-    const entry = document.createElement("div");
-    entry.classList.add("tech-card");
-
-    entry.innerHTML = `
-      <h3>${escapeHTML(techDef?.name || r.tech_code)}</h3>
-      <p>${escapeHTML(techDef?.encyclopedia_entry || "No lore available.")}</p>
-    `;
-
-    encyclopediaEl.appendChild(entry);
-  });
-}
-
-// ✅ Start Countdown Timers
-function startCountdownTimers() {
-  const countdownEls = document.querySelectorAll(".countdown");
-
-  countdownEls.forEach(el => {
-    const endsAt = new Date(el.dataset.endsAt).getTime();
-
-    const update = () => {
-      const remaining = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
-      el.textContent = formatTime(remaining);
-
-      if (remaining > 0) {
-        requestAnimationFrame(update);
-      } else {
-        el.textContent = "Completed!";
+        console.error(err);
+        showToast('Could not start research.');
       }
     };
+  }
+}
 
-    update();
+// Display currently active research
+function renderActive(active, techs) {
+  const el = document.getElementById('active-research');
+  if (!el) return;
+  el.innerHTML = '';
+
+  if (!active) {
+    el.innerHTML = '<p>No active research.</p>';
+    return;
+  }
+
+  const def = techs.find(t => t.tech_code === active.tech_code);
+  const remaining = Math.max(0, Math.floor((new Date(active.ends_at) - Date.now()) / 1000));
+
+  el.innerHTML = `
+    <div class="tech-card">
+      <h3>${escapeHTML(def?.name || active.tech_code)}</h3>
+      <p>${escapeHTML(def?.description || '')}</p>
+      <p>Time Remaining: <span class="countdown" data-ends-at="${active.ends_at}">${formatTime(remaining)}</span></p>
+    </div>
+  `;
+}
+
+// Render list of completed technologies
+function renderCompleted(completed, techs) {
+  const el = document.getElementById('completed-research');
+  if (!el) return;
+  el.innerHTML = '';
+
+  if (completed.length === 0) {
+    el.innerHTML = '<p>No completed research yet.</p>';
+    return;
+  }
+
+  completed.forEach(entry => {
+    const def = techs.find(t => t.tech_code === entry.tech_code);
+    el.innerHTML += `
+      <div class="tech-card">
+        <h3>${escapeHTML(def?.name || entry.tech_code)}</h3>
+        <p>${escapeHTML(def?.description || '')}</p>
+        <p>Completed: ${new Date(entry.ends_at).toLocaleString()}</p>
+      </div>
+    `;
   });
 }
 
-// ✅ Helper: Format Time
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+// Display lore/encyclopedia for completed techs
+function renderEncyclopedia(completed, techs) {
+  const el = document.getElementById('encyclopedia');
+  if (!el) return;
+  el.innerHTML = '';
 
-  return `${h}h ${m}m ${s}s`;
-}
+  if (completed.length === 0) {
+    el.innerHTML = '<p>No entries unlocked.</p>';
+    return;
+  }
 
-// ✅ Helper: Toast
-function showToast(msg) {
-  const toastEl = document.getElementById('toast');
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
-}
-
-// ✅ Helper: Escape HTML
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  completed.forEach(entry => {
+    const def = techs.find(t => t.tech_code === entry.tech_code);
+    el.innerHTML += `
+      <div class="tech-card">
+        <h3>${escapeHTML(def?.name || entry.tech_code)}</h3>
+        <p>${escapeHTML(def?.encyclopedia_entry || 'No lore available.')}</p>
+      </div>
+    `;
+  });
 }
