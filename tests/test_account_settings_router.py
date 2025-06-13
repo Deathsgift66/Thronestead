@@ -65,8 +65,8 @@ def test_load_profile_returns_security_fields():
     )
     result = account_settings.load_profile(user_id="u1", db=db)
     assert result["last_login_at"] == "2025-07-02T12:00:00Z"
-    assert result["ip_login_alerts"] is True
-    assert result["email_login_confirmations"] is False
+    assert result["ip_login_alerts"] == True
+    assert result["email_login_confirmations"] == False
 
 def test_update_profile_updates_security_fields():
     db = DummyDB()
@@ -78,5 +78,5 @@ def test_update_profile_updates_security_fields():
         email_login_confirmations=True,
     )
     account_settings.update_profile(payload, user_id="u1", db=db)
-    assert db.updated["ip_alert"] is False
-    assert db.updated["email_conf"] is True
+    assert db.updated["ip_alert"] == False
+    assert db.updated["email_conf"] == True
