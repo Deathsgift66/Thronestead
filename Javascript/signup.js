@@ -90,7 +90,7 @@ async function handleSignup() {
   };
 
   try {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: payload.email,
       password: payload.password,
       options: {
@@ -103,6 +103,21 @@ async function handleSignup() {
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    const userId = data?.user?.id;
+    if (userId) {
+      await fetch('/api/signup/create_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          username: payload.username,
+          display_name: payload.display_name,
+          kingdom_name: payload.kingdom_name,
+          email: payload.email
+        })
+      });
     }
 
     showToast("Sign-Up successful! Redirecting to login...");

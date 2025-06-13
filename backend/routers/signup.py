@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException
+
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
-
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from ..supabase_client import get_supabase_client
+from ..database import get_db
 
 
 router = APIRouter(prefix="/api/signup", tags=["signup"])
@@ -64,3 +67,34 @@ def signup_stats():
 
     data = getattr(res, "data", res) or []
     return {"top_kingdoms": data}
+
+
+class CreateUserPayload(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    kingdom_name: str
+    email: str
+
+
+@router.post("/create_user")
+def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
+    """Insert a basic profile row when a new account is registered."""
+    db.execute(
+        text(
+            """
+            INSERT INTO users (user_id, username, display_name, kingdom_name, email)
+            VALUES (:uid, :username, :display, :kingdom, :email)
+            ON CONFLICT (user_id) DO NOTHING
+            """
+        ),
+        {
+            "uid": payload.user_id,
+            "username": payload.username,
+            "display": payload.display_name,
+            "kingdom": payload.kingdom_name,
+            "email": payload.email,
+        },
+    )
+    db.commit()
+    return {"status": "created"}
