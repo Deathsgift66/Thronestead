@@ -1,123 +1,120 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: progression.js
-Date: June 2, 2025
-Author: Deathsgift66
+Date: June 13, 2025
+Author: Deathsgift66 + GPT Enhancements
+Description: Castle and Nobility/Knighthood progression handler with full API bindings.
 */
-// Castle and Nobility Progression API Helpers
 
-// =========================
-// API CALL FUNCTIONS
-// =========================
-export async function getCastleProgression() {
-  const res = await fetch('/api/progression/castle');
-  if (!res.ok) {
-    throw new Error('Failed to fetch castle progression');
-  }
+//
+// ─── API UTILITIES ───────────────────────────────────────────────────────────────
+//
+
+async function apiGET(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`GET failed: ${url}`);
   return res.json();
+}
+
+async function apiPOST(url, data = {}) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || `POST failed: ${url}`);
+  return json;
+}
+
+async function apiPUT(url, data = {}) {
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || `PUT failed: ${url}`);
+  return json;
+}
+
+async function apiDELETE(url, data = {}) {
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || `DELETE failed: ${url}`);
+  return json;
+}
+
+//
+// ─── CASTLE PROGRESSION ───────────────────────────────────────────────────────────
+//
+
+export async function getCastleProgression() {
+  return apiGET('/api/progression/castle');
 }
 
 export async function upgradeCastle() {
-  const res = await fetch('/api/progression/castle/upgrade', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to upgrade castle');
-  }
-  return res.json();
+  return apiPOST('/api/progression/castle/upgrade');
 }
+
+//
+// ─── NOBILITY ─────────────────────────────────────────────────────────────────────
+//
 
 export async function viewNobles() {
-  const res = await fetch('/api/progression/nobles');
-  if (!res.ok) {
-    throw new Error('Failed to fetch nobles');
-  }
-  return res.json();
+  return apiGET('/api/progression/nobles');
 }
 
-export async function viewKnights() {
-  const res = await fetch('/api/progression/knights');
-  if (!res.ok) {
-    throw new Error('Failed to fetch knights');
-  }
-  return res.json();
-}
-
-export async function nameNoble(nobleName) {
-  const res = await fetch('/api/progression/nobles', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ noble_name: nobleName })
-  });
-  if (!res.ok) throw new Error('Failed to name noble');
-  return res.json();
+export async function nameNoble(name) {
+  return apiPOST('/api/progression/nobles', { noble_name: name });
 }
 
 export async function renameNoble(oldName, newName) {
-  const res = await fetch('/api/progression/nobles/rename', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ old_name: oldName, new_name: newName })
+  return apiPUT('/api/progression/nobles/rename', {
+    old_name: oldName,
+    new_name: newName
   });
-  if (!res.ok) throw new Error('Failed to rename noble');
-  return res.json();
 }
 
-export async function removeNoble(nobleName) {
-  const res = await fetch('/api/progression/nobles', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ noble_name: nobleName })
-  });
-  if (!res.ok) throw new Error('Failed to remove noble');
-  return res.json();
+export async function removeNoble(name) {
+  return apiDELETE('/api/progression/nobles', { noble_name: name });
 }
 
-export async function nameKnight(knightName) {
-  const res = await fetch('/api/progression/knights', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ knight_name: knightName })
-  });
-  if (!res.ok) throw new Error('Failed to name knight');
-  return res.json();
+//
+// ─── KNIGHTHOOD ───────────────────────────────────────────────────────────────────
+//
+
+export async function viewKnights() {
+  return apiGET('/api/progression/knights');
+}
+
+export async function nameKnight(name) {
+  return apiPOST('/api/progression/knights', { knight_name: name });
 }
 
 export async function renameKnight(oldName, newName) {
-  const res = await fetch('/api/progression/knights/rename', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ old_name: oldName, new_name: newName })
+  return apiPUT('/api/progression/knights/rename', {
+    old_name: oldName,
+    new_name: newName
   });
-  if (!res.ok) throw new Error('Failed to rename knight');
-  return res.json();
 }
 
-export async function promoteKnightApi(knightName) {
-  const res = await fetch('/api/progression/knights/promote', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ knight_name: knightName })
-  });
-  if (!res.ok) throw new Error('Failed to promote knight');
-  return res.json();
+export async function removeKnight(name) {
+  return apiDELETE('/api/progression/knights', { knight_name: name });
 }
 
-export async function removeKnight(knightName) {
-  const res = await fetch('/api/progression/knights', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ knight_name: knightName })
-  });
-  if (!res.ok) throw new Error('Failed to remove knight');
-  return res.json();
+export async function promoteKnightApi(name) {
+  return apiPOST('/api/progression/knights/promote', { knight_name: name });
 }
 
-// =========================
-// OPTIONAL DOM INTEGRATION
-// =========================
+//
+// ─── DOM BINDINGS ────────────────────────────────────────────────────────────────
+//
+
 document.addEventListener('DOMContentLoaded', async () => {
   const castleEl = document.getElementById('castle-progress');
   if (castleEl) {
@@ -129,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
     } catch (err) {
       console.error('❌', err);
-      castleEl.innerHTML = '<p>Failed to load castle data.</p>';
+      castleEl.innerHTML = '<p>Failed to load castle progression.</p>';
     }
   }
 
@@ -137,165 +134,146 @@ document.addEventListener('DOMContentLoaded', async () => {
   await renderKnights();
 
   const nobleForm = document.getElementById('noble-form');
-  if (nobleForm) {
-    nobleForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('new-noble-name').value.trim();
-      if (!name) return;
-      try {
-        await nameNoble(name);
-        nobleForm.reset();
-        await renderNobles();
-      } catch (err) {
-        alert('Failed to name noble');
-      }
-    });
-  }
+  nobleForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('new-noble-name').value.trim();
+    if (!name) return;
+    try {
+      await nameNoble(name);
+      nobleForm.reset();
+      await renderNobles();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 
   const knightForm = document.getElementById('knight-form');
-  if (knightForm) {
-    knightForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('new-knight-name').value.trim();
-      if (!name) return;
-      try {
-        await nameKnight(name);
-        knightForm.reset();
-        await renderKnights();
-      } catch (err) {
-        alert('Failed to name knight');
-      }
-    });
-  }
+  knightForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('new-knight-name').value.trim();
+    if (!name) return;
+    try {
+      await nameKnight(name);
+      knightForm.reset();
+      await renderKnights();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 
   const upgradeBtn = document.getElementById('upgrade-castle-btn');
-  if (upgradeBtn) {
-    upgradeBtn.addEventListener('click', async () => {
-      upgradeBtn.disabled = true;
-      try {
-        const result = await upgradeCastle();
-        alert(result.message || 'Castle upgraded!');
-        if (castleEl) {
-          const data = await getCastleProgression();
-          castleEl.innerHTML = `
-            <p><strong>Level:</strong> ${data.level}</p>
-            <p><strong>XP:</strong> ${data.experience} / ${data.next_level_xp}</p>
-          `;
-        }
-      } catch (err) {
-        console.error('❌', err);
-        alert('Failed to upgrade castle.');
-      } finally {
-        upgradeBtn.disabled = false;
-      }
-    });
-  }
+  upgradeBtn?.addEventListener('click', async () => {
+    upgradeBtn.disabled = true;
+    try {
+      const result = await upgradeCastle();
+      alert(result.message || 'Castle upgraded!');
+      const data = await getCastleProgression();
+      castleEl.innerHTML = `
+        <p><strong>Level:</strong> ${data.level}</p>
+        <p><strong>XP:</strong> ${data.experience} / ${data.next_level_xp}</p>
+      `;
+    } catch (err) {
+      alert(err.message || 'Upgrade failed');
+    } finally {
+      upgradeBtn.disabled = false;
+    }
+  });
 });
 
+//
+// ─── UI RENDER HELPERS ─────────────────────────────────────────────────────────────
+//
+
 async function renderNobles() {
-  const noblesEl = document.getElementById('noble-list');
-  if (!noblesEl) return;
+  const el = document.getElementById('noble-list');
+  if (!el) return;
   try {
-    const data = await viewNobles();
-    noblesEl.innerHTML = '';
-    const nobles = data.nobles || [];
-    if (nobles.length === 0) {
-      noblesEl.innerHTML = '<li>No nobles found.</li>';
-    } else {
-      nobles.forEach((n) => {
-        const li = document.createElement('li');
-        li.textContent = n.name || n;
-        const renameBtn = document.createElement('button');
-        renameBtn.textContent = 'Rename';
-        renameBtn.className = 'action-btn';
-        renameBtn.addEventListener('click', async () => {
-          const newName = prompt('New name for noble:', n.name || n);
-          if (!newName) return;
-          try {
-            await renameNoble(n.name || n, newName);
-            await renderNobles();
-          } catch {
-            alert('Failed to rename noble');
-          }
-        });
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Remove';
-        removeBtn.className = 'action-btn';
-        removeBtn.addEventListener('click', async () => {
-          if (!confirm('Remove this noble?')) return;
-          try {
-            await removeNoble(n.name || n);
-            await renderNobles();
-          } catch {
-            alert('Failed to remove noble');
-          }
-        });
-        li.append(' ', renameBtn, ' ', removeBtn);
-        noblesEl.appendChild(li);
-      });
-    }
+    const { nobles = [] } = await viewNobles();
+    el.innerHTML = nobles.length
+      ? nobles.map(n => renderNameItem(n.name || n, 'noble')).join('')
+      : '<li>No nobles found.</li>';
+    bindNobleEvents();
   } catch (err) {
     console.error('❌', err);
-    noblesEl.innerHTML = '<li>Failed to load nobles.</li>';
+    el.innerHTML = '<li>Failed to load nobles.</li>';
   }
 }
 
 async function renderKnights() {
-  const knightsEl = document.getElementById('knight-list');
-  if (!knightsEl) return;
+  const el = document.getElementById('knight-list');
+  if (!el) return;
   try {
-    const data = await viewKnights();
-    knightsEl.innerHTML = '';
-    const knights = data.knights || [];
-    if (knights.length === 0) {
-      knightsEl.innerHTML = '<li>No knights found.</li>';
-    } else {
-      knights.forEach((k) => {
-        const li = document.createElement('li');
-        li.textContent = k.name || k;
-        const promoteBtn = document.createElement('button');
-        promoteBtn.textContent = 'Promote';
-        promoteBtn.className = 'action-btn';
-        promoteBtn.addEventListener('click', async () => {
-          try {
-            await promoteKnightApi(k.name || k);
-            await renderKnights();
-          } catch {
-            alert('Failed to promote knight');
-          }
-        });
-        const renameBtn = document.createElement('button');
-        renameBtn.textContent = 'Rename';
-        renameBtn.className = 'action-btn';
-        renameBtn.addEventListener('click', async () => {
-          const newName = prompt('New name for knight:', k.name || k);
-          if (!newName) return;
-          try {
-            await renameKnight(k.name || k, newName);
-            await renderKnights();
-          } catch {
-            alert('Failed to rename knight');
-          }
-        });
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Remove';
-        removeBtn.className = 'action-btn';
-        removeBtn.addEventListener('click', async () => {
-          if (!confirm('Remove this knight?')) return;
-          try {
-            await removeKnight(k.name || k);
-            await renderKnights();
-          } catch {
-            alert('Failed to remove knight');
-          }
-        });
-        li.append(' ', promoteBtn, ' ', renameBtn, ' ', removeBtn);
-        knightsEl.appendChild(li);
-      });
-    }
+    const { knights = [] } = await viewKnights();
+    el.innerHTML = knights.length
+      ? knights.map(k => renderNameItem(k.name || k, 'knight')).join('')
+      : '<li>No knights found.</li>';
+    bindKnightEvents();
   } catch (err) {
     console.error('❌', err);
-    knightsEl.innerHTML = '<li>Failed to load knights.</li>';
+    el.innerHTML = '<li>Failed to load knights.</li>';
   }
 }
 
+function renderNameItem(name, type) {
+  const base = `<li><strong>${name}</strong>`;
+  const buttons = {
+    noble: `
+      <button class="action-btn rename-noble" data-name="${name}">Rename</button>
+      <button class="action-btn remove-noble" data-name="${name}">Remove</button>
+    `,
+    knight: `
+      <button class="action-btn promote-knight" data-name="${name}">Promote</button>
+      <button class="action-btn rename-knight" data-name="${name}">Rename</button>
+      <button class="action-btn remove-knight" data-name="${name}">Remove</button>
+    `
+  };
+  return `${base} ${buttons[type]}</li>`;
+}
+
+function bindNobleEvents() {
+  document.querySelectorAll('.rename-noble').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      const oldName = btn.dataset.name;
+      const newName = prompt('Rename noble:', oldName);
+      if (!newName) return;
+      await renameNoble(oldName, newName);
+      await renderNobles();
+    })
+  );
+  document.querySelectorAll('.remove-noble').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      const name = btn.dataset.name;
+      if (confirm(`Remove noble ${name}?`)) {
+        await removeNoble(name);
+        await renderNobles();
+      }
+    })
+  );
+}
+
+function bindKnightEvents() {
+  document.querySelectorAll('.promote-knight').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      await promoteKnightApi(btn.dataset.name);
+      await renderKnights();
+    })
+  );
+  document.querySelectorAll('.rename-knight').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      const oldName = btn.dataset.name;
+      const newName = prompt('Rename knight:', oldName);
+      if (!newName) return;
+      await renameKnight(oldName, newName);
+      await renderKnights();
+    })
+  );
+  document.querySelectorAll('.remove-knight').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      const name = btn.dataset.name;
+      if (confirm(`Remove knight ${name}?`)) {
+        await removeKnight(name);
+        await renderKnights();
+      }
+    })
+  );
+}
