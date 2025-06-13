@@ -34,7 +34,7 @@ class QuestPayload(BaseModel):
 class TemplePayload(BaseModel):
     temple_type: str
     temple_name: str | None = None
-    is_major: bool | None = False
+    is_major: bool = False
 
 
 class TrainPayload(BaseModel):

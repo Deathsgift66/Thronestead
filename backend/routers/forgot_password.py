@@ -7,7 +7,7 @@ import re
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from ..database import get_db
 from backend.models import User, Notification
@@ -23,7 +23,7 @@ SESSION_TTL = int(os.getenv("PASSWORD_RESET_SESSION_TTL", "600"))
 RATE_LIMIT_MAX = int(os.getenv("PASSWORD_RESET_RATE_LIMIT", "3"))
 
 class EmailPayload(BaseModel):
-    email: str
+    email: EmailStr
 
 class CodePayload(BaseModel):
     code: str
