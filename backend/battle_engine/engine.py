@@ -77,7 +77,7 @@ class FogOfWar:
 
 
 class CombatResolver:
-    def resolve(self, war: WarState, logs: List[Dict]):
+    def resolve(self, war: WarState, logs: List[Dict]) -> None:
         """Very simplified combat resolution."""
         units_by_pos: Dict[Tuple[int, int], List[Unit]] = {}
         for u in war.units:
@@ -117,7 +117,7 @@ class CombatResolver:
 
 
 class BattleTickHandler:
-    def __init__(self):
+    def __init__(self) -> None:
         self.terrain_generator = TerrainGenerator()
         self.fog = FogOfWar()
         self.combat = CombatResolver()
