@@ -1,5 +1,7 @@
 import asyncio
 from backend.routers import login_routes
+from fastapi.responses import JSONResponse
+import json
 
 class DummyTable:
     def __init__(self, data=None):
@@ -23,6 +25,8 @@ def test_announcements_returned():
     rows = [
         {"id": 1, "title": "Welcome", "content": "Greetings", "created_at": "2025-01-01"}
     ]
-    login_routes.get_supabase_client = lambda: DummyClient({"login_announcements": rows})
-    result = asyncio.run(login_routes.get_announcements())
-    assert result["announcements"][0]["title"] == "Welcome"
+    login_routes.get_supabase_client = lambda: DummyClient({"announcements": rows})
+    resp = asyncio.run(login_routes.get_announcements())
+    assert isinstance(resp, JSONResponse)
+    data = json.loads(resp.body.decode())
+    assert data["announcements"][0]["title"] == "Welcome"
