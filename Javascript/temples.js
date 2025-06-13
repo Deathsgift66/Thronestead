@@ -189,8 +189,8 @@ function subscribeToTempleUpdates(kid) {
       schema: 'public',
       table: 'kingdom_temples',
       filter: `kingdom_id=eq.${kid}`
-    }, () => {
-      loadTemplesNexus();
+    }, async () => {
+      await loadTemplesNexus();
     })
     .subscribe();
 }

@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api/homepage", tags=["homepage"])
 
 
 @router.get("/featured")
-async def featured_news():
+def featured_news():
     """Return latest news articles for the homepage."""
     supabase = get_supabase_client()
     try:

@@ -30,8 +30,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   treatyChannel = supabase
     .channel('public:alliance_treaties')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, payload => {
-      loadTreatyTabs();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alliance_treaties' }, async () => {
+      await loadTreatyTabs();
     })
     .subscribe();
 
@@ -80,9 +80,9 @@ async function loadTreatyTabs() {
       card.classList.add("treaty-card");
 
       card.innerHTML = `
-        <h3>Treaty with ${treaty.partner_alliance_id}</h3>
-        <p>Type: <strong title="${TREATY_INFO[treaty.treaty_type] || ''}">${treaty.treaty_type}</strong></p>
-        <p>Status: <strong>${treaty.status}</strong></p>
+        <h3>Treaty with ${escapeHTML(treaty.partner_alliance_id)}</h3>
+        <p>Type: <strong title="${escapeHTML(TREATY_INFO[treaty.treaty_type] || '')}">${escapeHTML(treaty.treaty_type)}</strong></p>
+        <p>Status: <strong>${escapeHTML(treaty.status)}</strong></p>
         <div class="treaty-actions">
           <button class="action-btn view-treaty-btn" data-treaty='${JSON.stringify(treaty)}'>View</button>
           ${treaty.status === 'proposed' ? `<button class="action-btn accept-btn" data-id="${treaty.treaty_id}">Accept</button>` : ''}
@@ -125,10 +125,10 @@ async function viewTreatyDetails(treaty) {
   const modal = document.getElementById('treaty-modal');
   const details = document.getElementById('treaty-details');
   details.innerHTML = `
-    <h3>Treaty with Alliance ${data.partner_alliance_id}</h3>
-    <p>Type: <strong title="${TREATY_INFO[data.treaty_type] || ''}">${data.treaty_type}</strong></p>
-    <p>Status: <strong>${data.status}</strong></p>
-    <p>Signed: ${data.signed_at ?? 'Pending'}</p>
+    <h3>Treaty with Alliance ${escapeHTML(data.partner_alliance_id)}</h3>
+    <p>Type: <strong title="${escapeHTML(TREATY_INFO[data.treaty_type] || '')}">${escapeHTML(data.treaty_type)}</strong></p>
+    <p>Status: <strong>${escapeHTML(data.status)}</strong></p>
+    <p>Signed: ${data.signed_at ? escapeHTML(data.signed_at) : 'Pending'}</p>
   `;
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
@@ -157,4 +157,15 @@ async function respondToTreaty(treatyId, action) {
     body: JSON.stringify({ treaty_id: treatyId, action })
   });
   await loadTreatyTabs();
+}
+
+// Basic HTML escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

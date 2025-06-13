@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 
 from datetime import datetime
 from ..security import require_user_id
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"]
 
 
 @router.get("")
-async def get_alliance_changelog(
+def get_alliance_changelog(
     since: str | None = None,
     user_id: str = Depends(require_user_id),
 ):

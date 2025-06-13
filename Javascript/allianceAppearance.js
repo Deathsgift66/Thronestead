@@ -5,7 +5,7 @@ async function applyAllianceAppearance() {
   if (!session) return;
   try {
     const res = await fetch('/api/alliance-home/details', {
-      headers: { 'X-User-Id': session.user.id }
+      headers: { 'X-User-ID': session.user.id }
     });
     if (!res.ok) return;
     const data = await res.json();

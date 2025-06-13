@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 from fastapi import HTTPException
 
@@ -41,7 +40,7 @@ def test_invalid_user():
     client = DummyClient({"users": []})
     tutorial.get_supabase_client = lambda: client
     with pytest.raises(HTTPException):
-        asyncio.run(tutorial.steps(user_id="u1"))
+        tutorial.steps(user_id="u1")
 
 
 def test_returns_steps():
@@ -51,5 +50,5 @@ def test_returns_steps():
     tables = {"users": [{"user_id": "u1"}], "tutorial_steps": rows}
     client = DummyClient(tables)
     tutorial.get_supabase_client = lambda: client
-    result = asyncio.run(tutorial.steps(user_id="u1"))
+    result = tutorial.steps(user_id="u1")
     assert result["steps"][0]["title"] == "Intro"

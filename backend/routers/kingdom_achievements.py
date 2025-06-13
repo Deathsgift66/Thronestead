@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from ..database import get_db
 from ..security import require_user_id
@@ -11,8 +10,10 @@ router = APIRouter(prefix="/api/kingdom/achievements", tags=["kingdom_achievemen
 
 
 @router.get("")
+
 async def get_achievements(
     user_id: str = Depends(require_user_id),
+
     db: Session = Depends(get_db),
 ):
     """Return all achievements with unlock status for the player's kingdom."""

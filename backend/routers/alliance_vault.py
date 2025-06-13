@@ -54,7 +54,7 @@ def summary(
 
 
 @router.get("/custom-board")
-async def custom_board():
+def custom_board():
     return {"board": []}
 
 

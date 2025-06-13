@@ -101,7 +101,9 @@ async function loadChangelog() {
 function setupRealtime() {
   realtimeSub = supabase
     .channel('game_changelog')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_changelog' }, loadChangelog)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_changelog' }, async () => {
+      await loadChangelog();
+    })
     .subscribe();
 }
 

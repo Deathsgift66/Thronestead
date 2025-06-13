@@ -10,7 +10,6 @@ from backend.routers.messages import (
     list_messages,
     get_message,
     delete_message,
-    mark_all_read,
     MessagePayload,
     DeletePayload,
 )

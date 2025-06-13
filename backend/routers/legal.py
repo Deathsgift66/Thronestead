@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api/legal", tags=["legal"])
 
 
 @router.get("/documents")
-async def list_documents():
+def list_documents():
     """Return available legal documents sorted by display order."""
     supabase = get_supabase_client()
     try:

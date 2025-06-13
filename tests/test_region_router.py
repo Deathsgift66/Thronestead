@@ -1,4 +1,3 @@
-import asyncio
 from fastapi import HTTPException
 from backend.routers import region
 
@@ -37,7 +36,7 @@ def test_get_regions_success():
     ]
     client = DummyClient({"region_catalogue": DummyTable(data=rows)})
     region.get_supabase_client = lambda: client
-    result = asyncio.run(region.get_regions())
+    result = region.get_regions()
     assert result["regions"][0]["region_code"] == "north"
 
 
@@ -45,7 +44,7 @@ def test_get_regions_error():
     client = DummyClient({"region_catalogue": DummyTable(error="fail")})
     region.get_supabase_client = lambda: client
     try:
-        asyncio.run(region.get_regions())
+        region.get_regions()
     except HTTPException as e:
         assert e.status_code == 500
     else:

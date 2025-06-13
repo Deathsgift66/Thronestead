@@ -10,7 +10,9 @@ router = APIRouter(prefix="/api/tutorial", tags=["tutorial"])
 
 
 @router.get("/steps")
+
 async def steps(user_id: str = Depends(require_user_id)):
+
     """Return ordered tutorial steps from Supabase for the authenticated user."""
     supabase = get_supabase_client()
 

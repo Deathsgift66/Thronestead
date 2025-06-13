@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
 
 @router.get("/regions", response_class=JSONResponse)
-async def get_regions():
+def get_regions():
     """Return all regions from the region catalogue."""
     supabase = get_supabase_client()
 

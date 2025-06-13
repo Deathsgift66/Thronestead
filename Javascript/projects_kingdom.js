@@ -74,6 +74,8 @@ async function loadProjects() {
   const activeList = document.getElementById('active-projects-list');
   const powerScoreContainer = document.getElementById('power-score');
 
+  if (!availableList || !activeList || !powerScoreContainer) return;
+
   availableList.innerHTML = "<p>Loading available projects...</p>";
   activeList.innerHTML = "<p>Loading active projects...</p>";
   powerScoreContainer.innerHTML = "<p>Loading power score...</p>";

@@ -136,8 +136,8 @@ function subscribeToScrolls() {
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'town_crier_scrolls' },
-      () => {
-        loadBoard();
+      async () => {
+        await loadBoard();
       }
     )
     .subscribe();

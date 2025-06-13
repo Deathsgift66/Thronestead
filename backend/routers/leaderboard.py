@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/leaderboard", tags=["leaderboard"])
 
 
 @router.get("/{type}")
-async def leaderboard(
+def leaderboard(
     type: str,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),

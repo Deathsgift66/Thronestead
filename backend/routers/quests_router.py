@@ -32,7 +32,7 @@ def _get_requirements(code: str):
 
 
 @router.post("/complete")
-async def complete_quest(
+def complete_quest(
     payload: QuestPayload,
     db: Session = Depends(get_db),
 ):
