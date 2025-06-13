@@ -1,10 +1,10 @@
 /*
 Project Name: Kingmakers Rise Frontend
 File Name: leaderboard.js
-Date: June 2, 2025
 Author: Deathsgift66
+Date: June 2, 2025
+Description: Dynamic, multi-tabbed leaderboard with alliance application modal
 */
-// Full dynamic Leaderboard — Multi-tab + Alliance Apply
 
 import { supabase } from './supabaseClient.js';
 
@@ -12,23 +12,13 @@ let currentTab = "kingdoms";
 
 const headers = {
   kingdoms: ["Rank", "Kingdom", "Ruler", "Power", "Economy"],
-  alliances: [
-    "Rank",
-    "Alliance",
-    "Military",
-    "Economy",
-    "Diplomacy",
-    "Wins",
-    "Losses",
-    "Prestige",
-    "Apply",
-  ],
+  alliances: ["Rank", "Alliance", "Military", "Economy", "Diplomacy", "Wins", "Losses", "Prestige", "Apply"],
   wars: ["Rank", "Kingdom", "Ruler", "Wins", "Losses"],
-  economy: ["Rank", "Kingdom", "Ruler", "Trade", "Market %"],
+  economy: ["Rank", "Kingdom", "Ruler", "Trade", "Market %"]
 };
 
+// 🔐 User session + leaderboard loader
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
   const logoutBtn = document.getElementById("logout-btn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
@@ -37,120 +27,107 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ✅ Validate session
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     window.location.href = "login.html";
     return;
   }
 
-  // ✅ Setup tabs
   setupTabs();
-
-  // ✅ Load default tab (Top Kingdoms)
   await loadLeaderboard(currentTab);
 
-  // Auto-refresh leaderboard every 30 seconds for real-time updates
   setInterval(() => {
     loadLeaderboard(currentTab);
   }, 30000);
 });
 
-// ✅ Setup Tabs
+// 🧭 Tab switch logic
 function setupTabs() {
   const tabButtons = document.querySelectorAll(".tab-button");
-
   tabButtons.forEach(btn => {
     btn.addEventListener("click", async () => {
-      const target = btn.getAttribute("data-tab");
-
-      // Activate clicked tab
+      const target = btn.dataset.tab;
       tabButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentTab = target;
-
-      // Load corresponding leaderboard
       await loadLeaderboard(target);
     });
   });
 }
 
-// ✅ Load Leaderboard
+// 📊 Load leaderboard by tab type
 async function loadLeaderboard(type) {
   const tbody = document.getElementById("leaderboard-body");
   const headerRow = document.getElementById("leaderboard-headers");
+  const cols = headers[type]?.length || 5;
 
-  const cols = headers[type] ? headers[type].length : 5;
-
-  tbody.innerHTML = `
-    <tr><td colspan="${cols}">Loading leaderboard...</td></tr>
-  `;
+  tbody.innerHTML = `<tr><td colspan="${cols}">Loading leaderboard...</td></tr>`;
 
   try {
     const res = await fetch(`/api/leaderboard/${type}`);
     const data = await res.json();
 
-    if (headers[type]) {
-      headerRow.innerHTML = headers[type].map(h => `<th>${h}</th>`).join("");
-    }
-
+    headerRow.innerHTML = headers[type].map(h => `<th>${h}</th>`).join("");
     tbody.innerHTML = "";
 
-    if (!data.entries || data.entries.length === 0) {
-      tbody.innerHTML = `
-        <tr><td colspan="${cols}">No results available.</td></tr>
-      `;
+    if (!data.entries?.length) {
+      tbody.innerHTML = `<tr><td colspan="${cols}">No results available.</td></tr>`;
       return;
     }
 
     data.entries.forEach((entry, index) => {
       const row = document.createElement("tr");
 
-      // Build row based on tab type
-      if (type === "kingdoms") {
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${escapeHTML(entry.kingdom_name)}</td>
-          <td>${escapeHTML(entry.ruler_name)}</td>
-          <td>${entry.power_score}</td>
-          <td>${entry.economy_score}</td>
-        `;
-      } else if (type === "alliances") {
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${escapeHTML(entry.alliance_name)}</td>
-          <td>${entry.military_score}</td>
-          <td>${entry.economy_score}</td>
-          <td>${entry.diplomacy_score}</td>
-          <td>${entry.war_wins}</td>
-          <td>${entry.war_losses}</td>
-          <td>${entry.prestige_score ?? '—'}</td>
-          <td>
-            <button class="action-btn apply-btn" data-alliance-id="${entry.alliance_id}" data-alliance-name="${escapeHTML(entry.alliance_name)}">Apply</button>
-          </td>
-        `;
-      } else if (type === "wars") {
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${escapeHTML(entry.kingdom_name)}</td>
-          <td>${escapeHTML(entry.ruler_name)}</td>
-          <td>${entry.battles_won}</td>
-          <td>${entry.battles_lost}</td>
-        `;
-      } else if (type === "economy") {
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${escapeHTML(entry.kingdom_name)}</td>
-          <td>${escapeHTML(entry.ruler_name)}</td>
-          <td>${entry.total_trade_value}</td>
-          <td>${entry.market_share}%</td>
-        `;
+      switch (type) {
+        case "kingdoms":
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${escapeHTML(entry.kingdom_name)}</td>
+            <td>${escapeHTML(entry.ruler_name)}</td>
+            <td>${entry.power_score}</td>
+            <td>${entry.economy_score}</td>
+          `;
+          break;
+
+        case "alliances":
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${escapeHTML(entry.alliance_name)}</td>
+            <td>${entry.military_score}</td>
+            <td>${entry.economy_score}</td>
+            <td>${entry.diplomacy_score}</td>
+            <td>${entry.war_wins}</td>
+            <td>${entry.war_losses}</td>
+            <td>${entry.prestige_score ?? "—"}</td>
+            <td><button class="action-btn apply-btn" data-alliance-id="${entry.alliance_id}" data-alliance-name="${escapeHTML(entry.alliance_name)}">Apply</button></td>
+          `;
+          break;
+
+        case "wars":
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${escapeHTML(entry.kingdom_name)}</td>
+            <td>${escapeHTML(entry.ruler_name)}</td>
+            <td>${entry.battles_won}</td>
+            <td>${entry.battles_lost}</td>
+          `;
+          break;
+
+        case "economy":
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${escapeHTML(entry.kingdom_name)}</td>
+            <td>${escapeHTML(entry.ruler_name)}</td>
+            <td>${entry.total_trade_value}</td>
+            <td>${entry.market_share}%</td>
+          `;
+          break;
       }
 
       tbody.appendChild(row);
     });
 
-    // ✅ Bind Apply buttons (if Alliances tab)
+    // Bind Apply Buttons if Alliance tab
     if (type === "alliances") {
       document.querySelectorAll(".apply-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -161,23 +138,20 @@ async function loadLeaderboard(type) {
       });
     }
 
-    const ts = new Date().toLocaleTimeString();
-    document.getElementById("last-updated").textContent = `Last updated: ${ts}`;
+    document.getElementById("last-updated").textContent =
+      `Last updated: ${new Date().toLocaleTimeString()}`;
 
   } catch (err) {
     console.error(`❌ Error loading ${type} leaderboard:`, err);
-    tbody.innerHTML = `
-      <tr><td colspan="${cols}">Failed to load leaderboard.</td></tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="${cols}">Failed to load leaderboard.</td></tr>`;
   }
 }
 
-// ✅ Open Apply Modal
+// ✉️ Alliance application modal
 function openApplyModal(allianceId, allianceName) {
   const modal = document.getElementById("apply-modal");
   const modalContent = modal.querySelector(".modal-content");
 
-  // Populate modal content
   modalContent.innerHTML = `
     <h3>Apply to ${escapeHTML(allianceName)}</h3>
     <textarea id="application-message" placeholder="Write your application message..."></textarea>
@@ -186,53 +160,39 @@ function openApplyModal(allianceId, allianceName) {
     <button class="action-btn" id="close-application">Cancel</button>
   `;
 
-  // Show modal
   modal.classList.remove("hidden");
 
-  // ✅ Bind Submit
   document.getElementById("submit-application").addEventListener("click", async () => {
     const message = document.getElementById("application-message").value.trim();
-
-    if (!message) {
-      alert("Please enter a message.");
-      return;
-    }
+    if (!message) return alert("Please enter a message.");
 
     try {
       const res = await fetch("/api/alliance_members/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          alliance_id: allianceId,
-          message
-        })
+        body: JSON.stringify({ alliance_id: allianceId, message })
       });
 
       const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.error || "Application failed.");
-      }
+      if (!res.ok) throw new Error(result.error || "Application failed.");
 
       alert(result.message || "Application submitted!");
       modal.classList.add("hidden");
-
     } catch (err) {
-      console.error("❌ Error submitting application:", err);
+      console.error("❌ Application error:", err);
       alert("Application failed.");
     }
   });
 
-  // ✅ Bind Cancel
   document.getElementById("close-application").addEventListener("click", () => {
     modal.classList.add("hidden");
   });
 }
 
-// ✅ Basic HTML escape
+// 🧼 Basic HTML escape
 function escapeHTML(str) {
   if (!str) return "";
-  return str
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
