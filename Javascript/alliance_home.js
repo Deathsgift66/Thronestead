@@ -1,10 +1,10 @@
 import { supabase } from './supabaseClient.js';
 
-let activityChannel;
+let activityChannel = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
+  if (!session?.user?.id) {
     window.location.href = 'login.html';
     return;
   }
@@ -19,7 +19,7 @@ async function fetchAllianceDetails(userId) {
     if (!res.ok) throw new Error('Request failed');
     const data = await res.json();
     populateAlliance(data);
-    setupRealtime(data.alliance.alliance_id);
+    setupRealtime(data.alliance?.alliance_id);
   } catch (err) {
     console.error('Failed to fetch alliance details:', err);
   }
@@ -28,6 +28,7 @@ async function fetchAllianceDetails(userId) {
 function populateAlliance(data) {
   const a = data.alliance;
   if (!a) return;
+
   setText('alliance-name', a.name);
   setText('alliance-leader', a.leader);
   setText('alliance-region', a.region);
@@ -40,6 +41,7 @@ function populateAlliance(data) {
   setText('alliance-military', a.military_score);
   setText('alliance-economy', a.economy_score);
   setText('alliance-diplomacy', a.diplomacy_score);
+
   const banner = document.getElementById('alliance-banner-img');
   if (banner) banner.src = a.banner || 'Assets/banner.png';
 
@@ -62,19 +64,21 @@ function populateAlliance(data) {
   renderWarScore(data.wars);
 }
 
-function renderProjects(projects) {
+// === Render Functions ===
+
+function renderProjects(projects = []) {
   const container = document.getElementById('project-progress-bars');
   if (!container) return;
   container.innerHTML = '';
   projects.forEach(p => {
     const div = document.createElement('div');
-    div.classList.add('project-bar');
+    div.className = 'project-bar';
     div.innerHTML = `<label>${escapeHTML(p.name)}</label><progress value="${p.progress}" max="100"></progress> <span>${p.progress}%</span>`;
     container.appendChild(div);
   });
 }
 
-function renderMembers(members) {
+function renderMembers(members = []) {
   const body = document.getElementById('members-list');
   if (!body) return;
   body.innerHTML = '';
@@ -84,111 +88,115 @@ function renderMembers(members) {
       <td><img src="../images/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest" class="crest"></td>
       <td>${escapeHTML(m.username)}</td>
       <td>${escapeHTML(m.rank)}</td>
-      <td>${m.contribution}</td>
+      <td>${m.contribution ?? 0}</td>
       <td>${escapeHTML(m.status)}</td>`;
     body.appendChild(row);
   });
 }
 
-function renderTopContributors(members) {
+function renderTopContributors(members = []) {
   const list = document.getElementById('top-contrib-list');
   if (!list) return;
   list.innerHTML = '';
+
   if (!members.length) {
     list.innerHTML = '<li>No data.</li>';
     return;
   }
+
   const top = [...members]
     .sort((a, b) => (b.contribution || 0) - (a.contribution || 0))
     .slice(0, 5);
+
   top.forEach(m => {
     const li = document.createElement('li');
-    li.classList.add('top-contrib-entry');
+    li.className = 'top-contrib-entry';
+
     const img = document.createElement('img');
-    img.classList.add('contrib-avatar');
+    img.className = 'contrib-avatar';
     img.src = m.avatar || 'Assets/avatars/default_avatar_emperor.png';
     img.alt = m.username;
     li.appendChild(img);
+
     const span = document.createElement('span');
     span.textContent = ` ${m.username} - ${m.contribution}`;
     li.appendChild(span);
+
     list.appendChild(li);
   });
 }
 
-function renderQuests(quests) {
+function renderQuests(quests = []) {
   const container = document.getElementById('quest-list');
   if (!container) return;
   container.innerHTML = '';
   quests.forEach(q => {
     const card = document.createElement('div');
-    card.classList.add('quest-card');
+    card.className = 'quest-card';
     card.innerHTML = `<strong>${escapeHTML(q.name)}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${q.progress}%"></div></div>`;
     container.appendChild(card);
   });
 }
 
-function renderAchievements(achievements) {
+function renderAchievements(achievements = []) {
   const list = document.getElementById('achievements-list');
   if (!list) return;
-  list.innerHTML = '';
-  if (!achievements.length) {
-    list.innerHTML = '<li>No achievements earned yet.</li>';
-    return;
-  }
+  list.innerHTML = achievements.length ? '' : '<li>No achievements earned yet.</li>';
   achievements.forEach(a => {
     const li = document.createElement('li');
-    const img = document.createElement('span');
-    img.classList.add('achievement-badge');
-    if (a.icon_url) img.style.backgroundImage = `url(${a.icon_url})`;
-    li.appendChild(img);
+    const badge = document.createElement('span');
+    badge.className = 'achievement-badge';
+    if (a.icon_url) badge.style.backgroundImage = `url(${a.icon_url})`;
+    li.appendChild(badge);
     li.insertAdjacentText('beforeend', ` ${a.name}`);
     list.appendChild(li);
   });
 }
 
-function renderActivity(entries) {
+function renderActivity(entries = []) {
   const list = document.getElementById('activity-log');
   if (!list) return;
   list.innerHTML = '';
   entries.forEach(e => {
     const li = document.createElement('li');
-    li.classList.add('activity-log-entry');
+    li.className = 'activity-log-entry';
     li.textContent = `[${formatDate(e.created_at)}] ${e.username}: ${e.description}`;
     list.appendChild(li);
   });
 }
 
-function renderDiplomacy(treaties) {
+function renderDiplomacy(treaties = []) {
   const container = document.getElementById('diplomacy-table');
   if (!container) return;
   container.innerHTML = '';
   treaties.forEach(t => {
     const row = document.createElement('div');
-    row.classList.add('diplomacy-row');
+    row.className = 'diplomacy-row';
     row.textContent = `${t.treaty_type} with Alliance ${t.partner_alliance_id} (${t.status})`;
     container.appendChild(row);
   });
 }
 
-function renderActiveBattles(wars) {
+function renderActiveBattles(wars = []) {
   const container = document.getElementById('active-battles-list');
   if (!container) return;
   container.innerHTML = '';
+
   const active = wars.filter(w => w.war_status === 'active');
-  if (active.length === 0) {
+  if (!active.length) {
     container.textContent = 'No active battles.';
     return;
   }
+
   active.forEach(w => {
     const div = document.createElement('div');
-    div.classList.add('battle-entry');
+    div.className = 'battle-entry';
     div.textContent = `War ${w.alliance_war_id} — ${w.war_status}`;
     container.appendChild(div);
   });
 }
 
-function renderWarScore(wars) {
+function renderWarScore(wars = []) {
   const container = document.getElementById('war-score-summary');
   if (!container) return;
   container.innerHTML = '';
@@ -201,6 +209,8 @@ function renderWarScore(wars) {
   });
 }
 
+// === Utility Functions ===
+
 function setText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
@@ -211,15 +221,32 @@ function formatDate(str) {
   return new Date(str).toLocaleString();
 }
 
-function setupRealtime(aid) {
-  if (activityChannel) {
-    supabase.removeChannel(activityChannel);
-  }
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// === Realtime Activity Logging ===
+
+function setupRealtime(allianceId) {
+  if (!allianceId) return;
+  if (activityChannel) supabase.removeChannel(activityChannel);
+
   activityChannel = supabase
-    .channel('alliance_home_' + aid)
+    .channel(`alliance_home_${allianceId}`)
     .on(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'alliance_activity_log', filter: `alliance_id=eq.${aid}` },
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'alliance_activity_log',
+        filter: `alliance_id=eq.${allianceId}`
+      },
       payload => addActivityEntry(payload.new)
     )
     .subscribe();
@@ -229,19 +256,8 @@ function addActivityEntry(entry) {
   const list = document.getElementById('activity-log');
   if (!list) return;
   const li = document.createElement('li');
-  li.classList.add('activity-log-entry');
+  li.className = 'activity-log-entry';
   li.textContent = `[${formatDate(entry.created_at)}] ${entry.user_id}: ${entry.description}`;
   list.prepend(li);
   if (list.children.length > 20) list.removeChild(list.lastChild);
-}
-
-// Basic HTML escape helper
-function escapeHTML(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
