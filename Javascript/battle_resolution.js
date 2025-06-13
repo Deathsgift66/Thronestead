@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: battle_resolution.js
-Date: June 2, 2025
-Author: Deathsgift66
-Updated: Integration of Supabase battle resolution fetch
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: battle_resolution.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 const urlParams = new URLSearchParams(window.location.search);

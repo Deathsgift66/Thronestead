@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: villages_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import json
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException

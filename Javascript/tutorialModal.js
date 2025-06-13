@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: tutorialModal.js
-Updated: June 13, 2025 by Codex
-Description: Modal-based tutorial with persistent progress using cookies.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: tutorialModal.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('tutorialModal');
   const closeBtn = document.getElementById('tutorialClose');

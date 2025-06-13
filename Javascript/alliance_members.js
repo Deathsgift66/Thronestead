@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: alliance_members.js
-Date: June 13, 2025
-Author: Deathsgift66 (Finalized by GPT)
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: alliance_members.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 const RANK_TOOLTIPS = {

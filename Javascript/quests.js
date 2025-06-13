@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: quests.js
-Author: Deathsgift66
-Enhanced: June 13, 2025 by OpenAI
-Purpose: Manage and render kingdom quests dynamically, including catalog display, active/completed quests, and real-time updates.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: quests.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let questChannel = null;

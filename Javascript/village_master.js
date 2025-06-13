@@ -1,9 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: village_master.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
+// Project Name: Kingmakers Rise©
+// File Name: village_master.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // Sovereign’s Grand Overseer — Page Controller
 
 import { supabase } from './supabaseClient.js';

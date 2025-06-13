@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_admin_dashboard_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from backend.routers import admin_dashboard
 import pytest
 from fastapi import HTTPException

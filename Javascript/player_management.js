@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: player_management.js
-Date: June 13, 2025
-Author: Deathsgift66 + ChatGPT
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: player_management.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let playerChannel;

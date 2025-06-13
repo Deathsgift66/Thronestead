@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_vip_status_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from datetime import datetime, timedelta
 
 from services.vip_status_service import upsert_vip_status, get_vip_status, is_vip_active

@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: projects_kingdom.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: projects_kingdom.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 const RESOURCE_KEYS = [

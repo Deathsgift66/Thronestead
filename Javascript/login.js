@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: login.js
-Date: June 2, 2025
-Author: Deathsgift66
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: login.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 

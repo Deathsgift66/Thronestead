@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: login_routes.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel

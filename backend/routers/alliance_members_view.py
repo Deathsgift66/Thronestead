@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: alliance_members_view.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from uuid import UUID
 from fastapi import APIRouter, Depends
 

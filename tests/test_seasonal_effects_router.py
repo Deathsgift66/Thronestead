@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_seasonal_effects_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))

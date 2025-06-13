@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: kingdom_military.js
-Author: Deathsgift66
-Updated: June 13, 2025
-Description: Fully hardened military overview and training handler with live syncing
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: kingdom_military.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let currentUserId = null;

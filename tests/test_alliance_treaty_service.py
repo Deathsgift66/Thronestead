@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_alliance_treaty_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from services.alliance_treaty_service import (
     propose_treaty,
     accept_treaty,

@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: legal.js
-Date: June 2, 2025
-Author: Deathsgift66
-Description: Dynamic legal page handling for Terms, Policies, DMCA, GDPR, etc.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: legal.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let docs = [];

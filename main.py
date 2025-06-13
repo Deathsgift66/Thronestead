@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: main.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Minimal FastAPI entrypoint for local development."""
 
 from fastapi import FastAPI

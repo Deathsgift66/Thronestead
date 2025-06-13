@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_buildings_reset_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from backend.routers.buildings import reset_build, BuildingActionPayload
 from fastapi import HTTPException
 

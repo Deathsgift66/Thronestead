@@ -1,4 +1,7 @@
-
+# Project Name: Kingmakers Rise©
+# File Name: signup.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional

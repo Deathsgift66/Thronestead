@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: trade_logs.js
-Date: June 2, 2025
-Author: Deathsgift66
-Enhanced: June 13, 2025
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: trade_logs.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 

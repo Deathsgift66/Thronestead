@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: data.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 # Simple in-memory data store for the demo API
 
 # Recruitable units for all kingdoms

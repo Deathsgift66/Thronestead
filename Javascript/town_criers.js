@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: town_criers.js
-Date: June 2, 2025
-Author: Deathsgift66
-Enhanced by: Codex - June 13, 2025
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: town_criers.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let scrollChannel = null;

@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: changelog.js
-Updated: 2025-06-13 by Codex
-Description: Real-time changelog viewer with Supabase integration, expandable for filters and search.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: changelog.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let realtimeSub;

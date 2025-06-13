@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: manager.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from typing import Dict, List
 
 from .engine import BattleTickHandler, WarState

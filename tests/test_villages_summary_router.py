@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_villages_summary_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from backend.routers.villages_router import get_village_summary
 from fastapi import HTTPException
 

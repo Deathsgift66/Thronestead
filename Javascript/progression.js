@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: progression.js
-Date: June 13, 2025
-Author: Deathsgift66 + GPT Enhancements
-Description: Castle and Nobility/Knighthood progression handler with full API bindings.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: progression.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 //
 // ─── API UTILITIES ───────────────────────────────────────────────────────────────
 //

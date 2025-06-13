@@ -1,4 +1,7 @@
-
+# Project Name: Kingmakers Rise©
+# File Name: progression_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from fastapi import APIRouter, Depends, HTTPException, Header
 
 from pydantic import BaseModel

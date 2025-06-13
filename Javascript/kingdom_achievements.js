@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: achievement.js
-Updated: 2025-06-13
-Description: Full badge grid w/ search, filters, sorting, live sync, and modal preview
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: kingdom_achievements.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let allAchievements = [];

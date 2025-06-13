@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_alliance_wars_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 

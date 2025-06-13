@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: signup.js
-Date: June 2, 2025
-Author: Deathsgift66
-Enhanced: ChatGPT
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: signup.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');

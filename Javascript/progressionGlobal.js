@@ -1,11 +1,7 @@
-/*
-  Project Name: Kingmakers Rise Frontend
-  File Name: progressionGlobal.js
-  Created: 2025-06-02
-  Author: Deathsgift66 (Enhanced by ChatGPT)
-  Description: Global player progression state management with session storage fallback.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: progressionGlobal.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // ✅ Fetch progression summary from backend API and store globally + in sessionStorage
 export async function fetchAndStorePlayerProgression(userId) {
   try {

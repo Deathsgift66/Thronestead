@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: sovereign_utils.js
-Date: June 2, 2025
-Author: Deathsgift66 (enhanced by Codex)
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: sovereign_utils.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // Sovereign’s Grand Overseer — Shared Utility Module
 // Central module to manage village cards, sorting, and ambience audio.
 

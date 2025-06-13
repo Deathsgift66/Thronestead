@@ -1,10 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: forgot_password.js
-Updated: 2025-06-13 by Codex
-Description: Secure password reset flow with Supabase integration
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: forgot_password.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 // DOM Elements

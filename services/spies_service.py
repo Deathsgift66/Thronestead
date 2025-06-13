@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: spies_service.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Database helpers for kingdom spy management."""
 
 import logging

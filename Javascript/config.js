@@ -1,3 +1,7 @@
+// Project Name: Kingmakers Rise©
+// File Name: config.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 /*
   config.js — Public Supabase configuration (non-secret) used by frontend
   Automatically fallback to environment overrides if present (e.g., Render env vars)

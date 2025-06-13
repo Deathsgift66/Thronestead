@@ -1,3 +1,7 @@
+// Project Name: Kingmakers Rise©
+// File Name: village.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 function initRealtime(villageId) {
   const indicator = document.getElementById('realtime-indicator');
   indicator.textContent = 'Connecting...';

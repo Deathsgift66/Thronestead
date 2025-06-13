@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: security.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 import base64
 import json
 from uuid import UUID

@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: profile.js
-Date: June 13, 2025
-Author: Deathsgift66 + GPT Enhancements
-Description: Loads and renders player profile, customization, and activity logs.
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: profile.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {

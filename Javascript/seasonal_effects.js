@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: seasonal_effects.js
-Date: June 2, 2025
-Author: Deathsgift66
-Enhancer: ChatGPT
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: seasonal_effects.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {

@@ -1,10 +1,7 @@
-/*
-  Project: Kingmakers Rise Frontend
-  File: conflicts.js
-  Updated: July 2025
-  Description: Dynamic alliance conflict browser (filtered, sorted, real-time)
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: conflicts.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
 let accessToken = null;

@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: wars.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text

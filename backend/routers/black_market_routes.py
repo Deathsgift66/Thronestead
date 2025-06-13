@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: black_market_routes.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.params import Depends as DependsClass
 from ..security import verify_jwt_token

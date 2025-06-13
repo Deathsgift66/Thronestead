@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: movement.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 """Utility functions for tactical unit movement."""
 
 from typing import Any, Dict, List

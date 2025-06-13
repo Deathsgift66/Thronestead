@@ -1,3 +1,7 @@
+# Project Name: Kingmakers Rise©
+# File Name: test_training_catalog_router.py
+# Version 6.13.2025.19.49
+# Developer: Deathsgift66
 from backend.routers.training_catalog import get_catalog
 
 class DummyResult:

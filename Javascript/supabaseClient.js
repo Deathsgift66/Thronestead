@@ -1,11 +1,7 @@
-/*
-Project Name: Kingmakers Rise Frontend
-File Name: supabaseClient.js
-Date: June 2, 2025
-Author: Deathsgift66
-Updated: Enhanced by Codex
-*/
-
+// Project Name: Kingmakers Rise©
+// File Name: supabaseClient.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
 // ✅ Centralized Supabase Client
 // This file initializes and exports the Supabase client used across all frontend modules.
 
