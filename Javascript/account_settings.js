@@ -45,6 +45,20 @@ async function loadUserProfile() {
   });
 }
 
+async function loadKingdomDetails() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  const { data, error } = await supabase
+    .from('kingdoms')
+    .select('ruler_title,banner_url,emblem_url')
+    .eq('owner_id', session.user.id)
+    .single();
+  if (error || !data) return;
+  document.getElementById('ruler_title').value = data.ruler_title || '';
+  document.getElementById('kingdom_banner_url').value = data.banner_url || '';
+  document.getElementById('kingdom_emblem_url').value = data.emblem_url || '';
+}
+
 async function saveUserSettings() {
   const headers = await authHeaders();
   const displayName = document.getElementById('display_name').value.trim();
@@ -75,6 +89,28 @@ async function saveUserSettings() {
     body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('Failed to save');
+
+  const [{ data: { user } }, { data: { session } }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession()
+  ]);
+  if (user && session) {
+    await fetch('/api/kingdom/update', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': user.id,
+        Authorization: `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        ruler_title: document.getElementById('ruler_title').value.trim(),
+        banner_url:
+          document.getElementById('kingdom_banner_url').value.trim() || null,
+        emblem_url:
+          document.getElementById('kingdom_emblem_url').value.trim() || null
+      })
+    });
+  }
   showToast('Settings saved');
 }
 
@@ -107,6 +143,7 @@ function subscribeSessions(userId) {
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadUserProfile();
+    await loadKingdomDetails();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) subscribeSessions(user.id);
   } catch (err) {
@@ -139,7 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-export { loadUserProfile, saveUserSettings, logoutSession, uploadAvatar, subscribeSessions };
+export { loadUserProfile, loadKingdomDetails, saveUserSettings, logoutSession, uploadAvatar, subscribeSessions };
 
 function validateEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

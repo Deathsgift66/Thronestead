@@ -120,11 +120,11 @@ function bindEvents() {
     const mottoEl = document.getElementById('motto-input');
 
     const kingdomName = kNameEl.value.trim();
-    const rulerTitle = titleEl.value.trim();
+    const rulerTitle = titleEl ? titleEl.value.trim() : null;
     const region = regionEl.value;
     const villageName = villageEl.value.trim();
-    const bannerUrl = bannerEl.value.trim();
-    const emblemUrl = emblemEl.value.trim();
+    const bannerUrl = bannerEl ? bannerEl.value.trim() : null;
+    const emblemUrl = emblemEl ? emblemEl.value.trim() : null;
     const motto = mottoEl.value.trim();
 
     if (kingdomName.length < 3) {
