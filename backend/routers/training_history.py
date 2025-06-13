@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -14,7 +15,7 @@ class TrainingPayload(BaseModel):
     unit_name: str
     quantity: int
     source: str
-    initiated_at: str
+    initiated_at: datetime
     trained_by: str | None = None
     xp_awarded: int = 0
     modifiers_applied: dict | None = None

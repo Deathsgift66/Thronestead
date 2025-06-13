@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -16,7 +17,7 @@ def get_settings() -> dict:
 
 class SettingPayload(BaseModel):
     key: str
-    value: object
+    value: Any
     is_active: bool = True
 
 @router.post("/admin/game_settings")
