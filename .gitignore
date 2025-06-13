@@ -5,6 +5,9 @@
 node_modules/
 __pycache__/
 
+# Local frontend runtime config
+env.js
+
 # Ensure CI dependencies are tracked
 !dev_requirements.txt
 !tests/

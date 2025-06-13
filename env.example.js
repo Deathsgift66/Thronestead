@@ -1,0 +1,4 @@
+window.ENV = {
+  VITE_SUPABASE_URL: 'https://your-supabase-url.supabase.co',
+  VITE_SUPABASE_ANON_KEY: 'your-anon-key'
+};

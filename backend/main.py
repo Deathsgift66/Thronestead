@@ -71,6 +71,7 @@ from .routers import (
     vacation_mode,
     world_map,
     health,
+    public_config,
 )
 from .database import engine
 from .models import Base
@@ -152,6 +153,7 @@ app.include_router(signup_router.router)
 app.include_router(treaty_web.router)
 app.include_router(village_master_router.router)
 app.include_router(vacation_mode.router)
+app.include_router(public_config.router)
 
 
 # Serve static frontend after API routes so that catch-all paths don't intercept
