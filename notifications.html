@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: notifications.html
-Version 6.13.2025.19.49
+Version 6.14.2025.21.12
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -10,46 +10,48 @@ Developer: Deathsgift66
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  
   <title>Notifications | Kingmaker's Rise</title>
   <meta name="description" content="View your game notifications in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, notifications, alerts, updates, player activity" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/notifications.html" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Notifications | Kingmaker's Rise" />
   <meta property="og:description" content="View your game notifications in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/notifications.html" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Notifications | Kingmaker's Rise" />
   <meta name="twitter:description" content="View your game notifications in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, notifications, alerts, updates, player activity" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/notifications.html" />
 
-  <!-- Page-Specific Assets -->
+  <!-- Page-Specific Styles -->
   <link rel="stylesheet" href="CSS/notifications.css" />
   <script defer type="module" src="Javascript/notifications.js"></script>
 
   <!-- Global Assets -->
-  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="Assets/favicon.ico" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
+<!-- Navbar Injection -->
+<div id="navbar-container" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
+    .then(html => document.getElementById('navbar-container').innerHTML = html);
 </script>
 
 <!-- Page Banner -->
@@ -57,35 +59,31 @@ Developer: Deathsgift66
   Kingmaker's Rise — Notifications
 </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Notifications Interface">
+<!-- Main Section -->
+<main class="main-centered-container" id="main-content" aria-label="Notifications Interface">
 
-
-
-  <!-- Core Notifications Panel -->
+  <!-- Notification Stream -->
   <section class="alliance-members-container">
     <h2>Notifications</h2>
-    <p>Review your recent activity, alerts, and updates.</p>
+    <p>Stay up to date with all recent game events, alerts, and activities.</p>
 
-    <!-- Notification Toolbar -->
+    <!-- Toolbar -->
     <div class="notification-toolbar">
-
-      <label for="notification-filter">Filter Notifications</label>
-      <input id="notification-filter" type="text" />
+      <label for="notification-filter" class="sr-only">Search Notifications</label>
+      <input id="notification-filter" type="text" class="form-input" placeholder="Filter by keyword..." />
 
       <button class="royal-button" id="mark-all-btn">Mark All Read</button>
       <button class="royal-button" id="clear-all-btn">Clear All</button>
     </div>
 
-    <!-- Notification Feed -->
+    <!-- Live Notification Feed -->
     <div id="notification-feed" class="notification-feed" aria-live="polite">
-      <!-- JS will populate notifications -->
+      <!-- Populated via JS -->
     </div>
-
   </section>
 
-  <!-- Notification Feature Reference -->
-  <section class="alliance-members-container" aria-label="Notification Features">
+  <!-- Notification System Feature Matrix -->
+  <section class="alliance-members-container">
     <h2>Notification Features</h2>
     <table class="members-table">
       <caption class="sr-only">Notification features and their benefits</caption>
@@ -97,28 +95,28 @@ Developer: Deathsgift66
       </thead>
       <tbody>
         <tr>
-          <td data-label="Feature">🧮 Dynamic filtering by category &amp; priority</td>
-          <td data-label="Benefit">Let players hide low-priority or alliance messages</td>
+          <td>🧮 Dynamic filtering by category &amp; priority</td>
+          <td>Hide non-essential alerts for easier review</td>
         </tr>
         <tr>
-          <td data-label="Feature">💬 Tooltips or hover previews</td>
-          <td data-label="Benefit">Let players see battle summary or market info instantly</td>
+          <td>💬 Tooltip previews</td>
+          <td>Hover to preview battles, trade updates, etc.</td>
         </tr>
         <tr>
-          <td data-label="Feature">📬 Bulk actions (Mark all read, Delete)</td>
-          <td data-label="Benefit">Match user expectations from email-like systems</td>
+          <td>📬 Bulk actions</td>
+          <td>Quickly mark read or clear many notifications</td>
         </tr>
         <tr>
-          <td data-label="Feature">⚔️ War-specific notification stream</td>
-          <td data-label="Benefit">Pull live alerts into battle pages directly</td>
+          <td>⚔️ War-stream filter</td>
+          <td>Isolate war updates for battle-focused players</td>
         </tr>
         <tr>
-          <td data-label="Feature">🛠 Real-time notification system</td>
-          <td data-label="Benefit">WebSocket or AJAX-poll-based updates without page reload</td>
+          <td>🛠 Real-time socket-based alerts</td>
+          <td>Stay synced without refreshing the page</td>
         </tr>
         <tr>
-          <td data-label="Feature">🧭 Mini "Bell" widget in header</td>
-          <td data-label="Benefit">3–5 new alerts dropdown, global indicator</td>
+          <td>🧭 Bell widget integration</td>
+          <td>Quick dropdown of latest 5 notifications</td>
         </tr>
       </tbody>
     </table>
