@@ -111,6 +111,37 @@ export function formatDate(ts) {
 }
 
 /**
+ * Fetch JSON from an endpoint with sensible defaults and error handling.
+ *
+ * This helper ensures the "Accept" header is set and rejects on
+ * non-2xx responses or invalid JSON payloads.
+ *
+ * @param {string} url       Request URL
+ * @param {object} [options] fetch options
+ * @returns {Promise<any>}   Parsed JSON data
+ */
+export async function jsonFetch(url, options = {}) {
+  const opts = {
+    headers: { Accept: 'application/json', ...(options.headers || {}) },
+    ...options
+  };
+
+  const res = await fetch(url, opts);
+  const type = res.headers.get('content-type') || '';
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Request failed ${res.status}: ${text}`);
+  }
+
+  if (!type.includes('application/json')) {
+    throw new Error('Invalid JSON response');
+  }
+
+  return res.json();
+}
+
+/**
  * Build a DocumentFragment from an array of items.
  * @template T
  * @param {T[]} items Data items
