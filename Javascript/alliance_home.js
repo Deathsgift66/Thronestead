@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML, setText, formatDate, fragmentFrom } from './utils.js';
 
 let activityChannel = null;
 
@@ -70,23 +71,30 @@ function populateAlliance(data) {
 
 // === Render Functions ===
 
+/**
+ * Render active alliance projects with progress bars.
+ * @param {Array} projects Project list
+ */
 function renderProjects(projects = []) {
   const container = document.getElementById('project-progress-bars');
   if (!container) return;
-  container.innerHTML = '';
-  projects.forEach(p => {
+  const frag = fragmentFrom(projects, p => {
     const div = document.createElement('div');
     div.className = 'project-bar';
     div.innerHTML = `<label>${escapeHTML(p.name)}</label><progress value="${p.progress}" max="100"></progress> <span>${p.progress}%</span>`;
-    container.appendChild(div);
+    return div;
   });
+  container.replaceChildren(frag);
 }
 
+/**
+ * Render alliance member table.
+ * @param {Array} members Member list
+ */
 function renderMembers(members = []) {
   const body = document.getElementById('members-list');
   if (!body) return;
-  body.innerHTML = '';
-  members.forEach(m => {
+  const frag = fragmentFrom(members, m => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><img src="../images/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest" class="crest"></td>
@@ -94,8 +102,9 @@ function renderMembers(members = []) {
       <td>${escapeHTML(m.rank)}</td>
       <td>${m.contribution ?? 0}</td>
       <td>${escapeHTML(m.status)}</td>`;
-    body.appendChild(row);
+    return row;
   });
+  body.replaceChildren(frag);
 }
 
 function renderTopContributors(members = []) {
@@ -157,16 +166,20 @@ function renderAchievements(achievements = []) {
   });
 }
 
+/**
+ * Render recent alliance activity feed.
+ * @param {Array} entries Activity log entries
+ */
 function renderActivity(entries = []) {
   const list = document.getElementById('activity-log');
   if (!list) return;
-  list.innerHTML = '';
-  entries.forEach(e => {
+  const frag = fragmentFrom(entries, e => {
     const li = document.createElement('li');
     li.className = 'activity-log-entry';
     li.textContent = `[${formatDate(e.created_at)}] ${e.username}: ${e.description}`;
-    list.appendChild(li);
+    return li;
   });
+  list.replaceChildren(frag);
 }
 
 function renderDiplomacy(treaties = []) {
@@ -211,28 +224,6 @@ function renderWarScore(wars = []) {
     div.textContent = `War ${w.alliance_war_id}: Attacker ${att} vs Defender ${def}`;
     container.appendChild(div);
   });
-}
-
-// === Utility Functions ===
-
-function setText(id, text) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = text;
-}
-
-function formatDate(str) {
-  if (!str) return '';
-  return new Date(str).toLocaleString();
-}
-
-function escapeHTML(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 // === Realtime Activity Logging ===

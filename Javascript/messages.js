@@ -5,6 +5,7 @@
 // Unified Messaging System — Inbox + View + Compose + Enhancements
 
 import { supabase } from './supabaseClient.js';
+import { escapeHTML, formatDate, fragmentFrom } from './utils.js';
 
 let currentSession;
 let allMessages = [];
@@ -90,20 +91,23 @@ async function loadInbox(session) {
   }
 }
 
+/**
+ * Render inbox page of messages with pagination.
+ * @param {Array} list Message list to display
+ */
 function renderMessages(list) {
   currentList = list;
   const container = document.getElementById('message-list');
-  container.innerHTML = '';
   const totalPages = Math.ceil(list.length / pageSize);
   if (currentPage > totalPages) currentPage = totalPages || 1;
   document.getElementById('message-count').textContent = `${list.length} Messages`;
   if (!list.length) {
-    container.innerHTML = '<p>No messages found.</p>';
+    container.textContent = 'No messages found.';
     updatePagination(totalPages);
     return;
   }
   const start = (currentPage - 1) * pageSize;
-  list.slice(start, start + pageSize).forEach(msg => {
+  const frag = fragmentFrom(list.slice(start, start + pageSize), msg => {
     const card = document.createElement('div');
     card.classList.add('message-card');
     if (!msg.is_read) card.classList.add('unread');
@@ -116,8 +120,9 @@ function renderMessages(list) {
         <div class="message-subject">${escapeHTML((msg.subject || msg.message).substring(0, 50))}</div>
       </a>`;
     bindSwipe(card, msg.message_id);
-    container.appendChild(card);
+    return card;
   });
+  container.replaceChildren(frag);
   updatePagination(totalPages);
 }
 
@@ -211,14 +216,11 @@ function getAuthHeaders(session) {
   };
 }
 
-function formatDate(ts) {
-  return new Date(ts).toLocaleString();
-}
-
-function escapeHTML(str) {
-  return str?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") || "";
-}
-
+/**
+ * Replace emoji codes with image icons.
+ * @param {string} html HTML string
+ * @returns {string}
+ */
 function formatIcons(html) {
   return html
     .replace(/:sword:/g, '<img src="Assets/icon-sword.svg" class="icon" alt="sword">')
