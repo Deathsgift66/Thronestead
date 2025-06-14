@@ -69,7 +69,7 @@ function renderArticles(articles) {
       <h3>${escapeHTML(article.title)}</h3>
       <p class="news-meta">By ${escapeHTML(article.author_name || "System")} — ${formatDate(article.published_at)}</p>
       <p class="news-summary">${escapeHTML(article.summary || "")}</p>
-      <a href="news_article.html?article_id=${article.article_id}" class="action-btn">Read More</a>
+      <a href="#" class="action-btn" title="Full article page coming soon">Read More</a>
     `;
 
     container.appendChild(card);

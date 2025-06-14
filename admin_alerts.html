@@ -43,7 +43,6 @@ Developer: Deathsgift66
 
   <!-- Admin Scripts -->
   <script>window.requireAdmin = true;</script>
-  <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" defer src="Javascript/resourceBar.js"></script>
   <script type="module" defer src="Javascript/admin_alerts.js"></script>
@@ -52,13 +51,7 @@ Developer: Deathsgift66
 <body data-theme="parchment">
   <!-- Navbar -->
   <div id="navbar-container"></div>
-  <script>
-    fetch('/navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
-      });
-  </script>
+<script type=\"module\" src=\"Javascript/navLoader.js\"></script>
 
   <!-- Banner -->
   <header class="kr-top-banner" aria-label="Admin Panel Header">
