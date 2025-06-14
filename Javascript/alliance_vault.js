@@ -6,6 +6,7 @@ import { supabase } from './supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 import { loadCustomBoard } from './customBoard.js';
 import { escapeHTML } from './utils.js';
+import { setupTabs } from './components/tabControl.js';
 
 let currentUser = null;
 
@@ -45,7 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   });
 
-  initTabs();
+  setupTabs({ onShow: id => id === 'tab-transactions' && loadVaultHistory() });
   await Promise.all([
     loadVaultSummary(),
     loadCustomBoard({ fetchFn: authFetch }),
@@ -68,23 +69,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ✅ Tab control
-function initTabs() {
-  const tabs = document.querySelectorAll('.tab-button');
-  const sections = document.querySelectorAll('.tab-section');
-
-  tabs.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const target = btn.dataset.tab;
-      tabs.forEach(t => t.classList.remove('active'));
-      sections.forEach(sec => sec.classList.remove('active'));
-
-      btn.classList.add('active');
-      document.getElementById(target).classList.add('active');
-
-      if (target === 'tab-transactions') await loadVaultHistory();
-    });
-  });
-}
 
 // ✅ Vault total summary
 async function loadVaultSummary() {

@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
+import { setupTabs } from './components/tabControl.js';
 
 let currentTab = "kingdoms";
 
@@ -30,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  setupTabs();
+  setupTabs({ onShow: id => { currentTab = id; loadLeaderboard(id); } });
   await loadLeaderboard(currentTab);
 
   setInterval(() => {
@@ -38,19 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }, 30000);
 });
 
-// 🧭 Tab switch logic
-function setupTabs() {
-  const tabButtons = document.querySelectorAll(".tab-button");
-  tabButtons.forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const target = btn.dataset.tab;
-      tabButtons.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentTab = target;
-      await loadLeaderboard(target);
-    });
-  });
-}
+// 🧭 Tab switch logic for leaderboard page
 
 // 📊 Load leaderboard by tab type
 async function loadLeaderboard(type) {

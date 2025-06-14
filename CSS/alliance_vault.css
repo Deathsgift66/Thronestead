@@ -152,8 +152,6 @@ body {
   text-align: center;
 }
 
-.tab-section { display: none; }
-.tab-section.active { display: block; }
 
 @media (max-width: 600px) {
   .tab-control-bar {
