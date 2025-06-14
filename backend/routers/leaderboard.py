@@ -2,19 +2,17 @@
 # File Name: leaderboard.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
-
-from ..security import verify_jwt_token
-
-
-from ..supabase_client import get_supabase_client
-from ..database import get_db
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, or_
+
+from ..security import verify_jwt_token
+from ..supabase_client import get_supabase_client
+from ..database import get_db
 from backend.models import Alliance, AllianceWar, AllianceWarScore
 
 router = APIRouter(prefix="/api/leaderboard", tags=["leaderboard"])
-
 
 @router.get("/{type}")
 def leaderboard(
@@ -22,35 +20,43 @@ def leaderboard(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Return leaderboard data."""
+    """
+    🏆 Universal leaderboard route.
+
+    Type options:
+    - 'alliances' → Real-time SQL join of alliance scores and war records.
+    - 'kingdoms', 'wars', 'economy' → Supabase view-backed leaderboards.
+    """
     if type == "alliances":
+        # Define win and loss cases for alliances in wars
         win_case = case(
             (
-                (AllianceWar.attacker_alliance_id == Alliance.alliance_id)
-                & (AllianceWarScore.victor == "attacker"),
+                (AllianceWar.attacker_alliance_id == Alliance.alliance_id) &
+                (AllianceWarScore.victor == "attacker"),
                 1,
             ),
             (
-                (AllianceWar.defender_alliance_id == Alliance.alliance_id)
-                & (AllianceWarScore.victor == "defender"),
+                (AllianceWar.defender_alliance_id == Alliance.alliance_id) &
+                (AllianceWarScore.victor == "defender"),
                 1,
             ),
             else_=0,
         )
         loss_case = case(
             (
-                (AllianceWar.attacker_alliance_id == Alliance.alliance_id)
-                & (AllianceWarScore.victor == "defender"),
+                (AllianceWar.attacker_alliance_id == Alliance.alliance_id) &
+                (AllianceWarScore.victor == "defender"),
                 1,
             ),
             (
-                (AllianceWar.defender_alliance_id == Alliance.alliance_id)
-                & (AllianceWarScore.victor == "attacker"),
+                (AllianceWar.defender_alliance_id == Alliance.alliance_id) &
+                (AllianceWarScore.victor == "attacker"),
                 1,
             ),
             else_=0,
         )
 
+        # Query leaderboard stats for alliances
         rows = (
             db.query(
                 Alliance.alliance_id,
@@ -77,6 +83,7 @@ def leaderboard(
             .limit(50)
             .all()
         )
+
         entries = [
             {
                 "alliance_id": r.alliance_id,
@@ -89,29 +96,30 @@ def leaderboard(
             }
             for r in rows
         ]
-        return {"entries": entries}
+        return {"type": type, "entries": entries}
 
+    # Supported Supabase views for other leaderboard types
     table_map = {
         "kingdoms": "leaderboard_kingdoms",
-        "alliances": "leaderboard_alliances",
         "wars": "leaderboard_wars",
         "economy": "leaderboard_economy",
     }
+
     table = table_map.get(type)
     if not table:
-        raise HTTPException(status_code=400, detail="invalid leaderboard type")
+        raise HTTPException(status_code=400, detail="Invalid leaderboard type")
 
     supabase = get_supabase_client()
     try:
         result = (
             supabase.table(table)
             .select("*")
+            .order("rank", asc=True)
             .limit(50)
             .execute()
         )
-    except Exception as exc:  # pragma: no cover - network/db errors
+        entries = getattr(result, "data", result) or []
+    except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to fetch leaderboard") from exc
 
-    entries = getattr(result, "data", result) or []
-    return {"entries": entries}
-
+    return {"type": type, "entries": entries}
