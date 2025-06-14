@@ -608,18 +608,32 @@ class Notification(Base):
 
     notification_id = Column(Integer, primary_key=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    title = Column(String)
+    title = Column(Text)
     message = Column(Text)
-    category = Column(String)
-    priority = Column(String)
-    link_action = Column(String)
+    category = Column(Text)
+    priority = Column(Text)
+    link_action = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
     expires_at = Column(DateTime(timezone=True))
-    source_system = Column(String)
+    source_system = Column(Text)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class NotificationMetadata(Base):
+    """Optional key/value metadata for notifications."""
+
+    __tablename__ = "notification_metadata"
+
+    notification_id = Column(
+        Integer,
+        ForeignKey("notifications.notification_id"),
+        primary_key=True,
+    )
+    key = Column(Text, primary_key=True)
+    value = Column(Text)
 
 
 class BlackMarketListing(Base):
