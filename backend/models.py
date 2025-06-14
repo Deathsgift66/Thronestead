@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
@@ -97,14 +98,46 @@ class AllianceMember(Base):
 
     __tablename__ = "alliance_members"
 
-    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True)
+    alliance_id = Column(
+        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
+    )
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True
+    )
     username = Column(String)
     rank = Column(String)
     contribution = Column(Integer, default=0)
     status = Column(String)
     crest = Column(String)
     role_id = Column(Integer, ForeignKey("alliance_roles.role_id"))
+
+
+class AllianceRole(Base):
+    __tablename__ = "alliance_roles"
+
+    role_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    role_name = Column(Text, nullable=False)
+    permissions = Column(JSONB, server_default=text("'{}'::jsonb"))
+    is_default = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    can_invite = Column(Boolean, default=False)
+    can_kick = Column(Boolean, default=False)
+    can_manage_resources = Column(Boolean, default=False)
+
+
+class AlliancePolicy(Base):
+    __tablename__ = "alliance_policies"
+
+    alliance_id = Column(
+        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
+    )
+    policy_id = Column(
+        Integer, ForeignKey("policies_laws_catalogue.id"), primary_key=True
+    )
+    applied_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_active = Column(Boolean, default=True)
+
 
 
 class AllianceVault(Base):
