@@ -171,13 +171,15 @@ def alliance_details(
     # 🏅 Achievements
     # --------------------
     achievements = db.execute(
-        text("""
-            SELECT a.achievement_code, c.name, c.description, c.icon_url, a.awarded_at
+        text(
+            """
+            SELECT a.achievement_code, c.name, c.description, c.badge_icon_url, a.awarded_at
             FROM alliance_achievements a
             JOIN alliance_achievement_catalogue c ON a.achievement_code = c.achievement_code
             WHERE a.alliance_id = :aid
             ORDER BY a.awarded_at DESC
-        """),
+            """
+        ),
         {"aid": aid},
     ).fetchall()
     achievements = [
@@ -185,7 +187,7 @@ def alliance_details(
             "achievement_code": r[0],
             "name": r[1],
             "description": r[2],
-            "icon_url": r[3],
+            "badge_icon_url": r[3],
             "awarded_at": r[4].isoformat() if r[4] else None,
         }
         for r in achievements
