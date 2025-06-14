@@ -16,7 +16,7 @@ from sqlalchemy import (
     Numeric,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 from backend.db_base import Base
 
@@ -288,28 +288,55 @@ class ProjectPlayerCatalogue(Base):
     project_code = Column(String, primary_key=True)
     name = Column(String, nullable=False)
     description = Column(Text)
-    power_score = Column(Integer, default=0)
+    power_score = Column(Integer, server_default="0")
     cost = Column(JSONB)
-    modifiers = Column(JSONB)
+    modifiers = Column(JSONB, server_default="{}")
     category = Column(String)
-    is_repeatable = Column(Boolean, default=False)
-    prerequisites = Column(JSONB)
-    unlocks = Column(JSONB)
-    build_time_seconds = Column(Integer)
+    is_repeatable = Column(Boolean, server_default="true")
+    prerequisites = Column(ARRAY(Text))
+    unlocks = Column(ARRAY(Text))
+    build_time_seconds = Column(Integer, server_default="3600")
     project_duration_seconds = Column(Integer)
-    requires_kingdom_level = Column(Integer)
-    is_active = Column(Boolean, default=True)
+    requires_kingdom_level = Column(Integer, server_default="1")
+    is_active = Column(Boolean, server_default="true")
     max_active_instances = Column(Integer)
-    required_tech = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    required_tech = Column(ARRAY(Text))
     requires_region = Column(String)
     effect_summary = Column(Text)
     expires_at = Column(DateTime(timezone=True))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_updated = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     last_modified_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    gold_cost = Column(Integer, server_default="0")
+    effect_description = Column(Text)
+    wood = Column(Integer, server_default="0")
+    stone = Column(Integer, server_default="0")
+    iron_ore = Column(Integer, server_default="0")
+    gold = Column(Integer, server_default="0")
+    gems = Column(Integer, server_default="0")
+    food = Column(Integer, server_default="0")
+    coal = Column(Integer, server_default="0")
+    livestock = Column(Integer, server_default="0")
+    clay = Column(Integer, server_default="0")
+    flax = Column(Integer, server_default="0")
+    tools = Column(Integer, server_default="0")
+    wood_planks = Column(Integer, server_default="0")
+    refined_stone = Column(Integer, server_default="0")
+    iron_ingots = Column(Integer, server_default="0")
+    charcoal = Column(Integer, server_default="0")
+    leather = Column(Integer, server_default="0")
+    arrows = Column(Integer, server_default="0")
+    swords = Column(Integer, server_default="0")
+    axes = Column(Integer, server_default="0")
+    shields = Column(Integer, server_default="0")
+    armour = Column(Integer, server_default="0")
+    wagon = Column(Integer, server_default="0")
+    siege_weapons = Column(Integer, server_default="0")
+    jewelry = Column(Integer, server_default="0")
+    spear = Column(Integer, server_default="0")
+    horses = Column(Integer, server_default="0")
+    pitchforks = Column(Integer, server_default="0")
 
 
 class ProjectAllianceCatalogue(Base):
@@ -876,6 +903,18 @@ class ProjectAllianceContribution(Base):
     project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     contribution_type = Column(String, default="resource")
+
+
+class ProjectModifier(Base):
+    """Modifier entry applied from projects or catalogue items."""
+
+    __tablename__ = "project_modifiers"
+
+    source_type = Column(String, primary_key=True)
+    source_id = Column(String, primary_key=True)
+    effect_type = Column(String, primary_key=True)
+    target = Column(String, primary_key=True)
+    magnitude = Column(Numeric)
 
 
 class QuestKingdomTracking(Base):
