@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: market.html
-Version 6.13.2025.19.49
+Version 6.14.2025.20.12
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -13,10 +13,6 @@ Developer: Deathsgift66
 
   <title>Market | Kingmaker's Rise</title>
   <meta name="description" content="Trade goods and resources on the player-driven market of Kingmaker’s Rise." />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Market | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Trade goods and resources on the player-driven market of Kingmaker’s Rise." />
-  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta name="keywords" content="Kingmaker's Rise, market, trade, economy, player-driven market, goods, resources" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/market.html" />
@@ -28,24 +24,30 @@ Developer: Deathsgift66
   <meta property="og:url" content="https://www.kingmakersrise.com/market.html" />
   <meta property="og:type" content="website" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/market.css" />
-  <script defer type="module" src="Javascript/market.js"></script>
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Market | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Trade goods and resources on the player-driven market of Kingmaker’s Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Global Assets -->
+  <!-- Stylesheets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="CSS/root_theme.css" />
-    <link rel="stylesheet" href="CSS/kr_navbar.css" />
-    <script type="module" src="Javascript/navDropdown.js"></script>
-    <script type="module" src="Javascript/components/authGuard.js"></script>
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <link rel="stylesheet" href="CSS/market.css" />
+
+  <!-- Scripts -->
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/market.js"></script>
 </head>
 
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
+<!-- Navbar Loader -->
+<div id="navbar-container" role="navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -59,54 +61,60 @@ Developer: Deathsgift66
   Kingmaker's Rise — Market
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Content -->
 <main class="main-centered-container" aria-label="Market Interface">
 
-  <!-- Core Market Panel -->
   <section class="alliance-members-container">
-    <h2>Market Center</h2>
-    <p>Trade goods and resources on the player-driven market. Listings are updated in real time and reflect current player supply and demand.</p>
-    <div class="realtime-status">Market Feed: <span id="realtime-indicator" class="disconnected">Offline</span> — <span id="last-updated"></span></div>
 
-    <!-- Market Tabs -->
-    <div class="market-tabs">
-      <button class="tab active" data-tab="browse">Browse Listings</button>
-      <button class="tab" data-tab="myListings">My Listings</button>
-      <button class="tab" data-tab="history">Trade History</button>
+    <h2>Market Center</h2>
+    <p>Trade goods and resources on the player-driven market. Listings reflect live player supply and demand.</p>
+
+    <!-- Market Status -->
+    <div class="realtime-status" aria-live="polite">
+      Market Feed: <span id="realtime-indicator" class="disconnected">Offline</span> — 
+      <span id="last-updated" class="last-updated"></span>
     </div>
 
-    <!-- Tab Panels -->
-    <div id="browse" class="tab-panel active">
-      <div id="market-filters" class="market-filters">
-        <!-- Example Filter Inputs -->
+    <!-- Tabs -->
+    <div class="market-tabs" role="tablist" aria-label="Market Tabs">
+      <button type="button" class="tab active" data-tab="browse" role="tab" aria-selected="true">Browse Listings</button>
+      <button type="button" class="tab" data-tab="myListings" role="tab" aria-selected="false">My Listings</button>
+      <button type="button" class="tab" data-tab="history" role="tab" aria-selected="false">Trade History</button>
+    </div>
 
+    <!-- Browse Listings -->
+    <div id="browse" class="tab-panel active" role="tabpanel" aria-labelledby="browse-tab">
+      <form id="market-filters" class="market-filters" aria-label="Market Filters">
         <label for="market-search">Search Item</label>
-        <input type="text" id="market-search" />
-        <label for="market-category">Category</label>
-        <select id="market-category">
+        <input type="text" id="market-search" name="market-search" placeholder="Search by item name" />
 
+        <label for="market-category">Category</label>
+        <select id="market-category" name="market-category">
           <option value="">All Categories</option>
           <option value="Resources">Resources</option>
           <option value="Equipment">Equipment</option>
           <option value="Misc">Misc</option>
         </select>
-        <button class="royal-button">Apply Filters</button>
-      </div>
 
-      <div id="market-listings">
-        <!-- JS will populate -->
-      </div>
-    </div>
+        <button type="button" id="apply-filters" class="royal-button">Apply Filters</button>
+      </form>
 
-    <div id="myListings" class="tab-panel">
-      <div id="my-listings">
-        <!-- JS will populate -->
+      <div id="market-listings" class="market-listing-grid" aria-live="polite">
+        <!-- JS injects listings here -->
       </div>
     </div>
 
-    <div id="history" class="tab-panel">
-      <div id="trade-history">
-        <!-- JS will populate -->
+    <!-- My Listings -->
+    <div id="myListings" class="tab-panel" role="tabpanel" aria-labelledby="myListings-tab">
+      <div id="my-listings" aria-live="polite">
+        <!-- JS injects user listings here -->
+      </div>
+    </div>
+
+    <!-- Trade History -->
+    <div id="history" class="tab-panel" role="tabpanel" aria-labelledby="history-tab">
+      <div id="trade-history" aria-live="polite">
+        <!-- JS injects trade history here -->
       </div>
     </div>
 
