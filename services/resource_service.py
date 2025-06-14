@@ -79,7 +79,7 @@ def fetch_supabase_resources(user_id: str) -> Optional[dict[str, int]]:
 # ------------------------------------------------------------------------------
 
 def validate_resource(resource: str) -> None:
-    """Ensure a resource type is recognized."""
+    """Raise ``ValueError`` if ``resource`` is not defined in ``RESOURCE_TYPES``."""
     if resource not in RESOURCE_TYPES:
         raise ValueError(f"Invalid resource type: {resource}")
 
@@ -90,7 +90,19 @@ def _apply_resource_changes(
     changes: dict[str, int],
     op: Literal["+", "-"]
 ) -> None:
-    """Apply resource increments/decrements in a single SQL statement."""
+    """Apply resource increments or decrements atomically.
+
+    Parameters
+    ----------
+    db : Session
+        Active database session.
+    kingdom_id : int
+        Target kingdom record.
+    changes : dict[str, int]
+        Mapping of resource name to change amount.
+    op : Literal["+", "-"]
+        Operation to perform (``"+"`` for gain, ``"-"`` for spend).
+    """
 
     if not changes:
         return
@@ -100,15 +112,12 @@ def _apply_resource_changes(
         validate_resource(res)
         if amt < 0:
             raise ValueError("Resource amounts must be positive")
-        if op == "+":
-            set_expr.append(f"{res} = COALESCE({res}, 0) + :{res}")
-        else:
-            set_expr.append(f"{res} = {res} - :{res}")
+        expr = (
+            f"{res} = COALESCE({res}, 0) + :{res}" if op == "+" else f"{res} = {res} - :{res}"
+        )
+        set_expr.append(expr)
 
-    sql = (
-        "UPDATE kingdom_resources SET "
-        f"{', '.join(set_expr)} WHERE kingdom_id = :kid"
-    )
+    sql = "UPDATE kingdom_resources SET " + ", ".join(set_expr) + " WHERE kingdom_id = :kid"
     db.execute(text(sql), {**changes, "kid": kingdom_id})
     db.commit()
 
