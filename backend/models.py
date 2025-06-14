@@ -22,15 +22,41 @@ from backend.db_base import Base
 
 
 class Kingdom(Base):
-    """Minimal kingdom model for tests and basic relations."""
+    """ORM model for the ``kingdoms`` table."""
 
     __tablename__ = "kingdoms"
 
     kingdom_id = Column(Integer, primary_key=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    kingdom_name = Column(String, nullable=False)
-    region = Column(String)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), unique=True)
+    kingdom_name = Column(Text, nullable=False)
+    region = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    prestige_score = Column(Integer, default=0)
+    avatar_url = Column(Text)
+    status = Column(Text, server_default="active")
+    description = Column(Text)
+    motto = Column(Text)
+    ruler_name = Column(Text)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    alliance_role = Column(Text)
+    tech_level = Column(Integer, default=1)
+    economy_score = Column(Integer, default=0)
+    military_score = Column(Integer, default=0)
+    diplomacy_score = Column(Integer, default=0)
+    last_login_at = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=func.now())
+    is_npc = Column(Boolean, default=False)
+    customizations = Column(JSONB, default=dict)
+    ruler_title = Column(Text)
+    banner_url = Column(Text)
+    emblem_url = Column(Text)
+    is_on_vacation = Column(Boolean, default=False)
+    vacation_started_at = Column(DateTime(timezone=True))
+    vacation_expires_at = Column(DateTime(timezone=True))
+    vacation_cooldown_until = Column(DateTime(timezone=True))
+    policy_change_allowed_at = Column(DateTime(timezone=True))
+    banner_color = Column(Text)
+    national_theme = Column(Text)
 
 
 class User(Base):
@@ -69,6 +95,20 @@ class PlayerMessage(Base):
     message = Column(Text)
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
+
+
+class MessageMetadata(Base):
+    """Key/value metadata attached to ``player_messages``."""
+
+    __tablename__ = "message_metadata"
+
+    message_id = Column(
+        Integer,
+        ForeignKey("player_messages.message_id"),
+        primary_key=True,
+    )
+    key = Column(Text, primary_key=True)
+    value = Column(Text)
 
 
 class Alliance(Base):
