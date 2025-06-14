@@ -178,7 +178,10 @@ Developer: Deathsgift66
   outline-offset: 2px;
 }
 
-/* Utility button used across pages */
+/*
+  Utility button used across pages. Other styles inherit these
+  declarations to maintain a consistent look and feel.
+*/
 .action-btn {
   background: var(--btn-bg);
   color: var(--btn-text);

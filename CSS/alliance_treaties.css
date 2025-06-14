@@ -96,23 +96,7 @@ body {
   font-family: 'Cinzel', serif;
 }
 
-/* Action Buttons */
-.action-btn {
-  background: var(--accent);
-  color: white;
-  font-weight: bold;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--gold);
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: 'Cinzel', serif;
-  margin: 0.5rem;
-}
 
-.action-btn:hover {
-  background: var(--gold);
-  color: #1e1e1e;
-}
 
 /* Treaty Card Layout */
 #treaties-container {

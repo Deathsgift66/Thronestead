@@ -60,22 +60,7 @@ h2, h3 {
   color: var(--gold);
 }
 
-/* Buttons */
-.action-btn {
-  background: var(--accent);
-  border: 2px solid var(--gold);
-  color: white;
-  font-family: 'Cinzel', serif;
-  font-weight: bold;
-  padding: 0.75rem 1.25rem;
-  margin: 0.5rem 0;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.action-btn:hover {
-  background: var(--gold);
-  color: var(--ink);
-}
+
 
 /* Tabs */
 .tab-buttons {
