@@ -13,6 +13,9 @@ Developer: Deathsgift66
 
   <title>Royal Hamlet Ledger | Kingmaker's Rise</title>
   <meta name="description" content="Manage and oversee your villages with the Royal Hamlet Ledger — buildings, resources, military, and events." />
+  <meta name="keywords" content="Kingmaker's Rise, village management, royal hamlet ledger, buildings, military, resources, kingdom" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/village.html" />
   <meta property="og:title" content="Royal Hamlet Ledger | Kingmaker's Rise" />
   <meta property="og:description" content="Manage and oversee your villages with the Royal Hamlet Ledger — buildings, resources, military, and events." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +25,7 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Royal Hamlet Ledger | Kingmaker's Rise" />
   <meta name="twitter:description" content="Manage and oversee your villages with the Royal Hamlet Ledger — buildings, resources, military, and events." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, village management, royal hamlet ledger, buildings, military, resources, kingdom" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/village.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/village.css" />
@@ -34,17 +35,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -54,100 +54,96 @@ Developer: Deathsgift66
 </script>
 
 <!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Village Banner">
+<header class="kr-top-banner" aria-label="Village Management Banner">
   Kingmaker's Rise — Royal Hamlet Ledger
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Layout -->
 <main id="main-content" class="main-centered-container" aria-label="Village Interface">
 
-
   <!-- Core Village Panel -->
-  <section class="alliance-members-container">
+  <section class="alliance-members-container" role="region" aria-labelledby="village-section">
+    <h2 id="village-section" class="visually-hidden">Village Management Panel</h2>
 
-    <!-- Ledger Container -->
+    <!-- Ledger Layout -->
     <div class="ledger-container">
 
-      <!-- Sidebar -->
-      <aside class="ledger-sidebar custom-scrollbar">
+      <!-- Sidebar (Village List) -->
+      <aside class="ledger-sidebar custom-scrollbar" aria-label="Village List">
         <h3>Villages</h3>
-        <ul id="village-list">
+        <ul id="village-list" role="list">
           <!-- JS will populate -->
         </ul>
       </aside>
 
-      <!-- Main Ledger Content -->
-      <section class="ledger-content custom-scrollbar">
+      <!-- Main Ledger -->
+      <section class="ledger-content custom-scrollbar" aria-live="polite">
 
         <!-- Village Banner -->
         <div class="village-banner">
           <h2 id="village-name">[Village Name]</h2>
           <p>Overview of current status and operations.</p>
-          <div id="realtime-indicator" aria-live="polite">Connecting...</div>
+          <div id="realtime-indicator">Connecting...</div>
         </div>
 
-        <!-- Resources -->
-        <div class="ledger-section">
-          <h3>Resources</h3>
+        <!-- Resource Overview -->
+        <div class="ledger-section" aria-labelledby="resource-section">
+          <h3 id="resource-section">Resources</h3>
           <div class="resource-grid" id="resource-grid">
             <!-- JS will populate -->
           </div>
         </div>
 
-        <!-- Buildings -->
-        <div class="ledger-section">
-          <h3>Buildings</h3>
+        <!-- Building Overview -->
+        <div class="ledger-section" aria-labelledby="building-section">
+          <h3 id="building-section">Buildings</h3>
           <div class="building-list" id="building-list">
             <!-- JS will populate -->
           </div>
         </div>
 
         <!-- Active Modifiers -->
-        <div class="ledger-section">
-          <h3>Active Modifiers</h3>
+        <div class="ledger-section" aria-labelledby="modifiers-section">
+          <h3 id="modifiers-section">Active Modifiers</h3>
           <div class="modifier-list" id="modifier-list">
             <!-- JS will populate -->
           </div>
         </div>
 
         <!-- Military -->
-        <div class="ledger-section">
-          <h3>Military</h3>
+        <div class="ledger-section" aria-labelledby="military-section">
+          <h3 id="military-section">Military</h3>
           <div class="military-stats" id="military-stats">
             <!-- JS will populate -->
           </div>
         </div>
 
-        <!-- Training / Build Queue -->
-        <div class="ledger-section">
-          <h3>Training / Build Queue</h3>
+        <!-- Build/Training Queue -->
+        <div class="ledger-section" aria-labelledby="queue-section">
+          <h3 id="queue-section">Training / Build Queue</h3>
           <div class="queue-list" id="queue-list">
             <!-- JS will populate -->
           </div>
         </div>
 
-        <!-- Events -->
-        <div class="ledger-section">
-          <h3>Event Log</h3>
+        <!-- Event Log -->
+        <div class="ledger-section" aria-labelledby="event-section">
+          <h3 id="event-section">Event Log</h3>
           <div class="event-log" id="event-log">
             <!-- JS will populate -->
           </div>
         </div>
 
       </section>
-
     </div>
 
   </section>
-
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
