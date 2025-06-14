@@ -28,18 +28,25 @@ engine = None
 SessionLocal: Optional[sessionmaker] = None
 Session: Optional[sessionmaker] = None
 
-if DATABASE_URL:
-    try:
-        # Create SQLAlchemy engine
-        engine = create_engine(
-            DATABASE_URL,
-            pool_pre_ping=True,      # Helps detect dead connections
-            pool_recycle=280,        # Recycles stale connections to prevent timeout
-        )
 
-        # Create a configured session factory
+def init_engine(db_url: Optional[str] = None) -> None:
+    """Initialize the global SQLAlchemy engine and session factory."""
+    global engine, SessionLocal, Session
+    url = db_url or DATABASE_URL
+    if not url:
+        logger.warning("⚠️ DATABASE_URL is not set. SQLAlchemy is disabled.")
+        engine = None
+        SessionLocal = None
+        Session = None
+        return
+    try:
+        engine = create_engine(
+            url,
+            pool_pre_ping=True,
+            pool_recycle=280,
+        )
         SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-        Session = SessionLocal  # legacy alias support
+        Session = SessionLocal
         logger.info("✅ SQLAlchemy engine initialized successfully.")
     except OperationalError as err:
         logger.error("❌ Failed to initialize SQLAlchemy engine.")
@@ -47,8 +54,10 @@ if DATABASE_URL:
         engine = None
         SessionLocal = None
         Session = None
-else:
-    logger.warning("⚠️ DATABASE_URL is not set. SQLAlchemy is disabled.")
+
+
+# Initialize engine on import for normal application startup
+init_engine()
 
 def get_db() -> Generator:
     """
