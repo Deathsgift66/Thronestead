@@ -9,6 +9,7 @@ Used as the backend executor for hourly tick engines and live battle resolutions
 """
 
 from typing import Dict, List, Optional
+from threading import Lock
 import logging
 
 from .engine import BattleTickHandler, WarState
@@ -27,40 +28,44 @@ class WarManager:
         """Initialize empty war tracking structures and tick handler."""
         self._active_wars: Dict[int, WarState] = {}
         self._war_logs: Dict[int, List[dict]] = {}
+        self._lock = Lock()
         self.tick_handler = BattleTickHandler()
 
     def start_war(self, war: WarState) -> None:
         """Register a new war for real-time tick processing."""
         logger.info(f"⚔️ Starting war {war.war_id}")
-        self._active_wars[war.war_id] = war
-        self._war_logs[war.war_id] = []
+        with self._lock:
+            self._active_wars[war.war_id] = war
+            self._war_logs[war.war_id] = []
 
     def run_combat_tick(self) -> None:
         """Advance all active wars by one tick and prune finished ones."""
         finished: List[int] = []
+        with self._lock:
+            for war_id, war in list(self._active_wars.items()):
+                logger.debug(f"🔁 Running tick {war.tick} for war {war_id}")
+                logs = self.tick_handler.run_tick(war)
+                self._war_logs[war_id].extend(logs)
 
-        for war_id, war in list(self._active_wars.items()):
-            logger.debug(f"🔁 Running tick {war.tick} for war {war_id}")
-            logs = self.tick_handler.run_tick(war)
-            self._war_logs[war_id].extend(logs)
+                if war.castle_hp <= 0:
+                    logger.info(f"🏰 War {war_id} ended — castle destroyed.")
+                    finished.append(war_id)
+                elif war.tick >= 12:
+                    logger.info(f"⏱️ War {war_id} ended — tick limit reached.")
+                    finished.append(war_id)
 
-            if war.castle_hp <= 0:
-                logger.info(f"🏰 War {war_id} ended — castle destroyed.")
-                finished.append(war_id)
-            elif war.tick >= 12:
-                logger.info(f"⏱️ War {war_id} ended — tick limit reached.")
-                finished.append(war_id)
-
-        for war_id in finished:
-            self._active_wars.pop(war_id, None)
+            for war_id in finished:
+                self._active_wars.pop(war_id, None)
 
     def get_logs(self, war_id: int) -> List[dict]:
         """Return all logs for a specific war ID."""
-        return self._war_logs.get(war_id, [])
+        with self._lock:
+            return self._war_logs.get(war_id, [])
 
     def get_war(self, war_id: int) -> Optional[WarState]:
         """Retrieve the WarState instance for a given war."""
-        return self._active_wars.get(war_id)
+        with self._lock:
+            return self._active_wars.get(war_id)
 
 
 # 🔄 Shared instance used by API routes and tick engine

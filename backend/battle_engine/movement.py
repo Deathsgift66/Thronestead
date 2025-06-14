@@ -4,7 +4,17 @@
 # Developer: Deathsgift66
 """Utility functions for tactical unit movement."""
 
-from typing import Any, Dict, List
+
+from typing import Any, Dict, List, Deque
+from collections import deque
+import random
+
+TERRAIN_BASE_MODIFIERS: Dict[str, float] = {
+    "plains": 1.0,
+    "forest": 1.5,
+    "hills": 1.5,
+    "bridge": 1.0,
+}
 
 # Database interface for persisting movement state
 from ..db import db
@@ -17,7 +27,7 @@ def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> Non
     stance = unit["stance"]
     speed = unit["speed"]
 
-    movement_path = unit.get("movement_path") or []
+    movement_path: Deque[Dict[str, int]] = deque(unit.get("movement_path") or [])
     patrol_zone = unit.get("patrol_zone") or {}
     fallback_x = unit.get("fallback_point_x")
     fallback_y = unit.get("fallback_point_y")
@@ -33,14 +43,8 @@ def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> Non
         return
 
     if stance == "advance_engage" and movement_path:
-        next_tile = movement_path[0]
-        reached = move_towards(unit, next_tile["x"], next_tile["y"], speed, terrain)
-        if reached:
-            movement_path.pop(0)
-            db.execute(
-                """UPDATE unit_movements SET movement_path = %s WHERE movement_id = %s""",
-                (movement_path, unit_id),
-            )
+        if advance_along_path(unit, movement_path, speed, terrain):
+            persist_movement_path(unit_id, movement_path)
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
         return
 
@@ -51,14 +55,8 @@ def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> Non
         return
 
     if movement_path:
-        next_tile = movement_path[0]
-        reached = move_towards(unit, next_tile["x"], next_tile["y"], speed, terrain)
-        if reached:
-            movement_path.pop(0)
-            db.execute(
-                """UPDATE unit_movements SET movement_path = %s WHERE movement_id = %s""",
-                (movement_path, unit_id),
-            )
+        if advance_along_path(unit, movement_path, speed, terrain):
+            persist_movement_path(unit_id, movement_path)
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
 
 
@@ -95,23 +93,18 @@ def move_towards(unit: Dict[str, Any], target_x: int, target_y: int, speed: int,
 def terrain_movement_modifier(terrain_type: str, unit: Dict[str, Any]) -> float:
     """Return movement penalty multiplier based on terrain and unit type."""
 
-    if terrain_type == "plains":
-        return 1.0
-    if terrain_type == "forest":
-        return 2.0 if unit.get("class") == "cavalry" else 1.5
+    base = TERRAIN_BASE_MODIFIERS.get(terrain_type)
+
+    if terrain_type == "forest" and unit.get("class") == "cavalry":
+        return 2.0
     if terrain_type == "river":
         return 1.0 if unit.get("can_build_bridge") else 999
-    if terrain_type == "hills":
-        return 1.5
-    if terrain_type == "bridge":
-        return 1.0
-    return 1.0
+
+    return base if base is not None else 1.0
 
 
 def select_patrol_target(unit: Dict[str, Any], patrol_zone: Dict[str, int]) -> Dict[str, int]:
     """Return a random tile within ``patrol_zone`` for patrolling units."""
-
-    import random
 
     x1 = patrol_zone.get("x1", 0)
     y1 = patrol_zone.get("y1", 0)
@@ -134,4 +127,31 @@ def update_unit_position(unit_id: int, x: int, y: int) -> None:
         WHERE movement_id = %s
         """,
         (x, y, unit_id),
+    )
+
+
+def advance_along_path(
+    unit: Dict[str, Any],
+    path: Deque[Dict[str, int]],
+    speed: int,
+    terrain: List[List[str]],
+) -> bool:
+    """Advance ``unit`` toward the next waypoint in ``path``."""
+
+    if not path:
+        return False
+
+    next_tile = path[0]
+    reached = move_towards(unit, next_tile["x"], next_tile["y"], speed, terrain)
+    if reached:
+        path.popleft()
+    return reached
+
+
+def persist_movement_path(unit_id: int, path: Deque[Dict[str, int]]) -> None:
+    """Persist updated movement path to the database."""
+
+    db.execute(
+        """UPDATE unit_movements SET movement_path = %s WHERE movement_id = %s""",
+        (list(path), unit_id),
     )

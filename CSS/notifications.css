@@ -69,7 +69,7 @@ body {
 .alliance-members-container p {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
-  color: #d8caa5;
+  color: var(--parchment-light);
 }
 
 /* Toolbar */
