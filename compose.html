@@ -1,104 +1,148 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: compose.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.59
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Compose | Kingmaker's Rise</title>
-  <meta name="description" content="Send messages, notices, treaties or war declarations." />
+  <meta name="description" content="Send private messages, alliance notices, treaties, or war declarations in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, message, treaty, notice, war, diplomacy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/compose.html" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Compose | Kingmaker's Rise" />
   <meta property="og:description" content="Send messages, notices, treaties or war declarations." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/compose.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Compose | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Send communications or diplomatic actions in Kingmaker's Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/compose.css" />
   <script defer type="module" src="Javascript/compose.js"></script>
+
+  <!-- Global Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <script defer type="module" src="Javascript/navDropdown.js"></script>
+  <script defer type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
+
 <body>
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html').then(r=>r.text()).then(html=>{document.getElementById('navbar-container').innerHTML=html;});
-</script>
-<header class="kr-top-banner">Compose</header>
-<main class="main-container">
-  <div class="tabs">
-    <div class="tab active" data-tab="tab-message"><img src="Assets/icon-quill.svg" alt="Message" width="24"/> Message</div>
-    <div class="tab" data-tab="tab-notice"><img src="Assets/icon-bell.svg" alt="Notice" width="24"/> Notice</div>
-    <div class="tab" data-tab="tab-treaty"><img src="Assets/icon-scroll.svg" alt="Treaty" width="24"/> Treaty Draft</div>
-    <div class="tab" data-tab="tab-war"><img src="Assets/icon-sword.svg" alt="War" width="24"/> War Declaration</div>
-  </div>
-  <section id="tab-message" class="tab-content active">
-    <form id="message-form">
-      <div class="form-group">
-        <label for="msg-recipient">Recipient</label>
-        <input id="msg-recipient" list="recipient-list" autocomplete="off" required />
-        <datalist id="recipient-list"></datalist>
-      </div>
-      <div class="form-group">
-        <label for="msg-category">Category</label>
-        <select id="msg-category">
-          <option value="player">Player</option>
-          <option value="alliance">Alliance</option>
-          <option value="trade">Trade</option>
-          <option value="battle">Battle</option>
-          <option value="system">System</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="msg-content">Message</label>
-        <textarea id="msg-content" rows="6" required></textarea>
-      </div>
-      <div class="action-buttons">
-        <button type="submit">Send</button>
-      </div>
-    </form>
-    <div id="msg-preview" class="live-preview"></div>
-  </section>
 
-  <section id="tab-notice" class="tab-content">
-    <form id="notice-form">
-      <div class="form-group"><label for="notice-title">Title</label><input id="notice-title" required></div>
-      <div class="form-group"><label for="notice-message">Message</label><textarea id="notice-message" rows="6" required></textarea></div>
-      <div class="form-group"><label for="notice-category">Category</label><input id="notice-category"></div>
-      <div class="form-group"><label for="notice-link">Link Action</label><input id="notice-link"></div>
-      <div class="action-buttons"><button type="submit">Broadcast</button></div>
-    </form>
-    <div id="notice-preview" class="live-preview"></div>
-  </section>
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html').then(r => r.text()).then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+    });
+  </script>
 
-  <section id="tab-treaty" class="tab-content">
-    <form id="treaty-form">
-      <div class="form-group"><label for="treaty-partner">Partner Alliance ID</label><input id="treaty-partner" required></div>
-      <div class="form-group"><label for="treaty-type">Treaty Type</label><input id="treaty-type" required></div>
-      <div class="action-buttons"><button type="submit">Propose</button></div>
-    </form>
-    <div id="treaty-preview" class="live-preview"></div>
-  </section>
+  <!-- Banner -->
+  <header class="kr-top-banner" aria-label="Compose Interface">
+    🖋️ Kingmaker's Rise — Compose
+  </header>
 
-  <section id="tab-war" class="tab-content">
-    <form id="war-form">
-      <div class="form-group"><label for="war-defender">Defender ID</label><input id="war-defender" required></div>
-      <div class="form-group"><label for="war-reason">Reason</label><textarea id="war-reason" rows="6" required></textarea></div>
-      <div class="action-buttons"><button type="submit">Declare</button></div>
-    </form>
-    <div id="war-preview" class="live-preview"></div>
-  </section>
-</main>
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
-</footer>
+  <!-- Main UI -->
+  <main class="main-container" aria-label="Compose Messages">
+
+    <!-- Tab Selectors -->
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="tab-message" role="tab" aria-selected="true"><img src="Assets/icon-quill.svg" alt="Message Icon" width="24" /> Message</button>
+      <button class="tab" data-tab="tab-notice" role="tab"><img src="Assets/icon-bell.svg" alt="Notice Icon" width="24" /> Notice</button>
+      <button class="tab" data-tab="tab-treaty" role="tab"><img src="Assets/icon-scroll.svg" alt="Treaty Icon" width="24" /> Treaty</button>
+      <button class="tab" data-tab="tab-war" role="tab"><img src="Assets/icon-sword.svg" alt="War Icon" width="24" /> War</button>
+    </div>
+
+    <!-- Message Tab -->
+    <section id="tab-message" class="tab-content active" role="tabpanel">
+      <form id="message-form">
+        <div class="form-group">
+          <label for="msg-recipient">Recipient</label>
+          <input id="msg-recipient" list="recipient-list" autocomplete="off" required />
+          <datalist id="recipient-list"></datalist>
+        </div>
+        <div class="form-group">
+          <label for="msg-category">Category</label>
+          <select id="msg-category">
+            <option value="player">Player</option>
+            <option value="alliance">Alliance</option>
+            <option value="trade">Trade</option>
+            <option value="battle">Battle</option>
+            <option value="system">System</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="msg-content">Message</label>
+          <textarea id="msg-content" rows="6" required></textarea>
+        </div>
+        <div class="action-buttons">
+          <button type="submit" class="btn-fantasy">📨 Send</button>
+        </div>
+      </form>
+      <div id="msg-preview" class="live-preview" aria-live="polite"></div>
+    </section>
+
+    <!-- Notice Tab -->
+    <section id="tab-notice" class="tab-content" role="tabpanel">
+      <form id="notice-form">
+        <div class="form-group"><label for="notice-title">Title</label><input id="notice-title" required /></div>
+        <div class="form-group"><label for="notice-message">Message</label><textarea id="notice-message" rows="6" required></textarea></div>
+        <div class="form-group"><label for="notice-category">Category</label><input id="notice-category" /></div>
+        <div class="form-group"><label for="notice-link">Link Action</label><input id="notice-link" /></div>
+        <div class="action-buttons"><button type="submit" class="btn-fantasy">📢 Broadcast</button></div>
+      </form>
+      <div id="notice-preview" class="live-preview" aria-live="polite"></div>
+    </section>
+
+    <!-- Treaty Tab -->
+    <section id="tab-treaty" class="tab-content" role="tabpanel">
+      <form id="treaty-form">
+        <div class="form-group"><label for="treaty-partner">Partner Alliance ID</label><input id="treaty-partner" required /></div>
+        <div class="form-group"><label for="treaty-type">Treaty Type</label><input id="treaty-type" required /></div>
+        <div class="action-buttons"><button type="submit" class="btn-fantasy">🤝 Propose</button></div>
+      </form>
+      <div id="treaty-preview" class="live-preview" aria-live="polite"></div>
+    </section>
+
+    <!-- War Tab -->
+    <section id="tab-war" class="tab-content" role="tabpanel">
+      <form id="war-form">
+        <div class="form-group"><label for="war-defender">Defender Alliance ID</label><input id="war-defender" required /></div>
+        <div class="form-group"><label for="war-reason">Reason for War</label><textarea id="war-reason" rows="6" required></textarea></div>
+        <div class="action-buttons"><button type="submit" class="btn-fantasy">⚔️ Declare War</button></div>
+      </form>
+      <div id="war-preview" class="live-preview" aria-live="polite"></div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">More</a>
+    </div>
+  </footer>
+
 </body>
+
 </html>
