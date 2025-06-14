@@ -2,7 +2,7 @@
 // File Name: signup.js
 // Version 6.14.2025.20.12
 // Developer: Deathsgift66
-import { showToast, validateEmail } from './utils.js';
+import { showToast, validateEmail, debounce } from './utils.js';
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
@@ -72,15 +72,6 @@ async function handleSignup() {
     console.error("❌ Sign-Up error:", err);
     showToast("Sign-Up failed. Please try again.");
   }
-}
-
-// ✅ Debounce helper
-function debounce(fn, delay) {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), delay);
-  };
 }
 
 // ✅ Realtime check name availability

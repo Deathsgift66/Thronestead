@@ -18,10 +18,12 @@ logger = logging.getLogger("KingmakersRise.BattleManager")
 
 
 class WarManager:
-    """
-    Orchestrates active tactical wars.
-    Tracks WarState instances and tick logs,
-    applies tick processing via BattleTickHandler.
+    """Thread-safe coordinator for active :class:`WarState` objects.
+
+    Maintains war data and logs in memory while delegating tick
+    execution to :class:`BattleTickHandler`. Access to internal
+    structures is protected by a ``threading.Lock`` so multiple
+    requests or background tasks can manipulate wars safely.
     """
 
     def __init__(self) -> None:
@@ -39,7 +41,12 @@ class WarManager:
             self._war_logs[war.war_id] = []
 
     def run_combat_tick(self) -> None:
-        """Advance all active wars by one tick and prune finished ones."""
+        """Advance all active wars by one tick and prune finished ones.
+
+        This method is intentionally lightweight so it can be invoked
+        regularly by a scheduler or HTTP endpoint. Completed wars are
+        removed from memory to keep the manager scalable.
+        """
         finished: List[int] = []
         with self._lock:
             for war_id, war in list(self._active_wars.items()):

@@ -143,20 +143,21 @@ def load_game_settings() -> None:
         logger.warning("SessionLocal not initialized. Skipping game settings load.")
         return
 
-    session = SessionLocal()
+    query = text(
+        """
+        SELECT setting_key, setting_value
+        FROM game_settings
+        WHERE is_active = true
+        """
+    )
+
     try:
-        query = text("""
-            SELECT setting_key, setting_value
-            FROM game_settings
-            WHERE is_active = true
-        """)
-        rows = session.execute(query).fetchall()
-        # Build the settings dict in one step for efficiency
-        global_game_settings.clear()
-        global_game_settings.update({key: value for key, value in rows})
+        with SessionLocal() as session:
+            rows = session.execute(query).fetchall()
+            # Build the settings dict in one step for efficiency
+            global_game_settings.clear()
+            global_game_settings.update({key: value for key, value in rows})
         logger.info("✅ Loaded %s game settings.", len(global_game_settings))
     except Exception as exc:
         logger.error("❌ Failed to load game settings.")
         logger.exception(exc)
-    finally:
-        session.close()
