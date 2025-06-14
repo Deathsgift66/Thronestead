@@ -996,7 +996,11 @@ class QuestKingdomTracking(Base):
 class KingdomTemple(Base):
     __tablename__ = "kingdom_temples"
 
-    temple_id = Column(Integer, primary_key=True)
+    temple_id = Column(
+        Integer,
+        primary_key=True,
+        server_default=text("nextval('kingdom_temples_temple_id_seq'::regclass)")
+    )
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     temple_name = Column(String)
     temple_type = Column(String)
@@ -1011,7 +1015,7 @@ class KingdomTemple(Base):
 class KingdomResources(Base):
     __tablename__ = 'kingdom_resources'
 
-    kingdom_id = Column(Integer, primary_key=True)
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
     wood = Column(BigInteger, default=0)
     stone = Column(BigInteger, default=0)
     iron_ore = Column(BigInteger, default=0)
