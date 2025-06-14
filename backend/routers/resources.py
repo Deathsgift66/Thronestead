@@ -20,20 +20,21 @@ def get_resources(
     db: Session = Depends(get_db),
 ):
     """
-    Return the authenticated player's resource ledger.
+    Return the player's kingdom resource ledger.
 
-    Supports Supabase for real-time cloud reads, with local SQL fallback.
-    Filters out technical metadata like timestamps and IDs.
+    - Attempts Supabase if available for real-time reads
+    - Falls back to SQLAlchemy if Supabase fails or is misconfigured
+    - Removes metadata fields from the returned payload
     """
-    # ✅ Attempt Supabase first
+    # Attempt Supabase fetch
     try:
         supabase = get_supabase_client()
     except RuntimeError:
-        supabase = None  # 🔁 fallback enabled if Supabase is offline
+        supabase = None
 
     if supabase:
         try:
-            # Step 1: Lookup kingdom ID via user_id
+            # Fetch the kingdom ID for the given user
             kingdom_res = (
                 supabase.table("kingdoms")
                 .select("kingdom_id")
@@ -47,7 +48,7 @@ def get_resources(
 
             kid = kingdom_data["kingdom_id"]
 
-            # Step 2: Fetch kingdom resources
+            # Fetch the kingdom's resource ledger
             res = (
                 supabase.table("kingdom_resources")
                 .select("*")
@@ -55,14 +56,13 @@ def get_resources(
                 .single()
                 .execute()
             )
-            row = getattr(res, "data", res)
-            if not row:
+            resource_row = getattr(res, "data", res)
+            if not resource_row:
                 raise HTTPException(status_code=404, detail="Resources not found")
 
-            # Step 3: Filter out metadata fields
+            # Exclude metadata fields
             resources = {
-                k: v
-                for k, v in row.items()
+                k: v for k, v in resource_row.items()
                 if k not in {"kingdom_id", "created_at", "last_updated"}
             }
 
@@ -71,7 +71,7 @@ def get_resources(
         except Exception as exc:
             raise HTTPException(status_code=500, detail="Supabase error") from exc
 
-    # 🔁 Local SQLAlchemy fallback
+    # Fallback to SQLAlchemy if Supabase fails
     user = db.query(User).filter_by(user_id=user_id).first()
     if not user or not user.kingdom_id:
         raise HTTPException(status_code=404, detail="Kingdom not found")
@@ -84,7 +84,7 @@ def get_resources(
     if not row:
         raise HTTPException(status_code=404, detail="Resources not found")
 
-    # Construct dict from ORM columns, excluding metadata
+    # Build dict from model, skipping metadata fields
     resources = {
         col.name: getattr(row, col.name)
         for col in KingdomResources.__table__.columns
