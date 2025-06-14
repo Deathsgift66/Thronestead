@@ -150,7 +150,7 @@ async function submitDeclareWar() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        target_kingdom_id: parseInt(targetId, 10),
+        target: parseInt(targetId, 10),
         war_reason: reason
       })
     });

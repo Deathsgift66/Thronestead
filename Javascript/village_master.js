@@ -128,28 +128,49 @@ function setupAmbientToggle() {
   });
 }
 
-// ✅ Mass Action: Bulk Upgrade All buildings (stub async example)
+// ✅ Mass Action: Bulk Upgrade All buildings
 async function bulkUpgradeAll() {
   showToast("Initiating bulk upgrade of all buildings...");
-  // TODO: Replace with real API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  showToast("Bulk upgrade complete!");
+  try {
+    const res = await fetch('/api/village-master/bulk_upgrade', {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Failed');
+    showToast("Bulk upgrade complete!");
+  } catch (err) {
+    console.error('❌ Bulk upgrade failed:', err);
+    showToast('Bulk upgrade failed');
+  }
 }
 
-// ✅ Mass Action: Queue Troops in all villages (stub async example)
+// ✅ Mass Action: Queue Troops in all villages
 async function bulkQueueTraining() {
   showToast("Queuing troops in all villages...");
-  // TODO: Replace with real API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  showToast("Troop training queues started!");
+  try {
+    const res = await fetch('/api/village-master/bulk_queue_training', {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Failed');
+    showToast("Troop training queues started!");
+  } catch (err) {
+    console.error('❌ Bulk queue failed:', err);
+    showToast('Bulk queue failed');
+  }
 }
 
-// ✅ Mass Action: Harvest all village resources (stub async example)
+// ✅ Mass Action: Harvest all village resources
 async function bulkHarvest() {
   showToast("Harvesting resources from all villages...");
-  // TODO: Replace with real API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  showToast("Resources harvested!");
+  try {
+    const res = await fetch('/api/village-master/bulk_harvest', {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Failed');
+    showToast("Resources harvested!");
+  } catch (err) {
+    console.error('❌ Bulk harvest failed:', err);
+    showToast('Bulk harvest failed');
+  }
 }
 
 // ✅ Filter villages by empty state toggle

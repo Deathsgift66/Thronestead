@@ -20,6 +20,7 @@ router = APIRouter(prefix="/api/wars", tags=["wars"])
 # Payload for declaring war
 class DeclarePayload(BaseModel):
     target: str
+    war_reason: str | None = None
 
 @router.post("/declare")
 def declare_war(
@@ -47,8 +48,35 @@ def declare_war(
     # Log declaration
     log_action(db, user_id, "start_war", f"Declared war on {payload.target}")
 
-    # TODO: Insert war record logic here if needed
-    return {"message": "War declared", "target": payload.target}
+    attacker_name = db.execute(
+        text("SELECT username FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    defender_name = db.execute(
+        text("SELECT username FROM users WHERE user_id = :uid"),
+        {"uid": payload.target},
+    ).fetchone()
+
+    if not defender_name:
+        raise HTTPException(status_code=404, detail="Target not found")
+
+    war = War(
+        attacker_id=user_id,
+        defender_id=payload.target,
+        attacker_name=attacker_name[0] if attacker_name else "Unknown",
+        defender_name=defender_name[0],
+        war_reason=payload.war_reason,
+        status="pending",
+        attacker_kingdom_id=kid,
+        defender_kingdom_id=get_kingdom_id(db, payload.target),
+        submitted_by=user_id,
+    )
+
+    db.add(war)
+    db.commit()
+    db.refresh(war)
+
+    return {"message": "War declared", "war_id": war.war_id}
 
 
 # Helper function to convert a War object to dict
