@@ -4,16 +4,20 @@
 // Developer: Deathsgift66
 // Kingdom Overview — Summary + Resources + Military + Quests + Modifiers
 import { escapeHTML } from './utils.js';
+import { fetchJson, authFetchJson } from './fetchJson.js';
 
 import { supabase } from './supabaseClient.js';
 import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
+// Currently authenticated user and session
 let currentUser = null;
+let currentSession = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return window.location.href = "login.html";
   currentUser = session.user;
+  currentSession = session;
 
   loadPlayerProgressionFromStorage();
   if (!window.playerProgression) await fetchAndStorePlayerProgression(currentUser.id);
@@ -36,22 +40,8 @@ async function loadOverview() {
   if (modifiersContainer) modifiersContainer.innerHTML = "<p>Loading modifiers...</p>";
 
   try {
-    const [{ data: { user } }, prog] = await Promise.all([
-      supabase.auth.getUser(),
-      Promise.resolve(window.playerProgression)
-    ]);
-
-    const { data: userData } = await supabase
-      .from('users')
-      .select('kingdom_id')
-      .eq('user_id', user.id)
-      .single();
-    const kingdomId = userData.kingdom_id;
-
-    const ovRes = await fetch('/api/overview', {
-      headers: { 'X-User-ID': currentUser.id }
-    });
-    const data = await ovRes.json();
+    const prog = window.playerProgression;
+    const data = await authFetchJson('/api/overview', currentSession);
 
     summaryContainer.innerHTML = `
       <p id="summary-region"></p>
@@ -85,28 +75,14 @@ async function loadOverview() {
     }
 
     try {
-      const vipRes = await fetch('/api/kingdom/vip_status', {
-        headers: { 'X-User-ID': currentUser.id }
-      });
-      const vipData = await vipRes.json();
+      const vipData = await authFetchJson('/api/kingdom/vip_status', currentSession);
       document.getElementById('vip-level').innerHTML = `<strong>VIP:</strong> ${vipData.vip_level || 0}`;
     } catch {
       document.getElementById('vip-level').textContent = 'VIP: --';
     }
 
     // Resources
-    resourcesContainer.innerHTML = "";
-    if (data.resources && Object.keys(data.resources).length) {
-      const ul = document.createElement("ul");
-      for (const [key, val] of Object.entries(data.resources)) {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${escapeHTML(key)}:</strong> ${val}`;
-        ul.appendChild(li);
-      }
-      resourcesContainer.appendChild(ul);
-    } else {
-      resourcesContainer.innerHTML = "<p>No resources found.</p>";
-    }
+    renderResourceList(data.resources, resourcesContainer);
 
     // Military
     militaryContainer.innerHTML = "";
@@ -122,8 +98,7 @@ async function loadOverview() {
     // Modifiers
     if (modifiersContainer) {
       try {
-        const res = await fetch('/api/progression/modifiers');
-        const mods = await res.json();
+        const mods = await fetchJson('/api/progression/modifiers');
         modifiersContainer.innerHTML = '';
         for (const [cat, vals] of Object.entries(mods)) {
           const h4 = document.createElement('h4');
@@ -152,42 +127,45 @@ async function loadOverview() {
   }
 }
 
-// Escape dangerous HTML
-
 // Live update for kingdom resources
-function subscribeToResourceUpdates() {
-  supabase.auth.getUser().then(({ data }) => {
-    const uid = data?.user?.id;
-    if (!uid) return;
-    supabase
-      .from('users')
-      .select('kingdom_id')
-      .eq('user_id', uid)
-      .single()
-      .then(({ data }) => {
-        const kid = data?.kingdom_id;
-        if (!kid) return;
-        supabase
-          .channel('kr-overview-' + kid)
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'kingdom_resources',
-            filter: `kingdom_id=eq.${kid}`
-          }, payload => {
-            if (payload.new) updateResourceUI(payload.new);
-          })
-          .subscribe();
-      });
-  });
+async function subscribeToResourceUpdates() {
+  const { data } = await supabase.auth.getUser();
+  const uid = data?.user?.id;
+  if (!uid) return;
+  const { data: kidRow } = await supabase
+    .from('users')
+    .select('kingdom_id')
+    .eq('user_id', uid)
+    .single();
+  const kid = kidRow?.kingdom_id;
+  if (!kid) return;
+  supabase
+    .channel('kr-overview-' + kid)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'kingdom_resources',
+      filter: `kingdom_id=eq.${kid}`
+    }, payload => {
+      if (payload.new) renderResourceList(payload.new, document.getElementById('overview-resources'));
+    })
+    .subscribe();
 }
 
-function updateResourceUI(row) {
-  const container = document.getElementById('overview-resources');
+/**
+ * Render a list of resources into a container.
+ * @param {Object} resources Resource name/value pairs
+ * @param {HTMLElement} container Target element
+ */
+function renderResourceList(resources, container) {
   if (!container) return;
   container.innerHTML = '';
+  if (!resources || !Object.keys(resources).length) {
+    container.innerHTML = '<p>No resources found.</p>';
+    return;
+  }
   const ul = document.createElement('ul');
-  for (const [k, v] of Object.entries(row)) {
+  for (const [k, v] of Object.entries(resources)) {
     if (k === 'kingdom_id') continue;
     const li = document.createElement('li');
     li.innerHTML = `<strong>${escapeHTML(k)}:</strong> ${v}`;
