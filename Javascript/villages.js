@@ -5,6 +5,7 @@
 // Village Management with Server-Sent Events & Real-Time Updates
 
 import { supabase } from './supabaseClient.js';
+import { escapeHTML, showToast, fragmentFrom } from './utils.js';
 
 let eventSource;
 
@@ -47,7 +48,8 @@ function renderVillages(villages) {
     listEl.innerHTML = '<li>No villages found.</li>';
     return;
   }
-  villages.forEach(v => {
+
+  const frag = fragmentFrom(villages, v => {
     const li = document.createElement('li');
     li.className = 'village-item';
     li.innerHTML = `
@@ -56,8 +58,10 @@ function renderVillages(villages) {
       <span class="village-population">${v.population.toLocaleString()} peasants</span>
       <span class="village-buildings">Buildings: ${v.building_count.toLocaleString()}</span>
     `;
-    listEl.appendChild(li);
+    return li;
   });
+
+  listEl.appendChild(frag);
 }
 
 // Setup Server-Sent Events connection for real-time updates
@@ -115,28 +119,3 @@ async function createVillage() {
   }
 }
 
-// Escape HTML entities for safety
-function escapeHTML(str) {
-  return str?.toString()
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-// Toast notification helper
-function showToast(msg) {
-  let toastEl = document.getElementById('toast');
-  if (!toastEl) {
-    toastEl = document.createElement("div");
-    toastEl.id = "toast";
-    toastEl.className = "toast-notification";
-    document.body.appendChild(toastEl);
-  }
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 3000);
-}

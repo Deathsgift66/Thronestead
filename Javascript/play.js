@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML, showToast, fragmentFrom } from './utils.js';
 
 let currentUser = null;
 let authToken = '';
@@ -125,27 +126,6 @@ function validateInputs(name, village, region) {
   return true;
 }
 
-function showToast(message) {
-  let el = document.getElementById('toast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'toast';
-    el.className = 'toast-notification';
-    document.body.appendChild(el);
-  }
-  el.textContent = message;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-function escapeHTML(str) {
-  return str?.toString()
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 async function postJSON(url, body) {
   const res = await fetch(url, {
@@ -239,7 +219,7 @@ function renderAvatarOptions() {
   if (!container || !preview) return;
 
   container.innerHTML = '';
-  avatarList.forEach(src => {
+  const frag = fragmentFrom(avatarList, src => {
     const img = document.createElement('img');
     img.src = src;
     img.alt = 'Avatar Option';
@@ -250,8 +230,9 @@ function renderAvatarOptions() {
       img.classList.add('selected');
       preview.src = src;
     });
-    container.appendChild(img);
+    return img;
   });
+  container.appendChild(frag);
 
   preview.src = selectedAvatar;
   container.querySelector('.avatar-option')?.classList.add('selected');

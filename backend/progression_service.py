@@ -1,6 +1,6 @@
 # Project Name: Kingmakers Rise©
 # File Name: progression_service.py
-# Version: 6.13.2025.19.49
+# Version: 6.14.2025.20.30
 # Developer: Deathsgift66
 
 """In-memory progression logic used primarily for tests.
@@ -115,3 +115,23 @@ def promote_knight(knight_id: str) -> int:
         new_rank = knights[knight_id]["rank"]
         logger.info("⬆️ Knight '%s' promoted to rank %s.", knight_id, new_rank)
         return new_rank
+
+# ---------------------------
+# 🔄 State Utilities
+# ---------------------------
+def get_state() -> Dict[str, object]:
+    """Return a snapshot of the current progression state."""
+    with _state_lock:
+        return {
+            "castle": castle_state.copy(),
+            "nobles": set(nobles),
+            "knights": {k: v.copy() for k, v in knights.items()},
+        }
+
+
+def reset_state() -> None:
+    """Reset all progression data. Useful for tests."""
+    with _state_lock:
+        castle_state.update({"level": 1, "xp": 0})
+        nobles.clear()
+        knights.clear()
