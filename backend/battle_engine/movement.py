@@ -4,16 +4,17 @@
 # Developer: Deathsgift66
 """Utility functions for tactical unit movement."""
 
-
 from typing import Any, Dict, List, Deque
 from collections import deque
 import random
 
+# Base movement penalties by terrain type
 TERRAIN_BASE_MODIFIERS: Dict[str, float] = {
     "plains": 1.0,
     "forest": 1.5,
     "hills": 1.5,
     "bridge": 1.0,
+    "river": 1.0,  # default when unit can build bridges
 }
 
 # Database interface for persisting movement state
@@ -21,7 +22,7 @@ from ..db import db
 
 
 def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> None:
-    """Move a unit on the 20x60 grid and persist its position."""
+    """Advance ``unit`` based on stance, path, and morale, persisting position."""
 
     unit_id = unit["movement_id"]
     stance = unit["stance"]
@@ -31,10 +32,10 @@ def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> Non
     patrol_zone = unit.get("patrol_zone") or {}
     fallback_x = unit.get("fallback_point_x")
     fallback_y = unit.get("fallback_point_y")
-    withdraw_threshold = unit.get("withdraw_threshold_percent") or 0
+    withdraw_threshold = unit.get("withdraw_threshold_percent", 0)
     morale = unit.get("morale") or 1.0
 
-    if unit.get("withdraw_threshold_percent", 0) > 0 and morale < (withdraw_threshold / 100):
+    if withdraw_threshold > 0 and morale < (withdraw_threshold / 100):
         move_towards(unit, fallback_x, fallback_y, speed, terrain)
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
         return
@@ -93,14 +94,14 @@ def move_towards(unit: Dict[str, Any], target_x: int, target_y: int, speed: int,
 def terrain_movement_modifier(terrain_type: str, unit: Dict[str, Any]) -> float:
     """Return movement penalty multiplier based on terrain and unit type."""
 
-    base = TERRAIN_BASE_MODIFIERS.get(terrain_type)
+    base = TERRAIN_BASE_MODIFIERS.get(terrain_type, 1.0)
 
     if terrain_type == "forest" and unit.get("class") == "cavalry":
         return 2.0
     if terrain_type == "river":
         return 1.0 if unit.get("can_build_bridge") else 999
 
-    return base if base is not None else 1.0
+    return base
 
 
 def select_patrol_target(unit: Dict[str, Any], patrol_zone: Dict[str, int]) -> Dict[str, int]:
@@ -111,8 +112,10 @@ def select_patrol_target(unit: Dict[str, Any], patrol_zone: Dict[str, int]) -> D
     x2 = patrol_zone.get("x2", 59)
     y2 = patrol_zone.get("y2", 19)
 
-    target_x = random.randint(min(x1, x2), max(x1, x2))
-    target_y = random.randint(min(y1, y2), max(y1, y2))
+    min_x, max_x = sorted((x1, x2))
+    min_y, max_y = sorted((y1, y2))
+    target_x = random.randint(min_x, max_x)
+    target_y = random.randint(min_y, max_y)
 
     return {"x": target_x, "y": target_y}
 
