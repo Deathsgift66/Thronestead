@@ -1,11 +1,12 @@
 // Project Name: Kingmakers Rise©
 // File Name: messages.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.15.2025.20.12
+// Developer: Codex
 // Unified Messaging System — Inbox + View + Compose + Enhancements
 
 import { supabase } from './supabaseClient.js';
-import { escapeHTML, formatDate, fragmentFrom } from './utils.js';
+import { escapeHTML, formatDate, fragmentFrom, sanitizeHTML } from './utils.js';
+import { authFetchJson } from './fetchJson.js';
 
 let currentSession;
 let allMessages = [];
@@ -75,14 +76,8 @@ async function loadInbox(session) {
   const container = document.getElementById("message-list");
   container.innerHTML = "<p>Loading messages...</p>";
   try {
-    const res = await fetch('/api/messages/inbox', {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id
-      }
-    });
-    const { messages } = await res.json();
-    allMessages = messages || [];
+    const { messages = [] } = await authFetchJson('/api/messages/inbox', session);
+    allMessages = messages;
     currentPage = 1;
     renderMessages(allMessages);
   } catch (err) {
@@ -131,14 +126,7 @@ async function loadMessageView(messageId, session) {
   container.innerHTML = "<p>Loading message...</p>";
 
   try {
-    const res = await fetch(`/api/messages/${messageId}`, {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id
-      }
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Error');
+    const data = await authFetchJson(`/api/messages/${messageId}`, session);
 
     container.innerHTML = `
       <div class="message-meta">
@@ -146,7 +134,7 @@ async function loadMessageView(messageId, session) {
         <strong>Date:</strong> ${formatDate(data.sent_at)}
       </div>
       <h3>${escapeHTML(data.subject || '')}</h3>
-      <div class="message-body">${formatIcons(marked.parse(data.message || ''))}</div>
+      <div class="message-body">${formatIcons(sanitizeHTML(marked.parse(data.message || '')))}</div>
       <div class="message-actions">
         <a href="compose.html?reply_to=${data.user_id}" class="action-btn">Reply</a>
         <button class="action-btn" id="delete-message">Delete</button>
@@ -155,9 +143,8 @@ async function loadMessageView(messageId, session) {
 
     document.getElementById("delete-message").addEventListener("click", async () => {
       if (!confirm("Are you sure you want to delete this message?")) return;
-      await fetch('/api/messages/delete', {
+      await authFetchJson('/api/messages/delete', session, {
         method: 'POST',
-        headers: getAuthHeaders(session),
         body: JSON.stringify({ message_id: messageId })
       });
       alert("Message deleted.");
@@ -193,12 +180,10 @@ function setupCompose(session) {
     if (!recipient || !content) return alert("Fill all fields.");
 
     try {
-      const res = await fetch('/api/messages/send', {
+      await authFetchJson('/api/messages/send', session, {
         method: 'POST',
-        headers: getAuthHeaders(session),
         body: JSON.stringify({ recipient, subject, content, category, sender_id: session.user.id })
       });
-      if (!res.ok) throw new Error('Send failed');
       alert("Message sent!");
       window.location.href = "messages.html";
     } catch (err) {
@@ -208,13 +193,6 @@ function setupCompose(session) {
   });
 }
 
-function getAuthHeaders(session) {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${session.access_token}`,
-    'X-User-ID': session.user.id
-  };
-}
 
 /**
  * Replace emoji codes with image icons.
@@ -253,10 +231,7 @@ function filterMessages(category) {
 }
 
 async function markAllRead() {
-  await fetch('/api/messages/mark_all_read', {
-    method: 'POST',
-    headers: getAuthHeaders(currentSession)
-  });
+  await authFetchJson('/api/messages/mark_all_read', currentSession, { method: 'POST' });
 }
 
 function changePage(delta) {
@@ -286,9 +261,8 @@ function bindSwipe(card, messageId) {
   card.addEventListener('touchend', async () => {
     if (card.classList.contains('swipe-delete')) {
       if (confirm('Delete this message?')) {
-        await fetch('/api/messages/delete', {
+        await authFetchJson('/api/messages/delete', currentSession, {
           method: 'POST',
-          headers: getAuthHeaders(currentSession),
           body: JSON.stringify({ message_id: messageId })
         });
         await loadInbox(currentSession);

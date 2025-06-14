@@ -1,7 +1,17 @@
 // Project Name: Kingmakers Rise©
 // File Name: fetchJson.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.15.2025.20.12
+// Developer: Codex
+
+/**
+ * Perform a fetch request expecting a JSON response.
+ * The request is automatically aborted after `timeoutMs` milliseconds.
+ *
+ * @param {string} url            Target URL
+ * @param {RequestInit} options   Fetch options
+ * @param {number} timeoutMs      Timeout before aborting the request
+ * @returns {Promise<any>}        Parsed JSON data
+ */
 export async function fetchJson(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -30,4 +40,25 @@ export async function fetchJson(url, options = {}, timeoutMs = 8000) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/**
+ * Convenience wrapper for authenticated API requests.
+ * Adds Authorization and X-User-ID headers using the provided session.
+ *
+ * @param {string} url            API endpoint
+ * @param {object} session        Supabase session with `access_token` and `user.id`
+ * @param {RequestInit} [options] Additional fetch options
+ * @param {number} [timeoutMs]    Optional timeout override
+ * @returns {Promise<any>}        Parsed JSON data
+ */
+export async function authFetchJson(url, session, options = {}, timeoutMs = 8000) {
+  const headers = {
+    ...(options.headers || {}),
+    'Authorization': `Bearer ${session.access_token}`,
+    'X-User-ID': session.user.id,
+    'Content-Type': 'application/json'
+  };
+
+  return fetchJson(url, { ...options, headers }, timeoutMs);
 }

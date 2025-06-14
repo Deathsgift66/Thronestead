@@ -121,3 +121,17 @@ export function fragmentFrom(items, builder) {
   return frag;
 }
 
+/**
+ * Remove dangerous elements from an HTML string.
+ * This is a lightweight sanitizer for user-generated content.
+ *
+ * @param {string} html Raw HTML
+ * @returns {string} Clean HTML safe for insertion into the DOM
+ */
+export function sanitizeHTML(html = '') {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  template.content.querySelectorAll('script, iframe').forEach(el => el.remove());
+  return template.innerHTML;
+}
+
