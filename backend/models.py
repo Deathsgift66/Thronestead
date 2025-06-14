@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    Float,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
@@ -235,6 +236,31 @@ class AllianceLoan(Base):
     tax_started_at = Column(DateTime(timezone=True))
 
 
+class AllianceVote(Base):
+    __tablename__ = "alliance_votes"
+
+    vote_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    proposal_type = Column(Text)
+    proposal_details = Column(JSONB)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    ends_at = Column(DateTime(timezone=True))
+    status = Column(Text, default="active")
+    vote_type = Column(Text)
+    target_id = Column(Integer)
+    vote_metadata = Column(Text)
+
+
+class AllianceVoteParticipant(Base):
+    __tablename__ = "alliance_vote_participants"
+
+    vote_id = Column(Integer, ForeignKey("alliance_votes.vote_id"), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), primary_key=True)
+    vote_choice = Column(Text)
+    voted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class NobleHouse(Base):
     """Represents a noble house or family."""
 
@@ -435,14 +461,14 @@ class AllianceWarCombatLog(Base):
     alliance_war_id = Column(
         Integer, ForeignKey("alliance_wars.alliance_war_id", ondelete="CASCADE")
     )
-    tick_number = Column(Integer)
-    event_type = Column(String)
+    tick_number = Column(Integer, nullable=False)
+    event_type = Column(String, nullable=False)
     attacker_unit_id = Column(Integer)
     defender_unit_id = Column(Integer)
     position_x = Column(Integer)
     position_y = Column(Integer)
     damage_dealt = Column(Integer, default=0)
-    morale_shift = Column(Integer, default=0)
+    morale_shift = Column(Float, default=0)
     notes = Column(Text)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
