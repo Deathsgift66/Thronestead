@@ -1,7 +1,8 @@
 // Project Name: Kingmakers Rise©
 // File Name: signup.js
-// Version 6.13.2025.19.49
+// Version 6.14.2025.20.12
 // Developer: Deathsgift66
+import { showToast, validateEmail } from './utils.js';
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
@@ -71,30 +72,6 @@ async function handleSignup() {
     console.error("❌ Sign-Up error:", err);
     showToast("Sign-Up failed. Please try again.");
   }
-}
-
-// ✅ Email validation
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// ✅ Password must have all character classes
-function validatePasswordComplexity(password) {
-  const sets = [
-    /[a-z]/,  // lowercase
-    /[A-Z]/,  // uppercase
-    /[0-9]/,  // digits
-    /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]/  // special
-  ];
-  return sets.every(regex => regex.test(password));
-}
-
-// ✅ Visual toast alert
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
 // ✅ Debounce helper
