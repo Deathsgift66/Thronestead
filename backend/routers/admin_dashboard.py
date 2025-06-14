@@ -13,11 +13,12 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import text, update
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..security import require_user_id
+from backend.models import Kingdom
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin_dashboard"])
@@ -150,8 +151,13 @@ def update_kingdom_field(
     if field not in allowed_fields:
         raise HTTPException(status_code=400, detail="Field not allowed for direct update.")
 
-    query = text(f"UPDATE kingdoms SET {field} = :val WHERE kingdom_id = :kid")
-    db.execute(query, {"val": value, "kid": kingdom_id})
+    column = getattr(Kingdom, field)
+    stmt = (
+        update(Kingdom)
+        .where(Kingdom.kingdom_id == kingdom_id)
+        .values({column: value})
+    )
+    db.execute(stmt)
     db.commit()
     log_action(db, admin_user_id, "Update Kingdom", f"{field} → {value} for {kingdom_id}")
     return {"status": "updated"}

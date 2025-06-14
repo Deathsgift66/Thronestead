@@ -12,8 +12,10 @@ Signature validation is expected to be handled by Supabase middleware/gateway.
 
 import base64
 import json
+import os
 from uuid import UUID
 from fastapi import Header, HTTPException
+from jose import jwt, JWTError
 
 import logging
 logger = logging.getLogger("KingmakersRise.Security")
@@ -47,12 +49,19 @@ def verify_jwt_token(
         raise HTTPException(status_code=401, detail="Authorization header missing or invalid")
 
     token = authorization.split()[1]
+
+    jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
     try:
-        payload_part = token.split(".")[1]
-        # Pad base64 string to correct length if needed
-        payload_part += "=" * ((4 - len(payload_part) % 4) % 4)
-        payload_bytes = base64.urlsafe_b64decode(payload_part.encode("utf-8"))
-        payload = json.loads(payload_bytes)
+        if jwt_secret:
+            payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+        else:
+            payload_part = token.split(".")[1]
+            payload_part += "=" * ((4 - len(payload_part) % 4) % 4)
+            payload_bytes = base64.urlsafe_b64decode(payload_part.encode("utf-8"))
+            payload = json.loads(payload_bytes)
+    except JWTError:
+        logger.warning("JWT signature verification failed.")
+        raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as exc:
         logger.error("Failed to decode JWT payload.")
         logger.exception(exc)

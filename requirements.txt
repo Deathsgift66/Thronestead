@@ -16,6 +16,9 @@ supabase==2.0.0
 # Environment configuration
 python-dotenv==1.0.1
 
+# JWT verification
+python-jose[cryptography]==3.3.0
+
 # Async and Testing Support (optional for dev)
 httpx==0.27.0
 pytest==8.2.1

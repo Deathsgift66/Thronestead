@@ -7,10 +7,18 @@
   Automatically fallback to environment overrides if present (e.g., Render env vars)
 */
 
-export const SUPABASE_URL = window.SUPABASE_URL || 'https://zzqoxgytfrbptojcwrjm.supabase.co';
+const ENV = window.ENV || {};
+
+export const SUPABASE_URL = ENV.VITE_SUPABASE_URL || window.SUPABASE_URL || '';
 
 // ❗ Public anon key — NEVER use service_role key in frontend.
-export const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE';
+export const SUPABASE_ANON_KEY = ENV.VITE_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY || '';
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error(
+    'Supabase credentials missing. Define VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in env.js',
+  );
+}
 
 // Optional: Override API base URL (for FastAPI or Express proxy)
 export const API_BASE_URL = window.API_BASE_URL || (location.port === '3000' ? 'http://localhost:8000' : '');
