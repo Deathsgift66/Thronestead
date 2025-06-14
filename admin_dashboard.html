@@ -1,9 +1,10 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: admin_dashboard.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.11.10
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,6 +13,8 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Admin Dashboard | Kingmaker's Rise</title>
+
+  <!-- Metadata -->
   <meta name="description" content="Admin Dashboard for Kingmaker's Rise — View user metrics, suspicious activity, audit logs, and system tools." />
   <meta name="keywords" content="Admin Panel, Kingmaker's Rise, Audit Logs, Flagged Users, Account Moderation, Admin Tools" />
   <meta name="robots" content="noindex, nofollow" />
@@ -30,92 +33,83 @@ Developer: Deathsgift66
   <meta name="twitter:description" content="Full-featured admin panel for account alerts, logs, moderation, and real-time tools in Kingmaker's Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/admin_dashboard.css" />
-  <script defer type="module" src="Javascript/admin_dashboard.js"></script>
-
   <!-- Global Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script>window.requireAdmin = true;</script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <link rel="stylesheet" href="CSS/admin_dashboard.css" />
+  <script>window.requireAdmin = true;</script>
+
+  <!-- Scripts -->
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/admin_dashboard.js"></script>
 </head>
 
-<body>
- <!-- Inject Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+<body data-theme="parchment">
+  <!-- Navigation -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-  <!-- Page Banner -->
+  <!-- Page Header -->
   <header class="kr-top-banner" aria-label="Admin Dashboard Banner">
     Kingmaker's Rise – Admin Dashboard
   </header>
 
-  <!-- Main Content -->
-  <main class="main-container" aria-label="Admin Tools Panel">
+  <!-- Main Dashboard -->
+  <main class="main-container" aria-label="Admin Tools Interface">
     <div class="container" id="admin-dashboard-content">
       <h2>Command your administrative forces. Monitor, manage, and moderate in real time.</h2>
 
-      <!-- Game Statistics -->
-      <section class="dashboard-stats" aria-label="Game Metrics">
+      <!-- Live Statistics -->
+      <section class="dashboard-stats" aria-label="Game Metrics Overview">
         <h3>Game Statistics</h3>
         <div class="stats">
-          <div class="stat-card">
-            <h4>Active Users</h4>
-            <p id="total-users">--</p>
-          </div>
-          <div class="stat-card">
-            <h4>Flagged Users</h4>
-            <p id="flagged-users">--</p>
-          </div>
-          <div class="stat-card">
-            <h4>Suspicious Activity</h4>
-            <p id="suspicious-activity">--</p>
-          </div>
+          <div class="stat-card"><h4>Active Users</h4><p id="total-users">--</p></div>
+          <div class="stat-card"><h4>Flagged Users</h4><p id="flagged-users">--</p></div>
+          <div class="stat-card"><h4>Suspicious Activity</h4><p id="suspicious-activity">--</p></div>
         </div>
       </section>
 
       <!-- Flagged Players -->
       <section class="flagged-users" aria-label="Flagged Players">
         <h3>Flagged Players</h3>
-        <div id="flagged-list" aria-live="polite"></div>
+        <div id="flagged-list" class="scrollable-panel" aria-live="polite"></div>
       </section>
 
-      <!-- Player Management -->
-      <section class="user-management" aria-label="Player Management Tools">
+      <!-- User Management -->
+      <section class="user-management" aria-label="Player Moderation Tools">
         <h3>User Management</h3>
         <input id="search-player" type="text" placeholder="Search by username" aria-label="Search Player" />
-        <select id="status-filter" aria-label="Filter by Status">
+        <select id="status-filter" aria-label="User Status Filter">
           <option value="">All Statuses</option>
           <option value="active">Active</option>
           <option value="banned">Banned</option>
           <option value="frozen">Frozen</option>
         </select>
         <button id="search-btn">Search</button>
-        <div id="player-list" aria-live="polite"></div>
+        <div id="player-list" class="scrollable-panel" aria-live="polite"></div>
       </section>
 
-      <!-- Event Tools -->
-      <section class="event-management" aria-label="Event Control Panel">
+      <!-- Event Management -->
+      <section class="event-management" aria-label="Global Event Tools">
         <h3>Event Tools</h3>
         <button class="action-btn" id="create-event">Create New Event</button>
       </section>
 
       <!-- System Flags -->
-      <section class="flag-management" aria-label="System Flags">
+      <section class="flag-management" aria-label="System Flag Controls">
         <h3>System Flags</h3>
-        <input id="flag-key" type="text" placeholder="Flag key" aria-label="Flag key" />
-        <select id="flag-value" aria-label="Flag value">
+        <input id="flag-key" type="text" placeholder="Flag key" aria-label="System Flag Key" />
+        <select id="flag-value" aria-label="Flag Value">
           <option value="true">True</option>
           <option value="false">False</option>
         </select>
@@ -123,40 +117,40 @@ Developer: Deathsgift66
       </section>
 
       <!-- Kingdom Tools -->
-      <section class="kingdom-management" aria-label="Kingdom Tools">
+      <section class="kingdom-management" aria-label="Kingdom Editing Tools">
         <h3>Kingdom Update</h3>
         <input id="kingdom-id" type="number" placeholder="Kingdom ID" aria-label="Kingdom ID" />
-        <input id="kingdom-field" type="text" placeholder="Field" aria-label="Field" />
-        <input id="kingdom-value" type="text" placeholder="Value" aria-label="Value" />
+        <input id="kingdom-field" type="text" placeholder="Field" aria-label="Field Name" />
+        <input id="kingdom-value" type="text" placeholder="Value" aria-label="Field Value" />
         <button id="update-kingdom-btn">Update</button>
       </section>
 
-      <!-- War Tools -->
-      <section class="war-management" aria-label="War Tools">
+      <!-- War Controls -->
+      <section class="war-management" aria-label="War Control Tools">
         <h3>War Controls</h3>
         <input id="war-id" type="number" placeholder="War ID" aria-label="War ID" />
         <button id="force-end-war-btn">Force End War</button>
         <button id="rollback-tick-btn">Rollback Combat Tick</button>
       </section>
 
-      <!-- Data Rollback -->
-      <section class="data-rollback" aria-label="Database Rollback">
+      <!-- System Rollback -->
+      <section class="data-rollback" aria-label="Emergency Rollback Tool">
         <h3>Database Rollback</h3>
-        <input id="rollback-password" type="password" placeholder="Master Password" aria-label="Master Password" />
-        <button id="rollback-btn">Trigger Rollback</button>
+        <input id="rollback-password" type="password" placeholder="Master Password" aria-label="Admin Password" />
+        <button id="rollback-btn" class="danger-btn">Trigger Rollback</button>
       </section>
 
       <!-- Audit Logs -->
-      <section class="audit-logs" aria-label="Audit Logs Section">
+      <section class="audit-logs" aria-label="System Audit Logs">
         <h3>Audit Logs</h3>
         <button id="load-logs-btn">Load Logs</button>
-        <div id="log-list" aria-live="polite"></div>
+        <div id="log-list" class="scrollable-panel" aria-live="polite"></div>
       </section>
 
-      <!-- Account Alerts -->
-      <section class="account-alerts" aria-label="Account Alerts Section">
+      <!-- Real-Time Alerts -->
+      <section class="account-alerts" aria-label="Live Account Alerts">
         <h3>Account Alerts</h3>
-        <div id="alerts" aria-live="polite"></div>
+        <div id="alerts" class="scrollable-panel" aria-live="polite"></div>
       </section>
     </div>
   </main>
@@ -172,4 +166,5 @@ Developer: Deathsgift66
     </div>
   </footer>
 </body>
+
 </html>
