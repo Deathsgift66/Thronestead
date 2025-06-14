@@ -41,7 +41,6 @@ Developer: Deathsgift66
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
 
   <!-- JavaScript -->
-  <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/apiHelper.js"></script>
   <script type="module" src="Javascript/allianceAppearance.js"></script>
@@ -53,13 +52,7 @@ Developer: Deathsgift66
 <body class="alliance-bg">
   <!-- Navbar -->
   <div id="navbar-container"></div>
-  <script>
-    fetch('/navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
-      });
-  </script>
+<script type=\"module\" src=\"Javascript/navLoader.js\"></script>
 
   <!-- Page Banner -->
   <header class="kr-top-banner" aria-label="Alliance Projects Header">

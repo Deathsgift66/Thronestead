@@ -3,7 +3,9 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 document.addEventListener("DOMContentLoaded", () => {
-  const NAVBAR_PATH = "/navbar.html";
+  // Fetch navbar relative to the current page so deployment under a subpath
+  // still resolves correctly
+  const NAVBAR_PATH = "navbar.html";
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 500;
   const target =
@@ -58,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("❌ Navbar injection failed:", err);
       target.innerHTML = `
         <div class="navbar-failover">
-          <p>⚠️ Navigation failed to load. <a href="/">Return home</a>.</p>
+          <p>⚠️ Navigation failed to load. <a href="index.html">Return home</a>.</p>
         </div>
       `;
     }
