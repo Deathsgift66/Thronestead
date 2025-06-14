@@ -166,7 +166,7 @@ function renderAchievements(achievements = []) {
     const li = document.createElement('li');
     const badge = document.createElement('span');
     badge.className = 'achievement-badge';
-    if (a.icon_url) badge.style.backgroundImage = `url(${a.icon_url})`;
+    if (a.badge_icon_url) badge.style.backgroundImage = `url(${a.badge_icon_url})`;
     li.appendChild(badge);
     li.insertAdjacentText('beforeend', ` ${a.name}`);
     list.appendChild(li);
