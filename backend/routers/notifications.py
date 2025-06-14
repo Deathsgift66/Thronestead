@@ -12,6 +12,10 @@ from datetime import datetime
 import asyncio
 import json
 
+# Streaming configuration constants
+STREAM_INTERVAL = 5  # seconds between long-poll checks
+MAX_STREAM_CYCLES = 30  # ~2.5 minutes total
+
 from ..database import get_db
 from ..security import require_user_id
 from backend.models import Notification
@@ -44,6 +48,14 @@ def _serialize_notification(row: Notification) -> dict:
     }
 
 
+def _base_query(db: Session, user_id: str):
+    """Return the base query for notifications visible to ``user_id``."""
+    return (
+        db.query(Notification)
+        .filter((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
+    )
+
+
 # ---------- Endpoints ----------
 
 @router.get("/list")
@@ -54,8 +66,7 @@ def list_notifications(
 ):
     """Return all active notifications visible to the current user."""
     query = (
-        db.query(Notification)
-        .filter((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
+        _base_query(db, user_id)
         .filter((Notification.expires_at.is_(None)) | (Notification.expires_at > func.now()))
         .order_by(Notification.is_read.asc(), Notification.created_at.desc())
     )
@@ -107,21 +118,19 @@ async def stream_notifications(
     Checks every 5 seconds for new notifications within a 2.5-minute window.
     """
     async def event_generator():
-        """Yield notifications updated since the last check in ~5s intervals."""
+        """Yield notifications updated since the last check in ``STREAM_INTERVAL`` increments."""
         last_check = datetime.utcnow()
-        for _ in range(30):  # Check 30 times over ~2.5 minutes
+        for _ in range(MAX_STREAM_CYCLES):
             rows = (
-                db.query(Notification)
-                .filter((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
+                _base_query(db, user_id)
                 .filter(Notification.last_updated > last_check)
+                .order_by(Notification.created_at)
                 .all()
             )
             last_check = datetime.utcnow()
-
-            if rows:
-                for r in rows:
-                    yield f"data: {json.dumps(_serialize_notification(r))}\n\n"
-            await asyncio.sleep(5)
+            for row in rows:
+                yield f"data: {json.dumps(_serialize_notification(row))}\n\n"
+            await asyncio.sleep(STREAM_INTERVAL)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
