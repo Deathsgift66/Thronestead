@@ -2,36 +2,42 @@
 # File Name: conflicts.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from .progression_router import get_kingdom_id
 from ..security import verify_jwt_token
-
-
+from .progression_router import get_kingdom_id
 from ..supabase_client import get_supabase_client
-
 
 router = APIRouter(prefix="/api/conflicts", tags=["conflicts"])
 
+# ----------------------------
+# Helper
+# ----------------------------
 
 def get_alliance_id(db: Session, user_id: str) -> int:
+    """Fetch alliance ID for the user."""
     row = db.execute(
         text("SELECT alliance_id FROM users WHERE user_id = :uid"),
         {"uid": user_id},
     ).fetchone()
-    if not row or row[0] is None:
+    if not row or not row[0]:
         raise HTTPException(status_code=404, detail="Alliance not found")
     return row[0]
 
+# ----------------------------
+# Endpoints
+# ----------------------------
 
 @router.get("/kingdom")
 def list_kingdom_wars(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
+    """Return list of wars involving the user's kingdom."""
     kid = get_kingdom_id(db, user_id)
     supabase = get_supabase_client()
     res = (
@@ -42,12 +48,12 @@ def list_kingdom_wars(
     )
     return {"wars": getattr(res, "data", res) or []}
 
-
 @router.get("/alliance")
 def list_alliance_wars(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
+    """Return list of wars involving the user's alliance."""
     aid = get_alliance_id(db, user_id)
     supabase = get_supabase_client()
     res = (
@@ -58,14 +64,16 @@ def list_alliance_wars(
     )
     return {"wars": getattr(res, "data", res) or []}
 
-
 @router.get("/war/{war_id}/details")
 def get_war_details(
     war_id: int,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
+    """Return full summary of a war the user is a participant in."""
+    kid = get_kingdom_id(db, user_id)
     supabase = get_supabase_client()
+
     war_res = (
         supabase.table("wars")
         .select("*")
@@ -77,7 +85,6 @@ def get_war_details(
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
 
-    kid = get_kingdom_id(db, user_id)
     if war.get("attacker_kingdom_id") != kid and war.get("defender_kingdom_id") != kid:
         raise HTTPException(status_code=403, detail="Access denied")
 
@@ -100,13 +107,12 @@ def get_war_details(
         "defender_score": score.get("defender_score"),
     }
 
-
 @router.get("/overview")
 def list_conflict_overview(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ) -> dict:
-    """Return a summary list of all wars with tactical details."""
+    """Return a detailed overview of all wars (tactical+strategic)."""
     rows = db.execute(
         text(
             """
