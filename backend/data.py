@@ -127,7 +127,10 @@ try:
     from sqlalchemy import text
     from .database import SessionLocal
 except ImportError:  # When SQLAlchemy is not available in testing
-    text = lambda q: q  # type: ignore
+    def text(q: str) -> str:  # type: ignore
+        """Fallback text() implementation when SQLAlchemy is missing."""
+        return q
+
     SessionLocal = None  # type: ignore
 
 

@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Optional
-from datetime import datetime
 
 from ..database import get_db
 from ..security import require_user_id
