@@ -1,18 +1,25 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: alliance_vault.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.13.55
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Alliance Vault | Kingmaker's Rise</title>
+
+  <!-- Metadata -->
   <meta name="description" content="Manage your Alliance Vault in Kingmaker’s Rise — deposit, withdraw, and review vault history." />
+  <meta name="keywords" content="Kingmaker's Rise, alliance vault, treasury, resources, economy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/alliance_vault.html" />
+
+  <!-- Open Graph & Twitter -->
   <meta property="og:title" content="Alliance Vault | Kingmaker's Rise" />
   <meta property="og:description" content="Manage your Alliance Vault in Kingmaker’s Rise — deposit, withdraw, and review vault history." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -20,151 +27,163 @@ Developer: Deathsgift66
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Alliance Vault | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Manage your Alliance Vault in Kingmaker’s Rise — deposit, withdraw, and review vault history." />
+  <meta name="twitter:description" content="Manage your Alliance Vault — deposit, withdraw, and audit resources." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, alliance vault, treasury, alliance resources, economy" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/alliance_vault.html" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/alliance_vault.css" />
-  <script defer type="module" src="Javascript/alliance_vault.js"></script>
-
-  <!-- Global Assets -->
+  <!-- Stylesheets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/alliance_common.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
+  <link rel="stylesheet" href="CSS/alliance_vault.css" />
+
+  <!-- Scripts -->
   <script>window.requireAlliance = true;</script>
+  <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/apiHelper.js"></script>
   <script type="module" src="Javascript/allianceAppearance.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/alliance_vault.js"></script>
 </head>
 
 <body class="alliance-bg">
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Vault Management Page Header">
+    Kingmaker's Rise — Alliance Vault
+  </header>
+
+  <!-- Main Vault Container -->
+  <main class="main-centered-container" aria-label="Alliance Vault Interface">
+    <!-- Visual Branding -->
+    <div class="alliance-visuals">
+      <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
+      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
+    </div>
+
+    <!-- Custom Section -->
+    <section class="alliance-customization-area" aria-label="Vault Board Appearance">
+      <h2>Customize Vault Board</h2>
+      <div id="custom-image-slot" aria-label="Vault Custom Image"></div>
+      <div id="custom-text-slot" aria-label="Vault Custom Text"></div>
+    </section>
+
+    <!-- Vault Management Tabs -->
+    <section class="alliance-members-container" aria-label="Vault Controls">
+      <h2>Alliance Vault</h2>
+
+      <nav class="tab-control-bar" role="tablist" aria-label="Vault Sections">
+        <button class="tab-button active" data-tab="tab-manage" role="tab" aria-selected="true">Manage Vault</button>
+        <button class="tab-button" data-tab="tab-transactions" role="tab" aria-selected="false">Transactions</button>
+      </nav>
+
+      <!-- Manage Tab -->
+      <div id="tab-manage" class="tab-section active" role="tabpanel">
+        <p>Securely manage alliance resources — deposit, withdraw, and track treasury activity.</p>
+
+        <!-- Vault Totals -->
+        <div class="vault-summary panel" aria-label="Vault Resource Totals">
+          <!-- JS Injected Resource Display -->
+        </div>
+
+        <!-- Deposit Form -->
+        <div class="panel">
+          <h3 class="panel-title">Deposit Resources</h3>
+          <div id="deposit-section" aria-label="Deposit Interface">
+            <!-- JS Injected Deposit UI -->
+          </div>
+        </div>
+
+        <!-- Withdraw Form -->
+        <div class="panel">
+          <h3 class="panel-title">Withdraw Resources</h3>
+          <div id="withdraw-section" aria-label="Withdraw Interface">
+            <!-- JS Injected Withdraw UI -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Log Tab -->
+      <div id="tab-transactions" class="tab-section" role="tabpanel" hidden>
+        <div class="panel">
+          <h3 class="panel-title">Vault Transactions</h3>
+
+          <!-- Filters -->
+          <div class="filter-toolbar" aria-label="Transaction Filters">
+            <label for="filter-action">Filter:</label>
+            <select id="filter-action">
+              <option value="">All</option>
+              <option value="deposit">Deposits</option>
+              <option value="withdraw">Withdrawals</option>
+              <option value="transfer">Transfers</option>
+              <option value="trade">Trades</option>
+            </select>
+
+            <label for="filter-days">Time:</label>
+            <select id="filter-days">
+              <option value="">All</option>
+              <option value="1">Last Day</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+
+            <button id="apply-trans-filter" class="action-btn">Apply</button>
+          </div>
+
+          <!-- Table -->
+          <div class="transaction-table custom-scrollbar">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date/Time</th>
+                  <th>Player</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Amount</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="vault-history" aria-live="polite">
+                <!-- JS Injected Transaction Logs -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div><a href="legal.html">View Legal Documents</a></div>
+  </footer>
+
+  <!-- Tab Interactivity Script -->
+  <script>
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(target).classList.add('active');
+        document.querySelectorAll('.tab-section').forEach(s => s.setAttribute('hidden', true));
+        document.getElementById(target).removeAttribute('hidden');
+      });
     });
-</script>
-
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Alliance Vault Banner">
-  Kingmaker's Rise — Alliance Vault
-</header>
-
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Alliance Vault Interface">
-  <div class="alliance-visuals">
-    <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
-    <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
-  </div>
-
-  <!-- Alliance Customization Section -->
-  <section class="alliance-customization-area" aria-label="Alliance Customization">
-    <h2>Customize Vault Board</h2>
-    <div id="custom-image-slot">
-      <!-- Custom image will load here -->
-    </div>
-    <div id="custom-text-slot">
-      <!-- Custom text will load here -->
-    </div>
-  </section>
-
-  <!-- Core Vault Panel -->
-  <section class="alliance-members-container">
-    <h2>Alliance Vault</h2>
-    <div class="tab-control-bar">
-      <button class="tab-button active" data-tab="tab-manage">Manage Vault</button>
-      <button class="tab-button" data-tab="tab-transactions">Transactions</button>
-    </div>
-
-    <div id="tab-manage" class="tab-section active">
-      <p>Securely manage alliance resources — deposit, withdraw, and track alliance treasury history.</p>
-
-    <!-- Vault Summary -->
-    <div class="vault-summary panel">
-      <!-- JS will populate vault resource totals -->
-    </div>
-
-    <!-- Deposit Section -->
-    <div class="panel">
-      <h3 class="panel-title">Deposit Resources</h3>
-      <div id="deposit-section">
-        <!-- JS will populate deposit form -->
-      </div>
-    </div>
-
-    <!-- Withdraw Section -->
-    <div class="panel">
-      <h3 class="panel-title">Withdraw Resources</h3>
-      <div id="withdraw-section">
-        <!-- JS will populate withdraw form -->
-      </div>
-    </div>
-    </div> <!-- end tab-manage -->
-
-    <div id="tab-transactions" class="tab-section">
-      <div class="panel">
-        <h3 class="panel-title">Vault Transactions</h3>
-        <div class="filter-toolbar">
-          <label for="filter-action">Filter:</label>
-          <select id="filter-action">
-            <option value="">All</option>
-            <option value="deposit">Deposits</option>
-            <option value="withdraw">Withdrawals</option>
-            <option value="transfer">Transfers</option>
-            <option value="trade">Trades</option>
-          </select>
-          <label for="filter-days">Time:</label>
-          <select id="filter-days">
-            <option value="">All</option>
-            <option value="1">Last Day</option>
-            <option value="7">Last 7 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-          </select>
-          <button id="apply-trans-filter" class="action-btn">Apply</button>
-        </div>
-        <div class="transaction-table custom-scrollbar">
-          <table>
-            <thead>
-              <tr>
-                <th>Date/Time</th>
-                <th>Player</th>
-                <th>Action</th>
-                <th>Resource</th>
-                <th>Amount</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody id="vault-history" aria-live="polite">
-              <!-- JS will populate vault transaction log -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div> <!-- end tab-transactions -->
-
-  </section>
-
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
-</footer>
-
+  </script>
 </body>
 </html>
