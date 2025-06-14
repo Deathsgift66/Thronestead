@@ -90,8 +90,12 @@ def _apply_resource_changes(
     changes: dict[str, int],
     op: Literal["+", "-"]
 ) -> None:
-    """Update kingdom resource values with a single SQL statement."""
-    set_expr: list[str] = []
+    """Apply resource increments/decrements in a single SQL statement."""
+
+    if not changes:
+        return
+
+    set_expr = []
     for res, amt in changes.items():
         validate_resource(res)
         if amt < 0:
@@ -101,7 +105,10 @@ def _apply_resource_changes(
         else:
             set_expr.append(f"{res} = {res} - :{res}")
 
-    sql = f"UPDATE kingdom_resources SET {', '.join(set_expr)} WHERE kingdom_id = :kid"
+    sql = (
+        "UPDATE kingdom_resources SET "
+        f"{', '.join(set_expr)} WHERE kingdom_id = :kid"
+    )
     db.execute(text(sql), {**changes, "kid": kingdom_id})
     db.commit()
 
@@ -116,12 +123,12 @@ def get_kingdom_resources(db: Session, kingdom_id: int) -> dict:
     row = db.execute(
         text("SELECT * FROM kingdom_resources WHERE kingdom_id = :kid"),
         {"kid": kingdom_id}
-    ).fetchone()
+    ).mappings().fetchone()
 
     if not row:
         raise HTTPException(status_code=404, detail="Kingdom resource row missing.")
 
-    return dict(row._mapping)
+    return dict(row)
 
 
 def spend_resources(db: Session, kingdom_id: int, cost: dict[str, int]) -> None:
