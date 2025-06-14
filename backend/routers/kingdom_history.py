@@ -2,8 +2,10 @@
 # File Name: kingdom_history.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from ..database import get_db
 from services.kingdom_history_service import (
@@ -14,8 +16,8 @@ from services.kingdom_history_service import (
 from .progression_router import get_kingdom_id
 from .admin_dashboard import verify_admin
 from ..security import verify_jwt_token
-from pydantic import BaseModel
 
+# API Router configuration
 router = APIRouter(prefix="/api/kingdom-history", tags=["kingdom_history"])
 
 
@@ -26,16 +28,16 @@ class HistoryPayload(BaseModel):
 
 
 @router.get("")
-
 def kingdom_history(
-    kingdom_id: int = Query(...),
-    limit: int = 50,
+    kingdom_id: int = Query(..., description="Kingdom ID to fetch history for"),
+    limit: int = Query(50, le=500, description="Limit number of records returned (max 500)"),
     db: Session = Depends(get_db),
 ):
-    """Return recent history for a kingdom."""
+    """
+    🔍 Fetch recent kingdom history events.
+    """
     records = fetch_history(db, kingdom_id, limit)
     return {"history": records}
-
 
 
 @router.post("")
@@ -44,8 +46,11 @@ def create_history(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Insert a new history event."""
+    """
+    🛠 Log a new event into the kingdom's history.
 
+    Typically used for system or developer-level activity logging.
+    """
     log_event(db, payload.kingdom_id, payload.event_type, payload.event_details)
     return {"message": "logged"}
 
@@ -56,8 +61,10 @@ def full_history(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Return all historical data for the requested kingdom."""
-
+    """
+    📜 Retrieve the full history log for a specific kingdom.
+    Only the kingdom owner or an admin can access this endpoint.
+    """
     try:
         player_kid = get_kingdom_id(db, user_id)
     except HTTPException:
@@ -70,4 +77,4 @@ def full_history(
             raise HTTPException(status_code=403, detail="Access denied")
 
     data = fetch_full_history(db, kingdom_id)
-    return data
+    return {"full_history": data}
