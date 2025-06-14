@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
@@ -627,9 +628,9 @@ class BlackMarketListing(Base):
 
     __tablename__ = "black_market_listings"
 
-    listing_id = Column(Integer, primary_key=True)
-    seller_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    item = Column(String)
+    listing_id = Column(Integer, primary_key=True, autoincrement=True)
+    seller_id = Column(UUID(as_uuid=True))
+    item = Column(Text)
     price = Column(Numeric)
     quantity = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -912,4 +913,72 @@ class KingdomResources(Base):
     spear = Column(BigInteger, default=0)
     horses = Column(BigInteger, default=0)
     pitchforks = Column(BigInteger, default=0)
+
+
+class BuildingCatalogue(Base):
+    __tablename__ = "building_catalogue"
+
+    building_id = Column(Integer, primary_key=True, autoincrement=True)
+    building_name = Column(Text, nullable=False)
+    description = Column(Text)
+    production_type = Column(Text)
+    production_rate = Column(Integer)
+    upkeep = Column(Integer)
+    modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
+    category = Column(Text)
+    build_time_seconds = Column(Integer, server_default=text("3600"))
+    prerequisites = Column(JSONB, server_default=text("'{}'::jsonb"))
+    max_level = Column(Integer, server_default=text("10"))
+    special_effects = Column(JSONB, server_default=text("'{}'::jsonb"))
+    is_unique = Column(Boolean, server_default=text("false"))
+    is_repeatable = Column(Boolean, server_default=text("true"))
+    unlock_at_level = Column(Integer, server_default=text("1"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now())
+    cost_to_produce = Column(JSONB, server_default=text("'{}'::jsonb"))
+    efficiency_multiplier = Column(Numeric, server_default=text("1.0"))
+    wood_cost = Column(Integer, server_default=text("0"))
+    stone_cost = Column(Integer, server_default=text("0"))
+    iron_cost = Column(Integer, server_default=text("0"))
+    gold_cost = Column(Integer, server_default=text("0"))
+    wood_plan_cost = Column(Integer, server_default=text("0"))
+    iron_ingot_cost = Column(Integer, server_default=text("0"))
+    requires_tech_id = Column(Integer)
+    build_time = Column(Integer, server_default=text("0"))
+    effect_description = Column(Text)
+    wood = Column(Integer, server_default=text("0"))
+    stone = Column(Integer, server_default=text("0"))
+    iron_ore = Column(Integer, server_default=text("0"))
+    gold = Column(Integer, server_default=text("0"))
+    gems = Column(Integer, server_default=text("0"))
+    food = Column(Integer, server_default=text("0"))
+    coal = Column(Integer, server_default=text("0"))
+    livestock = Column(Integer, server_default=text("0"))
+    clay = Column(Integer, server_default=text("0"))
+    flax = Column(Integer, server_default=text("0"))
+    tools = Column(Integer, server_default=text("0"))
+    wood_planks = Column(Integer, server_default=text("0"))
+    refined_stone = Column(Integer, server_default=text("0"))
+    iron_ingots = Column(Integer, server_default=text("0"))
+    charcoal = Column(Integer, server_default=text("0"))
+    leather = Column(Integer, server_default=text("0"))
+    arrows = Column(Integer, server_default=text("0"))
+    swords = Column(Integer, server_default=text("0"))
+    axes = Column(Integer, server_default=text("0"))
+    shields = Column(Integer, server_default=text("0"))
+    armour = Column(Integer, server_default=text("0"))
+    wagon = Column(Integer, server_default=text("0"))
+    siege_weapons = Column(Integer, server_default=text("0"))
+    jewelry = Column(Integer, server_default=text("0"))
+    spear = Column(Integer, server_default=text("0"))
+    horses = Column(Integer, server_default=text("0"))
+    pitchforks = Column(Integer, server_default=text("0"))
+
+
+class BuildingCost(Base):
+    __tablename__ = "building_costs"
+
+    building_id = Column(Integer, ForeignKey("building_catalogue.building_id"), primary_key=True)
+    resource_type = Column(Text, primary_key=True)
+    amount = Column(Integer, nullable=False)
 
