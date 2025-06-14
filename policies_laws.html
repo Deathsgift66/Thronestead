@@ -12,17 +12,17 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Policies & Laws | Kingmaker's Rise</title>
-  <meta name="description" content="Manage your nation's policies and laws in Kingmaker’s Rise." />
+  <meta name="description" content="Manage your kingdom’s national policies and laws in Kingmaker’s Rise." />
   <meta property="og:title" content="Policies & Laws | Kingmaker's Rise" />
-  <meta property="og:description" content="Manage your nation's policies and laws in Kingmaker’s Rise." />
+  <meta property="og:description" content="Manage your kingdom’s national policies and laws in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/policies_laws.html" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Policies & Laws | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Manage your nation's policies and laws in Kingmaker’s Rise." />
+  <meta name="twitter:description" content="Manage your kingdom’s national policies and laws in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, policies, laws, nation management, kingdom settings" />
+  <meta name="keywords" content="Kingmaker's Rise, policies, laws, strategy, nation, bonuses, governance" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/policies_laws.html" />
 
@@ -35,67 +35,69 @@ Developer: Deathsgift66
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body class="medieval-page">
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Policies & Laws Banner">
-  Kingmaker's Rise — Policies & Laws
-</header>
+  <!-- Banner -->
+  <header class="kr-top-banner" aria-label="Policies & Laws Page Banner">
+    Kingmaker's Rise — Policies & Laws
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Policies & Laws Interface">
+  <!-- Main Interface -->
+  <main class="main-centered-container" aria-label="Policy and Law Interface">
 
-  <!-- Core Policies & Laws Panel -->
-  <section class="alliance-members-container">
-    <h2>Policies & Laws</h2>
-    <p>Set your kingdom's national policies and active laws to shape your strategy and bonuses.</p>
+    <section class="alliance-members-container" role="region" aria-labelledby="policy-law-heading">
+      <h2 id="policy-law-heading">Policies & Laws</h2>
+      <p>Shape your kingdom's direction with powerful national policies and laws. Adjust your nation’s bonuses, unlock new strategies, and respond to the needs of your people.</p>
 
-    <!-- Policies Section -->
-    <div class="policy-options">
-      <!-- JS will populate policy cards -->
+      <!-- Policies Selection Area -->
+      <section class="policy-options" role="region" aria-labelledby="policy-section-title">
+        <h3 id="policy-section-title">National Policies</h3>
+        <!-- JS will dynamically populate policy cards here -->
+      </section>
+
+      <!-- Laws Selection Area -->
+      <section class="law-options" role="region" aria-labelledby="law-section-title">
+        <h3 id="law-section-title">Enacted Laws</h3>
+        <!-- JS will dynamically populate law cards here -->
+      </section>
+
+      <!-- Summary Section -->
+      <section class="summary-preview" role="region" aria-labelledby="summary-title">
+        <h3 id="summary-title">Current Governance Summary</h3>
+        <div id="summary-content">
+          <!-- JS will populate summary of active policy/law effects -->
+        </div>
+      </section>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="legal.html">View Legal Documents</a>
     </div>
-
-    <!-- Laws Section -->
-    <div class="law-options">
-      <!-- JS will populate law cards -->
-    </div>
-
-    <!-- Summary Section -->
-    <div class="summary-preview">
-      <h3>Current Summary</h3>
-      <div id="summary-content">
-        <!-- JS will populate -->
-      </div>
-    </div>
-
-  </section>
-
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
-</footer>
+  </footer>
 
 </body>
+
 </html>
