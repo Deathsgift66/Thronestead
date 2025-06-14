@@ -4,13 +4,13 @@ File Name: seasonal_effects.html
 Version 6.13.2025.19.49
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  
   <title>Seasonal Effects | Kingmaker's Rise</title>
   <meta name="description" content="View and manage seasonal effects impacting your kingdom — adapt strategy and leverage advantages." />
   <meta property="og:title" content="Seasonal Effects | Kingmaker's Rise" />
@@ -25,6 +25,7 @@ Developer: Deathsgift66
   <meta name="keywords" content="Kingmaker's Rise, seasonal effects, world events, strategy, kingdom impact" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/seasonal_effects.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/seasonal_effects.css" />
@@ -34,15 +35,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
-<body>
+<body class="medieval-page">
+
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -56,87 +58,66 @@ Developer: Deathsgift66
   Kingmaker's Rise — Seasonal Effects
 </header>
 
-<!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="Seasonal Effects Interface">
+<!-- Main Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Seasonal Effects Dashboard">
 
-
-  <!-- Core Seasonal Effects Panel -->
   <section class="alliance-members-container">
 
-    <!-- Seasonal Banner -->
-    <div class="seasonal-banner">
-      <h2>Current Seasonal Effects</h2>
+    <div class="seasonal-banner" role="region" aria-labelledby="seasonal-intro-title">
+      <h2 id="seasonal-intro-title">Current Seasonal Effects</h2>
       <p>Adapt your strategy based on dynamic seasonal changes in the world of Kingmaker’s Rise.</p>
     </div>
 
-    <!-- Active Modifiers -->
-    <div class="card">
-      <h3>Active Modifiers</h3>
-      <div id="active-modifiers" class="custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
+    <!-- Each seasonal card represents a data section and is dynamically updated -->
+    <div class="card" role="region" aria-labelledby="modifiers-title">
+      <h3 id="modifiers-title">Active Modifiers</h3>
+      <div id="active-modifiers" class="custom-scrollbar"></div>
     </div>
 
-    <!-- Season Timer -->
-    <div class="card">
-      <h3>Season Timer</h3>
-      <div id="season-timer" class="custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
+    <div class="card" role="region" aria-labelledby="season-timer-title">
+      <h3 id="season-timer-title">Season Timer</h3>
+      <div id="season-timer" class="custom-scrollbar"></div>
     </div>
 
-    <!-- Forecast Wheel -->
-    <div class="card">
-      <h3>Forecast Wheel</h3>
-      <div id="forecast-wheel" class="custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
+    <div class="card" role="region" aria-labelledby="forecast-wheel-title">
+      <h3 id="forecast-wheel-title">Forecast Wheel</h3>
+      <div id="forecast-wheel" class="custom-scrollbar"></div>
     </div>
 
-    <!-- Lore Scroll -->
-    <div class="card">
-      <h3>Lore Scroll</h3>
-      <div id="lore-scroll" class="custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
+    <div class="card" role="region" aria-labelledby="lore-scroll-title">
+      <h3 id="lore-scroll-title">Lore Scroll</h3>
+      <div id="lore-scroll" class="custom-scrollbar"></div>
     </div>
 
-    <!-- Kingdom Impact -->
-    <div class="card">
-      <h3>Kingdom Impact</h3>
-      <div id="kingdom-impact" class="custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
+    <div class="card" role="region" aria-labelledby="kingdom-impact-title">
+      <h3 id="kingdom-impact-title">Kingdom Impact</h3>
+      <div id="kingdom-impact" class="custom-scrollbar"></div>
     </div>
 
-    <!-- Market Projections -->
-    <div class="card">
-      <h3>Market Projections</h3>
-      <div id="market-projections" class="custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
+    <div class="card" role="region" aria-labelledby="market-projections-title">
+      <h3 id="market-projections-title">Market Projections</h3>
+      <div id="market-projections" class="custom-scrollbar"></div>
     </div>
 
   </section>
-
 </main>
 
-<!-- Toast -->
-  <div id="toast" class="toast-notification"></div>
+<!-- Toast for real-time updates -->
+<div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
 
-  <div id="forecast-modal" class="modal-overlay hidden">
-    <div class="modal-content">
-      <div id="forecast-modal-body"></div>
-      <button class="btn-fantasy" id="close-forecast-modal">Close</button>
-    </div>
+<!-- Forecast Modal -->
+<div id="forecast-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="forecast-modal-label">
+  <div class="modal-content">
+    <h4 id="forecast-modal-label">Forecast Details</h4>
+    <div id="forecast-modal-body"></div>
+    <button class="btn-fantasy" id="close-forecast-modal">Close</button>
   </div>
+</div>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
