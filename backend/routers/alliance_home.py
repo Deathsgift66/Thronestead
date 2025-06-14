@@ -1,14 +1,15 @@
 # Project Name: Kingmakers Rise©
 # File Name: alliance_home.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ..database import get_db
-from backend.models import User, Alliance, AllianceMember, AllianceVault
 from ..security import require_user_id
+from backend.models import User, Alliance, AllianceMember, AllianceVault
 
 router = APIRouter(prefix="/api/alliance-home", tags=["alliance_home"])
 
@@ -18,7 +19,13 @@ def alliance_details(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """Return aggregated alliance details for the current user."""
+    """
+    Return full summary data for the user's current alliance.
+    Includes: core info, members, vault, projects, quests, wars, treaties, achievements, and activity logs.
+    """
+    # --------------------
+    # 🔐 Validate User & Alliance
+    # --------------------
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user or not user.alliance_id:
         raise HTTPException(status_code=404, detail="Alliance not found")
@@ -26,9 +33,11 @@ def alliance_details(
     aid = user.alliance_id
     alliance = db.query(Alliance).filter(Alliance.alliance_id == aid).first()
     if not alliance:
-        raise HTTPException(status_code=404, detail="Alliance not found")
+        raise HTTPException(status_code=404, detail="Alliance data missing")
 
-    # Members list with usernames
+    # --------------------
+    # 🧑 Members
+    # --------------------
     member_rows = (
         db.query(AllianceMember, User.username, User.profile_picture_url)
         .join(User, AllianceMember.user_id == User.user_id)
@@ -49,25 +58,27 @@ def alliance_details(
         for m, username, avatar in member_rows
     ]
 
-    # Vault resources
+    # --------------------
+    # 💰 Vault
+    # --------------------
     vault = db.query(AllianceVault).filter(AllianceVault.alliance_id == aid).first()
-    vault_data = {}
-    if vault:
-        for col in vault.__table__.columns.keys():
-            if col != "alliance_id":
-                vault_data[col] = getattr(vault, col)
+    vault_data = {
+        k: getattr(vault, k)
+        for k in vault.__table__.columns.keys()
+        if k != "alliance_id"
+    } if vault else {}
 
-    # Active projects
-    project_rows = db.execute(
-        text(
-            """
+    # --------------------
+    # 🏗️ Active Projects
+    # --------------------
+    projects = db.execute(
+        text("""
             SELECT p.project_id, c.name, p.project_key, p.progress, p.build_state
             FROM projects_alliance_in_progress p
             JOIN project_alliance_catalogue c ON p.project_key = c.project_key
             WHERE p.alliance_id = :aid
             ORDER BY p.start_time DESC
-            """
-        ),
+        """),
         {"aid": aid},
     ).fetchall()
     projects = [
@@ -78,20 +89,20 @@ def alliance_details(
             "progress": r[3],
             "build_state": r[4],
         }
-        for r in project_rows
+        for r in projects
     ]
 
-    # Active quests
-    quest_rows = db.execute(
-        text(
-            """
+    # --------------------
+    # 📘 Active Quests
+    # --------------------
+    quests = db.execute(
+        text("""
             SELECT t.quest_code, q.name, q.description, t.status, t.progress, t.ends_at
             FROM quest_alliance_tracking t
             JOIN quest_alliance_catalogue q ON t.quest_code = q.quest_code
             WHERE t.alliance_id = :aid
             ORDER BY t.started_at DESC
-            """
-        ),
+        """),
         {"aid": aid},
     ).fetchall()
     quests = [
@@ -103,21 +114,21 @@ def alliance_details(
             "progress": r[4],
             "ends_at": r[5].isoformat() if r[5] else None,
         }
-        for r in quest_rows
+        for r in quests
     ]
 
-    # Active wars and scores
-    war_rows = db.execute(
-        text(
-            """
+    # --------------------
+    # ⚔️ Active Wars
+    # --------------------
+    wars = db.execute(
+        text("""
             SELECT w.alliance_war_id, w.attacker_alliance_id, w.defender_alliance_id,
                    w.war_status, s.attacker_score, s.defender_score, s.victor
             FROM alliance_wars w
             LEFT JOIN alliance_war_scores s ON w.alliance_war_id = s.alliance_war_id
             WHERE w.attacker_alliance_id = :aid OR w.defender_alliance_id = :aid
             ORDER BY w.start_date DESC
-            """
-        ),
+        """),
         {"aid": aid},
     ).fetchall()
     wars = [
@@ -130,19 +141,19 @@ def alliance_details(
             "defender_score": r[5],
             "victor": r[6],
         }
-        for r in war_rows
+        for r in wars
     ]
 
-    # Treaties
-    treaty_rows = db.execute(
-        text(
-            """
+    # --------------------
+    # 📜 Treaties
+    # --------------------
+    treaties = db.execute(
+        text("""
             SELECT treaty_id, treaty_type, partner_alliance_id, status, signed_at
             FROM alliance_treaties
             WHERE alliance_id = :aid OR partner_alliance_id = :aid
             ORDER BY signed_at DESC
-            """
-        ),
+        """),
         {"aid": aid},
     ).fetchall()
     treaties = [
@@ -153,20 +164,20 @@ def alliance_details(
             "status": r[3],
             "signed_at": r[4].isoformat() if r[4] else None,
         }
-        for r in treaty_rows
+        for r in treaties
     ]
 
-    # Achievements
-    achievement_rows = db.execute(
-        text(
-            """
+    # --------------------
+    # 🏅 Achievements
+    # --------------------
+    achievements = db.execute(
+        text("""
             SELECT a.achievement_code, c.name, c.description, c.icon_url, a.awarded_at
             FROM alliance_achievements a
             JOIN alliance_achievement_catalogue c ON a.achievement_code = c.achievement_code
             WHERE a.alliance_id = :aid
             ORDER BY a.awarded_at DESC
-            """
-        ),
+        """),
         {"aid": aid},
     ).fetchall()
     achievements = [
@@ -177,21 +188,21 @@ def alliance_details(
             "icon_url": r[3],
             "awarded_at": r[4].isoformat() if r[4] else None,
         }
-        for r in achievement_rows
+        for r in achievements
     ]
 
-    # Recent activity log
-    activity_rows = db.execute(
-        text(
-            """
+    # --------------------
+    # 📅 Recent Activity
+    # --------------------
+    activity = db.execute(
+        text("""
             SELECT l.description, u.username, l.created_at
             FROM alliance_activity_log l
             JOIN users u ON l.user_id = u.user_id
             WHERE l.alliance_id = :aid
             ORDER BY l.created_at DESC
             LIMIT 10
-            """
-        ),
+        """),
         {"aid": aid},
     ).fetchall()
     activity = [
@@ -200,9 +211,12 @@ def alliance_details(
             "username": r[1],
             "created_at": r[2].isoformat() if r[2] else None,
         }
-        for r in activity_rows
+        for r in activity
     ]
 
+    # --------------------
+    # 🏰 Final Alliance Info
+    # --------------------
     alliance_info = {
         "alliance_id": alliance.alliance_id,
         "name": alliance.name,
