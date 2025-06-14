@@ -24,6 +24,7 @@ class WarManager:
     """
 
     def __init__(self) -> None:
+        """Initialize empty war tracking structures and tick handler."""
         self._active_wars: Dict[int, WarState] = {}
         self._war_logs: Dict[int, List[dict]] = {}
         self.tick_handler = BattleTickHandler()
@@ -35,13 +36,7 @@ class WarManager:
         self._war_logs[war.war_id] = []
 
     def run_combat_tick(self) -> None:
-        """
-        Process a battle tick for every active war.
-
-        Ends wars when:
-        - Castle HP reaches 0
-        - Max tick count (12) is exceeded
-        """
+        """Advance all active wars by one tick and prune finished ones."""
         finished: List[int] = []
 
         for war_id, war in list(self._active_wars.items()):

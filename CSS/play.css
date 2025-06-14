@@ -59,18 +59,6 @@ body {
   margin-bottom: 2rem;
 }
 
-.panel {
-  background: var(--stone-panel);
-  padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px var(--shadow);
-}
-
-.panel-title {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  margin-bottom: 1rem;
-}
 
 .dashboard-panels {
   display: grid;

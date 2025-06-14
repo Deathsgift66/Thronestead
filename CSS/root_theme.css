@@ -156,6 +156,13 @@ Developer: Deathsgift66
   color: var(--ink);
 }
 
+/* Title styling for panels reused across pages */
+.panel-title {
+  font-family: var(--font-header);
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
 /* -----------------------------------------------
    Button Base Class
 ------------------------------------------------ */

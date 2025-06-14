@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from pydantic import BaseModel
 from datetime import datetime
+import os
 import asyncio
 import json
 
 # Streaming configuration constants
-STREAM_INTERVAL = 5  # seconds between long-poll checks
-MAX_STREAM_CYCLES = 30  # ~2.5 minutes total
+# Allow tuning via environment variables for easier production scaling
+STREAM_INTERVAL = int(os.getenv("NOTIFICATION_STREAM_INTERVAL", "5"))
+MAX_STREAM_CYCLES = int(os.getenv("NOTIFICATION_MAX_CYCLES", "30"))
 
 from ..database import get_db
 from ..security import require_user_id
@@ -25,11 +27,13 @@ router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 # ---------- Models ----------
 
+
 class NotificationAction(BaseModel):
     notification_id: str | None = None
 
 
 # ---------- Internal Utilities ----------
+
 
 def _serialize_notification(row: Notification) -> dict:
     """Convert Notification ORM object to JSON-serializable dict."""
@@ -50,13 +54,13 @@ def _serialize_notification(row: Notification) -> dict:
 
 def _base_query(db: Session, user_id: str):
     """Return the base query for notifications visible to ``user_id``."""
-    return (
-        db.query(Notification)
-        .filter((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
+    return db.query(Notification).filter(
+        (Notification.user_id == user_id) | (Notification.user_id.is_(None))
     )
 
 
 # ---------- Endpoints ----------
+
 
 @router.get("/list")
 def list_notifications(
@@ -67,13 +71,17 @@ def list_notifications(
     """Return all active notifications visible to the current user."""
     query = (
         _base_query(db, user_id)
-        .filter((Notification.expires_at.is_(None)) | (Notification.expires_at > func.now()))
+        .filter(
+            (Notification.expires_at.is_(None)) | (Notification.expires_at > func.now())
+        )
         .order_by(Notification.is_read.asc(), Notification.created_at.desc())
     )
 
     if limit is not None:
         if limit <= 0 or limit > 100:
-            raise HTTPException(status_code=400, detail="Limit must be between 1 and 100")
+            raise HTTPException(
+                status_code=400, detail="Limit must be between 1 and 100"
+            )
         query = query.limit(limit)
 
     rows = query.all()
@@ -99,7 +107,10 @@ def delete_notification(
     """Delete a specific notification for the user."""
     deleted = (
         db.query(Notification)
-        .filter(Notification.notification_id == notification_id, Notification.user_id == user_id)
+        .filter(
+            Notification.notification_id == notification_id,
+            Notification.user_id == user_id,
+        )
         .delete()
     )
     db.commit()
@@ -113,14 +124,18 @@ async def stream_notifications(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    """Stream new notifications using long polling (SSE style).
+
+    Polls every ``STREAM_INTERVAL`` seconds for up to ``MAX_STREAM_CYCLES``
+    iterations. Both values can be tuned via environment variables to better
+    support real-time traffic.
     """
-    Stream new notifications using long-polling (SSE-style).
-    Checks every 5 seconds for new notifications within a 2.5-minute window.
-    """
+
     async def event_generator():
-        """Yield notifications updated since the last check in ``STREAM_INTERVAL`` increments."""
+        """Yield new notifications or periodic keep-alive pings."""
         last_check = datetime.utcnow()
-        for _ in range(MAX_STREAM_CYCLES):
+        cycles = 0
+        while cycles < MAX_STREAM_CYCLES:
             rows = (
                 _base_query(db, user_id)
                 .filter(Notification.last_updated > last_check)
@@ -128,8 +143,13 @@ async def stream_notifications(
                 .all()
             )
             last_check = datetime.utcnow()
-            for row in rows:
-                yield f"data: {json.dumps(_serialize_notification(row))}\n\n"
+            if rows:
+                for row in rows:
+                    yield f"data: {json.dumps(_serialize_notification(row))}\n\n"
+            else:
+                # Send SSE ping when no updates to keep connection alive
+                yield ": ping\n\n"
+            cycles += 1
             await asyncio.sleep(STREAM_INTERVAL)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
@@ -144,8 +164,10 @@ def mark_read(
     """Mark a specific notification as read."""
     notif = (
         db.query(Notification)
-        .filter(Notification.notification_id == payload.notification_id,
-                Notification.user_id == user_id)
+        .filter(
+            Notification.notification_id == payload.notification_id,
+            Notification.user_id == user_id,
+        )
         .first()
     )
     if not notif:
@@ -185,7 +207,9 @@ def cleanup_expired(db: Session = Depends(get_db)):
     """Clean up expired notifications (admin/cron endpoint)."""
     deleted = (
         db.query(Notification)
-        .filter(Notification.expires_at.is_not(None), Notification.expires_at < func.now())
+        .filter(
+            Notification.expires_at.is_not(None), Notification.expires_at < func.now()
+        )
         .delete()
     )
     db.commit()
