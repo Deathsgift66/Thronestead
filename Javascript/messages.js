@@ -8,6 +8,9 @@ import { supabase } from './supabaseClient.js';
 
 let currentSession;
 let allMessages = [];
+let currentList = [];
+let currentPage = 1;
+const pageSize = 20;
 
 // ✅ DOM Ready
 
@@ -53,11 +56,18 @@ function setupInboxControls() {
   const search = document.getElementById('message-search');
   if (search) search.addEventListener('input', () => {
     const query = search.value.toLowerCase();
-    renderMessages(allMessages.filter(m =>
+    const filtered = allMessages.filter(m =>
       m.subject?.toLowerCase().includes(query) ||
       m.message?.toLowerCase().includes(query)
-    ));
+    );
+    currentPage = 1;
+    renderMessages(filtered);
   });
+
+  const prev = document.getElementById('prev-page');
+  const next = document.getElementById('next-page');
+  if (prev) prev.addEventListener('click', () => changePage(-1));
+  if (next) next.addEventListener('click', () => changePage(1));
 }
 
 async function loadInbox(session) {
@@ -72,6 +82,7 @@ async function loadInbox(session) {
     });
     const { messages } = await res.json();
     allMessages = messages || [];
+    currentPage = 1;
     renderMessages(allMessages);
   } catch (err) {
     console.error("❌ Error loading inbox:", err);
@@ -80,14 +91,19 @@ async function loadInbox(session) {
 }
 
 function renderMessages(list) {
+  currentList = list;
   const container = document.getElementById('message-list');
   container.innerHTML = '';
+  const totalPages = Math.ceil(list.length / pageSize);
+  if (currentPage > totalPages) currentPage = totalPages || 1;
   document.getElementById('message-count').textContent = `${list.length} Messages`;
   if (!list.length) {
     container.innerHTML = '<p>No messages found.</p>';
+    updatePagination(totalPages);
     return;
   }
-  list.slice(0, 100).forEach(msg => { // ✅ Pagination placeholder
+  const start = (currentPage - 1) * pageSize;
+  list.slice(start, start + pageSize).forEach(msg => {
     const card = document.createElement('div');
     card.classList.add('message-card');
     if (!msg.is_read) card.classList.add('unread');
@@ -102,6 +118,7 @@ function renderMessages(list) {
     bindSwipe(card, msg.message_id);
     container.appendChild(card);
   });
+  updatePagination(totalPages);
 }
 
 async function loadMessageView(messageId, session) {
@@ -229,6 +246,7 @@ function filterMessages(category) {
     (category === 'all' || m.category === category) &&
     (m.subject?.toLowerCase().includes(searchVal) || m.message?.toLowerCase().includes(searchVal))
   );
+  currentPage = 1;
   renderMessages(filtered);
 }
 
@@ -237,6 +255,22 @@ async function markAllRead() {
     method: 'POST',
     headers: getAuthHeaders(currentSession)
   });
+}
+
+function changePage(delta) {
+  const total = Math.ceil(currentList.length / pageSize);
+  currentPage = Math.min(Math.max(1, currentPage + delta), total || 1);
+  renderMessages(currentList);
+}
+
+function updatePagination(totalPages) {
+  const info = document.getElementById('page-info');
+  const prev = document.getElementById('prev-page');
+  const next = document.getElementById('next-page');
+  if (!info || !prev || !next) return;
+  info.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+  prev.disabled = currentPage <= 1;
+  next.disabled = currentPage >= totalPages;
 }
 
 function bindSwipe(card, messageId) {
