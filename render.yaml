@@ -1,7 +1,23 @@
+# Project Name: Kingmaker’s Rise©
+# File Name: render.yaml
+# Description: Backend deployment config for Render
+# Version: 6.13.2025.19.49
+# Developer: Deathsgift66
+
 services:
   - type: web
     name: kingmakers-rise-backend
     runtime: python
-    plan: free
+    plan: free  # change to 'starter' or higher for production if needed
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kingmakers-rise-db
+          property: connectionString
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+    autoDeploy: true
