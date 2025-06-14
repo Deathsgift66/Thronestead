@@ -1,17 +1,26 @@
 # Project Name: Kingmakers Rise©
 # File Name: vip_status_service.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Enhanced)
 # Developer: Deathsgift66
+# Description: Handles VIP tier tracking, validation, and updates per user.
+
+from __future__ import annotations
+from datetime import datetime
 import logging
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover - SQLAlchemy optional
+    from sqlalchemy.exc import SQLAlchemyError
+except ImportError:  # pragma: no cover - SQLAlchemy fallback
     text = lambda q: q  # type: ignore
     Session = object  # type: ignore
-from datetime import datetime
 
+logger = logging.getLogger(__name__)
+
+# ------------------------------------------------------------
+# VIP Services
+# ------------------------------------------------------------
 
 def upsert_vip_status(
     db: Session,
@@ -20,45 +29,98 @@ def upsert_vip_status(
     expires_at: datetime | None = None,
     founder: bool = False,
 ) -> None:
-    """Insert or update a user's VIP status."""
-    db.execute(
-        text(
-            """
-            INSERT INTO kingdom_vip_status (user_id, vip_level, expires_at, founder)
-            VALUES (:uid, :lvl, :exp, :founder)
-            ON CONFLICT (user_id)
-            DO UPDATE SET vip_level = EXCLUDED.vip_level,
-                          expires_at = EXCLUDED.expires_at,
-                          founder = EXCLUDED.founder
-            """
-        ),
-        {"uid": user_id, "lvl": vip_level, "exp": expires_at, "founder": founder},
-    )
-    db.commit()
+    """
+    Insert or update VIP tier status for a user.
+
+    Args:
+        db: Active SQLAlchemy session
+        user_id: User UUID
+        vip_level: VIP tier (e.g., 1 or 2)
+        expires_at: Optional expiration datetime
+        founder: True for permanent founder-level VIP
+
+    Returns:
+        None
+    """
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO kingdom_vip_status (user_id, vip_level, expires_at, founder)
+                VALUES (:uid, :lvl, :exp, :founder)
+                ON CONFLICT (user_id)
+                DO UPDATE SET vip_level = EXCLUDED.vip_level,
+                              expires_at = EXCLUDED.expires_at,
+                              founder = EXCLUDED.founder
+                """
+            ),
+            {
+                "uid": user_id,
+                "lvl": vip_level,
+                "exp": expires_at,
+                "founder": founder,
+            },
+        )
+        db.commit()
+        logger.info("Upserted VIP level %s for user %s", vip_level, user_id)
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception("Failed to upsert VIP status for user_id=%s", user_id)
+        raise
 
 
 def get_vip_status(db: Session, user_id: str) -> dict | None:
-    """Return VIP status record for the given user."""
-    row = db.execute(
-        text(
-            "SELECT vip_level, expires_at, founder "
-            "FROM kingdom_vip_status WHERE user_id = :uid"
-        ),
-        {"uid": user_id},
-    ).fetchone()
-    if not row:
+    """
+    Retrieve VIP status info for a user.
+
+    Args:
+        db: SQLAlchemy session
+        user_id: UUID of user
+
+    Returns:
+        dict | None: VIP details (vip_level, expires_at, founder)
+    """
+    try:
+        row = db.execute(
+            text(
+                "SELECT vip_level, expires_at, founder "
+                "FROM kingdom_vip_status WHERE user_id = :uid"
+            ),
+            {"uid": user_id},
+        ).fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "vip_level": row[0],
+            "expires_at": row[1],
+            "founder": row[2],
+        }
+
+    except SQLAlchemyError as e:
+        logger.warning("Failed to fetch VIP status for user_id=%s", user_id)
         return None
-    return {"vip_level": row[0], "expires_at": row[1], "founder": row[2]}
 
 
 def is_vip_active(record: dict | None) -> bool:
-    """Return True if the provided VIP record represents an active VIP state."""
+    """
+    Determine if a user's VIP status is currently active.
+
+    Args:
+        record: VIP record from `get_vip_status`
+
+    Returns:
+        bool: True if active
+    """
     if not record:
         return False
+
     if record.get("founder"):
         return True
-    exp = record.get("expires_at")
-    level = record.get("vip_level", 0)
-    if level and exp and exp > datetime.utcnow():
-        return True
-    return False
+
+    vip_level = record.get("vip_level", 0)
+    expires = record.get("expires_at")
+
+    return bool(vip_level and expires and expires > datetime.utcnow())
