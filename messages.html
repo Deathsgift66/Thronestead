@@ -13,18 +13,22 @@ Developer: Deathsgift66
 
   <title>Messages | Kingmaker's Rise</title>
   <meta name="description" content="View and manage your messages in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, messages, inbox, communication, mail" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/messages.html" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Messages | Kingmaker's Rise" />
   <meta property="og:description" content="View and manage your messages in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/messages.html" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Messages | Kingmaker's Rise" />
   <meta name="twitter:description" content="View and manage your messages in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, messages, inbox, communication, mail" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/messages.html" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/messages.css" />
@@ -35,16 +39,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<nav id="navbar-container" role="navigation" aria-label="Main Navigation"></nav>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -53,21 +57,23 @@ Developer: Deathsgift66
     });
 </script>
 
-<!-- Page Banner -->
+<!-- Banner -->
 <header class="kr-top-banner" aria-label="Messages Banner">
   Kingmaker's Rise — Messages
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Content -->
 <main class="main-centered-container" aria-label="Messages Interface">
 
-  <!-- Core Messages Panel -->
-  <section class="alliance-members-container">
-    <h2>Inbox</h2>
+  <!-- Inbox Panel -->
+  <section class="alliance-members-container" role="region" aria-labelledby="inbox-heading">
+    <h2 id="inbox-heading">Inbox</h2>
     <p>View your messages and communicate with other players.</p>
 
+    <!-- Toolbar -->
     <div class="message-toolbar">
-      <select id="category-filter">
+      <label for="category-filter" class="visually-hidden">Filter by Category</label>
+      <select id="category-filter" aria-label="Message Category Filter">
         <option value="all">All</option>
         <option value="player">Player</option>
         <option value="alliance">Alliance</option>
@@ -75,21 +81,22 @@ Developer: Deathsgift66
         <option value="battle">Battle</option>
         <option value="system">System</option>
       </select>
-      <button class="royal-button" id="mark-all-read">Mark All Read</button>
+      <button class="royal-button" id="mark-all-read" aria-label="Mark all messages as read">Mark All Read</button>
     </div>
 
-    <div id="message-count" class="message-count"></div>
+    <!-- Message Count -->
+    <div id="message-count" class="message-count" aria-live="polite"></div>
 
+    <!-- Inbox Message List -->
     <div id="message-list" class="messages-container" aria-live="polite">
-      <!-- JS will populate messages -->
+      <!-- JS dynamically inserts messages here -->
     </div>
 
   </section>
-
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
   <div>
     <a href="legal.html">View Legal Documents</a>
