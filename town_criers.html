@@ -13,6 +13,8 @@ Developer: Deathsgift66
 
   <title>Town Criers | Kingmaker's Rise</title>
   <meta name="description" content="Publish and view player-run newspapers and announcements in the Town Criers board of Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, town criers, newspapers, player announcements, roleplay, flavor" />
+  <meta name="robots" content="index, follow" />
   <meta property="og:title" content="Town Criers | Kingmaker's Rise" />
   <meta property="og:description" content="Publish and view player-run newspapers and announcements in the Town Criers board of Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +24,8 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Town Criers | Kingmaker's Rise" />
   <meta name="twitter:description" content="Publish and view player-run newspapers and announcements in the Town Criers board of Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, town criers, newspapers, player announcements, roleplay, flavor" />
-  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/town_criers.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/town_criers.css" />
@@ -34,17 +35,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -58,65 +58,60 @@ Developer: Deathsgift66
   Kingmaker's Rise — Town Criers
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Content -->
 <main id="main-content" class="main-centered-container" aria-label="Town Criers Interface">
 
+  <!-- Town Criers Panel -->
+  <section class="alliance-members-container" aria-labelledby="town-criers-title">
+    <h2 id="town-criers-title">Town Criers Board</h2>
 
-
-  <!-- Core Town Criers Panel -->
-  <section class="alliance-members-container">
-
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-button active" data-tab="tab-board">Board Feed</button>
-      <button class="tab-button" data-tab="tab-your-scrolls">Your Scrolls</button>
-      <button class="tab-button" data-tab="tab-compose">Compose Scroll</button>
-    </div>
+    <!-- Tabs Navigation -->
+    <nav class="tabs" aria-label="Town Criers Tabs">
+      <button class="tab-button active" data-tab="tab-board" aria-controls="tab-board" aria-selected="true">Board Feed</button>
+      <button class="tab-button" data-tab="tab-your-scrolls" aria-controls="tab-your-scrolls" aria-selected="false">Your Scrolls</button>
+      <button class="tab-button" data-tab="tab-compose" aria-controls="tab-compose" aria-selected="false">Compose Scroll</button>
+    </nav>
 
     <!-- Board Feed -->
-    <div id="tab-board" class="tab-section active">
+    <section id="tab-board" class="tab-section active" role="tabpanel" aria-labelledby="tab-board-button">
       <h3>Town Crier Board</h3>
       <div id="board-feed" class="scroll-list custom-scrollbar" aria-live="polite">
         <!-- JS will populate -->
       </div>
-    </div>
+    </section>
 
     <!-- Your Scrolls -->
-    <div id="tab-your-scrolls" class="tab-section">
+    <section id="tab-your-scrolls" class="tab-section" role="tabpanel" aria-labelledby="tab-your-scrolls-button" hidden>
       <h3>Your Scrolls</h3>
       <div id="your-scrolls" class="scroll-list custom-scrollbar" aria-live="polite">
         <!-- JS will populate -->
       </div>
-    </div>
+    </section>
 
     <!-- Compose Scroll -->
-    <div id="tab-compose" class="tab-section">
+    <section id="tab-compose" class="tab-section" role="tabpanel" aria-labelledby="tab-compose-button" hidden>
       <h3>Compose New Scroll</h3>
-      <form id="compose-form">
+      <form id="compose-form" aria-label="Compose New Scroll Form">
         <div class="form-group">
           <label for="scroll-title">Title</label>
-          <input type="text" id="scroll-title" required />
+          <input type="text" id="scroll-title" name="scroll-title" required />
         </div>
-
         <div class="form-group">
           <label for="scroll-body">Body</label>
-          <textarea id="scroll-body" rows="6" required></textarea>
+          <textarea id="scroll-body" name="scroll-body" rows="6" required></textarea>
         </div>
-
         <button type="submit" class="btn-fantasy">Publish Scroll</button>
       </form>
-    </div>
+    </section>
 
   </section>
 
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
