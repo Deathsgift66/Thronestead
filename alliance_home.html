@@ -1,9 +1,10 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: alliance_home.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.12.15
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,6 +13,8 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Alliance Home | Kingmaker's Rise</title>
+
+  <!-- Metadata -->
   <meta name="description" content="Alliance command center: view members, progress, projects, and stats." />
   <meta name="keywords" content="Kingmaker's Rise, Alliance Hub, projects, members, command center, medieval MMO" />
   <meta name="robots" content="index, follow" />
@@ -30,43 +33,43 @@ Developer: Deathsgift66
   <meta name="twitter:description" content="Manage your alliance's members, projects, and defenses." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Assets -->
+  <!-- CSS -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/alliance_common.css" />
   <link rel="stylesheet" href="CSS/alliance_home.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
 
-  <!-- JavaScript -->
+  <!-- JS -->
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/apiHelper.js"></script>
   <script type="module" src="Javascript/allianceAppearance.js"></script>
-  <script type="module" defer src="Javascript/alliance_home.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/alliance_home.js"></script>
 </head>
 
 <body class="alliance-bg">
- <!-- Inject Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-  <!-- ✅ Page Banner -->
-  <header class="kr-top-banner" aria-label="Alliance Home Page Banner">
+  <!-- Header -->
+  <header class="kr-top-banner" aria-label="Alliance Homepage Banner">
     Kingmaker's Rise – Alliance Command Center
   </header>
 
-  <!-- ✅ Main Content -->
-  <main class="alliance-home-container" aria-label="Alliance Management Sections">
-    <!-- Alliance Details -->
+  <!-- Main Content -->
+  <main class="alliance-home-container" aria-label="Alliance Dashboard">
+    <!-- Overview -->
     <section class="panel alliance-details" aria-labelledby="overview-heading">
       <h2 id="overview-heading">Alliance Overview</h2>
       <div class="alliance-visuals">
@@ -84,7 +87,7 @@ Developer: Deathsgift66
       <p><strong>Treaties:</strong> <span id="alliance-treaties-count">0</span></p>
     </section>
 
-    <!-- Alliance Stats -->
+    <!-- Stats -->
     <section class="panel alliance-stats" aria-labelledby="stats-heading">
       <h2 id="stats-heading">Alliance Stats</h2>
       <p><strong>Military Score:</strong> <span id="alliance-military">0</span></p>
@@ -94,7 +97,7 @@ Developer: Deathsgift66
       <p><strong>Total Donated Army:</strong> <span id="alliance-army">0</span></p>
     </section>
 
-    <!-- Vault Snapshot -->
+    <!-- Vault -->
     <section class="panel vault-snapshot" aria-labelledby="vault-heading">
       <h2 id="vault-heading">Vault Snapshot</h2>
       <p><strong>Gold:</strong> <span id="vault-gold">0</span></p>
@@ -102,7 +105,7 @@ Developer: Deathsgift66
       <p><strong>Ore:</strong> <span id="vault-ore">0</span></p>
     </section>
 
-    <!-- Top Contributors -->
+    <!-- Contributors -->
     <section class="panel top-contributors" aria-labelledby="top-contrib-heading">
       <h2 id="top-contrib-heading">Top Contributors</h2>
       <ul id="top-contrib-list">
@@ -110,15 +113,13 @@ Developer: Deathsgift66
       </ul>
     </section>
 
-    <!-- Active Projects -->
+    <!-- Projects -->
     <section class="panel alliance-projects" aria-labelledby="projects-heading">
       <h2 id="projects-heading">Active Projects</h2>
-      <div id="project-progress-bars" class="progress-container">
-        <!-- JS Will Inject -->
-      </div>
+      <div id="project-progress-bars" class="progress-container"></div>
     </section>
 
-    <!-- Member List -->
+    <!-- Members -->
     <section class="panel alliance-members" aria-labelledby="members-heading">
       <h2 id="members-heading">Alliance Members</h2>
       <table class="members-table">
@@ -131,47 +132,48 @@ Developer: Deathsgift66
             <th>Status</th>
           </tr>
         </thead>
-      <tbody id="members-list">
-        <!-- Populated via JS -->
-      </tbody>
-    </table>
-  </section>
+        <tbody id="members-list"></tbody>
+      </table>
+    </section>
 
-      <!-- Alliance Achievements -->
-      <section class="panel alliance-achievements" aria-labelledby="achievements-heading">
-        <h2 id="achievements-heading">Alliance Achievements</h2>
-        <ul id="achievements-list">
-          <li>Loading achievements...</li>
-        </ul>
-      </section>
+    <!-- Achievements -->
+    <section class="panel alliance-achievements" aria-labelledby="achievements-heading">
+      <h2 id="achievements-heading">Alliance Achievements</h2>
+      <ul id="achievements-list">
+        <li>Loading achievements...</li>
+      </ul>
+    </section>
 
-      <section class="panel alliance-quests" aria-labelledby="quests-heading">
-        <h2 id="quests-heading">Quest Progress</h2>
-        <div id="quest-list">
-          <!-- JS injects quest cards -->
-        </div>
-      </section>
-      <section class="panel active-battles" aria-labelledby="active-battles-heading">
-        <h2 id="active-battles-heading">Active Battles</h2>
-        <div id="active-battles-list"></div>
-      </section>
+    <!-- Quests -->
+    <section class="panel alliance-quests" aria-labelledby="quests-heading">
+      <h2 id="quests-heading">Quest Progress</h2>
+      <div id="quest-list"></div>
+    </section>
 
+    <!-- Active Battles -->
+    <section class="panel active-battles" aria-labelledby="active-battles-heading">
+      <h2 id="active-battles-heading">Active Battles</h2>
+      <div id="active-battles-list"></div>
+    </section>
 
-      <section class="panel war-score" aria-labelledby="war-score-heading">
-        <h2 id="war-score-heading">War Score</h2>
-        <div id="war-score-summary"></div>
-      </section>
+    <!-- War Score -->
+    <section class="panel war-score" aria-labelledby="war-score-heading">
+      <h2 id="war-score-heading">War Score</h2>
+      <div id="war-score-summary"></div>
+    </section>
 
-      <section class="panel diplomacy-overview" aria-labelledby="diplomacy-heading">
-        <h2 id="diplomacy-heading">Diplomacy Overview</h2>
-        <div id="diplomacy-table"></div>
-      </section>
+    <!-- Diplomacy -->
+    <section class="panel diplomacy-overview" aria-labelledby="diplomacy-heading">
+      <h2 id="diplomacy-heading">Diplomacy Overview</h2>
+      <div id="diplomacy-table"></div>
+    </section>
 
-      <section class="panel activity-log" aria-labelledby="activity-heading">
-        <h2 id="activity-heading">Recent Activity Log</h2>
-        <ul id="activity-log"></ul>
-      </section>
-    </main>
+    <!-- Activity Log -->
+    <section class="panel activity-log" aria-labelledby="activity-heading">
+      <h2 id="activity-heading">Recent Activity Log</h2>
+      <ul id="activity-log"></ul>
+    </section>
+  </main>
 
   <!-- Footer -->
   <footer class="site-footer">
@@ -184,4 +186,5 @@ Developer: Deathsgift66
     </div>
   </footer>
 </body>
+
 </html>
