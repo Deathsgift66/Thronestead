@@ -2,7 +2,8 @@
 # File Name: settings_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from fastapi import APIRouter, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any
 from sqlalchemy import text
@@ -14,15 +15,23 @@ from ..security import require_user_id
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
-@router.get("/game/settings")
-def get_settings() -> dict:
-    """Return the currently loaded game settings."""
-    return global_game_settings
 
 class SettingPayload(BaseModel):
-    key: str
-    value: Any
-    is_active: bool = True
+    key: str                  # Unique game setting key
+    value: Any                # Updated value (any type supported by the setting)
+    is_active: bool = True    # Activation flag for the setting
+
+
+@router.get("/game/settings")
+def get_settings() -> dict:
+    """
+    Public endpoint to retrieve currently loaded game settings.
+
+    Returns:
+        Dictionary of key-value pairs from the global game settings cache.
+    """
+    return global_game_settings
+
 
 @router.post("/admin/game_settings")
 def update_setting(
@@ -30,26 +39,43 @@ def update_setting(
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ) -> dict:
-    """Update a game setting and reload the in-memory cache."""
-    db.execute(
-        text(
-            """
-            UPDATE game_settings
-            SET setting_value = :val,
-                is_active = :active,
-                last_updated = NOW(),
-                updated_by = :uid
-            WHERE setting_key = :key
-            """
-        ),
-        {
-            "val": payload.value,
-            "active": payload.is_active,
-            "uid": admin_id,
-            "key": payload.key,
-        },
-    )
-    db.commit()
-    load_game_settings()
-    return {"message": "Setting updated"}
+    """
+    Admin endpoint to update a game setting and reload the global in-memory cache.
 
+    Args:
+        payload (SettingPayload): Contains the setting key, value, and active state.
+        admin_id (str): Injected user ID of the admin (authorization required).
+        db (Session): Active SQLAlchemy session.
+
+    Returns:
+        dict: A confirmation message if the update succeeds.
+    """
+    try:
+        result = db.execute(
+            text(
+                """
+                UPDATE game_settings
+                SET setting_value = :val,
+                    is_active = :active,
+                    last_updated = NOW(),
+                    updated_by = :uid
+                WHERE setting_key = :key
+                """
+            ),
+            {
+                "val": payload.value,
+                "active": payload.is_active,
+                "uid": admin_id,
+                "key": payload.key,
+            },
+        )
+
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Setting key not found")
+
+        db.commit()
+        load_game_settings()
+
+        return {"message": "Setting updated", "key": payload.key, "new_value": payload.value}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to update setting") from e
