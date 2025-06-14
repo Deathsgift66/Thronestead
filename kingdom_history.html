@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: kingdom_history.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.05
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -12,19 +12,23 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Kingdom History | Kingmaker's Rise</title>
-  <meta name="description" content="Review your kingdom's story and major events in Kingmaker's Rise." />
+  <meta name="description" content="Review your kingdom's story, milestones, and major events in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, kingdom history, war logs, quest logs, event timeline" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/kingdom_history.html" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Kingdom History | Kingmaker's Rise" />
-  <meta property="og:description" content="Review your kingdom's story and major events in Kingmaker's Rise." />
+  <meta property="og:description" content="Review your kingdom’s timeline, achievements, and past actions in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/kingdom_history.html" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Kingdom History | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Review your kingdom's story and major events in Kingmaker's Rise." />
+  <meta name="twitter:description" content="Trace your kingdom’s legacy and combat record in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, kingdom history, log, events" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/kingdom_history.html" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/kingdom_history.css" />
@@ -34,9 +38,9 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
@@ -52,45 +56,47 @@ Developer: Deathsgift66
     });
 </script>
 
-<!-- Page Banner -->
+<!-- Banner -->
 <header class="kr-top-banner" aria-label="Kingdom History Banner">
   Kingmaker's Rise — Kingdom History
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Layout -->
 <main class="main-centered-container" aria-label="Kingdom History Interface">
 
-  <!-- Timeline Panel -->
-    <section class="history-section">
-      <h2>Kingdom Timeline</h2>
-      <ul id="timeline" class="timeline" aria-live="polite"></ul>
-    </section>
-
-  <!-- Achievement Grid -->
+  <!-- Kingdom Timeline -->
   <section class="history-section">
-    <h2>Achievements</h2>
-    <div id="achievement-grid" class="achievement-grid"></div>
+    <h2>📜 Kingdom Timeline</h2>
+    <ul id="timeline" class="timeline" aria-live="polite">
+      <!-- Entries injected via JS -->
+    </ul>
   </section>
 
-  <!-- Collapsible Logs -->
+  <!-- Achievements -->
+  <section class="history-section">
+    <h2>🏆 Achievements</h2>
+    <div id="achievement-grid" class="achievement-grid" aria-live="polite"></div>
+  </section>
+
+  <!-- Collapsible History Panels -->
   <section id="war-log-panel" class="collapsible">
-    <h3><span class="chevron">▶</span> Past Wars</h3>
-    <ul id="war-log"></ul>
+    <h3 tabindex="0"><span class="chevron">▶</span> Past Wars</h3>
+    <ul id="war-log" aria-label="War History Log"></ul>
   </section>
 
   <section id="project-log-panel" class="collapsible">
-    <h3><span class="chevron">▶</span> Project Activity</h3>
-    <ul id="project-log"></ul>
+    <h3 tabindex="0"><span class="chevron">▶</span> Project Activity</h3>
+    <ul id="project-log" aria-label="Project Activity Log"></ul>
   </section>
 
   <section id="quest-log-panel" class="collapsible">
-    <h3><span class="chevron">▶</span> Quest Attempts</h3>
-    <ul id="quest-log"></ul>
+    <h3 tabindex="0"><span class="chevron">▶</span> Quest Attempts</h3>
+    <ul id="quest-log" aria-label="Quest History Log"></ul>
   </section>
 
   <section id="training-log-panel" class="collapsible">
-    <h3><span class="chevron">▶</span> Training History</h3>
-    <ul id="training-log"></ul>
+    <h3 tabindex="0"><span class="chevron">▶</span> Training History</h3>
+    <ul id="training-log" aria-label="Training History Log"></ul>
   </section>
 
 </main>
@@ -99,7 +105,10 @@ Developer: Deathsgift66
 <footer class="site-footer">
   <div>© 2025 Kingmaker’s Rise</div>
   <div>
-    <a href="legal.html">View Legal Documents</a>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
   </div>
 </footer>
 
