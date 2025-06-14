@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: index.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.00
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -33,22 +33,37 @@ Developer: Deathsgift66
   <!-- Global Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script defer type="module" src="Javascript/resourceBar.js"></script>
   <script type="module" src="Javascript/apiHelper.js"></script>
 
-  <!-- Page-Specific Assets -->
+  <!-- Page-Specific -->
   <link rel="stylesheet" href="CSS/index.css" />
   <script defer type="module" src="Javascript/index.js"></script>
 </head>
 
 <body>
 
-<!-- Hero Section -->
-<section class="hero-section" aria-label="Hero Banner">
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch("/navbar.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("navbar-container").innerHTML = html;
+    });
+</script>
+
+<!-- Hero Banner -->
+<section class="hero-section" aria-label="Hero Introduction">
   <div class="hero-content">
     <h1>Kingmaker's Rise</h1>
     <p>Forge your destiny in the ultimate medieval nation-building strategy game.</p>
     <div class="hero-buttons">
-      <a href="signup.html" class="cta-button">Join the Realm</a>
+      <a href="signup.html" class="cta-button" aria-label="Create your Kingdom">Join the Realm</a>
     </div>
   </div>
 </section>
@@ -56,38 +71,39 @@ Developer: Deathsgift66
 <!-- Main Content -->
 <main class="main-centered-container" aria-label="Homepage Main Content">
 
-  <!-- Features / Differentiators -->
-  <section class="features-section">
+  <!-- Unique Selling Points -->
+  <section class="features-section" aria-label="Game Features">
     <h2>What Makes Kingmaker's Rise Unique?</h2>
     <div class="features-grid">
-      <div class="feature-card">
+      <article class="feature-card">
         <h3>Deep Diplomacy</h3>
         <p>Negotiate treaties, forge alliances, and manipulate the balance of power.</p>
-      </div>
-      <div class="feature-card">
+      </article>
+      <article class="feature-card">
         <h3>Dynamic War System</h3>
         <p>Engage in tactical battles with grid-based strategy — where skill matters more than numbers.</p>
-      </div>
-      <div class="feature-card">
+      </article>
+      <article class="feature-card">
         <h3>Player-Driven Economy</h3>
         <p>Trade goods, control resources, and shape the market through open-world commerce.</p>
-      </div>
-      <div class="feature-card">
+      </article>
+      <article class="feature-card">
         <h3>Alliance Governance</h3>
         <p>Manage internal politics, alliance projects, and collective war efforts.</p>
-      </div>
+      </article>
     </div>
   </section>
 
-  <!-- Lore / Trailer -->
-  <section class="lore-section" aria-label="Game Lore & Trailer">
+  <!-- Lore Teaser -->
+  <section class="lore-section" aria-label="Game Lore">
     <h2>Begin Your Legend</h2>
     <p>In a fractured realm of rival kingdoms, only the strongest will ascend. Will your name be written in the annals of history?</p>
-    
+    <!-- Optional Trailer Embed -->
+    <!-- <iframe src="..." title="Game Trailer"></iframe> -->
   </section>
 
-  <!-- Latest News -->
-  <section class="news-section" aria-label="Latest News">
+  <!-- News Feed -->
+  <section class="news-section" aria-label="Realm News">
     <h2>Realm News</h2>
     <ul id="news-list" class="news-list">
       <li>Loading news...</li>
@@ -95,7 +111,7 @@ Developer: Deathsgift66
   </section>
 
   <!-- CTA -->
-  <section class="cta-section">
+  <section class="cta-section" aria-label="Final Call to Action">
     <h2>Are You Ready to Rise?</h2>
     <a href="signup.html" class="cta-button">Create Your Kingdom</a>
   </section>
