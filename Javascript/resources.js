@@ -126,13 +126,20 @@ function renderSimulators() {
     <h3>Resource Simulators</h3>
     <p class="text-muted">Estimate production rates, trade values, and net efficiency.</p>
     <ul>
-      <li><a href="#">🔧 Production Efficiency Simulator</a></li>
-      <li><a href="#">📈 Market Value Calculator</a></li>
-      <li><a href="#">⚖️ Trade Ratio Evaluator</a></li>
+      <li><a href="#" class="sim-link">🔧 Production Efficiency Simulator</a></li>
+      <li><a href="#" class="sim-link">📈 Market Value Calculator</a></li>
+      <li><a href="#" class="sim-link">⚖️ Trade Ratio Evaluator</a></li>
     </ul>
   `;
 
   el.appendChild(panel);
+
+  panel.querySelectorAll('.sim-link').forEach(a =>
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      alert('🛠️ Simulator tools are coming soon.');
+    })
+  );
 }
 
 // ✅ Format resource keys to display-friendly names
