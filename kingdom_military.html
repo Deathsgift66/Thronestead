@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: kingdom_military.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.07
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -12,14 +12,14 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Kingdom Military | Kingmaker's Rise</title>
-  <meta name="description" content="Manage your military forces, train troops, and view army strength in Kingmaker’s Rise." />
-  <meta name="keywords" content="Kingmaker's Rise, military, troops, training, army management, warfare" />
+  <meta name="description" content="Manage your military forces, train troops, and review training history in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, military, army, training, troops, management, warfare" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/kingdom_military.html" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Kingdom Military | Kingmaker's Rise" />
-  <meta property="og:description" content="Manage your military forces, train troops, and view army strength in Kingmaker’s Rise." />
+  <meta property="og:description" content="Manage military units, oversee troop training, and review military strength in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/kingdom_military.html" />
   <meta property="og:type" content="website" />
@@ -27,7 +27,7 @@ Developer: Deathsgift66
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Kingdom Military | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Train your troops and command your armies in Kingmaker’s Rise." />
+  <meta name="twitter:description" content="Train your troops and command your army in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
   <!-- Page-Specific Assets -->
@@ -38,11 +38,11 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
@@ -63,49 +63,44 @@ Developer: Deathsgift66
   Kingmaker's Rise — Kingdom Military
 </header>
 
-<div class="military-status">
-  <span id="realtime-indicator" aria-live="polite">Connecting...</span>
+<!-- Real-Time Indicator -->
+<div class="military-status" aria-live="polite">
+  <span id="realtime-indicator">Connecting...</span>
   <span id="last-updated"></span>
 </div>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Kingdom Military Interface">
+<!-- Main Interface -->
+<main class="main-centered-container" aria-label="Military Management Interface">
 
-
-  <!-- Core Military Panel -->
   <section class="alliance-members-container">
-    <h2>Military Forces</h2>
-    <p>Manage your trained units, available troop slots, and training queues.</p>
+    <h2 class="golden-header text-center text-3xl mb-4">Military Forces</h2>
+    <p class="text-center mb-6">Oversee troop capacity, training queues, and your military history.</p>
 
-    <!-- Your existing beautiful parchment-bg military management panel -->
     <section class="parchment-bg p-4 rounded shadow">
 
-      <!-- Military Summary -->
-      <div class="golden-header text-center text-3xl mb-4">Military Summary</div>
-      <div id="military-summary" class="mb-6">
-        <!-- JS will populate -->
-      </div>
+      <!-- Summary -->
+      <div class="golden-header text-center text-2xl mb-4">Military Summary</div>
+      <div id="military-summary" class="summary-section mb-6"></div>
 
       <!-- Recruitable Units -->
       <div class="golden-header text-center text-2xl mb-4">Recruitable Units</div>
-      <div id="unit-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- JS will populate -->
+      <div id="unit-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-label="Recruitable Units">
+        <!-- Populated by JS -->
       </div>
 
-      <!-- Active Training Queue -->
+      <!-- Active Queue -->
       <div class="golden-header text-center text-2xl mb-4 mt-8">Active Training Queue</div>
-      <div id="training-queue" class="mb-6">
-        <!-- JS will populate -->
+      <div id="training-queue" class="mb-6" aria-label="Active Training Queue">
+        <!-- Populated by JS -->
       </div>
 
-      <!-- Historical Training Log -->
+      <!-- History -->
       <div class="golden-header text-center text-2xl mb-4 mt-8">Historical Training Log</div>
-      <div id="training-history" class="mb-6">
-        <!-- JS will populate -->
+      <div id="training-history" class="mb-6" aria-label="Historical Training Log">
+        <!-- Populated by JS -->
       </div>
 
     </section>
-
   </section>
 
 </main>
