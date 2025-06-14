@@ -8,13 +8,12 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from pydantic import BaseModel
-from uuid import UUID
 from datetime import datetime
 import asyncio
 import json
 
 from ..database import get_db
-from ..security import verify_jwt_token, require_user_id
+from ..security import require_user_id
 from backend.models import Notification
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])

@@ -39,7 +39,7 @@ else:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
         logging.info("✅ Supabase client initialized successfully.")
-    except Exception as exc:
+    except Exception:
         logging.exception("❌ Failed to initialize Supabase client.")
         supabase = None
 

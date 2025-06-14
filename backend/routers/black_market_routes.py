@@ -85,8 +85,12 @@ def get_listings() -> dict:
     Return all active, non-expired black market listings.
     """
     now = datetime.utcnow()
-    active = [l for l in _listings if l.stock_remaining > 0 and l.expires_at > now]
-    return {"listings": [l.dict() for l in active]}
+    active_listings = [
+        listing
+        for listing in _listings
+        if listing.stock_remaining > 0 and listing.expires_at > now
+    ]
+    return {"listings": [listing.dict() for listing in active_listings]}
 
 
 @router.post("/purchase")
@@ -101,7 +105,10 @@ def purchase_item(
     if user_id != payload.kingdom_id:
         raise HTTPException(status_code=403, detail="Kingdom mismatch")
 
-    listing = next((l for l in _listings if l.id == payload.listing_id), None)
+    listing = next(
+        (item for item in _listings if item.id == payload.listing_id),
+        None,
+    )
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
     if listing.expires_at < datetime.utcnow():

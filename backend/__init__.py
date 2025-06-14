@@ -15,7 +15,9 @@ import logging
 try:
     from dotenv import load_dotenv
 except Exception:  # pragma: no cover - optional in some environments
-    load_dotenv = lambda *_, **__: None  # type: ignore
+    def load_dotenv(*_: object, **__: object) -> None:
+        """Fallback when python-dotenv is unavailable."""
+        return None
 
 try:
     from supabase import create_client, Client
@@ -38,7 +40,7 @@ supabase = None
 if create_client and SUPABASE_URL and SUPABASE_KEY:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception as exc:  # pragma: no cover - network/dependency issues
+    except Exception:  # pragma: no cover - network/dependency issues
         logger.exception("Failed to initialize Supabase client")
         supabase = None
 else:
