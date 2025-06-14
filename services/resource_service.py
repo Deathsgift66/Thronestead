@@ -2,7 +2,7 @@
 # File Name: resource_service.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
-"""Service logic for handling kingdom resource economy — gain, spend, validate."""
+"""Service utilities for the kingdom resource economy."""
 
 from __future__ import annotations
 from typing import Literal, Optional
@@ -24,6 +24,54 @@ RESOURCE_TYPES = {
     "arrows", "swords", "axes", "shields", "armour", "wagon", "siege_weapons",
     "jewelry", "spear", "horses", "pitchforks", "gems"
 }
+
+# Fields that should never be returned to clients when using Supabase
+METADATA_FIELDS = {"kingdom_id", "created_at", "last_updated"}
+
+
+def fetch_supabase_resources(user_id: str) -> Optional[dict[str, int]]:
+    """Fetch a kingdom's resources directly from Supabase."""
+    try:
+        from backend.supabase_client import get_supabase_client
+    except RuntimeError:
+        return None
+
+    try:
+        supabase = get_supabase_client()
+        kid_resp = (
+            supabase.table("kingdoms")
+            .select("kingdom_id")
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+        if getattr(kid_resp, "status_code", 200) >= 400:
+            logger.error("Supabase error fetching kingdom: %s", getattr(kid_resp, "error", "unknown"))
+            return None
+
+        kid = (getattr(kid_resp, "data", kid_resp) or {}).get("kingdom_id")
+        if not kid:
+            return None
+
+        res_resp = (
+            supabase.table("kingdom_resources")
+            .select("*")
+            .eq("kingdom_id", kid)
+            .single()
+            .execute()
+        )
+        if getattr(res_resp, "status_code", 200) >= 400:
+            logger.error("Supabase error fetching resources: %s", getattr(res_resp, "error", "unknown"))
+            return None
+
+        row = getattr(res_resp, "data", res_resp) or {}
+        if not row:
+            return None
+
+        return {k: v for k, v in row.items() if k not in METADATA_FIELDS}
+    except Exception:
+        logger.exception("Error retrieving resources from Supabase")
+        return None
 
 # ------------------------------------------------------------------------------
 # Helpers
