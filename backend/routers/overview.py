@@ -10,6 +10,7 @@ from ..security import require_user_id
 from .progression_router import get_kingdom_id
 from ..database import get_db
 from ..data import military_state
+from services.resource_service import get_kingdom_resources
 
 router = APIRouter(prefix="/api/overview", tags=["overview"])
 
@@ -41,11 +42,12 @@ def get_overview(
         },
     )
 
-    # Example: These can later be replaced with dynamic DB fetches
+    # Fetch current resources from the database
+    resources_row = get_kingdom_resources(db, kingdom_id)
     resources = {
-        "gold": 1000,
-        "food": 500,
-        "wood": 300,
+        k: v
+        for k, v in resources_row.items()
+        if k not in {"kingdom_id", "created_at", "last_updated"}
     }
 
     base_slots = state.get("base_slots", 20)
