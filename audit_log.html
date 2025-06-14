@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: audit_log.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.14.00
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -38,83 +38,84 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script>window.requireAdmin = true;</script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script>window.requireAdmin = true;</script>
 </head>
 
-<body>
+<body class="audit-log-body">
 
-<!-- Inject Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- ✅ Navbar Inject -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Audit Log Banner">
-  Kingmaker's Rise – Audit Log
-</header>
+  <!-- ✅ Page Banner -->
+  <header class="kr-top-banner" aria-label="Audit Log Banner">
+    🛡️ Kingmaker's Rise — Audit Log
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Audit Log Interface">
+  <!-- ✅ Main Audit Panel -->
+  <main class="main-centered-container" aria-label="Administrative Audit Log Panel">
+    <section class="alliance-members-container">
 
-  <!-- Core Audit Panel -->
-  <section class="alliance-members-container">
-    <h2>Audit Log</h2>
-    <p>Track all significant administrative actions and changes in Kingmaker's Rise.</p>
+      <h2>Administrative Action Tracker</h2>
+      <p>Track all significant administrative actions and system-level changes in Kingmaker's Rise.</p>
 
-    <form id="audit-filter-form" class="audit-filter-form" aria-label="Filter Logs">
-      <label for="filter-user">User ID</label>
-      <input id="filter-user" type="text" />
-      <label for="filter-action">Action</label>
-      <input id="filter-action" type="text" />
-      <label for="filter-from">From</label>
-      <input id="filter-from" type="date" />
-      <label for="filter-to">To</label>
-      <input id="filter-to" type="date" />
-      <label for="filter-limit">Limit</label>
-      <input id="filter-limit" type="number" value="100" min="1" />
-      <button type="submit">Apply</button>
-    </form>
+      <!-- 🔎 Filter Bar -->
+      <form id="audit-filter-form" class="audit-filter-form" role="search" aria-label="Filter Audit Logs">
+        <label for="filter-user">User ID</label>
+        <input id="filter-user" name="user_id" type="text" placeholder="UUID..." />
+        <label for="filter-action">Action</label>
+        <input id="filter-action" name="action" type="text" placeholder="e.g., 'ban_kingdom'" />
+        <label for="filter-from">From</label>
+        <input id="filter-from" name="from_date" type="date" />
+        <label for="filter-to">To</label>
+        <input id="filter-to" name="to_date" type="date" />
+        <label for="filter-limit">Limit</label>
+        <input id="filter-limit" name="limit" type="number" value="100" min="1" />
+        <button type="submit" class="action-btn">Apply Filters</button>
+      </form>
 
-    <section class="log-entry-list" aria-label="Administrative Log Entries">
-      <div class="scroll-wrapper">
-      <table class="audit-log-table">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Action</th>
-            <th>Admin</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody id="audit-log-body" aria-live="polite">
-          <!-- Injected via JS -->
-        </tbody>
-      </table>
-      </div>
+      <!-- 🧾 Audit Log Entries -->
+      <section class="log-entry-list" aria-label="Audit Log Entries Table">
+        <div class="scroll-wrapper">
+          <table class="audit-log-table" aria-describedby="audit-log-description">
+            <caption id="audit-log-description" class="sr-only">Chronological listing of administrative actions</caption>
+            <thead>
+              <tr>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Action</th>
+                <th scope="col">Admin</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+            <tbody id="audit-log-body" aria-live="polite">
+              <tr><td colspan="4">Loading audit logs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
-  </section>
+  </main>
 
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
-    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
-    <a href="Assets/legal/EULA.pdf">EULA</a>
-    <a href="legal.html">and more</a>
-  </div>
-</footer>
+  <!-- ✅ Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">Legal Info</a>
+    </div>
+  </footer>
 
 </body>
 </html>
