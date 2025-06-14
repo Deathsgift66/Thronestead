@@ -3,13 +3,11 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, debounce } from './utils.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadPoliciesAndLaws();
 });
-
-let debounceTimer = null;
 
 // ✅ Load Policies and Laws
 async function loadPoliciesAndLaws() {
@@ -108,11 +106,9 @@ async function loadPoliciesAndLaws() {
     });
 
     // 🔘 Bind law toggles with debounce
+    const debouncedUpdate = debounce(() => updateLawToggles(headers), 300);
     document.querySelectorAll(".law-toggle").forEach(toggle => {
-      toggle.addEventListener("change", () => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => updateLawToggles(headers), 300);
-      });
+      toggle.addEventListener("change", debouncedUpdate);
     });
 
     updateSummary(activePolicy, activeLaws, policies, laws);

@@ -140,4 +140,21 @@ export function sanitizeHTML(html = '') {
   return template.innerHTML;
 }
 
+/**
+ * Create a debounced version of a function.
+ * Subsequent calls reset the timer so `fn` executes only
+ * after `delay` milliseconds have elapsed without a new call.
+ *
+ * @param {Function} fn    Callback to debounce
+ * @param {number} delay   Delay in milliseconds
+ * @returns {Function}     Debounced wrapper
+ */
+export function debounce(fn, delay = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 
