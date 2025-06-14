@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 import logging
 
-# Load .env variables (Render environment uses system variables by default)
-load_dotenv()
+# Load .ENV variables (Render environment uses system variables by default)
+load_dotenv(".ENV")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
