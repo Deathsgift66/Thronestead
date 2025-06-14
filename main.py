@@ -15,6 +15,7 @@ Routers:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 # Router imports
 from backend.routers import resources
@@ -28,10 +29,13 @@ app = FastAPI(
     description="Backend services for Kingmaker's Rise — resource systems, announcements, region data, and progression."
 )
 
-# Optional: Allow all for development CORS
+# Configure CORS
+allowed_origins = os.getenv("ALLOWED_ORIGINS")
+origins = [o.strip() for o in allowed_origins.split(",") if o.strip()] if allowed_origins else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with frontend domain(s) in production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
