@@ -13,6 +13,11 @@ Developer: Deathsgift66
 
   <title>Unified War Command Center | Kingmaker's Rise</title>
   <meta name="description" content="Manage and engage in wars with the Unified War Command Center — lead your kingdom to victory in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, war, command center, unified war, battles, alliances, military strategy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/wars.html" />
+
+  <!-- Social Metadata -->
   <meta property="og:title" content="Unified War Command Center | Kingmaker's Rise" />
   <meta property="og:description" content="Manage and engage in wars with the Unified War Command Center — lead your kingdom to victory in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +27,7 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Unified War Command Center | Kingmaker's Rise" />
   <meta name="twitter:description" content="Manage and engage in wars with the Unified War Command Center — lead your kingdom to victory in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, war, command center, unified war, battles, alliances, military strategy" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/wars.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/wars.css" />
@@ -35,18 +38,17 @@ Developer: Deathsgift66
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Global Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -55,50 +57,50 @@ Developer: Deathsgift66
     });
 </script>
 
-<!-- Page Banner -->
+<!-- Banner -->
 <header class="kr-top-banner" aria-label="War Command Center Banner">
   Kingmaker's Rise — Unified War Command Center
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Layout -->
 <main id="main-content" class="main-centered-container" aria-label="War Command Interface">
-
-
 
   <!-- Core War Panel -->
   <section class="alliance-members-container">
 
-    <!-- War Hub Container -->
     <div id="war-hub-container">
 
-      <!-- War Controls -->
-      <div class="kr-war-controls">
-        <button id="declareWarButton" class="btn-fantasy">Declare New War</button>
+      <!-- War Control Buttons -->
+      <div class="kr-war-controls" role="group" aria-label="War Controls">
+        <button id="declareWarButton" class="btn-fantasy" aria-controls="declare-war-modal">Declare New War</button>
         <button id="refreshWarsButton" class="btn-fantasy">Refresh Wars</button>
       </div>
 
-      <!-- Active Wars -->
-      <div id="active-wars">
-        <h3>Active Wars</h3>
-        <div id="war-list" class="custom-scrollbar">
-          <!-- JS will populate -->
+      <!-- Active Wars Section -->
+      <div id="active-wars" aria-labelledby="active-wars-heading">
+        <h3 id="active-wars-heading">Active Wars</h3>
+        <div id="war-list" class="custom-scrollbar" aria-live="polite">
+          <!-- JS will inject war summaries -->
         </div>
+
         <h4>Real-time War Feed</h4>
-        <div id="war-feed" class="war-feed" aria-live="polite"></div>
+        <div id="war-feed" class="war-feed" aria-live="polite">
+          <!-- JS will inject live war events -->
+        </div>
       </div>
 
       <!-- Declare War Modal -->
-      <div id="declare-war-modal" class="modal hidden">
-        <!-- JS will handle content -->
+      <div id="declare-war-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="declareWarHeader">
+        <!-- Populated dynamically -->
       </div>
 
       <!-- War Detail Modal -->
-      <div id="war-detail-modal" class="modal hidden">
-        <!-- JS will handle content -->
+      <div id="war-detail-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="warDetailHeader">
+        <!-- Populated dynamically -->
       </div>
 
       <!-- Toast Container -->
-      <div id="toast-container"></div>
+      <div id="toast-container" class="toast-notification" aria-live="polite"></div>
 
     </div>
 
@@ -107,11 +109,9 @@ Developer: Deathsgift66
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
