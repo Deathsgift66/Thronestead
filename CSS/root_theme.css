@@ -474,3 +474,27 @@ body[data-theme="parchment"] {
   text-shadow: 1px 1px 3px black;
   margin-bottom: 1rem;
 }
+
+.alliance-members-container {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 6px 14px var(--shadow);
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.alliance-members-container h2 {
+  font-family: var(--font-header);
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+  margin-bottom: 1rem;
+}
+
+.alliance-members-container p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #d8caa5;
+}
