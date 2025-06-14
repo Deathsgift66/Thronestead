@@ -2,213 +2,64 @@
 # File Name: messages.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from __future__ import annotations
-
 from fastapi import APIRouter, Depends, HTTPException
-
 from pydantic import BaseModel
-
 from ..supabase_client import get_supabase_client
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/messages", tags=["messages"])
 
 
-
-
 class MessagePayload(BaseModel):
     recipient: str
     subject: str | None = None
     content: str
-    category: str | None = None
-
-
-@router.get("/inbox")
-def list_inbox(user_id: str = Depends(verify_jwt_token)):
-    supabase = get_supabase_client()
-    res = (
-        supabase.table("player_messages")
-        .select(
-            "message_id,subject,message,category,sent_at,is_read,user_id,users(username)"
-        )
-        .eq("recipient_id", user_id)
-        .eq("deleted_by_recipient", False)
-        .order("sent_at", desc=True)
-        .limit(100)
-        .execute()
-    )
-
-    messages = [
-        {
-            "message_id": r["message_id"],
-            "subject": r["subject"],
-            "message": r["message"],
-            "category": r.get("category"),
-            "sent_at": r["sent_at"],
-            "is_read": r["is_read"],
-            "sender": r.get("users", {}).get("username"),
-        }
-        for r in res.data or []
-    ]
-    return {"messages": messages}
-
-
-@router.get("/view/{message_id}")
-def view_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
-    supabase = get_supabase_client()
-    res = (
-        supabase.table("player_messages")
-        .select("* , users(username)")
-        .eq("message_id", message_id)
-        .eq("recipient_id", user_id)
-        .single()
-        .execute()
-    )
-    if not res.data:
-        raise HTTPException(status_code=404, detail="Message not found")
-
-    supabase.table("player_messages").update({"is_read": True}).eq(
-        "message_id", message_id
-    ).execute()
-    row = res.data
-    return {
-        "message_id": row["message_id"],
-        "subject": row["subject"],
-        "message": row["message"],
-        "category": row.get("category"),
-        "sent_at": row["sent_at"],
-        "is_read": True,
-        "sender": row.get("users", {}).get("username"),
-    }
-
-
-@router.post("/delete/{message_id}")
-def delete_message_route(
-    message_id: int, user_id: str = Depends(verify_jwt_token)
-):
-    supabase = get_supabase_client()
-    res = (
-        supabase.table("player_messages")
-        .select("message_id")
-        .eq("message_id", message_id)
-        .eq("recipient_id", user_id)
-        .maybe_single()
-        .execute()
-    )
-    if not res.data:
-        raise HTTPException(status_code=404, detail="Message not found")
-
-    supabase.table("player_messages").update({"deleted_by_recipient": True}).eq(
-        "message_id", message_id
-    ).execute()
-    return {"status": "deleted", "message_id": message_id}
-
-
-@router.post("/mark_all_read")
-
-async def mark_all_read(user_id: str = Depends(verify_jwt_token)):
-
-    supabase = get_supabase_client()
-    supabase.table("player_messages").update({"is_read": True}).eq(
-        "recipient_id", user_id
-    ).execute()
-    return {"message": "All marked read"}
-
-
-@router.post("/send")
-
-async def send_message(
-    payload: MessagePayload, user_id: str = Depends(verify_jwt_token)
-
-):
-    supabase = get_supabase_client()
-    rec = (
-        supabase.table("users")
-        .select("user_id")
-        .eq("username", payload.recipient)
-        .single()
-        .execute()
-    )
-    if not rec.data:
-        raise HTTPException(status_code=404, detail="Recipient not found")
-
-    insert_res = (
-        supabase.table("player_messages")
-        .insert(
-            {
-                "recipient_id": rec.data["user_id"],
-                "user_id": user_id,
-                "subject": payload.subject,
-                "message": payload.content,
-                "category": payload.category or "player",
-            }
-        )
-        .execute()
-    )
-    mid = insert_res.data[0]["message_id"] if insert_res.data else None
-    return {"message": "sent", "message_id": mid}
-
-
-@router.get("/list")
-
-async def list_messages(user_id: str = Depends(verify_jwt_token)):
-
-    supabase = get_supabase_client()
-    res = (
-        supabase.table("player_messages")
-        .select(
-            "message_id,subject,message,category,sent_at,is_read,user_id,users(username)"
-        )
-        .eq("recipient_id", user_id)
-        .eq("deleted_by_recipient", False)
-        .order("sent_at", desc=True)
-        .execute()
-    )
-    messages = [
-        {
-            "message_id": r["message_id"],
-            "subject": r["subject"],
-            "message": r["message"],
-            "category": r.get("category"),
-            "sent_at": r["sent_at"],
-            "is_read": r["is_read"],
-            "user_id": r["user_id"],
-            "username": r.get("users", {}).get("username"),
-        }
-        for r in res.data or []
-    ]
-    return {"messages": messages}
+    category: str | None = "player"
 
 
 class DeletePayload(BaseModel):
     message_id: int
 
 
-@router.post("/delete")
-
-async def delete_message(payload: DeletePayload, user_id: str = Depends(verify_jwt_token)):
-
+@router.get("/inbox")
+def get_inbox(user_id: str = Depends(verify_jwt_token)):
+    """
+    📥 Fetch the latest 100 inbox messages for the current user.
+    """
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
-        .select("message_id")
-        .eq("message_id", payload.message_id)
+        .select("message_id,subject,message,category,sent_at,is_read,user_id,users(username)")
         .eq("recipient_id", user_id)
-        .maybe_single()
+        .eq("deleted_by_recipient", False)
+        .order("sent_at", desc=True)
+        .limit(100)
         .execute()
     )
-    if not res.data:
-        raise HTTPException(status_code=404, detail="Message not found")
-    supabase.table("player_messages").update({"deleted_by_recipient": True}).eq(
-        "message_id", payload.message_id
-    ).execute()
-    return {"status": "deleted"}
+    rows = getattr(res, "data", res) or []
+    return {
+        "messages": [
+            {
+                "message_id": r["message_id"],
+                "subject": r["subject"],
+                "message": r["message"],
+                "category": r.get("category"),
+                "sent_at": r["sent_at"],
+                "is_read": r["is_read"],
+                "sender": r.get("users", {}).get("username"),
+            }
+            for r in rows
+        ]
+    }
 
 
 @router.get("/{message_id}")
-
-async def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
-
+def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
+    """
+    📨 View a specific message by ID and mark it as read.
+    """
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
@@ -220,16 +71,87 @@ async def get_message(message_id: int, user_id: str = Depends(verify_jwt_token))
     )
     if not res.data:
         raise HTTPException(status_code=404, detail="Message not found")
-    supabase.table("player_messages").update({"is_read": True}).eq(
-        "message_id", message_id
-    ).execute()
-    row = res.data
+
+    # Mark message as read
+    supabase.table("player_messages").update({"is_read": True}).eq("message_id", message_id).execute()
+
+    r = res.data
     return {
-        "message_id": row["message_id"],
-        "subject": row["subject"],
-        "message": row["message"],
-        "sent_at": row["sent_at"],
-        "user_id": row["user_id"],
-        "username": row.get("users", {}).get("username"),
+        "message_id": r["message_id"],
+        "subject": r["subject"],
+        "message": r["message"],
+        "category": r.get("category"),
+        "sent_at": r["sent_at"],
+        "is_read": True,
+        "user_id": r["user_id"],
+        "username": r.get("users", {}).get("username"),
     }
 
+
+@router.post("/send")
+def send_message(payload: MessagePayload, user_id: str = Depends(verify_jwt_token)):
+    """
+    ✉️ Send a message to another user.
+    """
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("users")
+        .select("user_id")
+        .eq("username", payload.recipient)
+        .single()
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+
+    insert = (
+        supabase.table("player_messages")
+        .insert(
+            {
+                "recipient_id": res.data["user_id"],
+                "user_id": user_id,
+                "subject": payload.subject,
+                "message": payload.content,
+                "category": payload.category,
+            }
+        )
+        .execute()
+    )
+    if not insert.data:
+        raise HTTPException(status_code=500, detail="Message send failed")
+
+    return {"message": "sent", "message_id": insert.data[0]["message_id"]}
+
+
+@router.post("/delete")
+def delete_message(payload: DeletePayload, user_id: str = Depends(verify_jwt_token)):
+    """
+    ❌ Soft-delete a message for the recipient.
+    """
+    supabase = get_supabase_client()
+    verify = (
+        supabase.table("player_messages")
+        .select("message_id")
+        .eq("message_id", payload.message_id)
+        .eq("recipient_id", user_id)
+        .maybe_single()
+        .execute()
+    )
+    if not verify.data:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    supabase.table("player_messages").update({"deleted_by_recipient": True}).eq(
+        "message_id", payload.message_id
+    ).execute()
+
+    return {"status": "deleted", "message_id": payload.message_id}
+
+
+@router.post("/mark_all_read")
+def mark_all_messages_read(user_id: str = Depends(verify_jwt_token)):
+    """
+    ✅ Mark all inbox messages as read.
+    """
+    supabase = get_supabase_client()
+    supabase.table("player_messages").update({"is_read": True}).eq("recipient_id", user_id).execute()
+    return {"message": "All marked read"}
