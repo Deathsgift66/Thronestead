@@ -12,7 +12,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import logging
 import os
+
+logger = logging.getLogger("KingmakersRise.BackendMain")
 
 from .database import engine
 from .models import Base
@@ -106,7 +109,9 @@ if allowed_origins_env:
     origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
 else:
     origins = []  # Secure default when env var is missing
-    print("Warning: ALLOWED_ORIGINS not set; CORS disabled for external domains.")
+    logger.warning(
+        "ALLOWED_ORIGINS not set; CORS disabled for external domains."
+    )
 
 app.add_middleware(
     CORSMiddleware,

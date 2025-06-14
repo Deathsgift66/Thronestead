@@ -20,12 +20,17 @@ export function escapeHTML(str = '') {
 
 /**
  * Display a temporary toast notification.
- * Requires an element with id="toast" in the DOM.
+ * Creates the container dynamically if it does not exist.
  * @param {string} msg Message to display
  */
 export function showToast(msg) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast-notification';
+    document.body.appendChild(toast);
+  }
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
@@ -134,4 +139,5 @@ export function sanitizeHTML(html = '') {
   template.content.querySelectorAll('script, iframe').forEach(el => el.remove());
   return template.innerHTML;
 }
+
 

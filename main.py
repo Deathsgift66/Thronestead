@@ -15,6 +15,7 @@ Routers:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 import os
 
 # Router imports
@@ -22,6 +23,8 @@ from backend.routers import resources
 from backend.routers import login_routes as announcements
 from backend.routers import region
 from backend.routers import progression_router
+
+logger = logging.getLogger("KingmakersRise.Main")
 
 app = FastAPI(
     title="Kingmaker's Rise API",
@@ -35,7 +38,7 @@ if allowed_origins_env:
     origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
 else:
     origins = []  # Default to no CORS if environment variable is missing
-    print("Warning: ALLOWED_ORIGINS not set; CORS disabled for external domains.")
+    logger.warning("ALLOWED_ORIGINS not set; CORS disabled for external domains.")
 
 app.add_middleware(
     CORSMiddleware,

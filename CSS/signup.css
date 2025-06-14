@@ -178,21 +178,4 @@ body {
   }
 }
 
-.toast-notification {
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  background: rgba(245, 231, 196, 0.95);
-  color: var(--ink);
-  border: 2px solid var(--gold);
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px var(--shadow);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.toast-notification.show {
-  opacity: 1;
-}
 
