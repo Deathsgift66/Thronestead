@@ -73,11 +73,6 @@ body {
   margin-bottom: 2rem;
 }
 
-.panel-title {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  margin-bottom: 1rem;
-}
 
 .tab-buttons {
   display: flex;
