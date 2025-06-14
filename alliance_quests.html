@@ -1,19 +1,21 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: alliance_quests.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.13.30
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Alliance Quests | Kingmaker's Rise</title>
+
+  <!-- Metadata -->
   <meta name="description" content="Command your alliance through epic quests, lore-driven missions, and elite cooperative challenges." />
-  <meta name="keywords" content="Kingmaker's Rise, alliance management, quests, lore missions, medieval RPG" />
+  <meta name="keywords" content="Kingmaker's Rise, alliance quests, medieval MMO, lore, missions, teamplay" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/alliance_quests.html" />
 
@@ -30,98 +32,96 @@ Developer: Deathsgift66
   <meta name="twitter:description" content="Track, contribute, and lead your alliance through medieval quests worthy of legends." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/alliance_quests.css" />
-  <script defer type="module" src="Javascript/alliance_quests.js"></script>
-
-  <!-- Global Assets -->
+  <!-- CSS Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/alliance_common.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <link rel="stylesheet" href="CSS/alliance_quests.css" />
+
+  <!-- JS Modules -->
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/apiHelper.js"></script>
   <script type="module" src="Javascript/allianceAppearance.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/alliance_quests.js"></script>
 </head>
 
 <body class="quest-board-body alliance-bg">
 
-  <!-- Inject Navbar -->
+  <!-- Navbar -->
   <div id="navbar-container"></div>
   <script>
     fetch('/navbar.html')
       .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
-      });
+      .then(html => { document.getElementById('navbar-container').innerHTML = html; });
   </script>
 
-  <!-- Banner -->
-  <header class="kr-top-banner" aria-label="Alliance Quest Header">
+  <!-- Header -->
+  <header class="kr-top-banner" aria-label="Alliance Quests Banner">
     ⚔ Alliance Quests Board ⚔
   </header>
 
-  <!-- Main Centered Layout -->
-  <main class="main-centered-container" aria-label="Alliance Quest Management">
+  <!-- Main -->
+  <main class="main-centered-container" aria-label="Alliance Quest Interface">
+    <!-- Visual Identity -->
     <div class="alliance-visuals">
       <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
       <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
     </div>
 
-    <!-- Quest Board Panel -->
+    <!-- Quest Controls -->
     <div class="quest-board-container">
-
-      <!-- Filters -->
-      <section class="quest-filters" aria-label="Quest Filters">
+      <!-- Quest Filters -->
+      <section class="quest-filters" role="tablist" aria-label="Quest Filters">
         <button class="filter-tab active" data-filter="active" aria-pressed="true">Active</button>
         <button class="filter-tab" data-filter="completed" aria-pressed="false">Completed</button>
         <button class="filter-tab" data-filter="expired" aria-pressed="false">Expired</button>
       </section>
 
-      <!-- Quest Board -->
+      <!-- Quest Feed -->
       <section id="quest-board" aria-labelledby="quest-board-heading" aria-live="polite">
-        <h2 id="quest-board-heading" class="visually-hidden">Available Quests</h2>
+        <h2 id="quest-board-heading" class="visually-hidden">Alliance Quests</h2>
         <p id="no-quests-message" class="info-message hidden">No quests found for this category.</p>
+        <!-- JS injects quest cards -->
       </section>
 
-      <!-- Actions -->
-      <section class="quest-actions" aria-label="Quest Action Buttons">
+      <!-- Quest Action Button -->
+      <section class="quest-actions" aria-label="Quest Actions">
         <button class="action-btn medieval-banner-btn" id="start-new-quest" title="Start a New Alliance Quest">
           <span class="plus-icon">➕</span> Start New Quest
         </button>
       </section>
-
     </div>
 
-    <!-- Hall of Heroes Panel -->
+    <!-- Hall of Heroes -->
     <div class="hall-of-heroes" aria-labelledby="hall-of-heroes-heading">
       <h2 id="hall-of-heroes-heading">🏅 Hall of Heroes</h2>
       <ul id="hero-list" aria-live="polite">
         <li>Loading heroes...</li>
       </ul>
     </div>
-
   </main>
 
   <!-- Quest Modal -->
   <div id="quest-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-quest-title" aria-describedby="modal-quest-description" tabindex="-1">
     <div class="modal-content">
       <button class="close-button wax-seal-btn" aria-label="Close quest details" title="Close Quest Details">×</button>
+
       <h3 id="modal-quest-title" class="quest-title-modal">Quest Title</h3>
-      <p class="quest-type-modal">Type</p>
+      <p class="quest-type-modal">Quest Type</p>
 
       <div class="modal-parchment-content">
-        <p id="modal-quest-description" class="quest-description">Description</p>
+        <p id="modal-quest-description" class="quest-description">Quest description here...</p>
 
         <div class="quest-details-section">
           <h4>Required Contributions:</h4>
           <ul id="modal-quest-contributions" class="reward-list">
-            <li>No specific contributions listed.</li>
+            <li>No contributions listed.</li>
           </ul>
         </div>
 
@@ -151,9 +151,9 @@ Developer: Deathsgift66
       <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
       <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
       <a href="Assets/legal/EULA.pdf">EULA</a>
-      <a href="legal.html">and more</a>
+      <a href="legal.html">More</a>
     </div>
   </footer>
-
 </body>
+
 </html>
