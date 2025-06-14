@@ -2,6 +2,7 @@
 # File Name: login_routes.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -10,35 +11,40 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..security import verify_jwt_token
 from services.audit_service import log_action
-
-
 from ..supabase_client import get_supabase_client
-
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
 
 @router.get("/announcements", response_class=JSONResponse)
 def get_announcements():
-    """Return the latest public announcements for the login screen."""
+    """
+    🔔 Fetch the 10 most recent public login screen announcements.
+
+    Returns:
+        - List of announcement dicts with 'title', 'content', and 'created_at'.
+    """
     supabase = get_supabase_client()
 
     try:
-        res = (
-            supabase.table("announcements")
+        response = (
+            supabase
+            .table("announcements")
             .select("title,content,created_at")
             .order("created_at", desc=True)
             .limit(10)
             .execute()
         )
-    except Exception as e:  # pragma: no cover - network/db errors
+        if getattr(response, "status_code", 200) >= 400:
+            raise ValueError("Invalid Supabase response")
+
+        announcements = getattr(response, "data", response) or []
+    except Exception as e:
         print("❌ Error loading announcements:", e)
-        raise HTTPException(status_code=500, detail="Server error loading announcements.") from e
-
-    if getattr(res, "status_code", 200) >= 400:
-        raise HTTPException(status_code=500, detail="Failed to fetch announcements.")
-
-    announcements = getattr(res, "data", res) or []
+        raise HTTPException(
+            status_code=500,
+            detail="Server error loading announcements."
+        ) from e
 
     return JSONResponse(content=announcements, status_code=200)
 
@@ -53,6 +59,14 @@ def log_login_event(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Record a login related event for auditing."""
+    """
+    📘 Log user login-related actions (e.g., successful login, login attempt).
+
+    Parameters:
+        - payload.event (str): Description of the login event
+
+    Returns:
+        - Success message after recording the event
+    """
     log_action(db, user_id, "login_event", payload.event)
     return {"message": "event logged"}
