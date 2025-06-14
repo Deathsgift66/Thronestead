@@ -125,14 +125,37 @@ def get_admin_alerts(
 
     where_clause = f" WHERE {' AND '.join(filters)}" if filters else ""
 
-    def fetch(table: str, order_col: str, limit: int = 100, alt_where: str | None = None):
-        sql = f"SELECT * FROM {table}{alt_where or where_clause} ORDER BY {order_col} DESC LIMIT {limit}"
-        return [dict(row._mapping) for row in db.execute(text(sql), params).fetchall()]
+    allowed_tables = {
+        "audit_log": "created_at",
+        "admin_actions": "created_at",
+        "admin_notes": "created_at",
+        "alliance_war_combat_logs": "timestamp",
+        "alliance_treaties": "signed_at",
+    }
+
+    def fetch(table: str, limit: int = 100, alt_where: str | None = None):
+        order_col = allowed_tables.get(table)
+        if not order_col:
+            raise HTTPException(status_code=400, detail="Invalid table requested")
+        sql = text(
+            f"SELECT * FROM {table}{alt_where or where_clause} ORDER BY {order_col} DESC LIMIT :limit"
+        )
+        return [
+            dict(row._mapping)
+            for row in db.execute(sql, {**params, "limit": limit}).fetchall()
+        ]
 
     return {
-        "audit": fetch("audit_log", "created_at"),
-        "admin_actions": fetch("admin_actions", "created_at"),
-        "moderation_notes": fetch("admin_notes", "created_at"),
-        "recent_war_logs": fetch("alliance_war_combat_logs", "timestamp", alt_where=where_clause.replace("created_at", "timestamp")),
-        "treaty_activity": fetch("alliance_treaties", "signed_at", limit=10, alt_where=where_clause.replace("created_at", "signed_at")),
+        "audit": fetch("audit_log"),
+        "admin_actions": fetch("admin_actions"),
+        "moderation_notes": fetch("admin_notes"),
+        "recent_war_logs": fetch(
+            "alliance_war_combat_logs",
+            alt_where=where_clause.replace("created_at", "timestamp"),
+        ),
+        "treaty_activity": fetch(
+            "alliance_treaties",
+            limit=10,
+            alt_where=where_clause.replace("created_at", "signed_at"),
+        ),
     }

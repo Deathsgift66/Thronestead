@@ -8,11 +8,14 @@ import os
 import time
 import uuid
 import re
+import logging
 
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from pydantic import BaseModel, EmailStr
+
+from ..supabase_client import get_supabase_client
 
 from ..database import get_db
 from backend.models import User, Notification
@@ -94,7 +97,8 @@ def request_password_reset(
 
         # Placeholder: email system integration
         # send_email(user.email, subject="Reset Code", body=token)
-        print(f"[DEBUG] Reset token for {user.email}: {token}")
+        logger = logging.getLogger("KingmakersRise.PasswordReset")
+        logger.info("Password reset token generated for %s", user.email)
 
     return {"message": "If the email exists, a reset link has been sent."}
 
@@ -142,7 +146,15 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
     ):
         raise HTTPException(status_code=400, detail="Password too weak")
 
-    # TODO: update actual password hash if applicable (auth provider dependent)
+    try:
+        sb = get_supabase_client()
+        sb.auth.admin.update_user_by_id(uid, {"password": payload.new_password})
+    except Exception as exc:  # pragma: no cover - runtime dependency
+        logging.getLogger("KingmakersRise.PasswordReset").exception(
+            "Failed to update password for user %s", uid
+        )
+        raise HTTPException(status_code=500, detail="Password update failed") from exc
+
     db.execute(
         text("UPDATE users SET updated_at = now() WHERE user_id = :uid"),
         {"uid": uid}
