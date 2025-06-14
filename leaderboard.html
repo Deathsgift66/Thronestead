@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: leaderboard.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.12
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -13,18 +13,22 @@ Developer: Deathsgift66
 
   <title>Leaderboard | Kingmaker's Rise</title>
   <meta name="description" content="Track the top players, alliances, and rankings in the Leaderboard Hub of Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, leaderboard, rankings, top players, alliances, prestige, scores, influence" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/leaderboard.html" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Leaderboard | Kingmaker's Rise" />
   <meta property="og:description" content="Track the top players, alliances, and rankings in the Leaderboard Hub of Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/leaderboard.html" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Leaderboard | Kingmaker's Rise" />
   <meta name="twitter:description" content="Track the top players, alliances, and rankings in the Leaderboard Hub of Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, leaderboard, rankings, top players, alliances, competition, prestige" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/leaderboard.html" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/leaderboard.css" />
@@ -34,9 +38,9 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
@@ -57,24 +61,23 @@ Developer: Deathsgift66
   Kingmaker's Rise — Leaderboard Hub
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Content -->
 <main id="main-content" class="main-centered-container" aria-label="Leaderboard Interface">
 
-  <!-- Core Leaderboard Panel -->
+  <!-- Leaderboard Panel -->
   <section class="alliance-members-container">
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-button active" data-tab="kingdoms">Top Kingdoms</button>
-      <button class="tab-button" data-tab="alliances">Top Alliances</button>
-      <button class="tab-button" data-tab="wars">War Leaders</button>
-      <button class="tab-button" data-tab="economy">Economic Leaders</button>
-    </div>
+    <!-- Leaderboard Tabs -->
+    <nav class="tabs" role="tablist">
+      <button class="tab-button active" data-tab="kingdoms" role="tab" aria-selected="true">Top Kingdoms</button>
+      <button class="tab-button" data-tab="alliances" role="tab">Top Alliances</button>
+      <button class="tab-button" data-tab="wars" role="tab">War Leaders</button>
+      <button class="tab-button" data-tab="economy" role="tab">Economic Leaders</button>
+    </nav>
 
-    <!-- Leaderboard Container -->
+    <!-- Leaderboard Table -->
     <div class="leaderboard-container">
-      <!-- JS will dynamically populate based on active tab -->
-      <table class="leaderboard-table">
+      <table class="leaderboard-table" aria-label="Leaderboard Rankings">
         <thead>
           <tr id="leaderboard-headers">
             <th>Rank</th>
@@ -84,28 +87,30 @@ Developer: Deathsgift66
           </tr>
         </thead>
         <tbody id="leaderboard-body">
-          <!-- JS will populate leaderboard rows -->
+          <tr><td colspan="4">Loading leaderboard...</td></tr>
         </tbody>
       </table>
+      <div id="last-updated" class="last-updated text-sm text-right mt-2" aria-live="polite"></div>
     </div>
-    <div id="last-updated" class="last-updated"></div>
 
-    <!-- Apply Modal -->
-    <div id="apply-modal" class="modal hidden">
+    <!-- Detail Modal -->
+    <div id="apply-modal" class="modal hidden" aria-hidden="true">
       <div class="modal-content">
-        <!-- JS will populate modal content -->
+        <!-- JS will populate content -->
       </div>
     </div>
 
   </section>
-
 </main>
 
 <!-- Footer -->
 <footer class="site-footer">
   <div>© 2025 Kingmaker’s Rise</div>
   <div>
-    <a href="legal.html">View Legal Documents</a>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
   </div>
 </footer>
 
