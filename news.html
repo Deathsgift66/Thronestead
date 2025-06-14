@@ -47,7 +47,7 @@ Developer: Deathsgift66
 
 <!-- Navbar -->
 <div id="navbar-container"></div>
-<script type=\"module\" src=\"Javascript/navLoader.js\"></script>
+<script type="module" src="Javascript/navLoader.js"></script>
 
 <!-- Page Banner -->
 <header class="kr-top-banner" aria-label="News Banner">
@@ -74,12 +74,22 @@ Developer: Deathsgift66
     <p id="no-results-message" class="hidden text-warning">No news found. Try another search term.</p>
 
     <!-- Articles Grid -->
-    <div id="articles" class="articles-grid">
+  <div id="articles" class="articles-grid">
       <!-- Populated dynamically by news.js -->
-    </div>
+  </div>
 
   </section>
 </main>
+
+<!-- Article Modal -->
+<div id="article-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="article-title">
+  <div class="modal-content">
+    <button id="close-article-btn" class="modal-close" aria-label="Close article">&times;</button>
+    <h3 id="article-title"></h3>
+    <p id="article-meta" class="news-meta"></p>
+    <div id="article-body" class="article-body"></div>
+  </div>
+</div>
 
 <!-- Footer -->
 <footer class="site-footer">

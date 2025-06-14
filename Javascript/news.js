@@ -69,8 +69,13 @@ function renderArticles(articles) {
       <h3>${escapeHTML(article.title)}</h3>
       <p class="news-meta">By ${escapeHTML(article.author_name || "System")} — ${formatDate(article.published_at)}</p>
       <p class="news-summary">${escapeHTML(article.summary || "")}</p>
-      <a href="#" class="action-btn" title="Full article page coming soon">Read More</a>
+      <a href="#" class="action-btn read-more">Read More</a>
     `;
+
+    card.querySelector('.read-more')?.addEventListener('click', e => {
+      e.preventDefault();
+      openArticleModal(article);
+    });
 
     container.appendChild(card);
   });
@@ -135,3 +140,18 @@ function escapeHTML(str) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+// ✅ Modal viewer for full article
+function openArticleModal(article) {
+  const modal = document.getElementById('article-modal');
+  if (!modal) return;
+  modal.querySelector('#article-title').textContent = article.title || 'Untitled';
+  modal.querySelector('#article-meta').textContent =
+    `By ${article.author_name || 'System'} — ${formatDate(article.published_at)}`;
+  modal.querySelector('#article-body').textContent = article.content || 'Full article coming soon.';
+  modal.classList.remove('hidden');
+}
+
+document.getElementById('close-article-btn')?.addEventListener('click', () => {
+  document.getElementById('article-modal')?.classList.add('hidden');
+});
