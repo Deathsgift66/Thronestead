@@ -5,8 +5,6 @@
 # Description: Utility service for calculating troop slots, verifying progression gates, and merging live gameplay modifiers.
 
 import logging
-from datetime import datetime
-from typing import Optional
 
 from fastapi import HTTPException
 
