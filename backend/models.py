@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    Float,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
@@ -402,9 +403,12 @@ class CombatLog(Base):
     position_x = Column(Integer)
     position_y = Column(Integer)
     damage_dealt = Column(Integer, default=0)
-    morale_shift = Column(Integer)
+    morale_shift = Column(Float)
     notes = Column(Text)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    treaty_trigger_context = Column(JSONB, default=dict)
+    triggered_by_treaty = Column(Boolean, default=False)
+    treaty_name = Column(Text)
 
 
 class AllianceWar(Base):
@@ -733,6 +737,17 @@ class GameSetting(Base):
     setting_string = Column(String)
     setting_number = Column(Numeric)
     setting_boolean = Column(Boolean, default=False)
+
+
+class GameSettingValue(Base):
+    __tablename__ = "game_setting_values"
+
+    setting_key = Column(
+        String,
+        ForeignKey("game_settings.setting_key", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    setting_value = Column(Text)
 
 
 class KingdomHistoryLog(Base):
