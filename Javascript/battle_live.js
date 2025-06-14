@@ -192,13 +192,15 @@ let mapWidth = 60;
 let mapHeight = 20;
 let currentMapColumns = 60;
 let scoreboardChannel = null;
+// Cache tile DOM nodes for efficient updates
+let tileElements = [];
 
 function renderBattleMap(tileMap) {
   const battleMap = document.getElementById('battle-map');
   battleMap.innerHTML = '';
-
   battleMap.style.gridTemplateColumns = `repeat(${mapWidth}, 1fr)`;
-
+  const frag = document.createDocumentFragment();
+  tileElements = [];
   for (let row = 0; row < mapHeight; row++) {
     for (let col = 0; col < mapWidth; col++) {
       const tile = document.createElement('div');
@@ -209,34 +211,32 @@ function renderBattleMap(tileMap) {
       else if (type === 'hill') tile.style.backgroundColor = '#8B4513';
       else tile.style.backgroundColor = 'var(--stone-panel)';
       tile.title = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${TERRAIN_EFFECTS[type] || ''}`;
-      battleMap.appendChild(tile);
+      frag.appendChild(tile);
+      tileElements.push(tile);
     }
   }
+  battleMap.appendChild(frag);
 }
 
 function renderUnits(units) {
-  const battleMap = document.getElementById('battle-map');
-  const tiles = battleMap.children;
-
-  for (const tile of tiles) {
-    tile.innerHTML = '';
-  }
-
+  if (!tileElements.length) return;
+  tileElements.forEach(t => (t.innerHTML = ''));
   units.forEach(unit => {
     const index = unit.position_y * mapWidth + unit.position_x;
-    if (!tiles[index]) return;
+    const tile = tileElements[index];
+    if (!tile) return;
     const unitDiv = document.createElement('div');
     unitDiv.className = 'unit-icon';
     unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();
     const counter = UNIT_COUNTERS[unit.unit_type] || 'none';
     unitDiv.title = `HP: ${unit.hp ?? '?'}  Morale: ${unit.morale ?? '?'}%  Counters: ${counter}`;
     unitDiv.addEventListener('click', () => openOrderPanel(unit));
-    tiles[index].appendChild(unitDiv);
+    tile.appendChild(unitDiv);
     if (unit.morale !== undefined) {
       const morale = document.createElement('div');
       morale.className = 'morale-bar';
       morale.style.width = unit.morale + '%';
-      tiles[index].appendChild(morale);
+      tile.appendChild(morale);
     }
   });
 

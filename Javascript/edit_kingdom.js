@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { showToast, isValidURL, setValue, getValue } from './utils.js';
 
 let userId = null;
 let authToken = '';
@@ -155,39 +156,9 @@ function bindInputPreview() {
   }
 }
 
-// ------------------------------
-// Utility Functions
-// ------------------------------
-function setValue(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.value = val || '';
-}
-
-function getValue(id, allowNull = false) {
-  const val = (document.getElementById(id)?.value || '').trim();
-  return allowNull && val === '' ? null : val;
-}
-
 function setImagePreview(id, url) {
   const img = document.getElementById(id);
   if (img && isValidURL(url)) img.src = url;
-}
-
-function isValidURL(str) {
-  try {
-    new URL(str);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 function redirectToLogin() {

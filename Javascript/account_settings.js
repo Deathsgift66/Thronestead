@@ -3,6 +3,14 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import {
+  showToast,
+  validateEmail,
+  escapeHTML,
+  setValue,
+  setSrc,
+  setText
+} from './utils.js';
 
 /**
  * Retrieve headers for authenticated Supabase API calls.
@@ -232,61 +240,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+
 export { loadUserProfile, loadKingdomDetails, saveUserSettings, logoutSession, uploadAvatar, subscribeSessions };
-
-/**
- * Validates if an email address is in a correct format.
- */
-function validateEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-}
-
-/**
- * Shows a temporary toast notification.
- */
-function showToast(msg) {
-  const toastEl = document.getElementById('toast');
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(() => {
-    toastEl.classList.remove('show');
-  }, 3000);
-}
-
-/**
- * Escapes special HTML characters in dynamic content to prevent XSS.
- */
-function escapeHTML(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Sets the value of a form input by ID.
- */
-function setValue(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.value = value;
-}
-
-/**
- * Sets the src of an image element by ID.
- */
-function setSrc(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.src = value;
-}
-
-/**
- * Sets the text content of an element by ID.
- */
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
