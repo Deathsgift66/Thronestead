@@ -13,6 +13,11 @@ Developer: Deathsgift66
 
   <title>Kingdom Quests | Kingmaker's Rise</title>
   <meta name="description" content="Manage and complete Kingdom Quests in Kingmaker’s Rise — progress through story-driven quests and earn rewards." />
+  <meta name="keywords" content="Kingmaker's Rise, kingdom quests, story quests, player progression, rewards" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/quests.html" />
+
+  <!-- Social Metadata -->
   <meta property="og:title" content="Kingdom Quests | Kingmaker's Rise" />
   <meta property="og:description" content="Manage and complete Kingdom Quests in Kingmaker’s Rise — progress through story-driven quests and earn rewards." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +27,6 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Kingdom Quests | Kingmaker's Rise" />
   <meta name="twitter:description" content="Manage and complete Kingdom Quests in Kingmaker’s Rise — progress through story-driven quests and earn rewards." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, kingdom quests, story quests, player progression, rewards" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/quests.html" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/quests.css" />
@@ -35,79 +37,75 @@ Developer: Deathsgift66
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
-<body>
+<body class="quests-page">
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Kingdom Quests Banner">
-  Kingmaker's Rise — Kingdom Quests
-</header>
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Kingdom Quests Banner">
+    Kingmaker's Rise — Kingdom Quests
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Kingdom Quests Interface">
+  <!-- Main Interface -->
+  <main class="main-centered-container" aria-label="Kingdom Quests Interface">
 
-  <!-- Core Kingdom Quests Panel -->
-  <section class="alliance-members-container">
-
-    <!-- Hero Banner -->
-    <div class="hero-banner">
-      <h2>Kingdom Quests</h2>
-      <p>Progress through story-driven quests and guide your kingdom’s rise to power.</p>
-    </div>
-
-    <div class="quests-grid">
-      <!-- Quest Catalogue -->
-      <div class="section-panel">
-        <h3>Quest Catalogue</h3>
-        <div id="quest-catalogue" class="custom-scrollbar">
-          <!-- JS will populate -->
-        </div>
+    <!-- Quest Panel -->
+    <section class="alliance-members-container">
+      <div class="hero-banner">
+        <h2>Kingdom Quests</h2>
+        <p>Progress through story-driven quests and guide your kingdom’s rise to power.</p>
       </div>
 
-      <!-- Active Quests -->
-      <div class="section-panel">
-        <h3>Active Quests</h3>
-        <div id="active-quests" class="custom-scrollbar">
-          <!-- JS will populate -->
+      <!-- Grid Layout -->
+      <div class="quests-grid" aria-live="polite">
+        <!-- Quest Catalogue -->
+        <div class="section-panel">
+          <h3 id="catalogue-title">Quest Catalogue</h3>
+          <div id="quest-catalogue" class="custom-scrollbar loading-container" aria-describedby="catalogue-title">
+            <div class="loader" role="status" aria-label="Loading quests..."></div>
+          </div>
+        </div>
+
+        <!-- Active Quests -->
+        <div class="section-panel">
+          <h3 id="active-title">Active Quests</h3>
+          <div id="active-quests" class="custom-scrollbar loading-container" aria-describedby="active-title">
+            <div class="loader" role="status" aria-label="Loading active quests..."></div>
+          </div>
+        </div>
+
+        <!-- Completed Quests -->
+        <div class="section-panel">
+          <h3 id="completed-title">Completed Quests</h3>
+          <div id="completed-quests" class="custom-scrollbar loading-container" aria-describedby="completed-title">
+            <div class="loader" role="status" aria-label="Loading completed quests..."></div>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Completed Quests -->
-      <div class="section-panel">
-        <h3>Completed Quests</h3>
-        <div id="completed-quests" class="custom-scrollbar">
-          <!-- JS will populate -->
-        </div>
-      </div>
-    </div>
+  </main>
 
-  </section>
-
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
-</footer>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div><a href="legal.html">View Legal Documents</a></div>
+  </footer>
 
 </body>
 </html>
