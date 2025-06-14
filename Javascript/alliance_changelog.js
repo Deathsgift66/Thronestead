@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 let changelogData = [];
 let latestTimestamp = null;
@@ -108,15 +109,6 @@ function renderChangelog(list) {
 }
 
 // Basic HTML escaping to prevent XSS injection
-function escapeHTML(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 // ✅ Initialize changelog on DOM load
 document.addEventListener('DOMContentLoaded', () => {

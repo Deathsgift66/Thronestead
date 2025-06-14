@@ -3,16 +3,10 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 const REFRESH_MS = 30000;
 
-// 🔐 Prevent XSS via innerHTML
-function escapeHTML(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 // 📊 Dashboard Stats
 async function loadDashboardStats() {

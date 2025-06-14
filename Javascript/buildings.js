@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 // Keys to check for cost display
 const RESOURCE_KEYS = [
@@ -230,12 +231,6 @@ async function showBuildingInfo(buildingId) {
 }
 
 // ========== Helpers ==========
-function escapeHTML(str) {
-  return str ? String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;') : '';
-}
 
 function formatCostFromColumns(obj) {
   return RESOURCE_KEYS

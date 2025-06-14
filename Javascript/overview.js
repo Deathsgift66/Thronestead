@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 // Kingdom Overview — Summary + Resources + Military + Quests + Modifiers
+import { escapeHTML } from './utils.js';
 
 import { supabase } from './supabaseClient.js';
 import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from './progressionGlobal.js';
@@ -152,13 +153,6 @@ async function loadOverview() {
 }
 
 // Escape dangerous HTML
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 // Live update for kingdom resources
 function subscribeToResourceUpdates() {

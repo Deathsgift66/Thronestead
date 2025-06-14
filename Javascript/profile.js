@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadPlayerProfile();
@@ -185,13 +186,3 @@ function formatTimestamp(timestamp) {
   });
 }
 
-// ✅ HTML Escape Utility
-function escapeHTML(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}

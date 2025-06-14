@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 let currentUserId = null;
 let isAdmin = false;
@@ -238,9 +239,6 @@ function formatTimestamp(ts) {
   return d.toLocaleString();
 }
 
-function escapeHTML(str) {
-  return str ? String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;") : "";
-}
 
 function startAutoRefresh() {
   setInterval(() => loadMarketListings(), 30000);

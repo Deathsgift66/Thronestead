@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 const RESOURCE_KEYS = [
   'wood', 'stone', 'iron_ore', 'gold', 'gems', 'food', 'coal', 'livestock',
@@ -246,12 +247,3 @@ function formatCostFromColumns(obj) {
     .join(', ') || 'N/A';
 }
 
-function escapeHTML(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}

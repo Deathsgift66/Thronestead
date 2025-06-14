@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   enableSmoothScroll();        // ✅ Smooth scrolling behavior
@@ -137,12 +138,3 @@ function formatDate(dateStr) {
 // =============================
 // 🛡️ Basic HTML Escaping
 // =============================
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
