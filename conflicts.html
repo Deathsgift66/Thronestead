@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: conflicts.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.21.04
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -10,16 +10,15 @@ Developer: Deathsgift66
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Conflicts | Kingmaker's Rise</title>
   <meta name="description" content="Track current conflicts, wars, and disputes in Kingmaker's Rise." />
-  <meta name="keywords" content="Kingmaker's Rise, conflicts, wars, disputes, alliance wars, kingdom wars" />
+  <meta name="keywords" content="Kingmaker's Rise, conflicts, wars, disputes, battle history, alliance war log" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/conflicts.html" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Conflicts | Kingmaker's Rise" />
-  <meta property="og:description" content="Track current conflicts, wars, and disputes in Kingmaker's Rise." />
+  <meta property="og:description" content="Monitor alliance wars and dispute statuses in real time." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/conflicts.html" />
   <meta property="og:type" content="website" />
@@ -27,7 +26,7 @@ Developer: Deathsgift66
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Conflicts | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Track active and historical conflicts in Kingmaker's Rise." />
+  <meta name="twitter:description" content="Live and historical battle reporting for all major wars and disputes." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
   <!-- Page-Specific Assets -->
@@ -38,84 +37,90 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <script defer type="module" src="Javascript/navDropdown.js"></script>
+  <script defer type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
-<body>
+<body class="conflict-bg">
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Conflicts Banner">
-  Kingmaker's Rise — Conflicts
-</header>
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Conflicts Page Banner">
+    ⚔️ Kingmaker's Rise — Conflict Tracker
+  </header>
 
-<main class="main-centered-container">
+  <!-- Main Interface -->
+  <main class="main-centered-container" aria-label="Conflict Monitoring Interface">
 
-  <!-- Conflicts Hub -->
-  <section class="conflicts-container">
-    <h2>Conflicts</h2>
-    <p>Track current and past wars between kingdoms and alliances.</p>
+    <!-- Conflict Panel -->
+    <section class="conflicts-container" aria-labelledby="conflicts-heading">
+      <h2 id="conflicts-heading">Live and Historical Conflicts</h2>
+      <p>Explore war timelines, active siege states, and resolution statistics.</p>
 
-    <div class="conflict-controls">
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="active">Active</button>
-        <button class="filter-btn" data-filter="concluded">Concluded</button>
-        <button class="filter-btn" data-filter="planning">Planning</button>
-        <button class="filter-btn" data-filter="resolution">Resolution</button>
+      <!-- Filters and Search -->
+      <div class="conflict-controls" role="region" aria-label="Conflict Filters">
+        <div class="filter-buttons" role="group" aria-label="Filter by Status">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="active">Active</button>
+          <button class="filter-btn" data-filter="planning">Planning</button>
+          <button class="filter-btn" data-filter="resolution">Resolution</button>
+          <button class="filter-btn" data-filter="concluded">Concluded</button>
+        </div>
+        <input type="text" id="conflictSearch" placeholder="Search by alliance or kingdom..." aria-label="Search conflicts" />
       </div>
-      <input type="text" id="conflictSearch" placeholder="Search by alliance or kingdom" aria-label="Search Conflicts" />
+
+      <!-- Conflict Table -->
+      <div class="table-wrapper" aria-label="Conflict Data Table">
+        <table id="conflictTable" class="conflict-table">
+          <thead>
+            <tr>
+              <th scope="col">War ID</th>
+              <th scope="col" class="sortable">Alliance A</th>
+              <th scope="col" class="sortable">Alliance B</th>
+              <th scope="col" class="sortable">Type</th>
+              <th scope="col" class="sortable">Start Date</th>
+              <th scope="col" class="sortable">Phase</th>
+              <th scope="col">Victor</th>
+              <th scope="col">Progress</th>
+              <th scope="col">Castle HP</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="conflictRows" aria-live="polite">
+            <tr><td colspan="10">🔄 Loading conflicts...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- War Detail Modal -->
+    <div id="war-detail-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="warDetailHeader">
+      <!-- JS injects content here -->
     </div>
 
-    <div class="table-wrapper">
-      <table id="conflictTable" class="conflict-table">
-        <thead>
-          <tr>
-            <th scope="col" data-field="war_id">War ID</th>
-            <th scope="col" data-field="attacker_alliance" class="sortable">Alliance A</th>
-            <th scope="col" data-field="defender_alliance" class="sortable">Alliance B</th>
-            <th scope="col" data-field="war_type" class="sortable">Type</th>
-            <th scope="col" data-field="started_at" class="sortable">Start Date</th>
-            <th scope="col" data-field="phase" class="sortable">Phase</th>
-            <th scope="col">Victory</th>
-            <th scope="col">Progress</th>
-            <th scope="col">Castle HP</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="conflictRows">
-          <tr><td colspan="10">Loading conflicts...</td></tr>
-        </tbody>
-      </table>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">Legal Center</a>
     </div>
-  </section>
-
-  <div id="war-detail-modal" class="modal hidden"></div>
-
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
-    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
-    <a href="Assets/legal/EULA.pdf">EULA</a>
-    <a href="legal.html">and more</a>
-  </div>
-</footer>
+  </footer>
 
 </body>
 </html>
