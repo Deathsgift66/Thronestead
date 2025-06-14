@@ -316,6 +316,8 @@ def check_victory_condition_kingdom(war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
     elif war["battle_tick"] >= 12:
@@ -344,6 +346,8 @@ def check_victory_condition_kingdom(war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
 
@@ -388,6 +392,8 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
     elif awar["battle_tick"] >= 12:
@@ -419,6 +425,8 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
 
@@ -549,6 +557,8 @@ def insert_battle_resolution_log(
     attacker_casualties: int = 0,
     defender_casualties: int = 0,
     loot_summary: dict | None = None,
+    gold_looted: int = 0,
+    resources_looted: str | None = None,
 ) -> None:
     """Persist final battle outcome in ``battle_resolution_logs``."""
 
@@ -570,8 +580,10 @@ def insert_battle_resolution_log(
             total_ticks,
             attacker_casualties,
             defender_casualties,
-            loot_summary
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            loot_summary,
+            gold_looted,
+            resources_looted
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             battle_type,
@@ -582,6 +594,8 @@ def insert_battle_resolution_log(
             attacker_casualties,
             defender_casualties,
             loot_json,
+            gold_looted,
+            resources_looted,
         ),
     )
 

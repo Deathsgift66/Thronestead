@@ -70,6 +70,27 @@ class PlayerMessage(Base):
     is_read = Column(Boolean, default=False)
 
 
+class AuditLog(Base):
+    __tablename__ = "audit_log"
+
+    log_id = Column(Integer, primary_key=True)
+    user_id = Column(UUID(as_uuid=True))
+    action = Column(Text)
+    details = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    kingdom_id = Column(Integer)
+
+
+class ArchivedAuditLog(Base):
+    __tablename__ = "archived_audit_log"
+
+    log_id = Column(BigInteger)
+    user_id = Column(UUID(as_uuid=True))
+    action = Column(Text)
+    details = Column(Text)
+    created_at = Column(DateTime(timezone=True))
+
+
 class Alliance(Base):
     """Minimal alliance record used for foreign key relations."""
 
@@ -531,15 +552,17 @@ class AllianceWarScore(Base):
 class BattleResolutionLog(Base):
     __tablename__ = "battle_resolution_logs"
     resolution_id = Column(Integer, primary_key=True)
-    battle_type = Column(String)
+    battle_type = Column(Text)
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"))
     alliance_war_id = Column(Integer, ForeignKey("alliance_wars.alliance_war_id"))
-    winner_side = Column(String)
+    winner_side = Column(Text)
     total_ticks = Column(Integer, default=0)
     attacker_casualties = Column(Integer, default=0)
     defender_casualties = Column(Integer, default=0)
-    loot_summary = Column(JSONB, default={})
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    loot_summary = Column(JSONB, default=dict)
+    created_at = Column(DateTime, server_default=func.now())
+    gold_looted = Column(Integer, default=0)
+    resources_looted = Column(Text)
 
 
 class WarScore(Base):
