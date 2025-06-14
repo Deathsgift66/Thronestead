@@ -2,8 +2,8 @@
 # File Name: village_modifiers.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from datetime import datetime
 
+from datetime import datetime
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -15,6 +15,7 @@ from backend.models import VillageModifier
 router = APIRouter(prefix="/api/village_modifiers", tags=["village_modifiers"])
 
 
+# === Payload schema for applying village modifiers ===
 class ModifierPayload(BaseModel):
     village_id: int
     resource_bonus: dict | None = None
@@ -28,8 +29,13 @@ class ModifierPayload(BaseModel):
     applied_by: str | None = None
 
 
-@router.get("/{village_id}")
+# === GET: List all active modifiers for a village ===
+@router.get("/{village_id}", summary="List Active Modifiers")
 def list_modifiers(village_id: int, db: Session = Depends(get_db)):
+    """
+    Return all active modifiers for the given village.
+    Expired modifiers are automatically excluded.
+    """
     rows = (
         db.query(VillageModifier)
         .filter(VillageModifier.village_id == village_id)
@@ -61,8 +67,13 @@ def list_modifiers(village_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/apply")
+# === POST: Apply or update a modifier ===
+@router.post("/apply", summary="Apply Village Modifier")
 def apply_modifier(payload: ModifierPayload, db: Session = Depends(get_db)):
+    """
+    Apply or update a modifier for a specific village based on the source tag.
+    This supports stacking rules and time-based expiration.
+    """
     existing = (
         db.query(VillageModifier)
         .filter(
@@ -71,7 +82,9 @@ def apply_modifier(payload: ModifierPayload, db: Session = Depends(get_db)):
         )
         .first()
     )
+
     if existing:
+        # Update existing modifier
         existing.resource_bonus = payload.resource_bonus or {}
         existing.troop_bonus = payload.troop_bonus or {}
         existing.construction_speed_bonus = payload.construction_speed_bonus or 0
@@ -82,6 +95,7 @@ def apply_modifier(payload: ModifierPayload, db: Session = Depends(get_db)):
         existing.applied_by = payload.applied_by
         existing.last_updated = func.now()
     else:
+        # Insert new modifier
         mod = VillageModifier(
             village_id=payload.village_id,
             resource_bonus=payload.resource_bonus or {},
@@ -95,12 +109,18 @@ def apply_modifier(payload: ModifierPayload, db: Session = Depends(get_db)):
             applied_by=payload.applied_by,
         )
         db.add(mod)
+
     db.commit()
     return {"message": "modifier applied"}
 
 
-@router.post("/cleanup_expired")
+# === POST: Cleanup expired modifiers ===
+@router.post("/cleanup_expired", summary="Purge Expired Modifiers")
 def cleanup_expired(db: Session = Depends(get_db)):
+    """
+    Remove all expired modifiers from the database.
+    This keeps the system lean and fast.
+    """
     deleted = (
         db.query(VillageModifier)
         .filter(
