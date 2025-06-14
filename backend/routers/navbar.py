@@ -11,6 +11,7 @@ from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
 from ..database import get_db
 from backend.models import Notification, TradeLog
+from services.message_service import count_unread_messages
 
 router = APIRouter(prefix="/api/navbar", tags=["navbar"])
 
@@ -36,15 +37,8 @@ def navbar_profile(user_id: str = Depends(verify_jwt_token)):
     if not result:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Fetch unread messages count
-    msg_res = (
-        supabase.table("player_messages")
-        .select("message_id")
-        .eq("recipient_id", user_id)
-        .eq("is_read", False)
-        .execute()
-    )
-    unread_count = len(getattr(msg_res, "data", msg_res) or [])
+    # Fetch unread messages count via service
+    unread_count = count_unread_messages(supabase, user_id)
 
     return {
         "username": result.get("username"),
@@ -66,15 +60,8 @@ def navbar_counters(
     """
     supabase = get_supabase_client()
 
-    # Count unread messages
-    msg_res = (
-        supabase.table("player_messages")
-        .select("message_id")
-        .eq("recipient_id", user_id)
-        .eq("is_read", False)
-        .execute()
-    )
-    unread_messages = len(getattr(msg_res, "data", msg_res) or [])
+    # Count unread messages via shared service
+    unread_messages = count_unread_messages(supabase, user_id)
 
     # Count unread notifications (global or specific)
     unread_notifications = (

@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+import re
 from ..supabase_client import get_supabase_client
 from ..security import verify_jwt_token
 
@@ -17,6 +18,16 @@ class MessagePayload(BaseModel):
     subject: str | None = None
     content: str
     category: str | None = "player"
+
+    _TAG_RE = re.compile(r"<[^>]+>")
+
+    @validator("content")
+    def sanitize_content(cls, v: str) -> str:  # noqa: D401
+        """Strip HTML tags and enforce length limits."""
+        cleaned = cls._TAG_RE.sub("", v)
+        if len(cleaned) > 5000:
+            raise ValueError("Message too long")
+        return cleaned.strip()
 
 
 class DeletePayload(BaseModel):
