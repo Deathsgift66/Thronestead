@@ -147,3 +147,12 @@ body {
   vertical-align: middle;
 }
 
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  gap: 0.5rem;
+  color: var(--parchment);
+}
+
