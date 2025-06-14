@@ -1,12 +1,17 @@
-# Kingmaker’s Rise — FrontEnd Production Deploy Config
+# ----------------------------------------
+# Project: Kingmaker’s Rise — FrontEnd Production Deploy Config
+# Environment: Production (Netlify)
+# Version: 6.14.2025.20.12
+# ----------------------------------------
 
 [build]
-  publish = "."
-  command = ""
+  publish = "."                       # Root directory for static files
+  command = ""                        # No build command needed for pure HTML/CSS/JS
 
 [context.production.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "18"                # Ensures compatibility for any Node-based tooling
 
+# Enable single-page app behavior
 [[redirects]]
   from = "/*"
   to = "/index.html"
