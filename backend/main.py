@@ -15,6 +15,7 @@ from pathlib import Path
 import logging
 import os
 
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("KingmakersRise.BackendMain")
 
 from .database import engine
@@ -76,7 +77,8 @@ for name in router_pkg.__all__:
 # -----------------------
 # 🖼️ Serve Static Frontend Files
 # -----------------------
-BASE_DIR = Path(__file__).resolve().parent.parent
+# ``FRONTEND_DIR`` can override the default directory for serving the static site
+BASE_DIR = Path(os.getenv("FRONTEND_DIR", Path(__file__).resolve().parent.parent))
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
 # -----------------------
