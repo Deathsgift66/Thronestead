@@ -10,9 +10,18 @@ This file assumes FastAPI app structure, Supabase SDK, and environment-based con
 """
 
 import os
-from dotenv import load_dotenv
-from supabase import create_client, Client
 import logging
+
+try:
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover - optional in some environments
+    load_dotenv = lambda *_, **__: None  # type: ignore
+
+try:
+    from supabase import create_client, Client
+except Exception:  # pragma: no cover - optional in tests
+    create_client = None  # type: ignore
+    Client = None  # type: ignore
 
 # Load .ENV variables (Render environment uses system variables by default)
 load_dotenv(".ENV")
@@ -25,13 +34,20 @@ logger = logging.getLogger("KingmakersRise")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # Use service role key for backend tasks
 
-# Validate config
-if not SUPABASE_URL or not SUPABASE_KEY:
-    logger.error("Supabase credentials missing. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.")
-    raise EnvironmentError("Supabase configuration incomplete.")
+supabase = None
+if create_client and SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as exc:  # pragma: no cover - network/dependency issues
+        logger.exception("Failed to initialize Supabase client")
+        supabase = None
+else:
+    logger.warning(
+        "Supabase credentials missing or client library unavailable; continuing without Supabase"
+    )
 
-# Initialize Supabase client
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+if supabase:
+    logger.info("Supabase client initialized")
 
 # Exported objects from module
 __all__ = ["supabase", "logger"]

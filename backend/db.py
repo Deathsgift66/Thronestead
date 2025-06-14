@@ -58,6 +58,7 @@ class _DB:
         except SQLAlchemyError as e:
             logger.error(f"❌ DB EXECUTE ERROR — SQL: {sql} | Params: {params}")
             logger.exception(e)
+            raise
 
 
 # Exported database utility instance
