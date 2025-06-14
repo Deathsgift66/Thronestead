@@ -2,6 +2,7 @@
 # File Name: resources.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -12,20 +13,27 @@ from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])
 
+
 @router.get("")
 def get_resources(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Return the player's kingdom resource ledger."""
+    """
+    Return the authenticated player's resource ledger.
+
+    Supports Supabase for real-time cloud reads, with local SQL fallback.
+    Filters out technical metadata like timestamps and IDs.
+    """
+    # ✅ Attempt Supabase first
     try:
         supabase = get_supabase_client()
-    except RuntimeError:  # pragma: no cover - supabase not configured
-        supabase = None
+    except RuntimeError:
+        supabase = None  # 🔁 fallback enabled if Supabase is offline
 
-    if supabase is not None:
-        # Fetch from Supabase if credentials are provided
+    if supabase:
         try:
+            # Step 1: Lookup kingdom ID via user_id
             kingdom_res = (
                 supabase.table("kingdoms")
                 .select("kingdom_id")
@@ -33,15 +41,13 @@ def get_resources(
                 .single()
                 .execute()
             )
-        except Exception as exc:  # pragma: no cover - network/db errors
-            raise HTTPException(status_code=500, detail="Failed to fetch kingdom") from exc
+            kingdom_data = getattr(kingdom_res, "data", kingdom_res)
+            if not kingdom_data or not kingdom_data.get("kingdom_id"):
+                raise HTTPException(status_code=404, detail="Kingdom not found")
 
-        data = getattr(kingdom_res, "data", kingdom_res)
-        if not data:
-            raise HTTPException(status_code=404, detail="Kingdom not found")
+            kid = kingdom_data["kingdom_id"]
 
-        kid = data.get("kingdom_id")
-        try:
+            # Step 2: Fetch kingdom resources
             res = (
                 supabase.table("kingdom_resources")
                 .select("*")
@@ -49,30 +55,40 @@ def get_resources(
                 .single()
                 .execute()
             )
-        except Exception as exc:  # pragma: no cover - network/db errors
-            raise HTTPException(status_code=500, detail="Failed to fetch resources") from exc
+            row = getattr(res, "data", res)
+            if not row:
+                raise HTTPException(status_code=404, detail="Resources not found")
 
-        row = getattr(res, "data", res)
-        if not row:
-            raise HTTPException(status_code=404, detail="Resources not found")
+            # Step 3: Filter out metadata fields
+            resources = {
+                k: v
+                for k, v in row.items()
+                if k not in {"kingdom_id", "created_at", "last_updated"}
+            }
 
-        resources = {
-            k: row[k]
-            for k in row.keys()
-            if k not in ("kingdom_id", "created_at", "last_updated")
-        }
-        return {"resources": resources}
+            return {"resources": resources}
 
-    # Default to SQLAlchemy database
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail="Supabase error") from exc
+
+    # 🔁 Local SQLAlchemy fallback
     user = db.query(User).filter_by(user_id=user_id).first()
     if not user or not user.kingdom_id:
         raise HTTPException(status_code=404, detail="Kingdom not found")
 
-    row = db.query(KingdomResources).filter_by(kingdom_id=user.kingdom_id).first()
+    row = (
+        db.query(KingdomResources)
+        .filter_by(kingdom_id=user.kingdom_id)
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="Resources not found")
 
+    # Construct dict from ORM columns, excluding metadata
     resources = {
-        c.name: getattr(row, c.name) for c in KingdomResources.__table__.columns
+        col.name: getattr(row, col.name)
+        for col in KingdomResources.__table__.columns
+        if col.name not in {"kingdom_id", "created_at", "last_updated"}
     }
+
     return {"resources": resources}
