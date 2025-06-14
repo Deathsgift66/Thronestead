@@ -1,90 +1,120 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: edit_kingdom.html
-Version 6.13.2025.19.49
+Version 6.14.2025.22.45
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Edit Kingdom | Kingmaker's Rise</title>
-  <meta name="description" content="Update your kingdom details, banners and more in Kingmaker's Rise." />
-  <meta property="og:title" content="Edit Kingdom | Kingmaker's Rise" />
-  <meta property="og:description" content="Update your kingdom details, banners and more in Kingmaker's Rise." />
-  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta property="og:url" content="https://www.kingmakersrise.com/edit_kingdom.html" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Edit Kingdom | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Update your kingdom details, banners and more in Kingmaker's Rise." />
-  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, edit kingdom, settings" />
+  <meta name="description" content="Update your kingdom details, banners, and lore in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, kingdom settings, banners, ruler, edit kingdom" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/edit_kingdom.html" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/edit_kingdom.css" />
-  <script defer type="module" src="Javascript/edit_kingdom.js"></script>
+  <!-- Open Graph -->
+  <meta property="og:title" content="Edit Kingdom | Kingmaker's Rise" />
+  <meta property="og:description" content="Customize your kingdom's profile, imagery, and ruler identity." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/edit_kingdom.html" />
+  <meta property="og:type" content="website" />
 
-  <!-- Global Assets -->
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Edit Kingdom | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Customize your kingdom's details, banners, and ruler persona." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Stylesheets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <link rel="stylesheet" href="CSS/edit_kingdom.css" />
+
+  <!-- Scripts -->
+  <script defer type="module" src="Javascript/navDropdown.js"></script>
+  <script defer type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/edit_kingdom.js"></script>
 </head>
 
-<body>
+<body class="edit-kingdom-bg">
+
+  <!-- Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('/navbar.html').then(r => r.text()).then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
   </script>
 
+  <!-- Page Header -->
   <header class="kr-top-banner" aria-label="Edit Kingdom Banner">
-    Kingmaker's Rise — Edit Kingdom
+    🏰 Kingmaker's Rise — Edit Kingdom
   </header>
 
+  <!-- Main Form -->
   <main id="main-content" class="main-centered-container" aria-label="Edit Kingdom Interface">
     <section class="edit-kingdom-container">
-      <div id="vacation-warning" class="warning-banner hidden">Your kingdom is currently on vacation and cannot be edited.</div>
-      <img id="banner-preview" src="Assets/profile_background.png" alt="Banner preview" class="banner-img" />
-      <form id="kingdom-form">
+
+      <div id="vacation-warning" class="warning-banner hidden" role="alert">
+        ⚠️ Your kingdom is currently on vacation and cannot be edited.
+      </div>
+
+      <img id="banner-preview" src="Assets/profile_background.png" alt="Banner Preview" class="banner-img" />
+
+      <form id="kingdom-form" aria-label="Edit Kingdom Form">
+
+        <!-- Kingdom Identity -->
         <fieldset>
-          <legend>Identity</legend>
+          <legend>🏷️ Kingdom Identity</legend>
           <label for="kingdom_name">Kingdom Name</label>
-          <input type="text" id="kingdom_name" required />
+          <input type="text" id="kingdom_name" name="kingdom_name" required />
+
           <label for="ruler_name">Ruler Name</label>
-          <input type="text" id="ruler_name" required />
+          <input type="text" id="ruler_name" name="ruler_name" required />
+
           <label for="ruler_title">Ruler Title</label>
-          <input type="text" id="ruler_title" required />
+          <input type="text" id="ruler_title" name="ruler_title" required />
         </fieldset>
+
+        <!-- Lore & Culture -->
         <fieldset>
-          <legend>Culture</legend>
+          <legend>📜 Culture & Lore</legend>
           <label for="motto">Motto</label>
-          <input type="text" id="motto" />
-          <label for="description">Description</label>
-          <textarea id="description" rows="3"></textarea>
+          <input type="text" id="motto" name="motto" />
+
+          <label for="description">Kingdom Description</label>
+          <textarea id="description" name="description" rows="3" placeholder="Describe your kingdom’s culture, origins, or goals..."></textarea>
+
           <label for="religion">Religion</label>
-          <input type="text" id="religion" />
+          <input type="text" id="religion" name="religion" />
         </fieldset>
+
+        <!-- Region & Visuals -->
         <fieldset>
-          <legend>Region & Imagery</legend>
+          <legend>🗺️ Region & Imagery</legend>
           <label for="region">Region</label>
-          <select id="region"></select>
-          <label for="banner_url">Banner URL</label>
-          <input type="text" id="banner_url" />
-          <label for="emblem_url">Emblem URL</label>
-          <input type="text" id="emblem_url" />
-          <img id="emblem-preview" src="Assets/icon-scroll.svg" alt="Emblem preview" class="emblem-img" />
+          <select id="region" name="region" aria-label="Select Kingdom Region"></select>
+
+          <label for="banner_url">Banner Image URL</label>
+          <input type="url" id="banner_url" name="banner_url" placeholder="https://..." />
+
+          <label for="emblem_url">Emblem Image URL</label>
+          <input type="url" id="emblem_url" name="emblem_url" placeholder="https://..." />
+
+          <img id="emblem-preview" src="Assets/icon-scroll.svg" alt="Emblem Preview" class="emblem-img" />
         </fieldset>
-        <button type="submit" class="btn">Save Changes</button>
+
+        <!-- Submit -->
+        <button type="submit" class="btn">💾 Save Changes</button>
       </form>
     </section>
   </main>
@@ -93,13 +123,15 @@ Developer: Deathsgift66
   <footer class="site-footer">
     <div>© 2025 Kingmaker’s Rise</div>
     <div>
-      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy</a>
-      <a href="Assets/legal/TermsofService.pdf">Terms</a>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
       <a href="Assets/legal/EULA.pdf">EULA</a>
       <a href="legal.html">More</a>
     </div>
   </footer>
-  <div id="toast" class="toast-notification"></div>
-</body>
 
+  <!-- Toast -->
+  <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
+
+</body>
 </html>
