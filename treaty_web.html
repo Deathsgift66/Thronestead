@@ -13,6 +13,8 @@ Developer: Deathsgift66
 
   <title>Treaty Web | Kingmaker's Rise</title>
   <meta name="description" content="Visualize and analyze the dynamic diplomatic Treaty Web of Kingmaker’s Rise — understand alliances and conflicts." />
+  <meta name="keywords" content="Kingmaker's Rise, treaty web, diplomacy, alliances, wars, conflicts, diplomacy center" />
+  <meta name="robots" content="index, follow" />
   <meta property="og:title" content="Treaty Web | Kingmaker's Rise" />
   <meta property="og:description" content="Visualize and analyze the dynamic diplomatic Treaty Web of Kingmaker’s Rise — understand alliances and conflicts." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +24,8 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Treaty Web | Kingmaker's Rise" />
   <meta name="twitter:description" content="Visualize and analyze the dynamic diplomatic Treaty Web of Kingmaker’s Rise — understand alliances and conflicts." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, treaty web, diplomacy, alliances, wars, conflicts, diplomacy center" />
-  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/treaty_web.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/treaty_web.css" />
@@ -35,17 +36,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -60,35 +60,36 @@ Developer: Deathsgift66
 </header>
 
 <!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="Treaty Web Interface">
-
-
+<main id="main-content" class="main-centered-container" aria-label="Treaty Visualization Interface">
 
   <!-- Core Treaty Web Panel -->
-  <section class="alliance-members-container">
+  <section class="alliance-members-container" role="region" aria-labelledby="treaty-controls-title">
 
-    <!-- Treaty Controls -->
+    <!-- Controls -->
     <div class="treaty-controls">
-      <button id="refreshGraph" class="btn-fantasy">Refresh Graph</button>
-      <button id="toggleLegend" class="btn-fantasy">Toggle Legend</button>
+      <h2 id="treaty-controls-title" class="visually-hidden">Treaty Filters & Controls</h2>
+      <button id="refreshGraph" class="btn-fantasy" aria-label="Refresh Treaty Graph">Refresh Graph</button>
+      <button id="toggleLegend" class="btn-fantasy" aria-label="Toggle Treaty Legend">Toggle Legend</button>
     </div>
-    <div class="filter-controls">
-      <button class="btn-fantasy filter-btn active" data-type="MDP">MDP</button>
+
+    <!-- Filter Options -->
+    <div class="filter-controls" role="group" aria-label="Treaty Type Filters">
+      <button class="btn-fantasy filter-btn active" data-type="MDP">Mutual Defense Pact</button>
       <button class="btn-fantasy filter-btn active" data-type="protection">Protection</button>
-      <button class="btn-fantasy filter-btn active" data-type="NAP">NAP</button>
+      <button class="btn-fantasy filter-btn active" data-type="NAP">Non-Aggression Pact</button>
       <button class="btn-fantasy filter-btn active" data-type="war">War</button>
     </div>
 
-    <!-- Timeline Control -->
-    <div class="timeline-control">
+    <!-- Timeline Slider -->
+    <div class="timeline-control" aria-label="Treaty Timeline Control">
       <label for="timelineRange">Timeline:</label>
-      <input type="range" id="timelineRange" min="0" max="100" value="100" />
+      <input type="range" id="timelineRange" min="0" max="100" value="100" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" />
     </div>
 
-    <!-- Treaty Web Container -->
-    <div class="treaty-web-container">
+    <!-- D3 Network Graph Container -->
+    <div class="treaty-web-container" role="region" aria-label="Diplomatic Treaty Web">
       <div id="network" class="network-area">
-        <!-- D3.js network graph renders here -->
+        <!-- D3.js dynamic treaty web renders here -->
       </div>
     </div>
 
@@ -97,14 +98,13 @@ Developer: Deathsgift66
 </main>
 
 <!-- Footer -->
-  <footer class="site-footer">
-    <div>© 2025 Kingmaker’s Rise</div>
-    <div>
-      <a href="legal.html">View Legal Documents</a>
-    </div>
-  </footer>
+<footer class="site-footer" role="contentinfo">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div><a href="legal.html">View Legal Documents</a></div>
+</footer>
 
-  <div id="toast" class="toast-notification"></div>
+<!-- Toast Notification -->
+<div id="toast" class="toast-notification" role="alert" aria-live="assertive"></div>
 
 </body>
 </html>
