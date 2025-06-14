@@ -13,18 +13,22 @@ Developer: Deathsgift66
 
   <title>Message | Kingmaker's Rise</title>
   <meta name="description" content="View your message in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, message, communication, mail" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/message.html" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Message | Kingmaker's Rise" />
   <meta property="og:description" content="View your message in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/message.html" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Message | Kingmaker's Rise" />
   <meta name="twitter:description" content="View your message in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, message, communication, mail" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/message.html" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/message.css" />
@@ -35,16 +39,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<nav id="navbar-container" role="navigation"></nav>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -58,25 +62,26 @@ Developer: Deathsgift66
   Kingmaker's Rise — Message
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Layout -->
 <main class="main-centered-container" aria-label="Message Interface">
 
-  <!-- Core Message Panel -->
-  <section class="alliance-members-container">
-    <h2>Message</h2>
-    <div class="message-container" id="message-container">
-      <!-- JS will populate message details -->
-    </div>
-    <div class="message-actions">
-      <a href="messages.html" class="action-btn">Back to Inbox</a>
+  <!-- Message View Panel -->
+  <article class="alliance-members-container" role="region" aria-labelledby="message-heading">
+    <h2 id="message-heading">Message</h2>
+
+    <div id="message-container" class="message-container" aria-live="polite">
+      <!-- JS will render sender, timestamp, subject, and markdown body here -->
     </div>
 
-  </section>
+    <aside class="message-actions">
+      <a href="messages.html" class="action-btn" role="button">← Back to Inbox</a>
+    </aside>
+  </article>
 
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
   <div>
     <a href="legal.html">View Legal Documents</a>
