@@ -16,6 +16,7 @@ import logging
 
 from ..database import get_db
 from ..security import require_user_id
+from backend.models import User
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -96,9 +97,43 @@ def player_action(
 # 🧑‍💻 Admin Query Routes
 # -------------------------
 @router.get("/players")
-def list_players(search: str | None = Query(default=None)):
-    # Placeholder for admin UI player search
-    return {"players": [], "search": search}
+def list_players(
+    search: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    """Return basic player records filtered by username or display name."""
+    query = db.query(
+        User.user_id,
+        User.username,
+        User.display_name,
+        User.kingdom_id,
+        User.alliance_id,
+    )
+
+    if search:
+        pattern = f"%{search}%"
+        query = query.filter(
+            User.username.ilike(pattern) | User.display_name.ilike(pattern)
+        )
+
+    rows = (
+        query.order_by(User.username)
+        .limit(50)
+        .all()
+    )
+
+    return {
+        "players": [
+            {
+                "user_id": str(r.user_id),
+                "username": r.username,
+                "display_name": r.display_name,
+                "kingdom_id": r.kingdom_id,
+                "alliance_id": r.alliance_id,
+            }
+            for r in rows
+        ]
+    }
 
 
 @router.get("/alerts")
