@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: battle_replay.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.00
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -12,14 +12,14 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Battle Replay | Kingmaker's Rise</title>
-  <meta name="description" content="Replay the battle step by step to review combat events in Kingmaker's Rise." />
-  <meta name="keywords" content="Kingmaker's Rise, battle replay, combat events, battle review" />
+  <meta name="description" content="Replay the battle step-by-step and relive the glory of every clash." />
+  <meta name="keywords" content="Kingmaker's Rise, battle replay, war log, strategy, tactical combat" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/battle_replay.html" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Battle Replay | Kingmaker's Rise" />
-  <meta property="og:description" content="Replay the battle and review the combat events in Kingmaker's Rise." />
+  <meta property="og:description" content="Step through each moment of battle and witness victory unfold." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/battle_replay.html" />
   <meta property="og:type" content="website" />
@@ -27,102 +27,110 @@ Developer: Deathsgift66
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Battle Replay | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Track and replay the battle events step-by-step." />
+  <meta name="twitter:description" content="Watch every sword swing and strategy unfold tick-by-tick." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/battle_replay.css" />
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script defer type="module" src="Javascript/battle_replay.js"></script>
-
-  <!-- Global Assets -->
+  <!-- CSS Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <link rel="stylesheet" href="CSS/battle_replay.css" />
+
+  <!-- JavaScript Modules -->
+  <script defer type="module" src="Javascript/navDropdown.js"></script>
+  <script defer type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script defer type="module" src="Javascript/battle_replay.js"></script>
 </head>
 
-<body>
+<body class="battle-replay-bg">
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Battle Replay Banner">
-  Kingmaker's Rise — Battle Replay
-</header>
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Battle Replay Banner">
+    🛡️ Kingmaker's Rise — Battle Replay
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Battle Replay Interface">
+  <!-- Main Replay Interface -->
+  <main class="main-centered-container" aria-label="Replay Battle Timeline Interface">
+    <section class="replay-wrapper" role="region">
 
+      <!-- Left Column -->
+      <div class="battle-column">
+        <h2>Replay the Conflict</h2>
+        <p>Scrub through history and examine each tactical decision.</p>
 
-  <section class="replay-wrapper">
-    <div class="battle-column alliance-members-container">
-      <h2>Battle Replay</h2>
-      <p>Review the battle events step by step as they happened.</p>
+        <!-- Controls -->
+        <section class="replay-controls" aria-label="Playback Controls">
+          <button id="play-btn">▶ Play</button>
+          <button id="pause-btn" disabled>⏸ Pause</button>
+          <button id="reset-btn">⟳ Reset</button>
+          <label for="speed-select">Speed:</label>
+          <select id="speed-select" aria-label="Playback Speed">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+          </select>
+        </section>
 
-      <section class="replay-controls" aria-label="Replay Controls">
-        <button id="play-btn">Play</button>
-        <button id="pause-btn" disabled>Pause</button>
-        <button id="reset-btn">Reset</button>
-        <label for="speed-select">Speed:</label>
-        <select id="speed-select">
-          <option value="1">1x</option>
-          <option value="2">2x</option>
-          <option value="4">4x</option>
-        </select>
-      </section>
+        <!-- Timeline -->
+        <section class="timeline-container" aria-label="Battle Timeline">
+          <input type="range" id="replay-timeline" min="0" value="0" step="1" />
+        </section>
 
-      <section class="timeline-container" aria-label="Replay Timeline">
-        <input type="range" id="replay-timeline" min="0" value="0" step="1" aria-label="Replay timeline" />
-      </section>
+        <!-- Tactical Map -->
+        <section id="battlefield-grid" class="battlefield-grid" aria-label="Battlefield Grid">
+          <div id="fog-overlay" class="fog-overlay" aria-hidden="true"></div>
+          <!-- JS renders dynamic tiles and unit animations -->
+        </section>
 
-      <section id="battlefield-grid" class="battlefield-grid" aria-label="Battlefield Grid">
-        <!-- Tiles rendered by JS -->
-        <div id="fog-overlay" class="fog-overlay" aria-hidden="true"></div>
-      </section>
+        <!-- Outcome Summary -->
+        <section id="battle-outcome" class="battle-outcome" aria-label="Battle Results Summary">
+          <h3>📜 Outcome Summary</h3>
+          <p><strong>Status:</strong> <span id="battle-status">Loading...</span></p>
+          <p><strong>Winner:</strong> <span id="winner-name">Loading...</span></p>
+          <p><strong>Casualties:</strong> <span id="casualties">0</span></p>
+          <p><strong>Castle Damage:</strong> <span id="castle-damage">0</span></p>
+          <p><strong>Loot:</strong> <span id="loot">None</span></p>
+        </section>
+      </div>
 
-      <section id="battle-outcome" class="battle-outcome" aria-label="Battle Outcome Summary">
-        <h3>Battle Outcome</h3>
-        <p><strong>Status:</strong> <span id="battle-status">Loading...</span></p>
-        <p><strong>Winner:</strong> <span id="winner-name">Loading...</span></p>
-        <p><strong>Casualties:</strong> <span id="casualties">0</span></p>
-        <p><strong>Castle Damage:</strong> <span id="castle-damage">0</span></p>
-        <p><strong>Loot:</strong> <span id="loot">None</span></p>
-      </section>
+      <!-- Right Column -->
+      <aside class="log-column" aria-label="Combat Event Feed">
+        <section id="combat-log-feed" class="combat-log-feed">
+          <h3>⚔ Combat Log</h3>
+          <div id="combat-log-entries" aria-live="polite">
+            <!-- Logs dynamically injected -->
+          </div>
+        </section>
+      </aside>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">Legal</a>
     </div>
-
-    <aside class="log-column">
-      <section id="combat-log-feed" class="combat-log-feed" aria-label="Combat Log Feed">
-        <h3>Combat Log</h3>
-        <div id="combat-log-entries" aria-live="polite"></div>
-      </section>
-    </aside>
-  </section>
-
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
-    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
-    <a href="Assets/legal/EULA.pdf">EULA</a>
-    <a href="legal.html">and more</a>
-  </div>
-</footer>
+  </footer>
 
 </body>
+
 </html>
