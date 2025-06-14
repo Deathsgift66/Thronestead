@@ -4,31 +4,43 @@
 # Developer: Deathsgift66
 
 """
-This module uses SQLAlchemy's automap to dynamically reflect all tables from the connected database.
-It provides an easy way to access all models without explicitly declaring them.
+Dynamically reflect and expose all SQLAlchemy models from the connected PostgreSQL database.
+This allows access to all game-related tables without manually defining ORM classes.
+
+Integrates error logging and safe initialization for production use.
 """
 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import configure_mappers
 
 from .database import engine
 from . import logger
 
-# Create a base class for automapped models
+# Create automap base class for runtime reflection
 AutomapBase = automap_base()
 
 try:
-    # Reflect all tables from the connected database engine
+    # Reflect the database schema and prepare mapped classes
+    logger.info("🔄 Reflecting database schema via SQLAlchemy Automap...")
     AutomapBase.prepare(engine, reflect=True)
-    logger.info("✅ Successfully reflected all tables into AutomapBase.")
 
-    # Expose the mapped classes (tables) as an accessible dictionary-like namespace
+    # Optional: force early mapper configuration (catches issues before runtime)
+    configure_mappers()
+
+    # Access to all reflected table models (as attributes)
     models = AutomapBase.classes
+    logger.info("✅ All models reflected successfully. Ready for access.")
 
 except SQLAlchemyError as e:
-    logger.error(f"❌ Error reflecting database models: {e}")
+    logger.error("❌ Database reflection failed during AutomapBase.prepare()")
+    logger.exception(e)
     raise
 
-# Example usage:
-#   user_table = models.users
-#   kingdom_table = models.kingdoms
+# Optional: Example direct model access (uncomment to inspect)
+# print(dir(models))
+# print(models.users)
+# print(models.kingdoms)
+
+# Export for use in FastAPI routes, services, etc.
+__all__ = ["AutomapBase", "models"]
