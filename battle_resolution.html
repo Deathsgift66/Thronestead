@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: battle_resolution.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.00
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -12,14 +12,14 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Battle Resolution | Kingmaker's Rise</title>
-  <meta name="description" content="View the results of a battle, including the outcome, combat log, and rewards." />
-  <meta name="keywords" content="Kingmaker's Rise, battle resolution, combat log, battle results, rewards" />
+  <meta name="description" content="View detailed battle outcomes including winner, rewards, casualties, and score changes in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, battle results, resolution, war log, loot, casualties" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/battle_resolution.html" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Battle Resolution | Kingmaker's Rise" />
-  <meta property="og:description" content="View and analyze the results of battles, including rewards and losses in Kingmaker's Rise." />
+  <meta property="og:description" content="Analyze the results of tactical battles and see who emerged victorious." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/battle_resolution.html" />
   <meta property="og:type" content="website" />
@@ -27,76 +27,83 @@ Developer: Deathsgift66
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Battle Resolution | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Analyze the outcome of battles and track combat events in Kingmaker's Rise." />
+  <meta name="twitter:description" content="Track victory, losses, loot, and battle stats after every war." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/battle_resolution.css" />
-  <script defer type="module" src="Javascript/battle_resolution.js"></script>
-
-  <!-- Global Assets -->
+  <!-- Styles -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <link rel="stylesheet" href="CSS/battle_resolution.css" />
+
+  <!-- Scripts -->
+  <script defer type="module" src="Javascript/navDropdown.js"></script>
+  <script defer type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/battle_resolution.js"></script>
 </head>
 
-<body>
+<body class="battle-resolution-bg">
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Battle Resolution Banner">
-  Kingmaker's Rise — Battle Resolution
-</header>
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Battle Results Banner">
+    🏰 Kingmaker's Rise — Battle Resolution
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Battle Resolution Interface">
+  <!-- Main Layout -->
+  <main class="main-centered-container" aria-label="Battle Result Breakdown">
 
-  <!-- Core Resolution Panel -->
-  <section class="alliance-members-container">
-    <h2>Battle Resolution</h2>
-    <p>View the outcome of the battle and review key combat events and rewards.</p>
+    <!-- Resolution Section -->
+    <section class="resolution-interface" aria-labelledby="resolution-title">
+      <h2 id="resolution-title">⚔ Final Outcome</h2>
+      <p>Analyze the tactical results of the battle, from combat efficiency to economic impact.</p>
 
-    <div class="resolution-grid">
-      <section id="resolution-summary"></section>
-      <section id="score-breakdown"></section>
-      <section id="combat-timeline"></section>
-      <section id="casualty-report"></section>
-      <section id="loot-summary"></section>
-      <section id="stat-changes"></section>
-      <section id="participant-breakdown"></section>
-      <section id="replay-button"></section>
-      <section id="refresh-info">
-        <button id="refresh-btn" class="royal-button">Refresh</button>
-        <span id="last-updated"></span>
-      </section>
+      <div class="resolution-grid">
+        <section id="resolution-summary" class="resolution-tile" aria-label="Resolution Summary"></section>
+        <section id="score-breakdown" class="resolution-tile" aria-label="Score Breakdown"></section>
+        <section id="combat-timeline" class="resolution-tile" aria-label="Combat Timeline"></section>
+        <section id="casualty-report" class="resolution-tile" aria-label="Casualty Report"></section>
+        <section id="loot-summary" class="resolution-tile" aria-label="Loot and Plunder"></section>
+        <section id="stat-changes" class="resolution-tile" aria-label="Stat Changes"></section>
+        <section id="participant-breakdown" class="resolution-tile" aria-label="Kingdom Participation"></section>
+
+        <!-- Replay CTA -->
+        <section id="replay-button" class="resolution-tile" aria-label="Replay Navigation">
+          <button id="view-replay-btn" class="royal-button">🎬 View Full Replay</button>
+        </section>
+
+        <!-- Refresh Button -->
+        <section id="refresh-info" class="resolution-tile">
+          <button id="refresh-btn" class="royal-button">🔄 Refresh Data</button>
+          <p><small>Last Updated: <span id="last-updated">--:--:--</span></small></p>
+        </section>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">Legal Overview</a>
     </div>
-  </section>
-
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
-    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
-    <a href="Assets/legal/EULA.pdf">EULA</a>
-    <a href="legal.html">and more</a>
-  </div>
-</footer>
+  </footer>
 
 </body>
+
 </html>
