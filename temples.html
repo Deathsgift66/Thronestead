@@ -13,6 +13,8 @@ Developer: Deathsgift66
 
   <title>Temples | Kingmaker's Rise</title>
   <meta name="description" content="Manage and construct temples in Kingmaker’s Rise — harness spiritual power and influence." />
+  <meta name="keywords" content="Kingmaker's Rise, temples, spiritual power, kingdom religion, construction" />
+  <meta name="robots" content="index, follow" />
   <meta property="og:title" content="Temples | Kingmaker's Rise" />
   <meta property="og:description" content="Manage and construct temples in Kingmaker’s Rise — harness spiritual power and influence." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +24,8 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Temples | Kingmaker's Rise" />
   <meta name="twitter:description" content="Manage and construct temples in Kingmaker’s Rise — harness spiritual power and influence." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, temples, spiritual power, kingdom religion, construction" />
-  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/temples.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/temples.css" />
@@ -34,17 +35,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -58,38 +58,40 @@ Developer: Deathsgift66
   Kingmaker's Rise — Temples
 </header>
 
-<!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="Temples Interface">
+<!-- Main Layout -->
+<main id="main-content" class="main-centered-container" aria-label="Temple Interface">
 
-
-  <!-- Core Temples Panel -->
+  <!-- Temples Panel -->
   <section class="alliance-members-container">
 
     <!-- Temple Overview -->
-    <div class="temple-overview">
-      <h3>Temple Overview</h3>
+    <div class="temple-overview" role="region" aria-labelledby="temple-overview-title">
+      <h2 id="temple-overview-title">Temple Overview</h2>
+
+      <!-- Divine Favor Bar -->
       <div class="temple-stat">
-        <span>Divine Favor:</span>
-        <div class="favor-bar">
-          <div class="favor-bar-fill" style="width: 0%;"></div>
+        <label for="favor-bar-fill">Divine Favor:</label>
+        <div class="favor-bar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" role="progressbar">
+          <div id="favor-bar-fill" class="favor-bar-fill" style="width: 0%;"></div>
         </div>
       </div>
-      <div id="temple-overview-content" class="custom-scrollbar">
+
+      <div id="temple-overview-content" class="custom-scrollbar" aria-live="polite">
         <!-- JS will populate -->
       </div>
     </div>
 
     <!-- Construct Temple -->
-    <div class="temple-construction">
-      <h3>Construct Temple</h3>
+    <div class="temple-construction" role="region" aria-labelledby="temple-construct-title">
+      <h2 id="temple-construct-title">Construct Temple</h2>
       <div id="temple-construction-options" class="custom-scrollbar">
         <!-- JS will populate -->
       </div>
     </div>
 
-    <!-- Your Temples -->
-    <div class="temple-list">
-      <h3>Your Temples</h3>
+    <!-- Owned Temples List -->
+    <div class="temple-list" role="region" aria-labelledby="your-temples-title">
+      <h2 id="your-temples-title">Your Temples</h2>
       <div id="temple-list-content" class="custom-scrollbar">
         <!-- JS will populate -->
       </div>
@@ -100,11 +102,9 @@ Developer: Deathsgift66
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
