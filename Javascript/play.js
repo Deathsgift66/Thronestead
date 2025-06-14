@@ -1,9 +1,9 @@
 // Project Name: Kingmakers Rise©
 // File Name: play.js
-// Version 6.13.2025.19.49
+// Version 6.14.2025.20.12
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML, showToast, fragmentFrom } from './utils.js';
+import { escapeHTML, showToast, fragmentFrom, jsonFetch } from './utils.js';
 
 let currentUser = null;
 let authToken = '';
@@ -127,8 +127,13 @@ function validateInputs(name, village, region) {
 }
 
 
+/**
+ * POST a JSON payload using the shared `jsonFetch` helper.
+ * @param {string} url  Endpoint URL
+ * @param {object} body Body object to send
+ */
 async function postJSON(url, body) {
-  const res = await fetch(url, {
+  return jsonFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -137,21 +142,13 @@ async function postJSON(url, body) {
     },
     body: JSON.stringify(body)
   });
-  const contentType = res.headers.get('content-type') || '';
-  if (!res.ok || !contentType.includes('application/json')) {
-    const text = await res.text();
-    throw new Error(`Failed: ${res.status}, ${text}`);
-  }
-  return res.json();
 }
 
 async function loadVIPStatus() {
   try {
-    const res = await fetch('/api/kingdom/vip_status', {
+    const data = await jsonFetch('/api/kingdom/vip_status', {
       headers: { 'X-User-ID': currentUser.id }
     });
-    if (!res.ok) return;
-    const data = await res.json();
     vipLevel = data.vip_level || 0;
   } catch (err) {
     console.warn('Could not load VIP status.');
@@ -164,8 +161,7 @@ async function loadRegions() {
   if (!regionEl || !infoEl) return;
 
   try {
-    const res = await fetch('/api/kingdom/regions');
-    const regions = await res.json();
+    const regions = await jsonFetch('/api/kingdom/regions');
     regionEl.innerHTML = '<option value="">Select Region</option>';
 
     regions.forEach(region => {
@@ -202,8 +198,7 @@ async function loadAnnouncements() {
   if (!el) return;
 
   try {
-    const res = await fetch('/api/login/announcements');
-    const announcements = await res.json();
+    const announcements = await jsonFetch('/api/login/announcements');
     el.innerHTML = announcements.map(a =>
       `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`
     ).join('');

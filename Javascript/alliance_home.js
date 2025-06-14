@@ -1,9 +1,9 @@
 // Project Name: Kingmakers Rise©
 // File Name: alliance_home.js
-// Version 6.13.2025.19.49
+// Version 6.14.2025.20.12
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML, setText, formatDate, fragmentFrom } from './utils.js';
+import { escapeHTML, setText, formatDate, fragmentFrom, jsonFetch } from './utils.js';
 
 let activityChannel = null;
 
@@ -21,13 +21,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   fetchAllianceDetails(session.user.id);
 });
 
+/**
+ * Fetch alliance details via REST then initialize realtime channel.
+ * @param {string} userId Authenticated user identifier
+ */
 async function fetchAllianceDetails(userId) {
   try {
-    const res = await fetch('/api/alliance-home/details', {
+    const data = await jsonFetch('/api/alliance-home/details', {
       headers: { 'X-User-ID': userId }
     });
-    if (!res.ok) throw new Error('Request failed');
-    const data = await res.json();
     populateAlliance(data);
     setupRealtime(data.alliance?.alliance_id);
   } catch (err) {
@@ -209,26 +211,27 @@ function renderActiveBattles(wars = []) {
     container.textContent = 'No active battles.';
     return;
   }
-
-  active.forEach(w => {
+  const frag = fragmentFrom(active, w => {
     const div = document.createElement('div');
     div.className = 'battle-entry';
     div.textContent = `War ${w.alliance_war_id} — ${w.war_status}`;
-    container.appendChild(div);
+    return div;
   });
+  container.appendChild(frag);
 }
 
 function renderWarScore(wars = []) {
   const container = document.getElementById('war-score-summary');
   if (!container) return;
   container.innerHTML = '';
-  wars.forEach(w => {
+  const frag = fragmentFrom(wars, w => {
     const div = document.createElement('div');
     const att = w.attacker_score ?? 0;
     const def = w.defender_score ?? 0;
     div.textContent = `War ${w.alliance_war_id}: Attacker ${att} vs Defender ${def}`;
-    container.appendChild(div);
+    return div;
   });
+  container.appendChild(frag);
 }
 
 // === Realtime Activity Logging ===

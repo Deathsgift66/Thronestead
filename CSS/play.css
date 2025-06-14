@@ -270,3 +270,12 @@ body {
   margin-bottom: 0.25rem;
   color: var(--gold);
 }
+
+@media (max-width: 600px) {
+  .onboarding-container {
+    padding: 1rem;
+  }
+  .dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+}
