@@ -4,13 +4,13 @@ File Name: signup.html
 Version 6.13.2025.19.49
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  
   <title>Sign Up | Kingmaker's Rise</title>
   <meta name="description" content="Create your account and begin your rise in Kingmaker’s Rise — a medieval strategy MMO." />
   <meta property="og:title" content="Sign Up | Kingmaker's Rise" />
@@ -25,6 +25,7 @@ Developer: Deathsgift66
   <meta name="keywords" content="Kingmaker's Rise, sign up, create account, medieval strategy game, kingdom" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/signup.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/signup.css" />
@@ -35,12 +36,12 @@ Developer: Deathsgift66
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
-
 </head>
 
 <body>
+
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -54,80 +55,72 @@ Developer: Deathsgift66
   Kingmaker's Rise — Sign Up
 </header>
 
-<!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="Sign Up Interface">
-
-
-  <!-- Core Signup Panel -->
+<!-- Main Signup Form -->
+<main id="main-content" class="main-centered-container" aria-label="Signup Form Interface">
   <section class="alliance-members-container">
+    <div class="signup-panel" role="region" aria-labelledby="signup-header">
+      <h2 id="signup-header">Create Your Account</h2>
 
-    <!-- Signup Form -->
-    <div class="signup-panel">
-      <h2>Create Your Account</h2>
+      <form id="signup-form" aria-describedby="form-instructions" novalidate>
+        <p id="form-instructions" class="form-note">All fields are required unless stated otherwise.</p>
 
-      <form id="signup-form">
         <div class="form-group">
           <label for="kingdomName">Kingdom Name</label>
-          <input type="text" id="kingdomName" required />
-          <div id="kingdomName-msg" class="availability"></div>
+          <input type="text" id="kingdomName" name="kingdomName" required />
+          <div id="kingdomName-msg" class="availability" aria-live="polite"></div>
         </div>
 
         <div class="form-group">
           <label for="username">Ruler Name (Login)</label>
-          <input type="text" id="username" required />
-          <div id="username-msg" class="availability"></div>
+          <input type="text" id="username" name="username" required />
+          <div id="username-msg" class="availability" aria-live="polite"></div>
         </div>
 
         <div class="form-group">
           <label for="email">Email Address</label>
-          <input type="email" id="email" required />
+          <input type="email" id="email" name="email" required autocomplete="email" />
         </div>
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" required minlength="8" />
+          <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" />
         </div>
 
         <div class="form-group">
           <label for="confirmPassword">Confirm Password</label>
-          <input type="password" id="confirmPassword" required minlength="8" />
+          <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" />
         </div>
 
-        <!-- Legal Agreement Checkbox -->
+        <!-- Legal Agreement -->
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
-            <input type="checkbox" id="agreeLegal" required />
-            I have read and agree to the <a href="legal.html" target="_blank">Legal Documents</a>.
+            <input type="checkbox" id="agreeLegal" name="agreeLegal" required />
+            I agree to the <a href="legal.html" target="_blank">Legal Documents</a>.
           </label>
         </div>
 
-        <button type="submit" class="form-btn">Seal Your Fate</button>
+        <button type="submit" class="form-btn" aria-label="Create Account">Seal Your Fate</button>
       </form>
 
       <div class="links-section">
         Already a Kingmaker? <a href="login.html">Login Here</a>
       </div>
 
-      <section class="stats-panel hidden">
-        <h3>Legends of the Realm</h3>
-        <ul id="top-kingdoms-list"></ul>
+      <section class="stats-panel hidden" aria-labelledby="legends-header">
+        <h3 id="legends-header">Legends of the Realm</h3>
+        <ul id="top-kingdoms-list" class="top-kingdoms-list"></ul>
       </section>
-
     </div>
-
   </section>
-
 </main>
 
-<!-- Toast -->
-<div id="toast" class="toast-notification"></div>
+<!-- Toast for real-time form feedback -->
+<div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
