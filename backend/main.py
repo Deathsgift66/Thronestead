@@ -1,169 +1,102 @@
 # Project Name: Kingmakers Rise©
 # File Name: main.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49
 # Developer: Deathsgift66
+
+"""
+Main application entry point for the FastAPI server powering Kingmakers Rise©.
+Loads routers, initializes the DB schema, and serves static frontend content.
+"""
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from .routers import (
-    admin,
-    alliance_members,
-    alliance_members_view,
-    alliance_management,
-    alliance_projects,
-    kingdom,
-    conflicts,
-    black_market,
-    black_market_routes,
-    news,
-    alliance_wars,
-    notifications,
-    battle,
-    alliance_quests,
-    alliance_changelog,
-    changelog,
-    kingdom_military,
-    alliance_vault,
-    audit_log,
-    admin_audit_log,
-    donate_vip,
-    forgot_password,
-    messages,
-    compose,
-    player_management,
-    market,
-    diplomacy,
-    diplomacy_center,
-    leaderboard,
-    homepage,
-    buildings,
-    tutorial,
-    region,
-    progression_router,
-    villages_router,
-    vip_status_router,
-    titles_router,
-    treaties_router,
-    alliance_treaties_router,
-    admin_dashboard,
-    account_settings,
-    spies_router,
-    policies_laws as policies_laws_router,
-    overview as overview_router,
-    legal,
-    trade_logs,
-    training_history,
-    training_catalog,
-    training_queue,
-    village_modifiers,
-    settings_router,
-    alliance_home,
-    wars,
-    quests_router,
-    projects_router,
-    resources,
-    kingdom_history,
-    kingdom_achievements,
-    login_routes,
-    profile_view,
-    navbar,
-    seasonal_effects,
-    signup as signup_router,
-    treaty_web,
-    village_master as village_master_router,
-    vacation_mode,
-    world_map,
-    health,
-    public_config,
-)
 from .database import engine
 from .models import Base
 from .data import load_game_settings
 
-app = FastAPI(title="Kingmaker's Rise API")
+# -----------------------
+# ⚙️ FastAPI Initialization
+# -----------------------
+app = FastAPI(
+    title="Kingmaker's Rise API",
+    version="6.13.2025.19.49",
+    description="Backend for the Kingmakers Rise strategy MMO.",
+)
 
-# Ensure tables exist when an engine is configured
+# -----------------------
+# 🔐 Middleware (CORS, security headers, etc.)
+# -----------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace with specific domains in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# -----------------------
+# 🗃️ Ensure Database Tables Exist
+# -----------------------
 if engine:
     Base.metadata.create_all(bind=engine)
+
+# Load game-wide settings into memory (affects all systems)
 load_game_settings()
 
-app.include_router(alliance_members.router)
-app.include_router(alliance_members_view.router)
-app.include_router(alliance_management.router)
-app.include_router(admin.router)
-app.include_router(admin_dashboard.router)
-app.include_router(alliance_projects.router)
-app.include_router(kingdom.router)
-app.include_router(conflicts.router)
-app.include_router(black_market.router)
-app.include_router(black_market_routes.router)
-app.include_router(news.router)
-app.include_router(tutorial.router)
-app.include_router(homepage.router)
-app.include_router(region.router)
-app.include_router(alliance_wars.router)
-app.include_router(notifications.router)
-app.include_router(battle.router)
-app.include_router(alliance_quests.router)
-app.include_router(alliance_changelog.router)
-app.include_router(changelog.router)
-app.include_router(kingdom_military.router)
-app.include_router(alliance_vault.router)
+# -----------------------
+# 📦 Route Imports and Inclusion
+# -----------------------
+from .routers import (
+    admin, alliance_members, alliance_members_view, alliance_management, alliance_projects,
+    kingdom, conflicts, black_market, black_market_routes, news, alliance_wars,
+    notifications, battle, alliance_quests, alliance_changelog, changelog,
+    kingdom_military, alliance_vault, audit_log, admin_audit_log, donate_vip,
+    forgot_password, messages, compose, player_management, market, diplomacy,
+    diplomacy_center, leaderboard, homepage, buildings, tutorial, region,
+    progression_router, villages_router, vip_status_router, titles_router, treaties_router,
+    alliance_treaties_router, admin_dashboard, account_settings, spies_router,
+    policies_laws as policies_laws_router, overview as overview_router, legal,
+    trade_logs, training_history, training_catalog, training_queue, village_modifiers,
+    settings_router, alliance_home, wars, quests_router, projects_router, resources,
+    kingdom_history, kingdom_achievements, login_routes, profile_view, navbar,
+    seasonal_effects, signup as signup_router, treaty_web, village_master as village_master_router,
+    vacation_mode, world_map, health, public_config,
+)
+
+routers = [
+    admin, admin_dashboard, alliance_members, alliance_members_view, alliance_management, alliance_projects,
+    kingdom, conflicts, black_market, black_market_routes, news, tutorial, homepage,
+    region, alliance_wars, notifications, battle, alliance_quests, alliance_changelog,
+    changelog, kingdom_military, alliance_vault, audit_log, admin_audit_log, donate_vip,
+    messages, compose, player_management, market, diplomacy, diplomacy_center,
+    leaderboard, buildings, progression_router, villages_router, vip_status_router,
+    titles_router, treaties_router, alliance_treaties_router, account_settings, spies_router,
+    policies_laws_router, trade_logs, training_history, training_catalog, training_queue,
+    village_modifiers, settings_router, alliance_home, wars, quests_router, projects_router,
+    resources, kingdom_history, kingdom_achievements, forgot_password, login_routes,
+    legal, profile_view, navbar, seasonal_effects, signup_router, treaty_web,
+    village_master_router, vacation_mode, world_map, health, overview_router, public_config
+]
+
+# Register all API routers
+for router in routers:
+    app.include_router(router.router)
+
+# Include optional alt router for alliance vault (used for separate auth context or internal ops)
 app.include_router(alliance_vault.alt_router)
-app.include_router(audit_log.router)
-app.include_router(admin_audit_log.router)
-app.include_router(donate_vip.router)
-app.include_router(messages.router)
-app.include_router(compose.router)
-app.include_router(player_management.router)
-app.include_router(market.router)
-app.include_router(diplomacy.router)
-app.include_router(diplomacy_center.router)
-app.include_router(leaderboard.router)
-app.include_router(buildings.router)
-app.include_router(progression_router.router)
-app.include_router(villages_router.router)
-app.include_router(vip_status_router.router)
-app.include_router(titles_router.router)
-app.include_router(treaties_router.router)
-app.include_router(alliance_treaties_router.router)
-app.include_router(account_settings.router)
-app.include_router(spies_router.router)
-app.include_router(policies_laws_router.router)
-app.include_router(trade_logs.router)
-app.include_router(training_history.router)
-app.include_router(training_catalog.router)
-app.include_router(training_queue.router)
-app.include_router(village_modifiers.router)
-app.include_router(settings_router.router)
-app.include_router(alliance_home.router)
-app.include_router(wars.router)
-app.include_router(quests_router.router)
-app.include_router(projects_router.router)
-app.include_router(resources.router)
-app.include_router(kingdom_history.router)
-app.include_router(forgot_password.router)
-app.include_router(kingdom_achievements.router)
-app.include_router(login_routes.router)
-app.include_router(legal.router)
-app.include_router(profile_view.router)
-app.include_router(navbar.router)
-app.include_router(seasonal_effects.router)
-app.include_router(world_map.router)
-app.include_router(health.router)
-app.include_router(overview_router.router)
-app.include_router(signup_router.router)
-app.include_router(treaty_web.router)
-app.include_router(village_master_router.router)
-app.include_router(vacation_mode.router)
-app.include_router(public_config.router)
 
-
-# Serve static frontend after API routes so that catch-all paths don't intercept
-# API endpoints. We mount the repository root, which contains the static HTML
-# pages, at the application root path.
+# -----------------------
+# 🖼️ Serve Static Frontend Files
+# -----------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
-
+# -----------------------
+# ✅ Health Check (used by Render or CI/CD)
+# -----------------------
+@app.get("/health-check")
+def health_check():
+    return {"status": "online", "service": "Kingmaker's Rise API"}
