@@ -1091,6 +1091,54 @@ class KingdomResources(Base):
     pitchforks = Column(BigInteger, default=0)
 
 
+
+class GlobalEvent(Base):
+    """Representation of a global event."""
+
+    __tablename__ = "global_events"
+
+    event_id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    description = Column(Text)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    is_active = Column(Boolean, default=False)
+    impact_type = Column(Text)
+    magnitude = Column(Numeric)
+
+
+class GlobalEventCondition(Base):
+    """Conditions required for a global event."""
+
+    __tablename__ = "global_event_conditions"
+
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
+    condition_type = Column(Text, primary_key=True)
+    condition_target = Column(Text, primary_key=True)
+    condition_value = Column(Text)
+
+
+class GlobalEventEffect(Base):
+    """Effects applied by a global event."""
+
+    __tablename__ = "global_event_effects"
+
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
+    effect_type = Column(Text, primary_key=True)
+    target = Column(Text, primary_key=True)
+    magnitude = Column(Numeric)
+
+
+class GlobalEventReward(Base):
+    """Rewards granted upon global event completion."""
+
+    __tablename__ = "global_event_rewards"
+
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
+    reward_type = Column(Text, primary_key=True)
+    reward_target = Column(Text, primary_key=True)
+    reward_amount = Column(Numeric, nullable=False)
+
 class KingdomReligion(Base):
     """Religious affiliation and faith details for a kingdom."""
 
@@ -1116,4 +1164,5 @@ class KingdomResearchTracking(Base):
     status = Column(String)
     progress = Column(Integer, default=0)
     ends_at = Column(DateTime(timezone=True))
+
 
