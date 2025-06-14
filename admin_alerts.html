@@ -1,9 +1,10 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: admin_alerts.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.10.40
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,6 +13,8 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Admin Alerts | Kingmaker’s Rise</title>
+
+  <!-- SEO -->
   <meta name="description" content="Admin alert center for account monitoring and moderation." />
   <meta name="keywords" content="Kingmaker's Rise, Admin Alerts, moderation, flagged accounts, security, RPG" />
   <meta name="robots" content="noindex, nofollow" />
@@ -30,47 +33,50 @@ Developer: Deathsgift66
   <meta name="twitter:description" content="Monitor and enforce account security from the Kingmaker’s Rise Admin Center." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Global & Page-Specific Assets -->
+  <!-- Global Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/admin_alerts.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
 
-  <script type="module" src="Javascript/navDropdown.js"></script>
+  <!-- Admin Scripts -->
   <script>window.requireAdmin = true;</script>
+  <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script type="module" defer src="Javascript/resourceBar.js"></script>
   <script type="module" defer src="Javascript/admin_alerts.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
-  <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
-<body>
-  <!-- Inject Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+<body data-theme="parchment">
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-  <!-- ✅ Page Banner -->
-  <header class="kr-top-banner" aria-label="Admin Alert Page Banner">
+  <!-- Banner -->
+  <header class="kr-top-banner" aria-label="Admin Panel Header">
     Kingmaker's Rise – Admin Alert Center
   </header>
 
-  <!-- ✅ Main Content Panel -->
-  <main class="main-container" aria-label="Admin Alerts Dashboard">
+  <!-- Main Admin Panel -->
+  <main class="main-container" aria-label="Admin Alerts Interface">
     <div class="admin-alerts-container">
+
       <h2>Flagged Accounts & Suspicious Events</h2>
 
-      <!-- Filter Controls -->
+      <!-- Filters -->
       <section class="search-sort-controls" aria-label="Admin Alert Filters">
-        <input type="datetime-local" id="filter-start" class="filter-input" aria-label="Start time" />
-        <input type="datetime-local" id="filter-end" class="filter-input" aria-label="End time" />
-        <select id="filter-alert-type" class="filter-input" aria-label="Select alert type">
+        <input type="datetime-local" id="filter-start" class="filter-input" aria-label="Start Time" />
+        <input type="datetime-local" id="filter-end" class="filter-input" aria-label="End Time" />
+        
+        <select id="filter-alert-type" class="filter-input" aria-label="Alert Type">
           <option value="">All Types</option>
           <option value="moderation">Moderation</option>
           <option value="war">War</option>
@@ -79,28 +85,31 @@ Developer: Deathsgift66
           <option value="quests">Quests</option>
           <option value="abuse">Resource Abuse</option>
         </select>
-        <select id="filter-severity" class="filter-input" aria-label="Select severity">
+
+        <select id="filter-severity" class="filter-input" aria-label="Severity Level">
           <option value="">Any Severity</option>
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
-        <input type="text" id="filter-kingdom" class="filter-input" placeholder="Kingdom ID" aria-label="Filter by Kingdom" />
-        <input type="text" id="filter-alliance" class="filter-input" placeholder="Alliance ID" aria-label="Filter by Alliance" />
-        <button id="refresh-alerts">Refresh</button>
-        <button id="clear-filters">Clear</button>
+
+        <input type="text" id="filter-kingdom" class="filter-input" placeholder="Kingdom ID" aria-label="Filter by Kingdom ID" />
+        <input type="text" id="filter-alliance" class="filter-input" placeholder="Alliance ID" aria-label="Filter by Alliance ID" />
+
+        <button id="refresh-alerts" class="btn btn-primary">Refresh</button>
+        <button id="clear-filters" class="btn btn-secondary">Clear</button>
       </section>
 
-      <!-- Alert Results -->
-      <section class="kr-alerts-panel" aria-label="Alert Results Panel">
-        <div id="alerts-feed" aria-live="polite">
-          <!-- JS Populates alerts here -->
+      <!-- Alert Feed Panel -->
+      <section class="kr-alerts-panel" aria-label="Live Alert Feed">
+        <div id="alerts-feed" aria-live="polite" class="alerts-feed">
+          <!-- JavaScript inserts real-time alerts here -->
         </div>
       </section>
     </div>
   </main>
 
-  <!-- ✅ Footer -->
+  <!-- Footer -->
   <footer class="site-footer">
     <div>© 2025 Kingmaker’s Rise</div>
     <div>
@@ -111,4 +120,5 @@ Developer: Deathsgift66
     </div>
   </footer>
 </body>
+
 </html>
