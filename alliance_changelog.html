@@ -1,46 +1,58 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: alliance_changelog.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.11.40
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Alliance Changelog | Kingmaker's Rise</title>
+
+  <!-- SEO & Social -->
   <meta name="description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
-  <meta name="keywords" content="Kingmaker's Rise, alliance log, history" />
+  <meta name="keywords" content="Kingmaker's Rise, alliance log, history, changes, updates, policy" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/alliance_changelog.html" />
 
+  <!-- Open Graph -->
   <meta property="og:title" content="Alliance Changelog | Kingmaker's Rise" />
   <meta property="og:description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/alliance_changelog.html" />
   <meta property="og:type" content="website" />
 
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Alliance Changelog | Kingmaker's Rise" />
-  <meta name="twitter:description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
+  <meta name="twitter:description" content="Track alliance wars, treaties, project completions, quests, and more in the changelog." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
+  <!-- Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/alliance_common.css" />
   <link rel="stylesheet" href="CSS/alliance_changelog.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
+
+  <!-- Scripts -->
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/apiHelper.js"></script>
   <script type="module" src="Javascript/allianceAppearance.js"></script>
-  <script defer type="module" src="Javascript/alliance_changelog.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/alliance_changelog.js"></script>
 </head>
+
 <body class="alliance-bg">
+  <!-- Navigation -->
   <div id="navbar-container"></div>
   <script>
     fetch('/navbar.html')
@@ -50,23 +62,28 @@ Developer: Deathsgift66
       });
   </script>
 
-  <header class="kr-top-banner" aria-label="Alliance Changelog Banner">
+  <!-- Page Header -->
+  <header class="kr-top-banner" aria-label="Alliance Changelog Header">
     <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
     <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
     Alliance Changelog
   </header>
 
-  <main class="main-centered-container" aria-label="Alliance Changelog Interface">
+  <!-- Main Content -->
+  <main class="main-centered-container" aria-label="Alliance History Feed">
     <section class="changelog-container">
       <h2>Alliance Changelog</h2>
-      <div class="filter-bar">
-        <label for="filter-start">From</label>
-        <input type="date" id="filter-start" />
-        <label for="filter-end">To</label>
-        <input type="date" id="filter-end" />
-        <label for="filter-type">Type</label>
-        <select id="filter-type">
 
+      <!-- Filter Bar -->
+      <div class="filter-bar" role="search" aria-label="Filter Historical Logs">
+        <label for="filter-start">From</label>
+        <input type="date" id="filter-start" aria-label="Start Date" />
+
+        <label for="filter-end">To</label>
+        <input type="date" id="filter-end" aria-label="End Date" />
+
+        <label for="filter-type">Type</label>
+        <select id="filter-type" aria-label="Log Type Filter">
           <option value="">All Types</option>
           <option value="war">Wars</option>
           <option value="treaty">Treaties</option>
@@ -75,19 +92,36 @@ Developer: Deathsgift66
           <option value="member">Members</option>
           <option value="admin">Admin</option>
         </select>
-        <button onclick="applyFilters()">Filter</button>
-        <button onclick="fetchChangelog()">Refresh</button>
+
+        <button id="apply-filters-btn">Filter</button>
+        <button id="refresh-btn">Refresh</button>
       </div>
+
       <div class="last-updated">Last updated: <span id="last-updated">--</span></div>
-      <ul id="changelog-list" class="timeline-feed"><li>Loading...</li></ul>
+
+      <!-- Timeline Feed -->
+      <ul id="changelog-list" class="timeline-feed" aria-live="polite">
+        <li>Loading...</li>
+      </ul>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="site-footer">
     <div>© 2025 Kingmaker’s Rise</div>
-    <div>
-      <a href="legal.html">View Legal Documents</a>
-    </div>
+    <div><a href="legal.html">View Legal Documents</a></div>
   </footer>
+
+  <!-- Event Binding -->
+  <script>
+    // DOM-safe filter function trigger
+    document.getElementById("apply-filters-btn").addEventListener("click", () => {
+      if (typeof applyFilters === "function") applyFilters();
+    });
+    document.getElementById("refresh-btn").addEventListener("click", () => {
+      if (typeof fetchChangelog === "function") fetchChangelog();
+    });
+  </script>
 </body>
+
 </html>
