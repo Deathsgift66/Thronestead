@@ -59,8 +59,12 @@ def list_notifications(
         .filter((Notification.expires_at.is_(None)) | (Notification.expires_at > func.now()))
         .order_by(Notification.is_read.asc(), Notification.created_at.desc())
     )
-    if limit:
+
+    if limit is not None:
+        if limit <= 0 or limit > 100:
+            raise HTTPException(status_code=400, detail="Limit must be between 1 and 100")
         query = query.limit(limit)
+
     rows = query.all()
     return {"notifications": [_serialize_notification(r) for r in rows]}
 
@@ -103,6 +107,7 @@ async def stream_notifications(
     Checks every 5 seconds for new notifications within a 2.5-minute window.
     """
     async def event_generator():
+        """Yield notifications updated since the last check in ~5s intervals."""
         last_check = datetime.utcnow()
         for _ in range(30):  # Check 30 times over ~2.5 minutes
             rows = (
@@ -112,8 +117,10 @@ async def stream_notifications(
                 .all()
             )
             last_check = datetime.utcnow()
-            for r in rows:
-                yield f"data: {json.dumps(_serialize_notification(r))}\n\n"
+
+            if rows:
+                for r in rows:
+                    yield f"data: {json.dumps(_serialize_notification(r))}\n\n"
             await asyncio.sleep(5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

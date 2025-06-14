@@ -1,6 +1,6 @@
 // Project Name: Kingmakers Rise©
 // File Name: resourceBar.js
-// Version 6.13.2025.19.49
+// Version 6.15.2025.21.00
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { fetchJson } from './fetchJson.js'; // Custom wrapper for JSON fetch
@@ -37,6 +37,9 @@ const RESOURCES = [
   { key: 'spear', icon: '🔱' }, { key: 'horses', icon: '🐎' }, { key: 'pitchforks', icon: '🍴' }
 ];
 
+// Cache resource DOM elements for quick updates
+const resourceEls = {};
+
 // Create and inject the resource bar into the page
 function createBar() {
   const bar = document.createElement('div');
@@ -44,13 +47,18 @@ function createBar() {
   bar.className = 'resource-bar d-flex flex-wrap justify-content-center gap-2 py-1 bg-dark text-white fs-sm';
 
   bar.innerHTML = RESOURCES.map(({ key, icon }) => `
-    <a href="market.html?resource=${key}" 
+    <a href="market.html?resource=${key}"
        class="text-white text-decoration-none"
-       data-bs-toggle="tooltip" 
+       data-bs-toggle="tooltip"
        title="${key.replace(/_/g, ' ')}">
-      <span class="resource-icon">${icon}</span> 
+      <span class="resource-icon">${icon}</span>
       <span id="res-${key}">0</span>
     </a>`).join('');
+
+  // Populate resourceEls map
+  RESOURCES.forEach(({ key }) => {
+    resourceEls[key] = bar.querySelector(`#res-${key}`);
+  });
 
   const banner = document.querySelector('header.kr-top-banner');
   if (banner && banner.parentNode) {
@@ -86,7 +94,7 @@ async function loadResources() {
 // Populate each resource value into the bar
 function updateUI(data) {
   RESOURCES.forEach(({ key }) => {
-    const el = document.getElementById(`res-${key}`);
+    const el = resourceEls[key];
     if (el && data[key] !== undefined) {
       el.textContent = data[key];
     }
