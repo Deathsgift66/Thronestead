@@ -4,21 +4,9 @@
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
+import { authHeaders } from './auth.js';
 
 let realtimeSub;
-
-// ✅ Unified auth header fetch
-async function authHeaders() {
-  const [{ data: { user } }, { data: { session } }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession()
-  ]);
-  if (!user || !session) throw new Error('Unauthorized');
-  return {
-    'X-User-ID': user.id,
-    Authorization: `Bearer ${session.access_token}`
-  };
-}
 
 // ✅ Entry point
 document.addEventListener("DOMContentLoaded", async () => {

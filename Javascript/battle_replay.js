@@ -5,18 +5,7 @@
 // Battle Replay module with timeline playback
 
 import { supabase } from './supabaseClient.js';
-
-async function authHeaders() {
-  const [{ data: { user } }, { data: { session } }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession()
-  ]);
-  if (!user || !session) throw new Error('Unauthorized');
-  return {
-    'X-User-ID': user.id,
-    Authorization: `Bearer ${session.access_token}`
-  };
-}
+import { authHeaders } from './auth.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const warId = parseInt(urlParams.get('war_id'), 10) || 0;

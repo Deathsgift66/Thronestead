@@ -11,24 +11,12 @@ import {
   setSrc,
   setText,
   fragmentFrom,
-  isValidURL
+  isValidURL,
+  getValue
 } from './utils.js';
+import { authHeaders, getAuth } from './auth.js';
 
-/**
- * Retrieve headers for authenticated Supabase API calls.
- * Ensures user and session are valid and returns headers with auth tokens.
- */
-async function authHeaders() {
-  const [{ data: { user } }, { data: { session } }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession()
-  ]);
-  if (!user || !session) throw new Error('Unauthorized');
-  return {
-    'X-User-ID': user.id,
-    Authorization: `Bearer ${session.access_token}`
-  };
-}
+// Auth helpers are centralized in auth.js
 
 /**
  * Loads user profile data and updates the UI with user settings and session history.
@@ -108,8 +96,10 @@ async function loadKingdomDetails() {
  */
 async function saveUserSettings() {
   const headers = await authHeaders();
-  const displayName = document.getElementById('display_name')?.value.trim() || '';
-  const email = document.getElementById('email')?.value.trim() || '';
+  const displayName = getValue('display_name');
+  const email = getValue('email');
+  const avatarUrl = getValue('avatar_url');
+  const bannerUrl = getValue('profile_banner');
 
   if (displayName.length < 3) {
     showToast('Display Name must be at least 3 characters.');
@@ -120,13 +110,22 @@ async function saveUserSettings() {
     return;
   }
 
+  if (avatarUrl && !isValidURL(avatarUrl)) {
+    showToast('Invalid avatar URL');
+    return;
+  }
+  if (bannerUrl && !isValidURL(bannerUrl)) {
+    showToast('Invalid banner URL');
+    return;
+  }
+
   const payload = {
     display_name: displayName,
-    motto: document.getElementById('motto')?.value || '',
-    bio: document.getElementById('profile_bio')?.value || '',
-    profile_picture_url: document.getElementById('avatar_url')?.value || '',
-    theme_preference: document.getElementById('theme_preference')?.value || '',
-    profile_banner: document.getElementById('profile_banner')?.value || '',
+    motto: getValue('motto'),
+    bio: getValue('profile_bio'),
+    profile_picture_url: avatarUrl,
+    theme_preference: getValue('theme_preference'),
+    profile_banner: bannerUrl,
     ip_login_alerts: !!document.getElementById('ip_alerts')?.checked,
     email_login_confirmations: !!document.getElementById('email_confirmations')?.checked,
     email: email
@@ -140,11 +139,8 @@ async function saveUserSettings() {
   if (!res.ok) throw new Error('Failed to save');
 
   // Update kingdom-specific data
-  const [{ data: { user } }, { data: { session } }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession()
-  ]);
-  if (user && session) {
+  try {
+    const { user, session } = await getAuth();
     await fetch('/api/kingdom/update', {
       method: 'PATCH',
       headers: {
@@ -153,12 +149,12 @@ async function saveUserSettings() {
         Authorization: `Bearer ${session.access_token}`
       },
       body: JSON.stringify({
-        ruler_title: document.getElementById('ruler_title')?.value.trim() || '',
-        banner_url: document.getElementById('kingdom_banner_url')?.value.trim() || null,
-        emblem_url: document.getElementById('kingdom_emblem_url')?.value.trim() || null
+        ruler_title: getValue('ruler_title'),
+        banner_url: getValue('kingdom_banner_url', true),
+        emblem_url: getValue('kingdom_emblem_url', true)
       })
     });
-  }
+  } catch {}
 
   showToast('Settings saved');
 }
