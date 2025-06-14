@@ -6,6 +6,8 @@ from typing import Optional
 import json
 import logging
 
+from services import notification_service
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
@@ -21,6 +23,9 @@ START_RESOURCES = {
 }
 
 START_BUILDINGS = []
+
+# Base tech granted if catalogue is empty
+STARTER_TECH_CODE = "basic_mining"
 
 # Default noble created for every new kingdom
 DEFAULT_NOBLE_NAME = "Founding Noble"
@@ -86,6 +91,18 @@ def create_kingdom_transaction(
         ).fetchone()
         village_id = int(vil_row[0]) if vil_row else None
 
+        # Starter castle
+        db.execute(
+            text(
+                """
+                INSERT INTO village_buildings (village_id, building_id, level)
+                VALUES (:village_id, 1, 1)
+                ON CONFLICT DO NOTHING
+                """
+            ),
+            {"village_id": village_id},
+        )
+
         db.execute(
             text(
                 """
@@ -135,6 +152,14 @@ def create_kingdom_transaction(
                 ),
                 {"kid": kingdom_id, "code": tech_row[0]},
             )
+        else:
+            db.execute(
+                text(
+                    "INSERT INTO kingdom_research_tracking (kingdom_id, tech_code, status) "
+                    "VALUES (:kid, :tech, 'locked') ON CONFLICT DO NOTHING"
+                ),
+                {"kid": kingdom_id, "tech": STARTER_TECH_CODE},
+            )
 
         db.execute(
             text(
@@ -174,7 +199,24 @@ def create_kingdom_transaction(
             {"name": kingdom_name, "region": region, "kid": kingdom_id, "uid": user_id},
         )
 
+        db.execute(
+            text(
+                """
+                INSERT INTO user_setting_entries (user_id, setting_key, setting_value)
+                VALUES (:uid, 'theme', 'default')
+                ON CONFLICT DO NOTHING
+                """
+            ),
+            {"uid": user_id},
+        )
+
         db.commit()
+
+        notification_service.notify_user(
+            db,
+            user_id,
+            f"Your kingdom '{kingdom_name}' has been established."
+        )
         return kingdom_id
     except Exception:
         db.rollback()
