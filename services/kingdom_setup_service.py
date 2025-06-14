@@ -120,12 +120,15 @@ def create_kingdom_transaction(
             {"kid": kingdom_id},
         )
 
+
+        # Fallback building: ensure the starting village has a castle
         db.execute(
             text(
-                "INSERT INTO kingdom_castle_progression (kingdom_id, castle_level, xp)"
-                " VALUES (:kid, 1, 0)"
+                "INSERT INTO village_buildings (village_id, building_id, level) "
+                "VALUES (:vid, 1, 1) ON CONFLICT DO NOTHING"
             ),
-            {"kid": kingdom_id},
+            {"vid": village_id},
+
         )
 
         # Insert the first noble so progression can begin immediately
@@ -168,6 +171,15 @@ def create_kingdom_transaction(
                 ),
                 {"kid": kingdom_id, "tech": STARTER_TECH_CODE},
             )
+
+        # Fallback research tracking if none were inserted
+        db.execute(
+            text(
+                "INSERT INTO kingdom_research_tracking (kingdom_id, tech_code, status) "
+                "VALUES (:kid, 'basic_mining', 'locked') ON CONFLICT DO NOTHING"
+            ),
+            {"kid": kingdom_id},
+        )
 
         db.execute(
             text(
