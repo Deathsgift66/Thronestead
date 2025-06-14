@@ -2,6 +2,7 @@
 # File Name: villages_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 import json
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException
@@ -17,13 +18,16 @@ from ..data import get_max_villages_allowed
 
 router = APIRouter(prefix="/api/kingdom/villages", tags=["villages"])
 
+# ----------------------------- Pydantic Schema -----------------------------
 class VillagePayload(BaseModel):
     village_name: str
     village_type: str = "economic"
     kingdom_id: int | None = None
 
 
+# ----------------------------- Internal Utility -----------------------------
 def _fetch_villages(db: Session, kid: int):
+    """Helper to fetch all villages for a given kingdom ID with metadata."""
     rows = db.execute(
         text(
             """
@@ -58,14 +62,11 @@ def _fetch_villages(db: Session, kid: int):
     ]
 
 
+# ----------------------------- API Endpoints -----------------------------
+
 @router.get("")
-
-async def list_villages(
-    user_id: str = Depends(require_user_id),
-
-    db: Session = Depends(get_db),
-):
-    """List villages for the player's kingdom."""
+async def list_villages(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+    """List all villages for the authenticated player."""
     kid = get_kingdom_id(db, user_id)
     villages = _fetch_villages(db, kid)
     return {"villages": villages}
@@ -77,18 +78,22 @@ def create_village(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """Create a new village if allowed by castle level and nobles."""
+    """
+    Create a new village if:
+    - User has available slots from their castle level
+    - User has at least one noble
+    """
     kid = get_kingdom_id(db, user_id)
 
+    # Check current castle level
     record = db.execute(
-        text(
-            "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
-        ),
+        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
         {"kid": kid},
     ).fetchone()
     castle_level = record[0] if record else 1
     max_allowed = get_max_villages_allowed(castle_level)
 
+    # Enforce cap on village creation
     existing = db.execute(
         text("SELECT COUNT(*) FROM kingdom_villages WHERE kingdom_id = :kid"),
         {"kid": kid},
@@ -96,6 +101,7 @@ def create_village(
     if existing >= max_allowed:
         raise HTTPException(status_code=403, detail="Village limit reached")
 
+    # Require at least one noble
     nobles = db.execute(
         text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
         {"kid": kid},
@@ -103,6 +109,7 @@ def create_village(
     if nobles < 1:
         raise HTTPException(status_code=403, detail="Not enough nobles")
 
+    # Insert village
     result = db.execute(
         text(
             """
@@ -117,15 +124,16 @@ def create_village(
     return {"message": "Village created", "village_id": result[0]}
 
 
-
 @router.get("/summary/{village_id}")
 def get_village_summary(
     village_id: int,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """Return key details for a single village owned by the player's kingdom."""
+    """Return metadata, buildings, and resources for a single village."""
     kid = get_kingdom_id(db, user_id)
+
+    # Ensure ownership
     owner = db.execute(
         text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
         {"vid": village_id},
@@ -133,6 +141,7 @@ def get_village_summary(
     if not owner or owner[0] != kid:
         raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
 
+    # Fetch core data
     village = db.execute(
         text(
             """
@@ -151,9 +160,7 @@ def get_village_summary(
     ).mappings().fetchone()
 
     buildings = db.execute(
-        text(
-            "SELECT building_id, level FROM village_buildings WHERE village_id = :vid ORDER BY building_id"
-        ),
+        text("SELECT building_id, level FROM village_buildings WHERE village_id = :vid ORDER BY building_id"),
         {"vid": village_id},
     ).mappings().fetchall()
 
@@ -163,12 +170,10 @@ def get_village_summary(
         "buildings": [dict(b) for b in buildings],
     }
 
+
 @router.get("/stream")
-async def stream_villages(
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    """Stream village updates in real time using server-sent events."""
+async def stream_villages(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+    """Stream village data every 5s in Server-Sent Event format for real-time dashboards."""
     kid = get_kingdom_id(db, user_id)
 
     async def event_generator():
@@ -184,4 +189,3 @@ async def stream_villages(
             await asyncio.sleep(5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
