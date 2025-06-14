@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: projects.html
-Version 6.13.2025.19.49
+Version: 6.13.2025.19.49
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -13,100 +13,99 @@ Developer: Deathsgift66
 
   <title>Kingdom Projects | Kingmaker's Rise</title>
   <meta name="description" content="Manage your Kingdom Projects in Kingmaker’s Rise — plan, build, and track strategic projects." />
+  <meta name="keywords" content="Kingmaker's Rise, kingdom projects, construction, upgrades, economy, military" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/projects.html" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Kingdom Projects | Kingmaker's Rise" />
   <meta property="og:description" content="Manage your Kingdom Projects in Kingmaker’s Rise — plan, build, and track strategic projects." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/projects.html" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Kingdom Projects | Kingmaker's Rise" />
   <meta name="twitter:description" content="Manage your Kingdom Projects in Kingmaker’s Rise — plan, build, and track strategic projects." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, kingdom projects, construction, upgrades, economy, military" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/projects.html" />
 
-  <!-- Page-Specific Assets -->
+  <!-- Page Styles -->
   <link rel="stylesheet" href="CSS/projects_kingdom.css" />
-  <script defer type="module" src="Javascript/projects_kingdom.js"></script>
 
-  <!-- Global Assets -->
+  <!-- Global Styles -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
+
+  <!-- Scripts -->
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
-  <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script type="module" src="Javascript/resourceBar.js" defer></script>
+  <script type="module" src="Javascript/projects_kingdom.js" defer></script>
 </head>
 
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Kingdom Projects Banner">
-  Kingmaker's Rise — Kingdom Projects
-</header>
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Kingdom Projects Banner">
+    Kingmaker's Rise — Kingdom Projects
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Kingdom Projects Interface">
+  <!-- Main Layout -->
+  <main class="main-centered-container" aria-label="Kingdom Projects Interface">
+    <section class="alliance-members-container projects-wrapper">
 
+      <h2>Kingdom Projects</h2>
+      <p>Plan and construct projects to strengthen your kingdom. Active projects contribute bonuses to your economy, military, and strategic options.</p>
 
-  <!-- Core Projects Panel -->
-  <section class="alliance-members-container projects-wrapper">
-    <h2>Kingdom Projects</h2>
-    <p>Plan and construct projects to strengthen your kingdom. Active projects contribute bonuses to your economy, military, and strategic options.</p>
-
-    <!-- Power Score -->
-    <div class="project-panel">
-      <h3 class="panel-title">Kingdom Power Score</h3>
-      <div id="power-score">
-        <!-- JS will populate -->
+      <!-- Power Score Display -->
+      <div class="project-panel" aria-labelledby="power-score-heading">
+        <h3 id="power-score-heading" class="panel-title">Kingdom Power Score</h3>
+        <div id="power-score" aria-live="polite"></div>
       </div>
-    </div>
 
-    <!-- Tabs -->
-    <div class="tab-buttons">
-      <button class="tab-btn active" data-tab="available-projects">Available Projects</button>
-      <button class="tab-btn" data-tab="active-projects">Active Projects</button>
-    </div>
+      <!-- Tab Controls -->
+      <nav class="tab-buttons" role="tablist" aria-label="Project Tabs">
+        <button class="tab-btn active" data-tab="available-projects" role="tab" aria-selected="true" aria-controls="available-projects">Available Projects</button>
+        <button class="tab-btn" data-tab="active-projects" role="tab" aria-selected="false" aria-controls="active-projects">Active Projects</button>
+      </nav>
 
-    <!-- Available Projects -->
-    <div id="available-projects" class="tab-content active">
-      <div class="project-list" id="available-projects-list">
-        <!-- JS will populate -->
+      <!-- Available Projects Tab -->
+      <div id="available-projects" class="tab-content active" role="tabpanel" aria-labelledby="available-projects-tab">
+        <div class="project-list" id="available-projects-list" aria-live="polite">
+          <!-- Populated by JS -->
+        </div>
       </div>
-    </div>
 
-    <!-- Active Projects -->
-    <div id="active-projects" class="tab-content">
-      <div class="project-list" id="active-projects-list">
-        <!-- JS will populate -->
+      <!-- Active Projects Tab -->
+      <div id="active-projects" class="tab-content" role="tabpanel" aria-labelledby="active-projects-tab">
+        <div class="project-list" id="active-projects-list" aria-live="polite">
+          <!-- Populated by JS -->
+        </div>
       </div>
-    </div>
 
-  </section>
+    </section>
+  </main>
 
-</main>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
-</footer>
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div><a href="legal.html">View Legal Documents</a></div>
+  </footer>
 
 </body>
 </html>
