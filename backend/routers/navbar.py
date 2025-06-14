@@ -2,23 +2,27 @@
 # File Name: navbar.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
-from ..security import verify_jwt_token
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
+from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
 from ..database import get_db
 from backend.models import Notification, TradeLog
-
 
 router = APIRouter(prefix="/api/navbar", tags=["navbar"])
 
 
 @router.get("/profile")
 def navbar_profile(user_id: str = Depends(verify_jwt_token)):
-    """Return navbar profile data for the current user."""
+    """
+    🎭 Return navbar profile details including username, profile image, and unread messages count.
+    """
     supabase = get_supabase_client()
+
+    # Fetch user profile data
     user_res = (
         supabase.table("users")
         .select("username,profile_picture_url")
@@ -31,8 +35,8 @@ def navbar_profile(user_id: str = Depends(verify_jwt_token)):
         result = user_res.get("data")
     if not result:
         raise HTTPException(status_code=404, detail="User not found")
-    user = result
 
+    # Fetch unread messages count
     msg_res = (
         supabase.table("player_messages")
         .select("message_id")
@@ -40,11 +44,12 @@ def navbar_profile(user_id: str = Depends(verify_jwt_token)):
         .eq("is_read", False)
         .execute()
     )
-    unread = len(getattr(msg_res, "data", msg_res) or [])
+    unread_count = len(getattr(msg_res, "data", msg_res) or [])
+
     return {
-        "username": user.get("username"),
-        "profile_picture_url": user.get("profile_picture_url"),
-        "unread_messages": unread,
+        "username": result.get("username"),
+        "profile_picture_url": result.get("profile_picture_url"),
+        "unread_messages": unread_count,
     }
 
 
@@ -53,9 +58,15 @@ def navbar_counters(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Return unread counts for messages, notifications and recent trades."""
+    """
+    🧮 Return navbar counters:
+    - Unread player messages
+    - Unread notifications (personal or global)
+    - Recent trades (last 24h)
+    """
     supabase = get_supabase_client()
 
+    # Count unread messages
     msg_res = (
         supabase.table("player_messages")
         .select("message_id")
@@ -65,7 +76,8 @@ def navbar_counters(
     )
     unread_messages = len(getattr(msg_res, "data", msg_res) or [])
 
-    notif_count = (
+    # Count unread notifications (global or specific)
+    unread_notifications = (
         db.query(Notification)
         .filter(
             (Notification.user_id == user_id) | (Notification.user_id.is_(None))
@@ -74,11 +86,12 @@ def navbar_counters(
         .count()
     )
 
+    # Count trades completed in last 24 hours
     cutoff = datetime.utcnow() - timedelta(hours=24)
-    trade_count = db.query(TradeLog).filter(TradeLog.timestamp > cutoff).count()
+    recent_trades = db.query(TradeLog).filter(TradeLog.timestamp > cutoff).count()
 
     return {
         "unread_messages": unread_messages,
-        "unread_notifications": notif_count,
-        "recent_trades": trade_count,
+        "unread_notifications": unread_notifications,
+        "recent_trades": recent_trades,
     }
