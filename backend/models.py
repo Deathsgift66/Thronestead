@@ -742,7 +742,7 @@ class KingdomHistoryLog(Base):
 
     log_id = Column(Integer, primary_key=True)
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
-    event_type = Column(String)
+    event_type = Column(Text)
     event_details = Column(Text)
     event_date = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -912,4 +912,31 @@ class KingdomResources(Base):
     spear = Column(BigInteger, default=0)
     horses = Column(BigInteger, default=0)
     pitchforks = Column(BigInteger, default=0)
+
+
+class KingdomReligion(Base):
+    """Religious affiliation and faith details for a kingdom."""
+
+    __tablename__ = "kingdom_religion"
+
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
+    religion_name = Column(Text)
+    faith_level = Column(Integer, default=1)
+    faith_points = Column(Integer, default=0)
+    blessings = Column(JSONB, default=dict)
+    blessing_1 = Column(Text)
+    blessing_2 = Column(Text)
+    blessing_3 = Column(Text)
+
+
+class KingdomResearchTracking(Base):
+    """Tracks research progress for a kingdom's technologies."""
+
+    __tablename__ = "kingdom_research_tracking"
+
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
+    tech_code = Column(String, ForeignKey("tech_catalogue.tech_code"), primary_key=True)
+    status = Column(String)
+    progress = Column(Integer, default=0)
+    ends_at = Column(DateTime(timezone=True))
 
