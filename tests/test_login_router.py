@@ -4,7 +4,9 @@
 # Developer: Deathsgift66
 from backend.routers import login_routes
 from fastapi.responses import JSONResponse
+from fastapi import HTTPException
 import json
+import pytest
 
 class DummyTable:
     def __init__(self, data=None):
@@ -33,3 +35,13 @@ def test_announcements_returned():
     assert isinstance(resp, JSONResponse)
     data = json.loads(resp.body.decode())
     assert data["announcements"][0]["title"] == "Welcome"
+
+
+def test_supabase_unavailable_returns_503():
+    def raise_error():
+        raise RuntimeError("no client")
+
+    login_routes.get_supabase_client = raise_error
+    with pytest.raises(HTTPException) as exc:
+        login_routes.get_announcements()
+    assert exc.value.status_code == 503

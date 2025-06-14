@@ -5,6 +5,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+import logging
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -24,7 +25,11 @@ def get_announcements():
     Returns:
         - List of announcement dicts with 'title', 'content', and 'created_at'.
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
+    except RuntimeError as exc:
+        logging.exception("Supabase client unavailable")
+        raise HTTPException(status_code=503, detail="Supabase unavailable") from exc
 
     try:
         response = (
@@ -40,13 +45,12 @@ def get_announcements():
 
         announcements = getattr(response, "data", response) or []
     except Exception as e:
-        print("❌ Error loading announcements:", e)
+        logging.exception("Error loading announcements")
         raise HTTPException(
             status_code=500,
             detail="Server error loading announcements."
         ) from e
-
-    return JSONResponse(content=announcements, status_code=200)
+    return JSONResponse(content={"announcements": announcements}, status_code=200)
 
 
 class EventPayload(BaseModel):

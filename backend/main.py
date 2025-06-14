@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import os
 
 from .database import engine
 from .models import Base
@@ -29,9 +30,12 @@ app = FastAPI(
 # -----------------------
 # 🔐 Middleware (CORS, security headers, etc.)
 # -----------------------
+allowed_origins = os.getenv("ALLOWED_ORIGINS")
+origins = [o.strip() for o in allowed_origins.split(",") if o.strip()] if allowed_origins else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with specific domains in production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
