@@ -19,7 +19,12 @@ class KingdomCastleProgression(Base):
     kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'), primary_key=True)
     castle_level = Column(Integer, default=1)
     castle_xp = Column(Integer, default=0)
-    xp_for_next = Column(Integer, default=100)  # Default for level 1; backend can update this dynamically
+
+    def _default_xp_for_next(context):
+        level = context.get_current_parameters().get("castle_level", 1)
+        return 100 * (level ** 2)
+
+    xp_for_next = Column(Integer, default=_default_xp_for_next)
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 

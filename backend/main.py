@@ -30,8 +30,12 @@ app = FastAPI(
 # -----------------------
 # 🔐 Middleware (CORS, security headers, etc.)
 # -----------------------
-allowed_origins = os.getenv("ALLOWED_ORIGINS")
-origins = [o.strip() for o in allowed_origins.split(",") if o.strip()] if allowed_origins else ["*"]
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+if allowed_origins_env:
+    origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+else:
+    origins = []  # Secure default when env var is missing
+    print("Warning: ALLOWED_ORIGINS not set; CORS disabled for external domains.")
 
 app.add_middleware(
     CORSMiddleware,
