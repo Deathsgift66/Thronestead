@@ -4,11 +4,12 @@
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
+import { setupTabs } from './components/tabControl.js';
 
 let scrollChannel = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  initTabs();
+  setupTabs();
   await Promise.all([
     loadBoard(),
     loadYourScrolls()
@@ -23,17 +24,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ✅ UI Tabs Handler
-function initTabs() {
-  document.querySelectorAll('.tab-button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-tab');
-      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(target)?.classList.add('active');
-    });
-  });
-}
 
 // ✅ Load Global Bulletin
 async function loadBoard() {

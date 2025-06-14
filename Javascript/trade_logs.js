@@ -5,11 +5,12 @@
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
+import { setupTabs } from './components/tabControl.js';
 
 let realtimeChannel = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  initTabs();
+  setupTabs({ onShow: loadTradeLogs });
   initFilters();
   populateResourceOptions();
   await loadTradeLogs();
@@ -18,23 +19,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ✅ Initialize tab switching logic
-function initTabs() {
-  const tabs = document.querySelectorAll('.tab-button');
-  const sections = document.querySelectorAll('.tab-section');
-
-  tabs.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const target = btn.dataset.target;
-
-      tabs.forEach(b => b.classList.remove('active'));
-      sections.forEach(s => s.classList.remove('active'));
-
-      btn.classList.add('active');
-      document.getElementById(target)?.classList.add('active');
-      await loadTradeLogs();
-    });
-  });
-}
 
 // ✅ Setup filters
 function initFilters() {

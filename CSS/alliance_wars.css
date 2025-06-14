@@ -164,14 +164,6 @@ body {
   color: #1a1a1a;
 }
 
-.tab-section {
-  display: none;
-  margin-top: 1rem;
-}
-
-.tab-section.active {
-  display: block;
-}
 
 /* Battle Map */
 .battle-container {

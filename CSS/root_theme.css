@@ -290,6 +290,10 @@ a:focus {
 .flex { display: flex; }
 .grid { display: grid; }
 
+/* Generic tabbed section helper */
+.tab-section { display: none; margin-top: 1rem; }
+.tab-section.active { display: block; }
+
 /* Banner */
 header.kr-top-banner {
   text-align: center;

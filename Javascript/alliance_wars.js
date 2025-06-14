@@ -5,9 +5,11 @@
 import { supabase } from './supabaseClient.js';
 import { loadCustomBoard } from './customBoard.js';
 import { escapeHTML } from './utils.js';
+import { setupTabs } from './components/tabControl.js';
 
 let currentWarId = null;
 let combatInterval = null;
+let switchTab = () => {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Logout binding
@@ -17,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // ✅ Init
-  initTabs();
+  switchTab = setupTabs({ onShow: id => id !== 'tab-live' && stopCombatPolling() });
   await loadCustomBoard({ altText: 'Alliance War Banner' });
   await loadAllianceWars();
   await loadPendingWars();
@@ -209,15 +211,6 @@ function stopCombatPolling() {
 }
 
 // ✅ Tab Switching
-function initTabs() {
-  document.querySelectorAll('.tab-button').forEach(btn =>
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-}
-function switchTab(id) {
-  document.querySelectorAll('.tab-button, .tab-section').forEach(el =>
-    el.classList.toggle('active', el.dataset.tab === id || el.id === id));
-  if (id !== 'tab-live') stopCombatPolling();
-}
 
 // ✅ Declare War
 async function submitDeclareWar() {

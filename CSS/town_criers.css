@@ -84,13 +84,6 @@ body {
   color: #1a1a1a;
 }
 
-.tab-section {
-  display: none;
-}
-
-.tab-section.active {
-  display: block;
-}
 
 .scroll-list {
   background: rgba(251, 240, 217, 0.95);
