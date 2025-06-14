@@ -152,12 +152,16 @@ def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depend
 
     # Upgrade or insert castle level
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO kingdom_castle_progression (kingdom_id, castle_level, xp)
             VALUES (:kid, 1, 0)
-            ON CONFLICT (kingdom_id) DO UPDATE SET castle_level = castle_level + 1
-        """),
-        {"kid": kid}
+            ON CONFLICT (kingdom_id) DO UPDATE
+                SET castle_level = kingdom_castle_progression.castle_level + 1,
+                    xp = 0
+            """
+        ),
+        {"kid": kid},
     )
 
     # Ensure troop slots record exists

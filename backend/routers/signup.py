@@ -9,6 +9,8 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend.models import Notification
+
 from ..supabase_client import get_supabase_client
 from ..database import get_db
 
@@ -123,6 +125,27 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
                 "email": payload.email,
             },
         )
+
+        db.execute(
+            text(
+                """
+                INSERT INTO user_setting_entries (user_id, setting_key, setting_value)
+                VALUES (:uid, 'theme', 'default')
+                ON CONFLICT DO NOTHING
+                """
+            ),
+            {"uid": payload.user_id},
+        )
+
+        db.add(
+            Notification(
+                user_id=payload.user_id,
+                title="Welcome to Kingmaker’s Rise!",
+                message="Your kingdom awaits.",
+                category="system",
+            )
+        )
+
         db.commit()
         return {"status": "created"}
     except Exception as e:
@@ -173,6 +196,27 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
                 "email": payload.email,
             },
         )
+
+        db.execute(
+            text(
+                """
+                INSERT INTO user_setting_entries (user_id, setting_key, setting_value)
+                VALUES (:uid, 'theme', 'default')
+                ON CONFLICT DO NOTHING
+                """
+            ),
+            {"uid": uid},
+        )
+
+        db.add(
+            Notification(
+                user_id=uid,
+                title="Welcome to Kingmaker’s Rise!",
+                message="Your kingdom awaits.",
+                category="system",
+            )
+        )
+
         db.commit()
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to save user profile") from exc

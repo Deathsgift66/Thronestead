@@ -103,6 +103,14 @@ def create_kingdom_transaction(
             {"kid": kingdom_id},
         )
 
+        db.execute(
+            text(
+                "INSERT INTO kingdom_castle_progression (kingdom_id, castle_level, xp)"
+                " VALUES (:kid, 1, 0)"
+            ),
+            {"kid": kingdom_id},
+        )
+
         # Insert the first noble so progression can begin immediately
         db.execute(
             text(
