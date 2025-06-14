@@ -9,39 +9,87 @@ Developer: Deathsgift66
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spies | Kingmaker's Rise</title>
+
+  <title>Spy Network | Kingmaker's Rise</title>
+  <meta name="description" content="Manage your spy network in Kingmaker’s Rise — train spies, launch missions, and gather intelligence." />
+  <meta name="keywords" content="Kingmaker's Rise, spies, espionage, missions, intelligence, kingdom strategy" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="Spy Network | Kingmaker's Rise" />
+  <meta property="og:description" content="Manage your spy network in Kingmaker’s Rise — train spies, launch missions, and gather intelligence." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/spies.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Spy Network | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Manage your spy network in Kingmaker’s Rise — train spies, launch missions, and gather intelligence." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/spies.html" />
+  <meta name="theme-color" content="#2e2b27" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/spies.css" />
+  <script defer type="module" src="Javascript/spies.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <link rel="stylesheet" href="CSS/spies.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <script defer type="module" src="Javascript/spies.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
+
 <body>
-<div id="navbar-container"></div>
-<script>fetch('/navbar.html').then(r=>r.text()).then(h=>{document.getElementById('navbar-container').innerHTML=h});</script>
-<header class="kr-top-banner">Spies</header>
+
+<!-- Navbar -->
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
+<script>
+  fetch('/navbar.html')
+    .then(r => r.text())
+    .then(h => { document.getElementById('navbar-container').innerHTML = h; });
+</script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Spy Network Banner">
+  Kingmaker's Rise — Spy Network
+</header>
+
+<!-- Main Spy Interface -->
 <main class="main-centered-container" aria-label="Spy Interface">
-  <section class="spy-panel">
-    <h2>Your Spy Network <span id="realtime-indicator" aria-live="polite">Connecting...</span></h2>
-    <div id="spy-info"></div>
+
+  <!-- Spy Management -->
+  <section class="spy-panel" aria-labelledby="spy-network-header">
+    <h2 id="spy-network-header">Your Spy Network 
+      <span id="realtime-indicator" aria-live="polite" class="status-indicator">Connecting...</span>
+    </h2>
+
+    <div id="spy-info" class="spy-info custom-scrollbar">
+      <!-- JS will populate spy data -->
+    </div>
+
     <div class="train-controls">
-      <label for="train-qty">Train Amount</label>
-      <input type="number" id="train-qty" min="1" />
+      <label for="train-qty">Train Spies</label>
+      <input type="number" id="train-qty" name="train-qty" min="1" required />
       <button id="train-btn" class="btn">Train</button>
     </div>
   </section>
 
-  <section class="spy-panel">
-    <h2>Active Missions</h2>
-    <div id="missions"></div>
+  <!-- Active Spy Missions -->
+  <section class="spy-panel" aria-labelledby="active-missions-header">
+    <h2 id="active-missions-header">Active Missions</h2>
+    <div id="missions" class="missions-list custom-scrollbar">
+      <!-- JS will populate missions -->
+    </div>
   </section>
+
 </main>
-<footer class="site-footer">
+
+<!-- Footer -->
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
   <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
+
 </body>
 </html>
