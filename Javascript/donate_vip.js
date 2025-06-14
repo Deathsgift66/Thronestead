@@ -4,8 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from "./supabaseClient.js";
 import { escapeHTML } from './utils.js';
-
-let currentSession = null;
+import { authHeaders } from './auth.js';
 let vipTiers = [];
 let vipChannel = null;
 
@@ -19,7 +18,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  currentSession = session;
   await Promise.all([loadVIPStatus(), loadVIPTiers(), loadLeaderboard()]);
   setupRealtimeChannel();
   bindDonationForm();
@@ -47,7 +45,7 @@ function setupRealtimeChannel() {
 export async function loadVIPStatus() {
   try {
     const res = await fetch("/api/vip/status", {
-      headers: authHeaders()
+      headers: await authHeaders()
     });
     if (!res.ok) throw new Error("Failed to fetch VIP status");
     const status = await res.json();
@@ -82,7 +80,7 @@ function renderStatus(status) {
 export async function loadVIPTiers() {
   try {
     const res = await fetch("/api/vip/tiers", {
-      headers: authHeaders()
+      headers: await authHeaders()
     });
     if (!res.ok) throw new Error("Failed to fetch tiers");
     const { tiers } = await res.json();
@@ -137,7 +135,7 @@ export async function submitVIPDonation(tier_id) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...authHeaders()
+        ...(await authHeaders())
       },
       body: JSON.stringify({ tier_id })
     });
@@ -194,7 +192,7 @@ export async function loadLeaderboard() {
 
   try {
     const res = await fetch("/api/vip/leaders", {
-      headers: authHeaders()
+      headers: await authHeaders()
     });
     const { leaders = [] } = await res.json();
     renderLeaderboard(leaders);
@@ -228,10 +226,5 @@ function renderLeaderboard(leaders) {
 // ------------------------------
 // Utilities
 // ------------------------------
-function authHeaders() {
-  return {
-    Authorization: `Bearer ${currentSession.access_token}`,
-    "X-User-ID": currentSession.user.id
-  };
-}
+// authHeaders imported from auth.js
 

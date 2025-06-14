@@ -4,11 +4,11 @@
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { showToast, escapeHTML } from './utils.js';
+import { authHeaders, getAuth } from './auth.js';
 
 let listings = [];
 let kingdomId = null;
 let userId = null;
-let accessToken = null;
 let currentListing = null;
 
 // ========== INIT ==========
@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  accessToken = session.access_token;
 
   await initUserSession();
   await loadListings();
@@ -38,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ========== USER INIT ==========
 async function initUserSession() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user } = await getAuth();
   userId = user.id;
 
   const { data: profile } = await supabase
@@ -69,7 +68,7 @@ async function initUserSession() {
 // ========== LISTINGS ==========
 async function loadListings() {
   try {
-    const res = await fetch('/api/black-market/listings', authHeaders());
+    const res = await fetch('/api/black-market/listings', { headers: await authHeaders() });
     const data = await res.json();
     listings = data.listings || [];
     renderListings();
@@ -135,7 +134,7 @@ async function confirmPurchase() {
     await fetch('/api/black-market/purchase', {
       method: 'POST',
       headers: {
-        ...authHeaders().headers,
+        ...(await authHeaders()),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -158,7 +157,7 @@ async function confirmPurchase() {
 // ========== HISTORY ==========
 async function loadHistory() {
   try {
-    const res = await fetch(`/api/black-market/history?kingdom_id=${kingdomId}`, authHeaders());
+    const res = await fetch(`/api/black-market/history?kingdom_id=${kingdomId}`, { headers: await authHeaders() });
     const data = await res.json();
     const container = document.getElementById('purchaseHistory');
     container.innerHTML = '';
@@ -180,15 +179,6 @@ function openCreateModal() {
 }
 
 // ========== UTILS ==========
-function authHeaders() {
-  return {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'X-User-ID': userId
-    }
-  };
-}
-
 function formatExpiry(expiry) {
   const now = new Date();
   const exp = new Date(expiry);
