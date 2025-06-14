@@ -2,14 +2,24 @@
   "name": "kingmakers-rise-frontend",
   "version": "1.0.0",
   "description": "Frontend assets for Kingmaker's Rise",
-  "private": true,
   "author": "Deathsgift66",
   "license": "Proprietary",
+  "private": true,
   "scripts": {
-    "serve": "http-server -a localhost -p 3000 -c-1",
+    "serve": "http-server ./ -a localhost -p 3000 -c-1",
+    "build": "vite build",
+    "dev": "vite",
+    "lint": "eslint . --ext .js,.mjs --ignore-path .gitignore",
+    "preview": "vite preview",
+    "clean": "rm -rf dist",
     "test": "echo \"No tests defined\""
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "vite": "^5.2.0",
+    "eslint": "^8.57.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
