@@ -10,13 +10,15 @@ import logging
 from ..database import get_db
 from backend.models import User, KingdomResources
 from ..security import verify_jwt_token
-from services.resource_service import fetch_supabase_resources
+from services.resource_service import (
+    fetch_supabase_resources,
+    METADATA_FIELDS,
+)
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])
 logger = logging.getLogger("KingmakersRise.Resources")
 
-# Metadata fields that should never be exposed to the client
-METADATA_FIELDS = {"kingdom_id", "created_at", "last_updated"}
+# Expose shared constant from resource_service for field filtering
 
 
 @router.get("")
