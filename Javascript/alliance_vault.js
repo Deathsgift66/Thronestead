@@ -4,6 +4,8 @@
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
+import { loadCustomBoard } from './customBoard.js';
+import { escapeHTML } from './utils.js';
 
 let currentUser = null;
 
@@ -46,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTabs();
   await Promise.all([
     loadVaultSummary(),
-    loadCustomBoard(),
+    loadCustomBoard({ fetchFn: authFetch }),
     loadDepositForm(),
     loadWithdrawForm(),
     loadVaultHistory()
@@ -118,29 +120,6 @@ async function loadVaultSummary() {
   }
 }
 
-// ✅ Load image & text board
-async function loadCustomBoard() {
-  try {
-    const res = await authFetch("/api/alliance-vault/custom-board");
-    const data = await res.json();
-
-    const imgSlot = document.getElementById("custom-image-slot");
-    const textSlot = document.getElementById("custom-text-slot");
-
-    imgSlot.innerHTML = data.image_url
-      ? `<img src="${escapeHTML(data.image_url)}" alt="Vault Banner" class="vault-banner-image">`
-      : "<p>No custom image set.</p>";
-
-    textSlot.innerHTML = data.custom_text
-      ? `<p>${escapeHTML(data.custom_text)}</p>`
-      : "<p>No custom text set.</p>";
-
-  } catch (err) {
-    console.error("❌ Custom Board:", err);
-    document.getElementById("custom-image-slot").innerHTML = "<p>Error loading image.</p>";
-    document.getElementById("custom-text-slot").innerHTML = "<p>Error loading text.</p>";
-  }
-}
 
 // ✅ Deposit interface
 async function loadDepositForm() {
@@ -254,12 +233,3 @@ async function loadVaultHistory() {
   }
 }
 
-// ✅ HTML Escape Utility
-function escapeHTML(str) {
-  return String(str || '')
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}

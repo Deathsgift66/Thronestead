@@ -3,6 +3,8 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { loadCustomBoard } from './customBoard.js';
+import { escapeHTML } from './utils.js';
 
 let currentWarId = null;
 let combatInterval = null;
@@ -16,30 +18,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Init
   initTabs();
-  await loadCustomBoard();
+  await loadCustomBoard({ altText: 'Alliance War Banner' });
   await loadAllianceWars();
   await loadPendingWars();
 
   document.getElementById('declare-alliance-war-btn')?.addEventListener('click', submitDeclareWar);
 });
 
-// ✅ Load Alliance War Banner and Lore
-async function loadCustomBoard() {
-  try {
-    const res = await fetch("/api/alliance-vault/custom-board");
-    const data = await res.json();
-
-    document.getElementById("custom-image-slot").innerHTML = data.image_url
-      ? `<img src="${escapeHTML(data.image_url)}" alt="Alliance War Banner" class="war-board-image">`
-      : "<p>No custom image set.</p>";
-
-    document.getElementById("custom-text-slot").innerHTML = data.custom_text
-      ? `<p>${escapeHTML(data.custom_text)}</p>`
-      : "<p>No custom text set.</p>";
-  } catch (err) {
-    console.error("❌ Error loading custom board:", err);
-  }
-}
 
 // ✅ Load All Active and Completed Wars
 async function loadAllianceWars() {
@@ -293,11 +278,3 @@ async function surrenderWar() {
 }
 
 // ✅ Escape
-function escapeHTML(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
