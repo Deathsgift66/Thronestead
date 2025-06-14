@@ -6,6 +6,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
+from services.message_service import count_unread_messages
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
@@ -30,15 +31,8 @@ def profile_overview(user_id: str = Depends(verify_jwt_token)):
         if not user_data:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Count unread messages
-        msg_response = (
-            supabase.table("player_messages")
-            .select("message_id")
-            .eq("recipient_id", user_id)
-            .eq("is_read", False)
-            .execute()
-        )
-        unread_count = len(getattr(msg_response, "data", []))
+        # Count unread messages via service
+        unread_count = count_unread_messages(supabase, user_id)
 
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to fetch profile") from exc
