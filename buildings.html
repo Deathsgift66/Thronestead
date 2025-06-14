@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: buildings.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.41
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -12,14 +12,14 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Buildings | Kingmaker's Rise</title>
-  <meta name="description" content="Manage your kingdom's buildings, upgrades, and infrastructure in Kingmaker's Rise." />
-  <meta name="keywords" content="Kingmaker's Rise, buildings, upgrades, management, economy" />
+  <meta name="description" content="Manage and upgrade your kingdom's buildings and infrastructure in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, buildings, upgrades, village management, infrastructure" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/buildings.html" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Buildings | Kingmaker's Rise" />
-  <meta property="og:description" content="Manage your kingdom's buildings and upgrades in Kingmaker's Rise." />
+  <meta property="og:description" content="Oversee and enhance your medieval kingdom's buildings and economy." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/buildings.html" />
   <meta property="og:type" content="website" />
@@ -30,7 +30,7 @@ Developer: Deathsgift66
   <meta name="twitter:description" content="Upgrade and manage your buildings in Kingmaker's Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
-  <!-- Page-Specific Assets -->
+  <!-- Page-Specific Styles & Scripts -->
   <link rel="stylesheet" href="CSS/buildings.css" />
   <script defer type="module" src="Javascript/buildings.js"></script>
 
@@ -38,84 +38,86 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <script defer type="module" src="Javascript/navDropdown.js"></script>
+  <script defer type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
-<body>
+<body class="buildings-bg">
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Inject Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Buildings Banner">
-  Kingmaker's Rise — Buildings Management
-</header>
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Buildings Page Banner">
+    🏰 Kingmaker's Rise — Buildings Management
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Buildings Interface">
+  <!-- Main Layout -->
+  <main class="main-centered-container" aria-label="Buildings Management Interface">
 
+    <!-- Overview Section -->
+    <section class="alliance-members-container">
+      <h2>🏗️ Buildings Management</h2>
+      <p>Oversee development, upgrades, and strategic building placements across your kingdom.</p>
 
+      <!-- Village Selector -->
+      <label for="villageSelect" class="label">Select Village:</label>
+      <select id="villageSelect" aria-label="Village Selector"></select>
 
-  <!-- Core Buildings Panel -->
-  <section class="alliance-members-container">
-    <h2>Buildings Management</h2>
-    <p>View, upgrade, and manage your kingdom's buildings and infrastructure.</p>
-
-    <!-- Buildings Table -->
-    <label for="villageSelect">Village:</label>
-    <select id="villageSelect"></select>
-
-    <section class="buildings-table" aria-label="Buildings List">
-      <table id="buildingsTable">
-        <thead>
-          <tr>
-            <th>Icon</th>
-            <th>Building</th>
-            <th>Level</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="buildingsTableBody">
-          <!-- JS will populate -->
-        </tbody>
-      </table>
+      <!-- Buildings Table -->
+      <section class="buildings-table" aria-label="Buildings Overview Table">
+        <table id="buildingsTable">
+          <thead>
+            <tr>
+              <th>🏛️ Icon</th>
+              <th>Building</th>
+              <th>Level</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="buildingsTableBody">
+            <!-- Dynamically rendered by JS -->
+          </tbody>
+        </table>
+      </section>
     </section>
 
-  </section>
+    <!-- Modal for Building Info -->
+    <div id="buildingModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalBuildingName">
+      <div class="modal-content">
+        <button id="buildingModalClose" class="close-btn" aria-label="Close Modal">&times;</button>
+        <h3 id="modalBuildingName">Building Name</h3>
+        <p id="modalBuildingDesc">Description of the selected building...</p>
+        <div>
+          <h4>Upgrade Cost</h4>
+          <pre id="modalBuildCost">Loading...</pre>
+        </div>
+      </div>
+    </div>
 
-</main>
+  </main>
 
-<!-- Building Info Modal -->
-<div id="buildingModal" class="modal hidden">
-  <div class="modal-content">
-    <button id="buildingModalClose" class="close-btn" aria-label="Close">&times;</button>
-    <h3 id="modalBuildingName"></h3>
-    <p id="modalBuildingDesc"></p>
-    <pre id="modalBuildCost"></pre>
-  </div>
-</div>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
-    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
-    <a href="Assets/legal/EULA.pdf">EULA</a>
-    <a href="legal.html">and more</a>
-  </div>
-</footer>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div>
+      <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+      <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+      <a href="Assets/legal/EULA.pdf">EULA</a>
+      <a href="legal.html">More</a>
+    </div>
+  </footer>
 
 </body>
+
 </html>
