@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: profile.html
-Version 6.13.2025.19.49
+Version: 6.13.2025.19.49
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -13,103 +13,108 @@ Developer: Deathsgift66
 
   <title>Player Profile | Kingmaker's Rise</title>
   <meta name="description" content="View and customize your player profile and appearance in Kingmaker’s Rise — kingdom banners, avatar, and motto." />
-  <meta property="og:title" content="Player Profile | Kingmaker's Rise" />
-  <meta property="og:description" content="View and customize your player profile and appearance in Kingmaker’s Rise — kingdom banners, avatar, and motto." />
-  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta property="og:url" content="https://www.kingmakersrise.com/profile.html" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Player Profile | Kingmaker's Rise" />
-  <meta name="twitter:description" content="View and customize your player profile and appearance in Kingmaker’s Rise — kingdom banners, avatar, and motto." />
-  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, player profile, appearance, avatar, kingdom customization, VIP" />
+  <meta name="keywords" content="Kingmaker's Rise, player profile, avatar, banners, motto, prestige, VIP" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/profile.html" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/profile.css" />
-  <script defer type="module" src="Javascript/profile.js"></script>
+  <!-- Open Graph -->
+  <meta property="og:title" content="Player Profile | Kingmaker's Rise" />
+  <meta property="og:description" content="View and customize your player profile and appearance in Kingmaker’s Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/profile.html" />
+  <meta property="og:type" content="website" />
 
-  <!-- Global Assets -->
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Player Profile | Kingmaker's Rise" />
+  <meta name="twitter:description" content="View and customize your player profile and appearance in Kingmaker’s Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Styles -->
+  <link rel="stylesheet" href="CSS/profile.css" />
+
+  <!-- Global Styles -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/audit_log.css" />
+
+  <!-- Scripts -->
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/navLoader.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
-  <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script type="module" src="Javascript/resourceBar.js" defer></script>
+  <script type="module" src="Javascript/profile.js" defer></script>
 </head>
 
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
+  <!-- Navbar -->
+  <div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Player Profile Banner">
-  Kingmaker's Rise — Player Profile
-</header>
+  <!-- Header Banner -->
+  <header class="kr-top-banner" aria-label="Player Profile Banner">
+    Kingmaker's Rise — Player Profile
+  </header>
 
-<!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="Player Profile Interface">
+  <!-- Main Content Area -->
+  <main id="main-content" class="main-centered-container" aria-label="Player Profile Interface">
+    <section class="alliance-members-container profile-grid">
 
-  <!-- Core Profile Panel -->
-  <section class="alliance-members-container profile-grid">
-
-    <!-- Profile Avatar -->
-    <div class="profile-avatar">
-      <img id="profile-picture" src="Assets/avatars/default_avatar_emperor.png" alt="Player Avatar" />
-    </div>
-
-    <!-- Player Info -->
-    <div class="profile-info">
-      <h2 id="player-name">Player Name</h2>
-      <h3 id="kingdom-name">Kingdom Name</h3>
-      <p id="player-motto">"Player motto will appear here."</p>
-      <p id="prestige-score"></p>
-      <ul id="titles-list"></ul>
-    </div>
-
-    <!-- VIP Badge -->
-    <div id="vip-badge" class="vip-badge hidden">
-      VIP
-    </div>
-
-    <!-- Profile Customization Slots -->
-    <div class="profile-customization">
-      <h3>Profile Customization</h3>
-      <div id="profile-customization-content" class="custom-scrollbar">
-        <!-- JS will populate customization controls -->
+      <!-- Avatar Section -->
+      <div class="profile-avatar" aria-labelledby="avatar-heading">
+        <h2 id="avatar-heading" class="sr-only">Player Avatar</h2>
+        <img id="profile-picture" src="Assets/avatars/default_avatar_emperor.png" alt="Player Avatar" />
       </div>
-    </div>
 
-    <!-- Recent Activity -->
-    <div class="recent-actions">
-      <h3>Recent Activity</h3>
-      <table class="audit-log-table">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Action</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody id="recent-log-body" aria-live="polite"></tbody>
-      </table>
-    </div>
+      <!-- Basic Info -->
+      <div class="profile-info" aria-labelledby="info-heading">
+        <h2 id="info-heading">Player Info</h2>
+        <h3 id="player-name">Player Name</h3>
+        <h4 id="kingdom-name">Kingdom Name</h4>
+        <p id="player-motto">"Player motto will appear here."</p>
+        <p id="prestige-score" aria-live="polite"></p>
+        <ul id="titles-list" aria-label="Player Titles"></ul>
+      </div>
 
-  </section>
+      <!-- VIP Status -->
+      <div id="vip-badge" class="vip-badge hidden" aria-label="VIP Status Badge">
+        VIP
+      </div>
 
-</main>
+      <!-- Customization Panel -->
+      <div class="profile-customization" aria-labelledby="customization-heading">
+        <h3 id="customization-heading">Profile Customization</h3>
+        <div id="profile-customization-content" class="custom-scrollbar" aria-live="polite">
+          <!-- Populated via JS -->
+        </div>
+      </div>
 
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
-</footer>
+      <!-- Activity Log -->
+      <div class="recent-actions" aria-labelledby="activity-heading">
+        <h3 id="activity-heading">Recent Activity</h3>
+        <table class="audit-log-table">
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Action</th>
+              <th scope="col">Details</th>
+            </tr>
+          </thead>
+          <tbody id="recent-log-body" aria-live="polite">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div><a href="legal.html">View Legal Documents</a></div>
+  </footer>
 
 </body>
 </html>
