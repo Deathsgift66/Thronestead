@@ -104,6 +104,7 @@ class AllianceMember(Base):
     contribution = Column(Integer, default=0)
     status = Column(String)
     crest = Column(String)
+    role_id = Column(Integer, ForeignKey("alliance_roles.role_id"))
 
 
 class AllianceVault(Base):
@@ -177,6 +178,61 @@ class TradeLog(Base):
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class AllianceRole(Base):
+    __tablename__ = "alliance_roles"
+
+    role_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    role_name = Column(String, nullable=False)
+    permissions = Column(JSONB, default=dict)
+    is_default = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    can_invite = Column(Boolean, default=False)
+    can_kick = Column(Boolean, default=False)
+    can_manage_resources = Column(Boolean, default=False)
+
+
+class AllianceBlacklist(Base):
+    __tablename__ = "alliance_blacklist"
+
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
+    target_alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
+    reason = Column(Text)
+    added_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+
+
+class AllianceGrant(Base):
+    __tablename__ = "alliance_grants"
+
+    grant_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), nullable=False)
+    recipient_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    resource_type = Column(Text, nullable=False)
+    amount = Column(BigInteger, default=0)
+    granted_at = Column(DateTime(timezone=True), server_default=func.now())
+    reason = Column(Text)
+
+
+class AllianceLoan(Base):
+    __tablename__ = "alliance_loans"
+
+    loan_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), nullable=False)
+    borrower_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    resource_type = Column(Text, nullable=False)
+    amount = Column(BigInteger, default=0)
+    amount_repaid = Column(BigInteger, default=0)
+    interest_rate = Column(Numeric, default=0.05)
+    due_date = Column(DateTime(timezone=True))
+    status = Column(String, default="active")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now())
+    default_penalty_rate = Column(Numeric, default=0.10)
+    is_tax_active = Column(Boolean, default=False)
+    tax_started_at = Column(DateTime(timezone=True))
 
 
 class NobleHouse(Base):
