@@ -1,39 +1,52 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: alliance_members.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.12.50
 Developer: Deathsgift66
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Alliance Members | Kingmaker's Rise</title>
+
+  <!-- Metadata -->
   <meta name="description" content="Manage your alliance members, promote, demote, or remove members in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, alliance members, management, strategy game, kingdom MMO" />
+  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/alliance_members.html" />
+
+  <!-- Open Graph & Twitter -->
+  <meta property="og:title" content="Alliance Members | Kingmaker's Rise" />
+  <meta property="og:description" content="Alliance management dashboard to control ranks, statuses, and actions." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/alliance_members.html" />
+  <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Alliance Members | Kingmaker's Rise" />
   <meta name="twitter:description" content="Manage your alliance members, promote, demote, or remove members in Kingmaker's Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, alliance members, management, kingdom strategy" />
-  <meta name="robots" content="index, follow" />
-  <meta property="og:title" content="Alliance Members | Kingmaker's Rise" />
-  <meta property="og:description" content="Alliance management dashboard to control ranks, statuses, and actions." />
-  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Stylesheets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <link rel="stylesheet" href="CSS/alliance_common.css" />
   <link rel="stylesheet" href="CSS/alliance_members.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
+
+  <!-- Scripts -->
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/apiHelper.js"></script>
   <script type="module" src="Javascript/allianceAppearance.js"></script>
-  <script type="module" defer src="Javascript/alliance_members.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/alliance_members.js"></script>
 </head>
 
 <body class="alliance-bg">
@@ -42,25 +55,32 @@ Developer: Deathsgift66
   <script>
     fetch('/navbar.html')
       .then(res => res.text())
-      .then(html => document.getElementById('navbar-container').innerHTML = html);
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
   </script>
 
-  <!-- Header -->
-  <header class="kr-top-banner">Alliance Members</header>
+  <!-- Page Header -->
+  <header class="kr-top-banner" aria-label="Alliance Members Banner">
+    Alliance Members
+  </header>
 
-  <!-- Main Content Area -->
-  <main class="main-centered-container">
+  <!-- Main Content -->
+  <main class="main-centered-container" aria-label="Alliance Member Management Dashboard">
     <div class="alliance-members-container">
+      <!-- Visuals -->
       <div class="alliance-visuals">
         <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
         <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
       </div>
+
       <h2>Alliance Roster Management</h2>
 
-      <!-- Controls -->
-      <section class="search-sort-controls" aria-label="Alliance Member Controls">
+      <!-- Search and Sort Controls -->
+      <section class="search-sort-controls" aria-label="Sort and Filter Alliance Members">
         <input type="text" id="member-search" placeholder="Search by name..." aria-label="Search Members" />
-        <select id="sort-by" aria-label="Sort By">
+
+        <select id="sort-by" aria-label="Sort Members By">
           <option value="username">Name</option>
           <option value="rank">Rank</option>
           <option value="contribution">Contribution</option>
@@ -70,17 +90,19 @@ Developer: Deathsgift66
           <option value="diplomacy_score">Diplomacy</option>
           <option value="total_output">Resource Output</option>
         </select>
-        <select id="sort-direction" aria-label="Sort Direction">
+
+        <select id="sort-direction" aria-label="Sort Order">
           <option value="asc">Ascending</option>
           <option value="desc">Descending</option>
         </select>
-        <button id="apply-sort">Apply Sort</button>
+
+        <button id="apply-sort" class="btn">Apply Sort</button>
       </section>
 
-      <!-- Table -->
+      <!-- Members Table -->
       <section class="members-table-container" aria-label="Alliance Members Table">
         <table class="members-table">
-          <caption class="sr-only">Current alliance members</caption>
+          <caption class="sr-only">Current alliance members and stats</caption>
           <thead>
             <tr>
               <th scope="col">Crest</th>
@@ -97,9 +119,7 @@ Developer: Deathsgift66
             </tr>
           </thead>
           <tbody id="members-list" aria-live="polite">
-            <tr>
-              <td colspan="11">Loading members...</td>
-            </tr>
+            <tr><td colspan="11">Loading members...</td></tr>
           </tbody>
         </table>
       </section>
@@ -117,4 +137,5 @@ Developer: Deathsgift66
     </div>
   </footer>
 </body>
+
 </html>
