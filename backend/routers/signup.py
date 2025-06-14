@@ -2,8 +2,9 @@
 # File Name: signup.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -11,21 +12,43 @@ from sqlalchemy.orm import Session
 from ..supabase_client import get_supabase_client
 from ..database import get_db
 
-
 router = APIRouter(prefix="/api/signup", tags=["signup"])
 
 
+# ------------- Payload Models -------------------
+
 class CheckPayload(BaseModel):
     kingdom_name: Optional[str] = None
-    username: Optional[str] = None
+    username: Optional[constr(min_length=3, max_length=20)] = None
 
+
+class CreateUserPayload(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    kingdom_name: str
+    email: EmailStr
+
+
+class RegisterPayload(BaseModel):
+    email: EmailStr
+    password: constr(min_length=6)
+    username: constr(min_length=3, max_length=20)
+    kingdom_name: str
+    display_name: str
+
+
+# ------------- Route Endpoints -------------------
 
 @router.post("/check")
 def check_availability(payload: CheckPayload):
-    """Check if kingdom or username is available."""
+    """
+    Check if a kingdom name or username is available.
+    """
     sb = get_supabase_client()
     available_kingdom = True
     available_username = True
+
     try:
         if payload.kingdom_name:
             res = (
@@ -37,6 +60,7 @@ def check_availability(payload: CheckPayload):
             )
             rows = getattr(res, "data", res) or []
             available_kingdom = len(rows) == 0
+
         if payload.username:
             res = (
                 sb.table("users")
@@ -47,15 +71,21 @@ def check_availability(payload: CheckPayload):
             )
             rows = getattr(res, "data", res) or []
             available_username = len(rows) == 0
-    except Exception as exc:  # pragma: no cover - network/db errors
-        raise HTTPException(status_code=500, detail="failed to query") from exc
 
-    return {"kingdom_available": available_kingdom, "username_available": available_username}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to query availability") from exc
+
+    return {
+        "kingdom_available": available_kingdom,
+        "username_available": available_username
+    }
 
 
 @router.get("/stats")
 def signup_stats():
-    """Return top kingdom stats for signup page."""
+    """
+    Return top kingdoms for display on the signup screen.
+    """
     sb = get_supabase_client()
     try:
         res = (
@@ -65,56 +95,47 @@ def signup_stats():
             .limit(3)
             .execute()
         )
-    except Exception as exc:  # pragma: no cover - network/db errors
-        raise HTTPException(status_code=500, detail="failed to fetch stats") from exc
-
-    data = getattr(res, "data", res) or []
-    return {"top_kingdoms": data}
-
-
-class CreateUserPayload(BaseModel):
-    user_id: str
-    username: str
-    display_name: str
-    kingdom_name: str
-    email: str
+        data = getattr(res, "data", res) or []
+        return {"top_kingdoms": data}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to fetch kingdom stats") from exc
 
 
 @router.post("/create_user")
 def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
-    """Insert a basic profile row when a new account is registered."""
-    db.execute(
-        text(
-            """
-            INSERT INTO users (user_id, username, display_name, kingdom_name, email)
-            VALUES (:uid, :username, :display, :kingdom, :email)
-            ON CONFLICT (user_id) DO NOTHING
-            """
-        ),
-        {
-            "uid": payload.user_id,
-            "username": payload.username,
-            "display": payload.display_name,
-            "kingdom": payload.kingdom_name,
-            "email": payload.email,
-        },
-    )
-    db.commit()
-    return {"status": "created"}
-
-
-class RegisterPayload(BaseModel):
-    email: str
-    password: str
-    username: str
-    kingdom_name: str
-    display_name: str
+    """
+    Create the user's basic profile record after authentication setup.
+    """
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO users (user_id, username, display_name, kingdom_name, email)
+                VALUES (:uid, :username, :display, :kingdom, :email)
+                ON CONFLICT (user_id) DO NOTHING
+                """
+            ),
+            {
+                "uid": payload.user_id,
+                "username": payload.username,
+                "display": payload.display_name,
+                "kingdom": payload.kingdom_name,
+                "email": payload.email,
+            },
+        )
+        db.commit()
+        return {"status": "created"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to create user") from e
 
 
 @router.post("/register")
 def register(payload: RegisterPayload, db: Session = Depends(get_db)):
-    """Create auth user and corresponding profile."""
+    """
+    Create a Supabase auth user and register their kingdom profile.
+    """
     sb = get_supabase_client()
+
     try:
         res = sb.auth.admin.create_user(
             email=payload.email,
@@ -124,30 +145,36 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
                 "username": payload.username,
             },
         )
-    except Exception as exc:  # pragma: no cover - network/db errors
-        raise HTTPException(status_code=500, detail="failed to create auth user") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to create auth user") from exc
 
+    # Extract the newly created user ID
     uid = (
         getattr(res, "user", None) and getattr(res.user, "id", None)
     ) or getattr(res, "id", None)
-    if not uid:
-        raise HTTPException(status_code=500, detail="signup failed")
 
-    db.execute(
-        text(
-            """
-            INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id)
-            VALUES (:uid, :username, :display, :kingdom, :email, :uid)
-            ON CONFLICT (user_id) DO NOTHING
-            """
-        ),
-        {
-            "uid": uid,
-            "username": payload.username,
-            "display": payload.display_name,
-            "kingdom": payload.kingdom_name,
-            "email": payload.email,
-        },
-    )
-    db.commit()
+    if not uid:
+        raise HTTPException(status_code=500, detail="Signup failed - user ID missing")
+
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id)
+                VALUES (:uid, :username, :display, :kingdom, :email, :uid)
+                ON CONFLICT (user_id) DO NOTHING
+                """
+            ),
+            {
+                "uid": uid,
+                "username": payload.username,
+                "display": payload.display_name,
+                "kingdom": payload.kingdom_name,
+                "email": payload.email,
+            },
+        )
+        db.commit()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to save user profile") from exc
+
     return {"user_id": uid}
