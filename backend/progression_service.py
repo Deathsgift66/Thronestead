@@ -3,15 +3,21 @@
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
-"""
-Handles castle leveling, noble management, and knight progression for Kingdoms.
-This is an in-memory representation typically used for testing or simulation layers.
+"""In-memory progression logic used primarily for tests.
+
+This module tracks castle XP, nobles and knights for a single kingdom without
+requiring a database. All operations are protected by a :class:`threading.Lock`
+so that concurrent test scenarios behave predictably.
 """
 
-from typing import Dict, List
+from typing import Dict, Set
+from threading import Lock
 import logging
 
 logger = logging.getLogger("KingmakersRise.Progression")
+
+# Global lock to ensure thread-safe updates when used in async tests
+_state_lock = Lock()
 
 # XP required to level up the castle
 CASTLE_XP_THRESHOLD = 100
@@ -19,13 +25,10 @@ CASTLE_XP_THRESHOLD = 100
 # ---------------------------
 # 🏰 Castle Progression State
 # ---------------------------
-castle_state: Dict[str, int] = {
-    "level": 1,
-    "xp": 0,
-}
+castle_state: Dict[str, int] = {"level": 1, "xp": 0}
 
-# 🧙 Nobles List
-nobles: List[str] = []
+# 🧙 Nobles Set for O(1) lookups
+nobles: Set[str] = set()
 
 # ⚔️ Knights Dictionary (id → data)
 knights: Dict[str, Dict[str, int]] = {}
@@ -43,13 +46,23 @@ def progress_castle(xp_gain: int) -> int:
     Returns:
         int: New castle level
     """
-    logger.debug(f"Adding {xp_gain} XP to castle (current XP: {castle_state['xp']})")
-    castle_state["xp"] += xp_gain
+    if xp_gain <= 0:
+        logger.debug("Ignoring non-positive XP gain: %s", xp_gain)
+        return castle_state["level"]
 
-    if castle_state["xp"] >= CASTLE_XP_THRESHOLD:
-        castle_state["level"] += 1
-        castle_state["xp"] = 0
-        logger.info(f"🏰 Castle leveled up! New level: {castle_state['level']}")
+    logger.debug(
+        "Adding %s XP to castle (current XP: %s)", xp_gain, castle_state["xp"]
+    )
+
+    with _state_lock:
+        castle_state["xp"] += xp_gain
+
+        if castle_state["xp"] >= CASTLE_XP_THRESHOLD:
+            castle_state["level"] += 1
+            castle_state["xp"] = 0
+            logger.info(
+                "🏰 Castle leveled up! New level: %s", castle_state["level"]
+            )
 
     return castle_state["level"]
 
@@ -58,30 +71,33 @@ def progress_castle(xp_gain: int) -> int:
 # ---------------------------
 def add_noble(name: str) -> None:
     """Add a noble to the kingdom if not already present."""
-    if name not in nobles:
-        nobles.append(name)
-        logger.info(f"👑 Noble '{name}' added.")
-    else:
-        logger.debug(f"Noble '{name}' already exists.")
+    with _state_lock:
+        if name not in nobles:
+            nobles.add(name)
+            logger.info("👑 Noble '%s' added.", name)
+        else:
+            logger.debug("Noble '%s' already exists.", name)
 
 def remove_noble(name: str) -> None:
     """Remove a noble if they exist."""
-    if name in nobles:
-        nobles.remove(name)
-        logger.info(f"❌ Noble '{name}' removed.")
-    else:
-        logger.debug(f"Noble '{name}' not found.")
+    with _state_lock:
+        if name in nobles:
+            nobles.discard(name)
+            logger.info("❌ Noble '%s' removed.", name)
+        else:
+            logger.debug("Noble '%s' not found.", name)
 
 # ---------------------------
 # 🛡️ Knight Promotion System
 # ---------------------------
 def add_knight(knight_id: str, rank: int = 1) -> None:
     """Register a new knight."""
-    if knight_id not in knights:
-        knights[knight_id] = {"rank": rank}
-        logger.info(f"🛡️ Knight '{knight_id}' added with rank {rank}.")
-    else:
-        logger.debug(f"Knight '{knight_id}' already exists.")
+    with _state_lock:
+        if knight_id not in knights:
+            knights[knight_id] = {"rank": rank}
+            logger.info("🛡️ Knight '%s' added with rank %s.", knight_id, rank)
+        else:
+            logger.debug("Knight '%s' already exists.", knight_id)
 
 def promote_knight(knight_id: str) -> int:
     """
@@ -90,11 +106,12 @@ def promote_knight(knight_id: str) -> int:
     Returns:
         int: New rank after promotion
     """
-    if knight_id not in knights:
-        logger.error(f"⚠️ Cannot promote: Knight '{knight_id}' not found.")
-        raise ValueError("Knight not found")
+    with _state_lock:
+        if knight_id not in knights:
+            logger.error("⚠️ Cannot promote: Knight '%s' not found.", knight_id)
+            raise ValueError("Knight not found")
 
-    knights[knight_id]["rank"] += 1
-    new_rank = knights[knight_id]["rank"]
-    logger.info(f"⬆️ Knight '{knight_id}' promoted to rank {new_rank}.")
-    return new_rank
+        knights[knight_id]["rank"] += 1
+        new_rank = knights[knight_id]["rank"]
+        logger.info("⬆️ Knight '%s' promoted to rank %s.", knight_id, new_rank)
+        return new_rank
