@@ -102,6 +102,12 @@ def _apply_resource_changes(
         Mapping of resource name to change amount.
     op : Literal["+", "-"]
         Operation to perform (``"+"`` for gain, ``"-"`` for spend).
+
+    Notes
+    -----
+    Uses a single ``UPDATE`` statement to modify only the specified
+    resource columns, ensuring minimal lock contention even with many
+    concurrent updates.
     """
 
     if not changes:
@@ -112,10 +118,9 @@ def _apply_resource_changes(
         validate_resource(res)
         if amt < 0:
             raise ValueError("Resource amounts must be positive")
-        expr = (
+        set_expr.append(
             f"{res} = COALESCE({res}, 0) + :{res}" if op == "+" else f"{res} = {res} - :{res}"
         )
-        set_expr.append(expr)
 
     sql = "UPDATE kingdom_resources SET " + ", ".join(set_expr) + " WHERE kingdom_id = :kid"
     db.execute(text(sql), {**changes, "kid": kingdom_id})

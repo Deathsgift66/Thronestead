@@ -9,7 +9,9 @@ import {
   escapeHTML,
   setValue,
   setSrc,
-  setText
+  setText,
+  fragmentFrom,
+  isValidURL
 } from './utils.js';
 
 /**
@@ -69,15 +71,16 @@ async function loadUserProfile() {
   const tbody = document.querySelector('#sessions-table tbody');
   if (!tbody || !info.sessions) return;
   tbody.innerHTML = '';
-  info.sessions.forEach((s) => {
+  const rows = fragmentFrom(info.sessions, (s) => {
     const row = document.createElement('tr');
     row.id = `session-${s.session_id}`;
     row.innerHTML = `
       <td>${escapeHTML(s.device)}</td>
       <td>${escapeHTML(s.last_seen)}</td>
       <td><button class="logout-session" data-id="${s.session_id}">Logout</button></td>`;
-    tbody.appendChild(row);
+    return row;
   });
+  tbody.appendChild(rows);
 }
 
 /**
@@ -179,7 +182,13 @@ async function logoutSession(sessionId) {
 function uploadAvatar() {
   const url = document.getElementById('avatar_url')?.value;
   const preview = document.getElementById('avatar-preview');
-  if (preview) preview.src = url || 'Assets/avatars/default_avatar_emperor.png';
+  if (!preview) return;
+  if (url && !isValidURL(url)) {
+    showToast('Invalid avatar URL');
+    preview.src = 'Assets/avatars/default_avatar_emperor.png';
+  } else {
+    preview.src = url || 'Assets/avatars/default_avatar_emperor.png';
+  }
 }
 
 /**

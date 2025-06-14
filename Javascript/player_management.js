@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, fragmentFrom } from './utils.js';
 
 let playerChannel;
 
@@ -44,6 +44,10 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ✅ Load Player Table
+/**
+ * Fetch and render the player table based on current search query.
+ * Utilizes a document fragment to minimize reflow when inserting rows.
+ */
 async function loadPlayerTable() {
   const tableBody = document.querySelector("#player-table tbody");
   const query = document.getElementById("search-input")?.value.trim() || "";
@@ -57,8 +61,8 @@ async function loadPlayerTable() {
       ? ''
       : "<tr><td colspan='8'>No players found.</td></tr>";
 
-    players.forEach(player => {
-      const row = document.createElement("tr");
+    const rows = fragmentFrom(players, player => {
+      const row = document.createElement('tr');
       row.innerHTML = `
         <td><input type="checkbox" class="player-select" data-id="${player.user_id}"></td>
         <td>${escapeHTML(player.user_id)}</td>
@@ -74,8 +78,9 @@ async function loadPlayerTable() {
           <button class="action-btn history-btn" data-id="${player.user_id}">History</button>
         </td>
       `;
-      tableBody.appendChild(row);
+      return row;
     });
+    tableBody.appendChild(rows);
 
     rebindActionButtons();
 
