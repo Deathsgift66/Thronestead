@@ -62,3 +62,77 @@ def village_overview(
             for r in rows
         ]
     }
+
+
+@router.post("/bulk_upgrade", summary="Bulk upgrade all village buildings")
+def bulk_upgrade_all(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Increase the level of every building in the player's villages."""
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            """
+            UPDATE village_buildings vb
+               SET level = level + 1,
+                   last_updated = now()
+              FROM kingdom_villages kv
+             WHERE kv.village_id = vb.village_id
+               AND kv.kingdom_id = :kid
+            """
+        ),
+        {"kid": kid},
+    )
+    db.commit()
+    return {"status": "upgraded"}
+
+
+@router.post("/bulk_queue_training", summary="Queue troops in all villages")
+def bulk_queue_training(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Queue a default training order in every village."""
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            """
+            INSERT INTO training_queue (kingdom_id, unit_id, unit_name, quantity,
+                                       training_ends_at, started_at, status,
+                                       training_speed_modifier, xp_per_unit,
+                                       modifiers_applied, initiated_by, priority)
+            SELECT :kid, 1, 'Militia', 10,
+                   now() + interval '60 seconds', now(), 'queued',
+                   1, 0, '{}', :uid, 1
+              FROM kingdom_villages kv
+             WHERE kv.kingdom_id = :kid
+            """
+        ),
+        {"kid": kid, "uid": user_id},
+    )
+    db.commit()
+    return {"status": "queued"}
+
+
+@router.post("/bulk_harvest", summary="Harvest all village resources")
+def bulk_harvest(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Harvest accumulated resources in all villages."""
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            """
+            UPDATE village_resources vr
+               SET last_harvested = now()
+              FROM kingdom_villages kv
+             WHERE kv.village_id = vr.village_id
+               AND kv.kingdom_id = :kid
+            """
+        ),
+        {"kid": kid},
+    )
+    db.commit()
+    return {"status": "harvested"}
