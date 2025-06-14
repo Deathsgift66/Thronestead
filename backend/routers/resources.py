@@ -5,6 +5,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import logging
 
 from ..database import get_db
 from backend.models import User, KingdomResources
@@ -12,6 +13,7 @@ from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])
+logger = logging.getLogger("KingmakersRise.Resources")
 
 
 @router.get("")
@@ -42,6 +44,10 @@ def get_resources(
                 .single()
                 .execute()
             )
+            if getattr(kingdom_res, "status_code", 200) >= 400:
+                logger.error("Supabase error fetching kingdom: %s", getattr(kingdom_res, "error", "unknown"))
+                raise HTTPException(status_code=500, detail="Supabase query failed")
+
             kingdom_data = getattr(kingdom_res, "data", kingdom_res)
             if not kingdom_data or not kingdom_data.get("kingdom_id"):
                 raise HTTPException(status_code=404, detail="Kingdom not found")
@@ -56,6 +62,10 @@ def get_resources(
                 .single()
                 .execute()
             )
+            if getattr(res, "status_code", 200) >= 400:
+                logger.error("Supabase error fetching resources: %s", getattr(res, "error", "unknown"))
+                raise HTTPException(status_code=500, detail="Supabase query failed")
+
             resource_row = getattr(res, "data", res)
             if not resource_row:
                 raise HTTPException(status_code=404, detail="Resources not found")
@@ -68,8 +78,11 @@ def get_resources(
 
             return {"resources": resources}
 
+        except HTTPException:
+            raise
         except Exception as exc:
-            raise HTTPException(status_code=500, detail="Supabase error") from exc
+            logger.exception("Error retrieving resources from Supabase")
+            raise HTTPException(status_code=500, detail="Failed to fetch resources from Supabase") from exc
 
     # Fallback to SQLAlchemy if Supabase fails
     user = db.query(User).filter_by(user_id=user_id).first()
