@@ -99,9 +99,39 @@ def create_kingdom(
 
 
 @router.get("/overview")
-def overview():
-    """Stub overview for client fallback."""
-    return {"overview": "data"}
+def overview(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Return basic kingdom overview information."""
+    kid = get_kingdom_id(db, user_id)
+
+    kingdom = db.execute(
+        text(
+            "SELECT kingdom_name, region, created_at FROM kingdoms WHERE kingdom_id = :kid"
+        ),
+        {"kid": kid},
+    ).mappings().fetchone()
+    if not kingdom:
+        raise HTTPException(status_code=404, detail="Kingdom not found")
+
+    resources = db.execute(
+        text(
+            "SELECT gold, food, wood FROM kingdom_resources WHERE kingdom_id = :kid"
+        ),
+        {"kid": kid},
+    ).mappings().fetchone() or {}
+
+    state = get_state()
+    return {
+        "kingdom": dict(kingdom),
+        "resources": dict(resources),
+        "troop_slots": {
+            "base": state["base_slots"],
+            "used": state["used_slots"],
+            "available": max(0, state["base_slots"] - state["used_slots"]),
+        },
+    }
 
 
 @router.get("/summary")
@@ -125,10 +155,6 @@ def kingdom_summary():
     }
 
 
-@router.post("/start_project")
-def start_project(payload: ProjectPayload):
-    """Simulated project start placeholder."""
-    return {"message": "Project started", "project": payload.project}
 
 
 @router.post("/start_research")
