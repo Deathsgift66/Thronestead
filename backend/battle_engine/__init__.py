@@ -1,9 +1,20 @@
 # Project Name: Kingmakers Rise©
 # File Name: __init__.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49
 # Developer: Deathsgift66
-"""Battle system engine components."""
 
+"""
+Battle system engine components for Kingmakers Rise©.
+
+This package exposes all tactical combat mechanics, including:
+- Fog of War
+- Unit Movement and Targeting
+- Combat Resolution
+- Terrain Effects
+- Turn-based Tick Logic
+"""
+
+# Core battle engine components
 from .engine import (
     TerrainGenerator,
     FogOfWar,
@@ -13,8 +24,14 @@ from .engine import (
     Unit,
     TerrainType,
 )
+
+# Combat orchestration and live war state manager
 from .manager import WarManager, war_manager, run_combat_tick
+
+# Alternate full resolution combat (used for simulation or replays)
 from .resolver_full import run_combat_tick as run_full_combat_tick
+
+# Movement logic
 from .movement import (
     process_unit_movement,
     move_towards,
@@ -22,9 +39,14 @@ from .movement import (
     select_patrol_target,
     update_unit_position,
 )
+
+# Targeting and combat multiplier mechanics
 from .targeting import select_target, get_counter_multiplier
+
+# Vision, line of sight, and terrain-based obscurity
 from .vision import process_unit_vision, terrain_vision_modifier
 
+# Public interface for this module
 __all__ = [
     "TerrainGenerator",
     "FogOfWar",
