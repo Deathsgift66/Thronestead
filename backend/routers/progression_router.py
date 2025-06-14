@@ -12,7 +12,10 @@ import re
 from ..database import get_db
 from ..security import require_user_id
 from ..data import get_max_villages_allowed
-from services.progression_service import calculate_troop_slots, get_total_modifiers
+from services.progression_service import (
+    calculate_troop_slots,
+    get_total_modifiers,
+)
 
 # Allowed characters for noble and knight names (alphanumeric & spaces)
 NAME_PATTERN = re.compile(r"^[A-Za-z0-9 ]{1,50}$")
@@ -54,38 +57,63 @@ class KnightPayload(BaseModel):
         return v.strip()
 
 
-def ensure_nobles(db: Session, kid: int, required: int) -> int:
-    """Create placeholder nobles until the required count is met."""
+def _ensure_records(
+    db: Session,
+    table: str,
+    column: str,
+    kid: int,
+    required: int,
+    prefix: str,
+) -> int:
+    """Insert placeholder records until ``required`` entries exist."""
+
     current = (
         db.execute(
-            text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
+            text(f"SELECT COUNT(*) FROM {table} WHERE kingdom_id = :kid"),
             {"kid": kid},
         ).scalar()
         or 0
     )
-    for i in range(current, required):
-        db.execute(
-            text("INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"),
-            {"kid": kid, "name": f"Noble {i + 1}"},
-        )
+
+    if current < required:
+        rows = [
+            {"kid": kid, "name": f"{prefix} {i + 1}"}
+            for i in range(current, required)
+        ]
+        if rows:
+            db.execute(
+                text(
+                    f"INSERT INTO {table} (kingdom_id, {column})"
+                    f" VALUES (:kid, :name)"
+                ),
+                rows,
+            )
+
     return max(current, required)
+
+
+def ensure_nobles(db: Session, kid: int, required: int) -> int:
+    """Ensure the kingdom has at least ``required`` nobles."""
+    return _ensure_records(
+        db,
+        "kingdom_nobles",
+        "noble_name",
+        kid,
+        required,
+        "Noble",
+    )
 
 
 def ensure_knights(db: Session, kid: int, required: int) -> int:
-    """Create placeholder knights until the required count is met."""
-    current = (
-        db.execute(
-            text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
-            {"kid": kid},
-        ).scalar()
-        or 0
+    """Ensure the kingdom has at least ``required`` knights."""
+    return _ensure_records(
+        db,
+        "kingdom_knights",
+        "knight_name",
+        kid,
+        required,
+        "Knight",
     )
-    for i in range(current, required):
-        db.execute(
-            text("INSERT INTO kingdom_knights (kingdom_id, knight_name) VALUES (:kid, :name)"),
-            {"kid": kid, "name": f"Knight {i + 1}"},
-        )
-    return max(current, required)
 
 
 # 🔹 GET: Castle Level
