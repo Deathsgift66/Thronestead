@@ -12,6 +12,7 @@ import random
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Tuple, Dict, Set
+from collections import defaultdict
 
 # --------------------------
 # 🗺️ Terrain Definitions
@@ -78,23 +79,33 @@ class TerrainGenerator:
 # 🌫️ Fog of War
 # --------------------------
 class FogOfWar:
-    def visible_tiles(self, units: List[Unit], terrain: List[List[TerrainType]]) -> Set[Tuple[int, int]]:
-        """Calculate all tiles visible to the list of units, modified by terrain."""
+    """Visibility calculations taking terrain and unit vision into account."""
+
+    def visible_tiles(
+        self, units: List[Unit], terrain: List[List[TerrainType]]
+    ) -> Set[Tuple[int, int]]:
+        """Return all tiles visible to the provided units."""
+
         visible: Set[Tuple[int, int]] = set()
+        width = TerrainGenerator.WIDTH
+        height = TerrainGenerator.HEIGHT
 
         for u in units:
             vision = 5
-            if terrain[u.y][u.x] == TerrainType.HILLS:
+            tile = terrain[u.y][u.x]
+            if tile == TerrainType.HILLS:
                 vision += 2
-            elif terrain[u.y][u.x] == TerrainType.FOREST:
+            elif tile == TerrainType.FOREST:
                 vision -= 1
 
-            for dy in range(-vision, vision + 1):
-                for dx in range(-vision, vision + 1):
-                    x = u.x + dx
-                    y = u.y + dy
-                    if 0 <= x < TerrainGenerator.WIDTH and 0 <= y < TerrainGenerator.HEIGHT:
-                        visible.add((x, y))
+            min_y = max(0, u.y - vision)
+            max_y = min(height - 1, u.y + vision)
+            min_x = max(0, u.x - vision)
+            max_x = min(width - 1, u.x + vision)
+
+            for y in range(min_y, max_y + 1):
+                for x in range(min_x, max_x + 1):
+                    visible.add((x, y))
 
         return visible
 
@@ -103,16 +114,14 @@ class FogOfWar:
 # ⚔️ Combat Resolver
 # --------------------------
 class CombatResolver:
-    def resolve(self, war: WarState, logs: List[Dict]) -> None:
-        """
-        Resolve all combat interactions on the map.
+    """Handles unit-on-unit combat resolution for a battle tick."""
 
-        Units on the same tile but from different kingdoms will fight.
-        Each attack reduces defender HP. Units with zero HP are removed.
-        """
-        units_by_pos: Dict[Tuple[int, int], List[Unit]] = {}
-        for u in war.units:
-            units_by_pos.setdefault((u.x, u.y), []).append(u)
+    def resolve(self, war: WarState, logs: List[Dict]) -> None:
+        """Modify ``war`` in-place, resolving any combat interactions."""
+
+        units_by_pos: Dict[Tuple[int, int], List[Unit]] = defaultdict(list)
+        for unit in war.units:
+            units_by_pos[(unit.x, unit.y)].append(unit)
 
         for pos, units in units_by_pos.items():
             if len(units) < 2:
@@ -182,9 +191,9 @@ class BattleTickHandler:
         self.combat.resolve(war, logs)
 
         # Siege damage phase (castle damage from siege units)
-        siege_units = [u for u in war.units if u.unit_type == "siege"]
-        if siege_units:
-            damage = len(siege_units) * 5
+        siege_count = sum(1 for u in war.units if u.unit_type == "siege")
+        if siege_count:
+            damage = siege_count * 5
             war.castle_hp = max(0, war.castle_hp - damage)
             logs.append({
                 "event": "siege",
