@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: login.html
-Version 6.13.2025.19.49
+Version 6.14.2025.20.12
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -13,10 +13,6 @@ Developer: Deathsgift66
 
   <title>Login | Kingmaker's Rise</title>
   <meta name="description" content="Enter the realm of Kingmaker’s Rise — login to your account and continue your legend." />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Login | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Enter the realm of Kingmaker’s Rise — login to your account and continue your legend." />
-  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta name="keywords" content="Kingmaker's Rise, login, medieval strategy, kingdom, alliances" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/login.html" />
@@ -27,6 +23,12 @@ Developer: Deathsgift66
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
   <meta property="og:url" content="https://www.kingmakersrise.com/login.html" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Login | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Enter the realm of Kingmaker’s Rise — login to your account and continue your legend." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/login.css" />
@@ -39,22 +41,20 @@ Developer: Deathsgift66
 
 <body>
 
-<!-- Full Screen Background -->
+<!-- Background -->
 <div class="background-overlay" aria-hidden="true"></div>
 
 <!-- Login Panel -->
-<div class="login-panel">
+<div class="login-panel" aria-label="Login Interface">
 
   <h1 class="login-title">Kingmaker's Rise</h1>
   <p class="login-subtitle">Enter the Realm</p>
 
-    <form id="login-form" class="login-form" method="post" action="#">
-
+  <form id="login-form" class="login-form" method="post" action="#">
     <label for="login-id">Email or Ruler Name</label>
     <input type="text" id="login-id" name="login-id" required />
     <label for="password">Secret Passphrase</label>
     <input type="password" id="password" name="password" required />
-
     <button type="submit" class="royal-button">Enter the Realm</button>
   </form>
 
@@ -63,22 +63,23 @@ Developer: Deathsgift66
     <a href="#" id="forgot-password-link">Forgot Password?</a>
   </div>
 
-  <div id="message" class="message"></div>
-
+  <div id="message" class="message" aria-live="polite"></div>
 </div>
 
 <!-- Announcements -->
-<section id="announcements" class="announcements">
+<section id="announcements" class="announcements" aria-label="Town Crier Announcements">
   <h2 class="announcements-title">Town Crier</h2>
-  <ul id="announcement-list" class="announcement-list"></ul>
+  <ul id="announcement-list" class="announcement-list">
+    <li>Loading announcements...</li>
+  </ul>
 </section>
 
 <!-- Forgot Password Modal -->
-<div id="forgot-password-modal" class="modal hidden">
+<div id="forgot-password-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="forgot-title">
   <div class="modal-content">
-    <h2>Forgot Password</h2>
+    <h2 id="forgot-title">Forgot Password</h2>
     <p>Enter your account email to receive a reset link.</p>
-    <input type="email" id="forgot-email" placeholder="Your Royal Email" aria-label="Account Email" required />
+    <input type="email" id="forgot-email" placeholder="Your Royal Email" aria-label="Email Address" required />
     <button id="send-reset-btn" class="royal-button">Send Reset Link</button>
     <div id="forgot-message" class="message"></div>
     <button id="close-forgot-btn" class="royal-button">Close</button>
