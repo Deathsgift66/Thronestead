@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: kingdom_achievements.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.20.00
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -11,54 +11,89 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Kingdom Achievements | Kingmaker's Rise</title>
-  <meta name="description" content="View the achievements unlocked by your kingdom." />
+  <meta name="description" content="View the achievements unlocked by your kingdom in Kingmaker's Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, achievements, progress, kingdom rewards" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/kingdom_achievements.html" />
 
-  <!-- Assets -->
+  <!-- Open Graph -->
+  <meta property="og:title" content="Kingdom Achievements | Kingmaker's Rise" />
+  <meta property="og:description" content="Track your kingdom's accomplishments and unlock legendary rewards in Kingmaker’s Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/kingdom_achievements.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Kingdom Achievements | Kingmaker's Rise" />
+  <meta name="twitter:description" content="View the legendary achievements your kingdom has unlocked in Kingmaker’s Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/kingdom_achievements.css" />
+  <script defer type="module" src="Javascript/kingdom_achievements.js"></script>
+
+  <!-- Global Assets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <link rel="stylesheet" href="CSS/kingdom_achievements.css" />
-  <script type="module" src="Javascript/components/authGuard.js"></script>
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script defer type="module" src="Javascript/kingdom_achievements.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
+  <script type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
+
 <body>
-  <!-- Inject Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
-      });
-  </script>
 
-  <header class="kr-top-banner" aria-label="Kingdom Achievements Banner">
-    Kingmaker's Rise — Kingdom Achievements
-  </header>
+<!-- Navbar -->
+<div id="navbar-container"></div>
+<script>
+  fetch("/navbar.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("navbar-container").innerHTML = html;
+    });
+</script>
 
-  <main class="main-centered-container" aria-label="Kingdom Achievements Interface">
-    <section class="alliance-members-container parchment-bg">
-      <h2 class="golden-header">Your Kingdom Achievements</h2>
-      <p>Track accomplishments and rewards earned by your kingdom.</p>
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Kingdom Achievements Banner">
+  Kingmaker's Rise — Kingdom Achievements
+</header>
 
-      <section id="progress-summary"></section>
-      <section id="filter-toolbar" class="filter-toolbar"></section>
-      <div id="achievement-grid" class="badge-grid"></div>
-      <div id="achievement-modal" class="modal hidden"></div>
-    </section>
-  </main>
+<!-- Main Interface -->
+<main class="main-centered-container" aria-label="Kingdom Achievements Interface">
+  <section class="alliance-members-container parchment-bg">
+    <h2 class="golden-header">Your Kingdom Achievements</h2>
+    <p>Track accomplishments and rewards earned by your kingdom over time.</p>
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div>© 2025 Kingmaker’s Rise</div>
-    <div>
-      <a href="legal.html">View Legal Documents</a>
+    <!-- Summary Block -->
+    <section id="progress-summary" aria-label="Achievement Progress Summary"></section>
+
+    <!-- Filters -->
+    <section id="filter-toolbar" class="filter-toolbar" aria-label="Achievement Filters"></section>
+
+    <!-- Achievement Badges -->
+    <div id="achievement-grid" class="badge-grid" aria-live="polite">
+      <!-- Cards injected here -->
     </div>
-  </footer>
+
+    <!-- Modal Display -->
+    <div id="achievement-modal" class="modal hidden" aria-hidden="true">
+      <!-- Modal contents injected by JS -->
+    </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div>© 2025 Kingmaker’s Rise</div>
+  <div>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">and more</a>
+  </div>
+</footer>
+
 </body>
 </html>
