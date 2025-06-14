@@ -5,11 +5,14 @@
 """Full combat resolver processing kingdom and alliance wars."""
 
 from typing import Any, Dict, List
+import logging
 
 from .movement import process_unit_movement
 from .vision import process_unit_vision
 
 from ..db import db
+
+logger = logging.getLogger("KingmakersRise.BattleEngine")
 
 
 def process_unit_combat(
@@ -139,10 +142,11 @@ def run_combat_tick() -> None:
 # ============================================
 
 def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
+    """Advance a single tick for a kingdom vs. kingdom war."""
     war_id = war["war_id"]
     tick = war["battle_tick"] + 1
 
-    print(f"Processing Kingdom War ID {war_id} — Tick {tick}")
+    logger.info("Processing Kingdom War ID %s — Tick %s", war_id, tick)
 
     units = db.query(
         """
@@ -185,10 +189,11 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
 # ============================================
 
 def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
+    """Advance a single tick for an alliance war."""
     alliance_war_id = awar["alliance_war_id"]
     tick = awar["battle_tick"] + 1
 
-    print(f"Processing Alliance War ID {alliance_war_id} — Tick {tick}")
+    logger.info("Processing Alliance War ID %s — Tick %s", alliance_war_id, tick)
 
     participants = db.query(
         """
@@ -287,7 +292,7 @@ def check_victory_condition_kingdom(war_id: int) -> None:
     ).first()
 
     if war["castle_hp"] <= 0:
-        print(f"Kingdom War {war_id} — ATTACKER WINS!")
+        logger.info("Kingdom War %s — ATTACKER WINS!", war_id)
         db.execute(
             """
             UPDATE wars_tactical SET war_status = 'completed'
@@ -314,7 +319,7 @@ def check_victory_condition_kingdom(war_id: int) -> None:
         )
 
     elif war["battle_tick"] >= 12:
-        print(f"Kingdom War {war_id} — BATTLE ENDED AT TICK 12")
+        logger.info("Kingdom War %s — BATTLE ENDED AT TICK 12", war_id)
         victor = determine_victor(war_id)
         db.execute(
             """
@@ -356,7 +361,7 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
     ).first()
 
     if awar["castle_hp"] <= 0:
-        print(f"Alliance War {alliance_war_id} — ATTACKER WINS!")
+        logger.info("Alliance War %s — ATTACKER WINS!", alliance_war_id)
         db.execute(
             """
             UPDATE alliance_wars SET war_status = 'completed'
@@ -386,7 +391,7 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
         )
 
     elif awar["battle_tick"] >= 12:
-        print(f"Alliance War {alliance_war_id} — BATTLE ENDED AT TICK 12")
+        logger.info("Alliance War %s — BATTLE ENDED AT TICK 12", alliance_war_id)
         victor = determine_victor_alliance(alliance_war_id)
         db.execute(
             """
@@ -505,31 +510,28 @@ def calculate_alliance_war_casualties(alliance_war_id: int) -> tuple[int, int]:
     attacker_ids = [r["kingdom_id"] for r in attackers]
     defender_ids = [r["kingdom_id"] for r in defenders]
 
-    att_total = 0
-    for kid in attacker_ids:
-        row = db.query(
-            """
-            SELECT COALESCE(SUM(l.damage_dealt), 0) AS dmg
-            FROM alliance_war_combat_logs l
-            JOIN unit_movements um ON l.defender_unit_id = um.movement_id
-            WHERE l.alliance_war_id = %s AND um.kingdom_id = %s
-            """,
-            (alliance_war_id, kid),
-        ).first()
-        att_total += int(row["dmg"] if row else 0)
+    att_row = db.query(
+        """
+        SELECT COALESCE(SUM(l.damage_dealt), 0) AS dmg
+        FROM alliance_war_combat_logs l
+        JOIN unit_movements um ON l.defender_unit_id = um.movement_id
+        WHERE l.alliance_war_id = %s AND um.kingdom_id = ANY(%s)
+        """,
+        (alliance_war_id, attacker_ids),
+    ).first()
 
-    def_total = 0
-    for kid in defender_ids:
-        row = db.query(
-            """
-            SELECT COALESCE(SUM(l.damage_dealt), 0) AS dmg
-            FROM alliance_war_combat_logs l
-            JOIN unit_movements um ON l.defender_unit_id = um.movement_id
-            WHERE l.alliance_war_id = %s AND um.kingdom_id = %s
-            """,
-            (alliance_war_id, kid),
-        ).first()
-        def_total += int(row["dmg"] if row else 0)
+    def_row = db.query(
+        """
+        SELECT COALESCE(SUM(l.damage_dealt), 0) AS dmg
+        FROM alliance_war_combat_logs l
+        JOIN unit_movements um ON l.defender_unit_id = um.movement_id
+        WHERE l.alliance_war_id = %s AND um.kingdom_id = ANY(%s)
+        """,
+        (alliance_war_id, defender_ids),
+    ).first()
+
+    att_total = int(att_row["dmg"] if att_row else 0)
+    def_total = int(def_row["dmg"] if def_row else 0)
 
     return att_total, def_total
 
@@ -552,8 +554,10 @@ def insert_battle_resolution_log(
 
     loot_json = loot_summary or {}
 
-    print(
-        f"Inserting Battle Resolution Log — {battle_type.upper()} WAR — Victor: {victor}"
+    logger.info(
+        "Inserting Battle Resolution Log — %s WAR — Victor: %s",
+        battle_type.upper(),
+        victor,
     )
 
     db.execute(
