@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 import logging
+from .text_utils import sanitize_plain_text
 
 logger = logging.getLogger(__name__)
 
@@ -202,6 +203,8 @@ def transfer_resource(
     if amount <= 0:
         raise ValueError("Transfer amount must be positive.")
 
+    clean_reason = sanitize_plain_text(reason, 255)
+
     current = get_kingdom_resources(db, from_kingdom_id)
     if current.get(resource, 0) < amount:
         raise HTTPException(status_code=400, detail="Not enough resources to transfer.")
@@ -229,7 +232,7 @@ def transfer_resource(
                     "to_id": to_kingdom_id,
                     "res": resource,
                     "amt": amount,
-                    "reason": reason or "unlogged",
+                    "reason": clean_reason or "unlogged",
                 },
             )
             db.commit()
