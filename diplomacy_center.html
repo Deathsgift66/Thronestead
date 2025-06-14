@@ -1,45 +1,48 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: diplomacy_center.html
-Version 6.13.2025.19.49
+Version: 6.14.2025.22.00
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Diplomacy Center | Kingmaker's Rise</title>
   <meta name="description" content="Manage treaties, alliances, and diplomatic relations in the Diplomacy Center of Kingmaker’s Rise." />
-  <meta property="og:title" content="Diplomacy Center | Kingmaker's Rise" />
-  <meta property="og:description" content="Manage treaties, alliances, and diplomatic relations in the Diplomacy Center of Kingmaker’s Rise." />
-  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta property="og:url" content="https://www.kingmakersrise.com/diplomacy_center.html" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Diplomacy Center | Kingmaker's Rise" />
-  <meta name="twitter:description" content="Manage treaties, alliances, and diplomatic relations in the Diplomacy Center of Kingmaker’s Rise." />
-  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, diplomacy center, alliances, treaties, conflicts, politics, strategy" />
+  <meta name="keywords" content="Kingmaker's Rise, diplomacy center, alliances, treaties, politics, strategy" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/diplomacy_center.html" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/diplomacy_center.css" />
-  <script defer type="module" src="Javascript/diplomacy_center.js"></script>
+  <!-- Open Graph -->
+  <meta property="og:title" content="Diplomacy Center | Kingmaker's Rise" />
+  <meta property="og:description" content="Manage treaties, alliances, and diplomatic relations in Kingmaker’s Rise." />
+  <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.kingmakersrise.com/diplomacy_center.html" />
+  <meta property="og:type" content="website" />
 
-  <!-- Global Assets -->
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Diplomacy Center | Kingmaker's Rise" />
+  <meta name="twitter:description" content="Manage diplomatic relations and treaties in Kingmaker’s Rise." />
+  <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
+
+  <!-- Stylesheets -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <link rel="stylesheet" href="CSS/progressionBanner.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
-  <script type="module" src="Javascript/components/authGuard.js"></script>
-  <script type="module" src="Javascript/progressionBanner.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <link rel="stylesheet" href="CSS/diplomacy_center.css" />
+
+  <!-- Scripts -->
+  <script defer type="module" src="Javascript/navDropdown.js"></script>
+  <script defer type="module" src="Javascript/components/authGuard.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/progressionBanner.js"></script>
+  <script defer type="module" src="Javascript/diplomacy_center.js"></script>
 </head>
 
 <body>
@@ -49,65 +52,88 @@ Developer: Deathsgift66
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
+    .then(html => { document.getElementById('navbar-container').innerHTML = html; });
 </script>
 
 <!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Diplomacy Center Banner">
-  Kingmaker's Rise — Diplomacy Center
+<header class="kr-top-banner" aria-label="Diplomacy Banner">
+  🕊️ Kingmaker's Rise — Diplomacy Center
 </header>
 
-<!-- Main Centered Layout -->
-<main class="diplomacy-center-grid">
-  <section class="diplomacy-metrics panel">
-    <h2>Diplomacy Metrics</h2>
+<!-- Main Layout -->
+<main class="diplomacy-center-grid" aria-label="Diplomacy Interface">
+
+  <!-- Diplomacy Metrics -->
+  <section class="diplomacy-metrics panel" aria-label="Diplomacy Metrics Panel">
+    <h2>🧭 Diplomacy Metrics</h2>
     <p><strong>Diplomacy Score:</strong> <span id="diplomacy-score" aria-live="polite">--</span></p>
     <p><strong>Active Treaties:</strong> <span id="active-treaties-count" aria-live="polite">--</span></p>
     <p><strong>Ongoing Wars:</strong> <span id="ongoing-wars-count" aria-live="polite">--</span></p>
   </section>
 
-  <section class="treaty-list panel">
-    <h2>Alliance Treaties</h2>
+  <!-- Treaty List Table -->
+  <section class="treaty-list panel" aria-label="Treaty Table Panel">
+    <h2>🤝 Alliance Treaties</h2>
     <label for="treaty-filter">Filter:</label>
-    <select id="treaty-filter">
+    <select id="treaty-filter" aria-label="Filter Treaty Status">
       <option value="">All</option>
       <option value="active">Active</option>
       <option value="expired">Expired</option>
       <option value="proposed">Pending</option>
     </select>
-    <table class="treaties-table">
-      <thead>
-        <tr><th>Type</th><th>Partner</th><th>Status</th><th>Signed</th><th>Expires</th><th>Actions</th></tr>
-      </thead>
-      <tbody id="treaty-rows" aria-live="polite"></tbody>
-    </table>
+
+    <div class="table-wrapper">
+      <table class="treaties-table">
+        <thead>
+          <tr>
+            <th scope="col">Type</th>
+            <th scope="col">Partner</th>
+            <th scope="col">Status</th>
+            <th scope="col">Signed</th>
+            <th scope="col">Expires</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="treaty-rows" aria-live="polite">
+          <!-- Dynamically populated by JS -->
+        </tbody>
+      </table>
+    </div>
   </section>
 
-  <section class="propose-treaty-form panel">
-    <h2>Propose New Treaty</h2>
+  <!-- Propose New Treaty -->
+  <section class="propose-treaty-form panel" aria-label="Propose New Treaty Panel">
+    <h2>📜 Propose New Treaty</h2>
+
     <label for="treaty-type">Treaty Type:</label>
-    <select id="treaty-type">
+    <select id="treaty-type" aria-label="Treaty Type">
       <option value="non_aggression">Non-Aggression Pact</option>
       <option value="alliance">Military Alliance</option>
       <option value="economic">Trade Agreement</option>
     </select>
+
     <label for="partner-alliance-id">Partner Alliance ID:</label>
-    <input type="number" id="partner-alliance-id" />
+    <input type="number" id="partner-alliance-id" aria-label="Partner Alliance ID" />
+
     <label for="treaty-notes">Notes:</label>
-    <textarea id="treaty-notes"></textarea>
+    <textarea id="treaty-notes" rows="3" aria-label="Treaty Notes"></textarea>
+
     <label for="treaty-end">End Date:</label>
-    <input type="date" id="treaty-end" />
-    <button class="btn" onclick="proposeTreaty()">Submit Proposal</button>
+    <input type="date" id="treaty-end" aria-label="Treaty End Date" />
+
+    <button class="btn royal-button" onclick="proposeTreaty()">Submit Proposal</button>
   </section>
+
 </main>
 
 <!-- Footer -->
 <footer class="site-footer">
   <div>© 2025 Kingmaker’s Rise</div>
   <div>
-    <a href="legal.html">View Legal Documents</a>
+    <a href="Assets/legal/PrivacyPolicy.pdf">Privacy Policy</a>
+    <a href="Assets/legal/TermsofService.pdf">Terms of Service</a>
+    <a href="Assets/legal/EULA.pdf">EULA</a>
+    <a href="legal.html">More Legal</a>
   </div>
 </footer>
 
