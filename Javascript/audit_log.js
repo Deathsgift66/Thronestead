@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 // Hardened Admin Audit Log Page — with Supabase auth, loading, error handling, and formatting
+import { escapeHTML } from './utils.js';
 
 import { supabase } from './supabaseClient.js';
 let eventSource;
@@ -131,12 +132,3 @@ function formatTimestamp(timestamp) {
 }
 
 // ✅ Basic HTML escape (to prevent injection)
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}

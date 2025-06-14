@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 // Unified War Command Center — Page Controller
+import { escapeHTML } from './utils.js';
 
 import { supabase } from './supabaseClient.js';
 
@@ -234,12 +235,3 @@ function showToast(msg) {
 }
 
 // ✅ Basic HTML Escape
-function escapeHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}

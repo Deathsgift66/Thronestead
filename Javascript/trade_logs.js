@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 
 let realtimeChannel = null;
@@ -189,13 +190,6 @@ function showToast(msg) {
 }
 
 // ✅ Escape input to prevent XSS
-function escapeHTML(str) {
-  return str ? str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;") : "";
-}
 
 // ✅ Auto Refresh every 30s
 function startAutoRefresh() {

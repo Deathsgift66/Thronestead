@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 let realtimeSub;
 
@@ -118,13 +119,3 @@ function formatDate(dateStr) {
 }
 
 // ✅ HTML sanitization
-function escapeHTML(str) {
-  return str
-    ? String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-    : "";
-}

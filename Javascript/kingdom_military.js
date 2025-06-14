@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
+import { escapeHTML } from './utils.js';
 
 let currentUserId = null;
 let realtimeChannel = null;
@@ -186,15 +187,6 @@ function formatCost(costObj) {
 }
 
 // 🧼 Sanitize display text
-function escapeHTML(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 // ⏱ Format timestamps to readable string
 function formatTimestamp(ts) {
