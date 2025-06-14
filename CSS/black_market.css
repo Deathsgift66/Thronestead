@@ -130,17 +130,3 @@ body {
   }
 }
 
-.btn {
-  background: var(--accent);
-  color: #fff;
-  border: 1px solid var(--gold);
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-family: 'Cinzel', serif;
-}
-
-.btn:hover {
-  background: var(--gold);
-  color: var(--ink);
-}

@@ -95,3 +95,29 @@ export function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+/**
+ * Format a timestamp using the user's locale.
+ * @param {string|number|Date} ts Date or timestamp
+ * @returns {string} Locale formatted string
+ */
+export function formatDate(ts) {
+  const date = ts instanceof Date ? ts : new Date(ts);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
+}
+
+/**
+ * Build a DocumentFragment from an array of items.
+ * @template T
+ * @param {T[]} items Data items
+ * @param {(item:T)=>HTMLElement} builder Function to create an element
+ * @returns {DocumentFragment} Fragment with all built elements
+ */
+export function fragmentFrom(items, builder) {
+  const frag = document.createDocumentFragment();
+  for (const item of items) {
+    const el = builder(item);
+    if (el) frag.appendChild(el);
+  }
+  return frag;
+}
+
