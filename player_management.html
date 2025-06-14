@@ -26,103 +26,106 @@ Developer: Deathsgift66
   <meta name="robots" content="noindex, nofollow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/player_management.html" />
 
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/player_management.css" />
-  <script defer type="module" src="Javascript/player_management.js"></script>
-
-  <!-- Global Assets -->
+  <!-- Favicon -->
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+
+  <!-- Global Styles -->
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
+
+  <!-- Page-Specific Styles -->
+  <link rel="stylesheet" href="CSS/player_management.css" />
+
+  <!-- JS Modules -->
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script>window.requireAdmin = true;</script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
+  <script defer type="module" src="Javascript/player_management.js"></script>
 </head>
 
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+  <!-- Navbar -->
+  <div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
+  <script>
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+      });
+  </script>
 
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Player Management Banner">
-  Kingmaker's Rise — Player Management
-</header>
+  <!-- Page Header -->
+  <header class="kr-top-banner" aria-label="Player Management Banner">
+    Kingmaker's Rise — Player Management
+  </header>
 
-<!-- Main Centered Layout -->
-<main class="main-centered-container" aria-label="Player Management Interface">
+  <!-- Main Interface -->
+  <main class="main-centered-container" aria-label="Player Management Interface">
 
-  <!-- Core Admin Panel -->
-  <section class="alliance-members-container">
-    <h2>Player Management</h2>
-    <p>Manage player accounts, apply admin actions, and monitor player activity.</p>
+    <section class="alliance-members-container" role="region" aria-labelledby="admin-panel-title">
+      <h2 id="admin-panel-title">Player Management</h2>
+      <p>Manage player accounts, apply admin actions, and monitor player activity.</p>
 
-    <!-- Player Filter -->
-    <div class="player-controls">
-      <input id="search-input" type="text" placeholder="Search by Username / ID / Email" aria-label="Search players" />
-      <button id="search-button" class="action-btn">Search</button>
-      <button id="search-reset" class="action-btn">Reset</button>
-    </div>
-
-    <!-- Bulk Actions -->
-    <div class="bulk-actions">
-      <button id="bulk-ban" class="action-btn">Ban Selected</button>
-      <button id="bulk-flag" class="action-btn">Flag Selected</button>
-      <button id="bulk-logout" class="action-btn">Force Logout</button>
-      <button id="bulk-reset-password" class="action-btn">Reset Password</button>
-    </div>
-
-    <!-- Player Table -->
-    <div class="table-responsive">
-      <table id="player-table">
-        <thead>
-          <tr>
-            <th>Select</th>
-            <th>Player ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Kingdom</th>
-            <th>VIP Level</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- JS will populate -->
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Admin Modal -->
-    <div id="admin-modal" class="modal hidden">
-      <div class="modal-content">
-        <h3 id="modal-title" class="modal-title">Admin Action</h3>
-        <p id="modal-body">Action details go here.</p>
-        <button id="modal-confirm-btn" class="action-btn">Confirm</button>
-        <button class="action-btn" id="modal-close-btn">Close</button>
+      <!-- Filter/Search Controls -->
+      <div class="player-controls">
+        <input id="search-input" type="text" placeholder="Search by Username / ID / Email" aria-label="Search players" />
+        <button id="search-button" class="action-btn">Search</button>
+        <button id="search-reset" class="action-btn">Reset</button>
       </div>
-    </div>
 
-  </section>
+      <!-- Bulk Admin Actions -->
+      <div class="bulk-actions">
+        <button id="bulk-ban" class="action-btn danger">Ban Selected</button>
+        <button id="bulk-flag" class="action-btn">Flag Selected</button>
+        <button id="bulk-logout" class="action-btn">Force Logout</button>
+        <button id="bulk-reset-password" class="action-btn">Reset Password</button>
+      </div>
 
-</main>
+      <!-- Player Table -->
+      <div class="table-responsive" role="region" aria-label="Player Table">
+        <table id="player-table">
+          <thead>
+            <tr>
+              <th scope="col">Select</th>
+              <th scope="col">Player ID</th>
+              <th scope="col">Username</th>
+              <th scope="col">Email</th>
+              <th scope="col">Kingdom</th>
+              <th scope="col">VIP Level</th>
+              <th scope="col">Status</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
 
-<!-- Footer -->
-<footer class="site-footer">
-  <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
-</footer>
+      <!-- Modal for Admin Actions -->
+      <div id="admin-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+          <h3 id="modal-title" class="modal-title">Admin Action</h3>
+          <p id="modal-body">Action details go here.</p>
+          <div class="modal-actions">
+            <button id="modal-confirm-btn" class="action-btn confirm">Confirm</button>
+            <button id="modal-close-btn" class="action-btn cancel">Close</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Kingmaker’s Rise</div>
+    <div><a href="legal.html">View Legal Documents</a></div>
+  </footer>
 
 </body>
 </html>
