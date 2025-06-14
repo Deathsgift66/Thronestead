@@ -21,6 +21,13 @@ from ..database import get_db
 from backend.models import User, Notification
 from services.audit_service import log_action
 
+
+def send_email(to_email: str, subject: str, body: str) -> None:
+    """Minimal email sending stub logging the intended message."""
+    logging.getLogger("KingmakersRise.Email").info(
+        "Sending email to %s with subject %s: %s", to_email, subject, body
+    )
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ---------------------------------------------
@@ -95,10 +102,10 @@ def request_password_reset(
         token_hash = _hash_token(token)
         RESET_STORE[token_hash] = (str(user.user_id), time.time() + TOKEN_TTL)
 
-        # Placeholder: email system integration
-        # send_email(user.email, subject="Reset Code", body=token)
-        logger = logging.getLogger("KingmakersRise.PasswordReset")
-        logger.info("Password reset token generated for %s", user.email)
+        send_email(user.email, subject="Reset Code", body=token)
+        logging.getLogger("KingmakersRise.PasswordReset").info(
+            "Password reset token generated for %s", user.email
+        )
 
     return {"message": "If the email exists, a reset link has been sent."}
 
