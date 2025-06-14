@@ -151,10 +151,10 @@ def load_game_settings() -> None:
             WHERE is_active = true
         """)
         rows = session.execute(query).fetchall()
+        # Build the settings dict in one step for efficiency
         global_game_settings.clear()
-        for key, value in rows:
-            global_game_settings[key] = value
-        logger.info(f"✅ Loaded {len(global_game_settings)} game settings.")
+        global_game_settings.update({key: value for key, value in rows})
+        logger.info("✅ Loaded %s game settings.", len(global_game_settings))
     except Exception as exc:
         logger.error("❌ Failed to load game settings.")
         logger.exception(exc)
