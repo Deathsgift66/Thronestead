@@ -26,7 +26,7 @@ from backend.routers import progression_router
 app = FastAPI(
     title="Kingmaker's Rise API",
     version="6.14.2025.20.12",
-    description="Backend services for Kingmaker's Rise — resource systems, announcements, region data, and progression."
+    description="Backend services for Kingmaker's Rise — resource systems, announcements, region data, and progression.",
 )
 
 # Configure CORS
@@ -46,12 +46,14 @@ app.add_middleware(
 )
 
 # Register all route modules
-app.include_router(resources.router, prefix="/api/resources", tags=["resources"])
-app.include_router(announcements.router, prefix="/api/announcements", tags=["announcements"])
-app.include_router(region.router, prefix="/api/regions", tags=["regions"])
-app.include_router(progression_router.router, prefix="/api/progression", tags=["progression"])
+# Each router already defines its API prefix and tags.
+app.include_router(resources.router)
+app.include_router(announcements.router)
+app.include_router(region.router)
+app.include_router(progression_router.router)
 
 # Manual launch for `python main.py` use
 if __name__ == "__main__":  # pragma: no cover
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
