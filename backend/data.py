@@ -1,16 +1,28 @@
 # Project Name: Kingmakers Rise©
 # File Name: data.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49
 # Developer: Deathsgift66
-# Simple in-memory data store for the demo API
 
-# Recruitable units for all kingdoms
-recruitable_units = [
+"""
+This module serves as a runtime in-memory state layer and lightweight cache
+for demo, simulation, and real-time performance buffers in Kingmakers Rise©.
+"""
+
+import logging
+from typing import Dict, List, Any
+
+# Set up logger for internal debugging
+logger = logging.getLogger("KingmakersRise.Data")
+
+# ---------------------------------------------------
+# ⚔️ Recruitable Units (Stub/demo units for simulation)
+# ---------------------------------------------------
+recruitable_units: List[Dict[str, Any]] = [
     {
         "id": 1,
         "name": "Swordsman",
         "type": "Infantry",
-        "training_time": 60,
+        "training_time": 60,  # in seconds
         "cost": {"gold": 10, "food": 5},
     },
     {
@@ -22,19 +34,23 @@ recruitable_units = [
     },
 ]
 
-# Kingdom military state keyed by kingdom_id
-military_state = {
+# ---------------------------------------------------
+# 🛡️ Kingdom Military State
+# ---------------------------------------------------
+military_state: Dict[int, Dict[str, Any]] = {
     1: {
         "base_slots": 20,
         "used_slots": 0,
         "morale": 100,
-        "queue": [],
-        "history": [],
+        "queue": [],      # active training queue
+        "history": [],    # completed training logs
     }
 }
 
-# Simplified castle progression tracking
-castle_progression_state = {
+# ---------------------------------------------------
+# 🏰 Castle Progression
+# ---------------------------------------------------
+castle_progression_state: Dict[int, Dict[str, int]] = {
     1: {
         "castle_level": 1,
         "nobles": 0,
@@ -42,8 +58,10 @@ castle_progression_state = {
     }
 }
 
-# Default regions used when the database table is missing or empty
-DEFAULT_REGIONS = [
+# ---------------------------------------------------
+# 🌍 Default Region Metadata (used when DB fails/missing)
+# ---------------------------------------------------
+DEFAULT_REGIONS: List[Dict[str, Any]] = [
     {
         "region_code": "north",
         "region_name": "Northlands",
@@ -74,60 +92,68 @@ DEFAULT_REGIONS = [
     },
 ]
 
-# Active kingdom projects keyed by kingdom_id
-kingdom_projects: dict[int, list[dict]] = {}
+# ---------------------------------------------------
+# 🏗️ Runtime Buffers and State Caches
+# ---------------------------------------------------
+kingdom_projects: Dict[int, List[Dict]] = {}
+kingdom_villages: Dict[int, List[Dict]] = {}
 
-# List of villages currently controlled by each kingdom
-kingdom_villages: dict[int, list[dict]] = {}
-
-# Basic mapping for how many villages a castle level supports
+# Function to determine village cap based on castle level
 def get_max_villages_allowed(castle_level: int) -> int:
-    """Return the number of villages allowed for the given castle level."""
+    """Return the number of villages a kingdom can support based on castle level."""
     return castle_level
 
-# VIP levels per user_id
-vip_levels: dict[str, int] = {}
+# 👑 VIP, Prestige, and Titles
+vip_levels: Dict[str, int] = {}              # user_id → vip_level
+player_titles: Dict[str, List[str]] = {}     # user_id → list of title strings
+prestige_scores: Dict[str, int] = {}         # user_id → prestige points
 
-# Titles and prestige tracking per user
-player_titles: dict[str, list[str]] = {}
-prestige_scores: dict[str, int] = {}
+# 🤝 Diplomacy
+kingdom_treaties: Dict[int, List[Dict]] = {}
+alliance_treaties: Dict[int, List[Dict]] = {}
 
-# Treaty records
-kingdom_treaties: dict[int, list[dict]] = {}
-alliance_treaties: dict[int, list[dict]] = {}
+# 🕵️ Espionage
+kingdom_spies: Dict[int, Dict] = {}
+spy_missions: Dict[int, List[Dict]] = {}
 
-# Spy related data
-kingdom_spies: dict[int, dict] = {}
-spy_missions: dict[int, list[dict]] = {}
+# ⚙️ Global Settings Cache
+global_game_settings: Dict[str, Any] = {}
 
-# Global settings loaded from the database
-global_game_settings: dict[str, object] = {}
+# ---------------------------------------------------
+# 🔄 Live Game Setting Loader (from DB)
+# ---------------------------------------------------
 
-import logging
-
-try:  # pragma: no cover - SQLAlchemy optional in tests
+try:
     from sqlalchemy import text
     from .database import SessionLocal
-except ImportError:  # pragma: no cover - fallback when deps missing
+except ImportError:  # When SQLAlchemy is not available in testing
     text = lambda q: q  # type: ignore
     SessionLocal = None  # type: ignore
 
 
 def load_game_settings() -> None:
-    """Load active game settings from the database into memory."""
+    """
+    Load all active global settings from the database into memory.
+    These influence game-wide behaviors and can be modified dynamically.
+    """
     if not SessionLocal:
+        logger.warning("SessionLocal not initialized. Skipping game settings load.")
         return
+
     session = SessionLocal()
     try:
-        rows = session.execute(
-            text(
-                "SELECT setting_key, setting_value FROM game_settings WHERE is_active = true"
-            )
-        ).fetchall()
+        query = text("""
+            SELECT setting_key, setting_value
+            FROM game_settings
+            WHERE is_active = true
+        """)
+        rows = session.execute(query).fetchall()
         global_game_settings.clear()
         for key, value in rows:
             global_game_settings[key] = value
+        logger.info(f"✅ Loaded {len(global_game_settings)} game settings.")
     except Exception as exc:
-        logging.error("Failed to load game settings: %s", exc)
+        logger.error("❌ Failed to load game settings.")
+        logger.exception(exc)
     finally:
         session.close()
