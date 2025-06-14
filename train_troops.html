@@ -13,6 +13,8 @@ Developer: Deathsgift66
 
   <title>The Grand Muster Hall | Kingmaker's Rise</title>
   <meta name="description" content="Recruit and manage troops in The Grand Muster Hall of Kingmaker’s Rise — expand your army with elite forces." />
+  <meta name="keywords" content="Kingmaker's Rise, train troops, recruit, military, army management, muster hall" />
+  <meta name="robots" content="index, follow" />
   <meta property="og:title" content="The Grand Muster Hall | Kingmaker's Rise" />
   <meta property="og:description" content="Recruit and manage troops in The Grand Muster Hall of Kingmaker’s Rise — expand your army with elite forces." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +24,8 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="The Grand Muster Hall | Kingmaker's Rise" />
   <meta name="twitter:description" content="Recruit and manage troops in The Grand Muster Hall of Kingmaker’s Rise — expand your army with elite forces." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, train troops, recruit, military, army management, muster hall" />
-  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.kingmakersrise.com/train_troops.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/train_troops.css" />
@@ -35,18 +36,17 @@ Developer: Deathsgift66
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
   <link rel="stylesheet" href="CSS/progressionBanner.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
   <script type="module" src="Javascript/progressionBanner.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -60,60 +60,55 @@ Developer: Deathsgift66
   Kingmaker's Rise — The Grand Muster Hall
 </header>
 
-<!-- Main Centered Layout -->
-<main id="main-content" class="main-centered-container" aria-label="Train Troops Interface">
+<!-- Main Content -->
+<main id="main-content" class="main-centered-container" aria-label="Troop Training Interface">
 
+  <section class="alliance-members-container" aria-labelledby="muster-hall-title">
 
-  <!-- Core Train Troops Panel -->
-  <section class="alliance-members-container">
-
-    <!-- Top Bar -->
+    <!-- Header -->
     <div class="top-bar">
-      <h2>The Grand Muster Hall</h2>
+      <h2 id="muster-hall-title">The Grand Muster Hall</h2>
       <p>Recruit troops and expand your military might.</p>
     </div>
 
-    <!-- Controls Bar -->
-    <div class="controls-bar">
+    <!-- Action Controls -->
+    <div class="controls-bar" role="toolbar" aria-label="Training Options">
       <button id="toggleFilters" class="btn-fantasy">Toggle Filters</button>
       <button id="toggleQueue" class="btn-fantasy">View Training Queue</button>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <div class="troop-catalogue custom-scrollbar" id="troop-catalogue">
+    <!-- Main Layout -->
+    <div class="main-content" role="region" aria-label="Training Interface">
+      <div id="troop-catalogue" class="troop-catalogue custom-scrollbar" aria-label="Troop Catalogue">
         <!-- JS will populate -->
       </div>
 
-      <div class="sidebar-panel custom-scrollbar" id="sidebar-panel">
+      <aside id="sidebar-panel" class="sidebar-panel custom-scrollbar" aria-label="Troop Info Sidebar">
+        <!-- JS will populate -->
+      </aside>
+    </div>
+
+    <!-- Toggles -->
+    <div class="toggle-section" role="region" aria-label="Training Overview">
+      <div id="training-queue" class="history-log custom-scrollbar" aria-label="Active Training Queue">
+        <!-- JS will populate -->
+      </div>
+      <div id="training-history" class="history-log custom-scrollbar" aria-label="Training History">
         <!-- JS will populate -->
       </div>
     </div>
 
-    <!-- Toggle Section -->
-    <div class="toggle-section">
-      <div id="training-queue" class="history-log custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
-
-      <div id="training-history" class="history-log custom-scrollbar">
-        <!-- JS will populate -->
-      </div>
-    </div>
-
-    <!-- Toast -->
-    <div id="toast" class="toast"></div>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
 
   </section>
 
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
