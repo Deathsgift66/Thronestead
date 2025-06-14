@@ -150,7 +150,7 @@ Developer: Deathsgift66
 
 /* Logout Button */
 .kr-navbar .logout-btn {
-  background: linear-gradient(to bottom, #b91c1c, #7f1d1d);
+  background: linear-gradient(to bottom, var(--danger), #7f1d1d);
   color: white;
   padding: 0.6rem 1.25rem;
   font-weight: bold;

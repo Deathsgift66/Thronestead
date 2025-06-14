@@ -10,6 +10,13 @@ let accessToken = null;
 let userId = null;
 const UNIT_COUNTERS = { infantry: "archers", cavalry: "spearmen", archers: "infantry", mage: "infantry" };
 const TERRAIN_EFFECTS = { forest: "Defense bonus", river: "Slows movement", hill: "Ranged bonus" };
+// Map terrain types to their display colors for quick lookup
+const TERRAIN_COLORS = {
+  forest: "#228B22",
+  river: "#1E90FF",
+  hill: "#8B4513",
+  default: "var(--stone-panel)"
+};
 function playTickSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -68,7 +75,6 @@ async function loadTerrain() {
     const data = await response.json();
     mapWidth = data.map_width;
     mapHeight = data.map_height;
-    currentMapColumns = mapWidth;
     renderBattleMap(data.tile_map);
   } catch (err) {
     console.error('Error loading terrain:', err);
@@ -190,26 +196,30 @@ function refreshBattle() {
 }
 let mapWidth = 60;
 let mapHeight = 20;
-let currentMapColumns = 60;
 let scoreboardChannel = null;
 // Cache tile DOM nodes for efficient updates
 let tileElements = [];
 
+/**
+ * Render the terrain grid using a two-dimensional array of types.
+ * Cached tile nodes allow fast unit updates each tick.
+ * @param {string[][]} tileMap
+ */
 function renderBattleMap(tileMap) {
+  // Build the battle grid using cached DOM nodes for performance
   const battleMap = document.getElementById('battle-map');
   battleMap.innerHTML = '';
   battleMap.style.gridTemplateColumns = `repeat(${mapWidth}, 1fr)`;
   const frag = document.createDocumentFragment();
   tileElements = [];
   for (let row = 0; row < mapHeight; row++) {
+    const rowData = tileMap[row];
     for (let col = 0; col < mapWidth; col++) {
       const tile = document.createElement('div');
       tile.className = 'tile';
-      const type = tileMap[row][col];
-      if (type === 'forest') tile.style.backgroundColor = '#228B22';
-      else if (type === 'river') tile.style.backgroundColor = '#1E90FF';
-      else if (type === 'hill') tile.style.backgroundColor = '#8B4513';
-      else tile.style.backgroundColor = 'var(--stone-panel)';
+      const type = rowData[col];
+      const color = TERRAIN_COLORS[type] || TERRAIN_COLORS.default;
+      tile.style.backgroundColor = color;
       tile.title = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${TERRAIN_EFFECTS[type] || ''}`;
       frag.appendChild(tile);
       tileElements.push(tile);
@@ -218,6 +228,10 @@ function renderBattleMap(tileMap) {
   battleMap.appendChild(frag);
 }
 
+/**
+ * Render all unit icons on the pre-generated grid.
+ * @param {Object[]} units
+ */
 function renderUnits(units) {
   if (!tileElements.length) return;
   tileElements.forEach(t => (t.innerHTML = ''));
