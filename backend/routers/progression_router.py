@@ -6,33 +6,86 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+import re
 
 from ..database import get_db
 from ..security import require_user_id
 from ..data import get_max_villages_allowed
 from services.progression_service import calculate_troop_slots, get_total_modifiers
 
+# Allowed characters for noble and knight names (alphanumeric & spaces)
+NAME_PATTERN = re.compile(r"^[A-Za-z0-9 ]{1,50}$")
+
 router = APIRouter(prefix="/api/progression", tags=["progression"])
 
 
 # 🔹 Utility: Get the kingdom ID for a player
 def get_kingdom_id(db: Session, user_id: str) -> int:
-    row = db.execute(
+    """Return the kingdom_id for the given user or raise 404."""
+    kid = db.execute(
         text("SELECT kingdom_id FROM kingdoms WHERE user_id = :uid"),
         {"uid": user_id},
-    ).fetchone()
-    if not row:
+    ).scalar()
+    if kid is None:
         raise HTTPException(status_code=404, detail="Kingdom not found")
-    return row[0]
+    return int(kid)
 
 
 # 🔹 Input Schemas
 class NoblePayload(BaseModel):
     noble_name: str
 
+    @validator("noble_name")
+    def _validate_name(cls, v: str) -> str:  # noqa: D401
+        """Validate noble name format."""
+        if not NAME_PATTERN.match(v):
+            raise ValueError("Name must be 1-50 alphanumeric characters or spaces")
+        return v.strip()
+
 class KnightPayload(BaseModel):
     knight_name: str
+
+    @validator("knight_name")
+    def _validate_knight(cls, v: str) -> str:  # noqa: D401
+        """Validate knight name format."""
+        if not NAME_PATTERN.match(v):
+            raise ValueError("Name must be 1-50 alphanumeric characters or spaces")
+        return v.strip()
+
+
+def ensure_nobles(db: Session, kid: int, required: int) -> int:
+    """Create placeholder nobles until the required count is met."""
+    current = (
+        db.execute(
+            text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
+            {"kid": kid},
+        ).scalar()
+        or 0
+    )
+    for i in range(current, required):
+        db.execute(
+            text("INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"),
+            {"kid": kid, "name": f"Noble {i + 1}"},
+        )
+    return max(current, required)
+
+
+def ensure_knights(db: Session, kid: int, required: int) -> int:
+    """Create placeholder knights until the required count is met."""
+    current = (
+        db.execute(
+            text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
+            {"kid": kid},
+        ).scalar()
+        or 0
+    )
+    for i in range(current, required):
+        db.execute(
+            text("INSERT INTO kingdom_knights (kingdom_id, knight_name) VALUES (:kid, :name)"),
+            {"kid": kid, "name": f"Knight {i + 1}"},
+        )
+    return max(current, required)
 
 
 # 🔹 GET: Castle Level
@@ -92,16 +145,7 @@ def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depend
 
     # 💠 Handle Noble Unlocks
     if level >= 2:
-        noble_count = db.execute(
-            text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
-            {"kid": kid}
-        ).fetchone()[0]
-        while noble_count < 2:
-            db.execute(
-                text("INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"),
-                {"kid": kid, "name": f"Noble {noble_count + 1}"}
-            )
-            noble_count += 1
+        noble_count = ensure_nobles(db, kid, 2)
         db.execute(
             text("UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"),
             {"count": noble_count, "kid": kid}
@@ -109,17 +153,8 @@ def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depend
 
     # 💠 Handle Knight Unlocks
     if level >= 3:
-        knight_count = db.execute(
-            text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
-            {"kid": kid}
-        ).fetchone()[0]
         required = 1 if level == 3 else 2
-        while knight_count < required:
-            db.execute(
-                text("INSERT INTO kingdom_knights (kingdom_id, knight_name) VALUES (:kid, :name)"),
-                {"kid": kid, "name": f"Knight {knight_count + 1}"}
-            )
-            knight_count += 1
+        knight_count = ensure_knights(db, kid, required)
         db.execute(
             text("UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"),
             {"bonus": knight_count * 2, "kid": kid}
