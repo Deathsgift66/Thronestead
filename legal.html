@@ -1,7 +1,7 @@
 <!--
 Project Name: Kingmakers Rise©
 File Name: legal.html
-Version 6.13.2025.19.49
+Version 6.14.2025.20.12
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -10,7 +10,7 @@ Developer: Deathsgift66
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  
   <title>Legal | Kingmaker's Rise</title>
   <meta name="description" content="Complete legal documents for Kingmaker’s Rise, including Privacy Policy, Terms of Service, EULA, and more." />
   <meta name="keywords" content="Kingmaker's Rise, legal, privacy policy, terms of service, EULA, DPA, cookies, community guidelines" />
@@ -37,8 +37,8 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <script type="module" src="Javascript/navDropdown.js"></script>
   <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <script type="module" src="Javascript/navDropdown.js"></script>
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
@@ -59,20 +59,23 @@ Developer: Deathsgift66
   Kingmaker's Rise — Legal
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Content -->
 <main class="main-centered-container" aria-label="Legal Interface">
 
-  <!-- Core Legal Panel -->
   <section class="alliance-members-container">
     <h2>Legal Documents</h2>
     <p>View the complete legal documents for Kingmaker’s Rise. All players must comply with these terms to participate in the game.</p>
 
-    <div id="search-container">
+    <!-- Document Search -->
+    <div id="search-container" class="search-group">
       <label for="doc-search">Search Documents</label>
-      <input id="doc-search" type="text" />
+      <input id="doc-search" type="text" placeholder="Search by title or keyword…" aria-label="Search legal documents" />
     </div>
-    <div id="legal-docs" class="legal-card-grid"></div>
 
+    <!-- Legal Documents Grid -->
+    <div id="legal-docs" class="legal-card-grid" aria-live="polite">
+      <!-- JS will dynamically populate cards here -->
+    </div>
   </section>
 
 </main>
@@ -88,7 +91,8 @@ Developer: Deathsgift66
   </div>
 </footer>
 
-<script type="module" src="Javascript/legal.js"></script>
+<!-- Legal Script -->
+<script defer type="module" src="Javascript/legal.js"></script>
 
 </body>
 </html>
