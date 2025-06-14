@@ -1,16 +1,26 @@
 # Project Name: Kingmakers Rise©
 # File Name: training_history_service.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Enhanced)
 # Developer: Deathsgift66
+# Description: Handles tracking of completed troop training records.
+
+from __future__ import annotations
 import logging
+from typing import Optional
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
+    from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q  # type: ignore
-    Session = object  # type: ignore
+    text = lambda q: q
+    Session = object
 
+logger = logging.getLogger(__name__)
+
+# ------------------------------------------------------------
+# Training History Services
+# ------------------------------------------------------------
 
 def record_training(
     db: Session,
@@ -20,62 +30,97 @@ def record_training(
     quantity: int,
     source: str,
     initiated_at: str,
-    trained_by: str | None,
+    trained_by: Optional[str],
     xp_awarded: int,
-    modifiers_applied: dict | None,
+    modifiers_applied: Optional[dict],
 ) -> int:
-    """Insert a new training history row and return its id."""
-    result = db.execute(
-        text(
-            """
-            INSERT INTO training_history (
-                kingdom_id, unit_id, unit_name, quantity, completed_at,
-                source, initiated_at, trained_by, xp_awarded, modifiers_applied
-            ) VALUES (
-                :kid, :uid, :uname, :qty, now(),
-                :src, :init, :tby, :xp, :mods
-            ) RETURNING history_id
-            """
-        ),
-        {
-            "kid": kingdom_id,
-            "uid": unit_id,
-            "uname": unit_name,
-            "qty": quantity,
-            "src": source,
-            "init": initiated_at,
-            "tby": trained_by,
-            "xp": xp_awarded,
-            "mods": modifiers_applied or {},
-        },
-    )
-    row = result.fetchone()
-    db.commit()
-    return row[0] if row else 0
+    """
+    Record a completed unit training session.
+
+    Args:
+        db: Database session
+        kingdom_id: Kingdom ID that trained the unit
+        unit_id: Internal unit ID
+        unit_name: Display name of the unit
+        quantity: Number of units trained
+        source: Source of training (e.g., 'training_queue')
+        initiated_at: Timestamp when training started
+        trained_by: User ID who initiated the training (if available)
+        xp_awarded: XP rewarded for this training
+        modifiers_applied: Dictionary of production modifiers applied
+
+    Returns:
+        int: ID of the new training_history row
+    """
+    try:
+        result = db.execute(
+            text("""
+                INSERT INTO training_history (
+                    kingdom_id, unit_id, unit_name, quantity, completed_at,
+                    source, initiated_at, trained_by, xp_awarded, modifiers_applied
+                ) VALUES (
+                    :kid, :uid, :uname, :qty, now(),
+                    :src, :init, :tby, :xp, :mods
+                )
+                RETURNING history_id
+            """),
+            {
+                "kid": kingdom_id,
+                "uid": unit_id,
+                "uname": unit_name,
+                "qty": quantity,
+                "src": source,
+                "init": initiated_at,
+                "tby": trained_by,
+                "xp": xp_awarded,
+                "mods": modifiers_applied or {},
+            },
+        )
+        row = result.fetchone()
+        db.commit()
+        return int(row[0]) if row else 0
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception("Failed to record training session for unit %s", unit_name)
+        return 0
 
 
 def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
-    """Return recent training history for a kingdom."""
-    rows = db.execute(
-        text(
-            """
-            SELECT unit_name, quantity, completed_at, source, xp_awarded
-            FROM training_history
-            WHERE kingdom_id = :kid
-            ORDER BY completed_at DESC
-            LIMIT :lim
-            """
-        ),
-        {"kid": kingdom_id, "lim": limit},
-    ).fetchall()
+    """
+    Fetch the most recent unit training records for a given kingdom.
 
-    return [
-        {
-            "unit_name": r[0],
-            "quantity": r[1],
-            "completed_at": r[2],
-            "source": r[3],
-            "xp_awarded": r[4],
-        }
-        for r in rows
-    ]
+    Args:
+        db: DB session
+        kingdom_id: Kingdom to fetch records for
+        limit: Max rows to return (default = 50)
+
+    Returns:
+        List[dict]: Recent training records
+    """
+    try:
+        rows = db.execute(
+            text("""
+                SELECT unit_name, quantity, completed_at, source, xp_awarded
+                FROM training_history
+                WHERE kingdom_id = :kid
+                ORDER BY completed_at DESC
+                LIMIT :lim
+            """),
+            {"kid": kingdom_id, "lim": limit},
+        ).fetchall()
+
+        return [
+            {
+                "unit_name": r[0],
+                "quantity": r[1],
+                "completed_at": r[2],
+                "source": r[3],
+                "xp_awarded": r[4],
+            }
+            for r in rows
+        ]
+
+    except SQLAlchemyError as e:
+        logger.warning("Failed to fetch training history for kingdom_id=%s", kingdom_id)
+        return []
