@@ -13,6 +13,11 @@ Developer: Deathsgift66
 
   <title>World Map | Kingmaker's Rise</title>
   <meta name="description" content="Explore and interact with the dynamic World Map of Kingmaker’s Rise — claim territory, manage kingdoms, and engage in war." />
+  <meta name="keywords" content="Kingmaker's Rise, world map, territory, strategy, kingdoms, war, diplomacy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/world_map.html" />
+
+  <!-- Social Sharing Metadata -->
   <meta property="og:title" content="World Map | Kingmaker's Rise" />
   <meta property="og:description" content="Explore and interact with the dynamic World Map of Kingmaker’s Rise — claim territory, manage kingdoms, and engage in war." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +27,7 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="World Map | Kingmaker's Rise" />
   <meta name="twitter:description" content="Explore and interact with the dynamic World Map of Kingmaker’s Rise — claim territory, manage kingdoms, and engage in war." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, world map, territory, strategy, kingdoms, war, diplomacy" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/world_map.html" />
+  <meta name="theme-color" content="#1a1a1a" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/world_map.css" />
@@ -34,17 +37,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Global Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -53,39 +55,46 @@ Developer: Deathsgift66
     });
 </script>
 
-<!-- Page Banner -->
+<!-- Banner -->
 <header class="kr-top-banner" aria-label="World Map Banner">
   Kingmaker's Rise — World Map
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Layout -->
 <main id="main-content" class="main-centered-container" aria-label="World Map Interface">
 
-
-  <!-- Core Map Panel -->
   <section class="alliance-members-container">
 
-    <!-- World Map Stage -->
-    <div id="map-stage">
-      <canvas id="world-canvas" width="1200" height="800" aria-label="World Map Canvas"></canvas>
+    <!-- World Map Canvas Stage -->
+    <div id="map-stage" class="map-stage" role="region" aria-label="Interactive World Map">
+      <canvas id="world-canvas" width="1200" height="800" aria-label="Strategic Map Canvas"></canvas>
     </div>
 
-    <!-- Map UI -->
+    <!-- Controls + UI -->
     <div class="map-ui">
-      <div class="map-controls">
-        <button id="zoom-in" class="btn">+</button>
-        <button id="zoom-out" class="btn">-</button>
-        <button id="center-map" class="btn">Center</button>
+
+      <!-- Map Controls -->
+      <div class="map-controls" role="group" aria-label="Map Zoom and View Controls">
+        <button id="zoom-in" class="btn" aria-label="Zoom In">+</button>
+        <button id="zoom-out" class="btn" aria-label="Zoom Out">−</button>
+        <button id="center-map" class="btn" aria-label="Center Map">Center</button>
       </div>
-      <div class="map-legend">
-        <!-- Legend content — JS will populate -->
+
+      <!-- Legend -->
+      <div class="map-legend" id="map-legend" aria-label="Map Legend">
+        <!-- JS will populate legend items -->
       </div>
+
     </div>
 
     <!-- Tile Modal -->
-    <div id="tile-modal" class="modal hidden">
+    <div id="tile-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tile-modal-title">
       <div class="modal-content">
-        <!-- JS will populate -->
+        <h3 id="tile-modal-title">Tile Information</h3>
+        <div id="tile-details">
+          <!-- JS will inject tile-specific data -->
+        </div>
+        <button class="btn" id="close-tile-modal">Close</button>
       </div>
     </div>
 
@@ -94,11 +103,9 @@ Developer: Deathsgift66
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
