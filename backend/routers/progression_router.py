@@ -57,6 +57,17 @@ class KnightPayload(BaseModel):
         return v.strip()
 
 
+def _count_records(db: Session, table: str, kid: int) -> int:
+    """Return ``COUNT(*)`` for the given table and kingdom."""
+    return (
+        db.execute(
+            text(f"SELECT COUNT(*) FROM {table} WHERE kingdom_id = :kid"),
+            {"kid": kid},
+        ).scalar()
+        or 0
+    )
+
+
 def _ensure_records(
     db: Session,
     table: str,
@@ -67,13 +78,7 @@ def _ensure_records(
 ) -> int:
     """Insert placeholder records until ``required`` entries exist."""
 
-    current = (
-        db.execute(
-            text(f"SELECT COUNT(*) FROM {table} WHERE kingdom_id = :kid"),
-            {"kid": kid},
-        ).scalar()
-        or 0
-    )
+    current = _count_records(db, table, kid)
 
     if current < required:
         rows = [
@@ -214,10 +219,7 @@ def assign_noble(payload: NoblePayload, user_id: str = Depends(require_user_id),
         {"kid": kid, "name": payload.noble_name}
     )
 
-    count = db.execute(
-        text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
-        {"kid": kid}
-    ).fetchone()[0]
+    count = _count_records(db, "kingdom_nobles", kid)
 
     db.execute(
         text("UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"),
@@ -249,10 +251,7 @@ def assign_knight(payload: KnightPayload, user_id: str = Depends(require_user_id
         {"kid": kid, "name": payload.knight_name}
     )
 
-    count = db.execute(
-        text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
-        {"kid": kid}
-    ).fetchone()[0]
+    count = _count_records(db, "kingdom_knights", kid)
 
     db.execute(
         text("UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"),
@@ -290,20 +289,11 @@ def progression_summary(user_id: str = Depends(require_user_id), db: Session = D
     ).fetchone()
     castle_level = level_row[0] if level_row else 1
 
-    nobles = db.execute(
-        text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
-        {"kid": kid}
-    ).fetchone()[0]
+    nobles = _count_records(db, "kingdom_nobles", kid)
 
-    knights = db.execute(
-        text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
-        {"kid": kid}
-    ).fetchone()[0]
+    knights = _count_records(db, "kingdom_knights", kid)
 
-    villages = db.execute(
-        text("SELECT COUNT(*) FROM kingdom_villages WHERE kingdom_id = :kid"),
-        {"kid": kid}
-    ).fetchone()[0]
+    villages = _count_records(db, "kingdom_villages", kid)
 
     used_slots = db.execute(
         text("SELECT used_slots FROM kingdom_troop_slots WHERE kingdom_id = :kid"),

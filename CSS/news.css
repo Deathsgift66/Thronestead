@@ -75,18 +75,7 @@ body {
   margin-bottom: 1rem;
 }
 
-.action-btn {
-  display: inline-block;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: var(--border-radius-small);
-  background: var(--accent);
-  color: #fff;
-}
 
-.action-btn:hover {
-  background: var(--highlight);
-}
 
 @media (max-width: 768px) {
   .news-container {
