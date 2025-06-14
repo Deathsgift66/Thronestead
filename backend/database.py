@@ -1,32 +1,65 @@
 # Project Name: Kingmakers Rise©
 # File Name: database.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49
 # Developer: Deathsgift66
-"""Optional SQLAlchemy database engine for migrations and tests."""
 
-import logging
+"""
+This module configures the SQLAlchemy engine and session factory
+for database access in Kingmakers Rise©.
+
+Used for real-time backend services, migrations, and test environments.
+"""
+
 import os
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError
+from typing import Generator, Optional
 
+# Initialize logger
+logger = logging.getLogger("KingmakersRise.Database")
+
+# Load database URL from environment (e.g., Render, local .env, CI/CD)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Globals (for app-wide SQLAlchemy access)
+engine = None
+SessionLocal: Optional[sessionmaker] = None
+Session: Optional[sessionmaker] = None
+
 if DATABASE_URL:
-    engine = create_engine(DATABASE_URL)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    # Provide a backward compatible alias used in some modules/tests
-    Session = SessionLocal
+    try:
+        # Create SQLAlchemy engine
+        engine = create_engine(
+            DATABASE_URL,
+            pool_pre_ping=True,      # Helps detect dead connections
+            pool_recycle=280,        # Recycles stale connections to prevent timeout
+        )
+
+        # Create a configured session factory
+        SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+        Session = SessionLocal  # legacy alias support
+        logger.info("✅ SQLAlchemy engine initialized successfully.")
+    except OperationalError as err:
+        logger.error("❌ Failed to initialize SQLAlchemy engine.")
+        logger.exception(err)
+        engine = None
+        SessionLocal = None
+        Session = None
 else:
-    engine = None
-    SessionLocal = None
-    Session = None  # type: ignore
-    logging.warning("DATABASE_URL not set; SQLAlchemy engine disabled")
+    logger.warning("⚠️ DATABASE_URL is not set. SQLAlchemy is disabled.")
 
+def get_db() -> Generator:
+    """
+    Yields a new SQLAlchemy session and ensures it closes after use.
 
-
-def get_db():
+    Usage:
+        with next(get_db()) as db:
+            # use db session
+    """
     if SessionLocal is None:
-        raise RuntimeError("DATABASE_URL not configured")
+        raise RuntimeError("DATABASE_URL not configured. Cannot create DB session.")
 
     db = SessionLocal()
     try:
