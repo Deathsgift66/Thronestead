@@ -1,86 +1,103 @@
 # Project Name: Kingmakers Rise©
 # File Name: audit_service.py
-# Version 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Enhanced)
 # Developer: Deathsgift66
+# Description: Audit and activity tracking services for players, alliances, and system actions.
+
 import logging
+from typing import Optional
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover - fallback when SQLAlchemy isn't installed
-    text = lambda q: q  # type: ignore
-    Session = object  # type: ignore
+logger = logging.getLogger(__name__)
 
+# ------------------------
+# Core Audit Log Functions
+# ------------------------
 
-def log_action(db: Session, user_id: str | None, action: str, details: str) -> None:
-    """Insert a new audit log entry."""
-    db.execute(
-        text(
-            "INSERT INTO audit_log (user_id, action, details) "
-            "VALUES (:uid, :act, :det)"
-        ),
-        {"uid": user_id, "act": action, "det": details},
-    )
-    db.commit()
-
-
-def fetch_logs(db: Session, user_id: str | None = None, limit: int = 100) -> list[dict]:
-    """Fetch audit log entries, optionally filtered by user."""
-    if user_id:
-        rows = db.execute(
-            text(
-                "SELECT log_id, user_id, action, details, created_at "
-                "FROM audit_log "
-                "WHERE user_id = :uid "
-                "ORDER BY created_at DESC "
-                "LIMIT :limit"
-            ),
-            {"uid": user_id, "limit": limit},
-        ).fetchall()
-    else:
-        rows = db.execute(
-            text(
-                "SELECT log_id, user_id, action, details, created_at "
-                "FROM audit_log "
-                "ORDER BY created_at DESC "
-                "LIMIT :limit"
-            ),
-            {"limit": limit},
-        ).fetchall()
-
-    return [
-        {
-            "log_id": r[0],
-            "user_id": r[1],
-            "action": r[2],
-            "details": r[3],
-            "created_at": r[4],
-        }
-        for r in rows
-    ]
+def log_action(db: Session, user_id: Optional[str], action: str, details: str) -> None:
+    """Insert a global user action into the audit_log table."""
+    try:
+        db.execute(
+            text("""
+                INSERT INTO audit_log (user_id, action, details)
+                VALUES (:uid, :act, :det)
+            """),
+            {"uid": user_id, "act": action, "det": details},
+        )
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception("Failed to log action: %s", action)
+        raise RuntimeError("Audit log failed") from e
 
 
-def log_alliance_activity(db: Session, alliance_id: int, user_id: str | None, action: str, description: str) -> None:
-    """Insert a new alliance activity log entry."""
-    db.execute(
-        text(
-            "INSERT INTO alliance_activity_log (alliance_id, user_id, action, description) "
-            "VALUES (:aid, :uid, :act, :desc)"
-        ),
-        {"aid": alliance_id, "uid": user_id, "act": action, "desc": description},
-    )
-    db.commit()
+def fetch_logs(db: Session, user_id: Optional[str] = None, limit: int = 100) -> list[dict]:
+    """
+    Fetch global audit log entries. Can filter by user.
+    Returns a list of dicts with keys: log_id, user_id, action, details, created_at.
+    """
+    try:
+        query = """
+            SELECT log_id, user_id, action, details, created_at
+              FROM audit_log
+             WHERE (:uid IS NULL OR user_id = :uid)
+             ORDER BY created_at DESC
+             LIMIT :limit
+        """
+        rows = db.execute(text(query), {"uid": user_id, "limit": limit}).fetchall()
+        return [
+            {
+                "log_id": r[0],
+                "user_id": r[1],
+                "action": r[2],
+                "details": r[3],
+                "created_at": r[4],
+            }
+            for r in rows
+        ]
+    except SQLAlchemyError as e:
+        logger.exception("Failed to fetch audit logs")
+        raise RuntimeError("Audit fetch failed") from e
 
+
+# ------------------------
+# Alliance Activity Logging
+# ------------------------
+
+def log_alliance_activity(db: Session, alliance_id: int, user_id: Optional[str], action: str, description: str) -> None:
+    """Insert a new alliance-level action into alliance_activity_log."""
+    try:
+        db.execute(
+            text("""
+                INSERT INTO alliance_activity_log (alliance_id, user_id, action, description)
+                VALUES (:aid, :uid, :act, :desc)
+            """),
+            {"aid": alliance_id, "uid": user_id, "act": action, "desc": description},
+        )
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception("Failed to log alliance activity")
+        raise RuntimeError("Alliance activity log failed") from e
+
+
+# ------------------------
+# Flexible Filtering
+# ------------------------
 
 def fetch_filtered_logs(
     db: Session,
-    user_id: str | None = None,
-    action: str | None = None,
-    date_from: str | None = None,
-    date_to: str | None = None,
+    user_id: Optional[str] = None,
+    action: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
     limit: int = 100,
 ) -> list[dict]:
-    """Fetch audit logs with optional filters."""
+    """
+    Filter audit logs by optional user ID, action keyword, and date range.
+    """
     query = "SELECT log_id, user_id, action, details, created_at FROM audit_log WHERE 1=1"
     params = {"limit": limit}
     if user_id:
@@ -96,30 +113,45 @@ def fetch_filtered_logs(
         query += " AND created_at <= :date_to"
         params["date_to"] = date_to
     query += " ORDER BY created_at DESC LIMIT :limit"
-    rows = db.execute(text(query), params).fetchall()
-    return [
-        {
-            "log_id": r[0],
-            "user_id": r[1],
-            "action": r[2],
-            "details": r[3],
-            "created_at": r[4],
-        }
-        for r in rows
-    ]
 
+    try:
+        rows = db.execute(text(query), params).fetchall()
+        return [
+            {
+                "log_id": r[0],
+                "user_id": r[1],
+                "action": r[2],
+                "details": r[3],
+                "created_at": r[4],
+            }
+            for r in rows
+        ]
+    except SQLAlchemyError as e:
+        logger.exception("Filtered audit query failed")
+        raise RuntimeError("Filtered audit fetch failed") from e
+
+
+# ------------------------
+# Deep Audit by User
+# ------------------------
 
 def fetch_user_related_logs(db: Session, user_id: str) -> dict:
-    """Return logs from multiple tables related to a specific user."""
+    """
+    Collect logs from all relevant tables linked to the specified user.
+    Includes: audit_log, alliance_activity_log, vault, grants, loans, training.
+    """
     def q(sql: str) -> list[dict]:
         rows = db.execute(text(sql), {"uid": user_id}).fetchall()
-        return [dict(r._mapping) if hasattr(r, "_mapping") else dict(zip(range(len(r)), r)) for r in rows]
+        return [
+            dict(r._mapping) if hasattr(r, "_mapping") else dict(zip(range(len(r)), r))
+            for r in rows
+        ]
 
     return {
         "global": fetch_filtered_logs(db, user_id=user_id, limit=100),
         "alliance": q("SELECT * FROM alliance_activity_log WHERE user_id = :uid ORDER BY created_at DESC"),
         "vault": q("SELECT * FROM alliance_vault_transaction_log WHERE user_id = :uid ORDER BY created_at DESC"),
-        "grants": q("SELECT * FROM alliance_grants WHERE recipient_user_id = :uid ORDER BY created_at DESC"),
+        "grants": q("SELECT * FROM alliance_grants WHERE recipient_user_id = :uid ORDER BY granted_at DESC"),
         "loans": q("SELECT * FROM alliance_loans WHERE borrower_user_id = :uid ORDER BY created_at DESC"),
-        "training": q("SELECT * FROM training_history WHERE trained_by = :uid ORDER BY created_at DESC"),
+        "training": q("SELECT * FROM training_history WHERE trained_by = :uid ORDER BY initiated_at DESC"),
     }
