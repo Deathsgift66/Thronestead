@@ -18,8 +18,12 @@ except ImportError:  # pragma: no cover
 
 try:
     from backend.supabase_channels import broadcast_notification  # Optional live update support
-except ImportError:
-    def broadcast_notification(*args, **kwargs): pass  # fallback
+except ImportError:  # pragma: no cover - fallback when realtime is unavailable
+    def broadcast_notification(channel: str, target: str, message: str) -> None:
+        """Fallback notifier when Supabase channels are missing."""
+        logging.getLogger("KingmakersRise.NotificationFallback").info(
+            "[Fallback] %s -> %s: %s", channel, target, message
+        )
 
 logger = logging.getLogger(__name__)
 
