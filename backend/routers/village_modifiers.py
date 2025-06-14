@@ -20,9 +20,9 @@ class ModifierPayload(BaseModel):
     village_id: int
     resource_bonus: dict | None = None
     troop_bonus: dict | None = None
-    construction_speed_bonus: int | None = None
-    defense_bonus: int | None = None
-    trade_bonus: int | None = None
+    construction_speed_bonus: float | None = None
+    defense_bonus: float | None = None
+    trade_bonus: float | None = None
     source: str
     stacking_rules: dict | None = None
     expires_at: datetime | None = None
@@ -48,7 +48,6 @@ def list_modifiers(village_id: int, db: Session = Depends(get_db)):
     return {
         "modifiers": [
             {
-                "modifier_id": r.modifier_id,
                 "village_id": r.village_id,
                 "resource_bonus": r.resource_bonus,
                 "troop_bonus": r.troop_bonus,
@@ -74,14 +73,9 @@ def apply_modifier(payload: ModifierPayload, db: Session = Depends(get_db)):
     Apply or update a modifier for a specific village based on the source tag.
     This supports stacking rules and time-based expiration.
     """
-    existing = (
-        db.query(VillageModifier)
-        .filter(
-            VillageModifier.village_id == payload.village_id,
-            VillageModifier.source == payload.source,
-        )
-        .first()
-    )
+    existing = db.query(VillageModifier).filter(
+        VillageModifier.village_id == payload.village_id
+    ).first()
 
     if existing:
         # Update existing modifier

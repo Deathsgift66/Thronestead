@@ -62,23 +62,12 @@ class User(Base):
 class PlayerMessage(Base):
     __tablename__ = "player_messages"
 
-    message_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL")
-    )
-    recipient_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL")
-    )
-    subject = Column(Text)
+    message_id = Column(Integer, primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    recipient_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     message = Column(Text)
-    category = Column(String, default="player")
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
-    deleted_by_sender = Column(Boolean, default=False)
-    deleted_by_recipient = Column(Boolean, default=False)
-    last_updated = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
 
 
 class Alliance(Base):
@@ -598,7 +587,7 @@ class KingdomSpies(Base):
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
     spy_level = Column(Integer, default=1)
     spy_count = Column(Integer, default=0)
-    max_spy_capacity = Column(Integer, default=0)
+    max_spy_capacity = Column(Integer, default=10)
     spy_xp = Column(Integer, default=0)
     spy_upkeep_gold = Column(Integer, default=0)
     last_mission_at = Column(DateTime(timezone=True))
@@ -617,21 +606,24 @@ class VillageModifier(Base):
 
     __tablename__ = "village_modifiers"
 
-    modifier_id = Column(Integer, primary_key=True)
-    village_id = Column(Integer, index=True)
-    resource_bonus = Column(JSONB, default={})
-    troop_bonus = Column(JSONB, default={})
-    construction_speed_bonus = Column(Integer, default=0)
-    defense_bonus = Column(Integer, default=0)
-    trade_bonus = Column(Integer, default=0)
-    source = Column(String)
-    stacking_rules = Column(JSONB, default={})
-    expires_at = Column(DateTime(timezone=True))
-    applied_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    village_id = Column(
+        Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
+    )
+    resource_bonus = Column(JSONB, default=dict)
+    troop_bonus = Column(JSONB, default=dict)
+    construction_speed_bonus = Column(Numeric, default=0)
+    defense_bonus = Column(Numeric, default=0)
+    trade_bonus = Column(Numeric, default=0)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    source = Column(String, default="system")
+    stacking_rules = Column(JSONB, default=dict)
+    expires_at = Column(DateTime(timezone=True))
+    applied_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    wood_output_bonus = Column(Numeric, default=0)
+    troop_training_speed = Column(Numeric, default=0)
 
 
 class VillageProduction(Base):
@@ -643,16 +635,17 @@ class VillageProduction(Base):
         Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
     )
     resource_type = Column(String, primary_key=True)
-    amount_produced = Column(Numeric, default=0)
-    production_rate = Column(Numeric, default=0)
-    active_modifiers = Column(JSONB, default={})
-    last_collected_at = Column(DateTime(timezone=True))
-    collection_method = Column(String)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    amount_produced = Column(BigInteger, default=0)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    production_rate = Column(Numeric, default=0)
+    active_modifiers = Column(JSONB, default=dict)
+    last_collected_at = Column(DateTime(timezone=True))
+    collection_method = Column(String, server_default="automatic")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    seasonal_multiplier = Column(Numeric, default=1)
 
 
 class SpyMission(Base):
@@ -673,7 +666,6 @@ class GameSetting(Base):
     __tablename__ = "game_settings"
 
     setting_key = Column(String, primary_key=True)
-    setting_value = Column(JSONB)
     setting_type = Column(String)
     description = Column(Text)
     default_value = Column(JSONB)
@@ -682,6 +674,9 @@ class GameSetting(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    setting_string = Column(String)
+    setting_number = Column(Numeric)
+    setting_boolean = Column(Boolean, default=False)
 
 
 class KingdomHistoryLog(Base):

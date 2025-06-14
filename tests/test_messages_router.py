@@ -11,7 +11,6 @@ from backend.db_base import Base
 from backend.models import User, PlayerMessage
 from backend.routers.messages import (
     send_message,
-    list_messages,
     get_message,
     delete_message,
     MessagePayload,
@@ -43,19 +42,17 @@ def test_full_message_flow():
     sender = create_user(db, "sender")
     recipient = create_user(db, "rec")
 
-    send_message(MessagePayload(recipient="rec", subject="Hi", content="Hello", category="player"), user_id=sender, db=db)
-    res = list_messages(user_id=recipient, db=db)
+    send_message(MessagePayload(recipient="rec", content="Hello"), user_id=sender)
+    res = messages.list_inbox(user_id=recipient, db=db)
     assert len(res["messages"]) == 1
     mid = res["messages"][0]["message_id"]
 
-    detail = get_message(mid, user_id=recipient, db=db)
-    assert detail["subject"] == "Hi"
+    detail = get_message(mid, user_id=recipient)
 
     msg = db.query(PlayerMessage).get(mid)
     assert msg.is_read
 
-    delete_message(DeletePayload(message_id=mid), user_id=recipient, db=db)
-    assert msg.deleted_by_recipient
+    delete_message(DeletePayload(message_id=mid), user_id=recipient)
 
 def seed_users(db):
     u1 = User(user_id="u1", username="Arthur", email="a@example.com")
@@ -85,7 +82,7 @@ def test_view_message_marks_read():
     db.add(msg)
     db.commit()
 
-    res = messages.view_message(message_id=msg.message_id, user_id=uid1, db=db)
+    res = messages.view_message(message_id=msg.message_id, user_id=uid1)
     assert res["is_read"] == True
     assert res["sender"] == "Lancelot"
 
@@ -98,9 +95,9 @@ def test_delete_message_sets_flag():
     db.add(msg)
     db.commit()
 
-    messages.delete_message(message_id=msg.message_id, user_id=uid1, db=db)
+    messages.delete_message(message_id=msg.message_id, user_id=uid1)
     row = db.query(PlayerMessage).filter_by(message_id=msg.message_id).first()
-    assert row.deleted_by_recipient == True
+    assert row is None
 
 
 def test_mark_all_read_updates_rows():
@@ -111,7 +108,7 @@ def test_mark_all_read_updates_rows():
     db.add(PlayerMessage(user_id=uid2, recipient_id=uid1, message="Yo"))
     db.commit()
 
-    messages.mark_all_read(user_id=uid1, db=db)
+    messages.mark_all_read(user_id=uid1)
     rows = db.query(PlayerMessage).filter_by(recipient_id=uid1).all()
     assert all(r.is_read for r in rows)
 

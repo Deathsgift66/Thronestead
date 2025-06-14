@@ -15,9 +15,7 @@ router = APIRouter(prefix="/api/messages", tags=["messages"])
 
 class MessagePayload(BaseModel):
     recipient: str
-    subject: str | None = None
     content: str
-    category: str | None = "player"
 
     _TAG_RE = re.compile(r"<[^>]+>")
 
@@ -42,9 +40,8 @@ def get_inbox(user_id: str = Depends(verify_jwt_token)):
     supabase = get_supabase_client()
     res = (
         supabase.table("player_messages")
-        .select("message_id,subject,message,category,sent_at,is_read,user_id,users(username)")
+        .select("message_id,message,sent_at,is_read,user_id,users(username)")
         .eq("recipient_id", user_id)
-        .eq("deleted_by_recipient", False)
         .order("sent_at", desc=True)
         .limit(100)
         .execute()
@@ -54,9 +51,7 @@ def get_inbox(user_id: str = Depends(verify_jwt_token)):
         "messages": [
             {
                 "message_id": r["message_id"],
-                "subject": r["subject"],
                 "message": r["message"],
-                "category": r.get("category"),
                 "sent_at": r["sent_at"],
                 "is_read": r["is_read"],
                 "sender": r.get("users", {}).get("username"),
@@ -89,9 +84,7 @@ def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
     r = res.data
     return {
         "message_id": r["message_id"],
-        "subject": r["subject"],
         "message": r["message"],
-        "category": r.get("category"),
         "sent_at": r["sent_at"],
         "is_read": True,
         "user_id": r["user_id"],
@@ -121,9 +114,7 @@ def send_message(payload: MessagePayload, user_id: str = Depends(verify_jwt_toke
             {
                 "recipient_id": res.data["user_id"],
                 "user_id": user_id,
-                "subject": payload.subject,
                 "message": payload.content,
-                "category": payload.category,
             }
         )
         .execute()
@@ -151,9 +142,7 @@ def delete_message(payload: DeletePayload, user_id: str = Depends(verify_jwt_tok
     if not verify.data:
         raise HTTPException(status_code=404, detail="Message not found")
 
-    supabase.table("player_messages").update({"deleted_by_recipient": True}).eq(
-        "message_id", payload.message_id
-    ).execute()
+    supabase.table("player_messages").delete().eq("message_id", payload.message_id).execute()
 
     return {"status": "deleted", "message_id": payload.message_id}
 
@@ -166,3 +155,7 @@ def mark_all_messages_read(user_id: str = Depends(verify_jwt_token)):
     supabase = get_supabase_client()
     supabase.table("player_messages").update({"is_read": True}).eq("recipient_id", user_id).execute()
     return {"message": "All marked read"}
+
+# Aliases used by internal tests
+list_inbox = get_inbox
+view_message = get_message
