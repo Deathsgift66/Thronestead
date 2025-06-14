@@ -7,6 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend.models import Alliance
+from services.alliance_treaty_service import list_active_treaties
+
 from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
@@ -15,12 +18,20 @@ router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy"])
 
 
 @router.get("/alliances")
-def list_known_alliances():
-    """
-    Placeholder route to list alliances available for diplomacy.
-    Expected to be replaced with a live Supabase query to public.alliances.
-    """
-    return {"alliances": []}
+def list_known_alliances(db: Session = Depends(get_db)):
+    """Return a list of alliances available for diplomacy."""
+    rows = (
+        db.query(Alliance.alliance_id, Alliance.name)
+        .order_by(Alliance.name)
+        .limit(100)
+        .all()
+    )
+    return {
+        "alliances": [
+            {"alliance_id": r.alliance_id, "name": r.name}
+            for r in rows
+        ]
+    }
 
 
 @router.get("/treaties")
@@ -44,14 +55,27 @@ async def list_treaties(
     if nobles_count == 0:
         raise HTTPException(status_code=403, detail="No nobles available for diplomacy.")
 
-    # Placeholder for future treaty fetch (e.g., SELECT * FROM alliance_treaties WHERE ...)
-    return {"treaties": []}
+    aid_row = db.execute(
+        text("SELECT alliance_id FROM kingdoms WHERE kingdom_id = :kid"),
+        {"kid": kid},
+    ).fetchone()
+    if not aid_row or aid_row[0] is None:
+        return {"treaties": []}
+
+    treaties = list_active_treaties(db, aid_row[0])
+    return {"treaties": treaties}
 
 
 @router.get("/conflicts")
-def list_diplomatic_conflicts():
-    """
-    Placeholder endpoint for conflicts relevant to diplomacy (e.g., embargoes, trade wars).
-    In future, can return active non-war disputes between kingdoms or alliances.
-    """
-    return {"conflicts": []}
+def list_diplomatic_conflicts(db: Session = Depends(get_db)):
+    """Return active non-war disputes between kingdoms or alliances."""
+    rows = db.execute(
+        text(
+            """
+            SELECT conflict_id, conflict_type, attacker_name, defender_name, status
+              FROM diplomacy_conflicts
+             WHERE status != 'resolved'
+            """
+        )
+    ).fetchall()
+    return {"conflicts": [dict(r._mapping) for r in rows]}
