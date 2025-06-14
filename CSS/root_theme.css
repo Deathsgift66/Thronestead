@@ -16,6 +16,7 @@ Developer: Deathsgift66
   /* ------------------- COLOR SYSTEM ------------------- */
   --parchment: #f8f1dc;
   --parchment-dark: #e6d8b8;
+  --parchment-light: #d8caa5;
   --stone-bg: #2e2b27;
   --stone-panel: #3b3631;
   --leather: #8b4513;
@@ -503,5 +504,5 @@ body[data-theme="parchment"] {
 .alliance-members-container p {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
-  color: #d8caa5;
+  color: var(--parchment-light);
 }
