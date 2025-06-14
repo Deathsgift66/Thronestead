@@ -1,11 +1,14 @@
 # Project Name: Kingmakers Rise©
 # File Name: alliance_treaties_router.py
-# Version 6.13.2025.19.49
+# Version 6.13.2025.20.00
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from typing import Optional
+from datetime import datetime
 
 from ..database import get_db
 from ..security import require_user_id
@@ -14,17 +17,21 @@ from services.audit_service import log_action, log_alliance_activity
 router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
 
 
+# --- Payload Models ---
+
 class ProposePayload(BaseModel):
     treaty_type: str
     partner_alliance_id: int
-    notes: str | None = None
-    end_date: str | None = None
+    notes: Optional[str] = None
+    end_date: Optional[str] = None  # ISO format
 
 
 class RespondPayload(BaseModel):
     treaty_id: int
-    action: str
+    action: str  # "accept" or "cancel"
 
+
+# --- Utility Methods ---
 
 def get_alliance_id(db: Session, user_id: str) -> int:
     row = db.execute(
@@ -56,20 +63,22 @@ def validate_alliance_permission(db: Session, user_id: str, permission: str) -> 
     return alliance_id
 
 
+# --- Endpoints ---
+
 @router.get("/my-treaties")
 def get_my_treaties(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     aid = get_alliance_id(db, user_id)
     rows = db.execute(
-        text(
-            """
-            SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at, end_date, notes
+        text("""
+            SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id,
+                   status, signed_at, end_date, notes
               FROM alliance_treaties
              WHERE alliance_id = :aid OR partner_alliance_id = :aid
              ORDER BY signed_at DESC
-            """
-        ),
+        """),
         {"aid": aid},
     ).fetchall()
+
     return {
         "treaties": [
             {
@@ -94,11 +103,18 @@ def propose_treaty(
     db: Session = Depends(get_db),
 ):
     aid = validate_alliance_permission(db, user_id, "can_manage_treaties")
+
+    # Ensure not proposing with self
+    if aid == payload.partner_alliance_id:
+        raise HTTPException(status_code=400, detail="Cannot propose treaty to self")
+
     db.execute(
-        text(
-            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, notes, end_date) "
-            "VALUES (:aid, :type, :pid, 'proposed', :notes, :ed)"
-        ),
+        text("""
+            INSERT INTO alliance_treaties
+                (alliance_id, treaty_type, partner_alliance_id, status, notes, end_date)
+             VALUES
+                (:aid, :type, :pid, 'proposed', :notes, :ed)
+        """),
         {
             "aid": aid,
             "type": payload.treaty_type,
@@ -120,60 +136,73 @@ def respond_to_treaty(
     db: Session = Depends(get_db),
 ):
     treaty = db.execute(
-        text(
-            "SELECT alliance_id, partner_alliance_id FROM alliance_treaties WHERE treaty_id = :tid"
-        ),
+        text("SELECT alliance_id, partner_alliance_id FROM alliance_treaties WHERE treaty_id = :tid"),
         {"tid": payload.treaty_id},
     ).fetchone()
+
     if not treaty:
         raise HTTPException(status_code=404, detail="Treaty not found")
+
     aid = get_alliance_id(db, user_id)
     if aid not in treaty:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    if payload.action == "accept":
-        status = "active"
-    elif payload.action == "cancel":
-        status = "cancelled"
-    else:
+    if payload.action not in {"accept", "cancel"}:
         raise HTTPException(status_code=400, detail="Invalid action")
 
+    new_status = "active" if payload.action == "accept" else "cancelled"
+
     db.execute(
-        text(
-            "UPDATE alliance_treaties SET status = :st, signed_at = now() WHERE treaty_id = :tid"
-        ),
-        {"st": status, "tid": payload.treaty_id},
+        text("""
+            UPDATE alliance_treaties
+               SET status = :st, signed_at = NOW()
+             WHERE treaty_id = :tid
+        """),
+        {"st": new_status, "tid": payload.treaty_id},
     )
     db.commit()
-    log_alliance_activity(db, aid, user_id, f"Treaty {status.capitalize()}", str(payload.treaty_id))
-    log_action(db, user_id, f"Treaty {status}", str(payload.treaty_id))
-    return {"status": status}
+    log_alliance_activity(db, aid, user_id, f"Treaty {new_status.title()}", str(payload.treaty_id))
+    log_action(db, user_id, f"Treaty {new_status}", str(payload.treaty_id))
+    return {"status": new_status}
 
 
 @router.post("/renew")
 def renew_treaty(
     treaty_id: int,
-    end_date: str | None = None,
+    end_date: Optional[str] = None,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     row = db.execute(
-        text(
-            "SELECT alliance_id, partner_alliance_id, treaty_type FROM alliance_treaties WHERE treaty_id = :tid"
-        ),
+        text("""
+            SELECT alliance_id, partner_alliance_id, treaty_type
+              FROM alliance_treaties
+             WHERE treaty_id = :tid
+        """),
         {"tid": treaty_id},
     ).fetchone()
+
     if not row:
         raise HTTPException(status_code=404, detail="Treaty not found")
+
     aid = get_alliance_id(db, user_id)
-    if aid not in row[:2]:
+    if aid not in (row[0], row[1]):
         raise HTTPException(status_code=403, detail="Not authorized")
-    db.execute(text("UPDATE alliance_treaties SET status = 'expired' WHERE treaty_id = :tid"), {"tid": treaty_id})
+
+    # Expire old treaty
     db.execute(
-        text(
-            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, end_date) "
-            "VALUES (:aid, :type, :pid, 'active', :ed)"
-        ),
+        text("UPDATE alliance_treaties SET status = 'expired' WHERE treaty_id = :tid"),
+        {"tid": treaty_id},
+    )
+
+    # Insert renewed
+    db.execute(
+        text("""
+            INSERT INTO alliance_treaties
+                (alliance_id, treaty_type, partner_alliance_id, status, end_date)
+             VALUES
+                (:aid, :type, :pid, 'active', :ed)
+        """),
         {"aid": row[0], "type": row[2], "pid": row[1], "ed": end_date},
     )
     db.commit()
@@ -189,17 +218,22 @@ def view_treaty(
     db: Session = Depends(get_db),
 ):
     row = db.execute(
-        text(
-            "SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at, end_date, notes "
-            "FROM alliance_treaties WHERE treaty_id = :tid"
-        ),
+        text("""
+            SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id,
+                   status, signed_at, end_date, notes
+              FROM alliance_treaties
+             WHERE treaty_id = :tid
+        """),
         {"tid": treaty_id},
     ).fetchone()
+
     if not row:
         raise HTTPException(status_code=404, detail="Treaty not found")
+
     aid = get_alliance_id(db, user_id)
     if aid not in (row[1], row[3]):
         raise HTTPException(status_code=403, detail="Not authorized")
+
     return {
         "treaty_id": row[0],
         "alliance_id": row[1],
