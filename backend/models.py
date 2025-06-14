@@ -759,6 +759,8 @@ class QuestAllianceCatalogue(Base):
     category = Column(String)
     objectives = Column(JSONB, default={})
     rewards = Column(JSONB, default={})
+    objective_type = Column(String)
+    reward_gold = Column(Integer, default=0)
     required_level = Column(Integer, default=1)
     repeatable = Column(Boolean, default=True)
     max_attempts = Column(Integer)
@@ -786,7 +788,6 @@ class QuestAllianceTracking(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     attempt_count = Column(Integer, default=1)
-    reward_claimed = Column(Boolean, default=False)
     started_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
