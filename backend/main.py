@@ -167,4 +167,5 @@ app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 # -----------------------
 @app.get("/health-check")
 def health_check():
+    """Simple endpoint used for uptime checks and load balancers."""
     return {"status": "online", "service": "Kingmaker's Rise API"}

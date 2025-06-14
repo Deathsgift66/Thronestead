@@ -7,6 +7,11 @@ import { escapeHTML, setText, formatDate, fragmentFrom } from './utils.js';
 
 let activityChannel = null;
 
+// Clean up realtime connections when leaving the page
+window.addEventListener('beforeunload', () => {
+  if (activityChannel) supabase.removeChannel(activityChannel);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user?.id) {
@@ -228,6 +233,10 @@ function renderWarScore(wars = []) {
 
 // === Realtime Activity Logging ===
 
+/**
+ * Subscribe to alliance activity feed via Supabase realtime.
+ * @param {number|string} allianceId Alliance identifier
+ */
 function setupRealtime(allianceId) {
   if (!allianceId) return;
   if (activityChannel) supabase.removeChannel(activityChannel);
@@ -247,6 +256,10 @@ function setupRealtime(allianceId) {
     .subscribe();
 }
 
+/**
+ * Prepend an activity entry to the log, keeping the last 20 entries.
+ * @param {object} entry Activity payload
+ */
 function addActivityEntry(entry) {
   const list = document.getElementById('activity-log');
   if (!list) return;
