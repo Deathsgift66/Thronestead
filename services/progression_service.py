@@ -5,6 +5,7 @@
 # Description: Utility service for calculating troop slots, verifying progression gates, and merging live gameplay modifiers.
 
 import logging
+import time
 
 from fastapi import HTTPException
 
@@ -20,23 +21,24 @@ except ImportError:  # pragma: no cover
 try:
     from backend.data import (
         vip_levels,
-        player_titles,
         prestige_scores,
         kingdom_treaties,
-        alliance_treaties,
         kingdom_spies,
         global_game_settings,
     )
 except ImportError:
     vip_levels = {}
-    player_titles = {}
     prestige_scores = {}
     kingdom_treaties = {}
-    alliance_treaties = {}
     kingdom_spies = {}
     global_game_settings = {}
 
 logger = logging.getLogger(__name__)
+
+# Cached modifier data to reduce expensive aggregation queries.
+_modifier_cache: dict[int, tuple[float, dict]] = {}
+# Number of seconds before cached modifiers expire.
+_CACHE_TTL = 60
 
 # --------------------------------------------------------
 # Troop Slot Calculation
@@ -169,13 +171,160 @@ def _merge_modifiers(target: dict, mods: dict) -> None:
             bucket[key] = bucket.get(key, 0) + val
 
 
-def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
-    """
-    Aggregates all modifiers from regions, research, temples, projects, VIP, and other systems.
+def _region_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers granted by the kingdom's region."""
+    region_code = db.execute(
+        text("SELECT region FROM kingdoms WHERE kingdom_id = :kid"),
+        {"kid": kingdom_id},
+    ).scalar()
+    if not region_code:
+        return {}
+    row = db.execute(
+        text(
+            "SELECT resource_bonus, troop_bonus FROM region_catalogue WHERE region_code = :code"
+        ),
+        {"code": region_code},
+    ).fetchone()
+    if not row:
+        return {}
+    return {
+        "resource_bonus": row[0] or {},
+        "troop_bonus": row[1] or {},
+    }
 
-    Returns:
-        dict: a nested dictionary of modifier categories and keys
-    """
+
+def _tech_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers from completed research techs."""
+    rows = db.execute(
+        text(
+            """
+            SELECT tc.modifiers FROM kingdom_research_tracking krt
+            JOIN tech_catalogue tc ON tc.tech_code = krt.tech_code
+            WHERE krt.kingdom_id = :kid AND krt.status = 'completed'
+        """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    mods: dict = {}
+    for (m,) in rows:
+        _merge_modifiers(mods, m or {})
+    return mods
+
+
+def _temple_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers from active temples."""
+    rows = db.execute(
+        text(
+            """
+            SELECT bc.modifiers FROM village_buildings vb
+            JOIN kingdom_villages kv ON vb.village_id = kv.village_id
+            JOIN building_catalogue bc ON vb.building_id = bc.building_id
+            WHERE kv.kingdom_id = :kid
+              AND bc.production_type = 'temple'
+              AND vb.construction_status = 'complete'
+        """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    mods: dict = {}
+    for (m,) in rows:
+        _merge_modifiers(mods, m or {})
+    return mods
+
+
+def _kingdom_project_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers from a kingdom's completed projects."""
+    rows = db.execute(
+        text(
+            """
+            SELECT pc.modifiers FROM projects_player pp
+            JOIN project_player_catalogue pc ON pp.project_code = pc.project_code
+            WHERE pp.kingdom_id = :kid
+        """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    mods: dict = {}
+    for (m,) in rows:
+        _merge_modifiers(mods, m or {})
+    return mods
+
+
+def _alliance_project_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers from alliance projects."""
+    rows = db.execute(
+        text(
+            """
+            SELECT pa.modifiers FROM projects_alliance pa
+            WHERE pa.alliance_id IN (
+                SELECT alliance_id FROM alliance_members
+                WHERE user_id = (SELECT user_id FROM kingdoms WHERE kingdom_id = :kid)
+            )
+              AND pa.is_active = true
+              AND pa.build_state = 'completed'
+        """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    mods: dict = {}
+    for (m,) in rows:
+        _merge_modifiers(mods, m or {})
+    return mods
+
+
+def _vip_modifiers(_: Session, kingdom_id: int) -> dict:
+    """Return modifiers from the VIP level cache."""
+    level = vip_levels.get(str(kingdom_id), 0)
+    return global_game_settings.get("vip_perks", {}).get(level, {})
+
+
+def _prestige_modifiers(_: Session, kingdom_id: int) -> dict:
+    """Return modifiers based on prestige score."""
+    score = prestige_scores.get(str(kingdom_id), 0)
+    if not score:
+        return {}
+    return {"combat_bonus": {"prestige": score // 100}}
+
+
+def _village_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return production modifiers from village count."""
+    count = db.execute(
+        text("SELECT COUNT(*) FROM kingdom_villages WHERE kingdom_id = :kid"),
+        {"kid": kingdom_id},
+    ).scalar()
+    if not count:
+        return {}
+    return {"production_bonus": {"villages": count}}
+
+
+def _treaty_modifiers(_: Session, kingdom_id: int) -> dict:
+    """Return modifiers from active treaties."""
+    total: dict = {}
+    for treaty in kingdom_treaties.get(kingdom_id, []):
+        _merge_modifiers(total, treaty.get("modifiers", {}))
+    return total
+
+
+def _spy_modifiers(_: Session, kingdom_id: int) -> dict:
+    """Return modifiers provided by an active spy."""
+    spy = kingdom_spies.get(kingdom_id)
+    return spy.get("modifiers", {}) if spy else {}
+
+
+def _global_event_modifiers(_: Session, __: int) -> dict:
+    """Return global event modifiers."""
+    return global_game_settings.get("event_modifiers", {})
+
+
+
+def get_total_modifiers(db: Session, kingdom_id: int, *, use_cache: bool = True) -> dict:
+    """Return aggregated modifiers for a kingdom with optional caching."""
+
+    if use_cache:
+        cached = _modifier_cache.get(kingdom_id)
+        if cached and (time.time() - cached[0] < _CACHE_TTL):
+            return cached[1]
+
     total = {
         "resource_bonus": {},
         "troop_bonus": {},
@@ -185,138 +334,28 @@ def get_total_modifiers(db: Session, kingdom_id: int) -> dict:
         "production_bonus": {},
     }
 
-    # Region Bonuses
-    try:
-        region_code = db.execute(
-            text("SELECT region FROM kingdoms WHERE kingdom_id = :kid"),
-            {"kid": kingdom_id},
-        ).scalar()
-        if region_code:
-            row = db.execute(
-                text("SELECT resource_bonus, troop_bonus FROM region_catalogue WHERE region_code = :code"),
-                {"code": region_code},
-            ).fetchone()
-            if row:
-                _merge_modifiers(total, {
-                    "resource_bonus": row[0] or {},
-                    "troop_bonus": row[1] or {},
-                })
-    except Exception as e:
-        logger.warning("Region bonus error: %s", e)
+    sources = [
+        _region_modifiers,
+        _tech_modifiers,
+        _temple_modifiers,
+        _kingdom_project_modifiers,
+        _alliance_project_modifiers,
+        _vip_modifiers,
+        _prestige_modifiers,
+        _village_modifiers,
+        _treaty_modifiers,
+        _spy_modifiers,
+        _global_event_modifiers,
+    ]
 
-    # Completed Techs
-    try:
-        rows = db.execute(
-            text("""
-                SELECT tc.modifiers FROM kingdom_research_tracking krt
-                JOIN tech_catalogue tc ON tc.tech_code = krt.tech_code
-                WHERE krt.kingdom_id = :kid AND krt.status = 'completed'
-            """),
-            {"kid": kingdom_id},
-        ).fetchall()
-        for (mods,) in rows:
-            _merge_modifiers(total, mods or {})
-    except Exception as e:
-        logger.warning("Tech modifier error: %s", e)
+    for func in sources:
+        try:
+            mods = func(db, kingdom_id)
+            _merge_modifiers(total, mods)
+        except Exception as e:
+            logger.warning("%s error: %s", func.__name__, e)
 
-    # Active Temples
-    try:
-        rows = db.execute(
-            text("""
-                SELECT bc.modifiers FROM village_buildings vb
-                JOIN kingdom_villages kv ON vb.village_id = kv.village_id
-                JOIN building_catalogue bc ON vb.building_id = bc.building_id
-                WHERE kv.kingdom_id = :kid
-                  AND bc.production_type = 'temple'
-                  AND vb.construction_status = 'complete'
-            """),
-            {"kid": kingdom_id},
-        ).fetchall()
-        for (mods,) in rows:
-            _merge_modifiers(total, mods or {})
-    except Exception as e:
-        logger.warning("Temple modifier error: %s", e)
-
-    # Kingdom Projects
-    try:
-        rows = db.execute(
-            text("""
-                SELECT pc.modifiers FROM projects_player pp
-                JOIN project_player_catalogue pc ON pp.project_code = pc.project_code
-                WHERE pp.kingdom_id = :kid
-            """),
-            {"kid": kingdom_id},
-        ).fetchall()
-        for (mods,) in rows:
-            _merge_modifiers(total, mods or {})
-    except Exception as e:
-        logger.warning("Kingdom project modifier error: %s", e)
-
-    # Alliance Projects
-    try:
-        rows = db.execute(
-            text("""
-                SELECT pa.modifiers FROM projects_alliance pa
-                WHERE pa.alliance_id IN (
-                    SELECT alliance_id FROM alliance_members
-                    WHERE user_id = (SELECT user_id FROM kingdoms WHERE kingdom_id = :kid)
-                )
-                  AND pa.is_active = true
-                  AND pa.build_state = 'completed'
-            """),
-            {"kid": kingdom_id},
-        ).fetchall()
-        for (mods,) in rows:
-            _merge_modifiers(total, mods or {})
-    except Exception as e:
-        logger.warning("Alliance project modifier error: %s", e)
-
-    # VIP Perks
-    try:
-        level = vip_levels.get(str(kingdom_id), 0)
-        perks = global_game_settings.get("vip_perks", {}).get(level, {})
-        _merge_modifiers(total, perks)
-    except Exception as e:
-        logger.warning("VIP modifier error: %s", e)
-
-    # Prestige Score
-    try:
-        score = prestige_scores.get(str(kingdom_id), 0)
-        if score:
-            _merge_modifiers(total, {"combat_bonus": {"prestige": score // 100}})
-    except Exception as e:
-        logger.warning("Prestige bonus error: %s", e)
-
-    # Village Productivity
-    try:
-        count = db.execute(
-            text("SELECT COUNT(*) FROM kingdom_villages WHERE kingdom_id = :kid"),
-            {"kid": kingdom_id},
-        ).scalar()
-        if count:
-            _merge_modifiers(total, {"production_bonus": {"villages": count}})
-    except Exception as e:
-        logger.warning("Village bonus error: %s", e)
-
-    # Treaty Modifiers
-    try:
-        for treaty in kingdom_treaties.get(kingdom_id, []):
-            _merge_modifiers(total, treaty.get("modifiers", {}))
-    except Exception as e:
-        logger.warning("Treaty modifier error: %s", e)
-
-    # Spy Modifiers
-    try:
-        spy = kingdom_spies.get(kingdom_id)
-        if spy:
-            _merge_modifiers(total, spy.get("modifiers", {}))
-    except Exception as e:
-        logger.warning("Spy modifier error: %s", e)
-
-    # Global Events
-    try:
-        _merge_modifiers(total, global_game_settings.get("event_modifiers", {}))
-    except Exception as e:
-        logger.warning("Global event modifier error: %s", e)
+    if use_cache:
+        _modifier_cache[kingdom_id] = (time.time(), total)
 
     return total
