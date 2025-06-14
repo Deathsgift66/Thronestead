@@ -13,6 +13,11 @@ Developer: Deathsgift66
 
   <title>The Sovereign’s Grand Overseer | Kingmaker's Rise</title>
   <meta name="description" content="VIP village master control panel — oversee all your villages from one interface in Kingmaker’s Rise." />
+  <meta name="keywords" content="Kingmaker's Rise, VIP, sovereign, grand overseer, village master, control panel, management" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.kingmakersrise.com/village_master.html" />
+
+  <!-- Social Preview -->
   <meta property="og:title" content="The Sovereign’s Grand Overseer | Kingmaker's Rise" />
   <meta property="og:description" content="VIP village master control panel — oversee all your villages from one interface in Kingmaker’s Rise." />
   <meta property="og:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
@@ -22,9 +27,7 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="The Sovereign’s Grand Overseer | Kingmaker's Rise" />
   <meta name="twitter:description" content="VIP village master control panel — oversee all your villages from one interface in Kingmaker’s Rise." />
   <meta name="twitter:image" content="https://www.kingmakersrise.com/images/og-preview.jpg" />
-  <meta name="keywords" content="Kingmaker's Rise, VIP, sovereign, grand overseer, village master, control panel, management" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.kingmakersrise.com/village_master.html" />
+  <meta name="theme-color" content="#2e2b27" />
 
   <!-- Page-Specific Assets -->
   <link rel="stylesheet" href="CSS/village_master.css" />
@@ -34,17 +37,16 @@ Developer: Deathsgift66
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script type="module" src="Javascript/navDropdown.js"></script>
   <script type="module" src="Javascript/components/authGuard.js"></script>
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
   <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
 
 <body>
 
-
 <!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script>
   fetch('/navbar.html')
     .then(res => res.text())
@@ -58,77 +60,72 @@ Developer: Deathsgift66
   Kingmaker's Rise — The Sovereign’s Grand Overseer
 </header>
 
-<!-- Main Centered Layout -->
+<!-- Main Layout -->
 <main id="main-content" class="main-centered-container" aria-label="Village Master Interface">
 
- 
+  <!-- Master Panel -->
+  <section class="alliance-members-container" role="region" aria-labelledby="sovereign-title">
+    <h2 id="sovereign-title" class="visually-hidden">The Sovereign’s Grand Overseer Panel</h2>
 
-  <!-- Core Overseer Panel -->
-  <section class="alliance-members-container">
-
-    <!-- Sovereign Page -->
     <div class="sovereign-page">
 
-      <!-- Hero Banner -->
+      <!-- Hero Section -->
       <div class="hero-banner">
         <h2>The Sovereign’s Grand Overseer</h2>
         <p>Manage all your villages from one supreme command interface.</p>
       </div>
 
-      <!-- Overview Panel -->
-      <div class="overview-panel">
-        <h3>Kingdom Village Overview</h3>
+      <!-- Overview -->
+      <div class="overview-panel" aria-labelledby="overview-title">
+        <h3 id="overview-title">Kingdom Village Overview</h3>
         <div id="village-stats"></div>
         <div class="realtime-status">
           Realtime: <span id="realtime-indicator" class="disconnected">Offline</span>
         </div>
       </div>
 
-      <!-- Controls Panel -->
-      <div class="controls-panel">
-        <!-- JS will populate dynamic controls -->
+      <!-- Controls -->
+      <div class="controls-panel" aria-label="Controls Panel">
+        <!-- JS will populate -->
       </div>
 
-      <!-- Mass Actions Panel -->
-      <div class="mass-actions-panel">
-        <!-- JS will populate mass actions (Build All, Upgrade All, etc.) -->
+      <!-- Mass Actions -->
+      <div class="mass-actions-panel" aria-label="Mass Actions Panel">
+        <!-- JS will populate -->
       </div>
 
       <!-- Village Grid -->
-      <div class="village-grid" id="village-grid">
-        <!-- JS will populate village cards -->
+      <div class="village-grid" id="village-grid" aria-label="Village Grid Panel">
+        <!-- JS will populate -->
       </div>
 
-      <!-- Ambient Controls -->
-      <div class="ambient-controls">
+      <!-- Ambient Toggle -->
+      <div class="ambient-controls" aria-label="Ambient Effects Toggle">
         <label>
           <input type="checkbox" id="ambient-toggle" />
           Ambient Effects
         </label>
       </div>
 
-      <!-- Modal Container -->
-      <div class="modal-container" id="modal-container">
-        <!-- JS will handle modals -->
+      <!-- Modal Host -->
+      <div class="modal-container" id="modal-container" aria-hidden="true">
+        <!-- JS will populate -->
       </div>
 
-      <!-- Toasts Container -->
-      <div class="toasts-container" id="toasts-container">
-        <!-- JS will display toast notifications -->
+      <!-- Toasts -->
+      <div class="toasts-container" id="toasts-container" aria-live="polite">
+        <!-- JS will populate -->
       </div>
 
     </div>
-
   </section>
 
 </main>
 
 <!-- Footer -->
-<footer class="site-footer">
+<footer class="site-footer" role="contentinfo">
   <div>© 2025 Kingmaker’s Rise</div>
-  <div>
-    <a href="legal.html">View Legal Documents</a>
-  </div>
+  <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
 
 </body>
