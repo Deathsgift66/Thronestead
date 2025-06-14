@@ -97,6 +97,51 @@ class PlayerMessage(Base):
     is_read = Column(Boolean, default=False)
 
 
+
+class GlobalEvent(Base):
+    """Scheduled world events that impact gameplay."""
+
+    __tablename__ = "global_events"
+
+    event_id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    description = Column(Text)
+    start_time = Column(DateTime(timezone=False))
+    end_time = Column(DateTime(timezone=False))
+    is_active = Column(Boolean, server_default="false")
+    impact_type = Column(Text)
+    magnitude = Column(Numeric)
+
+
+class KingdomAchievementCatalogue(Base):
+    __tablename__ = "kingdom_achievement_catalogue"
+
+    achievement_code = Column(Text, primary_key=True)
+    name = Column(Text, nullable=False)
+    description = Column(Text)
+    category = Column(Text)
+    reward = Column(JSONB, server_default="{}")
+    points = Column(Integer, server_default="0")
+    is_hidden = Column(Boolean, server_default="false")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    gold_reward = Column(Integer, server_default="0")
+    honor_reward = Column(Integer, server_default="0")
+
+
+class KingdomAchievement(Base):
+    __tablename__ = "kingdom_achievements"
+
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
+    achievement_code = Column(
+        Text,
+        ForeignKey("kingdom_achievement_catalogue.achievement_code"),
+        primary_key=True,
+    )
+    awarded_at = Column(DateTime(timezone=True), server_default=func.now())
+
 class MessageMetadata(Base):
     """Key/value metadata attached to ``player_messages``."""
 
@@ -109,6 +154,7 @@ class MessageMetadata(Base):
     )
     key = Column(Text, primary_key=True)
     value = Column(Text)
+
 
 
 class Alliance(Base):
