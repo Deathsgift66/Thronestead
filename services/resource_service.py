@@ -26,6 +26,7 @@ RESOURCE_TYPES = {
 }
 
 # Fields that should never be returned to clients when using Supabase
+# Fields that should never be exposed to clients or modified directly
 METADATA_FIELDS = {"kingdom_id", "created_at", "last_updated"}
 
 
@@ -82,6 +83,28 @@ def validate_resource(resource: str) -> None:
     if resource not in RESOURCE_TYPES:
         raise ValueError(f"Invalid resource type: {resource}")
 
+
+def _apply_resource_changes(
+    db: Session,
+    kingdom_id: int,
+    changes: dict[str, int],
+    op: Literal["+", "-"]
+) -> None:
+    """Update kingdom resource values with a single SQL statement."""
+    set_expr: list[str] = []
+    for res, amt in changes.items():
+        validate_resource(res)
+        if amt < 0:
+            raise ValueError("Resource amounts must be positive")
+        if op == "+":
+            set_expr.append(f"{res} = COALESCE({res}, 0) + :{res}")
+        else:
+            set_expr.append(f"{res} = {res} - :{res}")
+
+    sql = f"UPDATE kingdom_resources SET {', '.join(set_expr)} WHERE kingdom_id = :kid"
+    db.execute(text(sql), {**changes, "kid": kingdom_id})
+    db.commit()
+
 # ------------------------------------------------------------------------------
 # Public Methods
 # ------------------------------------------------------------------------------
@@ -115,11 +138,7 @@ def spend_resources(db: Session, kingdom_id: int, cost: dict[str, int]) -> None:
         if current.get(res, 0) < amt:
             raise HTTPException(status_code=400, detail=f"Not enough {res}")
 
-    set_clause = ", ".join([f"{r} = {r} - :{r}" for r in cost])
-    sql = f"UPDATE kingdom_resources SET {set_clause} WHERE kingdom_id = :kid"
-
-    db.execute(text(sql), {**cost, "kid": kingdom_id})
-    db.commit()
+    _apply_resource_changes(db, kingdom_id, cost, "-")
 
 
 def gain_resources(db: Session, kingdom_id: int, gain: dict[str, int]) -> None:
@@ -131,11 +150,7 @@ def gain_resources(db: Session, kingdom_id: int, gain: dict[str, int]) -> None:
         if amt < 0:
             raise ValueError("Negative gain not allowed")
 
-    set_clause = ", ".join([f"{r} = COALESCE({r}, 0) + :{r}" for r in gain])
-    sql = f"UPDATE kingdom_resources SET {set_clause} WHERE kingdom_id = :kid"
-
-    db.execute(text(sql), {**gain, "kid": kingdom_id})
-    db.commit()
+    _apply_resource_changes(db, kingdom_id, gain, "+")
 
 
 def has_enough_resources(db: Session, kingdom_id: int, cost: dict[str, int]) -> bool:
