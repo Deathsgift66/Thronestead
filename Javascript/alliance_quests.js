@@ -55,6 +55,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("quest-modal").classList.remove("open");
   });
 
+  // ✅ Open quest details using event delegation
+  const boardEl = document.getElementById("quest-board");
+  boardEl.addEventListener("click", async e => {
+    const btn = e.target.closest(".view-quest-btn");
+    if (!btn) return;
+    const code = btn.dataset.code;
+    const resDetail = await fetch(`/api/alliance-quests/detail/${code}`);
+    const quest = await resDetail.json();
+    openQuestModal(quest);
+  });
+
   document.getElementById("accept-quest-button")?.addEventListener("click", async e => {
     const questId = e.target.dataset.questId;
     if (!questId) return;
@@ -117,16 +128,9 @@ async function loadQuests(status) {
     }
     noMsg?.classList.add("hidden");
 
-    quests.forEach(q => board.appendChild(renderQuestCard(q)));
-
-    document.querySelectorAll(".view-quest-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const code = btn.dataset.code;
-        const resDetail = await fetch(`/api/alliance-quests/detail/${code}`);
-        const quest = await resDetail.json();
-        openQuestModal(quest);
-      });
-    });
+    const frag = document.createDocumentFragment();
+    quests.forEach(q => frag.appendChild(renderQuestCard(q)));
+    board.appendChild(frag);
 
     const heroData = data.heroes || [];
     heroes.innerHTML = heroData.length
@@ -167,6 +171,7 @@ function renderQuestCard(q) {
 }
 
 // ✅ Modal Viewer
+// Displays full quest details in the modal dialog
 function openQuestModal(q) {
   const modal = document.getElementById("quest-modal");
 
