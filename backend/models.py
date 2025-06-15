@@ -14,8 +14,9 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    text,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 from backend.db_base import Base
 
@@ -38,7 +39,7 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     display_name = Column(String)
     email = Column(String, unique=True, nullable=False)
-    kingdom_name = Column(String)
+    kingdom_name = Column(String, nullable=False)
     profile_bio = Column(Text)
     profile_picture_url = Column(String)
     region = Column(String)
@@ -46,17 +47,20 @@ class User(Base):
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
     alliance_role = Column(String)
     active_policy = Column(Integer)
-    active_laws = Column(JSONB, default=list)
+    active_laws = Column(ARRAY(Integer), server_default=text("'{}'"))
     is_admin = Column(Boolean, default=False)
     is_banned = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
     setup_complete = Column(Boolean, default=False)
     sign_up_date = Column(Date, server_default=func.current_date())
-    sign_up_time = Column(Time(timezone=True), server_default=func.now())
+    sign_up_time = Column(Time(timezone=False), server_default=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    auth_user_id = Column(UUID(as_uuid=True), ForeignKey("auth.users.id"))
+    active_policy_1 = Column(String)
+    active_policy_2 = Column(String)
 
 
 class PlayerMessage(Base):
@@ -68,6 +72,14 @@ class PlayerMessage(Base):
     message = Column(Text)
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
+
+
+class UserSettingEntry(Base):
+    __tablename__ = "user_setting_entries"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True)
+    setting_key = Column(String, primary_key=True)
+    setting_value = Column(Text)
 
 
 class Alliance(Base):
@@ -589,6 +601,42 @@ class UnitStat(Base):
     vision = Column(Integer)
     troop_slots = Column(Integer, default=1)
     is_siege = Column(Boolean, default=False)
+
+
+class UnitUpgradePath(Base):
+    __tablename__ = "unit_upgrade_paths"
+
+    from_unit_type = Column(String, ForeignKey("unit_stats.unit_type"), primary_key=True)
+    to_unit_type = Column(String, ForeignKey("unit_stats.unit_type"), primary_key=True)
+    cost = Column(JSONB, server_default=text("'{}'::jsonb"))
+    required_level = Column(Integer, default=1)
+    wood = Column(Integer, default=0)
+    stone = Column(Integer, default=0)
+    iron_ore = Column(Integer, default=0)
+    gold = Column(Integer, default=0)
+    gems = Column(Integer, default=0)
+    food = Column(Integer, default=0)
+    coal = Column(Integer, default=0)
+    livestock = Column(Integer, default=0)
+    clay = Column(Integer, default=0)
+    flax = Column(Integer, default=0)
+    tools = Column(Integer, default=0)
+    wood_planks = Column(Integer, default=0)
+    refined_stone = Column(Integer, default=0)
+    iron_ingots = Column(Integer, default=0)
+    charcoal = Column(Integer, default=0)
+    leather = Column(Integer, default=0)
+    arrows = Column(Integer, default=0)
+    swords = Column(Integer, default=0)
+    axes = Column(Integer, default=0)
+    shields = Column(Integer, default=0)
+    armour = Column(Integer, default=0)
+    wagon = Column(Integer, default=0)
+    siege_weapons = Column(Integer, default=0)
+    jewelry = Column(Integer, default=0)
+    spear = Column(Integer, default=0)
+    horses = Column(Integer, default=0)
+    pitchforks = Column(Integer, default=0)
 
 
 class KingdomTroop(Base):
