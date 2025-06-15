@@ -1316,6 +1316,48 @@ class KingdomResources(Base):
     pitchforks = Column(BigInteger, default=0)
 
 
+class TreatyNegotiationLog(Base):
+    __tablename__ = "treaty_negotiation_log"
+
+    log_id = Column(Integer, primary_key=True)
+    treaty_id = Column(Integer, ForeignKey("alliance_treaties.treaty_id"))
+    acting_alliance_id = Column(Integer)
+    action = Column(Text)
+    message = Column(Text)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+
+
+class TreatyTerms(Base):
+    __tablename__ = "treaty_terms"
+
+    treaty_id = Column(Integer, ForeignKey("alliance_treaties.treaty_id"), primary_key=True)
+    term_type = Column(Text, primary_key=True)
+    value = Column(Text)
+
+
+class TreatyTypeCatalogue(Base):
+    __tablename__ = "treaty_type_catalogue"
+
+    treaty_type = Column(Text, primary_key=True)
+    display_name = Column(Text, nullable=False)
+    description = Column(Text)
+    duration_days = Column(Integer, default=0)
+    is_mutual = Column(Boolean, default=True)
+    triggers_war_support = Column(Boolean, default=False)
+    allows_cancelation = Column(Boolean, default=True)
+    cancel_notice_days = Column(Integer, default=0)
+    is_exclusive = Column(Boolean, default=False)
+    treaty_group = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    join_wars = Column(Boolean, default=False)
+    blocks_war = Column(Boolean, default=False)
+    blocks_spy_ops = Column(Boolean, default=False)
+    enables_shared_chat = Column(Boolean, default=False)
+    enables_trade_bonus = Column(Boolean, default=False)
+    auto_renew = Column(Boolean, default=False)
+    exclusive_with = Column(ARRAY(Text), server_default=text("'{}'::text[]"))
+
 
 class BuildingCatalogue(Base):
     __tablename__ = "building_catalogue"
@@ -1501,6 +1543,7 @@ class KingdomResearchTracking(Base):
     status = Column(String)
     progress = Column(Integer, default=0)
     ends_at = Column(DateTime(timezone=True))
+
 
 
 
