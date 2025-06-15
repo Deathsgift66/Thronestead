@@ -489,7 +489,7 @@ class War(Base):
 
 
 class WarPreplan(Base):
-    """Pre‑battle plans for tactical wars."""
+    """Pre-battle plans for tactical wars."""
 
     __tablename__ = "war_preplans"
 
@@ -497,14 +497,17 @@ class WarPreplan(Base):
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"))
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     preplan_jsonb = Column(JSONB)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     submitted_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     is_finalized = Column(Boolean, default=False)
     version = Column(Integer, default=1)
-    status = Column(String, default="draft")
+    status = Column(Text, default="draft")
+    start_tile_x = Column(Integer)
+    start_tile_y = Column(Integer)
+    initial_orders = Column(Text)
 
 
 class AllianceWarScore(Base):
@@ -544,13 +547,14 @@ class BattleResolutionLog(Base):
 
 class WarScore(Base):
     __tablename__ = "war_scores"
+    __table_args__ = (
+        CheckConstraint("victor IN ('attacker','defender','draw')"),
+    )
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), primary_key=True, index=True)
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
     victor = Column(String)
-    last_updated = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    last_updated = Column(DateTime(timezone=False), server_default=func.now())
 
 
 class TerrainMap(Base):
