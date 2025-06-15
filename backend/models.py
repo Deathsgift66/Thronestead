@@ -764,15 +764,17 @@ class TerrainMap(Base):
     map_seed = Column(Integer)
     map_version = Column(Integer, default=1)
     generated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    map_name = Column(String)
+    map_name = Column(Text)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    map_type = Column(String, default="battlefield")
+    map_type = Column(Text, default="battlefield")
     tile_schema_version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
-    map_source = Column(String, default="auto-generated")
-    map_features = Column(JSONB, default={})
+    map_source = Column(Text, default="auto-generated")
+    map_features = Column(JSONB, server_default=text("'{}'::jsonb"))
+    tileset = Column(Text)
+    features_summary = Column(Text)
 
 
 class UnitStat(Base):
@@ -958,6 +960,48 @@ class GameSettingValue(Base):
         primary_key=True,
     )
     setting_value = Column(Text)
+
+
+class SystemEventHook(Base):
+    """Webhook configuration for system events."""
+
+    __tablename__ = "system_event_hooks"
+
+    hook_id = Column(Integer, primary_key=True)
+    event_type = Column(Text)
+    payload_template = Column(JSONB)
+    endpoint_url = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+    event_topic = Column(Text)
+    payload_template_text = Column(Text)
+
+
+class TechCatalogue(Base):
+    """Research technologies available to kingdoms."""
+
+    __tablename__ = "tech_catalogue"
+
+    tech_code = Column(Text, primary_key=True)
+    name = Column(Text, nullable=False)
+    description = Column(Text)
+    category = Column(Text)
+    tier = Column(Integer)
+    duration_hours = Column(Integer)
+    encyclopedia_entry = Column(Text)
+    modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
+    prerequisites = Column(ARRAY(Text))
+    required_kingdom_level = Column(Integer, default=1)
+    required_region = Column(Text)
+    is_repeatable = Column(Boolean, default=False)
+    max_research_level = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    military_bonus = Column(Numeric, default=0)
+    economic_bonus = Column(Numeric, default=0)
 
 
 class KingdomHistoryLog(Base):
