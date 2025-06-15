@@ -109,18 +109,38 @@ def respond_war(payload: RespondPayload, user_id: str = Depends(require_user_id)
 @router.post("/surrender")
 def surrender_war(payload: SurrenderPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     authorize_war_access(db, user_id, payload.alliance_war_id)
+    row = db.execute(text(
+        "SELECT attacker_alliance_id, defender_alliance_id FROM alliance_wars WHERE alliance_war_id = :wid"
+    ), {"wid": payload.alliance_war_id}).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="War not found")
+
+    attacker_id, defender_id = row
     victor = "defender" if payload.side == "attacker" else "attacker"
+    surrendering = attacker_id if payload.side == "attacker" else defender_id
+    accepting = defender_id if payload.side == "attacker" else attacker_id
+
     db.execute(text("""
-        UPDATE alliance_wars 
-        SET war_status = 'surrendered', phase = 'ended', end_date = now() 
-        WHERE alliance_war_id = :wid
+        UPDATE alliance_wars
+           SET war_status = 'surrendered', phase = 'ended', end_date = now()
+         WHERE alliance_war_id = :wid
     """), {"wid": payload.alliance_war_id})
+
     db.execute(text("""
         INSERT INTO alliance_war_scores (alliance_war_id, victor)
         VALUES (:wid, :victor)
-        ON CONFLICT (alliance_war_id) 
-        DO UPDATE SET victor = :victor, last_updated = now()
+        ON CONFLICT (alliance_war_id)
+          DO UPDATE SET victor = :victor, last_updated = now()
     """), {"wid": payload.alliance_war_id, "victor": victor})
+
+    db.execute(text("""
+        INSERT INTO alliance_surrenders (
+            alliance_war_id, surrendering_alliance_id, accepted_by_alliance_id
+        ) VALUES (
+            :wid, :sid, :aid
+        )
+    """), {"wid": payload.alliance_war_id, "sid": surrendering, "aid": accepting})
+
     db.commit()
     return {"status": "surrendered", "victor": victor}
 

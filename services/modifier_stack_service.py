@@ -116,17 +116,9 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         "Alliance Project",
     )
 
+
     # --- Active Treaties ---
-    treaties = db.execute(
-        text("""
-            SELECT modifiers FROM kingdom_treaties
-            WHERE (kingdom_id = :kid OR partner_kingdom_id = :kid)
-            AND status = 'active' AND modifiers IS NOT NULL
-        """),
-        {"kid": kingdom_id},
-    ).fetchall()
-    for (mods,) in treaties:
-        _merge_stack(stack, mods or {}, "Treaty")
+    # No treaty modifier data is stored in the schema, so this step is skipped.
 
     # --- Spy Effects ---
     spy_row = db.execute(
