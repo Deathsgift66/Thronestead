@@ -4,6 +4,7 @@
 # Developer: Deathsgift66
 # Description: Utility service for calculating troop slots, verifying progression gates, and merging live gameplay modifiers.
 
+import json
 import logging
 import time
 
@@ -53,26 +54,29 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     """
     try:
         result = db.execute(
+
             text("""
                 SELECT kts.base_slots,
                        kts.slots_from_buildings,
                        kts.slots_from_tech,
                        kts.slots_from_projects,
                        kts.slots_from_events,
-                       COALESCE((rc.troop_bonus ->> 'base_slots')::integer, 0)
+                       COALESCE(rb.bonus_value::integer, 0)
                   FROM kingdom_troop_slots kts
                   JOIN kingdoms k ON k.kingdom_id = kts.kingdom_id
-             LEFT JOIN region_catalogue rc ON rc.region_code = k.region
+             LEFT JOIN region_bonuses rb ON rb.region_code = k.region
+                                        AND rb.bonus_type = 'base_slots'
                  WHERE kts.kingdom_id = :kid
             """),
+
             {"kid": kingdom_id},
         ).fetchone()
 
         if not result:
             return 0
 
-        base, buildings, tech, projects, events, region_bonus = result
-        return base + buildings + tech + projects + events + region_bonus
+        base, buildings, tech, projects, events = result
+        return base + buildings + tech + projects + events
 
     except SQLAlchemyError as e:
         logger.warning("Failed to calculate troop slots: %s", e)
@@ -179,18 +183,23 @@ def _region_modifiers(db: Session, kingdom_id: int) -> dict:
     ).scalar()
     if not region_code:
         return {}
-    row = db.execute(
+    rows = db.execute(
         text(
-            "SELECT resource_bonus, troop_bonus FROM region_catalogue WHERE region_code = :code"
+
+            "SELECT bonus_type, bonus_value FROM region_bonuses WHERE region_code = :code"
+
         ),
         {"code": region_code},
-    ).fetchone()
-    if not row:
+    ).fetchall()
+    if not rows:
         return {}
-    return {
-        "resource_bonus": row[0] or {},
-        "troop_bonus": row[1] or {},
-    }
+
+    mods: dict = {}
+    for btype, val in rows:
+        bucket = mods.setdefault(btype, {})
+        bucket["value"] = val
+    return mods
+
 
 
 def _tech_modifiers(db: Session, kingdom_id: int) -> dict:
@@ -255,7 +264,7 @@ def _alliance_project_modifiers(db: Session, kingdom_id: int) -> dict:
     rows = db.execute(
         text(
             """
-            SELECT pa.modifiers FROM projects_alliance pa
+            SELECT pa.active_bonus FROM projects_alliance pa
             WHERE pa.alliance_id IN (
                 SELECT alliance_id FROM alliance_members
                 WHERE user_id = (SELECT user_id FROM kingdoms WHERE kingdom_id = :kid)
@@ -268,7 +277,12 @@ def _alliance_project_modifiers(db: Session, kingdom_id: int) -> dict:
     ).fetchall()
     mods: dict = {}
     for (m,) in rows:
-        _merge_modifiers(mods, m or {})
+        if m:
+            try:
+                data = json.loads(m)
+            except Exception:
+                data = {}
+            _merge_modifiers(mods, data)
     return mods
 
 
@@ -297,12 +311,27 @@ def _village_modifiers(db: Session, kingdom_id: int) -> dict:
     return {"production_bonus": {"villages": count}}
 
 
-def _treaty_modifiers(_: Session, kingdom_id: int) -> dict:
-    """Return modifiers from active treaties."""
-    total: dict = {}
-    for treaty in kingdom_treaties.get(kingdom_id, []):
-        _merge_modifiers(total, treaty.get("modifiers", {}))
-    return total
+def _treaty_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers from active treaties stored in the database."""
+    rows = db.execute(
+        text(
+            """
+            SELECT tm.effect_type, tm.target, tm.magnitude
+              FROM kingdom_treaties kt
+              JOIN treaty_modifiers tm ON tm.treaty_id = kt.treaty_id
+             WHERE (kt.kingdom_id = :kid OR kt.partner_kingdom_id = :kid)
+               AND kt.status = 'active'
+            """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    mods: dict = {}
+    for effect, target, magnitude in rows:
+        if magnitude is None:
+            continue
+        bucket = mods.setdefault(effect, {})
+        bucket[target] = bucket.get(target, 0) + float(magnitude)
+    return mods
 
 
 def _spy_modifiers(_: Session, kingdom_id: int) -> dict:

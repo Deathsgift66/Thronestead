@@ -247,16 +247,14 @@ def war_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(g
     rows = db.execute(
         text(
             """
-            SELECT w.attacker_alliance_id,
-                   w.defender_alliance_id,
-                   w.war_status,
-                   w.start_date,
-                   w.end_date,
-                   s.victor
-              FROM alliance_wars w
-              LEFT JOIN alliance_war_scores s ON w.alliance_war_id = s.alliance_war_id
-             WHERE w.attacker_alliance_id = :aid OR w.defender_alliance_id = :aid
-             ORDER BY w.start_date DESC
+            SELECT attacker_alliance_id,
+                   defender_alliance_id,
+                   war_status,
+                   start_date,
+                   end_date
+              FROM alliance_wars
+             WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid
+             ORDER BY start_date DESC
             """
         ),
         {"aid": aid},
@@ -269,7 +267,6 @@ def war_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(g
             "war_status": r[2],
             "start_date": r[3].isoformat() if r[3] else None,
             "end_date": r[4].isoformat() if r[4] else None,
-            "victor": r[5],
         }
         for r in rows
     ]

@@ -82,8 +82,8 @@ def create_kingdom_transaction(
         vil_row = db.execute(
             text(
                 """
-                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type, is_capital)
-                VALUES (:kid, :vname, 'capital', TRUE)
+                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type)
+                VALUES (:kid, :vname, 'capital')
                 RETURNING village_id
                 """
             ),
@@ -147,7 +147,7 @@ def create_kingdom_transaction(
         db.execute(
             text(
                 "INSERT INTO kingdom_religion (kingdom_id, religion_name, faith_level) "
-                "VALUES (:kid, 'None', 1)"
+                "VALUES (:kid, 'None', 1) ON CONFLICT DO NOTHING"
             ),
             {"kid": kingdom_id},
         )
@@ -159,7 +159,7 @@ def create_kingdom_transaction(
             db.execute(
                 text(
                     "INSERT INTO kingdom_research_tracking (kingdom_id, tech_code, status) "
-                    "VALUES (:kid, :code, 'locked')"
+                    "VALUES (:kid, :code, 'locked') ON CONFLICT DO NOTHING"
                 ),
                 {"kid": kingdom_id, "code": tech_row[0]},
             )

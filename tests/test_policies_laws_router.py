@@ -21,8 +21,8 @@ class DummyTable:
         self._ordered = self._filtered
         return self
 
-    def order(self, *_args, **_kwargs):
-        self._ordered = sorted(self._filtered, key=lambda x: x.get("unlock_at_level", 0))
+    def order(self, field, *_args, **_kwargs):
+        self._ordered = sorted(self._filtered, key=lambda x: x.get(field, 0))
         return self
 
     def single(self):
@@ -53,8 +53,8 @@ class DummyClient:
 
 def test_catalogue_sorted():
     entries = [
-        {"id": 2, "type": "policy", "is_active": True, "unlock_at_level": 2},
-        {"id": 1, "type": "law", "is_active": True, "unlock_at_level": 1},
+        {"id": 2, "type": "policy"},
+        {"id": 1, "type": "law"},
     ]
     client = DummyClient({"policies_laws_catalogue": DummyTable(entries)})
     policies_laws.get_supabase_client = lambda: client
