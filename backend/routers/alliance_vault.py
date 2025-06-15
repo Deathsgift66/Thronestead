@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from backend.models import AllianceVault, AllianceVaultTransactionLog, User
 from services.audit_service import log_action
-from services.trade_log_service import record_trade
 from ..security import require_user_id
 
 # Primary and alternative API routes
@@ -74,15 +73,6 @@ def deposit_resource(payload: VaultTransaction, user_id: str = Depends(require_u
     ))
     db.commit()
 
-    record_trade(
-        db,
-        resource=payload.resource,
-        quantity=payload.amount,
-        trade_type="alliance_trade",
-        seller_id=user_id,
-        buyer_alliance_id=alliance_id
-    )
-
     log_action(db, user_id, "deposit_vault", f"Deposited {payload.amount} {payload.resource}")
     return {"message": "Deposited"}
 
@@ -116,15 +106,6 @@ def withdraw_resource(payload: VaultTransaction, user_id: str = Depends(require_
         notes='Player withdrawal'
     ))
     db.commit()
-
-    record_trade(
-        db,
-        resource=payload.resource,
-        quantity=payload.amount,
-        trade_type="alliance_trade",
-        buyer_id=user_id,
-        seller_alliance_id=alliance_id
-    )
 
     log_action(db, user_id, "withdraw_vault", f"Withdrew {payload.amount} {payload.resource}")
     return {"message": "Withdrawn"}

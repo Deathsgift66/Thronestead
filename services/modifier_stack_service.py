@@ -116,17 +116,29 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         "Alliance Project",
     )
 
+
     # --- Active Treaties ---
-    treaties = db.execute(
-        text("""
-            SELECT modifiers FROM kingdom_treaties
-            WHERE (kingdom_id = :kid OR partner_kingdom_id = :kid)
-            AND status = 'active' AND modifiers IS NOT NULL
-        """),
+    treaty_rows = db.execute(
+        text(
+            """
+            SELECT tm.effect_type, tm.target, tm.magnitude
+              FROM kingdom_treaties kt
+              JOIN treaty_modifiers tm ON tm.treaty_id = kt.treaty_id
+             WHERE (kt.kingdom_id = :kid OR kt.partner_kingdom_id = :kid)
+               AND kt.status = 'active'
+            """
+        ),
         {"kid": kingdom_id},
     ).fetchall()
-    for (mods,) in treaties:
-        _merge_stack(stack, mods or {}, "Treaty")
+    treaty_mods: dict = {}
+    for eff, tgt, mag in treaty_rows:
+        if mag is None:
+            continue
+        bucket = treaty_mods.setdefault(eff, {})
+        bucket[tgt] = bucket.get(tgt, 0) + float(mag)
+    if treaty_mods:
+        _merge_stack(stack, treaty_mods, "Treaty")
+
 
     # --- Spy Effects ---
     spy_row = db.execute(
