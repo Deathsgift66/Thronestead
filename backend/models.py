@@ -146,11 +146,11 @@ class AllianceVault(Base):
 
 class AllianceVaultTransactionLog(Base):
     __tablename__ = "alliance_vault_transaction_log"
-    transaction_id = Column(Integer, primary_key=True)
-    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    transaction_id = Column(BigInteger, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    action = Column(String)
-    resource_type = Column(String)
+    action = Column(Text)
+    resource_type = Column(Text)
     amount = Column(BigInteger)
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

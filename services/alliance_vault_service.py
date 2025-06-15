@@ -122,7 +122,7 @@ def withdraw_from_vault(
             INSERT INTO alliance_vault_transaction_log (
                 alliance_id, user_id, action, resource_type, amount, notes
             ) VALUES (
-                :aid, :uid, 'withdrawal', :res, :amt, :note
+                :aid, :uid, 'withdraw', :res, :amt, :note
             )
         """),
         {"aid": alliance_id, "uid": user_id, "res": resource_type, "amt": amount, "note": notes},

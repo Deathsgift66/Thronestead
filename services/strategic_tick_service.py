@@ -111,18 +111,22 @@ def expire_treaties(db: Session) -> int:
         int: number of treaties expired
     """
     res_a = db.execute(
-        text("""
+        text(
+            """
             UPDATE alliance_treaties
                SET status = 'expired'
-             WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < now()
-        """)
+             WHERE status = 'active' AND signed_at < now() - interval '30 days'
+            """
+        )
     )
     res_k = db.execute(
-        text("""
+        text(
+            """
             UPDATE kingdom_treaties
                SET status = 'expired'
-             WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < now()
-        """)
+             WHERE status = 'active' AND signed_at < now() - interval '30 days'
+            """
+        )
     )
     db.commit()
     count = (getattr(res_a, "rowcount", 0) or 0) + (getattr(res_k, "rowcount", 0) or 0)

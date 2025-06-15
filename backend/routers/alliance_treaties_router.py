@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from typing import Optional
+
 
 from ..database import get_db
 from ..security import require_user_id
@@ -21,8 +21,6 @@ router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
 class ProposePayload(BaseModel):
     treaty_type: str
     partner_alliance_id: int
-    notes: Optional[str] = None
-    end_date: Optional[str] = None  # ISO format
 
 
 class RespondPayload(BaseModel):
@@ -68,13 +66,15 @@ def validate_alliance_permission(db: Session, user_id: str, permission: str) -> 
 def get_my_treaties(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     aid = get_alliance_id(db, user_id)
     rows = db.execute(
-        text("""
+        text(
+            """
             SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id,
-                   status, signed_at, end_date, notes
+                   status, signed_at
               FROM alliance_treaties
              WHERE alliance_id = :aid OR partner_alliance_id = :aid
              ORDER BY signed_at DESC
-        """),
+            """
+        ),
         {"aid": aid},
     ).fetchall()
 
@@ -87,8 +87,6 @@ def get_my_treaties(user_id: str = Depends(require_user_id), db: Session = Depen
                 "partner_alliance_id": r[3],
                 "status": r[4],
                 "signed_at": r[5].isoformat() if r[5] else None,
-                "end_date": r[6].isoformat() if r[6] else None,
-                "notes": r[7],
             }
             for r in rows
         ]
@@ -108,18 +106,18 @@ def propose_treaty(
         raise HTTPException(status_code=400, detail="Cannot propose treaty to self")
 
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO alliance_treaties
-                (alliance_id, treaty_type, partner_alliance_id, status, notes, end_date)
+                (alliance_id, treaty_type, partner_alliance_id, status)
              VALUES
-                (:aid, :type, :pid, 'proposed', :notes, :ed)
-        """),
+                (:aid, :type, :pid, 'proposed')
+            """
+        ),
         {
             "aid": aid,
             "type": payload.treaty_type,
             "pid": payload.partner_alliance_id,
-            "notes": payload.notes,
-            "ed": payload.end_date,
         },
     )
     db.commit()
@@ -168,7 +166,6 @@ def respond_to_treaty(
 @router.post("/renew")
 def renew_treaty(
     treaty_id: int,
-    end_date: Optional[str] = None,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -196,13 +193,15 @@ def renew_treaty(
 
     # Insert renewed
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO alliance_treaties
-                (alliance_id, treaty_type, partner_alliance_id, status, end_date)
+                (alliance_id, treaty_type, partner_alliance_id, status)
              VALUES
-                (:aid, :type, :pid, 'active', :ed)
-        """),
-        {"aid": row[0], "type": row[2], "pid": row[1], "ed": end_date},
+                (:aid, :type, :pid, 'active')
+            """
+        ),
+        {"aid": row[0], "type": row[2], "pid": row[1]},
     )
     db.commit()
     log_alliance_activity(db, aid, user_id, "Treaty Renewed", str(treaty_id))
@@ -217,12 +216,14 @@ def view_treaty(
     db: Session = Depends(get_db),
 ):
     row = db.execute(
-        text("""
+        text(
+            """
             SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id,
-                   status, signed_at, end_date, notes
+                   status, signed_at
               FROM alliance_treaties
              WHERE treaty_id = :tid
-        """),
+            """
+        ),
         {"tid": treaty_id},
     ).fetchone()
 
@@ -240,6 +241,4 @@ def view_treaty(
         "partner_alliance_id": row[3],
         "status": row[4],
         "signed_at": row[5].isoformat() if row[5] else None,
-        "end_date": row[6].isoformat() if row[6] else None,
-        "notes": row[7],
     }

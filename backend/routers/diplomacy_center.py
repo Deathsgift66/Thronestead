@@ -34,8 +34,6 @@ def get_alliance_id(db: Session, user_id: str) -> int:
 class ProposePayload(BaseModel):
     treaty_type: str
     partner_alliance_id: int
-    notes: str | None = None
-    end_date: str | None = None
 
 
 class RespondPayload(BaseModel):
@@ -104,9 +102,12 @@ def list_treaties(
     """List treaties for the user's alliance, optionally filtered by status."""
     aid = get_alliance_id(db, user_id)
 
-    # Auto-expire old treaties
+    # Auto-expire old treaties older than 30 days
     db.execute(
-        text("UPDATE alliance_treaties SET status = 'expired' WHERE status = 'active' AND end_date IS NOT NULL AND end_date < now()")
+        text(
+            "UPDATE alliance_treaties SET status = 'expired' "
+            "WHERE status = 'active' AND signed_at < now() - interval '30 days'"
+        )
     )
     db.commit()
 
@@ -115,7 +116,7 @@ def list_treaties(
             f"""
             SELECT t.treaty_id, t.treaty_type,
                    CASE WHEN t.alliance_id = :aid THEN t.partner_alliance_id ELSE t.alliance_id END AS partner_id,
-                   t.status, t.signed_at, t.end_date, t.notes,
+                   t.status, t.signed_at,
                    a.name AS partner_name, a.emblem_url
             FROM alliance_treaties t
             JOIN alliances a ON a.alliance_id = CASE WHEN t.alliance_id = :aid THEN t.partner_alliance_id ELSE t.alliance_id END
@@ -134,10 +135,8 @@ def list_treaties(
             "partner_alliance_id": r[2],
             "status": r[3],
             "signed_at": r[4].isoformat() if r[4] else None,
-            "end_date": r[5].isoformat() if r[5] else None,
-            "notes": r[6],
-            "partner_name": r[7],
-            "emblem_url": r[8],
+            "partner_name": r[5],
+            "emblem_url": r[6],
         }
         for r in rows
     ]
@@ -153,15 +152,13 @@ def propose_treaty(
     aid = get_alliance_id(db, user_id)
     db.execute(
         text(
-            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, notes, end_date) "
-            "VALUES (:aid, :type, :pid, 'proposed', :notes, :end_date)"
+            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status) "
+            "VALUES (:aid, :type, :pid, 'proposed')"
         ),
         {
             "aid": aid,
             "type": payload.treaty_type,
             "pid": payload.partner_alliance_id,
-            "notes": payload.notes,
-            "end_date": payload.end_date,
         },
     )
     db.commit()
@@ -209,7 +206,6 @@ def respond_treaty(
 @router.post("/renew_treaty")
 def renew_treaty(
     treaty_id: int,
-    end_date: str | None = None,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
@@ -234,10 +230,10 @@ def renew_treaty(
     # Insert new
     db.execute(
         text(
-            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status, end_date) "
-            "VALUES (:aid, :type, :pid, 'active', :ed)"
+            "INSERT INTO alliance_treaties (alliance_id, treaty_type, partner_alliance_id, status) "
+            "VALUES (:aid, :type, :pid, 'active')"
         ),
-        {"aid": row[0], "type": row[2], "pid": row[1], "ed": end_date},
+        {"aid": row[0], "type": row[2], "pid": row[1]},
     )
     db.commit()
     log_alliance_activity(db, aid, "Treaty Renewed", str(treaty_id))
