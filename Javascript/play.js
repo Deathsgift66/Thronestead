@@ -198,7 +198,7 @@ async function loadAnnouncements() {
   if (!el) return;
 
   try {
-    const announcements = await jsonFetch('/api/login/announcements');
+    const { announcements } = await jsonFetch('/api/login/announcements');
     el.innerHTML = announcements.map(a =>
       `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`
     ).join('');
