@@ -20,15 +20,15 @@ import logging
 import os
 
 # Ensure environment variables from `.ENV` are loaded via the backend package
-import backend
-
-logging.basicConfig(level=logging.INFO)
+import backend as _backend  # noqa: F401
 
 # Router imports
 from backend.routers import resources
 from backend.routers import login_routes as announcements
 from backend.routers import region
 from backend.routers import progression_router
+
+logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger("KingmakersRise.Main")
 

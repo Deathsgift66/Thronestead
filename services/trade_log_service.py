@@ -13,7 +13,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q
+    def text(q):  # type: ignore
+        return q
+
     Session = object
 
 logger = logging.getLogger(__name__)
@@ -96,7 +98,7 @@ def record_trade(
         db.commit()
         return trade_id
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.exception("Trade log failed for %s x%d", resource, quantity)
         return 0
@@ -120,6 +122,6 @@ def update_trade_status(db: Session, trade_id: int, status: str) -> None:
             {"st": status, "tid": trade_id},
         )
         db.commit()
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.warning("Failed to update trade_id %s to status '%s'", trade_id, status)

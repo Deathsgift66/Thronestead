@@ -15,7 +15,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover - fallback for test environments
-    text = lambda q: q
+    def text(q):  # type: ignore
+        return q
+
     Session = object
 
 logger = logging.getLogger(__name__)
@@ -54,7 +56,7 @@ def enter_vacation_mode(db: Session, kingdom_id: int) -> datetime:
         logger.info("Kingdom %s entered Vacation Mode until %s", kingdom_id, expires)
         return expires
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.exception("Failed to enter vacation mode for kingdom_id=%s", kingdom_id)
         raise HTTPException(status_code=500, detail="Failed to enter Vacation Mode.")
@@ -84,7 +86,7 @@ def exit_vacation_mode(db: Session, kingdom_id: int) -> None:
         db.commit()
         logger.info("Kingdom %s exited Vacation Mode", kingdom_id)
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.exception("Failed to exit vacation mode for kingdom_id=%s", kingdom_id)
         raise HTTPException(status_code=500, detail="Failed to exit Vacation Mode.")
@@ -115,7 +117,7 @@ def can_exit_vacation(db: Session, kingdom_id: int) -> bool:
         expires = row[0]
         return expires is None or datetime.utcnow() >= expires
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.warning("Failed to check vacation expiration for kingdom_id=%s", kingdom_id)
         return False
 

@@ -12,7 +12,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q
+    def text(q):  # type: ignore
+        return q
+
     Session = object
 
 logger = logging.getLogger(__name__)

@@ -40,7 +40,7 @@ class DummyDB:
 
 def test_enter_and_exit():
     db = DummyDB()
-    exp = enter_vacation_mode(db, 1)
+    enter_vacation_mode(db, 1)
     assert any("UPDATE kingdoms" in q for q in db.queries)
     assert db.committed
     db.committed = False

@@ -58,7 +58,7 @@ def award_achievement(db: Session, kingdom_id: int, achievement_code: str) -> Op
         db.commit()
         return reward_row[0] if reward_row else None
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to award achievement %s", achievement_code)
         db.rollback()
         return None
@@ -109,6 +109,6 @@ def list_achievements(db: Session, kingdom_id: int) -> list[dict]:
 
         return achievements
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to list achievements for kingdom %d", kingdom_id)
         return []

@@ -5,7 +5,6 @@
 # Description: Handles treaty logic between individual kingdoms (propose, accept, cancel, list).
 
 import logging
-from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -53,10 +52,10 @@ def propose_treaty(
         )
         db.commit()
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to propose treaty")
-        raise RuntimeError("Database error during treaty proposal") from e
+        raise RuntimeError("Database error during treaty proposal") from exc
 
 
 def accept_treaty(db: Session, treaty_id: int) -> None:
@@ -77,10 +76,10 @@ def accept_treaty(db: Session, treaty_id: int) -> None:
         )
         db.commit()
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to accept treaty %d", treaty_id)
-        raise RuntimeError("Failed to accept treaty") from e
+        raise RuntimeError("Failed to accept treaty") from exc
 
 
 def cancel_treaty(db: Session, treaty_id: int) -> None:
@@ -101,10 +100,10 @@ def cancel_treaty(db: Session, treaty_id: int) -> None:
         )
         db.commit()
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to cancel treaty %d", treaty_id)
-        raise RuntimeError("Failed to cancel treaty") from e
+        raise RuntimeError("Failed to cancel treaty") from exc
 
 # ----------------------------
 # Treaty Listing Functions
@@ -131,7 +130,7 @@ def list_active_treaties(db: Session, kingdom_id: int) -> list[dict]:
 
         return [_map_treaty_row(r) for r in rows]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to list active treaties for kingdom %d", kingdom_id)
         return []
 
@@ -156,7 +155,7 @@ def list_incoming_proposals(db: Session, kingdom_id: int) -> list[dict]:
 
         return [_map_treaty_row(r) for r in rows]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to list incoming proposals for kingdom %d", kingdom_id)
         return []
 
@@ -181,7 +180,7 @@ def list_outgoing_proposals(db: Session, kingdom_id: int) -> list[dict]:
 
         return [_map_treaty_row(r) for r in rows]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to list outgoing proposals for kingdom %d", kingdom_id)
         return []
 

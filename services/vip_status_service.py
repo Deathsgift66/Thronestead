@@ -13,7 +13,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover - SQLAlchemy fallback
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 logger = logging.getLogger(__name__)
@@ -64,7 +66,7 @@ def upsert_vip_status(
         db.commit()
         logger.info("Upserted VIP level %s for user %s", vip_level, user_id)
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.exception("Failed to upsert VIP status for user_id=%s", user_id)
         raise
@@ -99,7 +101,7 @@ def get_vip_status(db: Session, user_id: str) -> dict | None:
             "founder": row[2],
         }
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.warning("Failed to fetch VIP status for user_id=%s", user_id)
         return None
 

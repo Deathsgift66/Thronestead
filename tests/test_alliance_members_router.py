@@ -13,6 +13,9 @@ from backend.routers.alliance_members import (
     transfer_leadership,
     TransferLeadershipPayload,
 )
+import pytest
+from fastapi import HTTPException
+from backend.routers.alliance_members import get_current_user_id
 
 
 def setup_db():
@@ -31,10 +34,6 @@ def test_promote_updates_rank():
     promote(RankPayload(user_id="u1", alliance_id=1, new_rank="Leader"), user_id="admin", db=db)
     row = db.query(AllianceMember).filter_by(user_id="u1").first()
     assert row.rank == "Leader"
-
-import pytest
-from fastapi import HTTPException
-from backend.routers.alliance_members import get_current_user_id
 
 
 def test_get_current_user_id_raises():

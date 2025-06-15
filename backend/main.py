@@ -15,13 +15,13 @@ from pathlib import Path
 import logging
 import os
 
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
-logger = logging.getLogger("KingmakersRise.BackendMain")
-
 from .database import engine
 from .models import Base
 from .data import load_game_settings
 from . import routers as router_pkg
+
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger("KingmakersRise.BackendMain")
 
 # -----------------------
 # ⚙️ FastAPI Initialization

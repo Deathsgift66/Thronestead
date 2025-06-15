@@ -6,14 +6,15 @@
 
 from datetime import datetime, timedelta
 import logging
-from typing import Optional
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 logger = logging.getLogger(__name__)

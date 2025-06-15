@@ -6,14 +6,15 @@
 """Service logic for executing and resolving live tactical war battles."""
 
 from __future__ import annotations
-from typing import Optional
 import logging
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 logger = logging.getLogger(__name__)

@@ -16,6 +16,7 @@ from sqlalchemy import (
     Numeric,
     Float,
     text,
+    CheckConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func

@@ -7,14 +7,15 @@
 
 from __future__ import annotations
 from typing import Optional
-from datetime import datetime
 import logging
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:  # fallback for test environments
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 logger = logging.getLogger(__name__)

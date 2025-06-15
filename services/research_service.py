@@ -7,14 +7,15 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
 import logging
-from typing import Optional
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 logger = logging.getLogger(__name__)
@@ -83,10 +84,10 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
         db.commit()
         return ends_at
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to start research %s for kingdom %d", tech_code, kingdom_id)
-        raise RuntimeError("Research initiation failed") from e
+        raise RuntimeError("Research initiation failed") from exc
 
 
 # -------------------------------------------------------------
@@ -109,10 +110,10 @@ def complete_finished_research(db: Session, kingdom_id: int) -> None:
             {"kid": kingdom_id},
         )
         db.commit()
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to complete expired research for kingdom %d", kingdom_id)
-        raise RuntimeError("Research completion update failed") from e
+        raise RuntimeError("Research completion update failed") from exc
 
 
 # -------------------------------------------------------------
@@ -142,7 +143,7 @@ def list_research(db: Session, kingdom_id: int) -> list[dict]:
             for r in rows
         ]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to fetch research list for kingdom %d", kingdom_id)
         return []
 
@@ -167,6 +168,6 @@ def is_tech_completed(db: Session, kingdom_id: int, tech_code: str) -> bool:
         ).fetchone()
         return row is not None
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.warning("Failed to verify tech completion for %s", tech_code)
         return False

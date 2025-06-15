@@ -15,7 +15,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 # Optional in-memory/game-state sources
@@ -78,8 +80,8 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
         base, buildings, tech, projects, events = result
         return base + buildings + tech + projects + events
 
-    except SQLAlchemyError as e:
-        logger.warning("Failed to calculate troop slots: %s", e)
+    except SQLAlchemyError as exc:
+        logger.warning("Failed to calculate troop slots: %s", exc)
         return 0
 
 
@@ -107,8 +109,8 @@ def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> No
         if used + troops_requested > total:
             raise HTTPException(status_code=400, detail="Not enough troop slots")
 
-    except SQLAlchemyError as e:
-        logger.warning("Troop slot check failed for kingdom %d", kingdom_id)
+    except SQLAlchemyError:
+        logger.exception("Troop slot check failed for kingdom %d", kingdom_id)
         raise HTTPException(status_code=500, detail="Slot verification error")
 
 
