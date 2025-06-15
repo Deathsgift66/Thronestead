@@ -167,8 +167,8 @@ async function loadAnnouncements() {
       console.debug(text.slice(0, 150));
       return;
     }
-    const announcements = await res.json();
-    announcements.forEach((a) => {
+    const { announcements } = await res.json();
+    announcements.forEach(a => {
       const li = document.createElement('li');
       li.textContent = `${a.title} - ${a.content}`;
       announcementList.appendChild(li);
