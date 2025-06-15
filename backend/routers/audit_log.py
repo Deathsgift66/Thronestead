@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..security import verify_jwt_token
 from services.audit_service import fetch_logs, log_action
 
 # FastAPI router for system-wide audit logs
@@ -24,6 +25,7 @@ class LogPayload(BaseModel):
 def get_audit_logs(
     user_id: str | None = Query(None, description="Filter logs by user ID"),
     limit: int = Query(100, ge=1, le=500, description="Max number of logs to return"),
+    _uid: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """
@@ -37,7 +39,11 @@ def get_audit_logs(
 
 
 @router.post("/")
-def create_audit_log(payload: LogPayload, db: Session = Depends(get_db)):
+def create_audit_log(
+    payload: LogPayload,
+    _uid: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     """
     Create a new audit log entry.
 
