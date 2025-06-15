@@ -13,10 +13,16 @@ Routers:
 - /api/progression
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import logging
 import os
+
+# Ensure environment variables from `.ENV` are loaded via the backend package
+import backend
+
+logging.basicConfig(level=logging.INFO)
 
 # Router imports
 from backend.routers import resources
@@ -31,6 +37,17 @@ app = FastAPI(
     version="6.14.2025.20.12",
     description="Backend services for Kingmaker's Rise — resource systems, announcements, region data, and progression.",
 )
+
+
+# Generic catch-all error handler for unexpected exceptions
+@app.exception_handler(Exception)
+async def handle_unexpected_exception(request: Request, exc: Exception):
+    logger.exception("Unhandled application error")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
+    )
+
 
 # Configure CORS
 allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
