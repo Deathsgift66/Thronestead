@@ -1107,6 +1107,50 @@ class KingdomResources(Base):
 
 
 
+class AllianceSurrender(Base):
+    """Records alliance surrender terms and status."""
+
+    __tablename__ = "alliance_surrenders"
+
+    surrender_id = Column(Integer, primary_key=True)
+    alliance_war_id = Column(Integer, ForeignKey("alliance_wars.alliance_war_id"))
+    surrendering_alliance_id = Column(Integer)
+    accepted_by_alliance_id = Column(Integer)
+    surrender_terms = Column(JSONB)
+    status = Column(Text, default="pending")
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+    peace_terms = Column(Text)
+    gold_penalty = Column(Integer, default=0)
+
+
+class AllianceTaxCollection(Base):
+    """Log of resources taxed from alliance members."""
+
+    __tablename__ = "alliance_tax_collections"
+
+    collection_id = Column(BigInteger, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    resource_type = Column(Text, nullable=False)
+    amount_collected = Column(BigInteger, default=0)
+    collected_at = Column(DateTime(timezone=True), server_default=func.now())
+    source = Column(Text)
+    notes = Column(Text)
+
+
+class AllianceTaxPolicy(Base):
+    """Active tax rates for alliance resources."""
+
+    __tablename__ = "alliance_tax_policies"
+
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
+    resource_type = Column(Text, primary_key=True)
+    tax_rate_percent = Column(Numeric, default=0)
+    is_active = Column(Boolean, default=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+
+
 class GlobalEvent(Base):
     """Representation of a global event."""
 
@@ -1179,5 +1223,6 @@ class KingdomResearchTracking(Base):
     status = Column(String)
     progress = Column(Integer, default=0)
     ends_at = Column(DateTime(timezone=True))
+
 
 
