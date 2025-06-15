@@ -764,15 +764,17 @@ class TerrainMap(Base):
     map_seed = Column(Integer)
     map_version = Column(Integer, default=1)
     generated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    map_name = Column(String)
+    map_name = Column(Text)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    map_type = Column(String, default="battlefield")
+    map_type = Column(Text, default="battlefield")
     tile_schema_version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
-    map_source = Column(String, default="auto-generated")
+    map_source = Column(Text, default="auto-generated")
     map_features = Column(JSONB, default={})
+    tileset = Column(Text)
+    features_summary = Column(Text)
 
 
 class UnitStat(Base):
