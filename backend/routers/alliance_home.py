@@ -21,7 +21,7 @@ def alliance_details(
 ):
     """
     Return full summary data for the user's current alliance.
-    Includes: core info, members, vault, projects, quests, wars, treaties, achievements, and activity logs.
+    Includes: core info, members, vault, projects, quests, wars, treaties, and activity logs.
     """
     # --------------------
     # 🔐 Validate User & Alliance
@@ -167,31 +167,6 @@ def alliance_details(
         for r in treaties
     ]
 
-    # --------------------
-    # 🏅 Achievements
-    # --------------------
-    achievements = db.execute(
-        text(
-            """
-            SELECT a.achievement_code, c.name, c.description, c.badge_icon_url, a.awarded_at
-            FROM alliance_achievements a
-            JOIN alliance_achievement_catalogue c ON a.achievement_code = c.achievement_code
-            WHERE a.alliance_id = :aid
-            ORDER BY a.awarded_at DESC
-            """
-        ),
-        {"aid": aid},
-    ).fetchall()
-    achievements = [
-        {
-            "achievement_code": r[0],
-            "name": r[1],
-            "description": r[2],
-            "badge_icon_url": r[3],
-            "awarded_at": r[4].isoformat() if r[4] else None,
-        }
-        for r in achievements
-    ]
 
     # --------------------
     # 📅 Recent Activity
@@ -246,6 +221,5 @@ def alliance_details(
         "quests": quests,
         "wars": wars,
         "treaties": treaties,
-        "achievements": achievements,
         "activity": activity,
     }

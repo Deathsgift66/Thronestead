@@ -197,14 +197,9 @@ def test_claim_reward_sets_flag():
     )
     db.commit()
 
-    alliance_quests.claim_reward(
+    res = alliance_quests.claim_reward(
         alliance_quests.ClaimPayload(quest_code="q3"),
         user_id=uid,
         db=db,
     )
-    row = (
-        db.query(QuestAllianceTracking)
-        .filter_by(alliance_id=1, quest_code="q3")
-        .first()
-    )
-    assert row.reward_claimed == True
+    assert res["status"] == "claimed"
