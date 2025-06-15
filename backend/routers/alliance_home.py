@@ -21,7 +21,7 @@ def alliance_details(
 ):
     """
     Return full summary data for the user's current alliance.
-    Includes: core info, members, vault, projects, quests, wars, treaties, achievements, and activity logs.
+    Includes: core info, members, vault, projects, quests, wars, treaties, and activity logs.
     """
     # --------------------
     # 🔐 Validate User & Alliance
@@ -72,22 +72,25 @@ def alliance_details(
     # 🏗️ Active Projects
     # --------------------
     projects = db.execute(
+
         text("""
-            SELECT p.project_id, c.name, p.project_key, p.progress, p.build_state
+            SELECT p.project_id, c.project_name, p.project_key, p.progress, p.build_state
+
             FROM projects_alliance_in_progress p
             JOIN project_alliance_catalogue c ON p.project_key = c.project_key
             WHERE p.alliance_id = :aid
-            ORDER BY p.start_time DESC
+            ORDER BY p.started_at DESC
         """),
+
         {"aid": aid},
     ).fetchall()
     projects = [
         {
-            "project_id": r[0],
+            "progress_id": r[0],
             "name": r[1],
             "project_key": r[2],
             "progress": r[3],
-            "build_state": r[4],
+            "status": r[4],
         }
         for r in projects
     ]
@@ -167,31 +170,6 @@ def alliance_details(
         for r in treaties
     ]
 
-    # --------------------
-    # 🏅 Achievements
-    # --------------------
-    achievements = db.execute(
-        text(
-            """
-            SELECT a.achievement_code, c.name, c.description, c.badge_icon_url, a.awarded_at
-            FROM alliance_achievements a
-            JOIN alliance_achievement_catalogue c ON a.achievement_code = c.achievement_code
-            WHERE a.alliance_id = :aid
-            ORDER BY a.awarded_at DESC
-            """
-        ),
-        {"aid": aid},
-    ).fetchall()
-    achievements = [
-        {
-            "achievement_code": r[0],
-            "name": r[1],
-            "description": r[2],
-            "badge_icon_url": r[3],
-            "awarded_at": r[4].isoformat() if r[4] else None,
-        }
-        for r in achievements
-    ]
 
     # --------------------
     # 📅 Recent Activity
@@ -246,6 +224,5 @@ def alliance_details(
         "quests": quests,
         "wars": wars,
         "treaties": treaties,
-        "achievements": achievements,
         "activity": activity,
     }

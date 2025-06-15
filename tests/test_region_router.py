@@ -34,8 +34,9 @@ def test_get_regions_success():
             "region_code": "north",
             "region_name": "North",
             "description": "cold",
-            "resource_bonus": {"iron": 10},
-            "troop_bonus": {"defense": 5},
+            "wood_bonus": 1,
+            "iron_bonus": 2,
+            "troop_attack_bonus": 3,
         }
     ]
     client = DummyClient({"region_catalogue": DummyTable(data=rows)})

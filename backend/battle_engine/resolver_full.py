@@ -150,8 +150,10 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
 
     units = db.query(
         """
-        SELECT * FROM unit_movements
-        WHERE war_id = %s AND status = 'active'
+        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        FROM unit_movements AS um
+        JOIN unit_stats AS us ON um.unit_type = us.unit_type
+        WHERE um.war_id = %s AND um.status = 'active'
         """,
         (war_id,),
     )
@@ -207,9 +209,11 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
 
     units = db.query(
         """
-        SELECT * FROM unit_movements
-        WHERE kingdom_id = ANY(%s) AND war_id IS NULL
-          AND status = 'active'
+        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        FROM unit_movements AS um
+        JOIN unit_stats AS us ON um.unit_type = us.unit_type
+        WHERE um.kingdom_id = ANY(%s) AND um.war_id IS NULL
+          AND um.status = 'active'
         """,
         (participant_kingdom_ids,),
     )
@@ -316,6 +320,8 @@ def check_victory_condition_kingdom(war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
     elif war["battle_tick"] >= 12:
@@ -344,6 +350,8 @@ def check_victory_condition_kingdom(war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
 
@@ -388,6 +396,8 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
     elif awar["battle_tick"] >= 12:
@@ -419,6 +429,8 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
             att_cas,
             def_cas,
             {},
+            0,
+            None,
         )
 
 
@@ -549,6 +561,8 @@ def insert_battle_resolution_log(
     attacker_casualties: int = 0,
     defender_casualties: int = 0,
     loot_summary: dict | None = None,
+    gold_looted: int = 0,
+    resources_looted: str | None = None,
 ) -> None:
     """Persist final battle outcome in ``battle_resolution_logs``."""
 
@@ -570,8 +584,10 @@ def insert_battle_resolution_log(
             total_ticks,
             attacker_casualties,
             defender_casualties,
-            loot_summary
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            loot_summary,
+            gold_looted,
+            resources_looted
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             battle_type,
@@ -582,6 +598,8 @@ def insert_battle_resolution_log(
             attacker_casualties,
             defender_casualties,
             loot_json,
+            gold_looted,
+            resources_looted,
         ),
     )
 
