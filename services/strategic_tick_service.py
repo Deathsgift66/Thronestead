@@ -114,8 +114,10 @@ def expire_treaties(db: Session) -> int:
         text(
             """
             UPDATE alliance_treaties
-               SET status = 'cancelled'
-             WHERE status = 'active' AND signed_at <= now() - INTERVAL '365 days'
+
+               SET status = 'expired'
+             WHERE status = 'active' AND signed_at < now() - interval '30 days'
+
             """
         )
     )
@@ -123,8 +125,10 @@ def expire_treaties(db: Session) -> int:
         text(
             """
             UPDATE kingdom_treaties
-               SET status = 'cancelled'
-             WHERE status = 'active' AND signed_at <= now() - INTERVAL '365 days'
+
+               SET status = 'expired'
+             WHERE status = 'active' AND signed_at < now() - interval '30 days'
+
             """
         )
     )
