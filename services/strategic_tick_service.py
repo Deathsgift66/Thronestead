@@ -88,11 +88,15 @@ def update_quest_progress(db: Session) -> int:
         int: total number of affected quests
     """
     completed = db.execute(
-        text("""
+        text(
+            """
             UPDATE quest_kingdom_tracking
-               SET status = 'completed', last_updated = now()
+               SET status = 'completed',
+                   is_complete = true,
+                   last_updated = now()
              WHERE status = 'active' AND progress >= 100
-        """)
+        """
+        )
     )
     expired = expire_quests(db)
     db.commit()

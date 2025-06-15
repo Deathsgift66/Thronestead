@@ -58,23 +58,13 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     ).fetchone()
     if region_row:
         region_code = region_row[0]
-        region_mods = db.execute(
-            text(
-                "SELECT wood_bonus, iron_bonus, troop_attack_bonus FROM region_catalogue WHERE region_code = :code"
-            ),
+        rows = db.execute(
+            text("SELECT bonus_type, bonus_value FROM region_bonuses WHERE region_code = :code"),
             {"code": region_code},
-        ).fetchone()
-        if region_mods:
-            wood, iron, attack = region_mods
-            res_mods = {}
-            if wood:
-                res_mods["wood"] = wood
-            if iron:
-                res_mods["iron"] = iron
-            if res_mods:
-                _merge_stack(stack, {"resource_bonus": res_mods}, "Region Bonus")
-            if attack:
-                _merge_stack(stack, {"troop_bonus": {"attack": attack}}, "Region Bonus")
+        ).fetchall()
+        for btype, val in rows:
+            _merge_stack(stack, {btype: {"value": val}}, "Region Bonus")
+
 
     # --- Completed Techs ---
     load_modifier_row(
