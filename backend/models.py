@@ -810,6 +810,8 @@ class QuestKingdomCatalogue(Base):
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    objective_type = Column(String)
+    reward_gold = Column(Integer, default=0)
 
 
 class QuestAllianceContribution(Base):
@@ -855,15 +857,26 @@ class QuestKingdomTracking(Base):
     )
     status = Column(String)
     progress = Column(Integer, default=0)
-    progress_details = Column(JSONB, default=dict)
+    progress_details = Column(JSONB, default={})
     ends_at = Column(DateTime(timezone=True))
     started_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     attempt_count = Column(Integer, default=1)
-
     started_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    objective_progress = Column(Integer, default=0)
+    is_complete = Column(Boolean, default=False)
+
+
+class RegionBonus(Base):
+    """Bonus modifiers attached to specific world regions."""
+
+    __tablename__ = "region_bonuses"
+
+    region_code = Column(String, ForeignKey("region_catalogue.region_code"), primary_key=True)
+    bonus_type = Column(String, primary_key=True)
+    bonus_value = Column(Numeric)
 
 
 class KingdomTemple(Base):
