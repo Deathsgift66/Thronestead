@@ -6,6 +6,7 @@
 """Central logic for computing, tracing, and summarizing active kingdom modifiers."""
 
 from __future__ import annotations
+import json
 import logging
 
 try:
@@ -47,6 +48,11 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         try:
             rows = db.execute(text(sql), params).fetchall()
             for (mod,) in rows:
+                if isinstance(mod, str):
+                    try:
+                        mod = json.loads(mod)
+                    except Exception:
+                        mod = {}
                 _merge_stack(stack, mod or {}, source_label)
         except Exception as e:
             logging.warning(f"Failed to load modifiers from {source_label}: {e}")
@@ -58,14 +64,13 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     ).fetchone()
     if region_row:
         region_code = region_row[0]
-        region_mods = db.execute(
-            text("SELECT resource_bonus, troop_bonus FROM region_catalogue WHERE region_code = :code"),
+        rows = db.execute(
+            text("SELECT bonus_type, bonus_value FROM region_bonuses WHERE region_code = :code"),
             {"code": region_code},
-        ).fetchone()
-        if region_mods:
-            res_bonus, troop_bonus = region_mods
-            _merge_stack(stack, {"resource_bonus": res_bonus or {}}, "Region Bonus")
-            _merge_stack(stack, {"troop_bonus": troop_bonus or {}}, "Region Bonus")
+        ).fetchall()
+        for btype, val in rows:
+            _merge_stack(stack, {btype: {"value": val}}, "Region Bonus")
+
 
     # --- Completed Techs ---
     load_modifier_row(
@@ -106,7 +111,7 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     # --- Alliance Projects ---
     load_modifier_row(
         """
-        SELECT pa.modifiers FROM projects_alliance pa
+        SELECT pa.active_bonus FROM projects_alliance pa
         WHERE pa.alliance_id IN (
             SELECT alliance_id FROM alliance_members
             WHERE user_id = (SELECT user_id FROM kingdoms WHERE kingdom_id = :kid)
@@ -116,17 +121,29 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         "Alliance Project",
     )
 
+
     # --- Active Treaties ---
-    treaties = db.execute(
-        text("""
-            SELECT modifiers FROM kingdom_treaties
-            WHERE (kingdom_id = :kid OR partner_kingdom_id = :kid)
-            AND status = 'active' AND modifiers IS NOT NULL
-        """),
+    treaty_rows = db.execute(
+        text(
+            """
+            SELECT tm.effect_type, tm.target, tm.magnitude
+              FROM kingdom_treaties kt
+              JOIN treaty_modifiers tm ON tm.treaty_id = kt.treaty_id
+             WHERE (kt.kingdom_id = :kid OR kt.partner_kingdom_id = :kid)
+               AND kt.status = 'active'
+            """
+        ),
         {"kid": kingdom_id},
     ).fetchall()
-    for (mods,) in treaties:
-        _merge_stack(stack, mods or {}, "Treaty")
+    treaty_mods: dict = {}
+    for eff, tgt, mag in treaty_rows:
+        if mag is None:
+            continue
+        bucket = treaty_mods.setdefault(eff, {})
+        bucket[tgt] = bucket.get(tgt, 0) + float(mag)
+    if treaty_mods:
+        _merge_stack(stack, treaty_mods, "Treaty")
+
 
     # --- Spy Effects ---
     spy_row = db.execute(
