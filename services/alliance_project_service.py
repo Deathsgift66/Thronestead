@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 def list_available_projects(db: Session) -> list[dict]:
     """Return all projects that alliances can start (from catalogue)."""
     rows = db.execute(
-        text("SELECT * FROM project_alliance_catalogue WHERE is_active = true ORDER BY tier, name")
+        text("SELECT * FROM project_alliance_catalogue WHERE is_active = true ORDER BY project_name")
     ).fetchall()
     return [dict(r._mapping) for r in rows]
 
@@ -40,19 +40,28 @@ def list_alliance_projects(db: Session, alliance_id: int) -> dict:
     return {
         "active": q(
             """
-            SELECT project_id, name, project_key, progress, build_state
-              FROM projects_alliance
-             WHERE alliance_id = :aid AND build_state = 'building'
-             ORDER BY start_time DESC
+
+            SELECT pa.project_id, pc.project_name, pa.project_key, pa.started_at,
+                   pa.expected_end, pa.contributed, pa.total_required,
+                   pa.build_state
+              FROM projects_alliance pa
+              JOIN project_alliance_catalogue pc ON pa.project_key = pc.project_key
+             WHERE pa.alliance_id = :aid AND pa.build_state = 'in_progress'
+             ORDER BY pa.started_at DESC
+
             """,
             {"aid": alliance_id},
         ),
         "completed": q(
             """
-            SELECT project_id, name, project_key, progress, end_time
-              FROM projects_alliance
-             WHERE alliance_id = :aid AND build_state = 'completed'
-             ORDER BY end_time DESC
+
+            SELECT pa.project_id, pc.project_name, pa.project_key, pa.started_at,
+                   pa.expected_end, pa.completed_at, pa.contributed
+              FROM projects_alliance pa
+              JOIN project_alliance_catalogue pc ON pa.project_key = pc.project_key
+             WHERE pa.alliance_id = :aid AND pa.build_state = 'completed'
+             ORDER BY pa.completed_at DESC
+
             """,
             {"aid": alliance_id},
         ),
@@ -73,7 +82,9 @@ def start_alliance_project(
     """Initiate a new alliance project if it's valid and not already active."""
     row = db.execute(
         text(
-            "SELECT build_time_seconds FROM project_alliance_catalogue "
+
+            "SELECT build_time_seconds, resource_costs FROM project_alliance_catalogue "
+
             "WHERE project_key = :key AND is_active = true"
         ),
         {"key": project_key},
@@ -82,8 +93,10 @@ def start_alliance_project(
     if not row:
         raise HTTPException(status_code=404, detail="Invalid or inactive project code")
 
-    build_time, = row
-    ends_at = datetime.utcnow() + timedelta(seconds=build_time or 0)
+
+    build_seconds, requirements = row
+    ends_at = datetime.utcnow() + timedelta(seconds=build_seconds or 0)
+
 
     exists = db.execute(
         text(
@@ -106,14 +119,27 @@ def start_alliance_project(
     db.execute(
         text(
             """
-            INSERT INTO projects_alliance_in_progress (
-                alliance_id, project_key, progress, started_at, expected_end, status, built_by
+
+            INSERT INTO projects_alliance (
+                alliance_id, project_key, started_at,
+                expected_end, contributed, total_required,
+                build_state, initiated_by
             ) VALUES (
-                :aid, :key, 0, now(), :end, 'building', :uid
+                :aid, :key, now(), :end, 0,
+                :req, 'in_progress', :uid
+
             )
-            """
+        """
         ),
-        {"aid": alliance_id, "key": project_key, "end": ends_at, "uid": initiated_by},
+
+        {
+            "aid": alliance_id,
+            "key": project_key,
+            "end": ends_at,
+            "req": sum((requirements or {}).values()),
+            "uid": initiated_by,
+        },
+
     )
 
     db.commit()
@@ -131,10 +157,12 @@ def contribute_to_project(
     row = db.execute(
         text(
             """
-            SELECT progress_id, progress
-              FROM projects_alliance_in_progress
-             WHERE alliance_id = :aid AND project_key = :key
-               AND status = 'building'
+
+            SELECT project_id, contributed, total_required
+            FROM projects_alliance
+            WHERE alliance_id = :aid AND project_key = :key
+              AND build_state = 'in_progress'
+
             """
         ),
         {"aid": alliance_id, "key": project_key},
@@ -168,14 +196,16 @@ def contribute_to_project(
 
 
 def complete_project_if_ready(db: Session, alliance_id: int, project_key: str) -> bool:
-    """Mark project as completed if progress reached 100%."""
+
+    """Manually check if a project has met requirements and complete it."""
     row = db.execute(
         text(
             """
-            SELECT progress_id, progress, started_at, expected_end, built_by
-              FROM projects_alliance_in_progress
-             WHERE alliance_id = :aid AND project_key = :key
-               AND status = 'building'
+            SELECT project_id, contributed, total_required
+            FROM projects_alliance
+            WHERE alliance_id = :aid AND project_key = :key
+              AND build_state = 'in_progress'
+
             """
         ),
         {"aid": alliance_id, "key": project_key},
@@ -220,6 +250,8 @@ def get_project_modifiers(
             """
             SELECT pa.active_bonus
               FROM projects_alliance pa
+               JOIN project_alliance_catalogue pc ON pa.project_key = pc.project_key
+
              WHERE pa.alliance_id = :aid AND pa.build_state = 'completed'
             """
         ),

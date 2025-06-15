@@ -31,17 +31,16 @@ class UpdateLawsPayload(BaseModel):
 # Endpoint: Get Catalogue of Active Policies/Laws
 # -------------------------------
 @router.get("/catalogue")
-def get_catalogue(user_id: str = Depends(verify_jwt_token)):
+def catalogue(user_id: str = Depends(verify_jwt_token)):
     """
-    Return all active policies and laws in the catalogue sorted by unlock level.
+    Return all policies and laws in the catalogue sorted by ID.
     """
     supabase = get_supabase_client()
     try:
         result = (
             supabase.table("policies_laws_catalogue")
             .select("*")
-            .eq("is_active", True)
-            .order("unlock_at_level")
+            .order("id")
             .execute()
         )
     except Exception as exc:
@@ -55,7 +54,7 @@ def get_catalogue(user_id: str = Depends(verify_jwt_token)):
 # Endpoint: Get User's Current Settings
 # -------------------------------
 @router.get("/user")
-def get_user_policies(user_id: str = Depends(verify_jwt_token)):
+def user_settings(user_id: str = Depends(verify_jwt_token)):
     """
     Return the current policy and active laws for the authenticated user.
     """
