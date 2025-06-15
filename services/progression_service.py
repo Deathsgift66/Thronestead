@@ -53,26 +53,25 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     """
     try:
         result = db.execute(
-            text("""
-                SELECT kts.base_slots,
-                       kts.slots_from_buildings,
-                       kts.slots_from_tech,
-                       kts.slots_from_projects,
-                       kts.slots_from_events,
-                       COALESCE((rc.troop_bonus ->> 'base_slots')::integer, 0)
-                  FROM kingdom_troop_slots kts
-                  JOIN kingdoms k ON k.kingdom_id = kts.kingdom_id
-             LEFT JOIN region_catalogue rc ON rc.region_code = k.region
-                 WHERE kts.kingdom_id = :kid
-            """),
+            text(
+                """
+                SELECT base_slots,
+                       slots_from_buildings,
+                       slots_from_tech,
+                       slots_from_projects,
+                       slots_from_events
+                  FROM kingdom_troop_slots
+                 WHERE kingdom_id = :kid
+                """
+            ),
             {"kid": kingdom_id},
         ).fetchone()
 
         if not result:
             return 0
 
-        base, buildings, tech, projects, events, region_bonus = result
-        return base + buildings + tech + projects + events + region_bonus
+        base, buildings, tech, projects, events = result
+        return base + buildings + tech + projects + events
 
     except SQLAlchemyError as e:
         logger.warning("Failed to calculate troop slots: %s", e)
@@ -181,16 +180,21 @@ def _region_modifiers(db: Session, kingdom_id: int) -> dict:
         return {}
     row = db.execute(
         text(
-            "SELECT resource_bonus, troop_bonus FROM region_catalogue WHERE region_code = :code"
+            "SELECT wood_bonus, iron_bonus, troop_attack_bonus FROM region_catalogue WHERE region_code = :code"
         ),
         {"code": region_code},
     ).fetchone()
     if not row:
         return {}
-    return {
-        "resource_bonus": row[0] or {},
-        "troop_bonus": row[1] or {},
-    }
+    res_mods = {}
+    if row[0]:
+        res_mods["wood"] = row[0]
+    if row[1]:
+        res_mods["iron"] = row[1]
+    troop_mods = {}
+    if row[2]:
+        troop_mods["attack"] = row[2]
+    return {"resource_bonus": res_mods, "troop_bonus": troop_mods}
 
 
 def _tech_modifiers(db: Session, kingdom_id: int) -> dict:
