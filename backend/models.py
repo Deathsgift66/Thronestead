@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    Float,
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
@@ -22,15 +23,41 @@ from backend.db_base import Base
 
 
 class Kingdom(Base):
-    """Minimal kingdom model for tests and basic relations."""
+    """ORM model for the ``kingdoms`` table."""
 
     __tablename__ = "kingdoms"
 
     kingdom_id = Column(Integer, primary_key=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    kingdom_name = Column(String, nullable=False)
-    region = Column(String)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), unique=True)
+    kingdom_name = Column(Text, nullable=False)
+    region = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    prestige_score = Column(Integer, default=0)
+    avatar_url = Column(Text)
+    status = Column(Text, server_default="active")
+    description = Column(Text)
+    motto = Column(Text)
+    ruler_name = Column(Text)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    alliance_role = Column(Text)
+    tech_level = Column(Integer, default=1)
+    economy_score = Column(Integer, default=0)
+    military_score = Column(Integer, default=0)
+    diplomacy_score = Column(Integer, default=0)
+    last_login_at = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=func.now())
+    is_npc = Column(Boolean, default=False)
+    customizations = Column(JSONB, default=dict)
+    ruler_title = Column(Text)
+    banner_url = Column(Text)
+    emblem_url = Column(Text)
+    is_on_vacation = Column(Boolean, default=False)
+    vacation_started_at = Column(DateTime(timezone=True))
+    vacation_expires_at = Column(DateTime(timezone=True))
+    vacation_cooldown_until = Column(DateTime(timezone=True))
+    policy_change_allowed_at = Column(DateTime(timezone=True))
+    banner_color = Column(Text)
+    national_theme = Column(Text)
 
 
 class User(Base):
@@ -74,12 +101,94 @@ class PlayerMessage(Base):
     is_read = Column(Boolean, default=False)
 
 
+
 class UserSettingEntry(Base):
     __tablename__ = "user_setting_entries"
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True)
     setting_key = Column(String, primary_key=True)
     setting_value = Column(Text)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_log"
+
+    log_id = Column(Integer, primary_key=True)
+    user_id = Column(UUID(as_uuid=True))
+    action = Column(Text)
+    details = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    kingdom_id = Column(Integer)
+
+
+class ArchivedAuditLog(Base):
+    __tablename__ = "archived_audit_log"
+
+    log_id = Column(BigInteger)
+    user_id = Column(UUID(as_uuid=True))
+    action = Column(Text)
+    details = Column(Text)
+    created_at = Column(DateTime(timezone=True))
+
+
+class GlobalEvent(Base):
+    """Scheduled world events that impact gameplay."""
+
+    __tablename__ = "global_events"
+
+    event_id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    description = Column(Text)
+    start_time = Column(DateTime(timezone=False))
+    end_time = Column(DateTime(timezone=False))
+    is_active = Column(Boolean, server_default="false")
+    impact_type = Column(Text)
+    magnitude = Column(Numeric)
+
+
+class KingdomAchievementCatalogue(Base):
+    __tablename__ = "kingdom_achievement_catalogue"
+
+    achievement_code = Column(Text, primary_key=True)
+    name = Column(Text, nullable=False)
+    description = Column(Text)
+    category = Column(Text)
+    reward = Column(JSONB, server_default="{}")
+    points = Column(Integer, server_default="0")
+    is_hidden = Column(Boolean, server_default="false")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    gold_reward = Column(Integer, server_default="0")
+    honor_reward = Column(Integer, server_default="0")
+
+
+class KingdomAchievement(Base):
+    __tablename__ = "kingdom_achievements"
+
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
+    achievement_code = Column(
+        Text,
+        ForeignKey("kingdom_achievement_catalogue.achievement_code"),
+        primary_key=True,
+    )
+    awarded_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MessageMetadata(Base):
+    """Key/value metadata attached to ``player_messages``."""
+
+    __tablename__ = "message_metadata"
+
+    message_id = Column(
+        Integer,
+        ForeignKey("player_messages.message_id"),
+        primary_key=True,
+    )
+    key = Column(Text, primary_key=True)
+    value = Column(Text)
+
+
 
 
 class Alliance(Base):
@@ -109,14 +218,46 @@ class AllianceMember(Base):
 
     __tablename__ = "alliance_members"
 
-    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True)
+    alliance_id = Column(
+        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
+    )
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True
+    )
     username = Column(String)
     rank = Column(String)
     contribution = Column(Integer, default=0)
     status = Column(String)
     crest = Column(String)
     role_id = Column(Integer, ForeignKey("alliance_roles.role_id"))
+
+
+class AllianceRole(Base):
+    __tablename__ = "alliance_roles"
+
+    role_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    role_name = Column(Text, nullable=False)
+    permissions = Column(JSONB, server_default=text("'{}'::jsonb"))
+    is_default = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    can_invite = Column(Boolean, default=False)
+    can_kick = Column(Boolean, default=False)
+    can_manage_resources = Column(Boolean, default=False)
+
+
+class AlliancePolicy(Base):
+    __tablename__ = "alliance_policies"
+
+    alliance_id = Column(
+        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
+    )
+    policy_id = Column(
+        Integer, ForeignKey("policies_laws_catalogue.id"), primary_key=True
+    )
+    applied_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_active = Column(Boolean, default=True)
+
 
 
 class AllianceVault(Base):
@@ -247,6 +388,31 @@ class AllianceLoan(Base):
     tax_started_at = Column(DateTime(timezone=True))
 
 
+class AllianceVote(Base):
+    __tablename__ = "alliance_votes"
+
+    vote_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    proposal_type = Column(Text)
+    proposal_details = Column(JSONB)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    ends_at = Column(DateTime(timezone=True))
+    status = Column(Text, default="active")
+    vote_type = Column(Text)
+    target_id = Column(Integer)
+    vote_metadata = Column(Text)
+
+
+class AllianceVoteParticipant(Base):
+    __tablename__ = "alliance_vote_participants"
+
+    vote_id = Column(Integer, ForeignKey("alliance_votes.vote_id"), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), primary_key=True)
+    vote_choice = Column(Text)
+    voted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class NobleHouse(Base):
     """Represents a noble house or family."""
 
@@ -267,28 +433,55 @@ class ProjectPlayerCatalogue(Base):
     project_code = Column(String, primary_key=True)
     name = Column(String, nullable=False)
     description = Column(Text)
-    power_score = Column(Integer, default=0)
+    power_score = Column(Integer, server_default="0")
     cost = Column(JSONB)
-    modifiers = Column(JSONB)
+    modifiers = Column(JSONB, server_default="{}")
     category = Column(String)
-    is_repeatable = Column(Boolean, default=False)
-    prerequisites = Column(JSONB)
-    unlocks = Column(JSONB)
-    build_time_seconds = Column(Integer)
+    is_repeatable = Column(Boolean, server_default="true")
+    prerequisites = Column(ARRAY(Text))
+    unlocks = Column(ARRAY(Text))
+    build_time_seconds = Column(Integer, server_default="3600")
     project_duration_seconds = Column(Integer)
-    requires_kingdom_level = Column(Integer)
-    is_active = Column(Boolean, default=True)
+    requires_kingdom_level = Column(Integer, server_default="1")
+    is_active = Column(Boolean, server_default="true")
     max_active_instances = Column(Integer)
-    required_tech = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    required_tech = Column(ARRAY(Text))
     requires_region = Column(String)
     effect_summary = Column(Text)
     expires_at = Column(DateTime(timezone=True))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_updated = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     last_modified_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    gold_cost = Column(Integer, server_default="0")
+    effect_description = Column(Text)
+    wood = Column(Integer, server_default="0")
+    stone = Column(Integer, server_default="0")
+    iron_ore = Column(Integer, server_default="0")
+    gold = Column(Integer, server_default="0")
+    gems = Column(Integer, server_default="0")
+    food = Column(Integer, server_default="0")
+    coal = Column(Integer, server_default="0")
+    livestock = Column(Integer, server_default="0")
+    clay = Column(Integer, server_default="0")
+    flax = Column(Integer, server_default="0")
+    tools = Column(Integer, server_default="0")
+    wood_planks = Column(Integer, server_default="0")
+    refined_stone = Column(Integer, server_default="0")
+    iron_ingots = Column(Integer, server_default="0")
+    charcoal = Column(Integer, server_default="0")
+    leather = Column(Integer, server_default="0")
+    arrows = Column(Integer, server_default="0")
+    swords = Column(Integer, server_default="0")
+    axes = Column(Integer, server_default="0")
+    shields = Column(Integer, server_default="0")
+    armour = Column(Integer, server_default="0")
+    wagon = Column(Integer, server_default="0")
+    siege_weapons = Column(Integer, server_default="0")
+    jewelry = Column(Integer, server_default="0")
+    spear = Column(Integer, server_default="0")
+    horses = Column(Integer, server_default="0")
+    pitchforks = Column(Integer, server_default="0")
 
 
 class ProjectAllianceCatalogue(Base):
@@ -358,21 +551,23 @@ class WarsTactical(Base):
     war_id = Column(Integer, ForeignKey("wars.war_id"), primary_key=True)
     attacker_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     defender_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
-    phase = Column(String)
+    phase = Column(String, server_default="alert")
     castle_hp = Column(Integer, default=1000)
     battle_tick = Column(Integer, default=0)
-    war_status = Column(String)
+    war_status = Column(String, server_default="active")
     terrain_id = Column(Integer, ForeignKey("terrain_map.terrain_id"))
     current_turn = Column(String)
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
-    last_tick_processed_at = Column(DateTime(timezone=True))
+    last_tick_processed_at = Column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     tick_interval_seconds = Column(Integer, default=300)
     is_concluded = Column(Boolean, default=False)
-    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    started_at = Column(DateTime(timezone=True))
     ended_at = Column(DateTime(timezone=True))
-    fog_of_war = Column(Boolean, default=False)
-    weather = Column(String)
+    fog_of_war = Column(Boolean, default=True)
+    weather = Column(Text)
     submitted_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
@@ -414,9 +609,12 @@ class CombatLog(Base):
     position_x = Column(Integer)
     position_y = Column(Integer)
     damage_dealt = Column(Integer, default=0)
-    morale_shift = Column(Integer)
+    morale_shift = Column(Float)
     notes = Column(Text)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    treaty_trigger_context = Column(JSONB, default=dict)
+    triggered_by_treaty = Column(Boolean, default=False)
+    treaty_name = Column(Text)
 
 
 class AllianceWar(Base):
@@ -447,14 +645,14 @@ class AllianceWarCombatLog(Base):
     alliance_war_id = Column(
         Integer, ForeignKey("alliance_wars.alliance_war_id", ondelete="CASCADE")
     )
-    tick_number = Column(Integer)
-    event_type = Column(String)
+    tick_number = Column(Integer, nullable=False)
+    event_type = Column(String, nullable=False)
     attacker_unit_id = Column(Integer)
     defender_unit_id = Column(Integer)
     position_x = Column(Integer)
     position_y = Column(Integer)
     damage_dealt = Column(Integer, default=0)
-    morale_shift = Column(Integer, default=0)
+    morale_shift = Column(Float, default=0)
     notes = Column(Text)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -474,25 +672,30 @@ class War(Base):
     """Metadata for kingdom level wars."""
 
     __tablename__ = "wars"
+    __table_args__ = (
+        CheckConstraint("outcome IN ('attacker','defender','draw')", name="wars_outcome_check"),
+    )
 
     war_id = Column(Integer, primary_key=True)
     attacker_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     defender_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    attacker_name = Column(String)
-    defender_name = Column(String)
+    attacker_name = Column(Text)
+    defender_name = Column(Text)
     war_reason = Column(Text)
-    status = Column(String)
+    status = Column(Text)
     start_date = Column(DateTime(timezone=True))
     end_date = Column(DateTime(timezone=True))
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
     attacker_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     defender_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
-    war_type = Column(String)
+    war_type = Column(Text, server_default="duel")
     is_retaliation = Column(Boolean, default=False)
     treaty_triggered = Column(Boolean, default=False)
-    victory_condition = Column(String)
-    outcome = Column(String)
+    victory_condition = Column(Text, server_default="score")
+    outcome = Column(Text)
+    triggered_by_treaty = Column(Boolean, default=False)
+    triggering_treaty_type = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -501,7 +704,7 @@ class War(Base):
 
 
 class WarPreplan(Base):
-    """Pre‑battle plans for tactical wars."""
+    """Pre-battle plans for tactical wars."""
 
     __tablename__ = "war_preplans"
 
@@ -509,14 +712,17 @@ class WarPreplan(Base):
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"))
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     preplan_jsonb = Column(JSONB)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     submitted_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     is_finalized = Column(Boolean, default=False)
     version = Column(Integer, default=1)
-    status = Column(String, default="draft")
+    status = Column(Text, default="draft")
+    start_tile_x = Column(Integer)
+    start_tile_y = Column(Integer)
+    initial_orders = Column(Text)
 
 
 class AllianceWarScore(Base):
@@ -543,26 +749,29 @@ class AllianceWarScore(Base):
 class BattleResolutionLog(Base):
     __tablename__ = "battle_resolution_logs"
     resolution_id = Column(Integer, primary_key=True)
-    battle_type = Column(String)
+    battle_type = Column(Text)
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"))
     alliance_war_id = Column(Integer, ForeignKey("alliance_wars.alliance_war_id"))
-    winner_side = Column(String)
+    winner_side = Column(Text)
     total_ticks = Column(Integer, default=0)
     attacker_casualties = Column(Integer, default=0)
     defender_casualties = Column(Integer, default=0)
-    loot_summary = Column(JSONB, default={})
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    loot_summary = Column(JSONB, default=dict)
+    created_at = Column(DateTime, server_default=func.now())
+    gold_looted = Column(Integer, default=0)
+    resources_looted = Column(Text)
 
 
 class WarScore(Base):
     __tablename__ = "war_scores"
+    __table_args__ = (
+        CheckConstraint("victor IN ('attacker','defender','draw')"),
+    )
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), primary_key=True, index=True)
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
     victor = Column(String)
-    last_updated = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    last_updated = Column(DateTime(timezone=False), server_default=func.now())
 
 
 class TerrainMap(Base):
@@ -576,15 +785,18 @@ class TerrainMap(Base):
     map_seed = Column(Integer)
     map_version = Column(Integer, default=1)
     generated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    map_name = Column(String)
+    map_name = Column(Text)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    map_type = Column(String, default="battlefield")
+    map_type = Column(Text, default="battlefield")
     tile_schema_version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
-    map_source = Column(String, default="auto-generated")
-    map_features = Column(JSONB, default={})
+    map_source = Column(Text, default="auto-generated")
+
+    map_features = Column(JSONB, server_default=text("'{}'::jsonb"))
+    tileset = Column(Text)
+    features_summary = Column(Text)
 
 
 class UnitStat(Base):
@@ -656,18 +868,32 @@ class Notification(Base):
 
     notification_id = Column(Integer, primary_key=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    title = Column(String)
+    title = Column(Text)
     message = Column(Text)
-    category = Column(String)
-    priority = Column(String)
-    link_action = Column(String)
+    category = Column(Text)
+    priority = Column(Text)
+    link_action = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
     expires_at = Column(DateTime(timezone=True))
-    source_system = Column(String)
+    source_system = Column(Text)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class NotificationMetadata(Base):
+    """Optional key/value metadata for notifications."""
+
+    __tablename__ = "notification_metadata"
+
+    notification_id = Column(
+        Integer,
+        ForeignKey("notifications.notification_id"),
+        primary_key=True,
+    )
+    key = Column(Text, primary_key=True)
+    value = Column(Text)
 
 
 class BlackMarketListing(Base):
@@ -675,9 +901,9 @@ class BlackMarketListing(Base):
 
     __tablename__ = "black_market_listings"
 
-    listing_id = Column(Integer, primary_key=True)
-    seller_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    item = Column(String)
+    listing_id = Column(Integer, primary_key=True, autoincrement=True)
+    seller_id = Column(UUID(as_uuid=True))
+    item = Column(Text)
     price = Column(Numeric)
     quantity = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -705,6 +931,33 @@ class KingdomSpies(Base):
     )
 
 
+class VillageBuilding(Base):
+    """Represents the state of a building within a village."""
+
+    __tablename__ = "village_buildings"
+
+    village_id = Column(
+        Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
+    )
+    building_id = Column(
+        Integer, ForeignKey("building_catalogue.building_id"), primary_key=True
+    )
+    level = Column(Integer, default=1)
+    construction_started_at = Column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    construction_ends_at = Column(DateTime(timezone=True))
+    is_under_construction = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    constructed_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    active_modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
+    construction_status = Column(Text, server_default="idle")
+    productivity_bonus = Column(Numeric, default=0)
+
+
 class VillageModifier(Base):
     """Temporary or permanent bonuses applied to a village."""
 
@@ -713,16 +966,16 @@ class VillageModifier(Base):
     village_id = Column(
         Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
     )
-    resource_bonus = Column(JSONB, default=dict)
-    troop_bonus = Column(JSONB, default=dict)
+    resource_bonus = Column(JSONB, server_default=text("'{}'::jsonb"))
+    troop_bonus = Column(JSONB, server_default=text("'{}'::jsonb"))
     construction_speed_bonus = Column(Numeric, default=0)
     defense_bonus = Column(Numeric, default=0)
     trade_bonus = Column(Numeric, default=0)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    source = Column(String, default="system")
-    stacking_rules = Column(JSONB, default=dict)
+    source = Column(Text, server_default="system")
+    stacking_rules = Column(JSONB, server_default=text("'{}'::jsonb"))
     expires_at = Column(DateTime(timezone=True))
     applied_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -738,13 +991,13 @@ class VillageProduction(Base):
     village_id = Column(
         Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
     )
-    resource_type = Column(String, primary_key=True)
+    resource_type = Column(Text, primary_key=True)
     amount_produced = Column(BigInteger, default=0)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     production_rate = Column(Numeric, default=0)
-    active_modifiers = Column(JSONB, default=dict)
+    active_modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
     last_collected_at = Column(DateTime(timezone=True))
     collection_method = Column(String, server_default="automatic")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -783,6 +1036,59 @@ class GameSetting(Base):
     setting_boolean = Column(Boolean, default=False)
 
 
+class GameSettingValue(Base):
+    __tablename__ = "game_setting_values"
+
+    setting_key = Column(
+        String,
+        ForeignKey("game_settings.setting_key", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    setting_value = Column(Text)
+
+
+class SystemEventHook(Base):
+    """Webhook configuration for system events."""
+
+    __tablename__ = "system_event_hooks"
+
+    hook_id = Column(Integer, primary_key=True)
+    event_type = Column(Text)
+    payload_template = Column(JSONB)
+    endpoint_url = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+    event_topic = Column(Text)
+    payload_template_text = Column(Text)
+
+
+class TechCatalogue(Base):
+    """Research technologies available to kingdoms."""
+
+    __tablename__ = "tech_catalogue"
+
+    tech_code = Column(Text, primary_key=True)
+    name = Column(Text, nullable=False)
+    description = Column(Text)
+    category = Column(Text)
+    tier = Column(Integer)
+    duration_hours = Column(Integer)
+    encyclopedia_entry = Column(Text)
+    modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
+    prerequisites = Column(ARRAY(Text))
+    required_kingdom_level = Column(Integer, default=1)
+    required_region = Column(Text)
+    is_repeatable = Column(Boolean, default=False)
+    max_research_level = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    military_bonus = Column(Numeric, default=0)
+    economic_bonus = Column(Numeric, default=0)
+
+
 class KingdomHistoryLog(Base):
     """Chronological history of important events for kingdoms."""
 
@@ -790,7 +1096,7 @@ class KingdomHistoryLog(Base):
 
     log_id = Column(Integer, primary_key=True)
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
-    event_type = Column(String)
+    event_type = Column(Text)
     event_details = Column(Text)
     event_date = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -807,6 +1113,8 @@ class QuestAllianceCatalogue(Base):
     category = Column(String)
     objectives = Column(JSONB, default={})
     rewards = Column(JSONB, default={})
+    objective_type = Column(String)
+    reward_gold = Column(Integer, default=0)
     required_level = Column(Integer, default=1)
     repeatable = Column(Boolean, default=True)
     max_attempts = Column(Integer)
@@ -834,7 +1142,6 @@ class QuestAllianceTracking(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     attempt_count = Column(Integer, default=1)
-    reward_claimed = Column(Boolean, default=False)
     started_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
@@ -892,6 +1199,18 @@ class ProjectAllianceContribution(Base):
     contribution_type = Column(String, default="resource")
 
 
+class ProjectModifier(Base):
+    """Modifier entry applied from projects or catalogue items."""
+
+    __tablename__ = "project_modifiers"
+
+    source_type = Column(String, primary_key=True)
+    source_id = Column(String, primary_key=True)
+    effect_type = Column(String, primary_key=True)
+    target = Column(String, primary_key=True)
+    magnitude = Column(Numeric)
+
+
 class QuestKingdomTracking(Base):
     """Tracks progress for kingdom quests."""
 
@@ -917,7 +1236,11 @@ class QuestKingdomTracking(Base):
 class KingdomTemple(Base):
     __tablename__ = "kingdom_temples"
 
-    temple_id = Column(Integer, primary_key=True)
+    temple_id = Column(
+        Integer,
+        primary_key=True,
+        server_default=text("nextval('kingdom_temples_temple_id_seq'::regclass)")
+    )
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     temple_name = Column(String)
     temple_type = Column(String)
@@ -932,7 +1255,7 @@ class KingdomTemple(Base):
 class KingdomResources(Base):
     __tablename__ = 'kingdom_resources'
 
-    kingdom_id = Column(Integer, primary_key=True)
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
     wood = Column(BigInteger, default=0)
     stone = Column(BigInteger, default=0)
     iron_ore = Column(BigInteger, default=0)
@@ -960,4 +1283,194 @@ class KingdomResources(Base):
     spear = Column(BigInteger, default=0)
     horses = Column(BigInteger, default=0)
     pitchforks = Column(BigInteger, default=0)
+
+
+
+class BuildingCatalogue(Base):
+    __tablename__ = "building_catalogue"
+
+    building_id = Column(Integer, primary_key=True, autoincrement=True)
+    building_name = Column(Text, nullable=False)
+    description = Column(Text)
+    production_type = Column(Text)
+    production_rate = Column(Integer)
+    upkeep = Column(Integer)
+    modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
+    category = Column(Text)
+    build_time_seconds = Column(Integer, server_default=text("3600"))
+    prerequisites = Column(JSONB, server_default=text("'{}'::jsonb"))
+    max_level = Column(Integer, server_default=text("10"))
+    special_effects = Column(JSONB, server_default=text("'{}'::jsonb"))
+    is_unique = Column(Boolean, server_default=text("false"))
+    is_repeatable = Column(Boolean, server_default=text("true"))
+    unlock_at_level = Column(Integer, server_default=text("1"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now())
+    cost_to_produce = Column(JSONB, server_default=text("'{}'::jsonb"))
+    efficiency_multiplier = Column(Numeric, server_default=text("1.0"))
+    wood_cost = Column(Integer, server_default=text("0"))
+    stone_cost = Column(Integer, server_default=text("0"))
+    iron_cost = Column(Integer, server_default=text("0"))
+    gold_cost = Column(Integer, server_default=text("0"))
+    wood_plan_cost = Column(Integer, server_default=text("0"))
+    iron_ingot_cost = Column(Integer, server_default=text("0"))
+    requires_tech_id = Column(Integer)
+    build_time = Column(Integer, server_default=text("0"))
+    effect_description = Column(Text)
+    wood = Column(Integer, server_default=text("0"))
+    stone = Column(Integer, server_default=text("0"))
+    iron_ore = Column(Integer, server_default=text("0"))
+    gold = Column(Integer, server_default=text("0"))
+    gems = Column(Integer, server_default=text("0"))
+    food = Column(Integer, server_default=text("0"))
+    coal = Column(Integer, server_default=text("0"))
+    livestock = Column(Integer, server_default=text("0"))
+    clay = Column(Integer, server_default=text("0"))
+    flax = Column(Integer, server_default=text("0"))
+    tools = Column(Integer, server_default=text("0"))
+    wood_planks = Column(Integer, server_default=text("0"))
+    refined_stone = Column(Integer, server_default=text("0"))
+    iron_ingots = Column(Integer, server_default=text("0"))
+    charcoal = Column(Integer, server_default=text("0"))
+    leather = Column(Integer, server_default=text("0"))
+    arrows = Column(Integer, server_default=text("0"))
+    swords = Column(Integer, server_default=text("0"))
+    axes = Column(Integer, server_default=text("0"))
+    shields = Column(Integer, server_default=text("0"))
+    armour = Column(Integer, server_default=text("0"))
+    wagon = Column(Integer, server_default=text("0"))
+    siege_weapons = Column(Integer, server_default=text("0"))
+    jewelry = Column(Integer, server_default=text("0"))
+    spear = Column(Integer, server_default=text("0"))
+    horses = Column(Integer, server_default=text("0"))
+    pitchforks = Column(Integer, server_default=text("0"))
+
+
+class BuildingCost(Base):
+    __tablename__ = "building_costs"
+
+    building_id = Column(Integer, ForeignKey("building_catalogue.building_id"), primary_key=True)
+    resource_type = Column(Text, primary_key=True)
+    amount = Column(Integer, nullable=False)
+
+
+class AllianceSurrender(Base):
+    """Records alliance surrender terms and status."""
+
+    __tablename__ = "alliance_surrenders"
+
+    surrender_id = Column(Integer, primary_key=True)
+    alliance_war_id = Column(Integer, ForeignKey("alliance_wars.alliance_war_id"))
+    surrendering_alliance_id = Column(Integer)
+    accepted_by_alliance_id = Column(Integer)
+    surrender_terms = Column(JSONB)
+    status = Column(Text, default="pending")
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+    peace_terms = Column(Text)
+    gold_penalty = Column(Integer, default=0)
+
+
+class AllianceTaxCollection(Base):
+    """Log of resources taxed from alliance members."""
+
+    __tablename__ = "alliance_tax_collections"
+
+    collection_id = Column(BigInteger, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    resource_type = Column(Text, nullable=False)
+    amount_collected = Column(BigInteger, default=0)
+    collected_at = Column(DateTime(timezone=True), server_default=func.now())
+    source = Column(Text)
+    notes = Column(Text)
+
+
+class AllianceTaxPolicy(Base):
+    """Active tax rates for alliance resources."""
+
+    __tablename__ = "alliance_tax_policies"
+
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
+    resource_type = Column(Text, primary_key=True)
+    tax_rate_percent = Column(Numeric, default=0)
+    is_active = Column(Boolean, default=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+
+
+class GlobalEvent(Base):
+    """Representation of a global event."""
+
+    __tablename__ = "global_events"
+
+    event_id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    description = Column(Text)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    is_active = Column(Boolean, default=False)
+    impact_type = Column(Text)
+    magnitude = Column(Numeric)
+
+
+class GlobalEventCondition(Base):
+    """Conditions required for a global event."""
+
+    __tablename__ = "global_event_conditions"
+
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
+    condition_type = Column(Text, primary_key=True)
+    condition_target = Column(Text, primary_key=True)
+    condition_value = Column(Text)
+
+
+class GlobalEventEffect(Base):
+    """Effects applied by a global event."""
+
+    __tablename__ = "global_event_effects"
+
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
+    effect_type = Column(Text, primary_key=True)
+    target = Column(Text, primary_key=True)
+    magnitude = Column(Numeric)
+
+
+class GlobalEventReward(Base):
+    """Rewards granted upon global event completion."""
+
+    __tablename__ = "global_event_rewards"
+
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
+    reward_type = Column(Text, primary_key=True)
+    reward_target = Column(Text, primary_key=True)
+    reward_amount = Column(Numeric, nullable=False)
+
+class KingdomReligion(Base):
+    """Religious affiliation and faith details for a kingdom."""
+
+    __tablename__ = "kingdom_religion"
+
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
+    religion_name = Column(Text)
+    faith_level = Column(Integer, default=1)
+    faith_points = Column(Integer, default=0)
+    blessings = Column(JSONB, default=dict)
+    blessing_1 = Column(Text)
+    blessing_2 = Column(Text)
+    blessing_3 = Column(Text)
+
+
+class KingdomResearchTracking(Base):
+    """Tracks research progress for a kingdom's technologies."""
+
+    __tablename__ = "kingdom_research_tracking"
+
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
+    tech_code = Column(String, ForeignKey("tech_catalogue.tech_code"), primary_key=True)
+    status = Column(String)
+    progress = Column(Integer, default=0)
+    ends_at = Column(DateTime(timezone=True))
+
+
+
 

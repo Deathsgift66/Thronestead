@@ -8,8 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from backend.models import BlackMarketListing, User
-from services.trade_log_service import record_trade
+from backend.models import BlackMarketListing
 from services.audit_service import log_action
 from ..security import require_user_id
 
@@ -38,11 +37,10 @@ class CancelPayload(BaseModel):
 @router.get("")
 def get_market(db: Session = Depends(get_db)):
     """
-    Return the 100 latest black market listings with seller usernames.
+    Return the 100 latest black market listings.
     """
     rows = (
-        db.query(BlackMarketListing, User.username.label("seller"))
-        .join(User, User.user_id == BlackMarketListing.seller_id)
+        db.query(BlackMarketListing)
         .order_by(BlackMarketListing.created_at.desc())
         .limit(100)
         .all()
@@ -50,11 +48,11 @@ def get_market(db: Session = Depends(get_db)):
 
     listings = [
         {
-            "listing_id": row.BlackMarketListing.listing_id,
-            "item": row.BlackMarketListing.item,
-            "price": float(row.BlackMarketListing.price),
-            "quantity": row.BlackMarketListing.quantity,
-            "seller": row.seller,
+            "listing_id": row.listing_id,
+            "item": row.item,
+            "price": float(row.price),
+            "quantity": row.quantity,
+            "seller_id": str(row.seller_id) if row.seller_id else None,
         }
         for row in rows
     ]
@@ -109,17 +107,6 @@ def buy_item(
         listing.quantity -= payload.quantity
     else:
         db.delete(listing)
-
-    # Log trade
-    record_trade(
-        db,
-        resource=listing.item,
-        quantity=payload.quantity,
-        unit_price=float(listing.price),
-        buyer_id=user_id,
-        seller_id=str(listing.seller_id),
-        trade_type="black_market",
-    )
 
     db.commit()
     log_action(db, user_id, "black_market_purchase", f"Bought {payload.quantity} {listing.item} from listing {listing.listing_id}")
