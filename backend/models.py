@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
@@ -657,6 +658,33 @@ class KingdomSpies(Base):
     )
 
 
+class VillageBuilding(Base):
+    """Represents the state of a building within a village."""
+
+    __tablename__ = "village_buildings"
+
+    village_id = Column(
+        Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
+    )
+    building_id = Column(
+        Integer, ForeignKey("building_catalogue.building_id"), primary_key=True
+    )
+    level = Column(Integer, default=1)
+    construction_started_at = Column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    construction_ends_at = Column(DateTime(timezone=True))
+    is_under_construction = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    constructed_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    active_modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
+    construction_status = Column(Text, server_default="idle")
+    productivity_bonus = Column(Numeric, default=0)
+
+
 class VillageModifier(Base):
     """Temporary or permanent bonuses applied to a village."""
 
@@ -665,16 +693,16 @@ class VillageModifier(Base):
     village_id = Column(
         Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
     )
-    resource_bonus = Column(JSONB, default=dict)
-    troop_bonus = Column(JSONB, default=dict)
+    resource_bonus = Column(JSONB, server_default=text("'{}'::jsonb"))
+    troop_bonus = Column(JSONB, server_default=text("'{}'::jsonb"))
     construction_speed_bonus = Column(Numeric, default=0)
     defense_bonus = Column(Numeric, default=0)
     trade_bonus = Column(Numeric, default=0)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    source = Column(String, default="system")
-    stacking_rules = Column(JSONB, default=dict)
+    source = Column(Text, server_default="system")
+    stacking_rules = Column(JSONB, server_default=text("'{}'::jsonb"))
     expires_at = Column(DateTime(timezone=True))
     applied_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -690,13 +718,13 @@ class VillageProduction(Base):
     village_id = Column(
         Integer, ForeignKey("kingdom_villages.village_id"), primary_key=True
     )
-    resource_type = Column(String, primary_key=True)
+    resource_type = Column(Text, primary_key=True)
     amount_produced = Column(BigInteger, default=0)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     production_rate = Column(Numeric, default=0)
-    active_modifiers = Column(JSONB, default=dict)
+    active_modifiers = Column(JSONB, server_default=text("'{}'::jsonb"))
     last_collected_at = Column(DateTime(timezone=True))
     collection_method = Column(String, server_default="automatic")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
