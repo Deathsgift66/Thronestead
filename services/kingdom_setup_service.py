@@ -82,8 +82,8 @@ def create_kingdom_transaction(
         vil_row = db.execute(
             text(
                 """
-                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type, is_capital)
-                VALUES (:kid, :vname, 'capital', TRUE)
+                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type)
+                VALUES (:kid, :vname, 'capital')
                 RETURNING village_id
                 """
             ),

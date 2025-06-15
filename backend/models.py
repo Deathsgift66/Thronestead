@@ -963,12 +963,23 @@ class UnitUpgradePath(Base):
 
 class KingdomTroop(Base):
     __tablename__ = "kingdom_troops"
+
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
     unit_type = Column(String, ForeignKey("unit_stats.unit_type"), primary_key=True)
+    unit_level = Column(Integer, primary_key=True, default=1)
     quantity = Column(Integer, default=0)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    in_training = Column(Integer, default=0)
+    wounded = Column(Integer, default=0)
+    unit_xp = Column(Integer, default=0)
+    active_modifiers = Column(JSONB, default=dict)
+    last_modified_by = Column(UUID(as_uuid=True))
+    last_combat_at = Column(DateTime(timezone=True))
+    last_morale = Column(Integer, default=100)
+    morale_bonus = Column(Numeric, default=0)
+    damage_bonus = Column(Numeric, default=0)
 
 
 class Notification(Base):
@@ -1411,6 +1422,25 @@ class KingdomResources(Base):
     horses = Column(BigInteger, default=0)
     pitchforks = Column(BigInteger, default=0)
 
+
+
+class KingdomVillage(Base):
+    __tablename__ = "kingdom_villages"
+
+    village_id = Column(Integer, primary_key=True)
+    kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
+    village_name = Column(Text, nullable=False)
+    village_type = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class KingdomVipStatus(Base):
+    __tablename__ = "kingdom_vip_status"
+
+    user_id = Column(UUID(as_uuid=True), primary_key=True)
+    vip_level = Column(Integer, default=0)
+    expires_at = Column(DateTime(timezone=True))
+    founder = Column(Boolean, default=False)
 
 class TreatyNegotiationLog(Base):
     __tablename__ = "treaty_negotiation_log"

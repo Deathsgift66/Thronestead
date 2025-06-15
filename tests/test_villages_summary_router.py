@@ -28,10 +28,7 @@ class DummyDB:
                 "village_id": 1,
                 "village_name": "Rivertown",
                 "village_type": "economic",
-                "is_capital": False,
-                "population": 100,
-                "defense_level": 1,
-                "prosperity": 50,
+                "created_at": 0,
             }])
         if "FROM village_resources" in str(query):
             return DummyResult([{"village_id": 1, "wood": 100}])
