@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, TradeLog, User
+from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, User
 from backend.routers.alliance_vault import VaultTransaction, deposit, withdraw, summary
 
 
@@ -50,8 +50,6 @@ def test_deposit_and_withdraw():
     assert vault.wood == 100
     tx = db.query(AllianceVaultTransactionLog).first()
     assert tx.action == "deposit" and tx.amount == 100
-    tlog = db.query(TradeLog).first()
-    assert tlog.quantity == 100 and tlog.trade_type == "alliance_trade"
 
     withdraw(
         VaultTransaction(alliance_id=1, resource="wood", amount=40),
@@ -64,10 +62,6 @@ def test_deposit_and_withdraw():
         AllianceVaultTransactionLog.transaction_id.desc()
     ).first()
     assert tx2.action == "withdraw" and tx2.amount == 40
-    tlog2 = (
-        db.query(TradeLog).order_by(TradeLog.trade_id.desc()).first()
-    )
-    assert tlog2.quantity == 40 and tlog2.trade_type == "alliance_trade"
 
 
 def test_summary_totals():

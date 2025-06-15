@@ -145,9 +145,11 @@ def load_game_settings() -> None:
 
     query = text(
         """
-        SELECT setting_key, setting_value
-        FROM game_settings
-        WHERE is_active = true
+        SELECT gs.setting_key, gsv.setting_value
+        FROM game_settings gs
+        LEFT JOIN game_setting_values gsv
+            ON gs.setting_key = gsv.setting_key
+        WHERE gs.is_active = true
         """
     )
 
