@@ -40,12 +40,12 @@ def list_units(db: Session) -> list[dict]:
         return []
 
 
-def get_unit_by_code(db: Session, unit_id: str) -> Optional[dict]:
+def get_unit_by_code(db: Session, unit_id: int) -> Optional[dict]:
     """
     Fetch a single unit definition by unit_id.
 
     Args:
-        unit_id: The internal ID/code of the unit to retrieve
+        unit_id: The numerical ID of the unit to retrieve
 
     Returns:
         dict | None: Unit definition if found

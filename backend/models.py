@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Numeric,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
@@ -172,8 +173,8 @@ class TradeLog(Base):
     seller_alliance_id = Column(Integer)
     buyer_name = Column(Text)
     seller_name = Column(Text)
-    trade_type = Column(String)
-    trade_status = Column(String, default="completed")
+    trade_type = Column(String, server_default=text("'player_trade'"))
+    trade_status = Column(String, server_default=text("'completed'"))
     initiated_by_system = Column(Boolean, default=False)
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
