@@ -57,16 +57,19 @@ def players(
     res = query.limit(100).execute()
     players = getattr(res, "data", res) or []
 
-    # Fetch kingdom name per user (1 per player, not batched for now)
-    for p in players:
-        kid_res = (
+    # Fetch kingdom names in a single query for efficiency
+    user_ids = [p["user_id"] for p in players]
+    if user_ids:
+        mapping_res = (
             supabase.table("kingdoms")
-            .select("kingdom_name")
-            .eq("user_id", p["user_id"])
-            .single()
+            .select("user_id,kingdom_name")
+            .in_("user_id", user_ids)
             .execute()
         )
-        p["kingdom_name"] = (getattr(kid_res, "data", kid_res) or {}).get("kingdom_name")
+        rows = getattr(mapping_res, "data", mapping_res) or []
+        name_map = {r["user_id"]: r.get("kingdom_name") for r in rows}
+        for p in players:
+            p["kingdom_name"] = name_map.get(p["user_id"])
 
     return {"players": players}
 

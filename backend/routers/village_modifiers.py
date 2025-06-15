@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from ..database import get_db
+from ..security import require_user_id
 from backend.models import VillageModifier
 
 router = APIRouter(prefix="/api/village_modifiers", tags=["village_modifiers"])
@@ -31,7 +32,11 @@ class ModifierPayload(BaseModel):
 
 # === GET: List all active modifiers for a village ===
 @router.get("/{village_id}", summary="List Active Modifiers")
-def list_modifiers(village_id: int, db: Session = Depends(get_db)):
+def list_modifiers(
+    village_id: int,
+    _uid: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     """
     Return all active modifiers for the given village.
     Expired modifiers are automatically excluded.
@@ -68,7 +73,11 @@ def list_modifiers(village_id: int, db: Session = Depends(get_db)):
 
 # === POST: Apply or update a modifier ===
 @router.post("/apply", summary="Apply Village Modifier")
-def apply_modifier(payload: ModifierPayload, db: Session = Depends(get_db)):
+def apply_modifier(
+    payload: ModifierPayload,
+    _uid: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     """
     Apply or update a modifier for a specific village based on the source tag.
     This supports stacking rules and time-based expiration.
@@ -110,7 +119,10 @@ def apply_modifier(payload: ModifierPayload, db: Session = Depends(get_db)):
 
 # === POST: Cleanup expired modifiers ===
 @router.post("/cleanup_expired", summary="Purge Expired Modifiers")
-def cleanup_expired(db: Session = Depends(get_db)):
+def cleanup_expired(
+    _uid: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     """
     Remove all expired modifiers from the database.
     This keeps the system lean and fast.
