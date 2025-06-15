@@ -83,9 +83,7 @@ class TroopSlots(Base):
     base_slots = Column(Integer, default=20)
     used_slots = Column(Integer, default=0)
     morale = Column(Integer, default=100)  # Base morale; affected by war losses, knights, tech, etc.
-    castle_bonus = Column(Integer, default=0)
-    noble_bonus = Column(Integer, default=0)
-    knight_bonus = Column(Integer, default=0)
+    slots_from_buildings = Column(Integer, default=0)
     slots_from_tech = Column(Integer, default=0)
     slots_from_projects = Column(Integer, default=0)
     slots_from_events = Column(Integer, default=0)
