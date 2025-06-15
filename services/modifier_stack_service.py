@@ -116,6 +116,7 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         "Alliance Project",
     )
 
+
     # --- Active Treaties ---
     treaty_rows = db.execute(
         text(
@@ -137,6 +138,7 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         bucket[tgt] = bucket.get(tgt, 0) + float(mag)
     if treaty_mods:
         _merge_stack(stack, treaty_mods, "Treaty")
+
 
     # --- Spy Effects ---
     spy_row = db.execute(

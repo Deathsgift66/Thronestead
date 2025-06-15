@@ -41,8 +41,7 @@ def load_profile(
                    k.kingdom_name,
                    a.name AS alliance_name,
                    c.motto, c.bio, c.theme_preference, c.profile_banner,
-                   v.vip_level, v.founder, v.expires_at,
-                   u.last_login_at, u.last_login_ip, u.ip_login_alerts, u.email_login_confirmations
+                   v.vip_level, v.founder, v.expires_at
             FROM users u
             LEFT JOIN kingdoms k ON k.user_id = u.user_id
             LEFT JOIN alliances a ON a.alliance_id = u.alliance_id
@@ -70,12 +69,18 @@ def load_profile(
         "vip_level",
         "founder",
         "expires_at",
-        "last_login_at",
-        "last_login_ip",
-        "ip_login_alerts",
-        "email_login_confirmations",
     ]
     profile = {k: row[i] for i, k in enumerate(keys)}
+    settings_rows = db.execute(
+        text(
+            "SELECT setting_key, setting_value FROM user_setting_entries "
+            "WHERE user_id = :uid AND setting_key IN ('ip_login_alerts','email_login_confirmations')"
+        ),
+        {"uid": user_id},
+    ).fetchall()
+    settings = {r[0]: r[1] for r in settings_rows}
+    profile["ip_login_alerts"] = settings.get("ip_login_alerts") == "true"
+    profile["email_login_confirmations"] = settings.get("email_login_confirmations") == "true"
     session_rows = db.execute(
         text(
             "SELECT session_id, device, last_seen FROM user_active_sessions WHERE user_id = :uid AND session_status = 'active'"
@@ -98,11 +103,18 @@ def update_profile(
     # fetch current values
     current = db.execute(
         text(
-            "SELECT display_name, profile_picture_url, ip_login_alerts, email_login_confirmations"
-            " FROM users WHERE user_id = :uid"
+            "SELECT display_name, profile_picture_url FROM users WHERE user_id = :uid"
         ),
         {"uid": user_id},
     ).fetchone()
+    settings_current_rows = db.execute(
+        text(
+            "SELECT setting_key, setting_value FROM user_setting_entries "
+            "WHERE user_id = :uid AND setting_key IN ('ip_login_alerts','email_login_confirmations')"
+        ),
+        {"uid": user_id},
+    ).fetchall()
+    settings_current = {r[0]: r[1] for r in settings_current_rows}
     customization = db.execute(
         text(
             "SELECT motto, bio, theme_preference, profile_banner FROM user_customization WHERE user_id = :uid"
@@ -112,19 +124,33 @@ def update_profile(
 
     db.execute(
         text(
-            "UPDATE users SET display_name = :dn, profile_picture_url = :pic,"
-            " ip_login_alerts = COALESCE(:ip_alert, ip_login_alerts),"
-            " email_login_confirmations = COALESCE(:email_conf, email_login_confirmations)"
-            " WHERE user_id = :uid"
+            "UPDATE users SET display_name = :dn, profile_picture_url = :pic "
+            "WHERE user_id = :uid"
         ),
         {
             "dn": payload.display_name,
             "pic": payload.profile_picture_url,
-            "ip_alert": payload.ip_login_alerts,
-            "email_conf": payload.email_login_confirmations,
             "uid": user_id,
         },
     )
+    if payload.ip_login_alerts is not None:
+        db.execute(
+            text(
+                "INSERT INTO user_setting_entries (user_id, setting_key, setting_value) "
+                "VALUES (:uid, 'ip_login_alerts', :val) "
+                "ON CONFLICT (user_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value"
+            ),
+            {"uid": user_id, "val": str(payload.ip_login_alerts).lower()},
+        )
+    if payload.email_login_confirmations is not None:
+        db.execute(
+            text(
+                "INSERT INTO user_setting_entries (user_id, setting_key, setting_value) "
+                "VALUES (:uid, 'email_login_confirmations', :val) "
+                "ON CONFLICT (user_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value"
+            ),
+            {"uid": user_id, "val": str(payload.email_login_confirmations).lower()},
+        )
     db.execute(
         text(
             """
@@ -153,9 +179,9 @@ def update_profile(
             diffs["display_name"] = payload.display_name
         if payload.profile_picture_url != current[1]:
             diffs["profile_picture_url"] = payload.profile_picture_url
-        if payload.ip_login_alerts is not None and payload.ip_login_alerts != current[2]:
+        if payload.ip_login_alerts is not None and payload.ip_login_alerts != (settings_current.get("ip_login_alerts") == "true"):
             diffs["ip_login_alerts"] = payload.ip_login_alerts
-        if payload.email_login_confirmations is not None and payload.email_login_confirmations != current[3]:
+        if payload.email_login_confirmations is not None and payload.email_login_confirmations != (settings_current.get("email_login_confirmations") == "true"):
             diffs["email_login_confirmations"] = payload.email_login_confirmations
     if customization:
         if payload.motto != customization[0]:

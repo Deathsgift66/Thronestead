@@ -169,7 +169,6 @@ def start_quest(
             existing.ends_at = datetime.utcnow() + timedelta(hours=hours)
             existing.started_at = datetime.utcnow()
             existing.started_by = user_id
-            existing.reward_claimed = False
             db.commit()
             log_action(db, user_id, "Alliance Quest Restarted", payload.quest_code)
             return {"status": "started"}
@@ -270,7 +269,6 @@ def quest_detail(
         "max_attempts": cat.max_attempts,
         "progress": tracking.progress if tracking else None,
         "status": tracking.status if tracking else None,
-        "reward_claimed": tracking.reward_claimed if tracking else None,
         "ends_at": tracking.ends_at if tracking else None,
         "started_at": tracking.started_at if tracking else None,
         "contributions": contributions,
@@ -356,14 +354,13 @@ def claim_reward(
         .filter_by(alliance_id=aid, quest_code=payload.quest_code)
         .first()
     )
-    if not row or row.status != "completed" or row.reward_claimed:
+    if not row or row.status != "completed":
         raise HTTPException(status_code=400, detail="Quest not claimable")
     quest = (
         db.query(QuestAllianceCatalogue)
         .filter_by(quest_code=payload.quest_code)
         .first()
     )
-    row.reward_claimed = True
     db.commit()
     log_action(db, user_id, "Alliance Quest Reward Claimed", payload.quest_code)
     return {"status": "claimed", "rewards": quest.rewards if quest else {}}
