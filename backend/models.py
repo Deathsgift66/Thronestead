@@ -16,7 +16,6 @@ from sqlalchemy import (
     Numeric,
     Float,
     text,
-
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
@@ -541,21 +540,23 @@ class WarsTactical(Base):
     war_id = Column(Integer, ForeignKey("wars.war_id"), primary_key=True)
     attacker_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     defender_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
-    phase = Column(String)
+    phase = Column(String, server_default="alert")
     castle_hp = Column(Integer, default=1000)
     battle_tick = Column(Integer, default=0)
-    war_status = Column(String)
+    war_status = Column(String, server_default="active")
     terrain_id = Column(Integer, ForeignKey("terrain_map.terrain_id"))
     current_turn = Column(String)
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
-    last_tick_processed_at = Column(DateTime(timezone=True))
+    last_tick_processed_at = Column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     tick_interval_seconds = Column(Integer, default=300)
     is_concluded = Column(Boolean, default=False)
-    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    started_at = Column(DateTime(timezone=True))
     ended_at = Column(DateTime(timezone=True))
-    fog_of_war = Column(Boolean, default=False)
-    weather = Column(String)
+    fog_of_war = Column(Boolean, default=True)
+    weather = Column(Text)
     submitted_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
@@ -660,25 +661,30 @@ class War(Base):
     """Metadata for kingdom level wars."""
 
     __tablename__ = "wars"
+    __table_args__ = (
+        CheckConstraint("outcome IN ('attacker','defender','draw')", name="wars_outcome_check"),
+    )
 
     war_id = Column(Integer, primary_key=True)
     attacker_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     defender_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    attacker_name = Column(String)
-    defender_name = Column(String)
+    attacker_name = Column(Text)
+    defender_name = Column(Text)
     war_reason = Column(Text)
-    status = Column(String)
+    status = Column(Text)
     start_date = Column(DateTime(timezone=True))
     end_date = Column(DateTime(timezone=True))
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
     attacker_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     defender_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
-    war_type = Column(String)
+    war_type = Column(Text, server_default="duel")
     is_retaliation = Column(Boolean, default=False)
     treaty_triggered = Column(Boolean, default=False)
-    victory_condition = Column(String)
-    outcome = Column(String)
+    victory_condition = Column(Text, server_default="score")
+    outcome = Column(Text)
+    triggered_by_treaty = Column(Boolean, default=False)
+    triggering_treaty_type = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
