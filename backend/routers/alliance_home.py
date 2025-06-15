@@ -21,7 +21,7 @@ def alliance_details(
 ):
     """
     Return full summary data for the user's current alliance.
-    Includes: core info, members, vault, projects, quests, wars, treaties, achievements, and activity logs.
+    Includes: core info, members, vault, projects, quests, wars, treaties, and activity logs.
     """
     # --------------------
     # 🔐 Validate User & Alliance
@@ -70,6 +70,58 @@ def alliance_details(
 
 
     # --------------------
+    # 🏗️ Active Projects
+    # --------------------
+    projects = db.execute(
+
+        text("""
+            SELECT p.project_id, c.project_name, p.project_key, p.progress, p.build_state
+
+            FROM projects_alliance_in_progress p
+            JOIN project_alliance_catalogue c ON p.project_key = c.project_key
+            WHERE p.alliance_id = :aid
+            ORDER BY p.started_at DESC
+        """),
+
+        {"aid": aid},
+    ).fetchall()
+    projects = [
+        {
+            "progress_id": r[0],
+            "name": r[1],
+            "project_key": r[2],
+            "progress": r[3],
+            "status": r[4],
+        }
+        for r in projects
+    ]
+
+    # --------------------
+    # 📘 Active Quests
+    # --------------------
+    quests = db.execute(
+        text("""
+            SELECT t.quest_code, q.name, q.description, t.status, t.progress, t.ends_at
+            FROM quest_alliance_tracking t
+            JOIN quest_alliance_catalogue q ON t.quest_code = q.quest_code
+            WHERE t.alliance_id = :aid
+            ORDER BY t.started_at DESC
+        """),
+        {"aid": aid},
+    ).fetchall()
+    quests = [
+        {
+            "quest_code": r[0],
+            "name": r[1],
+            "description": r[2],
+            "status": r[3],
+            "progress": r[4],
+            "ends_at": r[5].isoformat() if r[5] else None,
+        }
+        for r in quests
+    ]
+
+    # --------------------
     # ⚔️ Active Wars
     # --------------------
     wars = db.execute(
@@ -95,6 +147,54 @@ def alliance_details(
             "end_date": r[8].isoformat() if r[8] else None,
         }
         for r in wars
+    ]
+
+
+    # --------------------
+    # 📜 Treaties
+    # --------------------
+    treaties = db.execute(
+        text("""
+            SELECT treaty_id, treaty_type, partner_alliance_id, status, signed_at
+            FROM alliance_treaties
+            WHERE alliance_id = :aid OR partner_alliance_id = :aid
+            ORDER BY signed_at DESC
+        """),
+        {"aid": aid},
+    ).fetchall()
+    treaties = [
+        {
+            "treaty_id": r[0],
+            "treaty_type": r[1],
+            "partner_alliance_id": r[2],
+            "status": r[3],
+            "signed_at": r[4].isoformat() if r[4] else None,
+        }
+        for r in treaties
+    ]
+
+
+    # --------------------
+    # 📅 Recent Activity
+    # --------------------
+    activity = db.execute(
+        text("""
+            SELECT l.description, u.username, l.created_at
+            FROM alliance_activity_log l
+            JOIN users u ON l.user_id = u.user_id
+            WHERE l.alliance_id = :aid
+            ORDER BY l.created_at DESC
+            LIMIT 10
+        """),
+        {"aid": aid},
+    ).fetchall()
+    activity = [
+        {
+            "description": r[0],
+            "username": r[1],
+            "created_at": r[2].isoformat() if r[2] else None,
+        }
+        for r in activity
     ]
 
 
@@ -125,5 +225,7 @@ def alliance_details(
         "members": members,
         "vault": vault_data,
         "wars": wars,
-    }
+        "treaties": treaties,
+        "activity": activity,
+
     }

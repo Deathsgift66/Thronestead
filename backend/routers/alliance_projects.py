@@ -167,7 +167,6 @@ def contribute_to_project(payload: ContributionPayload, user_id: str = Depends(v
         raise HTTPException(status_code=404, detail="No active project")
 
     project.progress = min(100, project.progress + payload.amount)
-    project.last_updated = datetime.utcnow()
 
     contribution = ProjectAllianceContribution(
         alliance_id=user.alliance_id,

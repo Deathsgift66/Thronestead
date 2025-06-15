@@ -57,6 +57,7 @@ def respond_war(payload: RespondPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/surrender")
+
 def surrender_war(payload: SurrenderPayload, db: Session = Depends(get_db)):
     victor = "defender" if payload.side == "attacker" else "attacker"
     db.execute(
@@ -66,6 +67,7 @@ def surrender_war(payload: SurrenderPayload, db: Session = Depends(get_db)):
         ),
         {"wid": payload.alliance_war_id},
     )
+
     db.commit()
     return {"status": "surrendered", "victor": victor}
 

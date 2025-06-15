@@ -88,11 +88,15 @@ def update_quest_progress(db: Session) -> int:
         int: total number of affected quests
     """
     completed = db.execute(
-        text("""
+        text(
+            """
             UPDATE quest_kingdom_tracking
-               SET status = 'completed', last_updated = now()
+               SET status = 'completed',
+                   is_complete = true,
+                   last_updated = now()
              WHERE status = 'active' AND progress >= 100
-        """)
+        """
+        )
     )
     expired = expire_quests(db)
     db.commit()
@@ -104,25 +108,25 @@ def update_quest_progress(db: Session) -> int:
 
 
 def expire_treaties(db: Session) -> int:
-    """
-    Expires all kingdom and alliance treaties that have an end timestamp in the past.
+    """Cancel long-running treaties based on their signing date."""
 
-    Returns:
-        int: number of treaties expired
-    """
     res_a = db.execute(
-        text("""
+        text(
+            """
             UPDATE alliance_treaties
-               SET status = 'expired'
-             WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < now()
-        """)
+               SET status = 'cancelled'
+             WHERE status = 'active' AND signed_at <= now() - INTERVAL '365 days'
+            """
+        )
     )
     res_k = db.execute(
-        text("""
+        text(
+            """
             UPDATE kingdom_treaties
-               SET status = 'expired'
-             WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < now()
-        """)
+               SET status = 'cancelled'
+             WHERE status = 'active' AND signed_at <= now() - INTERVAL '365 days'
+            """
+        )
     )
     db.commit()
     count = (getattr(res_a, "rowcount", 0) or 0) + (getattr(res_k, "rowcount", 0) or 0)
