@@ -297,12 +297,27 @@ def _village_modifiers(db: Session, kingdom_id: int) -> dict:
     return {"production_bonus": {"villages": count}}
 
 
-def _treaty_modifiers(_: Session, kingdom_id: int) -> dict:
-    """Return modifiers from active treaties."""
-    total: dict = {}
-    for treaty in kingdom_treaties.get(kingdom_id, []):
-        _merge_modifiers(total, treaty.get("modifiers", {}))
-    return total
+def _treaty_modifiers(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers from active treaties stored in the database."""
+    rows = db.execute(
+        text(
+            """
+            SELECT tm.effect_type, tm.target, tm.magnitude
+              FROM kingdom_treaties kt
+              JOIN treaty_modifiers tm ON tm.treaty_id = kt.treaty_id
+             WHERE (kt.kingdom_id = :kid OR kt.partner_kingdom_id = :kid)
+               AND kt.status = 'active'
+            """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    mods: dict = {}
+    for effect, target, magnitude in rows:
+        if magnitude is None:
+            continue
+        bucket = mods.setdefault(effect, {})
+        bucket[target] = bucket.get(target, 0) + float(magnitude)
+    return mods
 
 
 def _spy_modifiers(_: Session, kingdom_id: int) -> dict:

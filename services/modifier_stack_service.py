@@ -118,7 +118,27 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
 
 
     # --- Active Treaties ---
-    # No treaty modifier data is stored in the schema, so this step is skipped.
+    treaty_rows = db.execute(
+        text(
+            """
+            SELECT tm.effect_type, tm.target, tm.magnitude
+              FROM kingdom_treaties kt
+              JOIN treaty_modifiers tm ON tm.treaty_id = kt.treaty_id
+             WHERE (kt.kingdom_id = :kid OR kt.partner_kingdom_id = :kid)
+               AND kt.status = 'active'
+            """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    treaty_mods: dict = {}
+    for eff, tgt, mag in treaty_rows:
+        if mag is None:
+            continue
+        bucket = treaty_mods.setdefault(eff, {})
+        bucket[tgt] = bucket.get(tgt, 0) + float(mag)
+    if treaty_mods:
+        _merge_stack(stack, treaty_mods, "Treaty")
+
 
     # --- Spy Effects ---
     spy_row = db.execute(
