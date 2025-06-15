@@ -59,10 +59,11 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
                        kts.slots_from_tech,
                        kts.slots_from_projects,
                        kts.slots_from_events,
-                       COALESCE((rc.troop_bonus ->> 'base_slots')::integer, 0)
+                       COALESCE(rb.bonus_value::integer, 0)
                   FROM kingdom_troop_slots kts
                   JOIN kingdoms k ON k.kingdom_id = kts.kingdom_id
-             LEFT JOIN region_catalogue rc ON rc.region_code = k.region
+             LEFT JOIN region_bonuses rb ON rb.region_code = k.region
+                                        AND rb.bonus_type = 'base_slots'
                  WHERE kts.kingdom_id = :kid
             """),
             {"kid": kingdom_id},
@@ -179,18 +180,19 @@ def _region_modifiers(db: Session, kingdom_id: int) -> dict:
     ).scalar()
     if not region_code:
         return {}
-    row = db.execute(
+    rows = db.execute(
         text(
-            "SELECT resource_bonus, troop_bonus FROM region_catalogue WHERE region_code = :code"
+            "SELECT bonus_type, bonus_value FROM region_bonuses WHERE region_code = :code"
         ),
         {"code": region_code},
-    ).fetchone()
-    if not row:
+    ).fetchall()
+    if not rows:
         return {}
-    return {
-        "resource_bonus": row[0] or {},
-        "troop_bonus": row[1] or {},
-    }
+    mods: dict = {}
+    for btype, val in rows:
+        bucket = mods.setdefault(btype, {})
+        bucket["value"] = val
+    return mods
 
 
 def _tech_modifiers(db: Session, kingdom_id: int) -> dict:

@@ -53,8 +53,12 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
             text("""
                 INSERT INTO quest_kingdom_tracking (
                     kingdom_id, quest_code, status, progress, progress_details,
-                    ends_at, started_by, attempt_count
-                ) VALUES (:kid, :code, 'active', 0, '{}'::jsonb, :end, :uid, 1)
+                    ends_at, started_by, attempt_count, objective_progress,
+                    is_complete
+                ) VALUES (
+                    :kid, :code, 'active', 0, '{}'::jsonb, :end, :uid, 1, 0,
+                    false
+                )
                 ON CONFLICT (kingdom_id, quest_code)
                 DO UPDATE SET
                     status = 'active',
@@ -63,6 +67,8 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
                     ends_at = EXCLUDED.ends_at,
                     started_by = EXCLUDED.started_by,
                     attempt_count = quest_kingdom_tracking.attempt_count + 1,
+                    objective_progress = 0,
+                    is_complete = false,
                     started_at = now(),
                     last_updated = now()
             """),
@@ -81,7 +87,7 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
 # 🔄 Progress Update
 # -----------------------------------------------------
 
-def update_progress(db: Session, kingdom_id: int, quest_code: str, progress: int, details: dict) -> None:
+def update_progress(db: Session, kingdom_id: int, quest_code: str, progress: int, details: dict, objective_progress: int | None = None) -> None:
     """
     Updates the progress and progress_details of an active quest.
 
@@ -98,10 +104,17 @@ def update_progress(db: Session, kingdom_id: int, quest_code: str, progress: int
                 UPDATE quest_kingdom_tracking
                    SET progress = :prog,
                        progress_details = :details,
-                       last_updated = now()
+                       last_updated = now(),
+                       objective_progress = COALESCE(:obj_prog, objective_progress)
                  WHERE kingdom_id = :kid AND quest_code = :code
             """),
-            {"kid": kingdom_id, "code": quest_code, "prog": progress, "details": details},
+            {
+                "kid": kingdom_id,
+                "code": quest_code,
+                "prog": progress,
+                "details": details,
+                "obj_prog": objective_progress,
+            },
         )
         db.commit()
     except SQLAlchemyError as e:
@@ -127,7 +140,9 @@ def complete_quest(db: Session, kingdom_id: int, quest_code: str) -> None:
         db.execute(
             text("""
                 UPDATE quest_kingdom_tracking
-                   SET status = 'completed', last_updated = now()
+                   SET status = 'completed',
+                       is_complete = true,
+                       last_updated = now()
                  WHERE kingdom_id = :kid AND quest_code = :code
             """),
             {"kid": kingdom_id, "code": quest_code},
