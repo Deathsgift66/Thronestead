@@ -225,7 +225,7 @@ function openQuestModal(q) {
 
   const claimBtn = document.getElementById("claim-reward-button");
   if (claimBtn) {
-    claimBtn.classList.toggle("hidden", !(q.status === 'completed' && !q.reward_claimed));
+    claimBtn.classList.toggle("hidden", q.status !== 'completed');
     claimBtn.dataset.questId = q.quest_code || '';
   }
 
