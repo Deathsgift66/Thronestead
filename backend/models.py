@@ -316,16 +316,16 @@ class ProjectsAlliance(Base):
     name = Column(String, nullable=False)
     project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
     progress = Column(Integer, default=0)
-    modifiers = Column(JSONB, default={})
     start_time = Column(DateTime(timezone=True), server_default=func.now())
     end_time = Column(DateTime(timezone=True))
-    is_active = Column(Boolean, default=False)
-    build_state = Column(String)
+    is_active = Column(Boolean, default=True)
+    build_state = Column(String, server_default="queued")
     built_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     expires_at = Column(DateTime(timezone=True))
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    active_bonus = Column(Text)
 
 
 class ProjectsAllianceInProgress(Base):
@@ -335,8 +335,8 @@ class ProjectsAllianceInProgress(Base):
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
     project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
     progress = Column(Integer, default=0)
-    started_at = Column(DateTime(timezone=True), server_default=func.now())
-    expected_end = Column(DateTime(timezone=True))
+    started_at = Column(DateTime(timezone=False), server_default=func.now())
+    expected_end = Column(DateTime(timezone=False))
     status = Column(String, default="building")
     built_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
