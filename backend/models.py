@@ -70,16 +70,28 @@ class PlayerMessage(Base):
     is_read = Column(Boolean, default=False)
 
 
+class Announcement(Base):
+    """Public announcements shown on the login screen."""
+
+    __tablename__ = "announcements"
+
+    announcement_id = Column(Integer, primary_key=True)
+    title = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    visible = Column(Boolean, default=True)
+
+
 class Alliance(Base):
     """Minimal alliance record used for foreign key relations."""
 
     __tablename__ = "alliances"
 
     alliance_id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    leader = Column(String)
-    status = Column(String)
-    region = Column(String)
+    name = Column(Text, nullable=False)
+    leader = Column(Text)
+    status = Column(Text)
+    region = Column(Text)
     level = Column(Integer, default=1)
     motd = Column(Text)
     banner = Column(Text)
@@ -90,6 +102,7 @@ class Alliance(Base):
     wars_count = Column(Integer, default=0)
     treaties_count = Column(Integer, default=0)
     projects_active = Column(Integer, default=0)
+    emblem_url = Column(Text)
 
 
 class AllianceMember(Base):
@@ -412,12 +425,12 @@ class AllianceWar(Base):
     alliance_war_id = Column(Integer, primary_key=True)
     attacker_alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
     defender_alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
-    phase = Column(String)
+    phase = Column(String, server_default="alert")
     castle_hp = Column(Integer, default=10000)
     battle_tick = Column(Integer, default=0)
-    war_status = Column(String)
-    start_date = Column(DateTime(timezone=True), server_default=func.now())
-    end_date = Column(DateTime(timezone=True))
+    war_status = Column(String, server_default="active")
+    start_date = Column(DateTime(timezone=False), server_default=func.now())
+    end_date = Column(DateTime(timezone=False))
 
 
 class AllianceWarParticipant(Base):

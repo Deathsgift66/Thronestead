@@ -50,7 +50,7 @@ def dashboard_summary(
     total_users = db.execute(text("SELECT COUNT(*) FROM users")).scalar()
     flagged = db.execute(text("SELECT COUNT(*) FROM account_alerts")).scalar()
     open_wars = db.execute(
-        text("SELECT COUNT(*) FROM alliance_wars WHERE status = 'active'")
+        text("SELECT COUNT(*) FROM alliance_wars WHERE war_status = 'active'")
     ).scalar()
 
     logs = db.execute(
