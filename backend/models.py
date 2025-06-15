@@ -577,7 +577,6 @@ class UnitMovement(Base):
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     unit_type = Column(String)
-    unit_level = Column(Integer)
     quantity = Column(Integer)
     position_x = Column(Integer)
     position_y = Column(Integer)
@@ -588,14 +587,19 @@ class UnitMovement(Base):
     fallback_point_x = Column(Integer)
     fallback_point_y = Column(Integer)
     withdraw_threshold_percent = Column(Integer)
-    morale = Column(Integer)
+    morale = Column(Numeric)
     status = Column(String)
-    visible_enemies = Column(JSONB, default={})
+    visible_enemies = Column(JSONB, default=dict, server_default="{}")
+    unit_level = Column(Integer, default=1)
     issued_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    target_tile_x = Column(Integer)
+    target_tile_y = Column(Integer)
+    patrol_start_x = Column(Integer)
+    patrol_start_y = Column(Integer)
 
 
 class CombatLog(Base):
@@ -802,17 +806,44 @@ class TerrainMap(Base):
 class UnitStat(Base):
     __tablename__ = "unit_stats"
     unit_type = Column(String, primary_key=True)
-    tier = Column(Integer)
-    version_tag = Column(String, default="v6.12.2025.13.16")
-    hp = Column(Integer)
-    damage = Column(Integer)
-    defense = Column(Integer)
-    speed = Column(Integer)
-    attack_speed = Column(Integer)
-    range = Column(Integer)
-    vision = Column(Integer)
+    tier = Column(Integer, nullable=False)
+    class_ = Column("class", String, nullable=False)
+    description = Column(Text)
+    hp = Column(Integer, nullable=False)
+    damage = Column(Integer, nullable=False)
+    defense = Column(Integer, nullable=False)
+    speed = Column(Integer, nullable=False)
+    attack_speed = Column(Numeric, nullable=False)
+    range = Column(Integer, nullable=False)
+    vision = Column(Integer, nullable=False)
     troop_slots = Column(Integer, default=1)
+    counters = Column(ARRAY(String), default=list)
     is_siege = Column(Boolean, default=False)
+    is_support = Column(Boolean, default=False)
+    icon_path = Column(String)
+    is_visible = Column(Boolean, default=True)
+    base_training_time = Column(Integer, nullable=False)
+    upkeep_food = Column(Integer, default=0)
+    upkeep_gold = Column(Integer, default=0)
+    enabled = Column(Boolean, default=True)
+    last_modified = Column(DateTime, server_default=func.current_timestamp())
+    can_build_bridge = Column(Boolean, default=False)
+    can_damage_castle = Column(Boolean, default=False)
+    can_capture_tile = Column(Boolean, default=True)
+    special_traits = Column(JSONB, default=dict)
+    is_meta = Column(Boolean, default=False)
+    special_ability = Column(String)
+
+
+class UnitCounter(Base):
+    __tablename__ = "unit_counters"
+    unit_type = Column(String, ForeignKey("unit_stats.unit_type"), primary_key=True)
+    countered_unit_type = Column(
+        String, ForeignKey("unit_stats.unit_type"), primary_key=True
+    )
+    effectiveness_multiplier = Column(Numeric, default=1.5)
+    source = Column(String, default="base")
+    notes = Column(Text)
 
 
 class UnitUpgradePath(Base):
