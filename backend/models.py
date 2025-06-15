@@ -15,7 +15,7 @@ from sqlalchemy import (
     ForeignKey,
     Numeric,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 from backend.db_base import Base
 
@@ -68,6 +68,28 @@ class PlayerMessage(Base):
     message = Column(Text)
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
+
+
+class PoliciesLawsCatalogue(Base):
+    __tablename__ = "policies_laws_catalogue"
+
+    id = Column(Integer, primary_key=True)
+    type = Column(Text)
+    name = Column(Text, nullable=False)
+    description = Column(Text)
+    effect_summary = Column(Text)
+
+
+class PolicyChangeLog(Base):
+    __tablename__ = "policy_change_log"
+
+    log_id = Column(Integer, primary_key=True)
+    kingdom_id = Column(Integer)
+    alliance_id = Column(Integer)
+    policy_id = Column(Integer)
+    changed_by = Column(UUID(as_uuid=True))
+    change_type = Column(Text)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
 
 
 class Alliance(Base):
@@ -282,15 +304,16 @@ class ProjectPlayerCatalogue(Base):
 class ProjectAllianceCatalogue(Base):
     __tablename__ = "project_alliance_catalogue"
 
-    project_key = Column(String, primary_key=True)
-    project_name = Column(String, nullable=False)
+    project_id = Column(Integer, primary_key=True)
+    project_key = Column(Text, unique=True, nullable=False)
+    project_name = Column(Text, nullable=False)
     description = Column(Text)
-    category = Column(String)
+    category = Column(Text)
     effect_summary = Column(Text)
     is_repeatable = Column(Boolean, default=False)
-    required_tech = Column(JSONB)
-    prerequisites = Column(JSONB)
-    unlocks = Column(JSONB)
+    required_tech = Column(ARRAY(Text))
+    prerequisites = Column(ARRAY(Text))
+    unlocks = Column(ARRAY(Text))
     resource_costs = Column(JSONB)
     build_time_seconds = Column(Integer)
     project_duration_seconds = Column(Integer)
@@ -299,11 +322,40 @@ class ProjectAllianceCatalogue(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    modifiers = Column(JSONB)
-    requires_alliance_level = Column(Integer, default=0)
+    requires_alliance_level = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
     max_active_instances = Column(Integer)
     expires_at = Column(DateTime(timezone=True))
+    wood_cost = Column(Integer, default=0)
+    stone_cost = Column(Integer, default=0)
+    effect_description = Column(Text)
+    wood = Column(Integer, default=0)
+    stone = Column(Integer, default=0)
+    iron_ore = Column(Integer, default=0)
+    gold = Column(Integer, default=0)
+    gems = Column(Integer, default=0)
+    food = Column(Integer, default=0)
+    coal = Column(Integer, default=0)
+    livestock = Column(Integer, default=0)
+    clay = Column(Integer, default=0)
+    flax = Column(Integer, default=0)
+    tools = Column(Integer, default=0)
+    wood_planks = Column(Integer, default=0)
+    refined_stone = Column(Integer, default=0)
+    iron_ingots = Column(Integer, default=0)
+    charcoal = Column(Integer, default=0)
+    leather = Column(Integer, default=0)
+    arrows = Column(Integer, default=0)
+    swords = Column(Integer, default=0)
+    axes = Column(Integer, default=0)
+    shields = Column(Integer, default=0)
+    armour = Column(Integer, default=0)
+    wagon = Column(Integer, default=0)
+    siege_weapons = Column(Integer, default=0)
+    jewelry = Column(Integer, default=0)
+    spear = Column(Integer, default=0)
+    horses = Column(Integer, default=0)
+    pitchforks = Column(Integer, default=0)
 
 
 class ProjectsAlliance(Base):
@@ -314,7 +366,7 @@ class ProjectsAlliance(Base):
     project_id = Column(Integer, primary_key=True)
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
     name = Column(String, nullable=False)
-    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
+    project_key = Column(Text, ForeignKey("project_alliance_catalogue.project_key"))
     progress = Column(Integer, default=0)
     modifiers = Column(JSONB, default={})
     start_time = Column(DateTime(timezone=True), server_default=func.now())
@@ -333,7 +385,7 @@ class ProjectsAllianceInProgress(Base):
 
     progress_id = Column(Integer, primary_key=True)
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
-    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
+    project_key = Column(Text, ForeignKey("project_alliance_catalogue.project_key"))
     progress = Column(Integer, default=0)
     started_at = Column(DateTime(timezone=True), server_default=func.now())
     expected_end = Column(DateTime(timezone=True))
@@ -839,7 +891,7 @@ class ProjectAllianceContribution(Base):
     resource_type = Column(String)
     amount = Column(Integer)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    project_key = Column(String, ForeignKey("project_alliance_catalogue.project_key"))
+    project_key = Column(Text, ForeignKey("project_alliance_catalogue.project_key"))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     contribution_type = Column(String, default="resource")
 

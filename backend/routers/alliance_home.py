@@ -73,11 +73,11 @@ def alliance_details(
     # --------------------
     projects = db.execute(
         text("""
-            SELECT p.project_id, c.name, p.project_key, p.progress, p.build_state
+            SELECT p.project_id, c.project_name, p.project_key, p.progress, p.build_state
             FROM projects_alliance_in_progress p
             JOIN project_alliance_catalogue c ON p.project_key = c.project_key
             WHERE p.alliance_id = :aid
-            ORDER BY p.start_time DESC
+            ORDER BY p.started_at DESC
         """),
         {"aid": aid},
     ).fetchall()
