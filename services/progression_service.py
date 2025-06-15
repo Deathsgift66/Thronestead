@@ -4,6 +4,7 @@
 # Developer: Deathsgift66
 # Description: Utility service for calculating troop slots, verifying progression gates, and merging live gameplay modifiers.
 
+import json
 import logging
 import time
 
@@ -263,7 +264,7 @@ def _alliance_project_modifiers(db: Session, kingdom_id: int) -> dict:
     rows = db.execute(
         text(
             """
-            SELECT pa.modifiers FROM projects_alliance pa
+            SELECT pa.active_bonus FROM projects_alliance pa
             WHERE pa.alliance_id IN (
                 SELECT alliance_id FROM alliance_members
                 WHERE user_id = (SELECT user_id FROM kingdoms WHERE kingdom_id = :kid)
@@ -276,7 +277,12 @@ def _alliance_project_modifiers(db: Session, kingdom_id: int) -> dict:
     ).fetchall()
     mods: dict = {}
     for (m,) in rows:
-        _merge_modifiers(mods, m or {})
+        if m:
+            try:
+                data = json.loads(m)
+            except Exception:
+                data = {}
+            _merge_modifiers(mods, data)
     return mods
 
 

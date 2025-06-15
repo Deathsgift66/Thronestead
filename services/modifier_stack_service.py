@@ -6,6 +6,7 @@
 """Central logic for computing, tracing, and summarizing active kingdom modifiers."""
 
 from __future__ import annotations
+import json
 import logging
 
 try:
@@ -47,6 +48,11 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         try:
             rows = db.execute(text(sql), params).fetchall()
             for (mod,) in rows:
+                if isinstance(mod, str):
+                    try:
+                        mod = json.loads(mod)
+                    except Exception:
+                        mod = {}
                 _merge_stack(stack, mod or {}, source_label)
         except Exception as e:
             logging.warning(f"Failed to load modifiers from {source_label}: {e}")
@@ -105,7 +111,7 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     # --- Alliance Projects ---
     load_modifier_row(
         """
-        SELECT pa.modifiers FROM projects_alliance pa
+        SELECT pa.active_bonus FROM projects_alliance pa
         WHERE pa.alliance_id IN (
             SELECT alliance_id FROM alliance_members
             WHERE user_id = (SELECT user_id FROM kingdoms WHERE kingdom_id = :kid)
