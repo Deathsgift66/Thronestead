@@ -150,8 +150,10 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
 
     units = db.query(
         """
-        SELECT * FROM unit_movements
-        WHERE war_id = %s AND status = 'active'
+        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        FROM unit_movements AS um
+        JOIN unit_stats AS us ON um.unit_type = us.unit_type
+        WHERE um.war_id = %s AND um.status = 'active'
         """,
         (war_id,),
     )
@@ -207,9 +209,11 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
 
     units = db.query(
         """
-        SELECT * FROM unit_movements
-        WHERE kingdom_id = ANY(%s) AND war_id IS NULL
-          AND status = 'active'
+        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        FROM unit_movements AS um
+        JOIN unit_stats AS us ON um.unit_type = us.unit_type
+        WHERE um.kingdom_id = ANY(%s) AND um.war_id IS NULL
+          AND um.status = 'active'
         """,
         (participant_kingdom_ids,),
     )
