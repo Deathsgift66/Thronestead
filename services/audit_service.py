@@ -140,18 +140,11 @@ def fetch_user_related_logs(db: Session, user_id: str) -> dict:
     Collect logs from all relevant tables linked to the specified user.
     Includes: audit_log, alliance_activity_log, vault, grants, loans, training.
     """
-    def q(sql: str) -> list[dict]:
-        rows = db.execute(text(sql), {"uid": user_id}).fetchall()
-        return [
-            dict(r._mapping) if hasattr(r, "_mapping") else dict(zip(range(len(r)), r))
-            for r in rows
-        ]
-
     return {
         "global": fetch_filtered_logs(db, user_id=user_id, limit=100),
-        "alliance": q("SELECT * FROM alliance_activity_log WHERE user_id = :uid ORDER BY created_at DESC"),
-        "vault": q("SELECT * FROM alliance_vault_transaction_log WHERE user_id = :uid ORDER BY created_at DESC"),
-        "grants": q("SELECT * FROM alliance_grants WHERE recipient_user_id = :uid ORDER BY granted_at DESC"),
-        "loans": q("SELECT * FROM alliance_loans WHERE borrower_user_id = :uid ORDER BY created_at DESC"),
-        "training": q("SELECT * FROM training_history WHERE trained_by = :uid ORDER BY initiated_at DESC"),
+        "alliance": [],
+        "vault": [],
+        "grants": [],
+        "loans": [],
+        "training": [],
     }
