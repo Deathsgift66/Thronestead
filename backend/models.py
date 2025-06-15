@@ -22,6 +22,7 @@ from sqlalchemy.sql import func
 from backend.db_base import Base
 
 
+
 class Kingdom(Base):
     """ORM model for the ``kingdoms`` table."""
 
@@ -425,6 +426,31 @@ class NobleHouse(Base):
     region = Column(String)
     description = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class RegionCatalogue(Base):
+    """Catalogue of regions players can choose from."""
+
+    __tablename__ = "region_catalogue"
+
+    region_code = Column(String, primary_key=True)
+    region_name = Column(String, nullable=False)
+    description = Column(Text)
+    wood_bonus = Column(Numeric, default=0)
+    iron_bonus = Column(Numeric, default=0)
+    troop_attack_bonus = Column(Numeric, default=0)
+
+
+class RegionStructure(Base):
+    __tablename__ = "region_structures"
+
+    region_code = Column(
+        String,
+        ForeignKey("region_catalogue.region_code"),
+        primary_key=True,
+    )
+    structure_type = Column(String, primary_key=True)
+    structure_level = Column(Integer)
 
 
 class ProjectPlayerCatalogue(Base):
@@ -1041,11 +1067,15 @@ class SpyMission(Base):
 
     __tablename__ = "spy_missions"
 
-    mission_id = Column(Integer, primary_key=True)
+    mission_id = Column(
+        Integer,
+        primary_key=True,
+        server_default=text("nextval('spy_missions_mission_id_seq'::regclass)"),
+    )
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     mission_type = Column(String)
     target_id = Column(Integer)
-    status = Column(String, default="active")
+    status = Column(String, server_default="active")
     launched_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime(timezone=True))
 
