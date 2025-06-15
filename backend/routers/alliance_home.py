@@ -68,6 +68,7 @@ def alliance_details(
         if k != "alliance_id"
     } if vault else {}
 
+
     # --------------------
     # 🏗️ Active Projects
     # --------------------
@@ -124,14 +125,13 @@ def alliance_details(
     # ⚔️ Active Wars
     # --------------------
     wars = db.execute(
-        text("""
-            SELECT w.alliance_war_id, w.attacker_alliance_id, w.defender_alliance_id,
-                   w.war_status, s.attacker_score, s.defender_score, s.victor
-            FROM alliance_wars w
-            LEFT JOIN alliance_war_scores s ON w.alliance_war_id = s.alliance_war_id
-            WHERE w.attacker_alliance_id = :aid OR w.defender_alliance_id = :aid
-            ORDER BY w.start_date DESC
-        """),
+        text(
+            "SELECT alliance_war_id, attacker_alliance_id, defender_alliance_id,"
+            " phase, castle_hp, battle_tick, war_status, start_date, end_date "
+            "FROM alliance_wars "
+            "WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid "
+            "ORDER BY start_date DESC"
+        ),
         {"aid": aid},
     ).fetchall()
     wars = [
@@ -139,13 +139,16 @@ def alliance_details(
             "alliance_war_id": r[0],
             "attacker_alliance_id": r[1],
             "defender_alliance_id": r[2],
-            "war_status": r[3],
-            "attacker_score": r[4],
-            "defender_score": r[5],
-            "victor": r[6],
+            "phase": r[3],
+            "castle_hp": r[4],
+            "battle_tick": r[5],
+            "war_status": r[6],
+            "start_date": r[7].isoformat() if r[7] else None,
+            "end_date": r[8].isoformat() if r[8] else None,
         }
         for r in wars
     ]
+
 
     # --------------------
     # 📜 Treaties
@@ -194,6 +197,7 @@ def alliance_details(
         for r in activity
     ]
 
+
     # --------------------
     # 🏰 Final Alliance Info
     # --------------------
@@ -220,9 +224,8 @@ def alliance_details(
         "alliance": alliance_info,
         "members": members,
         "vault": vault_data,
-        "projects": projects,
-        "quests": quests,
         "wars": wars,
         "treaties": treaties,
         "activity": activity,
+
     }
