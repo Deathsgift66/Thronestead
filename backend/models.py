@@ -369,19 +369,6 @@ class TradeLog(Base):
     )
 
 
-class AllianceRole(Base):
-    __tablename__ = "alliance_roles"
-
-    role_id = Column(Integer, primary_key=True)
-    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
-    role_name = Column(String, nullable=False)
-    permissions = Column(JSONB, default=dict)
-    is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    can_invite = Column(Boolean, default=False)
-    can_kick = Column(Boolean, default=False)
-    can_manage_resources = Column(Boolean, default=False)
-
 
 class AllianceBlacklist(Base):
     __tablename__ = "alliance_blacklist"
@@ -1609,29 +1596,14 @@ class AllianceTaxPolicy(Base):
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
-class GlobalEvent(Base):
-    """Representation of a global event."""
-
-    __tablename__ = "global_events"
-
-    event_id = Column(Integer, primary_key=True)
-    name = Column(Text)
-    description = Column(Text)
-    start_time = Column(DateTime)
-    end_time = Column(DateTime)
-    is_active = Column(Boolean, default=False)
-    impact_type = Column(Text)
-    magnitude = Column(Numeric)
-
-
 class GlobalEventCondition(Base):
     """Conditions required for a global event."""
 
     __tablename__ = "global_event_conditions"
 
-    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
-    condition_type = Column(Text, primary_key=True)
-    condition_target = Column(Text, primary_key=True)
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), nullable=False)
+    condition_type = Column(Text, nullable=False)
+    condition_target = Column(Text)
     condition_value = Column(Text)
 
 
@@ -1640,9 +1612,9 @@ class GlobalEventEffect(Base):
 
     __tablename__ = "global_event_effects"
 
-    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
-    effect_type = Column(Text, primary_key=True)
-    target = Column(Text, primary_key=True)
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), nullable=False)
+    effect_type = Column(Text, nullable=False)
+    target = Column(Text)
     magnitude = Column(Numeric)
 
 
@@ -1651,9 +1623,9 @@ class GlobalEventReward(Base):
 
     __tablename__ = "global_event_rewards"
 
-    event_id = Column(Integer, ForeignKey("global_events.event_id"), primary_key=True)
-    reward_type = Column(Text, primary_key=True)
-    reward_target = Column(Text, primary_key=True)
+    event_id = Column(Integer, ForeignKey("global_events.event_id"), nullable=False)
+    reward_type = Column(Text, nullable=False)
+    reward_target = Column(Text)
     reward_amount = Column(Numeric, nullable=False)
 
 class KingdomReligion(Base):
