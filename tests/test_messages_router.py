@@ -16,10 +16,6 @@ from backend.routers.messages import (
     MessagePayload,
     DeletePayload,
 )
-
-
-from backend.db_base import Base
-from backend.models import User, PlayerMessage
 from backend.routers import messages
 
 def setup_db():
@@ -47,7 +43,7 @@ def test_full_message_flow():
     assert len(res["messages"]) == 1
     mid = res["messages"][0]["message_id"]
 
-    detail = get_message(mid, user_id=recipient)
+    get_message(mid, user_id=recipient)
 
     msg = db.query(PlayerMessage).get(mid)
     assert msg.is_read
@@ -83,7 +79,7 @@ def test_view_message_marks_read():
     db.commit()
 
     res = messages.view_message(message_id=msg.message_id, user_id=uid1)
-    assert res["is_read"] == True
+    assert res["is_read"] is True
     assert res["sender"] == "Lancelot"
 
 

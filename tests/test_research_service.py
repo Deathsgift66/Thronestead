@@ -75,5 +75,5 @@ def test_list_and_check():
     db.rows = [("tech_a", "completed", 100, "2025-01-01")]
     results = list_research(db, 1)
     assert results[0]["tech_code"] == "tech_a"
-    assert is_tech_completed(db, 1, "tech_a") == True
+    assert is_tech_completed(db, 1, "tech_a") is True
 

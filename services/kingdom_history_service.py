@@ -28,10 +28,10 @@ def log_event(db: Session, kingdom_id: int, event_type: str, event_details: str)
             {"kid": kingdom_id, "etype": event_type, "details": event_details},
         )
         db.commit()
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to log event for kingdom %d", kingdom_id)
-        raise RuntimeError("Failed to log kingdom event") from e
+        raise RuntimeError("Failed to log kingdom event") from exc
 
 
 def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
@@ -62,7 +62,7 @@ def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
             }
             for r in rows
         ]
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to fetch history for kingdom %d", kingdom_id)
         return []
 
@@ -84,7 +84,7 @@ def fetch_full_history(db: Session, kingdom_id: int) -> dict:
         try:
             row = db.execute(text(query), {"kid": kingdom_id}).mappings().fetchone()
             return dict(row) if row else {}
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             logger.warning("Failed to fetch single row: %s", query)
             return {}
 
@@ -92,7 +92,7 @@ def fetch_full_history(db: Session, kingdom_id: int) -> dict:
         try:
             rows = db.execute(text(query), {"kid": kingdom_id}).mappings().fetchall()
             return [dict(r) for r in rows]
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             logger.warning("Failed to fetch many rows: %s", query)
             return []
 

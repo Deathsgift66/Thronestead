@@ -3,7 +3,7 @@
 # Version: 6.13.2025.20.13
 # Developer: Deathsgift66
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session

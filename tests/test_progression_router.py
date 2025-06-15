@@ -2,7 +2,6 @@
 # File Name: test_progression_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-import types
 from backend.routers import progression_router as pr
 
 class DummyResult:

@@ -6,14 +6,14 @@
 
 from __future__ import annotations
 import logging
-from typing import Optional
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
-    from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q
+    def text(q):  # type: ignore
+        return q
+
     Session = object
 
 # External tick-participating modules

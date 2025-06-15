@@ -13,7 +13,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q
+    def text(q):  # type: ignore
+        return q
+
     Session = object
 
 logger = logging.getLogger(__name__)
@@ -80,7 +82,7 @@ def record_training(
         db.commit()
         return int(row[0]) if row else 0
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.exception("Failed to record training session for unit %s", unit_name)
         return 0
@@ -121,6 +123,6 @@ def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
             for r in rows
         ]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.warning("Failed to fetch training history for kingdom_id=%s", kingdom_id)
         return []

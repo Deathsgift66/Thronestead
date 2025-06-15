@@ -4,7 +4,6 @@
 # Developer: Deathsgift66
 from typing import Optional
 import json
-import logging
 
 from services import notification_service
 
@@ -12,7 +11,9 @@ try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 START_RESOURCES = {

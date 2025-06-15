@@ -6,14 +6,14 @@
 """Service functions for logging and retrieving combat log data."""
 
 from __future__ import annotations
-from datetime import datetime
-import logging
 
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover - fallback when SQLAlchemy isn't installed
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 

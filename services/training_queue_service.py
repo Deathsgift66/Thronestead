@@ -13,7 +13,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q
+    def text(q):  # type: ignore
+        return q
+
     Session = object
 
 logger = logging.getLogger(__name__)
@@ -89,7 +91,7 @@ def add_training_order(
         db.commit()
         return int(row[0]) if row else 0
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.exception("Failed to insert training queue entry for %s x%d", unit_name, quantity)
         return 0

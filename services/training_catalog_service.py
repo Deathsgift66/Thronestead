@@ -13,7 +13,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q
+    def text(q):  # type: ignore
+        return q
+
     Session = object
 
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ def list_units(db: Session) -> list[dict]:
         ).fetchall()
         return [dict(row._mapping) for row in rows]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to fetch training catalog.")
         return []
 
@@ -57,7 +59,7 @@ def get_unit_by_code(db: Session, unit_id: int) -> Optional[dict]:
         ).fetchone()
         return dict(row._mapping) if row else None
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.warning("Failed to get unit_id %s", unit_id)
         return None
 
@@ -79,6 +81,6 @@ def list_units_by_tier(db: Session, tier: int) -> list[dict]:
         ).fetchall()
         return [dict(row._mapping) for row in rows]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.warning("Failed to list units for tier %d", tier)
         return []

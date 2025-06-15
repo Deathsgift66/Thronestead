@@ -8,6 +8,9 @@ from typing import Any, Dict, List, Deque
 from collections import deque
 import random
 
+# Database interface for persisting movement state
+from ..db import db
+
 # Base movement penalties by terrain type
 TERRAIN_BASE_MODIFIERS: Dict[str, float] = {
     "plains": 1.0,
@@ -16,9 +19,6 @@ TERRAIN_BASE_MODIFIERS: Dict[str, float] = {
     "bridge": 1.0,
     "river": 1.0,  # default when unit can build bridges
 }
-
-# Database interface for persisting movement state
-from ..db import db
 
 
 def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> None:

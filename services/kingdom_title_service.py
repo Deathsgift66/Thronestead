@@ -46,10 +46,10 @@ def award_title(db: Session, kingdom_id: int, title: str) -> None:
         )
         db.commit()
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to award title '%s' to kingdom %d", title, kingdom_id)
-        raise RuntimeError("Error awarding kingdom title") from e
+        raise RuntimeError("Error awarding kingdom title") from exc
 
 
 def list_titles(db: Session, kingdom_id: int) -> list[dict]:
@@ -72,7 +72,7 @@ def list_titles(db: Session, kingdom_id: int) -> list[dict]:
 
         return [{"title": r[0], "awarded_at": r[1]} for r in rows]
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to list titles for kingdom %d", kingdom_id)
         return []
 
@@ -95,10 +95,10 @@ def set_active_title(db: Session, kingdom_id: int, title: Optional[str]) -> None
         )
         db.commit()
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Failed to set active title for kingdom %d", kingdom_id)
-        raise RuntimeError("Error setting active title") from e
+        raise RuntimeError("Error setting active title") from exc
 
 
 def get_active_title(db: Session, kingdom_id: int) -> Optional[str]:
@@ -120,6 +120,6 @@ def get_active_title(db: Session, kingdom_id: int) -> Optional[str]:
 
         return row[0] if row else None
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         logger.exception("Failed to get active title for kingdom %d", kingdom_id)
         return None

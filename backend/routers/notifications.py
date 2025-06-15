@@ -13,14 +13,14 @@ import os
 import asyncio
 import json
 
+from ..database import get_db
+from ..security import require_user_id
+from backend.models import Notification
+
 # Streaming configuration constants
 # Allow tuning via environment variables for easier production scaling
 STREAM_INTERVAL = int(os.getenv("NOTIFICATION_STREAM_INTERVAL", "5"))
 MAX_STREAM_CYCLES = int(os.getenv("NOTIFICATION_MAX_CYCLES", "30"))
-
-from ..database import get_db
-from ..security import require_user_id
-from backend.models import Notification
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 

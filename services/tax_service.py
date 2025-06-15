@@ -12,7 +12,9 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
-    text = lambda q: q  # type: ignore
+    def text(q):  # type: ignore
+        return q
+
     Session = object  # type: ignore
 
 logger = logging.getLogger(__name__)
@@ -122,7 +124,7 @@ def collect_alliance_tax(
         # Return the net result
         return earned_amount - tax_amount
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         logger.exception("Alliance tax collection failed for %s", resource_type)
         return earned_amount

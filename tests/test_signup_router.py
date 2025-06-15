@@ -2,7 +2,6 @@
 # File Name: test_signup_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi import HTTPException
