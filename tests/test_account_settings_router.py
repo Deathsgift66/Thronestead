@@ -24,6 +24,8 @@ class DummyDB:
         self.custom_row = None
         self.updated = None
         self.custom_updated = None
+        self.settings_rows = []
+        self.setting_updates = []
     def execute(self, query, params=None):
         q = str(query).strip()
         params = params or {}
@@ -35,11 +37,16 @@ class DummyDB:
             return DummyResult(row=self.current_row)
         if q.startswith("SELECT motto"):
             return DummyResult(row=self.custom_row)
+        if q.startswith("SELECT setting_key"):
+            return DummyResult(rows=self.settings_rows)
         if q.startswith("UPDATE users SET"):
             self.updated = params
             return DummyResult()
         if q.startswith("INSERT INTO user_customization"):
             self.custom_updated = params
+            return DummyResult()
+        if q.startswith("INSERT INTO user_setting_entries"):
+            self.setting_updates.append(params)
             return DummyResult()
         return DummyResult()
     def commit(self):
@@ -62,19 +69,22 @@ def test_load_profile_returns_security_fields():
         1,
         False,
         None,
-        "2025-07-02T12:00:00Z",
-        "1.1.1.1",
-        True,
-        False,
     )
+    db.settings_rows = [
+        ("ip_login_alerts", "true"),
+        ("email_login_confirmations", "false"),
+    ]
     result = account_settings.load_profile(user_id="u1", db=db)
-    assert result["last_login_at"] == "2025-07-02T12:00:00Z"
     assert result["ip_login_alerts"] == True
     assert result["email_login_confirmations"] == False
 
 def test_update_profile_updates_security_fields():
     db = DummyDB()
-    db.current_row = ("Old", "old.png", True, False)
+    db.current_row = ("Old", "old.png")
+    db.settings_rows = [
+        ("ip_login_alerts", "true"),
+        ("email_login_confirmations", "false"),
+    ]
     db.custom_row = ("M", "B", "p", "ban")
     payload = account_settings.UpdatePayload(
         display_name="New",
@@ -82,5 +92,6 @@ def test_update_profile_updates_security_fields():
         email_login_confirmations=True,
     )
     account_settings.update_profile(payload, user_id="u1", db=db)
-    assert db.updated["ip_alert"] == False
-    assert db.updated["email_conf"] == True
+    assert db.updated["dn"] == "New"
+    assert db.setting_updates[0]["val"] == "false"
+    assert db.setting_updates[1]["val"] == "true"
