@@ -55,15 +55,13 @@ def update_setting(
             text(
                 """
                 UPDATE game_settings
-                SET setting_value = :val,
-                    is_active = :active,
+                SET is_active = :active,
                     last_updated = NOW(),
                     updated_by = :uid
                 WHERE setting_key = :key
                 """
             ),
             {
-                "val": payload.value,
                 "active": payload.is_active,
                 "uid": admin_id,
                 "key": payload.key,
@@ -72,6 +70,18 @@ def update_setting(
 
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="Setting key not found")
+
+        db.execute(
+            text(
+                """
+                INSERT INTO game_setting_values (setting_key, setting_value)
+                VALUES (:key, :val)
+                ON CONFLICT (setting_key) DO UPDATE
+                SET setting_value = EXCLUDED.setting_value
+                """
+            ),
+            {"key": payload.key, "val": payload.value},
+        )
 
         db.commit()
         load_game_settings()

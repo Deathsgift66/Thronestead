@@ -22,7 +22,6 @@ router = APIRouter(prefix="/api/compose", tags=["compose"])
 class MessagePayload(BaseModel):
     recipient_id: str
     message: str
-    category: str | None = None
 
 
 class NoticePayload(BaseModel):
@@ -66,7 +65,6 @@ def send_message(
         recipient_id=payload.recipient_id,
         user_id=user_id,
         message=payload.message,
-        category=payload.category or "player",
     )
 
     db.add(msg)
