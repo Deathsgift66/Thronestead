@@ -46,7 +46,6 @@ def test_record_training_inserts():
         source="manual",
         initiated_at="2025-06-09 10:00",
         trained_by="u1",
-        xp_awarded=50,
         modifiers_applied={"bonus": 10},
     )
     assert hid == 1
@@ -56,7 +55,7 @@ def test_record_training_inserts():
 
 def test_fetch_history_returns_rows():
     db = DummyDB()
-    db.rows = [("Knight", 10, "2025-06-10", "manual", 50)]
+    db.rows = [("Knight", 10, "2025-06-10", "manual")]
     rows = fetch_history(db, 1, 20)
     assert len(rows) == 1
     assert rows[0]["unit_name"] == "Knight"

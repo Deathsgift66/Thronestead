@@ -24,7 +24,6 @@ class TrainingPayload(BaseModel):
     source: str = Field(..., description="Source of training (e.g., 'barracks', 'event')")
     initiated_at: datetime = Field(..., description="Timestamp when training was initiated")
     trained_by: str | None = Field(None, description="Trainer's name or admin (optional)")
-    xp_awarded: int = Field(0, description="Experience points awarded for the training")
     modifiers_applied: dict | None = Field(default_factory=dict, description="Applied training modifiers")
 
 
@@ -60,7 +59,6 @@ def create_history(payload: TrainingPayload, db: Session = Depends(get_db)):
             source=payload.source,
             initiated_at=payload.initiated_at,
             trained_by=payload.trained_by,
-            xp_awarded=payload.xp_awarded,
             modifiers_applied=payload.modifiers_applied or {},
         )
     except Exception as e:

@@ -118,7 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await getCastleProgression();
       castleEl.innerHTML = `
         <p><strong>Level:</strong> ${data.level}</p>
-        <p><strong>XP:</strong> ${data.experience} / ${data.next_level_xp}</p>
       `;
     } catch (err) {
       console.error('❌', err);
@@ -166,7 +165,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await getCastleProgression();
       castleEl.innerHTML = `
         <p><strong>Level:</strong> ${data.level}</p>
-        <p><strong>XP:</strong> ${data.experience} / ${data.next_level_xp}</p>
       `;
     } catch (err) {
       alert(err.message || 'Upgrade failed');

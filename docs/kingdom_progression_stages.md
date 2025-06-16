@@ -4,7 +4,7 @@ This document summarizes the staged progression design for Kingmaker's Rise. The
 
 ## Stage 1: Initial Kingdom Setup
 - **Account Creation** – Player starts with a level 1 castle, one village and one noble. Knights are not yet available.
-- **Early Quests** – Direct the player to upgrade their starting village, recruit basic troops and earn castle experience.
+- **Early Quests** – Direct the player to upgrade their starting village and recruit basic troops.
 - **Unlocked Content** – Base troop slots and initial resource production.
 
 ## Stage 2: Castle Progression Begins

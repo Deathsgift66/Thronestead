@@ -129,7 +129,7 @@ This document maps key PostgreSQL tables and their important columns to the HTML
 - `train_troops.html`: display current training queue
 
 ### Table: `training_history`
-**Relevant Columns**: `history_id`, `kingdom_id`, `unit_name`, `quantity`, `completed_at`, `source`, `xp_awarded`
+**Relevant Columns**: `history_id`, `kingdom_id`, `unit_name`, `quantity`, `completed_at`, `source`
 **Used In**:
 - `train_troops.html`: recent training history list
 

@@ -16,7 +16,6 @@ Each row represents one batch of units that are currently training or waiting to
 | `started_at` | When training began |
 | `status` | `queued`, `training`, `paused`, `completed`, `cancelled` |
 | `training_speed_modifier` | Modifier applied to training time |
-| `xp_per_unit` | XP granted per unit |
 | `modifiers_applied` | JSON of special bonuses applied |
 | `initiated_by` | User who started the training |
 | `priority` | Higher values train first |
@@ -30,12 +29,12 @@ Each row represents one batch of units that are currently training or waiting to
 INSERT INTO public.training_queue (
     kingdom_id, unit_id, unit_name, quantity,
     training_ends_at, started_at, status,
-    training_speed_modifier, xp_per_unit, modifiers_applied,
+    training_speed_modifier, modifiers_applied,
     initiated_by, priority
 ) VALUES (
     ?, ?, ?, ?,
     now() + (? * ?) * interval '1 second', now(), 'queued',
-    ?, ?, ?,
+    ?, ?,
     ?, 1
 );
 ```

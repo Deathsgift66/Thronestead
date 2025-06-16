@@ -102,19 +102,20 @@ def start_mission(db: Session, kingdom_id: int, cooldown: int = 3600) -> None:
     db.commit()
 
 
-def record_success(db: Session, kingdom_id: int, xp_reward: int) -> None:
+def record_success(db: Session, kingdom_id: int) -> None:
     """
-    Awards XP and increments successful mission count.
+    Increments the successful mission count.
     """
     db.execute(
-        text("""
+        text(
+            """
             UPDATE kingdom_spies
                SET missions_successful = missions_successful + 1,
-                   spy_xp = spy_xp + :xp,
                    last_updated = NOW()
              WHERE kingdom_id = :kid
-        """),
-        {"xp": xp_reward, "kid": kingdom_id},
+            """
+        ),
+        {"kid": kingdom_id},
     )
     db.commit()
 

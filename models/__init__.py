@@ -6,7 +6,7 @@
 Kingmaker’s Rise: Progression Module
 
 This package contains all models related to progression systems, including:
-- Castle XP & Leveling
+- Castle Leveling
 - Nobles and Knights (Hero Units)
 - Troop Slot Bonuses
 

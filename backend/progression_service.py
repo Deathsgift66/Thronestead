@@ -19,13 +19,10 @@ logger = logging.getLogger("KingmakersRise.Progression")
 # Global lock to ensure thread-safe updates when used in async tests
 _state_lock = Lock()
 
-# XP required to level up the castle
-CASTLE_XP_THRESHOLD = 100
-
 # ---------------------------
 # 🏰 Castle Progression State
 # ---------------------------
-castle_state: Dict[str, int] = {"level": 1, "xp": 0}
+castle_state: Dict[str, int] = {"level": 1}
 
 # 🧙 Nobles Set for O(1) lookups
 nobles: Set[str] = set()
@@ -36,34 +33,11 @@ knights: Dict[str, Dict[str, int]] = {}
 # ---------------------------
 # 🏗️ Castle Progression Logic
 # ---------------------------
-def progress_castle(xp_gain: int) -> int:
-    """
-    Increase castle XP and level up when threshold is reached.
-
-    Args:
-        xp_gain (int): Amount of XP gained
-
-    Returns:
-        int: New castle level
-    """
-    if xp_gain <= 0:
-        logger.debug("Ignoring non-positive XP gain: %s", xp_gain)
-        return castle_state["level"]
-
-    logger.debug(
-        "Adding %s XP to castle (current XP: %s)", xp_gain, castle_state["xp"]
-    )
-
+def progress_castle() -> int:
+    """Increase the castle level by one."""
     with _state_lock:
-        castle_state["xp"] += xp_gain
-
-        if castle_state["xp"] >= CASTLE_XP_THRESHOLD:
-            castle_state["level"] += 1
-            castle_state["xp"] = 0
-            logger.info(
-                "🏰 Castle leveled up! New level: %s", castle_state["level"]
-            )
-
+        castle_state["level"] += 1
+        logger.info("🏰 Castle leveled up! New level: %s", castle_state["level"])
     return castle_state["level"]
 
 # ---------------------------
@@ -132,6 +106,6 @@ def get_state() -> Dict[str, object]:
 def reset_state() -> None:
     """Reset all progression data. Useful for tests."""
     with _state_lock:
-        castle_state.update({"level": 1, "xp": 0})
+        castle_state.update({"level": 1})
         nobles.clear()
         knights.clear()

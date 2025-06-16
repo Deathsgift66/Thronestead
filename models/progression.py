@@ -10,28 +10,20 @@ from backend.db_base import Base
 
 class KingdomCastleProgression(Base):
     """
-    Tracks the XP and level progression of a kingdom's castle.
-    XP required for next level can be scaled based on game formula (e.g., 100 * level^2).
+    Tracks the level progression of a kingdom's castle.
     """
 
     __tablename__ = 'kingdom_castle_progression'
 
     kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'), primary_key=True)
     castle_level = Column(Integer, default=1)
-    castle_xp = Column(Integer, default=0)
-
-    def _default_xp_for_next(context):
-        level = context.get_current_parameters().get("castle_level", 1)
-        return 100 * (level ** 2)
-
-    xp_for_next = Column(Integer, default=_default_xp_for_next)
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class KingdomNoble(Base):
     """
     Represents a noble who serves the kingdom. Nobles may influence production, diplomacy, or faith.
-    Can be assigned to villages for specific bonuses. Loyalty and experience affect output.
+    Can be assigned to villages for specific bonuses. Loyalty affects output.
     """
 
     __tablename__ = 'kingdom_nobles'
@@ -41,7 +33,6 @@ class KingdomNoble(Base):
     noble_name = Column(String, nullable=False)
     title = Column(String, nullable=False)
     level = Column(Integer, default=1)
-    experience = Column(Integer, default=0)
     loyalty = Column(Integer, default=50)  # Ranges from 0 to 100
     specialization = Column(String, default='general')  # e.g., 'economy', 'war', 'faith'
     assigned_village_id = Column(Integer, ForeignKey('kingdom_villages.village_id'), nullable=True)
@@ -62,7 +53,6 @@ class KingdomKnight(Base):
     knight_name = Column(String, nullable=False)
     rank = Column(String, default='Squire')  # e.g., 'Squire', 'Knight', 'Champion', 'Paladin'
     level = Column(Integer, default=1)
-    experience = Column(Integer, default=0)
     leadership = Column(Integer, default=10)  # Affects morale bonus
     tactics = Column(Integer, default=10)     # Influences war utility
     morale_aura = Column(Integer, default=0)  # % boost to nearby troops

@@ -1,6 +1,6 @@
 # Kingdom Troops
 
-The `kingdom_troops` table stores the live state of a player's military forces. Each row is keyed by `(kingdom_id, unit_type, unit_level)` so troops of the same type can exist at multiple levels. The table tracks healthy, training and wounded soldiers along with XP for leveling and combat history.
+The `kingdom_troops` table stores the live state of a player's military forces. Each row is keyed by `(kingdom_id, unit_type, unit_level)` so troops of the same type can exist at multiple levels. The table tracks healthy, training and wounded soldiers for combat history.
 
 ## Table Structure
 
@@ -11,7 +11,6 @@ The `kingdom_troops` table stores the live state of a player's military forces. 
 | `quantity` | How many healthy troops at this level |
 | `in_training` | How many are currently being trained |
 | `wounded` | How many are wounded (cannot fight) |
-| `unit_xp` | Current XP for this `unit_type`/`unit_level` combo |
 | `unit_level` | What level these troops are (1 = base troops) |
 | `active_modifiers` | JSON of temporary modifiers (buffs, debuffs, tech bonuses, etc.) |
 | `last_modified_by` | Last user/admin/system that updated this row |
@@ -39,14 +38,6 @@ FROM public.kingdom_troops
 WHERE kingdom_id = ?
   AND quantity > 0
   AND wounded = 0;
-```
-
-### Granting XP after battle
-
-```sql
-UPDATE public.kingdom_troops
-SET unit_xp = unit_xp + ?, last_combat_at = now()
-WHERE kingdom_id = ? AND unit_type = ? AND unit_level = ?;
 ```
 
 ### Leveling up troops
@@ -81,5 +72,5 @@ Use `in_training` while units are in the queue. When training completes, move th
 
 ## Best Practices
 
-This structure supports leveled troops, XP-based progression, training queues, wounded recovery, morale tracking, and audit history. Treat updates as critical game state and audit via `last_modified_by`.
+This structure supports leveled troops, training queues, wounded recovery, morale tracking, and audit history. Treat updates as critical game state and audit via `last_modified_by`.
 

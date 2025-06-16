@@ -524,8 +524,6 @@ CREATE TABLE public.kingdom_history_log (
 CREATE TABLE public.kingdom_castle_progression (
   kingdom_id integer PRIMARY KEY REFERENCES public.kingdoms(kingdom_id),
   castle_level integer DEFAULT 1,
-  castle_xp integer DEFAULT 0,
-  xp_for_next integer DEFAULT 100,
   last_updated timestamp with time zone DEFAULT now()
 );
 
@@ -536,7 +534,6 @@ CREATE TABLE public.kingdom_nobles (
   noble_name text NOT NULL,
   title text,
   level integer DEFAULT 1,
-  experience integer DEFAULT 0,
   loyalty integer DEFAULT 50,
   specialization text DEFAULT 'general',
   assigned_village_id integer,
@@ -554,7 +551,6 @@ CREATE TABLE public.kingdom_knights (
   knight_name text NOT NULL,
   rank text DEFAULT 'Squire',
   level integer DEFAULT 1,
-  experience integer DEFAULT 0,
   leadership integer DEFAULT 10,
   tactics integer DEFAULT 10,
   morale_aura integer DEFAULT 0,
@@ -622,7 +618,6 @@ CREATE TABLE public.kingdom_spies (
   spy_level integer DEFAULT 1,
   spy_count integer DEFAULT 0,
   max_spy_capacity integer DEFAULT 10,
-  spy_xp integer DEFAULT 0,
   spy_upkeep_gold integer DEFAULT 0,
   last_mission_at timestamp with time zone,
   cooldown_seconds integer DEFAULT 0,
@@ -1247,7 +1242,6 @@ CREATE TABLE public.training_history (
   source text DEFAULT 'manual'::text,
   initiated_at timestamp with time zone DEFAULT now(),
   trained_by uuid,
-  xp_awarded integer DEFAULT 0,
   modifiers_applied jsonb DEFAULT '{}'::jsonb,
   speed_modifier numeric DEFAULT 1,
   CONSTRAINT training_history_pkey PRIMARY KEY (history_id),
@@ -1265,7 +1259,6 @@ CREATE TABLE public.training_queue (
   started_at timestamp with time zone DEFAULT now(),
   status text DEFAULT 'queued'::text CHECK (status = ANY (ARRAY['queued'::text, 'training'::text, 'paused'::text, 'completed'::text, 'cancelled'::text])),
   training_speed_modifier numeric DEFAULT 1.0,
-  xp_per_unit integer DEFAULT 0,
   modifiers_applied jsonb DEFAULT '{}'::jsonb,
   initiated_by uuid,
   priority integer DEFAULT 1,
