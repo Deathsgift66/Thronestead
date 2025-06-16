@@ -124,18 +124,11 @@ runtime.
 
 This will create all tables referenced by the frontend.
 
-After loading the base schema, apply the SQL files in the `migrations/` folder
-to keep your database up to date. These scripts also seed initial data.
-For example, run the regions migration to populate the `region_catalogue`
-table used on **play.html**:
-
-```bash
-psql -f migrations/2025_06_08_add_regions.sql
-```
-
-Without this migration the `/api/kingdom/regions` request will fall back to
-sample regions bundled with the backend, so the dropdown will work but won't
-reflect any custom data you expected.
+If your deployment requires additional data seeding or custom tables, load any
+project-specific SQL migrations after `full_schema.sql`. Example documentation
+references a `2025_06_08_add_regions.sql` script used to populate the
+`region_catalogue` table, but the migrations directory is not included in this
+repository.
 
 ---
 

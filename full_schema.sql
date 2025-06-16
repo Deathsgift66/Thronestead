@@ -519,6 +519,50 @@ CREATE TABLE public.kingdom_history_log (
   CONSTRAINT kingdom_history_log_pkey PRIMARY KEY (log_id),
   CONSTRAINT kingdom_history_log_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
+
+-- Table added to align with progression models
+CREATE TABLE public.kingdom_castle_progression (
+  kingdom_id integer PRIMARY KEY REFERENCES public.kingdoms(kingdom_id),
+  castle_level integer DEFAULT 1,
+  castle_xp integer DEFAULT 0,
+  xp_for_next integer DEFAULT 100,
+  last_updated timestamp with time zone DEFAULT now()
+);
+
+CREATE SEQUENCE IF NOT EXISTS kingdom_nobles_noble_id_seq;
+CREATE TABLE public.kingdom_nobles (
+  noble_id integer NOT NULL DEFAULT nextval('kingdom_nobles_noble_id_seq'::regclass),
+  kingdom_id integer,
+  noble_name text NOT NULL,
+  title text,
+  level integer DEFAULT 1,
+  experience integer DEFAULT 0,
+  loyalty integer DEFAULT 50,
+  specialization text DEFAULT 'general',
+  assigned_village_id integer,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_nobles_pkey PRIMARY KEY (noble_id),
+  CONSTRAINT kingdom_nobles_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_nobles_assigned_village_id_fkey FOREIGN KEY (assigned_village_id) REFERENCES public.kingdom_villages(village_id)
+);
+
+CREATE SEQUENCE IF NOT EXISTS kingdom_knights_knight_id_seq;
+CREATE TABLE public.kingdom_knights (
+  knight_id integer NOT NULL DEFAULT nextval('kingdom_knights_knight_id_seq'::regclass),
+  kingdom_id integer,
+  knight_name text NOT NULL,
+  rank text DEFAULT 'Squire',
+  level integer DEFAULT 1,
+  experience integer DEFAULT 0,
+  leadership integer DEFAULT 10,
+  tactics integer DEFAULT 10,
+  morale_aura integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_knights_pkey PRIMARY KEY (knight_id),
+  CONSTRAINT kingdom_knights_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
 CREATE TABLE public.kingdom_religion (
   kingdom_id integer NOT NULL,
   religion_name text,

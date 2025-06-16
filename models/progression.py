@@ -38,7 +38,7 @@ class KingdomNoble(Base):
 
     noble_id = Column(Integer, primary_key=True)
     kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
-    name = Column(String, nullable=False)
+    noble_name = Column(String, nullable=False)
     title = Column(String, nullable=False)
     level = Column(Integer, default=1)
     experience = Column(Integer, default=0)
@@ -59,7 +59,7 @@ class KingdomKnight(Base):
 
     knight_id = Column(Integer, primary_key=True)
     kingdom_id = Column(Integer, ForeignKey('kingdoms.kingdom_id'))
-    name = Column(String, nullable=False)
+    knight_name = Column(String, nullable=False)
     rank = Column(String, default='Squire')  # e.g., 'Squire', 'Knight', 'Champion', 'Paladin'
     level = Column(Integer, default=1)
     experience = Column(Integer, default=0)
