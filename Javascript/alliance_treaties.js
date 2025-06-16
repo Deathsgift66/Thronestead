@@ -5,11 +5,8 @@
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
-const TREATY_INFO = {
-  'NAP': 'Non-Aggression Pact',
-  'Trade Pact': 'Allows trading resources',
-  'Mutual Defense': 'Allies will defend each other'
-};
+let TREATY_INFO = {};
+let AVAILABLE_TYPES = [];
 
 let treatyChannel;
 
@@ -20,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   });
 
+  await loadTreatyTypes();
   await loadTreatyTabs();
 
   // ✅ Realtime Treaty Sync
@@ -34,7 +32,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ New Treaty Creation
   document.getElementById("create-new-treaty")?.addEventListener("click", async () => {
-    const treatyType = prompt("Enter treaty type (NAP, Trade Pact, Mutual Defense):");
+    const opts = AVAILABLE_TYPES.map(t => t.treaty_type).join(', ');
+    const treatyType = prompt(`Enter treaty type (${opts}):`);
     const partnerId = prompt("Enter partner alliance ID:");
     if (!treatyType || !partnerId) return;
     const { data: { user } } = await supabase.auth.getUser();
@@ -67,6 +66,20 @@ function closeModal() {
   const modal = document.getElementById('treaty-modal');
   modal.classList.add('hidden');
   modal.setAttribute('aria-hidden', 'true');
+}
+
+async function loadTreatyTypes() {
+  try {
+    const res = await fetch('/api/alliance-treaties/types');
+    const { types = [] } = await res.json();
+    AVAILABLE_TYPES = types;
+    TREATY_INFO = {};
+    types.forEach(t => {
+      TREATY_INFO[t.treaty_type] = t.display_name || t.description || '';
+    });
+  } catch (err) {
+    console.error('❌ Failed to load treaty types:', err);
+  }
 }
 
 async function loadTreatyTabs() {

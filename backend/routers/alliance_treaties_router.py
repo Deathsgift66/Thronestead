@@ -16,6 +16,19 @@ from services.audit_service import log_action, log_alliance_activity
 router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
 
 
+@router.get("/types")
+def get_treaty_types(db: Session = Depends(get_db)):
+    """Return all treaty types from the catalogue."""
+    rows = (
+        db.execute(
+            text("SELECT * FROM treaty_type_catalogue ORDER BY treaty_type")
+        )
+        .mappings()
+        .fetchall()
+    )
+    return {"types": [dict(r) for r in rows]}
+
+
 # --- Payload Models ---
 
 class ProposePayload(BaseModel):
