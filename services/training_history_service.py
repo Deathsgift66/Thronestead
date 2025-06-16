@@ -33,7 +33,6 @@ def record_training(
     source: str,
     initiated_at: str,
     trained_by: Optional[str],
-    xp_awarded: int,
     modifiers_applied: Optional[dict],
 ) -> int:
     """
@@ -48,7 +47,6 @@ def record_training(
         source: Source of training (e.g., 'training_queue')
         initiated_at: Timestamp when training started
         trained_by: User ID who initiated the training (if available)
-        xp_awarded: XP rewarded for this training
         modifiers_applied: Dictionary of production modifiers applied
 
     Returns:
@@ -59,10 +57,10 @@ def record_training(
             text("""
                 INSERT INTO training_history (
                     kingdom_id, unit_id, unit_name, quantity, completed_at,
-                    source, initiated_at, trained_by, xp_awarded, modifiers_applied
+                    source, initiated_at, trained_by, modifiers_applied
                 ) VALUES (
                     :kid, :uid, :uname, :qty, now(),
-                    :src, :init, :tby, :xp, :mods
+                    :src, :init, :tby, :mods
                 )
                 RETURNING history_id
             """),
@@ -74,7 +72,6 @@ def record_training(
                 "src": source,
                 "init": initiated_at,
                 "tby": trained_by,
-                "xp": xp_awarded,
                 "mods": modifiers_applied or {},
             },
         )
@@ -103,7 +100,7 @@ def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
     try:
         rows = db.execute(
             text("""
-                SELECT unit_name, quantity, completed_at, source, xp_awarded
+                SELECT unit_name, quantity, completed_at, source
                 FROM training_history
                 WHERE kingdom_id = :kid
                 ORDER BY completed_at DESC
@@ -118,7 +115,6 @@ def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
                 "quantity": r[1],
                 "completed_at": r[2],
                 "source": r[3],
-                "xp_awarded": r[4],
             }
             for r in rows
         ]

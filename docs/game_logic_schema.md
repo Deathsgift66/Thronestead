@@ -20,7 +20,7 @@ This document outlines the major gameplay systems in **Kingmaker's Rise** and ho
 
 ## 4. Troop Training
 - The `training_queue` table tracks pending and active batches of units. Each row specifies the unit type, quantity, training duration and status.
-- When training completes, units move into `kingdom_troops` where level, experience and wounded counts are tracked.
+- When training completes, units move into `kingdom_troops` where level and wounded counts are tracked.
 
 ## 5. Projects and Quests
 - Player projects (`projects_player`) and alliance projects (`projects_alliance`) provide modifiers or unlock features when completed. Alliance and kingdom quests offer objectives that reward resources or bonuses.
@@ -43,6 +43,6 @@ This document outlines the major gameplay systems in **Kingmaker's Rise** and ho
 2. **Progression** loops drive players to gather resources, train troops, complete projects and participate in diplomacy.
 3. **Strategic Tick** processes ongoing timers and keeps wars and treaties up to date.
 4. **Modifiers** from regions, buildings, projects and treaties aggregate to shape each kingdom’s capabilities.
-5. **Wars and quests** feed back into progression by providing experience, resources and prestige, restarting the loops.
+5. **Wars and quests** feed back into progression by providing resources and prestige, restarting the loops.
 
 This schema summarizes how the game's major systems work together so new features can be integrated coherently.

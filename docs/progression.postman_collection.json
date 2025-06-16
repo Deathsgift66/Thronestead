@@ -18,7 +18,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"xp_gain\": 50\n}"
+          "raw": "{}"
         }
       }
     },

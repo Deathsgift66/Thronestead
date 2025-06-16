@@ -48,7 +48,6 @@ def test_add_training_order_inserts():
         quantity=10,
         base_training_seconds=60,
         training_speed_modifier=1.0,
-        xp_per_unit=0,
         modifiers_applied=None,
         initiated_by="u1",
         priority=1,

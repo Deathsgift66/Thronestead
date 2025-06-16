@@ -154,7 +154,7 @@ function renderTrainingHistory(history) {
     card.innerHTML = `
       <h4>${escapeHTML(entry.unit_name)} x ${entry.quantity}</h4>
       <p>[${new Date(entry.completed_at).toLocaleString()}] (source: ${escapeHTML(entry.source)})</p>
-      ${entry.xp_awarded ? `<p>XP Awarded: ${entry.xp_awarded}</p>` : ""}
+      
     `;
     historyEl.appendChild(card);
   });

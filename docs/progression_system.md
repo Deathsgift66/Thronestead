@@ -1,6 +1,6 @@
 # Progression System
 
-This subsystem tracks castle experience, nobles and knights. Progress is stored
+This subsystem tracks castle level, nobles and knights. Progress is stored
 in PostgreSQL tables accessed through SQLAlchemy. The helper functions in
 `services/progression_service.py` aggregate troop slot bonuses for a kingdom and
 provide reusable validation helpers.
@@ -13,8 +13,7 @@ provide reusable validation helpers.
   troop training request would exceed the available slots
 
 ## Castle Progression
-- Experience points are gained through various actions.
-- When XP reaches 100, the castle level increases and XP resets.
+Castle upgrades require resources. When costs are paid the castle level increases.
 
 ## Nobles Management
 - Nobles are represented as a list of names.

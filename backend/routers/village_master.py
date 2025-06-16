@@ -100,11 +100,11 @@ def bulk_queue_training(
             """
             INSERT INTO training_queue (kingdom_id, unit_id, unit_name, quantity,
                                        training_ends_at, started_at, status,
-                                       training_speed_modifier, xp_per_unit,
+                                       training_speed_modifier,
                                        modifiers_applied, initiated_by, priority)
             SELECT :kid, 1, 'Militia', 10,
                    now() + interval '60 seconds', now(), 'queued',
-                   1, 0, '{}', :uid, 1
+                   1, '{}', :uid, 1
               FROM kingdom_villages kv
              WHERE kv.kingdom_id = :kid
             """

@@ -32,7 +32,6 @@ def add_training_order(
     quantity: int,
     base_training_seconds: int,
     training_speed_modifier: float = 1.0,
-    xp_per_unit: int = 0,
     modifiers_applied: Optional[dict] = None,
     initiated_by: Optional[str] = None,
     priority: int = 1,
@@ -48,7 +47,6 @@ def add_training_order(
         quantity: Quantity of units to train
         base_training_seconds: Base time in seconds
         training_speed_modifier: Multiplier (e.g., 0.8 = 20% faster)
-        xp_per_unit: XP granted per unit
         modifiers_applied: Modifier details for tracking
         initiated_by: User ID
         priority: Queue priority (higher = earlier)
@@ -63,12 +61,12 @@ def add_training_order(
                 INSERT INTO training_queue (
                     kingdom_id, unit_id, unit_name, quantity,
                     training_ends_at, started_at, status,
-                    training_speed_modifier, xp_per_unit, modifiers_applied,
+                    training_speed_modifier, modifiers_applied,
                     initiated_by, priority
                 ) VALUES (
                     :kid, :uid, :uname, :qty,
                     now() + (:base * :speed) * interval '1 second', now(), 'queued',
-                    :speed, :xp, :mods,
+                    :speed, :mods,
                     :init, :pri
                 )
                 RETURNING queue_id
@@ -81,7 +79,6 @@ def add_training_order(
                 "qty": quantity,
                 "base": base_training_seconds,
                 "speed": training_speed_modifier,
-                "xp": xp_per_unit,
                 "mods": modifiers_applied or {},
                 "init": initiated_by,
                 "pri": priority,
