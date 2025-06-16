@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from fastapi import HTTPException
 
 from backend.db_base import Base
-from backend.models import User
+from backend.models import User, Kingdom, KingdomVipStatus
 from backend.routers import signup
 
 
@@ -47,8 +47,13 @@ def test_register_creates_user_row():
     )
     res = signup.register(payload, db=db)
     assert res["user_id"] == "newid"
+    assert res["kingdom_id"] == 1
     user = db.query(User).get("newid")
+    kingdom = db.query(Kingdom).get(1)
+    vip = db.query(KingdomVipStatus).get("newid")
     assert user.email == "e@example.com"
+    assert kingdom.kingdom_name == "Realm"
+    assert vip.vip_level == 0
 
 
 def test_register_handles_error():

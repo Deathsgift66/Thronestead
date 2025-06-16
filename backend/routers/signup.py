@@ -197,6 +197,25 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
             },
         )
 
+        row = db.execute(
+            text(
+                """
+                INSERT INTO kingdoms (user_id, kingdom_name, ruler_name)
+                VALUES (:uid, :kingdom, :display)
+                RETURNING kingdom_id
+                """
+            ),
+            {"uid": uid, "kingdom": payload.kingdom_name, "display": payload.display_name},
+        ).fetchone()
+        kid = int(row[0]) if row else None
+
+        db.execute(
+            text(
+                "INSERT INTO kingdom_vip_status (user_id, vip_level) VALUES (:uid, 0) ON CONFLICT (user_id) DO NOTHING"
+            ),
+            {"uid": uid},
+        )
+
         db.execute(
             text(
                 """
@@ -221,4 +240,4 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to save user profile") from exc
 
-    return {"user_id": uid}
+    return {"user_id": uid, "kingdom_id": kid}
