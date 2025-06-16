@@ -64,6 +64,11 @@ def create_kingdom_transaction(
                 """
                 INSERT INTO kingdoms (user_id, kingdom_name, region, ruler_name, motto, customizations)
                 VALUES (:uid, :name, :region, :rname, :motto, :cust)
+                ON CONFLICT (user_id)
+                DO UPDATE SET
+                    region = EXCLUDED.region,
+                    motto = EXCLUDED.motto,
+                    customizations = kingdoms.customizations || EXCLUDED.customizations
                 RETURNING kingdom_id
                 """
             ),
@@ -196,14 +201,6 @@ def create_kingdom_transaction(
                 "VALUES (:kid, 'created', :det)"
             ),
             {"kid": kingdom_id, "det": f'Kingdom {kingdom_name} created'},
-        )
-
-        db.execute(
-            text(
-                "INSERT INTO kingdom_vip_status (user_id, vip_level) "
-                "VALUES (:uid, 0) ON CONFLICT (user_id) DO NOTHING"
-            ),
-            {"uid": user_id},
         )
 
         db.execute(
