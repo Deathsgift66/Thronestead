@@ -48,13 +48,7 @@ Developer: Deathsgift66
 
 <!-- Navbar -->
 <nav id="navbar-container" role="navigation" aria-label="Main Navigation"></nav>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+<script type="module" src="Javascript/navLoader.js"></script>
 
 <!-- Banner -->
 <header class="kr-top-banner" aria-label="Messages Banner">

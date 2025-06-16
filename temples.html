@@ -44,13 +44,7 @@ Developer: Deathsgift66
 
 <!-- Navbar -->
 <div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
-<script>
-  fetch('/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-    });
-</script>
+<script type="module" src="Javascript/navLoader.js"></script>
 
 <!-- Page Banner -->
 <header class="kr-top-banner" aria-label="Temples Banner">
