@@ -136,5 +136,27 @@ function formatDate(dateStr) {
 }
 
 // =============================
+// 💖 Donate Link Handler
+// =============================
+document.addEventListener('DOMContentLoaded', setupDonationLink);
+
+function setupDonationLink() {
+  const container = document.getElementById('donate-container');
+  if (!container) return;
+  const btn = document.createElement('button');
+  btn.className = 'cta-button';
+  btn.textContent = 'Donate';
+  btn.addEventListener('click', () => {
+    const answer = prompt('What is 3 + 4?');
+    if (answer && parseInt(answer, 10) === 7) {
+      window.location.href = atob('aHR0cHM6Ly93d3cucGF5cGFsLmNvbS9uY3AvcGF5bWVudC9ZQjRMVzdYUkVMSkJT');
+    } else {
+      alert('Incorrect answer. Please try again.');
+    }
+  });
+  container.appendChild(btn);
+}
+
+// =============================
 // 🛡️ Basic HTML Escaping
 // =============================
