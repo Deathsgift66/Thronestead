@@ -1486,6 +1486,7 @@ CREATE TABLE public.village_buildings (
   CONSTRAINT village_buildings_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_buildings_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.building_catalogue(building_id)
 );
+CREATE INDEX idx_village_buildings_status_end ON public.village_buildings (construction_status, construction_ends_at);
 CREATE TABLE public.village_modifiers (
   village_id integer NOT NULL,
   resource_bonus jsonb DEFAULT '{}'::jsonb,
@@ -1505,6 +1506,7 @@ CREATE TABLE public.village_modifiers (
   CONSTRAINT village_modifiers_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_modifiers_applied_by_fkey FOREIGN KEY (applied_by) REFERENCES public.users(user_id)
 );
+CREATE INDEX idx_village_modifiers_expires ON public.village_modifiers (expires_at);
 CREATE TABLE public.village_production (
   village_id integer NOT NULL,
   resource_type text NOT NULL,
