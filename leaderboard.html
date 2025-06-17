@@ -79,7 +79,7 @@ Developer: Deathsgift66
             <th>Details</th>
           </tr>
         </thead>
-        <tbody id="leaderboard-body">
+        <tbody id="leaderboard-body" aria-live="polite">
           <tr><td colspan="4">Loading leaderboard...</td></tr>
         </tbody>
       </table>
@@ -91,6 +91,10 @@ Developer: Deathsgift66
       <div class="modal-content">
         <!-- JS will populate content -->
       </div>
+    </div>
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-content"></div>
     </div>
 
   </section>

@@ -1,33 +1,49 @@
 # Project Name: Thronestead©
 # File Name: leaderboard.py
-# Version 6.13.2025.19.49
-# Developer: Deathsgift66
+# Version 6.16.2025.21.20
+# Developer: Codex
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, or_
 
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
 from ..database import get_db
-from backend.models import Alliance, AllianceWar, AllianceWarScore
+from backend.models import Alliance, AllianceWar, AllianceWarScore, User
+
+
+def _optional_user(
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+) -> str | None:
+    """Return user ID if valid headers are provided."""
+    if authorization and x_user_id:
+        try:
+            return verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+        except HTTPException:
+            return None
+    return None
 
 router = APIRouter(prefix="/api/leaderboard", tags=["leaderboard"])
 
-@router.get("/{type}")
-def leaderboard(
-    type: str,
-    user_id: str = Depends(verify_jwt_token),
+@router.get("/{category}")
+def get_leaderboard(
+    category: str,
+    limit: int = 100,
+    user_id: str | None = Depends(_optional_user),
     db: Session = Depends(get_db),
 ):
     """
     🏆 Universal leaderboard route.
 
-    Type options:
-    - 'alliances' → Real-time SQL join of alliance scores and war records.
-    - 'kingdoms', 'wars', 'economy' → Supabase view-backed leaderboards.
+    Categories:
+      - kingdoms: Total prestige
+      - alliances: Combined alliance score
+      - wars: War score (victories, kills, contribution)
+      - economy: Total economic output (resources produced/traded)
     """
-    if type == "alliances":
+    if category == "alliances":
         # Define win and loss cases for alliances in wars
         win_case = case(
             (
@@ -80,12 +96,17 @@ def leaderboard(
             )
             .group_by(Alliance.alliance_id)
             .order_by(Alliance.military_score.desc())
-            .limit(50)
+            .limit(limit)
             .all()
         )
+        user_alliance_id = None
+        if user_id:
+            result = db.query(User.alliance_id).filter(User.user_id == user_id).first()
+            user_alliance_id = result[0] if result else None
 
-        entries = [
-            {
+        entries = []
+        for r in rows:
+            entries.append({
                 "alliance_id": r.alliance_id,
                 "alliance_name": r.alliance_name,
                 "military_score": r.military_score or 0,
@@ -93,10 +114,10 @@ def leaderboard(
                 "diplomacy_score": r.diplomacy_score or 0,
                 "war_wins": r.war_wins or 0,
                 "war_losses": r.war_losses or 0,
-            }
-            for r in rows
-        ]
-        return {"type": type, "entries": entries}
+                "is_self": bool(user_alliance_id and r.alliance_id == user_alliance_id),
+            })
+
+        return {"category": category, "entries": entries}
 
     # Supported Supabase views for other leaderboard types
     table_map = {
@@ -105,9 +126,9 @@ def leaderboard(
         "economy": "leaderboard_economy",
     }
 
-    table = table_map.get(type)
+    table = table_map.get(category)
     if not table:
-        raise HTTPException(status_code=400, detail="Invalid leaderboard type")
+        raise HTTPException(status_code=400, detail="Invalid leaderboard category")
 
     supabase = get_supabase_client()
     try:
@@ -115,11 +136,19 @@ def leaderboard(
             supabase.table(table)
             .select("*")
             .order("rank", asc=True)
-            .limit(50)
+            .limit(limit)
             .execute()
         )
         entries = getattr(result, "data", result) or []
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to fetch leaderboard") from exc
 
-    return {"type": type, "entries": entries}
+    # Mark current user if present
+    if user_id:
+        for e in entries:
+            if str(e.get("user_id")) == str(user_id):
+                e["is_self"] = True
+            else:
+                e.setdefault("is_self", False)
+
+    return {"category": category, "entries": entries}
