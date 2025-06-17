@@ -55,7 +55,13 @@ function populateAlliance(data) {
   setText('alliance-diplomacy', a.diplomacy_score);
 
   const banner = document.getElementById('alliance-banner-img');
-  if (banner) banner.src = a.banner || 'Assets/banner.png';
+  if (banner) {
+    banner.src = a.banner || 'Assets/banner.png';
+    banner.alt = `Banner of ${a.name}`;
+  }
+
+  const emblem = document.getElementById('alliance-emblem-img');
+  if (emblem) emblem.alt = `Emblem of ${a.name}`;
 
   if (data.vault) {
     setText('alliance-fortification', data.vault.fortification_level ?? 0);
@@ -85,10 +91,14 @@ function populateAlliance(data) {
 function renderProjects(projects = []) {
   const container = document.getElementById('project-progress-bars');
   if (!container) return;
+  if (!projects.length) {
+    container.innerHTML = '<p class="empty">No active projects.</p>';
+    return;
+  }
   const frag = fragmentFrom(projects, p => {
     const div = document.createElement('div');
-    div.className = 'project-bar';
-    div.innerHTML = `<label>${escapeHTML(p.name)}</label><progress value="${p.progress}" max="100"></progress> <span>${p.progress}%</span>`;
+    div.className = 'progress-bar';
+    div.innerHTML = `\n    <label>${escapeHTML(p.name)}</label>\n    <progress value="${p.progress}" max="100"></progress>\n    <span>${p.progress}%</span>\n  `;
     return div;
   });
   container.replaceChildren(frag);
@@ -101,10 +111,20 @@ function renderProjects(projects = []) {
 function renderMembers(members = []) {
   const body = document.getElementById('members-list');
   if (!body) return;
+  if (!members.length) {
+    body.innerHTML = '<tr><td class="empty" colspan="5">No members.</td></tr>';
+    return;
+  }
+  const highest = Math.max(0, ...members.map(m => m.contribution || 0));
   const frag = fragmentFrom(members, m => {
     const row = document.createElement('tr');
+    let icons = '';
+    const rank = String(m.rank || '').toLowerCase();
+    if (rank === 'leader') icons += '👑 ';
+    else if (rank === 'officer') icons += '🛡️ ';
+    if ((m.contribution || 0) === highest && highest > 0) icons += '🔥 ';
     row.innerHTML = `
-      <td><img src="../images/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest" class="crest"></td>
+      <td>${icons}<img src="../images/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${escapeHTML(m.username)}" class="crest"></td>
       <td>${escapeHTML(m.username)}</td>
       <td>${escapeHTML(m.rank)}</td>
       <td>${m.contribution ?? 0}</td>
@@ -118,9 +138,8 @@ function renderTopContributors(members = []) {
   const list = document.getElementById('top-contrib-list');
   if (!list) return;
   list.innerHTML = '';
-
   if (!members.length) {
-    list.innerHTML = '<li>No data.</li>';
+    list.innerHTML = '<p class="empty">No contributors yet.</p>';
     return;
   }
 
@@ -150,6 +169,10 @@ function renderQuests(quests = []) {
   const container = document.getElementById('quest-list');
   if (!container) return;
   container.innerHTML = '';
+  if (!quests.length) {
+    container.innerHTML = '<p class="empty">No active quests.</p>';
+    return;
+  }
   quests.forEach(q => {
     const card = document.createElement('div');
     card.className = 'quest-card';
@@ -161,7 +184,11 @@ function renderQuests(quests = []) {
 function renderAchievements(achievements = []) {
   const list = document.getElementById('achievements-list');
   if (!list) return;
-  list.innerHTML = achievements.length ? '' : '<li>No achievements earned yet.</li>';
+  if (!achievements.length) {
+    list.innerHTML = '<p class="empty">No achievements earned yet.</p>';
+    return;
+  }
+  list.innerHTML = '';
   achievements.forEach(a => {
     const li = document.createElement('li');
     const badge = document.createElement('span');
@@ -180,6 +207,10 @@ function renderAchievements(achievements = []) {
 function renderActivity(entries = []) {
   const list = document.getElementById('activity-log');
   if (!list) return;
+  if (!entries.length) {
+    list.innerHTML = '<p class="empty">No recent activity.</p>';
+    return;
+  }
   const frag = fragmentFrom(entries, e => {
     const li = document.createElement('li');
     li.className = 'activity-log-entry';
@@ -193,6 +224,10 @@ function renderDiplomacy(treaties = []) {
   const container = document.getElementById('diplomacy-table');
   if (!container) return;
   container.innerHTML = '';
+  if (!treaties.length) {
+    container.innerHTML = '<p class="empty">No treaties.</p>';
+    return;
+  }
   treaties.forEach(t => {
     const row = document.createElement('div');
     row.className = 'diplomacy-row';
@@ -208,7 +243,7 @@ function renderActiveBattles(wars = []) {
 
   const active = wars.filter(w => w.war_status === 'active');
   if (!active.length) {
-    container.textContent = 'No active battles.';
+    container.innerHTML = '<p class="empty">No active battles.</p>';
     return;
   }
   const frag = fragmentFrom(active, w => {
@@ -224,6 +259,10 @@ function renderWarScore(wars = []) {
   const container = document.getElementById('war-score-summary');
   if (!container) return;
   container.innerHTML = '';
+  if (!wars.length) {
+    container.innerHTML = '<p class="empty">No war scores.</p>';
+    return;
+  }
   const frag = fragmentFrom(wars, w => {
     const div = document.createElement('div');
     const att = w.attacker_score ?? 0;
