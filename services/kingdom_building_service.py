@@ -17,18 +17,21 @@ logger = logging.getLogger(__name__)
 # Utilities
 # ------------------------------------------------------------------------------
 
+
 def _validate_building_id(db: Session, building_id: int) -> None:
     """Ensure building ID exists in the catalogue."""
     row = db.execute(
         text("SELECT 1 FROM building_catalogue WHERE building_id = :bid"),
-        {"bid": building_id}
+        {"bid": building_id},
     ).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Building type does not exist.")
 
+
 # ------------------------------------------------------------------------------
 # Public Service Functions
 # ------------------------------------------------------------------------------
+
 
 def list_buildings(db: Session, village_id: int) -> list[dict]:
     """Return all buildings in a village with metadata from catalogue."""
@@ -36,7 +39,7 @@ def list_buildings(db: Session, village_id: int) -> list[dict]:
         text(
             """
             SELECT vb.building_id, vb.level, vb.construction_status,
-                   vb.started_at, vb.completed_at,
+                   vb.construction_started_at, vb.construction_ends_at,
                    bc.building_name, bc.category, bc.production_type, bc.modifiers
               FROM village_buildings vb
               JOIN building_catalogue bc ON vb.building_id = bc.building_id
@@ -56,7 +59,7 @@ def construct_building(
     building_id: int,
     initiated_by: str,
     construction_time_seconds: int,
-    replace_existing: bool = False
+    replace_existing: bool = False,
 ) -> int:
     """Begin or restart construction on a building in the village.
 
@@ -67,8 +70,10 @@ def construct_building(
     # Optionally remove the existing structure
     if replace_existing:
         db.execute(
-            text("DELETE FROM village_buildings WHERE village_id = :vid AND building_id = :bid"),
-            {"vid": village_id, "bid": building_id}
+            text(
+                "DELETE FROM village_buildings WHERE village_id = :vid AND building_id = :bid"
+            ),
+            {"vid": village_id, "bid": building_id},
         )
 
     # Start construction
@@ -77,16 +82,25 @@ def construct_building(
             """
             INSERT INTO village_buildings (
                 village_id, building_id, level,
-                construction_status, started_at, completed_at,
+                construction_status,
+                construction_started_at,
+                construction_ends_at,
                 initiated_by
             ) VALUES (
                 :vid, :bid, 1,
-                'in_progress', now(), now() + (:duration * interval '1 second'),
+                'in_progress',
+                now(),
+                now() + (:duration * interval '1 second'),
                 :uid
             ) RETURNING id
             """
         ),
-        {"vid": village_id, "bid": building_id, "duration": construction_time_seconds, "uid": initiated_by},
+        {
+            "vid": village_id,
+            "bid": building_id,
+            "duration": construction_time_seconds,
+            "uid": initiated_by,
+        },
     )
 
     db.commit()
@@ -99,7 +113,7 @@ def upgrade_building(
     village_id: int,
     building_id: int,
     initiated_by: str,
-    construction_time_seconds: int
+    construction_time_seconds: int,
 ) -> None:
     """Initiate an upgrade to the next level of the given building."""
     row = db.execute(
@@ -114,7 +128,9 @@ def upgrade_building(
     ).fetchone()
 
     if not row:
-        raise HTTPException(status_code=400, detail="Building not found or already upgrading")
+        raise HTTPException(
+            status_code=400, detail="Building not found or already upgrading"
+        )
 
     vb_id, current_level = row
     next_level = current_level + 1
@@ -125,8 +141,8 @@ def upgrade_building(
             UPDATE village_buildings
                SET level = :lvl,
                    construction_status = 'in_progress',
-                   started_at = now(),
-                   completed_at = now() + (:duration * interval '1 second'),
+                   construction_started_at = now(),
+                   construction_ends_at = now() + (:duration * interval '1 second'),
                    initiated_by = :uid
              WHERE id = :vbid
             """
@@ -136,7 +152,7 @@ def upgrade_building(
             "duration": construction_time_seconds,
             "uid": initiated_by,
             "vbid": vb_id,
-        }
+        },
     )
     db.commit()
 
@@ -150,7 +166,7 @@ def mark_completed_buildings(db: Session) -> int:
                SET construction_status = 'complete',
                    last_updated = now()
              WHERE construction_status = 'in_progress'
-               AND completed_at <= now()
+               AND construction_ends_at <= now()
             """
         )
     )
@@ -158,9 +174,7 @@ def mark_completed_buildings(db: Session) -> int:
     return getattr(result, "rowcount", 0)
 
 
-def get_building_level(
-    db: Session, village_id: int, building_id: int
-) -> Optional[int]:
+def get_building_level(db: Session, village_id: int, building_id: int) -> Optional[int]:
     """Return the current level of a specific building, if it exists."""
     row = db.execute(
         text(
@@ -184,14 +198,12 @@ def delete_building(db: Session, village_id: int, building_id: int) -> None:
              WHERE village_id = :vid AND building_id = :bid
             """
         ),
-        {"vid": village_id, "bid": building_id}
+        {"vid": village_id, "bid": building_id},
     )
     db.commit()
 
 
-def count_buildings_by_type(
-    db: Session, kingdom_id: int, production_type: str
-) -> int:
+def count_buildings_by_type(db: Session, kingdom_id: int, production_type: str) -> int:
     """Count completed buildings of a specific type owned by a kingdom."""
     row = db.execute(
         text(
@@ -204,6 +216,6 @@ def count_buildings_by_type(
               AND bc.production_type = :ptype
             """
         ),
-        {"kid": kingdom_id, "ptype": production_type}
+        {"kid": kingdom_id, "ptype": production_type},
     ).fetchone()
     return row[0] if row else 0
