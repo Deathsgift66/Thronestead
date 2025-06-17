@@ -1,0 +1,84 @@
+<!--
+Project Name: Thronestead©
+File Name: spy_log.html
+Version 6.14.2025.20.12
+Developer: Codex
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Spy Mission Log | Thronestead</title>
+  <meta name="description" content="Review recent spy missions carried out by your kingdom in Thronestead." />
+  <meta name="keywords" content="Thronestead, spy log, espionage history" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="Spy Mission Log | Thronestead" />
+  <meta property="og:description" content="Review recent spy missions carried out by your kingdom in Thronestead." />
+  <meta property="og:image" content="https://www.thronestead.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.thronestead.com/spy_log.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Spy Mission Log | Thronestead" />
+  <meta name="twitter:description" content="Review recent spy missions carried out by your kingdom in Thronestead." />
+  <meta name="twitter:image" content="https://www.thronestead.com/images/og-preview.jpg" />
+  <link rel="canonical" href="https://www.thronestead.com/spy_log.html" />
+  <meta name="theme-color" content="#2e2b27" />
+
+  <!-- Page-Specific Assets -->
+  <link rel="stylesheet" href="CSS/spy_log.css" />
+  <script defer type="module" src="Javascript/spy_log.js"></script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
+  <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script defer type="module" src="Javascript/resourceBar.js"></script>
+</head>
+<body>
+
+<!-- Navbar -->
+<div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
+<script type="module" src="Javascript/navLoader.js"></script>
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Spy Mission Log Banner">
+  Thronestead — Spy Mission Log
+</header>
+
+<!-- Main Content -->
+<main class="main-centered-container" aria-label="Spy Mission Log Interface">
+  <div class="realtime-status" aria-live="polite">
+    Feed Status: <span id="realtime-indicator" class="disconnected">Offline</span>
+  </div>
+  <div class="scroll-wrapper" role="region" aria-label="Spy Mission Log Table">
+    <table class="spy-log-table">
+      <thead>
+        <tr>
+          <th scope="col">Mission</th>
+          <th scope="col">Target</th>
+          <th scope="col">Outcome</th>
+          <th scope="col">Accuracy</th>
+          <th scope="col">Detected</th>
+          <th scope="col">Losses</th>
+          <th scope="col">Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="spy-log-body">
+        <tr><td colspan="7">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer" role="contentinfo">
+  <div>© 2025 Thronestead</div>
+  <div><a href="legal.html">View Legal Documents</a></div>
+</footer>
+
+</body>
+</html>
