@@ -18,7 +18,7 @@ from backend.progression_service import (
     nobles,
     knights,
 )
-from services.progression_service import get_total_modifiers
+from services.progression_service import get_total_modifiers, calculate_troop_slots
 
 
 def setup_function():
@@ -84,3 +84,24 @@ def test_get_total_modifiers_default():
         "economic_bonus": {},
         "production_bonus": {},
     }
+
+
+def test_calculate_troop_slots_includes_region_bonus():
+    class DummyResult:
+        def __init__(self, row=None):
+            self._row = row
+
+        def fetchone(self):
+            return self._row
+
+    class DummyDB:
+        def execute(self, query, params=None):
+            q = str(query)
+            if "region_bonuses" in q:
+                return DummyResult((10, 2, 1, 0, 0, 4))
+            if "used_slots" in q:
+                return DummyResult((0,))
+            return DummyResult(None)
+
+    total = calculate_troop_slots(DummyDB(), 1)
+    assert total == 17
