@@ -28,7 +28,7 @@ class DummyDB:
     def execute(self, query, params=None):
         q = str(query).strip()
         self.queries.append(q)
-        if q.startswith("SELECT war_id FROM wars"):
+        if q.startswith("UPDATE wars") and "RETURNING war_id" in q:
             return DummyResult(rows=self.rows)
         return DummyResult(rowcount=1)
 
@@ -41,7 +41,7 @@ def test_project_progress_updates():
     count = update_project_progress(db)
     assert count == 1
     assert any("projects_alliance_in_progress" in q for q in db.queries)
-    assert db.commits == 2
+    assert db.commits == 1
 
 
 def test_expire_treaties_runs_updates():
@@ -50,7 +50,7 @@ def test_expire_treaties_runs_updates():
     assert count == 2
     joined = " ".join(db.queries)
     assert "alliance_treaties" in joined and "kingdom_treaties" in joined
-    assert db.commits == 2
+    assert db.commits == 1
 
 
 def test_activate_pending_wars_selects_and_updates():
@@ -59,10 +59,9 @@ def test_activate_pending_wars_selects_and_updates():
     count = activate_pending_wars(db)
     assert count == 2
     joined = " ".join(db.queries)
-    assert "SELECT war_id FROM wars" in joined
-    assert "UPDATE wars SET status='active'" in joined
+    assert "UPDATE wars" in joined and "RETURNING war_id" in joined
     assert "event_notification_log" in joined
-    assert db.commits == 4
+    assert db.commits == 1
 
 
 def test_check_war_status_updates():
@@ -70,5 +69,7 @@ def test_check_war_status_updates():
     count = check_war_status(db)
     assert count == 2
     assert any("UPDATE wars SET status='concluded'" in q for q in db.queries)
-    assert any("UPDATE alliance_wars SET war_status='concluded'" in q for q in db.queries)
-    assert db.commits == 2
+    assert any(
+        "UPDATE alliance_wars SET war_status='concluded'" in q for q in db.queries
+    )
+    assert db.commits == 1
