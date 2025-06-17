@@ -16,6 +16,55 @@ import {
 } from './utils.js';
 import { authHeaders, getAuth } from './auth.js';
 
+/**
+ * Fetch and display the user's VIP tier.
+ */
+async function loadVipStatus() {
+  try {
+    const res = await fetch('/api/user/vip');
+    if (!res.ok) throw new Error('vip');
+    const data = await res.json();
+    const vipText = data.vip_level >= 2 ? 'VIP 2 \u2013 Full Perks'
+      : data.vip_level === 1 ? 'VIP 1 \u2013 Limited Perks'
+      : 'Free Tier';
+    setText('vip-status', vipText);
+  } catch {
+    setText('vip-status', 'Free Tier');
+  }
+}
+
+/**
+ * Fetch basic spy defense information.
+ */
+async function loadSpyDefense() {
+  try {
+    const res = await fetch('/api/spy/defense');
+    if (!res.ok) throw new Error('spy');
+    const data = await res.json();
+    setText('spy-defense-summary', `Detection Level: ${data.detection_level}, Counterintel Buildings: ${data.counterintel_buildings}`);
+  } catch {
+    setText('spy-defense-summary', 'Unavailable');
+  }
+}
+
+/**
+ * Load persistent user settings such as theme preference.
+ */
+async function loadUserSettings() {
+  try {
+    const res = await fetch('/api/user/settings');
+    if (!res.ok) return;
+    const settings = await res.json();
+    const select = document.getElementById('theme_preference');
+    if (select) {
+      select.value = settings.theme || 'parchment';
+      document.body.dataset.theme = select.value;
+    }
+  } catch {
+    // ignore
+  }
+}
+
 // Auth helpers are centralized in auth.js
 
 /**
@@ -48,12 +97,8 @@ async function loadUserProfile() {
   const emailEl = document.getElementById('email_confirmations');
   if (emailEl) emailEl.checked = !!info.email_login_confirmations;
 
-  // VIP / Founder Status
-  const vipElement = document.getElementById('vip-status');
-  if (vipElement) {
-    vipElement.innerText = info.vip_level ? `VIP ${info.vip_level}` : 'Not a VIP';
-    if (info.founder) vipElement.innerText += ' (Founder)';
-  }
+  await loadVipStatus();
+  await loadSpyDefense();
 
   // Session list
   const tbody = document.querySelector('#sessions-table tbody');
@@ -96,7 +141,7 @@ async function loadKingdomDetails() {
  */
 async function saveUserSettings() {
   const headers = await authHeaders();
-  const displayName = getValue('display_name');
+  const displayName = escapeHTML(getValue('display_name'));
   const email = getValue('email');
   const avatarUrl = getValue('avatar_url');
   const bannerUrl = getValue('profile_banner');
@@ -121,8 +166,8 @@ async function saveUserSettings() {
 
   const payload = {
     display_name: displayName,
-    motto: getValue('motto'),
-    bio: getValue('profile_bio'),
+    motto: escapeHTML(getValue('motto')),
+    bio: escapeHTML(getValue('profile_bio')),
     profile_picture_url: avatarUrl,
     theme_preference: getValue('theme_preference'),
     profile_banner: bannerUrl,
@@ -137,6 +182,14 @@ async function saveUserSettings() {
     body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('Failed to save');
+
+  try {
+    await fetch('/api/user/settings', {
+      method: 'PATCH',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: getValue('theme_preference') })
+    });
+  } catch {}
 
   // Update kingdom-specific data
   try {
@@ -206,6 +259,7 @@ function subscribeSessions(userId) {
  */
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    await loadUserSettings();
     await loadUserProfile();
     await loadKingdomDetails();
 
@@ -246,4 +300,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-export { loadUserProfile, loadKingdomDetails, saveUserSettings, logoutSession, uploadAvatar, subscribeSessions };
+export {
+  loadUserProfile,
+  loadKingdomDetails,
+  saveUserSettings,
+  logoutSession,
+  uploadAvatar,
+  subscribeSessions,
+  loadVipStatus,
+  loadSpyDefense,
+  loadUserSettings
+};
