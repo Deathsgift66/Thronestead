@@ -1044,6 +1044,8 @@ class KingdomSpies(Base):
     spies_lost = Column(Integer, default=0)
     missions_attempted = Column(Integer, default=0)
     missions_successful = Column(Integer, default=0)
+    daily_attacks_sent = Column(Integer, default=0)
+    daily_attacks_received = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

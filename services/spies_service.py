@@ -209,3 +209,19 @@ def update_mission_status(db: Session, mission_id: int, status: str) -> None:
         {"st": status, "mid": mission_id},
     )
     db.commit()
+
+
+def reset_daily_attack_counts(db: Session) -> int:
+    """Reset daily spy attack counters for all kingdoms."""
+    result = db.execute(
+        text(
+            """
+            UPDATE kingdom_spies
+               SET daily_attacks_sent = 0,
+                   daily_attacks_received = 0,
+                   last_updated = NOW()
+            """
+        )
+    )
+    db.commit()
+    return getattr(result, "rowcount", 0)

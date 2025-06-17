@@ -60,6 +60,7 @@ the records created during onboarding.
 ✅ Game loops explained in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md#high-level-game-loops)
 ✅ Resource helpers `spend_resources` and `gain_resources` in [services/resource_service.py](services/resource_service.py)
 ✅ Strategic tick automation in [services/strategic_tick_service.py](services/strategic_tick_service.py)
+✅ Daily spy attack counter reset in [scripts/reset_spy_attacks.py](scripts/reset_spy_attacks.py)
 
 
 
