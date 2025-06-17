@@ -31,4 +31,8 @@ Records which kingdoms have unlocked which achievements.
 2. **Achievement page** – The `/kingdom/achievements` page queries all catalogue entries and the player's unlocked ones. Locked achievements marked `is_hidden` are not shown until earned.
 3. **Leaderboards** – Sum `points` from unlocked achievements per kingdom for ranking.
 
+Unlocking an achievement automatically increases the kingdom's `prestige_score`
+by the associated `points` and records an `achievement_unlocked` entry in
+`kingdom_history_log`.
+
 Both tables are system managed. Players cannot edit them directly.

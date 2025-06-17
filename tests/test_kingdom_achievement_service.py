@@ -23,6 +23,8 @@ class DummyDB:
         self.check_rows = []
         self.reward = None
         self.list_rows = []
+        self.prestige_updates = []
+        self.history_logs = []
 
     def execute(self, query, params=None):
         q = str(query).strip()
@@ -32,8 +34,18 @@ class DummyDB:
         if q.startswith("INSERT INTO kingdom_achievements"):
             self.inserted.append(params)
             return DummyResult()
+        if "SELECT reward, points FROM kingdom_achievement_catalogue" in q:
+            return DummyResult((self.reward, 5))
         if "SELECT reward FROM kingdom_achievement_catalogue" in q:
             return DummyResult((self.reward,))
+        if q.startswith("UPDATE kingdoms SET prestige_score"):
+            self.prestige_updates.append(params)
+            return DummyResult()
+        if q.startswith("SELECT user_id FROM kingdoms"):
+            return DummyResult(row=("u1",))
+        if q.startswith("INSERT INTO kingdom_history_log"):
+            self.history_logs.append(params)
+            return DummyResult()
         if "FROM kingdom_achievement_catalogue" in q and "LEFT JOIN" in q:
             return DummyResult(rows=self.list_rows)
         return DummyResult()
@@ -49,6 +61,8 @@ def test_award_new_achievement():
     reward = award_achievement(db, 1, "first_gold")
     assert reward == {"gold": 100}
     assert db.inserted[0]["kid"] == 1
+    assert len(db.prestige_updates) == 1
+    assert len(db.history_logs) == 1
 
 
 def test_award_existing_returns_none():
@@ -57,6 +71,8 @@ def test_award_existing_returns_none():
     reward = award_achievement(db, 1, "first_gold")
     assert reward is None
     assert db.inserted == []
+    assert db.prestige_updates == []
+    assert db.history_logs == []
 
 
 def test_list_achievements_filters_hidden():

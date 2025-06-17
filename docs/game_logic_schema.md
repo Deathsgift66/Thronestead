@@ -36,7 +36,7 @@ This document outlines the major gameplay systems in **Thronestead** and how the
 - These automated updates keep game state consistent even when players are offline.
 
 ## 8. History and Achievements
-- Significant actions are logged in `kingdom_history_log` for players to review. Achievements awarded via the `kingdom_achievement_catalogue` contribute to leaderboards and prestige.
+- Significant actions are logged in `kingdom_history_log` for players to review. When an achievement is unlocked it is also logged and the achievement's points are added to the kingdom's `prestige_score` for leaderboard ranking.
 
 ## 9. Overall Flow
 1. **Onboarding** creates the baseline kingdom state.
