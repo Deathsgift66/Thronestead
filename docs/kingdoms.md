@@ -11,7 +11,7 @@ The `kingdoms` table stores the master record for every player kingdom in the ga
 | `kingdom_name` | Player-chosen name of the kingdom |
 | `region` | Region code referencing `region_catalogue.region_code` |
 | `created_at` | When this kingdom was created |
-| `prestige_score` | Overall ranking score (used for leaderboards) |
+| `prestige_score` | Activity metric showing how active a player is |
 | `avatar_url` | URL to avatar image |
 | `status` | `active`, `inactive`, `banned`, `deleted` — hide inactive kingdoms |
 | `description` | Kingdom flavor text (bio) |

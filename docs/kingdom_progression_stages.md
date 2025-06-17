@@ -25,7 +25,7 @@ This document summarizes the staged progression design for Thronestead. The feat
 - **Strategic Balance** – Players must manage village specialization, noble allocation and knight progression.
 
 ## Stage 6: Global Scale Gameplay
-- **Large Scale Wars** – Alliance wars and global projects open up. Prestige and ranking are affected by castle level, military success, alliance achievements and economic power.
+- **Large Scale Wars** – Alliance wars and global projects open up. Prestige now reflects player activity only. Ranking continues to depend on castle level, military success, alliance achievements and economic power.
 
 ## High Level Game Loops
 - **Primary Loop** – `Castle Level → Nobles → Villages → Resources → Troops → Wars → Castle Level ↑`

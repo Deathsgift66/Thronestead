@@ -155,13 +155,10 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     if spy_row and spy_row[0]:
         _merge_stack(stack, spy_row[0], "Spies")
 
-    # --- Prestige Score Bonus (if enabled) ---
-    prestige = db.execute(
-        text("SELECT prestige_score FROM kingdoms WHERE kingdom_id = :kid"),
-        {"kid": kingdom_id},
-    ).scalar()
-    if prestige and prestige > 0:
-        _merge_stack(stack, {"combat_bonus": {"prestige": prestige // 100}}, "Prestige")
+
+    # --- Prestige Score (activity metric) ---
+    # Prestige no longer grants combat bonuses. It is fetched only for display
+    # purposes elsewhere in the codebase.
 
     # --- Global Modifiers (Events, VIP, etc.) ---
     global_mods = db.execute(
