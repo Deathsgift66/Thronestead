@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: login.js
-// Version 6.13.2025.19.49
+// Version 6.14.2025.21.00
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
@@ -49,35 +49,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 🔐 Handle login form submission
 async function handleLogin(e) {
   e.preventDefault();
+  messageContainer.textContent = '🔐 Authenticating...';
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
 
-  const identifier = loginIdInput.value.trim();
+  const loginID = loginIdInput.value.trim();
   const password = passwordInput.value;
 
-  let email = identifier;
+  let email = loginID.includes('@') ? loginID : null;
 
-  if (!isEmail(identifier)) {
-    // Convert username to email
-    const { data: userData, error } = await supabase
+  if (!email) {
+    const { data, error } = await supabase
       .from('users')
       .select('email')
-      .eq('username', identifier)
+      .eq('username', loginID)
       .single();
 
-    if (error || !userData) {
-      showMessage('error', 'User not found.');
+    if (error || !data) {
+      showMessage('error', '⚠️ No account found with that Ruler Name.');
       resetLoginButton();
       return;
     }
-    email = userData.email;
+    email = data.email;
   }
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      showMessage('error', error.message);
+      showMessage('error', '❌ Invalid credentials. Try again.');
     } else if (data?.user) {
       await fetchAndStorePlayerProgression(data.user.id);
 
@@ -92,7 +92,7 @@ async function handleLogin(e) {
         return;
       }
 
-      showMessage('success', 'Login successful! Redirecting...');
+      showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
         window.location.href = details.setup_complete ? 'overview.html' : 'play.html';
       }, 1200);
@@ -139,11 +139,6 @@ async function handleReset() {
   }
 }
 
-// ✅ Simple email validator
-function isEmail(str) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
-}
-
 // 📣 Show banner messages
 function showMessage(type, text) {
   messageContainer.textContent = text;
@@ -158,19 +153,22 @@ function showMessage(type, text) {
 async function loadAnnouncements() {
   if (!announcementList) return;
   try {
-    const res = await fetch('/api/login/announcements');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const ctype = res.headers.get('content-type') || '';
-    if (!ctype.includes('application/json')) {
-      const text = await res.text();
-      console.error('❌ Announcements returned HTML instead of JSON');
-      console.debug(text.slice(0, 150));
+    const { data, error } = await supabase
+      .from('announcements')
+      .select('title, content')
+      .eq('visible', true)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error || !data || data.length === 0) {
+      announcementList.innerHTML = '<li>No announcements yet.</li>';
       return;
     }
-    const { announcements } = await res.json();
-    announcements.forEach(a => {
+
+    announcementList.innerHTML = '';
+    data.forEach(({ title, content }) => {
       const li = document.createElement('li');
-      li.textContent = `${a.title} - ${a.content}`;
+      li.textContent = `\uD83D\uDCEF ${title}: ${content}`; // 📯 encoded for ES5 compatibility
       announcementList.appendChild(li);
     });
   } catch (err) {
