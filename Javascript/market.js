@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   setupTabs();
   setupCreateListingModal();
+  document.getElementById('apply-filters')?.addEventListener('click', renderListings);
   subscribeRealtime();
   startAutoRefresh();
 
