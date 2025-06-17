@@ -45,6 +45,7 @@ the records created during onboarding.
 ✅ Alliance member roster uses Supabase RPC `get_alliance_members_detailed`
 
 
+✅ Technology catalogue documented in [docs/tech_catalogue.md](docs/tech_catalogue.md)
 ✅ VIP status system documented in [docs/vip_status.md](docs/vip_status.md)
 
 ✅ Kingdom troops table documented in [docs/kingdom_troops.md](docs/kingdom_troops.md)
@@ -128,11 +129,7 @@ Update these values with your project credentials to enable API access. Then cop
 runtime.
 
 This will create all tables referenced by the frontend.
-
-If your deployment requires additional data seeding or custom tables, load any
-project-specific SQL migrations after `full_schema.sql`. Example documentation
-references a `2025_06_08_add_regions.sql` script used to populate the
-`region_catalogue` table, but the migrations directory is not included in this
+If your deployment requires additional data seeding or custom tables, load any project-specific SQL migrations after `full_schema.sql`. Example documentation references a `2025_06_08_add_regions.sql` script used to populate the `region_catalogue` table. Another example is the `migrations/2025_06_17_populate_tech_catalogue.sql` script which seeds the `tech_catalogue` table.
 repository.
 
 ---
