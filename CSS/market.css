@@ -167,6 +167,26 @@ body {
   color: var(--error);
 }
 
+/* Listing Grid */
+.market-listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.listing-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.listing-time {
+  font-size: 0.9rem;
+  color: var(--parchment-light);
+}
+
 @media (max-width: 768px) {
   .market-filters {
     flex-direction: column;
