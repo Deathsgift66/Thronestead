@@ -128,13 +128,18 @@ def list_research(db: Session, kingdom_id: int) -> list[dict]:
         list of dicts with: tech_code, status, progress, ends_at
     """
     try:
+        # Auto-complete any research that has finished since the last check
+        complete_finished_research(db, kingdom_id)
+
         rows = db.execute(
-            text("""
+            text(
+                """
                 SELECT tech_code, status, progress, ends_at
                   FROM kingdom_research_tracking
                  WHERE kingdom_id = :kid
                  ORDER BY tech_code
-            """),
+                """
+            ),
             {"kid": kingdom_id},
         ).fetchall()
 
