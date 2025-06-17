@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: alliance_vault.js
-// Version 6.13.2025.19.49
+// Version 6.15.2025.00.00
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
@@ -30,7 +30,7 @@ function subscribeToVault(allianceId) {
       filter: `alliance_id=eq.${allianceId}`
     }, async () => {
       await loadVaultSummary();
-      await loadVaultHistory();
+      await loadTransactions();
     })
     .subscribe();
 }
@@ -46,13 +46,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   });
 
-  setupTabs({ onShow: id => id === 'tab-transactions' && loadVaultHistory() });
+  setupTabs({ onShow: id => id === 'tab-transactions' && loadTransactions() });
   await Promise.all([
     loadVaultSummary(),
-    loadCustomBoard({ fetchFn: authFetch }),
+    loadCustomBoard({ endpoint: '/api/alliance/custom/vault', fetchFn: authFetch }),
     loadDepositForm(),
     loadWithdrawForm(),
-    loadVaultHistory()
+    loadTransactions()
   ]);
 
   const { data: allianceData } = await supabase
@@ -65,132 +65,121 @@ document.addEventListener("DOMContentLoaded", async () => {
     subscribeToVault(allianceData.alliance_id);
   }
 
-  document.getElementById('apply-trans-filter')?.addEventListener('click', loadVaultHistory);
+  // permissions check for withdrawals
+  try {
+    const res = await authFetch('/api/alliance-members/view');
+    const json = await res.json();
+    const me = (json.alliance_members || []).find(m => m.user_id === currentUser.id);
+    if (!me || !(me.can_manage_resources || me.permissions?.can_manage_resources)) {
+      document.getElementById('withdraw-section').style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Permission check failed:', err);
+  }
+
+  document.getElementById('apply-trans-filter')?.addEventListener('click', () => loadTransactions());
 });
 
 // ✅ Tab control
 
-// ✅ Vault total summary
+// ✅ Render vault resource totals with progress bars
+function renderVaultSummary(data) {
+  const container = document.querySelector('.vault-summary');
+  container.innerHTML = Object.entries(data).map(([key, value]) => {
+    const label = escapeHTML(key.replaceAll('_', ' '));
+    return `
+      <div class="progress-bar">
+        <label>${label}</label>
+        <progress value="${value}" max="50000"></progress>
+        <span>${value.toLocaleString()}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ✅ Vault total summary loader
 async function loadVaultSummary() {
-  const container = document.querySelector(".vault-summary");
-  container.innerHTML = "<p>Loading vault totals...</p>";
-
+  const container = document.querySelector('.vault-summary');
+  container.innerHTML = '<p>Loading vault totals...</p>';
   try {
-    const res = await authFetch("/api/vault/resources");
+    const res = await authFetch('/api/vault/resources');
     const { totals } = await res.json();
-
-    container.innerHTML = "";
     if (!totals || Object.keys(totals).length === 0) {
-      container.innerHTML = "<p>No resources in vault.</p>";
+      container.innerHTML = '<p>No resources in vault.</p>';
       return;
     }
-
-    Object.entries(totals).forEach(([res, amt]) => {
-      const div = document.createElement("div");
-      div.classList.add("vault-resource-row");
-      const pct = Math.min(100, (amt / 100000) * 100);
-      div.innerHTML = `
-        <strong>${escapeHTML(res)}</strong>
-        <div class="vault-progress-bar">
-          <div class="vault-progress-bar-fill" style="width:${pct}%"></div>
-        </div>
-        <span>${amt.toLocaleString()}</span>`;
-      container.appendChild(div);
-    });
-
+    renderVaultSummary(totals);
   } catch (err) {
-    console.error("❌ Vault Summary:", err);
-    container.innerHTML = "<p>Failed to load vault totals.</p>";
+    console.error('❌ Vault Summary:', err);
+    container.innerHTML = '<p>Failed to load vault totals.</p>';
   }
 }
 
 
 // ✅ Deposit interface
-async function loadDepositForm() {
-  const container = document.getElementById("deposit-section");
+function buildResourceInputForm(type, containerId) {
+  const container = document.getElementById(containerId);
   container.innerHTML = `
-    <label>Resource:</label>
-    <input list="resource-options-deposit" id="deposit-resource" />
-    <datalist id="resource-options-deposit">
-      ${RESOURCE_TYPES.map(r => `<option value="${r}">`).join('')}
-    </datalist>
-    <label>Amount:</label>
-    <input type="number" id="deposit-amount" min="1" />
-    <button class="action-btn" id="deposit-submit">Deposit</button>
+    <form id="${type}-form" class="resource-form">
+      ${RESOURCE_TYPES.map(r => `
+        <div class="resource-input-row">
+          <label>${r}</label>
+          <input type="number" min="0" name="${r}" data-type="${type}" />
+        </div>
+      `).join('')}
+      <button class="action-btn" type="submit">${type === 'deposit' ? 'Deposit' : 'Withdraw'}</button>
+    </form>
   `;
 
-  document.getElementById("deposit-submit").addEventListener("click", async () => {
-    const resource = document.getElementById("deposit-resource").value.toLowerCase().replace(/ /g, "_");
-    const amount = parseInt(document.getElementById("deposit-amount").value);
-    if (!resource || amount <= 0) return alert("Please enter a valid resource and amount.");
-
-    try {
-      const res = await authFetch("/api/vault/deposit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resource, amount })
-      });
-      const result = await res.json();
-      alert(result.message || "Deposit successful.");
-      await loadVaultSummary();
-      await loadVaultHistory();
-    } catch (err) {
-      console.error("❌ Deposit:", err);
-      alert("Deposit failed.");
+  document.getElementById(`${type}-form`).addEventListener('submit', async e => {
+    e.preventDefault();
+    const inputs = Array.from(document.querySelectorAll(`#${type}-form input[data-type='${type}']`));
+    const payloads = inputs
+      .map(i => ({ res: i.name.toLowerCase().replace(/ /g, '_'), amt: parseInt(i.value) || 0 }))
+      .filter(p => p.amt > 0);
+    if (!payloads.length) return alert('Enter amounts.');
+    for (const p of payloads) {
+      try {
+        await authFetch(`/api/alliance/vault/${type}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resource: p.res, amount: p.amt })
+        });
+      } catch (err) {
+        console.error(`❌ ${type}:`, err);
+      }
     }
+    await loadVaultSummary();
+    await loadTransactions();
+    inputs.forEach(i => { i.value = ''; });
+    alert(`${type.charAt(0).toUpperCase() + type.slice(1)} complete.`);
   });
+}
+
+function loadDepositForm() {
+  buildResourceInputForm('deposit', 'deposit-section');
 }
 
 // ✅ Withdraw interface
-async function loadWithdrawForm() {
-  const container = document.getElementById("withdraw-section");
-  container.innerHTML = `
-    <label>Resource:</label>
-    <input list="resource-options-withdraw" id="withdraw-resource" />
-    <datalist id="resource-options-withdraw">
-      ${RESOURCE_TYPES.map(r => `<option value="${r}">`).join('')}
-    </datalist>
-    <label>Amount:</label>
-    <input type="number" id="withdraw-amount" min="1" />
-    <button class="action-btn" id="withdraw-submit">Withdraw</button>
-  `;
-
-  document.getElementById("withdraw-submit").addEventListener("click", async () => {
-    const resource = document.getElementById("withdraw-resource").value.toLowerCase().replace(/ /g, "_");
-    const amount = parseInt(document.getElementById("withdraw-amount").value);
-    if (!resource || amount <= 0) return alert("Please enter a valid resource and amount.");
-
-    try {
-      const res = await authFetch("/api/vault/withdraw", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resource, amount })
-      });
-      const result = await res.json();
-      alert(result.message || "Withdrawal successful.");
-      await loadVaultSummary();
-      await loadVaultHistory();
-    } catch (err) {
-      console.error("❌ Withdraw:", err);
-      alert("Withdrawal failed.");
-    }
-  });
+function loadWithdrawForm() {
+  buildResourceInputForm('withdraw', 'withdraw-section');
 }
 
-// ✅ Vault transaction history
-async function loadVaultHistory() {
+// ✅ Vault transaction history loader
+async function loadTransactions(action = '', days = '') {
   const tbody = document.getElementById("vault-history");
   tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
 
   try {
     const params = new URLSearchParams();
-    const action = document.getElementById('filter-action')?.value;
-    const days = document.getElementById('filter-days')?.value;
+    action = action || document.getElementById('filter-action')?.value || '';
+    days = days || document.getElementById('filter-days')?.value || '';
     if (action) params.append('action', action);
     if (days) params.append('days', days);
 
-    const res = await authFetch(`/api/vault/transactions?${params}`);
-    const { history = [] } = await res.json();
+    const res = await authFetch(`/api/alliance/vault/transactions?${params}`);
+    const logs = await res.json();
+    const history = logs || [];
 
     tbody.innerHTML = "";
     if (!history.length) {
@@ -198,15 +187,15 @@ async function loadVaultHistory() {
       return;
     }
 
-    history.forEach(t => {
-      const row = document.createElement("tr");
+    history.forEach(log => {
+      const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${new Date(t.created_at).toLocaleString()}</td>
-        <td>${escapeHTML(t.username || t.user_id || 'System')}</td>
-        <td>${escapeHTML(t.action)}</td>
-        <td>${escapeHTML(t.resource_type)}</td>
-        <td>${t.amount}</td>
-        <td>${escapeHTML(t.notes || '')}</td>
+        <td>${new Date(log.timestamp || log.created_at).toLocaleString()}</td>
+        <td>${escapeHTML(log.user || log.username || log.user_id || 'System')}</td>
+        <td>${escapeHTML(log.action)}</td>
+        <td>${escapeHTML(log.resource_type)}</td>
+        <td>${log.amount}</td>
+        <td>${escapeHTML(log.notes || '-')}</td>
       `;
       tbody.appendChild(row);
     });
