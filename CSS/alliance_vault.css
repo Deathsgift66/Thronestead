@@ -68,21 +68,17 @@ body {
   margin-bottom: 2rem;
 }
 
-.vault-resource-row {
+.progress-bar {
   margin-bottom: 0.5rem;
 }
-.vault-progress-bar {
-  background: var(--parchment-dark);
-  border: 1px solid var(--gold);
-  border-radius: 6px;
-  height: 8px;
-  overflow: hidden;
+.resource-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
 }
-.vault-progress-bar-fill {
-  background: var(--accent);
-  height: 100%;
-  width: 0;
-  transition: width var(--transition-medium);
+.resource-form {
+  margin-bottom: 1rem;
 }
 
 /* Footer */
