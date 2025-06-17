@@ -122,6 +122,7 @@ Codex must apply these modifiers when resolving battles.
   | `custom` | Manually designed |
   | `imported` | From external source |
   | `event` | For special events |
+- Index on `war_id` for fast lookups during battle execution.
 
 ## Final Summary for Codex
 | Feature | How to use |

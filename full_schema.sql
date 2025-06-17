@@ -1194,6 +1194,7 @@ CREATE TABLE public.terrain_map (
   CONSTRAINT terrain_map_generated_by_fkey FOREIGN KEY (generated_by) REFERENCES public.users(user_id),
   CONSTRAINT terrain_map_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
 );
+CREATE INDEX idx_terrain_map_war_id ON public.terrain_map (war_id);
 CREATE TABLE public.trade_logs (
   trade_id integer NOT NULL DEFAULT nextval('trade_logs_trade_id_seq'::regclass),
   timestamp timestamp with time zone DEFAULT now(),
@@ -1379,6 +1380,7 @@ CREATE TABLE public.unit_movements (
   CONSTRAINT unit_movements_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
   CONSTRAINT unit_movements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
+CREATE INDEX idx_unit_movements_war_id ON public.unit_movements (war_id);
 CREATE TABLE public.unit_stats (
   unit_type text NOT NULL,
   tier integer NOT NULL,
