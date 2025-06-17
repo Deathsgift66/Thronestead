@@ -73,10 +73,15 @@ Developer: Deathsgift66
 
       <!-- Summary -->
       <div class="golden-header text-center text-2xl mb-4">Military Summary</div>
-      <div id="military-summary" class="summary-section mb-6"></div>
+      <div id="military-summary" class="summary-section mb-2"></div>
+      <div id="capacity-bar" class="progress-bar-bg mb-6"><div class="progress-bar-fill" style="width:0%"></div></div>
 
       <!-- Recruitable Units -->
       <div class="golden-header text-center text-2xl mb-4">Recruitable Units</div>
+      <div class="mb-4 text-center">
+        <label for="unit-type-filter" class="mr-2">Filter:</label>
+        <select id="unit-type-filter" class="text-black"></select>
+      </div>
       <div id="unit-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-label="Recruitable Units">
         <!-- Populated by JS -->
       </div>

@@ -7,6 +7,7 @@ import { escapeHTML } from './utils.js';
 
 let currentUserId = null;
 let realtimeChannel = null;
+let availableUnits = [];
 
 // Initialize logic
 document.addEventListener("DOMContentLoaded", async () => {
@@ -28,6 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await loadMilitarySummary();
   await loadRecruitableUnits();
+  document.getElementById('unit-type-filter')?.addEventListener('change', renderUnits);
   await loadTrainingQueue();
   await loadTrainingHistory();
   updateLastUpdated();
@@ -48,6 +50,10 @@ async function loadMilitarySummary() {
       <p><strong>Morale:</strong> ${data.morale}%</p>
       <p><strong>Usable Slots:</strong> ${data.usable_slots}</p>
     `;
+    const bar = document.getElementById('capacity-bar');
+    if (bar) {
+      bar.querySelector('.progress-bar-fill').style.width = Math.min(100, (data.used_slots * 100) / data.base_slots) + '%';
+    }
   } catch (err) {
     console.error("❌ Military summary error:", err);
     container.innerHTML = "<p>Failed to load military summary.</p>";
@@ -65,52 +71,9 @@ async function loadRecruitableUnits() {
     const res = await fetch("/api/kingdom_military/recruitable", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
-    container.innerHTML = "";
-
-    if (!data.units?.length) {
-      container.innerHTML = "<p>No recruitable units available.</p>";
-      return;
-    }
-
-    data.units.forEach(unit => {
-      const card = document.createElement("div");
-      card.classList.add("unit-card");
-      card.innerHTML = `
-        <h4>${escapeHTML(unit.name)}</h4>
-        <p>Type: ${escapeHTML(unit.type)}</p>
-        <p>Cost: ${formatCost(unit.cost)}</p>
-        <p>Training Time: ${unit.training_time} seconds</p>
-        <button class="action-btn recruit-btn" data-unit-id="${unit.id}">Recruit</button>
-      `;
-      container.appendChild(card);
-    });
-
-    document.querySelectorAll(".recruit-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const unitId = btn.dataset.unitId;
-        const qty = prompt("How many units do you want to recruit?");
-        const qtyInt = parseInt(qty);
-        if (!qtyInt || qtyInt <= 0) return alert("Invalid quantity.");
-
-        try {
-          const res = await fetch("/api/kingdom_military/recruit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", 'X-User-ID': currentUserId },
-            body: JSON.stringify({ unit_id: unitId, quantity: qtyInt })
-          });
-
-          const result = await res.json();
-          if (!res.ok) throw new Error(result.error || "Recruitment failed.");
-
-          alert(result.message || "Units queued for training.");
-          await loadMilitarySummary();
-          await loadTrainingQueue();
-        } catch (err) {
-          console.error("❌ Recruitment error:", err);
-          alert(err.message || "Recruitment failed.");
-        }
-      });
-    });
+    availableUnits = data.units || [];
+    populateFilterOptions(availableUnits);
+    renderUnits();
 
   } catch (err) {
     console.error("❌ Recruitable units error:", err);
@@ -129,18 +92,7 @@ async function loadTrainingQueue() {
 
     container.innerHTML = "";
 
-    if (!data.queue?.length) {
-      container.innerHTML = "<p>No active training queue.</p>";
-      return;
-    }
-
-    const list = document.createElement("ul");
-    data.queue.forEach(entry => {
-      const li = document.createElement("li");
-      li.textContent = `${escapeHTML(entry.unit_name)} x${entry.quantity} — Ends: ${formatTimestamp(entry.training_ends_at)}`;
-      list.appendChild(li);
-    });
-    container.appendChild(list);
+    renderTrainingQueue(data.queue);
   } catch (err) {
     console.error("❌ Training queue error:", err);
     container.innerHTML = "<p>Failed to load training queue.</p>";
@@ -158,20 +110,7 @@ async function loadTrainingHistory() {
     const res = await fetch("/api/training-history?kingdom_id=1&limit=50", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
-    container.innerHTML = "";
-
-    if (!data.history?.length) {
-      container.innerHTML = "<p>No training history available.</p>";
-      return;
-    }
-
-    const list = document.createElement("ul");
-    data.history.forEach(entry => {
-      const li = document.createElement("li");
-      li.textContent = `[${formatTimestamp(entry.completed_at)}] Trained ${entry.quantity} ${escapeHTML(entry.unit_name)} (source: ${entry.source})`;
-      list.appendChild(li);
-    });
-    container.appendChild(list);
+    container.innerHTML = renderTrainingHistory(data.history || []);
   } catch (err) {
     console.error("❌ Training history error:", err);
     container.innerHTML = "<p>Failed to load training history.</p>";
@@ -233,3 +172,143 @@ function subscribeRealtime() {
     if (realtimeChannel) supabase.removeChannel(realtimeChannel);
   });
 }
+
+// ---------------------------
+// 🖼️ Unit Card Renderer and Helpers
+// ---------------------------
+function renderUnitCard(unit) {
+  const gold = unit.cost?.gold || 0;
+  const imgName = escapeHTML(unit.unit_name || unit.name);
+  return `
+    <div class="unit-card border rounded-lg p-4 shadow hover:shadow-lg transition">
+      <h3 class="text-xl font-bold">${escapeHTML(unit.name)}</h3>
+      <img src="Assets/troops/${imgName}.png" alt="${escapeHTML(unit.name)}" class="w-16 h-16 mx-auto my-2" />
+      <p><strong>Type:</strong> ${escapeHTML(unit.type)}</p>
+      <p><strong>Training:</strong> ${unit.training_time}s</p>
+      <p><strong>Cost:</strong> ${gold} gold</p>
+      <button class="btn mt-2 recruit-btn" data-unit-id="${unit.id}">Train</button>
+    </div>
+  `;
+}
+
+function populateFilterOptions(units) {
+  const select = document.getElementById('unit-type-filter');
+  if (!select) return;
+  const types = [...new Set(units.map(u => u.type))].sort();
+  select.innerHTML = '<option value="">All</option>' +
+    types.map(t => `<option value="${escapeHTML(t)}">${escapeHTML(t)}</option>`).join('');
+}
+
+function renderUnits() {
+  const container = document.getElementById('unit-list');
+  if (!container) return;
+  const filter = document.getElementById('unit-type-filter')?.value || '';
+  let units = availableUnits;
+  if (filter) units = units.filter(u => u.type === filter);
+  if (!units.length) {
+    container.innerHTML = '<p>No recruitable units available.</p>';
+    return;
+  }
+  container.innerHTML = units.map(renderUnitCard).join('');
+  container.querySelectorAll('.recruit-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleRecruit(btn.dataset.unitId));
+  });
+}
+
+async function handleRecruit(unitId) {
+  const qty = prompt('How many units do you want to recruit?');
+  const qtyInt = parseInt(qty);
+  if (!qtyInt || qtyInt <= 0) return alert('Invalid quantity.');
+  try {
+    const res = await fetch('/api/kingdom_military/recruit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-ID': currentUserId },
+      body: JSON.stringify({ unit_id: unitId, quantity: qtyInt })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Recruitment failed.');
+    alert(result.message || 'Units queued for training.');
+    await loadMilitarySummary();
+    await loadTrainingQueue();
+  } catch (err) {
+    console.error('❌ Recruitment error:', err);
+    alert(err.message || 'Recruitment failed.');
+  }
+}
+
+function renderTrainingItem(entry) {
+  const unit = availableUnits.find(u => u.name === entry.unit_name) || {};
+  const secs = (unit.training_time || 0) * (entry.quantity || 1);
+  const endAttr = entry.training_ends_at ? `data-end="${entry.training_ends_at}"` : '';
+  return `
+    <div class="training-item border p-3 rounded mb-2 shadow-sm" data-seconds="${secs}" ${endAttr}>
+      <strong>${escapeHTML(entry.unit_name)} x${entry.quantity}</strong> — ETA: <span class="eta-countdown">${formatTime(secs)}</span>
+      <div class="progress-bar-bg mt-1">
+        <div class="progress-bar-fill" style="width:0%"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderTrainingQueue(queue) {
+  const container = document.getElementById('training-queue');
+  if (!container) return;
+  if (!queue?.length) {
+    container.innerHTML = '<p>No active training queue.</p>';
+    return;
+  }
+  container.innerHTML = queue.map(renderTrainingItem).join('');
+  updateTrainingCountdowns();
+}
+
+function updateTrainingCountdowns() {
+  document.querySelectorAll('.training-item').forEach(item => {
+    const span = item.querySelector('.eta-countdown');
+    const bar = item.querySelector('.progress-bar-fill');
+    const end = item.dataset.end ? new Date(item.dataset.end).getTime() : null;
+    const baseSecs = parseInt(item.dataset.seconds) || 0;
+    item.dataset.start = item.dataset.start || Date.now();
+    const start = parseInt(item.dataset.start);
+    const total = end ? Math.floor((end - start) / 1000) || baseSecs : baseSecs;
+    const remaining = end
+      ? Math.max(0, Math.floor((end - Date.now()) / 1000))
+      : Math.max(0, Math.floor((start + baseSecs * 1000 - Date.now()) / 1000));
+    if (span) span.textContent = formatTime(remaining);
+    const pct = total ? Math.max(0, Math.min(100, 100 - (remaining * 100) / total)) : 0;
+    if (bar) bar.style.width = pct + '%';
+  });
+}
+
+setInterval(updateTrainingCountdowns, 1000);
+
+function renderTrainingHistory(logs) {
+  const grouped = logs.reduce((acc, entry) => {
+    const date = new Date(entry.completed_at).toLocaleDateString();
+    acc[date] = acc[date] || [];
+    acc[date].push(entry);
+    return acc;
+  }, {});
+
+  return Object.entries(grouped).map(([date, entries]) => `
+    <div class="mb-4">
+      <h4 class="font-bold text-lg mb-2">${escapeHTML(date)}</h4>
+      <ul class="list-disc ml-5">
+        ${entries.map(e => `<li>${e.quantity}x ${escapeHTML(e.unit_name)}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h}h ${m}m ${s}s`;
+}
+
+setInterval(() => {
+  const lastUpdated = new Date().toLocaleTimeString();
+  document.getElementById('last-updated').textContent = `Last updated: ${lastUpdated}`;
+  const indicator = document.getElementById('realtime-indicator');
+  if (indicator) indicator.textContent = '🟢 Live';
+}, 30000);
