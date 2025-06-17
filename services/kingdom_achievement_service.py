@@ -10,6 +10,9 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
+from backend.data import prestige_scores
+from services.kingdom_history_service import log_event
+
 logger = logging.getLogger(__name__)
 
 # ----------------------------
@@ -46,17 +49,43 @@ def award_achievement(db: Session, kingdom_id: int, achievement_code: str) -> Op
             {"kid": kingdom_id, "code": achievement_code},
         )
 
-        # Fetch reward metadata
+        # Fetch reward metadata and point value
         reward_row = db.execute(
-            text("""
-                SELECT reward FROM kingdom_achievement_catalogue
+            text(
+                """
+                SELECT reward, points FROM kingdom_achievement_catalogue
                  WHERE achievement_code = :code
-            """),
+            """
+            ),
             {"code": achievement_code},
         ).fetchone()
 
+        reward = reward_row[0] if reward_row else None
+        points = reward_row[1] if reward_row else 0
+
+        if points:
+            # Update prestige score in the database
+            db.execute(
+                text(
+                    "UPDATE kingdoms SET prestige_score = prestige_score + :pts WHERE kingdom_id = :kid"
+                ),
+                {"pts": points, "kid": kingdom_id},
+            )
+
+            # Refresh cached prestige score using user_id
+            uid_row = db.execute(
+                text("SELECT user_id FROM kingdoms WHERE kingdom_id = :kid"),
+                {"kid": kingdom_id},
+            ).fetchone()
+            if uid_row:
+                uid = str(uid_row[0])
+                prestige_scores[uid] = prestige_scores.get(uid, 0) + points
+
+        # Log achievement unlock
+        log_event(db, kingdom_id, "achievement_unlocked", achievement_code)
+
         db.commit()
-        return reward_row[0] if reward_row else None
+        return reward
 
     except SQLAlchemyError:
         logger.exception("Failed to award achievement %s", achievement_code)
