@@ -4,7 +4,12 @@
 # Developer: Deathsgift66
 from datetime import datetime, timedelta
 
-from services.vip_status_service import upsert_vip_status, get_vip_status, is_vip_active
+from services.vip_status_service import (
+    upsert_vip_status,
+    get_vip_status,
+    is_vip_active,
+    vip_levels,
+)
 
 
 class DummyResult:
@@ -58,3 +63,22 @@ def test_is_vip_active_expired():
     old = datetime.utcnow() - timedelta(days=1)
     record = {"vip_level": 1, "expires_at": old, "founder": False}
     assert not is_vip_active(record)
+
+
+def test_cache_updates_on_upsert():
+    db = DummyDB()
+    vip_levels.clear()
+    upsert_vip_status(db, "u2", 2, None)
+    assert vip_levels.get("u2") == 2
+
+
+def test_cache_updates_on_fetch_and_clear():
+    db = DummyDB()
+    exp = datetime.utcnow() + timedelta(days=5)
+    db.row = (3, exp, False)
+    vip_levels.clear()
+    get_vip_status(db, "u3")
+    assert vip_levels.get("u3") == 3
+    db.row = None
+    assert get_vip_status(db, "u3") is None
+    assert "u3" not in vip_levels
