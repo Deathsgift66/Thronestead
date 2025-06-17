@@ -99,4 +99,4 @@ def delete_house(house_id: int, db: Session = Depends(get_db)):
 
     db.delete(house)
     db.commit()
-    return {"message": "House deleted successfully"}
+    return {"message": "deleted"}
