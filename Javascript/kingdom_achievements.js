@@ -118,11 +118,17 @@ function addCategoryFilter(achievements) {
   const categories = [...new Set(achievements.map(a => a.category).filter(Boolean))].sort();
   categories.unshift('All');
 
-  categories.forEach(cat => {
+  categories.forEach((cat, idx) => {
     const btn = document.createElement('button');
     btn.className = 'action-btn';
+    btn.dataset.filter = cat.toLowerCase();
     btn.textContent = cat;
-    btn.addEventListener('click', () => filterByCategory(cat === 'All' ? null : cat));
+    if (idx === 0) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      document.querySelector('.filter-toolbar .active')?.classList.remove('active');
+      btn.classList.add('active');
+      filterByCategory(cat === 'All' ? null : cat);
+    });
     toolbar.appendChild(btn);
   });
 }
@@ -184,18 +190,21 @@ function displayAchievementDetail(ach) {
     : 'None';
 
   modal.innerHTML = `
-    <h2>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.name) : '???'}</h2>
-    <p>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.description) : 'Unlock to reveal details.'}</p>
-    <p>Category: ${escapeHTML(ach.category || 'N/A')}</p>
-    <p>Reward: ${escapeHTML(reward)}</p>
-    <p>Status: ${ach.is_unlocked ? 'Unlocked' : 'Locked'}</p>
-    ${ach.awarded_at ? `<p>Earned on: ${new Date(ach.awarded_at).toLocaleString()}</p>` : ''}
-    <button class="action-btn" id="close-achievement-modal">Close</button>
-  `;
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <h3>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.name) : '???'}</h3>
+      <p>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.description) : 'Unlock to reveal details.'}</p>
+      <img src="${ach.icon_url || 'Assets/icon-sword.svg'}" alt="${escapeHTML(ach.name)}" />
+      <p><strong>Points:</strong> ${ach.points || 0}</p>
+      <p><strong>Category:</strong> ${escapeHTML(ach.category || 'N/A')}</p>
+      <p><strong>Reward:</strong> ${escapeHTML(reward)}</p>
+    </div>`;
   modal.classList.remove('hidden');
-  document.getElementById('close-achievement-modal').addEventListener('click', () => {
-    modal.classList.add('hidden');
-  });
+}
+
+function closeModal() {
+  const modal = document.getElementById('achievement-modal');
+  if (modal) modal.classList.add('hidden');
 }
 
 // ✅ Summary bar at top
@@ -205,13 +214,11 @@ function updateProgressSummary(list) {
   const total = list.length;
   const unlocked = list.filter(a => a.is_unlocked).length;
   const percent = total ? Math.round((unlocked / total) * 100) : 0;
-  summary.className = 'progress-summary';
-  summary.innerHTML = `
-    <p>${unlocked} / ${total} unlocked (${percent}%)</p>
-    <div class="progress-bar">
-      <div class="progress-fill" style="width:${percent}%"></div>
-    </div>
-  `;
+
+  document.getElementById('achieved-count').textContent = unlocked;
+  document.getElementById('total-count').textContent = total;
+  const progress = document.getElementById('achievement-progress');
+  if (progress) progress.value = percent;
 }
 
 // ✅ Live updates from Supabase channel
