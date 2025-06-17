@@ -1,0 +1,96 @@
+<!--
+Project Name: Thronestead©
+File Name: kingdom_profile.html
+Version: 6.14.2025.21.12
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Kingdom Profile | Thronestead</title>
+  <meta name="description" content="View another kingdom's public profile in Thronestead." />
+  <meta name="keywords" content="Thronestead, kingdom, profile, spy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/kingdom_profile.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Kingdom Profile | Thronestead" />
+  <meta property="og:description" content="View another kingdom's public profile." />
+  <meta property="og:image" content="https://www.thronestead.com/images/og-preview.jpg" />
+  <meta property="og:url" content="https://www.thronestead.com/kingdom_profile.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Kingdom Profile | Thronestead" />
+  <meta name="twitter:description" content="View another kingdom's public profile." />
+  <meta name="twitter:image" content="https://www.thronestead.com/images/og-preview.jpg" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="CSS/profile.css" />
+
+  <!-- Global Styles -->
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="CSS/root_theme.css" />
+  <link rel="stylesheet" href="CSS/kr_navbar.css" />
+  <link rel="stylesheet" href="CSS/resource_bar.css" />
+
+  <!-- Scripts -->
+  <script type="module" src="Javascript/components/authGuard.js"></script>
+  <script type="module" src="Javascript/navLoader.js"></script>
+  <script type="module" src="Javascript/resourceBar.js" defer></script>
+  <script type="module" src="Javascript/kingdom_profile.js" defer></script>
+</head>
+<body>
+  <!-- Navbar -->
+  <div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
+
+  <!-- Header Banner -->
+  <header class="kr-top-banner" aria-label="Kingdom Profile Banner">
+    Thronestead — Kingdom Profile
+  </header>
+
+  <!-- Main Content Area -->
+  <main id="main-content" class="main-centered-container" aria-label="Public Kingdom Profile">
+    <section class="alliance-members-container profile-grid" id="profile-container">
+      <!-- Avatar -->
+      <div class="profile-avatar">
+        <img id="profile-picture" src="Assets/avatars/default_avatar_emperor.png" alt="Kingdom Avatar" />
+      </div>
+
+      <!-- Info -->
+      <div class="profile-info">
+        <h2 id="kingdom-name">Kingdom Name</h2>
+        <p id="ruler-name">Ruler</p>
+        <p id="kingdom-motto">"Motto"</p>
+        <div id="prestige" aria-live="polite"></div>
+        <button id="spy-btn" class="action-btn hidden">🕵️ Spy or Attack</button>
+      </div>
+    </section>
+
+    <!-- Spy Modal -->
+    <div id="spy-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-content">
+        <h3 id="spy-modal-title">Choose Spy Mission</h3>
+        <div class="modal-actions">
+          <button class="action-btn spy-option" data-mission="spy_troops">Spy on Troops</button>
+          <button class="action-btn spy-option" data-mission="spy_resources">Spy on Resources</button>
+          <button class="action-btn spy-option" data-mission="assassinate_spies">Assassinate Spies</button>
+          <button class="action-btn spy-option" data-mission="assassinate_noble">Assassinate Noble</button>
+          <button class="action-btn spy-option" data-mission="assassinate_knight">Assassinate Knight</button>
+          <button class="action-btn" id="close-spy-modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Thronestead</div>
+    <div><a href="legal.html">View Legal Documents</a></div>
+  </footer>
+</body>
+</html>
