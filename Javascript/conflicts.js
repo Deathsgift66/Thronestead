@@ -3,22 +3,23 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, debounce, jsonFetch } from './utils.js';
 
-let accessToken = null;
-let userId = null;
+let headers = {};
 const REFRESH_MS = 30000;
 
 let conflicts = [];
 let currentFilter = 'all';
-let sortBy = 'started_at';
+let sortBy = 'start_date';
 let sortDir = 'desc';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return (window.location.href = 'login.html');
-  accessToken = session.access_token;
-  userId = session.user.id;
+  headers = {
+    'Authorization': `Bearer ${session.access_token}`,
+    'X-User-ID': session.user.id
+  };
 
   setupControls();
   await loadConflicts();
@@ -37,7 +38,7 @@ function setupControls() {
   });
 
   const search = document.getElementById('conflictSearch');
-  if (search) search.addEventListener('input', applyFilters);
+  if (search) search.addEventListener('input', debounce(applyFilters, 300));
 
   document.querySelectorAll('#conflictTable th.sortable').forEach(th => {
     th.addEventListener('click', () => {
@@ -59,13 +60,7 @@ async function loadConflicts() {
   tbody.innerHTML = '<tr><td colspan="10">Loading conflicts...</td></tr>';
 
   try {
-    const res = await fetch('/api/conflicts/overview', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-User-ID': userId
-      }
-    });
-    const data = await res.json();
+    const data = await jsonFetch('/api/conflicts/all', { headers });
     conflicts = data.wars || [];
     applyFilters();
   } catch (err) {
@@ -80,10 +75,18 @@ function applyFilters() {
   let rows = conflicts.slice();
 
   switch (currentFilter) {
-    case 'active': rows = rows.filter(r => r.phase === 'live'); break;
-    case 'concluded': rows = rows.filter(r => r.phase === 'resolved'); break;
-    case 'planning': rows = rows.filter(r => r.phase === 'planning'); break;
-    case 'resolution': rows = rows.filter(r => r.phase === 'resolved' && r.winner_side); break;
+    case 'active':
+      rows = rows.filter(r => r.phase === 'live');
+      break;
+    case 'planning':
+      rows = rows.filter(r => r.phase === 'planning' || r.phase === 'alert');
+      break;
+    case 'resolution':
+      rows = rows.filter(r => r.phase === 'resolved' && !r.victor);
+      break;
+    case 'concluded':
+      rows = rows.filter(r => r.phase === 'resolved' && !!r.victor);
+      break;
   }
 
   if (searchVal) {
@@ -103,7 +106,7 @@ function applyFilters() {
 }
 
 function compareFields(a, b, field) {
-  if (field === 'started_at') {
+  if (field === 'start_date') {
     const da = a[field] ? new Date(a[field]) : 0;
     const db = b[field] ? new Date(b[field]) : 0;
     return sortDir === 'asc' ? da - db : db - da;
@@ -138,20 +141,60 @@ function renderRows(rows) {
       ? ` | <a href="battle_resolution.html?war_id=${r.war_id}">View Resolution</a>` : '';
 
     const tr = document.createElement('tr');
+    tr.classList.add(`row-${(r.phase || '').toLowerCase()}`);
     tr.innerHTML = `
       <td>${r.war_id}</td>
       <td>${escapeHTML(r.attacker_alliance || r.attacker_kingdom || '')}</td>
       <td>${escapeHTML(r.defender_alliance || r.defender_kingdom || '')}</td>
       <td>${escapeHTML(r.war_type || '')}</td>
-      <td>${r.started_at ? new Date(r.started_at).toLocaleDateString() : ''}</td>
+      <td>${r.start_date ? new Date(r.start_date).toLocaleDateString() : ''}</td>
       <td class="${phaseClass}">${escapeHTML(r.phase || '')}</td>
       <td>${escapeHTML(r.victor || r.winner_side || '')}</td>
       <td>${progress}</td>
       <td>${r.castle_hp ?? ''}</td>
       <td>${linkLive}${linkRes}</td>
     `;
+    tr.addEventListener('click', () => openWarModal(r.war_id));
     tbody.appendChild(tr);
   });
+}
+
+// ✅ Open detail modal
+async function openWarModal(warId) {
+  const modal = document.getElementById('war-detail-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.innerHTML = '<div class="modal-content"><p>Loading...</p></div>';
+
+  try {
+    const data = await jsonFetch(`/api/conflicts/${warId}`, { headers });
+    const w = data.war || {};
+    const tickPct = w.battle_tick ? Math.min(w.battle_tick * 100 / 12, 100) : 0;
+    const participants = [w.alliance_a_name, w.alliance_b_name].filter(Boolean);
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3 id="warDetailHeader">${escapeHTML(w.alliance_a_name || '')} vs ${escapeHTML(w.alliance_b_name || '')}</h3>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${tickPct}%"></div></div>
+        <p>Phase: ${escapeHTML(w.phase || '')}</p>
+        <p>Castle HP: ${w.castle_hp ?? ''}</p>
+        <p>Score: ${w.attacker_score ?? 0} - ${w.defender_score ?? 0}</p>
+        <p>Victor: ${escapeHTML(w.victor || '')}</p>
+        <ul>${participants.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul>
+        <button type="button" class="action-btn" id="war-detail-close-btn">Close</button>
+      </div>`;
+
+    modal.querySelector('#war-detail-close-btn').addEventListener('click', closeWarModal);
+  } catch (err) {
+    console.error('Failed to load war details:', err);
+    modal.innerHTML = `<div class="modal-content"><p>Failed to load war details.</p><button type="button" class="action-btn" id="war-detail-close-btn">Close</button></div>`;
+    modal.querySelector('#war-detail-close-btn').addEventListener('click', closeWarModal);
+  }
+}
+
+function closeWarModal() {
+  const modal = document.getElementById('war-detail-modal');
+  if (modal) modal.classList.add('hidden');
 }
 
 // ✅ Safe HTML Escape
