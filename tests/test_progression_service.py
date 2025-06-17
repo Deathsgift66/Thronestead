@@ -19,6 +19,9 @@ from backend.progression_service import (
     knights,
 )
 from services.progression_service import get_total_modifiers
+from services.progression_service import _kingdom_project_modifiers
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
 
 def setup_function():
@@ -84,3 +87,38 @@ def test_get_total_modifiers_default():
         "economic_bonus": {},
         "production_bonus": {},
     }
+
+
+def test_kingdom_project_modifiers_exclude_expired():
+    engine = create_engine("sqlite:///:memory:")
+    conn = engine.connect()
+    conn.execute(
+        text(
+            "CREATE TABLE project_player_catalogue (project_code TEXT PRIMARY KEY, modifiers TEXT)"
+        )
+    )
+    conn.execute(
+        text(
+            "CREATE TABLE projects_player (project_id INTEGER PRIMARY KEY, kingdom_id INTEGER, project_code TEXT, ends_at TIMESTAMP)"
+        )
+    )
+    conn.execute(
+        text(
+            "INSERT INTO project_player_catalogue (project_code, modifiers) VALUES ('p1', '{\"resource_bonus\": {\"wood\": 10}}')"
+        )
+    )
+    conn.execute(
+        text(
+            "INSERT INTO projects_player (project_id, kingdom_id, project_code, ends_at) VALUES (1, 1, 'p1', datetime('now', '+1 hour'))"
+        )
+    )
+    conn.execute(
+        text(
+            "INSERT INTO projects_player (project_id, kingdom_id, project_code, ends_at) VALUES (2, 1, 'p1', datetime('now', '-1 hour'))"
+        )
+    )
+    Session = sessionmaker(bind=engine)
+    db = Session()
+
+    mods = _kingdom_project_modifiers(db, 1)
+    assert mods == {"resource_bonus": {"wood": 10}}

@@ -251,6 +251,7 @@ def _kingdom_project_modifiers(db: Session, kingdom_id: int) -> dict:
             SELECT pc.modifiers FROM projects_player pp
             JOIN project_player_catalogue pc ON pp.project_code = pc.project_code
             WHERE pp.kingdom_id = :kid
+              AND (pp.ends_at IS NULL OR pp.ends_at > now())
         """
         ),
         {"kid": kingdom_id},
