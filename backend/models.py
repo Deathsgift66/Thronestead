@@ -652,6 +652,9 @@ class WarsTactical(Base):
 
 class UnitMovement(Base):
     __tablename__ = "unit_movements"
+    __table_args__ = (
+        Index("idx_unit_movements_war_id", "war_id"),
+    )
     movement_id = Column(Integer, primary_key=True)
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
@@ -859,8 +862,12 @@ class WarScore(Base):
 
 class TerrainMap(Base):
     __tablename__ = "terrain_map"
+    __table_args__ = (
+        Index("idx_terrain_map_war_id", "war_id"),
+    )
+
     terrain_id = Column(Integer, primary_key=True)
-    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"))
+    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
     tile_map = Column(JSONB)
     generated_at = Column(DateTime(timezone=True), server_default=func.now())
     map_width = Column(Integer)

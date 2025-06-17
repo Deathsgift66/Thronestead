@@ -55,3 +55,6 @@ WHERE movement_id = :id;
 Use `visible_enemies` to maintain fog‑of‑war caching.
 
 This table powers live battle visualization and replay. Never delete rows while a war is active.
+
+## Best Practices
+- Add an index on `war_id` to speed up retrieval of all movements for a battle.
