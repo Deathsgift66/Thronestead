@@ -47,6 +47,10 @@ async function submitForgotRequest() {
       ? 'If the email exists, a reset link has been sent.'
       : (await res.json())?.detail || 'Error sending reset request.';
     renderStatusMessage(msg, !res.ok);
+    if (res.ok) {
+      codePanel.classList.remove('hidden');
+      codePanel.setAttribute('aria-hidden', 'false');
+    }
   } catch (err) {
     renderStatusMessage(err.message, true);
   }
@@ -68,7 +72,9 @@ async function submitResetCode() {
 
     if (res.ok) {
       codePanel.classList.add('hidden');
+      codePanel.setAttribute('aria-hidden', 'true');
       newPassPanel.classList.remove('hidden');
+      newPassPanel.setAttribute('aria-hidden', 'false');
       renderStatusMessage('Code verified. Enter new password.', false);
     } else {
       const data = await res.json();
@@ -119,7 +125,9 @@ function validatePasswordMatch() {
 
 function renderStatusMessage(message, isError = false) {
   statusBanner.textContent = message;
-  statusBanner.className = isError ? 'error-banner' : 'success-banner';
+  statusBanner.className = `status-banner ${
+    isError ? 'error-banner' : 'success-banner'
+  }`;
 }
 
 // =======================
