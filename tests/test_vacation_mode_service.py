@@ -27,25 +27,32 @@ class DummyDB:
         self.queries = []
         self.params = []
         self.row = None
+        self.row_sequence = []
         self.committed = False
 
     def execute(self, query, params=None):
         self.queries.append(str(query))
         self.params.append(params)
+        if self.row_sequence:
+            return DummyResult(self.row_sequence.pop(0))
         return DummyResult(self.row)
 
     def commit(self):
         self.committed = True
 
+    def rollback(self):
+        pass
+
 
 def test_enter_and_exit():
     db = DummyDB()
+    db.row_sequence = [(False, None)]
     enter_vacation_mode(db, 1)
     assert any("UPDATE kingdoms" in q for q in db.queries)
     assert db.committed
     db.committed = False
     exit_vacation_mode(db, 1)
-    assert any("is_on_vacation = FALSE" in q for q in db.queries[-1:])
+    assert any("vacation_cooldown_until" in q for q in db.queries[-1:])
     assert db.committed
 
 
@@ -55,6 +62,17 @@ def test_can_exit_vacation():
     assert can_exit_vacation(db, 1)
     db.row = (datetime.utcnow() + timedelta(days=1),)
     assert not can_exit_vacation(db, 1)
+
+
+def test_enter_during_cooldown_raises():
+    db = DummyDB()
+    db.row_sequence = [(False, datetime.utcnow() + timedelta(days=1))]
+    raised = False
+    try:
+        enter_vacation_mode(db, 1)
+    except HTTPException:
+        raised = True
+    assert raised
 
 
 def test_check_vacation_mode_raises():

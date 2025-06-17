@@ -19,8 +19,14 @@ except ImportError:  # pragma: no cover - fallback for test environments
         return q
 
     Session = object
+    SQLAlchemyError = Exception
 
 logger = logging.getLogger(__name__)
+
+# How long vacation mode lasts in days
+_VACATION_DURATION = 7
+# Cooldown period after exiting vacation mode
+_VACATION_COOLDOWN = 3
 
 # ------------------------------------------------------------
 # Vacation Mode Service
@@ -37,9 +43,23 @@ def enter_vacation_mode(db: Session, kingdom_id: int) -> datetime:
     Returns:
         datetime: Timestamp when vacation mode will expire
     """
-    expires = datetime.utcnow() + timedelta(days=7)
+    expires = datetime.utcnow() + timedelta(days=_VACATION_DURATION)
 
     try:
+        row = db.execute(
+            text(
+                "SELECT is_on_vacation, vacation_cooldown_until FROM kingdoms WHERE kingdom_id = :kid"
+            ),
+            {"kid": kingdom_id},
+        ).fetchone()
+
+        if row and row[0]:
+            raise HTTPException(status_code=400, detail="Already in Vacation Mode")
+
+        cooldown_until = row[1] if row else None
+        if cooldown_until and datetime.utcnow() < cooldown_until:
+            raise HTTPException(status_code=403, detail="Vacation Mode cooldown active")
+
         db.execute(
             text(
                 """
@@ -77,11 +97,12 @@ def exit_vacation_mode(db: Session, kingdom_id: int) -> None:
                 UPDATE kingdoms
                 SET is_on_vacation = FALSE,
                     vacation_started_at = NULL,
-                    vacation_expires_at = NULL
+                    vacation_expires_at = NULL,
+                    vacation_cooldown_until = NOW() + :cool * interval '1 day'
                 WHERE kingdom_id = :kid
                 """
             ),
-            {"kid": kingdom_id},
+            {"kid": kingdom_id, "cool": _VACATION_COOLDOWN},
         )
         db.commit()
         logger.info("Kingdom %s exited Vacation Mode", kingdom_id)
