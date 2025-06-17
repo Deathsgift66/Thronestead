@@ -178,3 +178,25 @@ h2 {
     margin-right: 0.5rem;
   }
 }
+
+.role-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: #eee;
+  color: #444;
+}
+.officer {
+  background-color: #cfe2ff;
+}
+.leader {
+  background-color: #ffe599;
+  font-weight: bold;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  margin: 1rem auto;
+}

@@ -17,6 +17,7 @@ from sqlalchemy import (
     Float,
     text,
     CheckConstraint,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
@@ -254,6 +255,11 @@ class AllianceMember(Base):
     """Represents membership information for alliances."""
 
     __tablename__ = "alliance_members"
+    __table_args__ = (
+        Index("idx_alliance_members_user_id", "user_id"),
+        Index("idx_alliance_members_alliance_id", "alliance_id"),
+        Index("idx_alliance_members_contribution", "contribution"),
+    )
 
     alliance_id = Column(
         Integer, ForeignKey("alliances.alliance_id"), primary_key=True

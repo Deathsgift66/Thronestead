@@ -13,6 +13,33 @@ const RANK_TOOLTIPS = {
   Member: 'Standard member'
 };
 
+function renderActions(member, currentRole) {
+  const actions = [];
+  if (currentRole === 'leader') {
+    if (member.rank.toLowerCase() !== 'leader') {
+      actions.push(`<button data-id="${member.user_id}" class="promote-btn">Promote</button>`);
+      actions.push(`<button data-id="${member.user_id}" class="demote-btn">Demote</button>`);
+      actions.push(`<button data-id="${member.user_id}" class="kick-btn danger-btn">Kick</button>`);
+      actions.push(`<button data-id="${member.user_id}" class="transfer-btn">Transfer Leadership</button>`);
+    }
+  } else if (currentRole === 'officer') {
+    if (member.rank.toLowerCase() === 'member') {
+      actions.push(`<button data-id="${member.user_id}" class="promote-btn">Promote</button>`);
+      actions.push(`<button data-id="${member.user_id}" class="kick-btn">Kick</button>`);
+    }
+  }
+  return actions.join(' ');
+}
+
+function roleBadge(member) {
+  if (!member.rank) return '';
+  const cls = member.rank.toLowerCase().replace(/\s+/g, '-');
+  const icons = { leader: '👑', officer: '🛡' };
+  const icon = icons[cls] || '';
+  const text = member.role || member.rank;
+  return `<span class="badge role-badge ${cls}">${icon ? icon + ' ' : ''}${escapeHTML(text)}</span>`;
+}
+
 let members = [];
 let membersChannel = null;
 
@@ -20,7 +47,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const accessGranted = await enforceAllianceOrAdminAccess();
   if (!accessGranted) return;
 
-  await fetchMembers();
+  const sortBy = document.getElementById('sort-by')?.value || 'username';
+  const dir = document.getElementById('sort-direction')?.value || 'asc';
+  await fetchMembers(sortBy, dir);
   setupRealtime();
   setupUIControls();
   setupLogout();
@@ -61,20 +90,20 @@ async function enforceAllianceOrAdminAccess() {
 }
 
 // 📦 Fetch member list from API
-async function fetchMembers() {
+async function fetchMembers(sortBy = 'username', direction = 'asc', search = '') {
   const tbody = document.getElementById('members-list');
   if (!tbody) return;
   tbody.innerHTML = `<tr><td colspan="11">Loading members...</td></tr>`;
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch('/api/alliance-members/view', {
+    const params = new URLSearchParams({ sort_by: sortBy, direction, search });
+    const res = await fetch(`/api/alliance/members?${params.toString()}`, {
       headers: { 'X-User-ID': user.id }
     });
 
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
-    const json = await res.json();
-    members = json.alliance_members;
+    members = await res.json();
     renderMembers(members);
   } catch (err) {
     console.error('❌ Error loading members:', err);
@@ -108,6 +137,11 @@ async function renderMembers(data) {
   const rankPower = ['Member', 'Diplomat', 'War Officer', 'Co-Leader', 'Leader'];
   const isLeader = userRank === 'Leader';
 
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-state">No matching members found.</td></tr>`;
+    return;
+  }
+
   data.forEach(member => {
     const row = document.createElement('tr');
     if (member.rank === 'Leader') row.classList.add('leader-row');
@@ -119,7 +153,7 @@ async function renderMembers(data) {
       <td><img src="../images/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest"></td>
       <td><a href="profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}</td>
       <td title="${escapeHTML(RANK_TOOLTIPS[member.rank] || '')}">${escapeHTML(member.rank)}</td>
-      <td>${showFull ? escapeHTML(member.role || '—') : '—'}</td>
+      <td>${showFull ? roleBadge(member) : '—'}</td>
       <td>${showFull ? escapeHTML(member.status) : '—'}</td>
       <td>${showFull ? member.contribution : '—'}</td>
       <td>${showFull ? member.economy_score : '—'}</td>
@@ -127,35 +161,31 @@ async function renderMembers(data) {
       <td>${showFull ? member.diplomacy_score : '—'}</td>
       <td>${showFull ? member.total_output : '—'}</td>
       <td>
-        ${canManage ? `
-          <button onclick="promoteMember('${member.user_id}')">⬆️</button>
-          <button onclick="demoteMember('${member.user_id}')">⬇️</button>
-          <button onclick="removeMember('${member.user_id}')">❌</button>
-          ${isLeader && member.user_id !== userId ? `<button onclick="transferLeadership('${member.user_id}')">👑</button>` : ''}
-        ` : '—'}
+        ${canManage ? renderActions(member, userRank.toLowerCase()) : '—'}
       </td>
     `;
     tbody.appendChild(row);
   });
+
+  tbody.addEventListener('click', evt => {
+    const btn = evt.target.closest('button');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.classList.contains('promote-btn')) promoteMember(id);
+    else if (btn.classList.contains('demote-btn')) demoteMember(id);
+    else if (btn.classList.contains('kick-btn')) removeMember(id);
+    else if (btn.classList.contains('transfer-btn')) transferLeadership(id);
+  }, { once: true });
 }
 
 // 🔃 Setup sorting & filtering UI
 function setupUIControls() {
   document.getElementById('apply-sort')?.addEventListener('click', () => {
     const keyword = document.getElementById('member-search')?.value.toLowerCase() || '';
-    const sortBy = document.getElementById('sort-by')?.value;
+    const sortBy = document.getElementById('sort-by')?.value || 'username';
     const direction = document.getElementById('sort-direction')?.value || 'asc';
 
-    const filtered = members
-      .filter(m => m.username.toLowerCase().includes(keyword))
-      .sort((a, b) => {
-        const num = ['contribution','military_score','economy_score','diplomacy_score','total_output'].includes(sortBy);
-        const valA = num ? Number(a[sortBy] || 0) : String(a[sortBy] || '');
-        const valB = num ? Number(b[sortBy] || 0) : String(b[sortBy] || '');
-        return direction === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
-      });
-
-    renderMembers(filtered);
+    fetchMembers(sortBy, direction, keyword);
   });
 }
 
@@ -167,7 +197,7 @@ function setupRealtime() {
       event: '*',
       schema: 'public',
       table: 'alliance_members'
-    }, fetchMembers)
+    }, () => fetchMembers())
     .subscribe();
 
   window.addEventListener('beforeunload', () => {
