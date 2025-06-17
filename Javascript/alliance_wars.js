@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: alliance_wars.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.16.2025.00.00
+// Developer: Codex
 import { supabase } from './supabaseClient.js';
 import { loadCustomBoard } from './customBoard.js';
 import { escapeHTML } from './utils.js';
@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Init
   switchTab = setupTabs({ onShow: id => id !== 'tab-live' && stopCombatPolling() });
   await loadCustomBoard({ altText: 'Alliance War Banner' });
-  await loadAllianceWars();
-  await loadPendingWars();
+  await loadActiveWars();
+  await loadWarHistory();
 
-  document.getElementById('declare-alliance-war-btn')?.addEventListener('click', submitDeclareWar);
+  document.getElementById('declare-alliance-war-btn')?.addEventListener('click', declareWar);
 });
 
 
@@ -213,16 +213,16 @@ function stopCombatPolling() {
 // ✅ Tab Switching
 
 // ✅ Declare War
-async function submitDeclareWar() {
-  const id = parseInt(document.getElementById('target-alliance-id').value.trim(), 10);
-  if (!id) return;
-  await fetch('/api/alliance-wars/declare', {
+async function declareWar() {
+  const targetId = document.getElementById('target-alliance-id').value;
+  if (!targetId) return;
+  const res = await fetch('/api/battle/declare', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ defender_alliance_id: id })
+    body: JSON.stringify({ target_alliance_id: parseInt(targetId) })
   });
-  await loadAllianceWars();
-  await loadPendingWars();
+  const data = await res.json();
+  if (data.success) loadActiveWars();
 }
 
 // ✅ Accept Pending
@@ -245,8 +245,7 @@ async function loadPendingWars() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alliance_war_id: parseInt(btn.dataset.id), action: 'accept' })
       });
-      await loadAllianceWars();
-      await loadPendingWars();
+      await loadActiveWars();
     }));
 }
 
@@ -266,8 +265,52 @@ async function surrenderWar() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ alliance_war_id: currentWarId, side: 'attacker' })
   });
-  await loadAllianceWars();
+  await loadActiveWars();
   await viewWarDetails({ alliance_war_id: currentWarId });
 }
 
 // ✅ Escape
+
+// ---------------------------------------------------------------------------
+// Functional JS Hook Points
+// ---------------------------------------------------------------------------
+
+// 2. Load Active Wars
+async function loadActiveWars() {
+  const res = await fetch('/api/battle/wars');
+  const wars = await res.json();
+  document.getElementById('wars-container').innerHTML = wars
+    .map(w => `
+    <div class="war-card">
+      <strong>vs ${w.enemy_name}</strong> – Phase: ${w.phase}
+      <br>Score: ${w.our_score} vs ${w.their_score}
+    </div>
+  `)
+    .join('');
+}
+
+// 3. Load War History
+async function loadWarHistory() {
+  const res = await fetch('/api/battle/history');
+  const history = await res.json();
+  document.getElementById('history-container').innerHTML = history
+    .map(
+      entry => `
+    <div class="history-entry">
+      <strong>${entry.outcome}</strong> – ${entry.enemy_name} on ${new Date(
+        entry.ended_at
+      ).toLocaleDateString()}
+    </div>
+  `
+    )
+    .join('');
+}
+
+// 4. Combat Log (Live Battle)
+async function pollCombatLog(warId) {
+  const res = await fetch(`/api/battle/combat_log/${warId}`);
+  const logs = await res.json();
+  document.getElementById('combat-log').innerHTML += logs
+    .map(l => `<div>${l.timestamp}: ${l.message}</div>`)
+    .join('');
+}
