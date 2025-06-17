@@ -12,6 +12,7 @@ from backend.models import (
     KingdomVillage,
 )
 from backend.routers.spy import launch_spy_mission, LaunchPayload
+from services import spies_service
 
 
 def setup_db():
@@ -53,4 +54,22 @@ def test_launch_spy_mission_inserts_row(monkeypatch):
     assert mission is not None
     assert res["mission_id"] == mission.mission_id
     assert res["outcome"] in {"success", "failed"}
+
+
+def test_spy_defense_modifies_success(monkeypatch):
+    Session = setup_db()
+    db = Session()
+    seed_data(db)
+
+    monkeypatch.setattr(random, "random", lambda: 0.01)
+    monkeypatch.setattr(random, "randint", lambda a, b: a)
+    monkeypatch.setattr(spies_service, "get_spy_defense", lambda *_: 20)
+
+    res = launch_spy_mission(
+        LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=3),
+        user_id="u1",
+        db=db,
+    )
+
+    assert res["success_pct"] < 50
 
