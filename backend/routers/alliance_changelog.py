@@ -3,7 +3,7 @@
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import datetime
 from typing import Optional
 
@@ -15,7 +15,9 @@ router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"]
 
 @router.get("")
 def get_alliance_changelog(
-    since: Optional[str] = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    event_type: Optional[str] = Query(None, alias="type"),
     user_id: str = Depends(require_user_id),
 ):
     """
@@ -89,12 +91,23 @@ def get_alliance_changelog(
     all_logs = [log for log in all_logs if log.get("timestamp")]
     all_logs.sort(key=lambda x: x["timestamp"], reverse=True)
 
-    if since:
+    if start:
         try:
-            since_dt = datetime.fromisoformat(since)
-            all_logs = [log for log in all_logs if datetime.fromisoformat(log["timestamp"]) > since_dt]
+            start_dt = datetime.fromisoformat(start)
+            all_logs = [log for log in all_logs if datetime.fromisoformat(log["timestamp"]) >= start_dt]
         except ValueError:
-            pass  # ignore filter if date is malformed
+            pass
+
+    if end:
+        try:
+            end_dt = datetime.fromisoformat(end)
+            all_logs = [log for log in all_logs if datetime.fromisoformat(log["timestamp"]) <= end_dt]
+        except ValueError:
+            pass
+
+    if event_type:
+        allowed = {t.strip() for t in event_type.split(",") if t.strip()}
+        all_logs = [log for log in all_logs if log["event_type"] in allowed]
 
     latest_logs = all_logs[:100]
 
@@ -115,4 +128,7 @@ def get_alliance_changelog(
         if actor_id:
             log["actor"] = username_map.get(actor_id, actor_id)
 
-    return latest_logs
+    return {
+        "logs": latest_logs,
+        "last_updated": datetime.utcnow().isoformat() + "Z",
+    }
