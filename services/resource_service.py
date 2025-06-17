@@ -131,14 +131,25 @@ def _apply_resource_changes(
 # Public Methods
 # ------------------------------------------------------------------------------
 
-def get_kingdom_resources(db: Session, kingdom_id: int) -> dict:
+def get_kingdom_resources(db: Session, kingdom_id: int, *, lock: bool = False) -> dict:
+    """Return current resource values for a kingdom.
+
+    Parameters
+    ----------
+    db : Session
+        Active database session.
+    kingdom_id : int
+        Target kingdom.
+    lock : bool, optional
+        If ``True`` acquire a ``FOR UPDATE`` lock on the row so that
+        subsequent updates are safe from race conditions.
     """
-    Return current resource values for a kingdom.
-    """
-    row = db.execute(
-        text("SELECT * FROM kingdom_resources WHERE kingdom_id = :kid"),
-        {"kid": kingdom_id}
-    ).mappings().fetchone()
+
+    sql = "SELECT * FROM kingdom_resources WHERE kingdom_id = :kid"
+    if lock:
+        sql += " FOR UPDATE"
+
+    row = db.execute(text(sql), {"kid": kingdom_id}).mappings().fetchone()
 
     if not row:
         raise HTTPException(status_code=404, detail="Kingdom resource row missing.")
@@ -147,11 +158,23 @@ def get_kingdom_resources(db: Session, kingdom_id: int) -> dict:
 
 
 def spend_resources(db: Session, kingdom_id: int, cost: dict[str, int]) -> None:
+    """Deduct specified resources from the kingdom.
+
+    Parameters
+    ----------
+    db : Session
+        Active database session.
+    kingdom_id : int
+        Target kingdom.
+    cost : dict[str, int]
+        Resources to spend.
+
+    Notes
+    -----
+    The resource row is locked using ``FOR UPDATE`` to ensure the
+    balance check and deduction occur atomically.
     """
-    Deduct specified resources from the kingdom.
-    Will raise HTTPException if insufficient resources are available.
-    """
-    current = get_kingdom_resources(db, kingdom_id)
+    current = get_kingdom_resources(db, kingdom_id, lock=True)
 
     for res, amt in cost.items():
         validate_resource(res)
@@ -204,10 +227,6 @@ def transfer_resource(
         raise ValueError("Transfer amount must be positive.")
 
     clean_reason = sanitize_plain_text(reason, 255)
-
-    current = get_kingdom_resources(db, from_kingdom_id)
-    if current.get(resource, 0) < amount:
-        raise HTTPException(status_code=400, detail="Not enough resources to transfer.")
 
     # Spend from sender
     spend_resources(db, from_kingdom_id, {resource: amount})
