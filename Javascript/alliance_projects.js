@@ -37,6 +37,8 @@ async function loadAllLists() {
     loadCompleted(),
     loadCatalogue()
   ]);
+  const live = document.getElementById('project-updates');
+  if (live) live.textContent = 'Project data updated.';
 }
 
 async function getAllianceInfo() {
@@ -59,7 +61,7 @@ async function loadAvailable() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance-projects/available?alliance_id=${allianceId}`);
+    const res = await fetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
     const json = await res.json();
     renderAvailable(json.projects || []);
   } catch (err) {
@@ -70,22 +72,27 @@ async function loadAvailable() {
 
 function renderAvailable(list) {
   const container = document.getElementById('available-projects-list');
-  container.innerHTML = list.length ? '' : '<p>No projects available.</p>';
+  container.innerHTML = list.length
+    ? ''
+    : '<p class="empty-state">No projects found in this category.</p>';
+  const canStart = window.user?.permissions?.includes('can_manage_projects');
   list.forEach(p => {
-    const card = document.createElement('div');
+    const card = document.createElement('article');
     card.className = 'project-card';
+    card.setAttribute('role', 'region');
+    card.setAttribute('aria-label', `Project: ${p.project_name}`);
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)}</h3>
       <p>${escapeHTML(p.description || '')}</p>
       <p>Costs: ${formatCostFromColumns(p)}</p>
       <p>Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
-      <button class="action-btn start-btn" data-key="${p.project_code}">Start</button>
+      ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}">Start Project</button>` : ''}
     `;
     container.appendChild(card);
   });
 
-  container.querySelectorAll('.start-btn').forEach(btn => {
-    btn.addEventListener('click', () => startProject(btn.dataset.key));
+  container.querySelectorAll('.build-btn').forEach(btn => {
+    btn.addEventListener('click', () => startProject(btn.dataset.project));
   });
 }
 
@@ -98,7 +105,7 @@ async function loadInProgress() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance-projects/in-progress?alliance_id=${allianceId}`);
+    const res = await fetch(`/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
     const json = await res.json();
     renderInProgress(json.projects || []);
   } catch (err) {
@@ -109,40 +116,50 @@ async function loadInProgress() {
 
 function renderInProgress(list) {
   const container = document.getElementById('in-progress-projects-list');
-  container.innerHTML = list.length ? '' : '<p>No active projects.</p>';
+  container.innerHTML = list.length
+    ? ''
+    : '<p class="empty-state">No projects found in this category.</p>';
   list.forEach(p => {
     const percent = p.progress || 0;
-    const card = document.createElement('div');
+    const card = document.createElement('article');
     card.className = 'project-card';
+    card.setAttribute('role', 'region');
+    card.setAttribute('aria-label', `Project: ${p.project_key}`);
     const eta = formatTime(Math.max(0, Math.floor((new Date(p.expected_end) - Date.now()) / 1000)));
     card.innerHTML = `
       <h3>${escapeHTML(p.project_key)}</h3>
-      <div class="progress-bar"><div class="progress-bar-fill" style="width:${percent}%"></div></div>
-      <p>${percent}% complete - ETA ${eta}</p>
-      <ul class="contrib-list">Loading...</ul>
+      <progress value="${percent}" max="100"></progress>
+      <span>${percent}% - ETA ${eta}</span>
+      <div class="contrib-summary">Loading...</div>
     `;
     container.appendChild(card);
-    loadLeaderboard(p.project_key, card.querySelector('.contrib-list'));
+    loadContributions(p.project_key, card.querySelector('.contrib-summary'));
   });
 }
 
-async function loadLeaderboard(key, element) {
+async function loadContributions(key, element) {
   try {
-    const res = await fetch(`/api/alliance-projects/leaderboard?project_key=${key}`);
+    const res = await fetch(`/api/alliance/projects/contributions?project_key=${key}`);
     const data = await res.json();
-    const list = data.leaderboard || [];
-    element.innerHTML = list.length
-      ? ''
-      : '<li>No contributions yet.</li>';
-
-    list.forEach(r => {
-      const li = document.createElement('li');
-      li.textContent = `${escapeHTML(r.player_name)}: ${r.total}`;
-      element.appendChild(li);
+    const list = data.contributions || [];
+    if (list.length === 0) {
+      element.innerHTML = '<p class="empty-state">No contributions yet.</p>';
+      return;
+    }
+    const total = list.reduce((t, r) => t + r.amount, 0) || 1;
+    element.innerHTML = '';
+    list.slice(0, 3).forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'contrib-entry';
+      div.innerHTML = `
+        <span>${escapeHTML(r.player_name)}</span>
+        <div class="contrib-bar"><div class="contrib-bar-fill" style="width:${(r.amount / total) * 100}%"></div></div>
+      `;
+      element.appendChild(div);
     });
   } catch (err) {
-    console.error('leaderboard', err);
-    element.innerHTML = '<li>Failed to load leaderboard.</li>';
+    console.error('contributions', err);
+    element.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
 }
 
@@ -155,7 +172,7 @@ async function loadCompleted() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance-projects/built?alliance_id=${allianceId}`);
+    const res = await fetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
     const json = await res.json();
     renderCompleted(json.projects || []);
   } catch (err) {
@@ -166,13 +183,18 @@ async function loadCompleted() {
 
 function renderCompleted(list) {
   const container = document.getElementById('completed-projects-list');
-  container.innerHTML = list.length ? '' : '<p>No completed projects.</p>';
+  container.innerHTML = list.length
+    ? ''
+    : '<p class="empty-state">No projects found in this category.</p>';
   list.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'project-card';
+    const card = document.createElement('article');
+    card.className = 'project-card completed-project';
+    card.setAttribute('role', 'region');
+    card.setAttribute('aria-label', `Project: ${p.name || p.project_key}`);
+    const builtBy = p.built_by ? ` by ${escapeHTML(p.built_by)}` : '';
     card.innerHTML = `
       <h3>${escapeHTML(p.name || p.project_key)}</h3>
-      <p>Completed on: ${new Date(p.end_time).toLocaleString()}</p>
+      <p>Completed on ${new Date(p.end_time).toLocaleDateString()}${builtBy}</p>
     `;
     container.appendChild(card);
   });
@@ -186,7 +208,7 @@ async function loadCatalogue() {
   if (!container) return;
   container.innerHTML = '<p>Loading...</p>';
   try {
-    const res = await fetch('/api/alliance-projects/catalogue');
+    const res = await fetch('/api/alliance/projects/catalogue');
     const json = await res.json();
     renderCatalogue(json.projects || []);
   } catch (err) {
@@ -197,15 +219,22 @@ async function loadCatalogue() {
 
 function renderCatalogue(list) {
   const container = document.getElementById('catalogue-projects-list');
-  container.innerHTML = list.length ? '' : '<p>No projects found.</p>';
+  container.innerHTML = list.length
+    ? ''
+    : '<p class="empty-state">No projects found in this category.</p>';
   list.forEach(p => {
-    const card = document.createElement('div');
+    const card = document.createElement('article');
     card.className = 'project-card';
+    card.setAttribute('role', 'region');
+    card.setAttribute('aria-label', `Project: ${p.project_name}`);
+    const status = p.status || 'Available';
+    const statusIcon = status === 'Completed' ? '✅' : status === 'Available' ? '🔓' : '🔒';
     card.innerHTML = `
-      <h3>${escapeHTML(p.project_name)}</h3>
+      <h3>${escapeHTML(p.project_name)} ${statusIcon}</h3>
       <p>${escapeHTML(p.description || '')}</p>
       <p>Category: ${escapeHTML(p.category || '')}</p>
     `;
+    if (status === 'Locked') card.classList.add('locked');
     container.appendChild(card);
   });
 }
@@ -216,7 +245,7 @@ function renderCatalogue(list) {
 async function startProject(projectKey) {
   try {
     const { userId } = await getAllianceInfo();
-    const res = await fetch('/api/alliance-projects/start', {
+    const res = await fetch('/api/alliance/projects/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ project_key: projectKey, user_id: userId })
@@ -224,6 +253,8 @@ async function startProject(projectKey) {
     const json = await res.json();
     if (!res.ok) throw new Error(json.detail || 'Unknown error');
     await loadAllLists();
+    const live = document.getElementById('project-updates');
+    if (live) live.textContent = 'Project started successfully.';
   } catch (err) {
     console.error('startProject', err);
     alert('❌ Failed to start project.');

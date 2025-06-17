@@ -111,9 +111,45 @@ h2, h3 {
   transition: width var(--transition-medium);
 }
 
+progress {
+  width: 100%;
+  height: 1rem;
+  accent-color: var(--accent);
+}
+
 .contrib-list {
   margin-top: 0.5rem;
   padding-left: 1.2rem;
+}
+
+.empty-state {
+  color: #888;
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}
+
+.contrib-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.contrib-bar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  height: 0.5rem;
+}
+.contrib-bar-fill {
+  background: var(--accent);
+  height: 100%;
+  width: 0;
+}
+
+.locked {
+  opacity: 0.5;
 }
 
 
