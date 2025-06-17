@@ -1,0 +1,35 @@
+/*
+Project Name: Thronestead©
+File Name: spy_mission.css
+Version 6.13.2025.19.49
+Developer: Deathsgift66
+*/
+@import url("./root_theme.css");
+@import url("./base_styles.css");
+
+body {
+  background: url('../Assets/train_troops_background.png') no-repeat center center fixed, var(--stone-bg);
+  background-size: cover;
+  color: var(--parchment);
+}
+
+.mission-panel {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--gold);
+  border-radius: var(--border-radius);
+  padding: var(--padding-md);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.mission-panel h2 {
+  font-family: var(--font-header);
+  color: var(--gold);
+  margin-top: 0;
+}
+
+.mission-results {
+  margin-top: 1rem;
+  font-family: var(--font-body);
+  color: var(--parchment);
+}
