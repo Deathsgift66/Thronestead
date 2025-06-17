@@ -98,7 +98,8 @@ body {
 }
 
 /* New VIP Donation Styles */
-.vip-tier-card {
+.vip-tier-card,
+.vip-card {
   background: var(--card-bg);
   border: var(--card-border);
   border-radius: var(--border-radius);
