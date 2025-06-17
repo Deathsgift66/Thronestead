@@ -133,7 +133,18 @@ class CombatResolver:
                     if attacker.kingdom_id == defender.kingdom_id:
                         continue
 
-                    damage = min(attacker.quantity * 10, defender.hp)
+                    base_damage = attacker.quantity * 10
+                    crit_chance = 0.0
+                    if attacker.morale > 0.6:
+                        crit_chance = ((attacker.morale - 0.6) / 0.4) * 0.05
+                        crit_chance = min(0.05, crit_chance)
+
+                    critical = False
+                    if random.random() < crit_chance:
+                        base_damage = int(base_damage * 1.5)
+                        critical = True
+
+                    damage = min(base_damage, defender.hp)
                     defender.hp -= damage
 
                     logs.append({
@@ -142,6 +153,7 @@ class CombatResolver:
                         "defender_id": defender.unit_id,
                         "pos": pos,
                         "damage": damage,
+                        "critical": critical,
                     })
 
                     if defender.hp <= 0 and defender not in to_remove:
