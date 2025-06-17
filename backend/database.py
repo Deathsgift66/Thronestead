@@ -12,10 +12,13 @@ Used for real-time backend services, migrations, and test environments.
 
 import os
 import logging
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
 from typing import Generator, Optional
+from fastapi import Request
+
+from .pg_settings import inject_claims_as_pg_settings
 
 # Initialize logger
 logger = logging.getLogger("KingmakersRise.Database")
@@ -59,7 +62,7 @@ def init_engine(db_url: Optional[str] = None) -> None:
 # Initialize engine on import for normal application startup
 init_engine()
 
-def get_db() -> Generator:
+def get_db(request: Request | None = None) -> Generator:
     """
     Yields a new SQLAlchemy session and ensures it closes after use.
 
@@ -71,6 +74,13 @@ def get_db() -> Generator:
         raise RuntimeError("DATABASE_URL not configured. Cannot create DB session.")
 
     db = SessionLocal()
+    if request is not None:
+        settings = inject_claims_as_pg_settings(request)
+        for key, value in settings.items():
+            try:
+                db.execute(text(f"SET LOCAL {key} = :val"), {"val": value})
+            except Exception:
+                logger.exception("Failed to set session variable %s", key)
     try:
         yield db
     finally:
