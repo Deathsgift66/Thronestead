@@ -1,10 +1,11 @@
 // Project Name: Thronestead©
 // File Name: leaderboard.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.16.2025.21.20
+// Developer: Codex
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
 import { setupTabs } from './components/tabControl.js';
+import { authHeaders } from './auth.js';
 
 let currentTab = "kingdoms";
 
@@ -37,23 +38,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(() => {
     loadLeaderboard(currentTab);
   }, 30000);
+
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector('.tab-button.active')?.classList.remove('active');
+      document.querySelector('.tab-button[aria-selected="true"]')?.setAttribute('aria-selected', 'false');
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      currentTab = btn.dataset.tab;
+      loadLeaderboard(currentTab);
+    });
+  });
 });
 
 // 🧭 Tab switch logic for leaderboard page
 
 // 📊 Load leaderboard by tab type
 async function loadLeaderboard(type) {
-  const tbody = document.getElementById("leaderboard-body");
-  const headerRow = document.getElementById("leaderboard-headers");
+  const tbody = document.getElementById('leaderboard-body');
+  const headerRow = document.getElementById('leaderboard-headers');
   const cols = headers[type]?.length || 5;
 
-  tbody.innerHTML = `<tr><td colspan="${cols}">Loading leaderboard...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="${cols}">Loading ${type} leaderboard...</td></tr>`;
 
   try {
-    const res = await fetch(`/api/leaderboard/${type}`);
+    const res = await fetch(`/api/leaderboard/${type}?limit=100`, {
+      headers: await authHeaders()
+    });
     const data = await res.json();
 
-    headerRow.innerHTML = headers[type].map(h => `<th>${h}</th>`).join("");
+    headerRow.innerHTML = headers[type].map(h => `<th scope="col">${h}</th>`).join("");
     tbody.innerHTML = "";
 
     if (!data.entries?.length) {
@@ -63,6 +77,7 @@ async function loadLeaderboard(type) {
 
     data.entries.forEach((entry, index) => {
       const row = document.createElement("tr");
+      if (entry.is_self) row.classList.add('highlight-current-user');
 
       switch (type) {
         case "kingdoms":
@@ -109,14 +124,16 @@ async function loadLeaderboard(type) {
           `;
           break;
       }
+      row.addEventListener('click', () => openPreviewModal(entry));
 
       tbody.appendChild(row);
     });
 
     // Bind Apply Buttons if Alliance tab
-    if (type === "alliances") {
-      document.querySelectorAll(".apply-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
+    if (type === 'alliances') {
+      document.querySelectorAll('.apply-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
           const allianceId = btn.dataset.allianceId;
           const allianceName = btn.dataset.allianceName;
           openApplyModal(allianceId, allianceName);
@@ -173,6 +190,17 @@ function openApplyModal(allianceId, allianceName) {
   document.getElementById("close-application").addEventListener("click", () => {
     modal.classList.add("hidden");
   });
+}
+
+function openPreviewModal(entry) {
+  const modal = document.getElementById('preview-modal');
+  if (!modal) return;
+  const content = modal.querySelector('.modal-content');
+  content.textContent = entry.detail || 'No additional details';
+  modal.classList.remove('hidden');
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.classList.add('hidden');
+  }, { once: true });
 }
 
 // 🧼 Basic HTML escape
