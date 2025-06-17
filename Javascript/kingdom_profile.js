@@ -43,6 +43,10 @@ async function loadProfile() {
   const avatarEl = document.getElementById('profile-picture');
   const rulerEl = document.getElementById('ruler-name');
   const prestigeEl = document.getElementById('prestige');
+  const militaryEl = document.getElementById('military-score');
+  const economyEl = document.getElementById('economy-score');
+  const diplomacyEl = document.getElementById('diplomacy-score');
+  const villagesEl = document.getElementById('village-count');
 
   kNameEl.textContent = 'Loading...';
 
@@ -56,6 +60,14 @@ async function loadProfile() {
     rulerEl.textContent = data.ruler_name || '';
     avatarEl.src = data.profile_picture_url || 'Assets/avatars/default_avatar_emperor.png';
     prestigeEl.textContent = data.prestige ? `Prestige: ${data.prestige}` : '';
+    militaryEl.textContent = data.military_score != null ?
+      `Combat Score: ${data.military_score}` : '';
+    economyEl.textContent = data.economy_score != null ?
+      `Economy Score: ${data.economy_score}` : '';
+    diplomacyEl.textContent = data.diplomacy_score != null ?
+      `Diplomacy Score: ${data.diplomacy_score}` : '';
+    villagesEl.textContent = data.village_count != null ?
+      `Villages: ${data.village_count}` : '';
 
     if (!data.is_on_vacation && currentKingdomId !== targetKingdomId) {
       document.getElementById('spy-btn').classList.remove('hidden');

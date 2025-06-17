@@ -28,6 +28,7 @@ from backend.routers import resources
 from backend.routers import login_routes as announcements
 from backend.routers import region
 from backend.routers import progression_router
+from backend.routers import public_kingdom
 
 logging.basicConfig(level=logging.INFO)
 
@@ -73,6 +74,7 @@ app.include_router(resources.router)
 app.include_router(announcements.router)
 app.include_router(region.router)
 app.include_router(progression_router.router)
+app.include_router(public_kingdom.router)
 
 # Manual launch for `python main.py` use
 if __name__ == "__main__":  # pragma: no cover
