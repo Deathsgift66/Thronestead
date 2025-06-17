@@ -1,8 +1,8 @@
 /*
 Project Name: Thronestead©
 File Name: alliance_treaties.css
-Version 6.13.2025.19.49
-Developer: Deathsgift66
+Version 6.30.2025
+Developer: Codex
 */
 @import url("./root_theme.css");
 @import url("./base_styles.css");
@@ -113,10 +113,20 @@ body {
   padding: var(--padding-md);
   box-shadow: var(--box-shadow);
 }
+.treaty-card.proposed {
+  border-left: 5px solid #f39c12;
+}
+.treaty-card.active {
+  border-left: 5px solid #27ae60;
+}
+.treaty-card.cancelled {
+  border-left: 5px solid #7f8c8d;
+}
 
 .treaty-card h3 {
   margin-top: 0;
-  font-family: var(--font-header);
+  font-family: 'Cinzel', serif;
+  font-size: 1.25rem;
 }
 
 .treaty-actions {
