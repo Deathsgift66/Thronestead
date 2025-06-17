@@ -69,6 +69,17 @@ def get_village_buildings(
     return {"buildings": [dict(r) for r in rows]}
 
 
+# Alias route for compatibility with older clients
+@router.get("/by_village/{village_id}")
+def get_buildings_by_village(
+    village_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Backward compatible wrapper around get_village_buildings."""
+    return get_village_buildings(village_id=village_id, user_id=user_id, db=db)
+
+
 # -------------------------------
 # Begin construction of new building
 # -------------------------------
