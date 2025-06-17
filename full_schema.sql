@@ -624,6 +624,8 @@ CREATE TABLE public.kingdom_spies (
   spies_lost integer DEFAULT 0,
   missions_attempted integer DEFAULT 0,
   missions_successful integer DEFAULT 0,
+  daily_attacks_sent integer DEFAULT 0,
+  daily_attacks_received integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
   last_updated timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_spies_pkey PRIMARY KEY (kingdom_id),
