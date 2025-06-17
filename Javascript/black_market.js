@@ -68,7 +68,7 @@ async function initUserSession() {
 // ========== LISTINGS ==========
 async function loadListings() {
   try {
-    const res = await fetch('/api/black-market/listings', { headers: await authHeaders() });
+    const res = await fetch('/api/black_market/listings', { headers: await authHeaders() });
     const data = await res.json();
     listings = data.listings || [];
     renderListings();
@@ -97,19 +97,23 @@ function renderListings() {
     card.className = 'listing-card';
     const expiresIn = formatExpiry(listing.expires_at);
     card.innerHTML = `
-      <img src="Assets/1.png" alt="${escapeHTML(listing.item_name)}">
-      <strong>${escapeHTML(listing.item_name)}</strong><br>
-      ${listing.stock_remaining} in stock<br>
-      ${listing.price_per_unit} ${listing.currency_type}<br>
-      <small>${expiresIn}</small>
+      <h4>${escapeHTML(listing.item_name)}</h4>
+      <p>${escapeHTML(listing.description)}</p>
+      <p><strong>Price:</strong> ${listing.price_per_unit} ${listing.currency_type}</p>
+      <p><strong>Qty:</strong> ${listing.stock_remaining}</p>
+      <p><small>${expiresIn}</small></p>
+      <button class="btn">Buy</button>
     `;
-    card.addEventListener('click', () => openModal(listing));
+    card.querySelector('button').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openPurchaseModal(listing);
+    });
     grid.appendChild(card);
   });
 }
 
 // ========== PURCHASE ==========
-function openModal(listing) {
+function openPurchaseModal(listing) {
   currentListing = listing;
   document.getElementById('modalTitle').textContent = listing.item_name;
   document.getElementById('modalDesc').textContent = listing.description;
@@ -131,7 +135,7 @@ async function confirmPurchase() {
   if (!currentListing || !qty || qty < 1 || qty > currentListing.stock_remaining) return;
 
   try {
-    await fetch('/api/black-market/purchase', {
+    await fetch('/api/black_market/purchase', {
       method: 'POST',
       headers: {
         ...(await authHeaders()),
@@ -157,7 +161,7 @@ async function confirmPurchase() {
 // ========== HISTORY ==========
 async function loadHistory() {
   try {
-    const res = await fetch(`/api/black-market/history?kingdom_id=${kingdomId}`, { headers: await authHeaders() });
+    const res = await fetch(`/api/black_market/history?kingdom_id=${kingdomId}`, { headers: await authHeaders() });
     const data = await res.json();
     const container = document.getElementById('purchaseHistory');
     container.innerHTML = '';

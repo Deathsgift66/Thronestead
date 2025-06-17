@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market_v2"])
+alt_router = APIRouter(prefix="/api/black_market", tags=["black_market_v2"])
 
 # ---------------------------------------------
 # Pydantic Models
@@ -164,3 +165,6 @@ def get_history(
 
 # Backwards compatibility alias
 history = get_history
+
+# Expose same routes under underscore prefix
+alt_router.include_router(router)
