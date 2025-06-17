@@ -1,8 +1,8 @@
-// Project Name: Kingmakers Rise©
+// Project Name: Thronestead©
 // File Name: world_map.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
-// world_map.js — Tile-based world map engine for Kingmaker's Rise
+// world_map.js — Tile-based world map engine for Thronestead
 import { supabase } from './supabaseClient.js';
 
 let currentSession;

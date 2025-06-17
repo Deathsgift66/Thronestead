@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: progression_service.py
 # Version: 6.14.2025.20.30
 # Developer: Deathsgift66
@@ -14,7 +14,7 @@ from typing import Dict, Set
 from threading import Lock
 import logging
 
-logger = logging.getLogger("KingmakersRise.Progression")
+logger = logging.getLogger("Thronestead.Progression")
 
 # Global lock to ensure thread-safe updates when used in async tests
 _state_lock = Lock()

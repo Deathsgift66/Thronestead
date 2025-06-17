@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: resolver_full.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -12,7 +12,7 @@ from .vision import process_unit_vision
 
 from ..db import db
 
-logger = logging.getLogger("KingmakersRise.BattleEngine")
+logger = logging.getLogger("Thronestead.BattleEngine")
 
 
 def process_unit_combat(

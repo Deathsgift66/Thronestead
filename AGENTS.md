@@ -1,6 +1,6 @@
-# AGENTS Instructions for Kingmaker's Rise
+# AGENTS Instructions for Thronestead
 
-This repository contains the pre-alpha frontend and accompanying FastAPI backend of **Kingmaker's Rise**. Use the following steps and conventions when working in this code base.
+This repository contains the pre-alpha frontend and accompanying FastAPI backend of **Thronestead**. Use the following steps and conventions when working in this code base.
 
 ## Local Setup
 

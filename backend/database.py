@@ -1,11 +1,11 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: database.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
 This module configures the SQLAlchemy engine and session factory
-for database access in Kingmakers Rise©.
+for database access in Thronestead©.
 
 Used for real-time backend services, migrations, and test environments.
 """
@@ -21,7 +21,7 @@ from fastapi import Request
 from .pg_settings import inject_claims_as_pg_settings
 
 # Initialize logger
-logger = logging.getLogger("KingmakersRise.Database")
+logger = logging.getLogger("Thronestead.Database")
 
 # Load database URL from environment (e.g., Render, local .env, CI/CD)
 DATABASE_URL = os.getenv("DATABASE_URL")

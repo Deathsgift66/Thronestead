@@ -1,10 +1,10 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: __init__.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
-Battle system engine components for Kingmakers Rise©.
+Battle system engine components for Thronestead©.
 
 This package exposes all tactical combat mechanics, including:
 - Fog of War

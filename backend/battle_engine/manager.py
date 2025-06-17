@@ -1,10 +1,10 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: manager.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
-Manages all active wars and coordinates battle ticks in Kingmakers Rise©.
+Manages all active wars and coordinates battle ticks in Thronestead©.
 Used as the backend executor for hourly tick engines and live battle resolutions.
 """
 
@@ -14,7 +14,7 @@ import logging
 
 from .engine import BattleTickHandler, WarState
 
-logger = logging.getLogger("KingmakersRise.BattleManager")
+logger = logging.getLogger("Thronestead.BattleManager")
 
 
 class WarManager:

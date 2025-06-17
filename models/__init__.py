@@ -1,9 +1,9 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: __init__.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 """
-Kingmaker’s Rise: Progression Module
+Thronestead: Progression Module
 
 This package contains all models related to progression systems, including:
 - Castle Leveling

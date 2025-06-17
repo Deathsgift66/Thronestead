@@ -1,4 +1,4 @@
-// Project Name: Kingmakers Rise©
+// Project Name: Thronestead©
 // File Name: auth.js
 // Version 6.14.2025.20.45
 // Developer: Codex

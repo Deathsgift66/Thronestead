@@ -1,10 +1,10 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: engine.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
-Core engine logic for Kingmakers Rise© tactical battles.
+Core engine logic for Thronestead© tactical battles.
 Handles terrain generation, fog of war, unit modeling, and combat resolution.
 """
 

@@ -1,18 +1,18 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: data.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
 This module serves as a runtime in-memory state layer and lightweight cache
-for demo, simulation, and real-time performance buffers in Kingmakers Rise©.
+for demo, simulation, and real-time performance buffers in Thronestead©.
 """
 
 import logging
 from typing import Dict, List, Any
 
 # Set up logger for internal debugging
-logger = logging.getLogger("KingmakersRise.Data")
+logger = logging.getLogger("Thronestead.Data")
 
 # ---------------------------------------------------
 # ⚔️ Recruitable Units (Stub/demo units for simulation)

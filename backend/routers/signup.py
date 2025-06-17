@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: signup.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -140,7 +140,7 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
         db.add(
             Notification(
                 user_id=payload.user_id,
-                title="Welcome to Kingmaker’s Rise!",
+                title="Welcome to Thronestead!",
                 message="Your kingdom awaits.",
                 category="system",
             )
@@ -230,7 +230,7 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
         db.add(
             Notification(
                 user_id=uid,
-                title="Welcome to Kingmaker’s Rise!",
+                title="Welcome to Thronestead!",
                 message="Your kingdom awaits.",
                 category="system",
             )

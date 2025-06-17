@@ -1,4 +1,4 @@
-# ⚙️ Redis Caching for Kingmaker’s Rise
+# ⚙️ Redis Caching for Thronestead
 
 ## Use Cases
 - Modifier stacks per kingdom

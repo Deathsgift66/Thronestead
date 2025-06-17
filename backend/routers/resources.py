@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: resources.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -16,7 +16,7 @@ from services.resource_service import (
 )
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])
-logger = logging.getLogger("KingmakersRise.Resources")
+logger = logging.getLogger("Thronestead.Resources")
 
 # Expose shared constant from resource_service for field filtering
 

@@ -1,4 +1,4 @@
-# Kingmaker’s Rise Backend Requirements
+# Thronestead Backend Requirements
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
