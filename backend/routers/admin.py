@@ -35,6 +35,15 @@ class BulkAction(BaseModel):
     player_ids: list[str]
 
 
+class AlertFilters(BaseModel):
+    start: str | None = None
+    end: str | None = None
+    type: str | None = None
+    severity: str | None = None
+    kingdom: str | None = None
+    alliance: str | None = None
+
+
 # -------------------------
 # 🚨 Admin Action Routes
 # -------------------------
@@ -91,6 +100,39 @@ def player_action(
 ):
     log_action(db, admin_id, "admin_action", payload.alert_id or "manual_action")
     return {"message": "Action executed", "action": payload.alert_id}
+
+
+@router.post("/flag_ip")
+def flag_ip(
+    payload: dict,
+    admin_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    ip = payload.get("ip")
+    log_action(db, admin_id, "flag_ip", f"Flagged IP {ip}")
+    return {"message": "IP flagged", "ip": ip}
+
+
+@router.post("/suspend_user")
+def suspend_user(
+    payload: dict,
+    admin_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    uid = payload.get("user_id")
+    log_action(db, admin_id, "suspend_user", f"Suspended user {uid}")
+    return {"message": "User suspended", "user_id": uid}
+
+
+@router.post("/mark_alert_handled")
+def mark_alert_handled(
+    payload: dict,
+    admin_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    aid = payload.get("alert_id")
+    log_action(db, admin_id, "mark_alert", f"Handled alert {aid}")
+    return {"message": "Alert marked", "alert_id": aid}
 
 
 # -------------------------
@@ -194,3 +236,40 @@ def get_admin_alerts(
             alt_where=where_clause.replace("created_at", "signed_at"),
         ),
     }
+
+
+@router.post("/alerts")
+def query_account_alerts(
+    filters: AlertFilters,
+    admin_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return account alerts filtered by multiple fields."""
+
+    where_parts: list[str] = []
+    params: dict[str, str] = {}
+    if filters.start:
+        where_parts.append("timestamp >= :start")
+        params["start"] = filters.start
+    if filters.end:
+        where_parts.append("timestamp <= :end")
+        params["end"] = filters.end
+    if filters.type:
+        where_parts.append("alert_type = :type")
+        params["type"] = filters.type
+    if filters.severity:
+        where_parts.append("severity = :severity")
+        params["severity"] = filters.severity
+    if filters.kingdom:
+        where_parts.append("kingdom_id = :kingdom")
+        params["kingdom"] = filters.kingdom
+    if filters.alliance:
+        where_parts.append("alliance_id = :alliance")
+        params["alliance"] = filters.alliance
+
+    where = " WHERE " + " AND ".join(where_parts) if where_parts else ""
+    sql = text(
+        f"SELECT * FROM account_alerts{where} ORDER BY timestamp DESC LIMIT 100"
+    )
+    rows = db.execute(sql, params).fetchall()
+    return {"alerts": [dict(r._mapping) for r in rows]}
