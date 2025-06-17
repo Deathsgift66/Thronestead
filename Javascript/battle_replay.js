@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: battle_replay.js
-// Version 6.13.2025.19.49
+// Version 6.14.2025.20.30
 // Developer: Deathsgift66
 // Battle Replay module with timeline playback
 
@@ -11,10 +11,17 @@ const urlParams = new URLSearchParams(window.location.search);
 const warId = parseInt(urlParams.get('war_id'), 10) || 0;
 
 let replayData = null;
+let battleData = [];
 let currentTick = 0;
 let tickInterval = 1000;
 let playTimeline = null;
+let playbackInterval = null; // legacy interval fallback
 let playbackSpeed = 1;
+
+function togglePlayButtons(isPlaying) {
+  document.getElementById('play-btn').disabled = isPlaying;
+  document.getElementById('pause-btn').disabled = !isPlaying;
+}
 
 // ===============================
 // DOM READY
@@ -27,9 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  await loadReplayData();
+  await loadReplay();
   renderTick(0);
   displayOutcome();
+  togglePlayButtons(false);
 
   realtimeSub = supabase
     .channel(`replay_${warId}`)
@@ -48,11 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
     .subscribe();
 
-  document.getElementById('play-btn').addEventListener('click', animateTimeline);
-  document.getElementById('pause-btn').addEventListener('click', () => {
-    if (playTimeline) playTimeline.pause();
-  });
-  document.getElementById('reset-btn').addEventListener('click', resetReplay);
+  document.getElementById('play-btn').addEventListener('click', () => play(playbackSpeed));
+  document.getElementById('pause-btn').addEventListener('click', pause);
+  document.getElementById('reset-btn').addEventListener('click', reset);
   document.getElementById('replay-timeline').addEventListener('input', e => {
     currentTick = parseInt(e.target.value, 10);
     renderTick(currentTick);
@@ -72,7 +78,7 @@ window.addEventListener('beforeunload', () => {
 // ===============================
 // LOAD REPLAY DATA
 // ===============================
-export async function loadReplayData() {
+export async function loadReplay() {
   try {
     const headers = await authHeaders();
     const res = await fetch(`/api/battle/replay/${warId}`, { headers });
@@ -134,10 +140,10 @@ export function renderTick(tick) {
 // ===============================
 // PLAY THE TIMELINE
 // ===============================
-export function animateTimeline() {
+export function play(speed = playbackSpeed) {
   if (!replayData) return;
   if (playTimeline) playTimeline.kill();
-  playTimeline = gsap.timeline({ onComplete: () => { playTimeline = null; } });
+  playTimeline = gsap.timeline({ onComplete: () => { playTimeline = null; togglePlayButtons(false); } });
   for (let t = currentTick + 1; t <= replayData.total_ticks; t++) {
     playTimeline.to({}, {
       duration: tickInterval / 1000,
@@ -147,7 +153,14 @@ export function animateTimeline() {
       }
     });
   }
-  playTimeline.timeScale(playbackSpeed);
+  playTimeline.timeScale(speed);
+  togglePlayButtons(true);
+}
+
+export function pause() {
+  if (playTimeline) playTimeline.pause();
+  clearInterval(playbackInterval);
+  togglePlayButtons(false);
 }
 
 // ===============================
@@ -166,11 +179,12 @@ export function displayOutcome() {
 // ===============================
 // RESET REPLAY
 // ===============================
-export function resetReplay() {
+export function reset() {
   if (playTimeline) playTimeline.kill();
   playTimeline = null;
   currentTick = 0;
   renderTick(0);
   const fog = document.getElementById('fog-overlay');
   if (fog) fog.style.display = replayData?.fog_of_war ? 'block' : 'none';
+  togglePlayButtons(false);
 }
