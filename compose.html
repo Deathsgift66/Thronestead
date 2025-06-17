@@ -86,6 +86,9 @@ Developer: Deathsgift66
           <label for="msg-content">Message</label>
           <textarea id="msg-content" rows="6" required></textarea>
         </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="msg-anon" /> Send Anonymously</label>
+        </div>
         <div class="action-buttons">
           <button type="submit" class="btn-fantasy">📨 Send</button>
         </div>
@@ -100,6 +103,8 @@ Developer: Deathsgift66
         <div class="form-group"><label for="notice-message">Message</label><textarea id="notice-message" rows="6" required></textarea></div>
         <div class="form-group"><label for="notice-category">Category</label><input id="notice-category" /></div>
         <div class="form-group"><label for="notice-link">Link Action</label><input id="notice-link" /></div>
+        <div class="form-group"><label for="notice-image-url">Image URL</label><input id="notice-image-url" /></div>
+        <div class="form-group"><label for="notice-expires">Expires At</label><input id="notice-expires" type="datetime-local" /></div>
         <div class="action-buttons"><button type="submit" class="btn-fantasy">📢 Broadcast</button></div>
       </form>
       <div id="notice-preview" class="live-preview" aria-live="polite"></div>
@@ -109,7 +114,13 @@ Developer: Deathsgift66
     <section id="tab-treaty" class="tab-content" role="tabpanel">
       <form id="treaty-form">
         <div class="form-group"><label for="treaty-partner">Partner Alliance ID</label><input id="treaty-partner" required /></div>
-        <div class="form-group"><label for="treaty-type">Treaty Type</label><input id="treaty-type" required /></div>
+        <div class="form-group"><label for="treaty-type">Treaty Type</label>
+          <select id="treaty-type" required>
+            <option value="non_aggression">Non-Aggression</option>
+            <option value="trade_pact">Trade Pact</option>
+            <option value="mutual_defense">Mutual Defense</option>
+          </select>
+        </div>
         <div class="action-buttons"><button type="submit" class="btn-fantasy">🤝 Propose</button></div>
       </form>
       <div id="treaty-preview" class="live-preview" aria-live="polite"></div>
