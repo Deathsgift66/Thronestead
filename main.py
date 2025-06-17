@@ -29,6 +29,7 @@ from backend.routers import login_routes as announcements
 from backend.routers import region
 from backend.routers import progression_router
 from backend.routers import public_kingdom
+from backend.routers import black_market_routes
 
 logging.basicConfig(level=logging.INFO)
 
@@ -75,6 +76,8 @@ app.include_router(announcements.router)
 app.include_router(region.router)
 app.include_router(progression_router.router)
 app.include_router(public_kingdom.router)
+app.include_router(black_market_routes.router)
+app.include_router(black_market_routes.alt_router)
 
 # Manual launch for `python main.py` use
 if __name__ == "__main__":  # pragma: no cover
