@@ -4,7 +4,7 @@
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, conint
 from typing import List
 from datetime import datetime, timedelta
 
@@ -21,15 +21,15 @@ class Listing(BaseModel):
     item_key: str
     item_name: str
     description: str
-    quantity: int
+    quantity: conint(gt=0)
     price_per_unit: int
     currency_type: str
-    stock_remaining: int
+    stock_remaining: conint(ge=0)
     expires_at: datetime
 
 class PurchasePayload(BaseModel):
     listing_id: int
-    quantity: int
+    quantity: conint(gt=0)
     kingdom_id: str
 
 class Transaction(BaseModel):
@@ -144,6 +144,9 @@ def purchase_item(
         "kingdom_resources": kingdom_resources
     }
 
+# Backwards compatibility aliases
+purchase = purchase_item
+
 
 @router.get("/history")
 def get_history(
@@ -158,3 +161,6 @@ def get_history(
 
     history = [t.dict() for t in _transactions if t.kingdom_id == kingdom_id]
     return {"trades": history[-10:]}
+
+# Backwards compatibility alias
+history = get_history
