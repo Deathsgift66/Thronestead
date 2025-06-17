@@ -139,3 +139,58 @@ def test_list_conflict_overview_executes_query():
     assert result["wars"][0]["war_id"] == 1
     joined = " ".join(db.queries[0][0].lower().split())
     assert "from wars_tactical" in joined
+
+
+def test_list_all_conflicts_executes_query():
+    db = DummyDB()
+    db.rows = [
+        (
+            1,
+            "AllA",
+            "AllB",
+            "duel",
+            "2025-01-01",
+            "active",
+            900,
+            5,
+            4,
+            "attacker",
+        )
+    ]
+    result = conflicts.list_all_conflicts(db=db, user_id="u1")
+    assert result["wars"][0]["war_id"] == 1
+    assert db.queries
+
+
+def test_get_conflict_details_returns_row():
+    db = DummyDB()
+    db.rows = [
+        (
+            1,
+            "AllA",
+            "AllB",
+            "duel",
+            "2025-01-01",
+            "active",
+            900,
+            5,
+            4,
+            "attacker",
+        )
+    ]
+    result = conflicts.get_conflict_details(1, db=db, user_id="u1")
+    assert result["war"]["war_id"] == 1
+
+
+def test_search_conflicts_uses_param():
+    db = DummyDB()
+    db.rows = []
+    conflicts.search_conflicts(q="test", db=db, user_id="u1")
+    assert db.queries[0][1]["s"].startswith("%test")
+
+
+def test_filter_conflicts_binds_phase():
+    db = DummyDB()
+    db.rows = []
+    conflicts.filter_conflicts({"status": "active"}, db=db, user_id="u1")
+    assert db.queries[0][1]["phase"] == "active"

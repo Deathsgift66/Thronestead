@@ -140,3 +140,149 @@ def list_conflict_overview(
     ).fetchall()
 
     return {"wars": [dict(r._mapping) for r in rows]}
+
+
+# ----------------------------
+# New Endpoints for Conflict Tracker
+# ----------------------------
+
+@router.get("/all")
+def list_all_conflicts(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Return all wars with alliance names and metadata."""
+    rows = db.execute(
+        text(
+            """
+            SELECT w.war_id, a1.name AS alliance_a_name, a2.name AS alliance_b_name,
+                   w.war_type, w.start_date, wt.phase, wt.castle_hp, wt.battle_tick,
+                   ws.attacker_score, ws.defender_score, ws.victor
+            FROM wars w
+            JOIN wars_tactical wt ON w.war_id = wt.war_id
+            LEFT JOIN war_scores ws ON ws.war_id = wt.war_id
+            LEFT JOIN kingdoms k1 ON wt.attacker_kingdom_id = k1.kingdom_id
+            LEFT JOIN kingdoms k2 ON wt.defender_kingdom_id = k2.kingdom_id
+            LEFT JOIN alliances a1 ON k1.alliance_id = a1.alliance_id
+            LEFT JOIN alliances a2 ON k2.alliance_id = a2.alliance_id
+            ORDER BY w.start_date DESC
+            """
+        )
+    ).fetchall()
+
+    return {"wars": [dict(r._mapping) for r in rows]}
+
+
+@router.get("/{war_id}")
+def get_conflict_details(
+    war_id: int,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Fetch detailed information for a single war."""
+    row = db.execute(
+        text(
+            """
+            SELECT w.war_id, a1.name AS alliance_a_name, a2.name AS alliance_b_name,
+                   w.war_type, w.start_date, wt.phase, wt.castle_hp, wt.battle_tick,
+                   ws.attacker_score, ws.defender_score, ws.victor
+            FROM wars w
+            JOIN wars_tactical wt ON w.war_id = wt.war_id
+            LEFT JOIN war_scores ws ON ws.war_id = wt.war_id
+            LEFT JOIN kingdoms k1 ON wt.attacker_kingdom_id = k1.kingdom_id
+            LEFT JOIN kingdoms k2 ON wt.defender_kingdom_id = k2.kingdom_id
+            LEFT JOIN alliances a1 ON k1.alliance_id = a1.alliance_id
+            LEFT JOIN alliances a2 ON k2.alliance_id = a2.alliance_id
+            WHERE w.war_id = :wid
+            """
+        ),
+        {"wid": war_id},
+    ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="War not found")
+
+    logs = db.execute(
+        text(
+            """
+            SELECT tick_number, event_type, damage_dealt, notes
+            FROM combat_logs
+            WHERE war_id = :wid
+            ORDER BY tick_number
+            """
+        ),
+        {"wid": war_id},
+    ).fetchall()
+
+    return {
+        "war": dict(row._mapping),
+        "logs": [dict(l._mapping) for l in logs],
+    }
+
+
+@router.get("/search")
+def search_conflicts(
+    q: str,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Search conflicts by kingdom or alliance name."""
+    search = f"%{q.lower()}%"
+    rows = db.execute(
+        text(
+            """
+            SELECT w.war_id, a1.name AS alliance_a_name, a2.name AS alliance_b_name,
+                   w.war_type, w.start_date, wt.phase, wt.castle_hp, wt.battle_tick,
+                   ws.attacker_score, ws.defender_score, ws.victor
+            FROM wars w
+            JOIN wars_tactical wt ON w.war_id = wt.war_id
+            LEFT JOIN war_scores ws ON ws.war_id = wt.war_id
+            LEFT JOIN kingdoms k1 ON wt.attacker_kingdom_id = k1.kingdom_id
+            LEFT JOIN kingdoms k2 ON wt.defender_kingdom_id = k2.kingdom_id
+            LEFT JOIN alliances a1 ON k1.alliance_id = a1.alliance_id
+            LEFT JOIN alliances a2 ON k2.alliance_id = a2.alliance_id
+            WHERE lower(a1.name) LIKE :s
+               OR lower(a2.name) LIKE :s
+               OR lower(k1.kingdom_name) LIKE :s
+               OR lower(k2.kingdom_name) LIKE :s
+            ORDER BY w.start_date DESC
+            """
+        ),
+        {"s": search},
+    ).fetchall()
+
+    return {"wars": [dict(r._mapping) for r in rows]}
+
+
+@router.post("/filter")
+def filter_conflicts(
+    payload: dict,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Filter conflicts by phase status."""
+    phase = payload.get("status")
+    if phase not in {"active", "planning", "resolution", "concluded"}:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    rows = db.execute(
+        text(
+            """
+            SELECT w.war_id, a1.name AS alliance_a_name, a2.name AS alliance_b_name,
+                   w.war_type, w.start_date, wt.phase, wt.castle_hp, wt.battle_tick,
+                   ws.attacker_score, ws.defender_score, ws.victor
+            FROM wars w
+            JOIN wars_tactical wt ON w.war_id = wt.war_id
+            LEFT JOIN war_scores ws ON ws.war_id = wt.war_id
+            LEFT JOIN kingdoms k1 ON wt.attacker_kingdom_id = k1.kingdom_id
+            LEFT JOIN kingdoms k2 ON wt.defender_kingdom_id = k2.kingdom_id
+            LEFT JOIN alliances a1 ON k1.alliance_id = a1.alliance_id
+            LEFT JOIN alliances a2 ON k2.alliance_id = a2.alliance_id
+            WHERE wt.phase = :phase
+            ORDER BY w.start_date DESC
+            """
+        ),
+        {"phase": phase},
+    ).fetchall()
+
+    return {"wars": [dict(r._mapping) for r in rows]}
