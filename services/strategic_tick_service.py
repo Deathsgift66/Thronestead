@@ -11,6 +11,7 @@ try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 # Utility: Central Logging + Notifications
 # ------------------------------------------------------------
 
+
 def _log_unified(db: Session, event_type: str, details: str) -> None:
     """
     Writes a unified event log entry (if table is enabled).
@@ -34,7 +36,6 @@ def _log_unified(db: Session, event_type: str, details: str) -> None:
             text("INSERT INTO unified_logs (event_type, details) VALUES (:et, :de)"),
             {"et": event_type, "de": details},
         )
-        db.commit()
     except Exception as e:
         logger.debug("Unified log unavailable: %s", e)
 
@@ -45,19 +46,22 @@ def _notify_event(db: Session, event_type: str, ref_id: int, info: str = "") -> 
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO event_notification_log (event_type, reference_id, info)
                 VALUES (:et, :rid, :info)
-            """),
+            """
+            ),
             {"et": event_type, "rid": ref_id, "info": info},
         )
-        db.commit()
     except Exception as e:
         logger.debug("Event notification log unavailable: %s", e)
+
 
 # ------------------------------------------------------------
 # Core Tick Modules
 # ------------------------------------------------------------
+
 
 def update_project_progress(db: Session) -> int:
     """
@@ -67,11 +71,13 @@ def update_project_progress(db: Session) -> int:
         int: number of completed projects
     """
     result = db.execute(
-        text("""
+        text(
+            """
             UPDATE projects_alliance_in_progress
                SET status = 'completed', last_updated = now()
              WHERE status = 'building' AND expected_end <= now()
-        """)
+        """
+        )
     )
     db.commit()
     count = getattr(result, "rowcount", 0)
@@ -147,21 +153,22 @@ def activate_pending_wars(db: Session) -> int:
         int: number of wars activated
     """
     rows = db.execute(
-        text("""
-            SELECT war_id FROM wars
+        text(
+            """
+            UPDATE wars
+               SET status='active'
              WHERE status = 'pending' AND start_date <= now()
-        """)
+             RETURNING war_id
+        """
+        )
     ).fetchall()
+    db.commit()
     war_ids = [r[0] for r in rows]
 
+    for wid in war_ids:
+        _notify_event(db, "new_war", wid)
+
     if war_ids:
-        db.execute(
-            text("UPDATE wars SET status='active' WHERE war_id = ANY(:ids)"),
-            {"ids": war_ids},
-        )
-        db.commit()
-        for wid in war_ids:
-            _notify_event(db, "new_war", wid)
         _log_unified(db, "wars_activated", f"{len(war_ids)} wars activated")
 
     return len(war_ids)
@@ -190,9 +197,11 @@ def check_war_status(db: Session) -> int:
         _log_unified(db, "wars_concluded", f"{count} wars concluded")
     return count
 
+
 # ------------------------------------------------------------
 # Strategic Tick Executor
 # ------------------------------------------------------------
+
 
 def process_tick(db: Session) -> None:
     """
