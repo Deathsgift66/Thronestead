@@ -71,7 +71,7 @@ def launch_spy_mission(
         raise HTTPException(status_code=400, detail="mission_type is required")
 
     try:
-        spies_service.start_mission(db, kid)
+        spies_service.start_mission(db, kid, payload.target_id)
         mission_id = spies_service.create_spy_mission(db, kid, mtype, payload.target_id)
         return {"message": "Mission launched", "mission_id": mission_id}
     except ValueError as e:

@@ -11,7 +11,9 @@ from backend.models import (
     VillageModifier,
     KingdomVillage,
 )
-from backend.routers.spy import launch_spy_mission, LaunchPayload
+from backend.routers.spy import launch_spy_mission, LaunchPayload, DAILY_LIMIT
+from fastapi import HTTPException
+import pytest
 from services import spies_service
 
 
@@ -72,4 +74,41 @@ def test_spy_defense_modifies_success(monkeypatch):
     )
 
     assert res["success_pct"] < 50
+
+
+def test_daily_counters_increment(monkeypatch):
+    Session = setup_db()
+    db = Session()
+    seed_data(db)
+
+    monkeypatch.setattr(random, "random", lambda: 0.99)
+    monkeypatch.setattr(random, "randint", lambda a, b: a)
+
+    launch_spy_mission(
+        LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+        user_id="u1",
+        db=db,
+    )
+
+    atk = db.query(KingdomSpies).filter_by(kingdom_id=1).one()
+    tgt = db.query(KingdomSpies).filter_by(kingdom_id=2).one()
+
+    assert atk.daily_attacks_sent == 1
+    assert tgt.daily_attacks_received == 1
+
+
+def test_daily_limit_enforced(monkeypatch):
+    Session = setup_db()
+    db = Session()
+    seed_data(db)
+
+    db.query(KingdomSpies).filter_by(kingdom_id=1).update({"daily_attacks_sent": DAILY_LIMIT})
+    db.commit()
+
+    with pytest.raises(HTTPException):
+        launch_spy_mission(
+            LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+            user_id="u1",
+            db=db,
+        )
 

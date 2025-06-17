@@ -91,7 +91,11 @@ async function launchMission(e) {
         'Content-Type': 'application/json',
         'X-User-ID': currentUserId
       },
-      body: JSON.stringify({ target_id, mission_type, count })
+      body: JSON.stringify({
+        target_kingdom_name: name,
+        mission_type,
+        num_spies: count
+      })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Launch failed');
