@@ -5,6 +5,7 @@
 """Utilities for selecting combat targets and applying unit counters."""
 
 from typing import Any, Dict, List
+from functools import lru_cache
 
 # Database interface for counters
 from ..db import db
@@ -31,18 +32,22 @@ def select_target(unit: Dict[str, Any], enemies_in_range: List[Dict[str, Any]]) 
     return enemies_in_range[0]
 
 
+@lru_cache(maxsize=256)
 def get_counter_multiplier(attacker_type: str, defender_type: str) -> float:
-    """Return the counter effectiveness multiplier."""
+    """Return the counter effectiveness multiplier.
 
-    result = db.query(
+    Results are cached to avoid repeated database lookups during combat.
+    """
+
+    rows = db.query(
         """
         SELECT effectiveness_multiplier
         FROM unit_counters
         WHERE unit_type = %s AND countered_unit_type = %s
         """,
         (attacker_type, defender_type),
-    ).first()
+    )
 
-    if result:
-        return result["effectiveness_multiplier"]
+    if rows:
+        return float(rows[0].get("effectiveness_multiplier", 1.0))
     return 1.0

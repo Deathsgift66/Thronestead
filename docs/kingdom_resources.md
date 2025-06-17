@@ -90,6 +90,8 @@ operations:
 - `spend_resources(db, kingdom_id, cost)` deducts resources safely and raises
   an error if funds are insufficient.
 - `gain_resources(db, kingdom_id, gain)` credits new resources to the kingdom.
+- `get_kingdom_resources(db, kingdom_id, lock=False)` fetches the current
+  ledger. Pass ``lock=True`` to acquire a `FOR UPDATE` lock for atomic updates.
 
 Use these helpers when implementing features that modify `kingdom_resources` to
 ensure consistent logging and validation.

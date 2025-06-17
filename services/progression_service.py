@@ -77,8 +77,8 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
         if not result:
             return 0
 
-        base, buildings, tech, projects, events = result
-        return base + buildings + tech + projects + events
+        base, buildings, tech, projects, events, region_bonus = result
+        return base + buildings + tech + projects + events + region_bonus
 
     except SQLAlchemyError as exc:
         logger.warning("Failed to calculate troop slots: %s", exc)
@@ -91,20 +91,12 @@ def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> No
     """
     try:
         row = db.execute(
-            text("""
-                SELECT base_slots, slots_from_buildings, slots_from_tech,
-                       slots_from_projects, slots_from_events, used_slots
-                  FROM kingdom_troop_slots
-                 WHERE kingdom_id = :kid
-            """),
+            text("SELECT used_slots FROM kingdom_troop_slots WHERE kingdom_id = :kid"),
             {"kid": kingdom_id},
         ).fetchone()
 
-        if not row:
-            total, used = 0, 0
-        else:
-            base, bld, tech, proj, evt, used = row
-            total = base + bld + tech + proj + evt
+        used = row[0] if row else 0
+        total = calculate_troop_slots(db, kingdom_id)
 
         if used + troops_requested > total:
             raise HTTPException(status_code=400, detail="Not enough troop slots")
