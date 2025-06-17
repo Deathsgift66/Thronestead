@@ -20,7 +20,7 @@ from backend.models import (
     User,
 )
 
-router = APIRouter(prefix="/api/alliance-projects", tags=["alliance_projects"])
+router = APIRouter(prefix="/api/alliance/projects", tags=["alliance_projects"])
 
 
 # ---------- SCHEMA DEFINITIONS ----------
@@ -88,7 +88,7 @@ def get_available_projects(alliance_id: int, user_id: str = Depends(verify_jwt_t
     return {"projects": [{col: getattr(r, col) for col in r.__table__.columns.keys()} for r in eligible]}
 
 
-@router.get("/in-progress")
+@router.get("/in_progress")
 def get_in_progress_projects(alliance_id: int, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return projects currently under construction."""
     expire_old_projects(db)
@@ -99,7 +99,7 @@ def get_in_progress_projects(alliance_id: int, user_id: str = Depends(verify_jwt
     return {"projects": [{col: getattr(r, col) for col in r.__table__.columns.keys()} for r in rows]}
 
 
-@router.get("/built")
+@router.get("/completed")
 def get_built_projects(alliance_id: int, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return completed alliance projects."""
     user = db.query(User).filter_by(user_id=user_id).first()
@@ -181,9 +181,9 @@ def contribute_to_project(payload: ContributionPayload, user_id: str = Depends(v
     return {"status": "ok"}
 
 
-@router.get("/leaderboard")
-def project_leaderboard(project_key: str, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
-    """Show leaderboard for a given project by contribution amount."""
+@router.get("/contributions")
+def project_contributions(project_key: str, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    """Return contribution totals for a given project."""
     user = db.query(User).filter_by(user_id=user_id).first()
     if not user or not user.alliance_id:
         raise HTTPException(status_code=403, detail="Not authorized")
@@ -198,4 +198,4 @@ def project_leaderboard(project_key: str, user_id: str = Depends(verify_jwt_toke
         .order_by(func.sum(ProjectAllianceContribution.amount).desc())
         .all()
     )
-    return {"leaderboard": [{"player_name": r.name, "total": r.total} for r in rows]}
+    return {"contributions": [{"player_name": r.name, "amount": r.total} for r in rows]}

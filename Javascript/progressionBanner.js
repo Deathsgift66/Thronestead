@@ -28,6 +28,9 @@ export function renderProgressionBanner(target = 'body') {
     <span><strong>👑 Nobles:</strong> ${prog.availableNobles}/${prog.totalNobles}</span>
     <span><strong>🛡️ Knights:</strong> ${prog.availableKnights}/${prog.totalKnights}</span>
     <span><strong>⚔️ Troops:</strong> ${prog.troopSlots.used}/${prog.troopSlots.used + prog.troopSlots.available}</span>
+    ${prog.allianceLevel ? `<span><strong>🤝 Alliance:</strong> Lv ${prog.allianceLevel}</span>` : ''}
+    ${prog.projectMilestones ? `<span><strong>🏗️ Milestones:</strong> ${prog.projectMilestones}</span>` : ''}
+    ${prog.unlockRequirements ? `<span><strong>🔓 Unlocks:</strong> ${prog.unlockRequirements}</span>` : ''}
   `;
 }
 
