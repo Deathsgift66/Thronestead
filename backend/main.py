@@ -10,6 +10,7 @@ Loads routers, initializes the DB schema, and serves static frontend content.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .auth_middleware import UserStateMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import logging
@@ -51,6 +52,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(UserStateMiddleware)
 
 # -----------------------
 # 🗃️ Ensure Database Tables Exist

@@ -16,6 +16,7 @@ Routers:
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from backend.auth_middleware import UserStateMiddleware
 import logging
 import os
 
@@ -64,6 +65,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(UserStateMiddleware)
 
 # Register all route modules
 # Each router already defines its API prefix and tags.
