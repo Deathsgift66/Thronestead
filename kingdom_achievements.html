@@ -60,7 +60,10 @@ Developer: Deathsgift66
     <p>Track accomplishments and rewards earned by your kingdom over time.</p>
 
     <!-- Summary Block -->
-    <section id="progress-summary" aria-label="Achievement Progress Summary"></section>
+    <section id="progress-summary" class="progress-summary" aria-label="Achievement Progress Summary">
+      <p><strong>🏅 Achievements Unlocked:</strong> <span id="achieved-count">0</span> / <span id="total-count">0</span></p>
+      <progress id="achievement-progress" max="100" value="0"></progress>
+    </section>
 
     <!-- Filters -->
     <section id="filter-toolbar" class="filter-toolbar" aria-label="Achievement Filters"></section>
