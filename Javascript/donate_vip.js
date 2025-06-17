@@ -5,6 +5,28 @@
 import { supabase } from "./supabaseClient.js";
 import { escapeHTML } from './utils.js';
 import { authHeaders } from './auth.js';
+
+// Static VIP tier definitions used by the donate page
+const VIP_TIERS = [
+  {
+    tier_id: 1,
+    name: 'VIP 1',
+    price_usd: 3.99,
+    perks: ['Gold username', 'VIP chat badge', 'Custom troop names']
+  },
+  {
+    tier_id: 2,
+    name: 'VIP 2',
+    price_usd: 5.99,
+    perks: [
+      'All VIP1 perks',
+      'Custom troop image',
+      'VIP vault skin',
+      'Founder badge if subscribed 6+ months'
+    ]
+  }
+];
+
 let vipTiers = [];
 let vipChannel = null;
 
@@ -18,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  await Promise.all([loadVIPStatus(), loadVIPTiers(), loadLeaderboard()]);
+  await Promise.all([loadPlayerVIPStatus(), loadVIPTiers(), loadLeaderboard()]);
   setupRealtimeChannel();
   bindDonationForm();
 });
@@ -42,7 +64,7 @@ function setupRealtimeChannel() {
 // ------------------------------
 // VIP Status Renderer
 // ------------------------------
-export async function loadVIPStatus() {
+export async function loadPlayerVIPStatus() {
   try {
     const res = await fetch("/api/vip/status", {
       headers: await authHeaders()
@@ -55,22 +77,26 @@ export async function loadVIPStatus() {
   }
 }
 
+// Backwards compatibility export
+export { loadPlayerVIPStatus as loadVIPStatus };
+
 function renderStatus(status) {
-  const banner = document.getElementById("current-status-banner");
-  const founder = document.getElementById("founder-preview");
+  const banner = document.getElementById('current-status-banner');
+  const badge = document.getElementById('founder-preview');
 
   if (!banner) return;
 
-  if (status.founder) {
-    founder.hidden = false;
-    founder.textContent = "Founder Perk Active";
-    banner.textContent = "Founder VIP - Permanent";
-  } else if (status.vip_level) {
-    banner.innerHTML = `VIP ${status.vip_level} - expires in <span id="vip-timer"></span>`;
-    renderTimer(status.expires_at);
+  if (status.vip_level) {
+    banner.innerHTML = `\u{1F396}\uFE0F Your Status: <strong>VIP ${status.vip_level}</strong> \u2014 Active until ${new Date(status.expires_at).toLocaleDateString()}`;
   } else {
-    founder.hidden = true;
-    banner.textContent = "No active VIP status";
+    banner.innerHTML = `\u{1F9D9} You are not currently a VIP.`;
+  }
+
+  if (status.founder) {
+    badge.innerHTML = `\u{1F451} Founder Badge Active`;
+    badge.hidden = false;
+  } else {
+    badge.hidden = true;
   }
 }
 
@@ -78,18 +104,8 @@ function renderStatus(status) {
 // VIP Tier Loader and Renderer
 // ------------------------------
 export async function loadVIPTiers() {
-  try {
-    const res = await fetch("/api/vip/tiers", {
-      headers: await authHeaders()
-    });
-    if (!res.ok) throw new Error("Failed to fetch tiers");
-    const { tiers } = await res.json();
-    vipTiers = tiers || [];
-    renderTiers(vipTiers);
-  } catch (err) {
-    console.warn("No tiers found", err);
-    vipTiers = [];
-  }
+  vipTiers = VIP_TIERS;
+  renderTiers(vipTiers);
 }
 
 function renderTiers(tiers) {
@@ -97,21 +113,23 @@ function renderTiers(tiers) {
   if (!container) return;
   container.innerHTML = "";
 
-  tiers.forEach(t => {
-    const card = document.createElement("div");
-    card.className = "vip-tier-card";
+  tiers.forEach(tier => {
+    const card = document.createElement('div');
+    card.className = 'vip-card';
     card.innerHTML = `
-      <h3>${escapeHTML(t.tier_name)}</h3>
-      <div class="vip-price">${t.price_gold} gold</div>
-      <button class="vip-button" data-tier="${t.tier_id}">Donate</button>
+      <h3>${escapeHTML(tier.name)}</h3>
+      <p>$${tier.price_usd.toFixed(2)} / month</p>
+      <ul>${tier.perks.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul>
+      <button onclick="selectTier(${tier.tier_id})" class="vip-button">Select</button>
     `;
-    card.querySelector("button").addEventListener("click", () => {
-      document.getElementById("selected-tier-id").value = t.tier_id;
-      document.getElementById("donation-form").hidden = false;
-      renderPerks(t);
-    });
     container.appendChild(card);
   });
+}
+
+// Triggered when a tier card is selected
+export function selectTier(tierId) {
+  document.getElementById('selected-tier-id').value = tierId;
+  document.getElementById('donation-form').hidden = false;
 }
 
 // ------------------------------
@@ -131,7 +149,7 @@ function bindDonationForm() {
 
 export async function submitVIPDonation(tier_id) {
   try {
-    const res = await fetch("/api/vip/donate", {
+    const res = await fetch("/api/vip/activate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -143,7 +161,7 @@ export async function submitVIPDonation(tier_id) {
     const result = await res.json();
     if (!res.ok) throw new Error(result.detail || "Donation failed");
 
-    await loadVIPStatus();
+    await loadPlayerVIPStatus();
     document.getElementById("donation-form").hidden = true;
     alert("VIP status updated!");
   } catch (err) {
@@ -191,7 +209,7 @@ export async function loadLeaderboard() {
   table.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
 
   try {
-    const res = await fetch("/api/vip/leaders", {
+    const res = await fetch("/api/vip/leaderboard", {
       headers: await authHeaders()
     });
     const { leaders = [] } = await res.json();
