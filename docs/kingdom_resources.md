@@ -80,3 +80,16 @@ Alliance taxes withdraw from this table and deposit into `alliance_vault`. Trade
 * Use `SELECT ... FOR UPDATE` when performing critical resource updates to avoid race conditions.
 * Prevent negative values in application logic or with check constraints.
 * Consider logging transactions in a separate `kingdom_resource_transaction_log` table for auditing.
+
+### Programmatic Updates
+
+The backend exposes helper functions in
+[`services/resource_service.py`](../services/resource_service.py) for common
+operations:
+
+- `spend_resources(db, kingdom_id, cost)` deducts resources safely and raises
+  an error if funds are insufficient.
+- `gain_resources(db, kingdom_id, gain)` credits new resources to the kingdom.
+
+Use these helpers when implementing features that modify `kingdom_resources` to
+ensure consistent logging and validation.
