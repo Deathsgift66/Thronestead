@@ -156,7 +156,7 @@ def activate_pending_wars(db: Session) -> int:
 
     if war_ids:
         db.execute(
-            text("UPDATE wars SET status = 'active' WHERE war_id = ANY(:ids)"),
+            text("UPDATE wars SET status='active' WHERE war_id = ANY(:ids)"),
             {"ids": war_ids},
         )
         db.commit()
@@ -175,18 +175,14 @@ def check_war_status(db: Session) -> int:
         int: number of wars concluded
     """
     res_k = db.execute(
-        text("""
-            UPDATE wars
-               SET status = 'concluded'
-             WHERE status = 'active' AND end_date < now()
-        """)
+        text(
+            "UPDATE wars SET status='concluded' WHERE status = 'active' AND end_date < now()"
+        )
     )
     res_a = db.execute(
-        text("""
-            UPDATE alliance_wars
-               SET war_status = 'concluded'
-             WHERE war_status = 'active' AND end_date < now()
-        """)
+        text(
+            "UPDATE alliance_wars SET war_status='concluded' WHERE war_status = 'active' AND end_date < now()"
+        )
     )
     db.commit()
     count = (getattr(res_k, "rowcount", 0) or 0) + (getattr(res_a, "rowcount", 0) or 0)
