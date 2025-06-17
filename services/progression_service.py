@@ -295,11 +295,9 @@ def _vip_modifiers(_: Session, kingdom_id: int) -> dict:
 
 
 def _prestige_modifiers(_: Session, kingdom_id: int) -> dict:
-    """Return modifiers based on prestige score."""
-    score = prestige_scores.get(str(kingdom_id), 0)
-    if not score:
-        return {}
-    return {"combat_bonus": {"prestige": score // 100}}
+    """Return an empty modifier set since prestige no longer affects combat."""
+    _ = prestige_scores.get(str(kingdom_id), 0)
+    return {}
 
 
 def _village_modifiers(db: Session, kingdom_id: int) -> dict:
