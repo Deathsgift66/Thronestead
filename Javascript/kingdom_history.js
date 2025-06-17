@@ -52,16 +52,16 @@ async function loadFullHistory(headers) {
 }
 
 function renderTimeline(events) {
-  const el = document.getElementById('timeline');
-  el.innerHTML = '';
+  const timeline = document.getElementById('timeline');
+  timeline.innerHTML = '';
   if (!events.length) {
-    el.innerHTML = '<li>No events found.</li>';
+    timeline.innerHTML = '<li>No events found.</li>';
     return;
   }
-  events.forEach(ev => {
+  events.forEach(event => {
     const li = document.createElement('li');
-    li.textContent = `[${formatDate(ev.event_date)}] ${ev.event_details}`;
-    el.appendChild(li);
+    li.innerHTML = `<strong>${formatDate(event.event_date)}</strong>: ${escapeHTML(event.event_details)}`;
+    timeline.appendChild(li);
   });
 }
 
@@ -87,19 +87,17 @@ function renderLog(containerId, entries, formatter) {
   }
   entries.forEach(entry => {
     const li = document.createElement('li');
-    li.textContent = formatter(entry);
+    li.innerHTML = formatter(entry);
     container.appendChild(li);
   });
 }
 
 function bindCollapsibles() {
-  document.querySelectorAll('.collapsible').forEach(section => {
-    const header = section.querySelector('h3');
-    if (!header) return;
+  document.querySelectorAll('.collapsible h3').forEach(header => {
     header.addEventListener('click', () => {
-      section.classList.toggle('open');
+      header.parentElement.classList.toggle('open');
       const chevron = header.querySelector('.chevron');
-      if (chevron) chevron.textContent = section.classList.contains('open') ? '▼' : '▶';
+      chevron.textContent = header.parentElement.classList.contains('open') ? '▼' : '▶';
     });
   });
 }
@@ -123,7 +121,7 @@ function subscribeToRealtime() {
 
 function addTimelineEntry(entry) {
   const li = document.createElement('li');
-  li.textContent = `[${formatDate(entry.event_date)}] ${entry.event_details}`;
+  li.innerHTML = `<strong>${formatDate(entry.event_date)}</strong>: ${escapeHTML(entry.event_details)}`;
   document.getElementById('timeline').prepend(li);
 }
 
