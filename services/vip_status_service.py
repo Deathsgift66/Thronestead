@@ -9,6 +9,11 @@ from datetime import datetime
 import logging
 
 try:
+    from backend.data import vip_levels
+except Exception:  # pragma: no cover - when backend.data not available
+    vip_levels = {}
+
+try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
@@ -65,6 +70,7 @@ def upsert_vip_status(
         )
         db.commit()
         logger.info("Upserted VIP level %s for user %s", vip_level, user_id)
+        vip_levels[str(user_id)] = vip_level
 
     except SQLAlchemyError:
         db.rollback()
@@ -93,8 +99,10 @@ def get_vip_status(db: Session, user_id: str) -> dict | None:
         ).fetchone()
 
         if not row:
+            vip_levels.pop(str(user_id), None)
             return None
 
+        vip_levels[str(user_id)] = row[0]
         return {
             "vip_level": row[0],
             "expires_at": row[1],
