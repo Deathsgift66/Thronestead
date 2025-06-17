@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML, debounce } from './utils.js';
+import { escapeHTML, debounce, jsonFetch } from './utils.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadPoliciesAndLaws();
@@ -30,14 +30,13 @@ async function loadPoliciesAndLaws() {
       'Content-Type': 'application/json'
     };
 
-    const userRes = await fetch('/api/policies-laws/user', { headers });
-    const userData = await userRes.json();
+    const [userData, { entries: catalogData }] = await Promise.all([
+      jsonFetch('/api/policies-laws/user', { headers }),
+      jsonFetch('/api/policies-laws/catalogue', { headers })
+    ]);
 
     const activePolicy = userData.active_policy;
     const activeLaws = userData.active_laws || [];
-
-    const catRes = await fetch('/api/policies-laws/catalogue', { headers });
-    const { entries: catalogData } = await catRes.json();
 
     const policies = catalogData.filter(e => e.type === "policy");
     const laws = catalogData.filter(e => e.type === "law");
@@ -49,7 +48,7 @@ async function loadPoliciesAndLaws() {
     for (const policy of policies) {
       const card = document.createElement("div");
       card.className = "policy-card";
-      if (policy.id === activePolicy) card.classList.add("active-policy");
+      if (policy.id === activePolicy) card.classList.add("policy-active");
 
       card.innerHTML = `
         <span class="glow"></span>
@@ -69,6 +68,7 @@ async function loadPoliciesAndLaws() {
       card.className = "law-card";
 
       const isActive = activeLaws.includes(law.id);
+      if (isActive) card.classList.add("law-active");
 
       card.innerHTML = `
         <span class="glow"></span>
@@ -88,12 +88,12 @@ async function loadPoliciesAndLaws() {
         const policyId = parseInt(btn.dataset.id);
         btn.disabled = true;
         try {
-          const res = await fetch('/api/policies-laws/policy', {
+          await jsonFetch('/api/policies-laws/policy', {
             method: 'POST',
             headers,
             body: JSON.stringify({ policy_id: policyId })
           });
-          if (!res.ok) throw new Error('Policy change failed');
+          
           alert("✅ Policy updated!");
           await loadPoliciesAndLaws();
         } catch (err) {
@@ -129,13 +129,11 @@ async function updateLawToggles(headers) {
     .map(t => parseInt(t.dataset.id));
 
   try {
-    const res = await fetch('/api/policies-laws/laws', {
+    await jsonFetch('/api/policies-laws/laws', {
       method: 'POST',
       headers,
       body: JSON.stringify({ law_ids: selected })
     });
-
-    if (!res.ok) throw new Error('Failed');
     alert("✅ Laws updated!");
     await loadPoliciesAndLaws();
   } catch (err) {
