@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: battle_live.js
-// Version 6.13.2025.19.49
+// Version 6.14.2025.21.00
 // Developer: Deathsgift66
 // Live Battle Viewer — fetches terrain, units and combat logs
 
@@ -45,16 +45,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   accessToken = session.access_token;
   userId = session.user.id;
-  await loadTerrain();
-  await loadUnits();
-  await loadCombatLogs();
-  await loadStatus();
-  await loadScoreboard();
+  await refreshBattle();
   subscribeScoreboard();
 
-  // Refresh unit positions periodically
-  setInterval(loadUnits, 10000);
-  setInterval(pollStatus, 5000);
+  // Auto refresh every 10 seconds
+  setInterval(refreshBattle, 10000);
 });
 
 window.addEventListener('beforeunload', () => {
@@ -162,9 +157,7 @@ function countdownTick() {
   document.getElementById('tick-timer').textContent = `${timer}s`;
   if (lastTick !== 0 && timer === tickInterval) {
     playTickSound();
-    loadUnits();
-    loadCombatLogs();
-    loadScoreboard();
+    refreshBattle();
   }
 }
 
@@ -190,9 +183,40 @@ export async function triggerNextTick() {
 // =============================================
 // RENDER FUNCTIONS
 // =============================================
-function refreshBattle() {
-  loadUnits();
-  loadCombatLogs();
+export async function refreshBattle() {
+  try {
+    const res = await fetch(`/api/battle/live?war_id=${warId}&since=${logsTick}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-User-ID': userId
+      }
+    });
+    const data = await res.json();
+    if (data.tile_map) {
+      mapWidth = data.map_width;
+      mapHeight = data.map_height;
+      renderBattleMap(data.tile_map);
+    }
+    if (data.units) renderUnits(data.units);
+    if (data.combat_logs) {
+      if (data.combat_logs.length) {
+        logsTick = data.combat_logs[data.combat_logs.length - 1].tick_number;
+      }
+      renderCombatLog(data.combat_logs);
+    }
+    if (data.weather) {
+      document.getElementById('weather').textContent = data.weather;
+      document.getElementById('phase').textContent = data.phase;
+      document.getElementById('castle-hp').textContent = data.castle_hp;
+      document.getElementById('score-a').textContent = data.attacker_score;
+      document.getElementById('score-b').textContent = data.defender_score;
+      lastTick = data.battle_tick;
+      tickInterval = data.tick_interval_seconds;
+    }
+    if (data.victor !== undefined) renderScoreboard(data);
+  } catch (err) {
+    console.error('Error refreshing battle', err);
+  }
 }
 let mapWidth = 60;
 let mapHeight = 20;
@@ -244,7 +268,7 @@ function renderUnits(units) {
     unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();
     const counter = UNIT_COUNTERS[unit.unit_type] || 'none';
     unitDiv.title = `HP: ${unit.hp ?? '?'}  Morale: ${unit.morale ?? '?'}%  Counters: ${counter}`;
-    unitDiv.addEventListener('click', () => openOrderPanel(unit));
+    unitDiv.addEventListener('click', () => showOrderPanel(unit));
     tile.appendChild(unitDiv);
     if (unit.morale !== undefined) {
       const morale = document.createElement('div');
@@ -320,7 +344,7 @@ function subscribeScoreboard() {
 // =============================================
 let activeUnit = null;
 
-function openOrderPanel(unit) {
+export function showOrderPanel(unit) {
   activeUnit = unit;
   document.getElementById('order-unit').textContent = unit.unit_type + ' #' + unit.movement_id;
   document.getElementById('order-x').value = unit.position_x;
@@ -345,7 +369,7 @@ async function submitOrders() {
         'Authorization': `Bearer ${accessToken}`,
         'X-User-ID': userId
       },
-      body: JSON.stringify({ movement_id: activeUnit.movement_id, position_x: x, position_y: y })
+      body: JSON.stringify({ war_id: warId, unit_id: activeUnit.movement_id, x, y })
     });
     closeOrderPanel();
     refreshBattle();
@@ -353,3 +377,9 @@ async function submitOrders() {
     console.error('Failed to submit orders', e);
   }
 }
+
+// Expose functions for inline handlers
+window.triggerNextTick = triggerNextTick;
+window.refreshBattle = refreshBattle;
+window.closeOrderPanel = closeOrderPanel;
+window.submitOrders = submitOrders;

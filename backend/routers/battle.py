@@ -513,3 +513,85 @@ def get_battle_summary(
         raise HTTPException(status_code=403, detail="not authorized")
 
     return _aggregate_war_summary(db, war_id)
+
+
+@router.get("/api/battle/live")
+def get_live_battle(
+    war_id: int,
+    since: int = 0,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
+    """Return aggregated live battle data."""
+
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        raise HTTPException(status_code=404, detail="war not found")
+
+    terrain = (
+        db.query(models.TerrainMap)
+        .filter(models.TerrainMap.war_id == war_id)
+        .first()
+    )
+    units = (
+        db.query(models.UnitMovement)
+        .filter(models.UnitMovement.war_id == war_id)
+        .all()
+    )
+    logs = (
+        db.query(models.CombatLog)
+        .filter(models.CombatLog.war_id == war_id)
+        .filter(models.CombatLog.tick_number > since)
+        .order_by(models.CombatLog.tick_number, models.CombatLog.combat_id)
+        .all()
+    )
+    score = (
+        db.query(models.WarScore)
+        .filter(models.WarScore.war_id == war_id)
+        .first()
+    )
+
+    return {
+        "war_id": war.war_id,
+        "phase": war.phase,
+        "weather": war.weather,
+        "battle_tick": war.battle_tick,
+        "tick_interval_seconds": war.tick_interval_seconds,
+        "castle_hp": war.castle_hp,
+        "fog_of_war": war.fog_of_war,
+        "attacker_score": score.attacker_score if score else war.attacker_score,
+        "defender_score": score.defender_score if score else war.defender_score,
+        "victor": score.victor if score else None,
+        "tile_map": terrain.tile_map if terrain else [],
+        "map_width": terrain.map_width if terrain else 60,
+        "map_height": terrain.map_height if terrain else 20,
+        "units": [
+            {
+                "movement_id": u.movement_id,
+                "kingdom_id": u.kingdom_id,
+                "unit_type": u.unit_type,
+                "quantity": u.quantity,
+                "position_x": u.position_x,
+                "position_y": u.position_y,
+                "morale": float(u.morale) if u.morale is not None else None,
+            }
+            for u in units
+        ],
+        "combat_logs": [
+            {
+                "tick_number": log.tick_number,
+                "event_type": log.event_type,
+                "attacker_unit_id": log.attacker_unit_id,
+                "defender_unit_id": log.defender_unit_id,
+                "position_x": log.position_x,
+                "position_y": log.position_y,
+                "damage_dealt": log.damage_dealt,
+                "notes": log.notes,
+            }
+            for log in logs
+        ],
+    }
