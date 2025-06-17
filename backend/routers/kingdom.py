@@ -250,3 +250,109 @@ def train_troop(payload: TrainPayload):
     state["queue"].append({"unit_name": unit["name"], "quantity": payload.quantity})
 
     return {"message": "Training queued", "unit_id": payload.unit_id}
+
+
+class KingdomUpdatePayload(BaseModel):
+    ruler_name: str | None = None
+    ruler_title: str | None = None
+    kingdom_name: str | None = None
+    motto: str | None = None
+    description: str | None = None
+    religion: str | None = None
+    region: str | None = None
+    banner_url: str | None = None
+    emblem_url: str | None = None
+
+
+@router.get("/profile")
+def kingdom_profile(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    """Return editable kingdom profile data for the authenticated user."""
+    row = db.execute(
+        text(
+            """
+            SELECT kingdom_id, ruler_name, ruler_title, kingdom_name,
+                   motto, description, region, banner_url,
+                   emblem_url, is_on_vacation
+            FROM kingdoms WHERE user_id = :uid
+            """
+        ),
+        {"uid": user_id},
+    ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Kingdom not found")
+
+    rel = db.execute(
+        text("SELECT religion_name FROM kingdom_religion WHERE kingdom_id = :kid"),
+        {"kid": row[0]},
+    ).fetchone()
+
+    return {
+        "ruler_name": row[1],
+        "ruler_title": row[2],
+        "kingdom_name": row[3],
+        "motto": row[4],
+        "description": row[5],
+        "region": row[6],
+        "banner_url": row[7],
+        "emblem_url": row[8],
+        "on_vacation": row[9],
+        "religion": rel[0] if rel else None,
+    }
+
+
+@router.post("/update")
+def update_kingdom_profile(
+    payload: KingdomUpdatePayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Update kingdom profile fields for the authenticated user."""
+    row = db.execute(
+        text("SELECT kingdom_id FROM kingdoms WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Kingdom not found")
+
+    kid = row[0]
+
+    updates = []
+    params = {"kid": kid}
+    field_map = {
+        "ruler_name": "ruler_name",
+        "ruler_title": "ruler_title",
+        "kingdom_name": "kingdom_name",
+        "motto": "motto",
+        "description": "description",
+        "region": "region",
+        "banner_url": "banner_url",
+        "emblem_url": "emblem_url",
+    }
+
+    for attr, column in field_map.items():
+        value = getattr(payload, attr)
+        if value is not None:
+            updates.append(f"{column} = :{attr}")
+            params[attr] = value
+
+    if updates:
+        q = f"UPDATE kingdoms SET {', '.join(updates)} WHERE kingdom_id = :kid"
+        db.execute(text(q), params)
+
+    if payload.religion is not None:
+        db.execute(
+            text(
+                """
+                INSERT INTO kingdom_religion (kingdom_id, religion_name)
+                VALUES (:kid, :religion)
+                ON CONFLICT (kingdom_id)
+                DO UPDATE SET religion_name = EXCLUDED.religion_name
+                """
+            ),
+            {"kid": kid, "religion": payload.religion},
+        )
+
+    db.commit()
+    return {"message": "updated"}
