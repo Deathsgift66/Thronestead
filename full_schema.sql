@@ -291,6 +291,7 @@ CREATE TABLE public.alliance_wars (
 );
 CREATE INDEX idx_alliance_wars_attacker ON public.alliance_wars (attacker_alliance_id);
 CREATE INDEX idx_alliance_wars_defender ON public.alliance_wars (defender_alliance_id);
+CREATE INDEX idx_alliance_wars_status ON public.alliance_wars (war_status);
 CREATE TABLE public.alliances (
   alliance_id integer NOT NULL DEFAULT nextval('alliances_alliance_id_seq'::regclass),
   name text NOT NULL,
@@ -900,6 +901,9 @@ CREATE TABLE public.project_alliance_contributions (
   CONSTRAINT project_alliance_contributions_project_key_fkey FOREIGN KEY (project_key) REFERENCES public.project_alliance_catalogue(project_key),
   CONSTRAINT project_alliance_contributions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
+CREATE INDEX idx_proj_all_contrib_alliance ON public.project_alliance_contributions (alliance_id);
+CREATE INDEX idx_proj_all_contrib_project ON public.project_alliance_contributions (project_key);
+CREATE INDEX idx_proj_all_contrib_user ON public.project_alliance_contributions (user_id);
 CREATE TABLE public.project_modifiers (
   source_type text NOT NULL CHECK (source_type = ANY (ARRAY['project'::text, 'catalogue'::text])),
   source_id text NOT NULL,
@@ -984,6 +988,8 @@ CREATE TABLE public.projects_alliance (
   CONSTRAINT projects_alliance_built_by_fkey FOREIGN KEY (built_by) REFERENCES public.users(user_id),
   CONSTRAINT projects_alliance_project_key_fkey FOREIGN KEY (project_key) REFERENCES public.project_alliance_catalogue(project_key)
 );
+CREATE INDEX idx_projects_alliance_aid ON public.projects_alliance (alliance_id);
+CREATE INDEX idx_projects_alliance_state ON public.projects_alliance (build_state);
 CREATE TABLE public.projects_alliance_in_progress (
   progress_id integer NOT NULL DEFAULT nextval('projects_alliance_in_progress_progress_id_seq'::regclass),
   alliance_id integer,
@@ -997,6 +1003,8 @@ CREATE TABLE public.projects_alliance_in_progress (
   CONSTRAINT projects_alliance_in_progress_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT projects_alliance_in_progress_built_by_fkey FOREIGN KEY (built_by) REFERENCES public.users(user_id)
 );
+CREATE INDEX idx_proj_alliance_progress_aid ON public.projects_alliance_in_progress (alliance_id);
+CREATE INDEX idx_proj_alliance_progress_status ON public.projects_alliance_in_progress (status);
 CREATE TABLE public.projects_player (
   project_id integer NOT NULL DEFAULT nextval('projects_player_project_id_seq'::regclass),
   kingdom_id integer,
@@ -1041,6 +1049,9 @@ CREATE TABLE public.quest_alliance_contributions (
   CONSTRAINT quest_alliance_contributions_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_alliance_catalogue(quest_code),
   CONSTRAINT quest_alliance_contributions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
+CREATE INDEX idx_quest_all_contrib_aid ON public.quest_alliance_contributions (alliance_id);
+CREATE INDEX idx_quest_all_contrib_qcode ON public.quest_alliance_contributions (quest_code);
+CREATE INDEX idx_quest_all_contrib_user ON public.quest_alliance_contributions (user_id);
 CREATE TABLE public.quest_alliance_tracking (
   alliance_id integer NOT NULL,
   quest_code text NOT NULL,
@@ -1056,6 +1067,8 @@ CREATE TABLE public.quest_alliance_tracking (
   CONSTRAINT quest_alliance_tracking_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT quest_alliance_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_alliance_catalogue(quest_code)
 );
+CREATE INDEX idx_quest_all_track_aid ON public.quest_alliance_tracking (alliance_id);
+CREATE INDEX idx_quest_all_track_status ON public.quest_alliance_tracking (status);
 CREATE TABLE public.quest_kingdom_catalogue (
   quest_code text NOT NULL,
   name text NOT NULL,
