@@ -1029,6 +1029,23 @@ class NotificationMetadata(Base):
     value = Column(Text)
 
 
+class AllianceNotice(Base):
+    """Notices shared within alliances or globally."""
+
+    __tablename__ = "alliance_notices"
+
+    notice_id = Column(Integer, primary_key=True)
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"))
+    title = Column(Text, nullable=False)
+    message = Column(Text, nullable=False)
+    category = Column(Text)
+    link_action = Column(Text)
+    image_url = Column(Text)
+    expires_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+
+
 class BlackMarketListing(Base):
     """Active player listings on the Black Market."""
 

@@ -1632,3 +1632,20 @@ CREATE TABLE public.wars_tactical (
 );
 CREATE INDEX idx_wars_tactical_attacker ON public.wars_tactical (attacker_kingdom_id);
 CREATE INDEX idx_wars_tactical_defender ON public.wars_tactical (defender_kingdom_id);
+
+CREATE TABLE public.alliance_notices (
+  notice_id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+  alliance_id integer,
+  title text NOT NULL,
+  message text NOT NULL,
+  category text,
+  link_action text,
+  image_url text,
+  expires_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  created_by uuid,
+  CONSTRAINT alliance_notices_pkey PRIMARY KEY (notice_id),
+  CONSTRAINT alliance_notices_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id) ON DELETE CASCADE,
+  CONSTRAINT alliance_notices_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(user_id)
+);
+CREATE INDEX idx_alliance_notices_alliance_id ON public.alliance_notices (alliance_id);
