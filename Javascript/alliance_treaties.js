@@ -1,192 +1,132 @@
 // Project Name: Thronestead©
 // File Name: alliance_treaties.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.30.2025
+// Developer: Codex
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
-let TREATY_INFO = {};
-let AVAILABLE_TYPES = [];
+// -------------------- Initialization --------------------
 
-let treatyChannel;
-
-document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Logout
-  document.getElementById("logout-btn")?.addEventListener("click", async () => {
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('logout-btn')?.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    window.location.href = "index.html";
+    window.location.href = 'index.html';
   });
 
-  await loadTreatyTypes();
-  await loadTreatyTabs();
-
-  // ✅ Realtime Treaty Sync
-  treatyChannel = supabase
-    .channel('public:alliance_treaties')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'alliance_treaties'
-    }, loadTreatyTabs)
-    .subscribe();
-
-  // ✅ New Treaty Creation
-  document.getElementById("create-new-treaty")?.addEventListener("click", async () => {
-    const opts = AVAILABLE_TYPES.map(t => t.treaty_type).join(', ');
-    const treatyType = prompt(`Enter treaty type (${opts}):`);
-    const partnerId = prompt("Enter partner alliance ID:");
-    if (!treatyType || !partnerId) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch("/api/alliance-treaties/propose", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-User-ID": user.id },
-      body: JSON.stringify({
-        treaty_type: treatyType,
-        partner_alliance_id: parseInt(partnerId, 10)
-      })
-    });
-    const data = await res.json();
-    alert(data.status || "Proposal sent.");
-    await loadTreatyTabs();
-  });
-
-  // ✅ Modal close
+  loadTreaties();
+  document.getElementById('create-new-treaty')?.addEventListener('click', proposeTreaty);
   document.querySelector('.modal-close')?.addEventListener('click', closeModal);
   document.getElementById('treaty-modal')?.addEventListener('click', e => {
     if (e.target.id === 'treaty-modal') closeModal();
   });
-
-  window.addEventListener('beforeunload', () => {
-    if (treatyChannel) supabase.removeChannel(treatyChannel);
-  });
 });
 
-// ✅ Close modal
+// -------------------- Treaty Feed --------------------
+
+async function loadTreaties() {
+  const container = document.getElementById('treaties-container');
+  container.innerHTML = '<p>Loading treaties...</p>';
+  try {
+    const res = await fetch('/api/alliance/treaties');
+    const treaties = await res.json();
+    if (!treaties.length) {
+      container.innerHTML = "<p class='empty-state'>No treaties found.</p>";
+      return;
+    }
+    container.innerHTML = treaties.map(t => renderTreatyCard(t)).join('');
+    bindCardActions();
+  } catch (err) {
+    console.error('Failed to load treaties:', err);
+    container.innerHTML = '<p>Failed to load treaties.</p>';
+  }
+}
+
+function renderTreatyCard(t) {
+  const type = (t.type || t.treaty_type || '').replaceAll('_', ' ').toUpperCase();
+  return `
+    <div class="treaty-card ${t.status}">
+      <h3>${escapeHTML(type)}</h3>
+      <p><strong>With:</strong> ${escapeHTML(t.partner_name)}</p>
+      <p><strong>Status:</strong> ${escapeHTML(t.status)}</p>
+      ${t.status === 'proposed' ? "<button class='respond-btn' data-id='" + t.treaty_id + "'>Respond</button>" : ''}
+      <button class="view-btn" data-id="${t.treaty_id}">View</button>
+    </div>
+  `;
+}
+
+function bindCardActions() {
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => openTreatyModal(btn.dataset.id));
+  });
+  document.querySelectorAll('.respond-btn').forEach(btn => {
+    btn.addEventListener('click', () => openTreatyModal(btn.dataset.id));
+  });
+}
+
+// -------------------- Modal --------------------
+
+function openTreatyModal(id) {
+  fetch(`/api/alliance/treaty/${id}`)
+    .then(res => res.json())
+    .then(t => {
+      const box = document.getElementById('treaty-details');
+      box.innerHTML = `
+        <h3>${escapeHTML(t.name)}</h3>
+        <p>Partner: ${escapeHTML(t.partner_name)}</p>
+        <p>Status: ${escapeHTML(t.status)}</p>
+        <p>Terms: ${escapeHTML(JSON.stringify(t.terms))}</p>
+        ${t.status === 'proposed' ? `
+          <button class="accept-btn" data-id="${t.id}">Accept</button>
+          <button class="reject-btn" data-id="${t.id}">Reject</button>
+        ` : ''}
+      `;
+      const modal = document.getElementById('treaty-modal');
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.querySelector('.accept-btn')?.addEventListener('click', () => respondToTreaty(t.id, 'accept'));
+      document.querySelector('.reject-btn')?.addEventListener('click', () => respondToTreaty(t.id, 'reject'));
+    })
+    .catch(err => console.error('Failed to load treaty:', err));
+}
+
 function closeModal() {
   const modal = document.getElementById('treaty-modal');
   modal.classList.add('hidden');
   modal.setAttribute('aria-hidden', 'true');
 }
 
-async function loadTreatyTypes() {
+// -------------------- Actions --------------------
+
+async function respondToTreaty(id, response) {
   try {
-    const res = await fetch('/api/alliance-treaties/types');
-    const { types = [] } = await res.json();
-    AVAILABLE_TYPES = types;
-    TREATY_INFO = {};
-    types.forEach(t => {
-      TREATY_INFO[t.treaty_type] = t.display_name || t.description || '';
-    });
-  } catch (err) {
-    console.error('❌ Failed to load treaty types:', err);
-  }
-}
-
-async function loadTreatyTabs() {
-  const container = document.getElementById("treaties-container");
-  container.innerHTML = "<p>Loading treaties...</p>";
-
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch("/api/alliance-treaties/my-treaties", {
-      headers: { "X-User-ID": user.id }
-    });
-    const { treaties = [] } = await res.json();
-    container.innerHTML = "";
-
-    if (!treaties.length) {
-      container.innerHTML = "<p>No treaties found.</p>";
-      return;
-    }
-
-    treaties.forEach(treaty => {
-      const card = document.createElement("div");
-      card.className = "treaty-card";
-      card.innerHTML = `
-        <h3>Treaty with ${escapeHTML(treaty.partner_alliance_id)}</h3>
-        <p>Type: <strong title="${escapeHTML(TREATY_INFO[treaty.treaty_type] || '')}">${escapeHTML(treaty.treaty_type)}</strong></p>
-        <p>Status: <strong>${escapeHTML(treaty.status)}</strong></p>
-        <div class="treaty-actions">
-          <button class="action-btn view-treaty-btn" data-treaty='${escapeHTML(JSON.stringify(treaty))}'>View</button>
-          ${treaty.status === 'proposed' ? `<button class="action-btn accept-btn" data-id="${treaty.treaty_id}">Accept</button>` : ''}
-          ${treaty.status !== 'cancelled' ? `<button class="action-btn cancel-btn" data-id="${treaty.treaty_id}">Cancel</button>` : ''}
-        </div>
-      `;
-      container.appendChild(card);
-    });
-
-    bindTreatyButtons();
-
-  } catch (err) {
-    console.error("❌ Error loading treaties:", err);
-    container.innerHTML = "<p>Failed to load treaties.</p>";
-  }
-}
-
-function bindTreatyButtons() {
-  document.querySelectorAll(".view-treaty-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const treaty = JSON.parse(btn.dataset.treaty);
-      await viewTreatyDetails(treaty);
-    });
-  });
-
-  document.querySelectorAll(".accept-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      respondToTreaty(parseInt(btn.dataset.id, 10), 'accept');
-    });
-  });
-
-  document.querySelectorAll(".cancel-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      respondToTreaty(parseInt(btn.dataset.id, 10), 'cancel');
-    });
-  });
-}
-
-// ✅ View single treaty modal
-async function viewTreatyDetails(treaty) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch(`/api/alliance-treaties/view/${treaty.treaty_id}`, {
-      headers: { 'X-User-ID': user.id }
-    });
-    const data = await res.json();
-
-    const details = document.getElementById('treaty-details');
-    details.innerHTML = `
-      <h3>Treaty with Alliance ${escapeHTML(data.partner_alliance_id)}</h3>
-      <p>Type: <strong title="${escapeHTML(TREATY_INFO[data.treaty_type] || '')}">${escapeHTML(data.treaty_type)}</strong></p>
-      <p>Status: <strong>${escapeHTML(data.status)}</strong></p>
-      <p>Signed: ${data.signed_at ? escapeHTML(data.signed_at) : 'Pending'}</p>
-    `;
-
-    const modal = document.getElementById('treaty-modal');
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden', 'false');
-    modal.querySelector('.modal-close')?.focus();
-  } catch (err) {
-    console.error("❌ Failed to view treaty:", err);
-    alert("Could not load treaty details.");
-  }
-}
-
-// ✅ Accept or Cancel Treaty
-async function respondToTreaty(treatyId, action) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch('/api/alliance-treaties/respond', {
+    await fetch('/api/alliance/treaties/respond', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
-      body: JSON.stringify({ treaty_id: treatyId, action })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ treaty_id: parseInt(id, 10), response })
     });
-    const result = await res.json();
-    alert(result.status || `Treaty ${action}ed.`);
-    await loadTreatyTabs();
+    closeModal();
+    loadTreaties();
   } catch (err) {
-    console.error(`❌ Treaty ${action} failed:`, err);
-    alert(`Failed to ${action} treaty.`);
+    console.error('Failed to respond:', err);
   }
 }
 
-// ✅ Safe text rendering
+async function proposeTreaty() {
+  const type = prompt('Enter treaty type (non_aggression_pact, defensive_pact, trade_pact, intelligence_sharing, research_collaboration):');
+  const partnerId = prompt('Enter partner alliance ID:');
+  if (!type || !partnerId) return;
+  try {
+    await fetch('/api/alliance/treaties/propose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        partner_alliance_id: parseInt(partnerId, 10),
+        treaty_type: type,
+        terms: { duration_days: 30, exclusive: true }
+      })
+    });
+    loadTreaties();
+  } catch (err) {
+    console.error('Failed to propose treaty:', err);
+  }
+}
