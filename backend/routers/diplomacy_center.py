@@ -41,6 +41,20 @@ class RespondPayload(BaseModel):
     response_action: str
 
 
+# New API payloads used by metrics/treaty endpoints
+class TreatyProposal(BaseModel):
+    proposer_id: int
+    partner_alliance_id: int
+    treaty_type: str
+    notes: str | None = None
+    end_date: str | None = None
+
+
+class TreatyResponse(BaseModel):
+    treaty_id: int
+    response: str
+
+
 # --------------------
 # Routes
 # --------------------
@@ -270,3 +284,139 @@ def war_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(g
         }
         for r in rows
     ]
+
+
+# --------------------
+# New API Routes
+# --------------------
+
+@router.get("/metrics/{alliance_id}")
+def metrics(alliance_id: int, db: Session = Depends(get_db)):
+    """Return basic diplomacy metrics for an alliance."""
+    diplomacy_score = db.execute(
+        text("SELECT diplomacy_score FROM alliances WHERE alliance_id = :aid"),
+        {"aid": alliance_id},
+    ).scalar() or 0
+
+    active_treaties = db.execute(
+        text(
+            "SELECT COUNT(*) FROM alliance_treaties "
+            "WHERE (alliance_id = :aid OR partner_alliance_id = :aid) "
+            "AND status = 'active'"
+        ),
+        {"aid": alliance_id},
+    ).scalar() or 0
+
+    ongoing_wars = db.execute(
+        text(
+            "SELECT COUNT(*) FROM alliance_wars "
+            "WHERE (attacker_alliance_id = :aid OR defender_alliance_id = :aid) "
+            "AND war_status = 'active'"
+        ),
+        {"aid": alliance_id},
+    ).scalar() or 0
+
+    return {
+        "diplomacy_score": diplomacy_score,
+        "active_treaties": active_treaties,
+        "ongoing_wars": ongoing_wars,
+    }
+
+
+@router.get("/treaties/{alliance_id}")
+def treaties(alliance_id: int, status: str | None = Query(None), db: Session = Depends(get_db)):
+    """Return treaties for the specified alliance."""
+    query = (
+        "SELECT t.treaty_id, t.treaty_type, "
+        "CASE WHEN t.alliance_id = :aid THEN t.partner_alliance_id ELSE t.alliance_id END AS partner_id, "
+        "t.status, t.signed_at, a.name AS partner_name "
+        "FROM alliance_treaties t "
+        "JOIN alliances a ON a.alliance_id = CASE WHEN t.alliance_id = :aid THEN t.partner_alliance_id ELSE t.alliance_id END "
+        "WHERE t.alliance_id = :aid OR t.partner_alliance_id = :aid"
+    )
+    if status:
+        query += " AND status = :st"
+    query += " ORDER BY signed_at DESC"
+    rows = db.execute(text(query), {"aid": alliance_id, "st": status}).fetchall()
+
+    return [
+        {
+            "treaty_id": r[0],
+            "treaty_type": r[1],
+            "partner_alliance_id": r[2],
+            "status": r[3],
+            "signed_at": r[4].isoformat() if r[4] else None,
+            "partner_name": r[5],
+        }
+        for r in rows
+    ]
+
+
+@router.post("/treaty/propose")
+def propose_treaty_api(payload: TreatyProposal, db: Session = Depends(get_db)):
+    """Insert a proposed treaty."""
+    columns = ["alliance_id", "partner_alliance_id", "treaty_type", "status"]
+    values = [":aid", ":pid", ":type", "'proposed'"]
+    params = {
+        "aid": payload.proposer_id,
+        "pid": payload.partner_alliance_id,
+        "type": payload.treaty_type,
+    }
+    if payload.notes is not None:
+        columns.append("notes")
+        values.append(":notes")
+        params["notes"] = payload.notes
+    if payload.end_date is not None:
+        columns.append("end_date")
+        values.append(":end")
+        params["end"] = payload.end_date
+
+    db.execute(
+        text(
+            f"INSERT INTO alliance_treaties ({', '.join(columns)}) "
+            f"VALUES ({', '.join(values)})"
+        ),
+        params,
+    )
+    db.commit()
+    return {"status": "proposed"}
+
+
+@router.patch("/treaty/respond")
+def respond_treaty_api(payload: TreatyResponse, db: Session = Depends(get_db)):
+    """Update treaty status based on a response."""
+    status_map = {"accept": "active", "decline": "cancelled"}
+    if payload.response not in status_map:
+        raise HTTPException(status_code=400, detail="Invalid response")
+
+    db.execute(
+        text(
+            "UPDATE alliance_treaties SET status = :st, signed_at = now() "
+            "WHERE treaty_id = :tid"
+        ),
+        {"st": status_map[payload.response], "tid": payload.treaty_id},
+    )
+    db.commit()
+    return {"status": status_map[payload.response]}
+
+
+@router.get("/treaty/{treaty_id}")
+def treaty_detail(treaty_id: int, db: Session = Depends(get_db)):
+    """Return details for a single treaty."""
+    row = db.execute(
+        text(
+            "SELECT alliance_id, partner_alliance_id, treaty_type, status, signed_at "
+            "FROM alliance_treaties WHERE treaty_id = :tid"
+        ),
+        {"tid": treaty_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Treaty not found")
+
+    return {
+        "alliance_id": row[0],
+        "partner_alliance_id": row[1],
+        "treaty_type": row[2],
+        "status": row[3],
+        "signed_at": row[4].isoformat() if row[4] else None,
+    }
