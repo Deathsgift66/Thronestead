@@ -33,18 +33,25 @@ async function loadAlerts() {
   container.innerHTML = '<p>Loading alerts...</p>';
 
   try {
-    const params = new URLSearchParams(getFilters());
-    const res = await fetch(`/api/admin/alerts?${params.toString()}`);
+    const res = await fetch('/api/admin/alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getFilters())
+    });
     const data = await res.json();
 
     container.innerHTML = '';
-    renderCategory(container, 'Moderation', data.moderation_notes);
-    renderCategory(container, 'War', data.recent_war_logs);
-    renderCategory(container, 'Diplomacy', data.treaty_activity);
-    renderCategory(container, 'Audit Log', data.audit);
-    renderCategory(container, 'Admin Actions', data.admin_actions);
-
-    attachActionHandlers(); // ⬅️ Re-bind action buttons after render
+    if (Array.isArray(data.alerts)) {
+      data.alerts.forEach(alert => renderAlertCard(container, alert));
+      bindNewActionHandlers();
+    } else {
+      renderCategory(container, 'Moderation', data.moderation_notes);
+      renderCategory(container, 'War', data.recent_war_logs);
+      renderCategory(container, 'Diplomacy', data.treaty_activity);
+      renderCategory(container, 'Audit Log', data.audit);
+      renderCategory(container, 'Admin Actions', data.admin_actions);
+      attachActionHandlers();
+    }
   } catch (err) {
     console.error('❌ Failed to load alerts:', err);
     container.innerHTML = '<p>Error loading alerts. Please try again later.</p>';
@@ -172,4 +179,47 @@ function formatItem(item) {
   if (item.action && item.details) return `${item.action} - ${item.details}`;
   if (item.note) return item.note;
   return JSON.stringify(item);
+}
+
+// =====================
+// 🆕 Simple card renderer
+// =====================
+function renderAlertCard(container, alert) {
+  const el = document.createElement('div');
+  el.className = `alert-card ${alert.severity || 'low'}`;
+  el.innerHTML = `
+    <strong>[${(alert.type || '').toUpperCase()}]</strong>
+    <p>${alert.message || ''}</p>
+    <span>Kingdom: ${alert.kingdom_id || '—'} | Alliance: ${alert.alliance_id || '—'} | ${new Date(alert.timestamp).toLocaleString()}</span>
+  `;
+  const actions = document.createElement('div');
+  actions.className = 'alert-actions';
+  actions.innerHTML = `
+    <button class="btn btn-small flag-ip" data-ip="${alert.ip || ''}">Flag IP</button>
+    <button class="btn btn-small suspend-account" data-uid="${alert.user_id || ''}">Suspend</button>
+    <button class="btn btn-small mark-reviewed" data-id="${alert.id}">Mark Reviewed</button>
+  `;
+  el.appendChild(actions);
+  container.appendChild(el);
+}
+
+function bindNewActionHandlers() {
+  document.querySelectorAll('.flag-ip').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await postAdminAction('/api/admin/flag_ip', { ip: btn.dataset.ip });
+      alert('✅ IP flagged.');
+    });
+  });
+  document.querySelectorAll('.suspend-account').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await postAdminAction('/api/admin/suspend_user', { user_id: btn.dataset.uid });
+      alert('✅ Account suspended.');
+    });
+  });
+  document.querySelectorAll('.mark-reviewed').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await postAdminAction('/api/admin/mark_alert_handled', { alert_id: btn.dataset.id });
+      btn.disabled = true;
+    });
+  });
 }

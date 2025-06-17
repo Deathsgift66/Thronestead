@@ -147,6 +147,28 @@ tr:nth-child(even) {
 .alert-item.severity-medium { border-left-color: var(--alert-blue); }
 .alert-item.severity-high { border-left-color: var(--alert-red); }
 
+/* New alert card styling */
+.alert-card {
+  border-left: 5px solid #2980b9;
+  background-color: #eef6ff;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 6px var(--shadow-base);
+  border-radius: 4px;
+}
+.alert-card.high {
+  border-left-color: #c0392b;
+  background-color: #fdd;
+}
+.alert-card.medium {
+  border-left-color: #f39c12;
+  background-color: #fff4e5;
+}
+.alert-card.low {
+  border-left-color: #2980b9;
+  background-color: #eef6ff;
+}
+
 @media (max-width: 768px) {
   .search-sort-controls {
     flex-direction: column;
