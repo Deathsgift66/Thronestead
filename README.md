@@ -57,6 +57,10 @@ the records created during onboarding.
 ✅ Final schema summary in [FINAL_SCHEMA_DOCUMENTATION.md](FINAL_SCHEMA_DOCUMENTATION.md)
 ✅ Noble houses documented in [docs/noble_houses.md](docs/noble_houses.md)
 
+✅ Game loops explained in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md#high-level-game-loops)
+✅ Resource helpers `spend_resources` and `gain_resources` in [services/resource_service.py](services/resource_service.py)
+✅ Strategic tick automation in [services/strategic_tick_service.py](services/strategic_tick_service.py)
+
 
 
 ---
