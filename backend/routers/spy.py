@@ -48,8 +48,8 @@ def launch_spy_mission(
 
     target_record = spies_service.get_spy_record(db, target.kingdom_id)
     if (
-        attacker_record.get("missions_attempted", 0) >= DAILY_LIMIT
-        or target_record.get("missions_attempted", 0) >= DAILY_LIMIT
+        attacker_record.get("daily_attacks_sent", 0) >= DAILY_LIMIT
+        or target_record.get("daily_attacks_received", 0) >= DAILY_LIMIT
     ):
         raise HTTPException(status_code=400, detail="Daily spy limit exceeded")
 
@@ -63,7 +63,7 @@ def launch_spy_mission(
     detection_pct = max(5.0, min(95.0, 100.0 - success_pct + defense_rating))
     accuracy_pct = min(100.0, success_pct + 10.0)
 
-    spies_service.start_mission(db, kingdom_id)
+    spies_service.start_mission(db, kingdom_id, target.kingdom_id)
     mission_id = spies_service.create_spy_mission(
         db, kingdom_id, payload.mission_type, target.kingdom_id
     )

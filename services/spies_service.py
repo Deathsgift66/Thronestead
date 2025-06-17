@@ -81,24 +81,40 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
 # Spy Mission Lifecycle
 # ------------------------------------------------------------
 
-def start_mission(db: Session, kingdom_id: int, cooldown: int = 3600) -> None:
-    """
-    Starts a spy mission and sets the cooldown timer.
+def start_mission(
+    db: Session,
+    kingdom_id: int,
+    target_id: Optional[int] = None,
+    cooldown: int = 3600,
+) -> None:
+    """Starts a spy mission, updating cooldown and daily counters."""
 
-    Args:
-        cooldown (int): seconds to wait before next mission
-    """
     db.execute(
-        text("""
+        text(
+            """
             UPDATE kingdom_spies
                SET last_mission_at = NOW(),
                    cooldown_seconds = :cool,
                    missions_attempted = missions_attempted + 1,
+                   daily_attacks_sent = daily_attacks_sent + 1,
                    last_updated = NOW()
              WHERE kingdom_id = :kid
-        """),
+            """
+        ),
         {"cool": cooldown, "kid": kingdom_id},
     )
+    if target_id is not None:
+        db.execute(
+            text(
+                """
+                UPDATE kingdom_spies
+                   SET daily_attacks_received = daily_attacks_received + 1,
+                       last_updated = NOW()
+                 WHERE kingdom_id = :tid
+                """
+            ),
+            {"tid": target_id},
+        )
     db.commit()
 
 
