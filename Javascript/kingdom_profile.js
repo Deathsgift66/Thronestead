@@ -1,41 +1,28 @@
 // Project Name: Thronestead©
 // File Name: kingdom_profile.js
-// Version 6.14.2025.21.12
-// Developer: Deathsgift66
+// Version 6.15.2025.22.00
+// Developer: Codex
 import { supabase } from './supabaseClient.js';
+import { authFetchJson } from './fetchJson.js';
 
 let targetKingdomId = null;
-let currentKingdomId = null;
+let currentSession = null;
+let lastAction = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  targetKingdomId = parseInt(urlParams.get('kingdom_id'), 10);
+  const params = new URLSearchParams(window.location.search);
+  targetKingdomId = parseInt(params.get('id') || params.get('kingdom_id'), 10);
   if (!targetKingdomId) {
     document.getElementById('profile-container').innerHTML = '<p>Invalid kingdom.</p>';
     return;
   }
 
-  await loadCurrentKingdomId();
+  const { data: { session } } = await supabase.auth.getSession();
+  currentSession = session;
+
   await loadProfile();
   setupSpyControls();
 });
-
-async function loadCurrentKingdomId() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const res = await fetch('/api/profile/overview', {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id
-      }
-    });
-    const data = await res.json();
-    currentKingdomId = data.user?.kingdom_id || null;
-  } catch (err) {
-    console.warn('Failed to load current kingdom id', err);
-  }
-}
 
 async function loadProfile() {
   const kNameEl = document.getElementById('kingdom-name');
@@ -51,25 +38,20 @@ async function loadProfile() {
   kNameEl.textContent = 'Loading...';
 
   try {
-    const res = await fetch(`/api/kingdoms/public/${targetKingdomId}`);
+    const res = await fetch(`/api/kingdom/profile?target_id=${targetKingdomId}`);
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Failed to load');
 
     kNameEl.textContent = data.kingdom_name || 'Unknown Kingdom';
-    mottoEl.textContent = data.motto || '';
+    mottoEl.textContent = data.motto ? `"${data.motto}"` : '';
     rulerEl.textContent = data.ruler_name || '';
     avatarEl.src = data.profile_picture_url || 'Assets/avatars/default_avatar_emperor.png';
     prestigeEl.textContent = data.prestige ? `Prestige: ${data.prestige}` : '';
-    militaryEl.textContent = data.military_score != null ?
-      `Combat Score: ${data.military_score}` : '';
-    economyEl.textContent = data.economy_score != null ?
-      `Economy Score: ${data.economy_score}` : '';
-    diplomacyEl.textContent = data.diplomacy_score != null ?
-      `Diplomacy Score: ${data.diplomacy_score}` : '';
-    villagesEl.textContent = data.village_count != null ?
-      `Villages: ${data.village_count}` : '';
+    militaryEl.textContent = `Military: ${data.military_score}`;
+    economyEl.textContent = `Economy: ${data.economy_score}`;
+    diplomacyEl.textContent = `Diplomacy: ${data.diplomacy_score}`;
+    villagesEl.textContent = `Villages: ${data.village_count}`;
 
-    if (!data.is_on_vacation && currentKingdomId !== targetKingdomId) {
+    if (currentSession && !data.is_self) {
       document.getElementById('spy-btn').classList.remove('hidden');
     }
   } catch (err) {
@@ -82,14 +64,69 @@ function setupSpyControls() {
   const btn = document.getElementById('spy-btn');
   const modal = document.getElementById('spy-modal');
   const closeBtn = document.getElementById('close-spy-modal');
+  const attackBtn = document.getElementById('attack-modal-btn');
 
-  if (btn) btn.addEventListener('click', () => modal.classList.remove('hidden'));
-  if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+  if (btn) {
+    btn.addEventListener('click', () => {
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+    });
+  }
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    });
+  }
 
   document.querySelectorAll('.spy-option').forEach(el => {
-    el.addEventListener('click', () => {
-      const mission = el.dataset.mission;
-      window.location.href = `spies.html?target_id=${targetKingdomId}&mission=${mission}`;
-    });
+    el.addEventListener('click', () => launchMission(el.dataset.mission));
   });
+
+  if (attackBtn) attackBtn.addEventListener('click', confirmAttack);
+}
+
+async function launchMission(missionType) {
+  if (!currentSession) return alert('Login required');
+  const now = Date.now();
+  if (now - lastAction < 5000) {
+    alert('Please wait before launching another mission.');
+    return;
+  }
+  lastAction = now;
+
+  try {
+    await authFetchJson('/api/espionage/launch', currentSession, {
+      method: 'POST',
+      body: JSON.stringify({
+        target_kingdom_id: targetKingdomId,
+        mission_type: missionType
+      })
+    });
+    alert(`Mission launched: ${missionType}`);
+  } catch (err) {
+    alert(`❌ Mission failed: ${err.message}`);
+  } finally {
+    document.getElementById('spy-modal').classList.add('hidden');
+    document.getElementById('spy-modal').setAttribute('aria-hidden', 'true');
+  }
+}
+
+async function confirmAttack() {
+  if (!currentSession) return alert('Login required');
+  if (!window.confirm('⚔️ Are you sure you want to attack this kingdom?')) return;
+
+  try {
+    const result = await authFetchJson('/api/battle/initiate', currentSession, {
+      method: 'POST',
+      body: JSON.stringify({ target_kingdom_id: targetKingdomId })
+    });
+    if (result.success && result.war_id) {
+      window.location.href = `/battle_live.html?war_id=${result.war_id}`;
+    } else {
+      alert(`❌ Attack failed: ${result.message || 'Unknown error'}`);
+    }
+  } catch (err) {
+    alert(`❌ Attack failed: ${err.message}`);
+  }
 }
