@@ -167,7 +167,8 @@ h2 {
 }
 
 /* Example active class - shown when modal is opened */
-.modal.active {
+.modal.active,
+.modal.visible {
   display: flex;
 }
 
