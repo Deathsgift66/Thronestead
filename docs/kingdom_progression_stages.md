@@ -1,6 +1,6 @@
 # Kingdom Progression Stages
 
-This document summarizes the staged progression design for Kingmaker's Rise. The features described here are implemented across the backend services and client pages. The progression system ensures that players unlock new mechanics at predictable milestones.
+This document summarizes the staged progression design for Thronestead. The features described here are implemented across the backend services and client pages. The progression system ensures that players unlock new mechanics at predictable milestones.
 
 ## Stage 1: Initial Kingdom Setup
 - **Account Creation** – Player starts with a level 1 castle, one village and one noble. Knights are not yet available.

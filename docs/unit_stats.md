@@ -1,6 +1,6 @@
 # public.unit_stats — Reference
 
-This table defines the core attributes and functional roles for every unit type in **Kingmaker's Rise**. Combat resolution, troop training and UI previews all read from here.
+This table defines the core attributes and functional roles for every unit type in **Thronestead**. Combat resolution, troop training and UI previews all read from here.
 
 ## Table Structure
 

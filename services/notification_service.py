@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: notification_service.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -23,7 +23,7 @@ try:
 except ImportError:  # pragma: no cover - fallback when realtime is unavailable
     def broadcast_notification(channel: str, target: str, message: str) -> None:
         """Fallback notifier when Supabase channels are missing."""
-        logging.getLogger("KingmakersRise.NotificationFallback").info(
+        logging.getLogger("Thronestead.NotificationFallback").info(
             "[Fallback] %s -> %s: %s", channel, target, message
         )
 

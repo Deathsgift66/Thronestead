@@ -1,6 +1,6 @@
 ## Postgres Table to HTML Reference
 
-This document maps key PostgreSQL tables and their important columns to the HTML pages in **Kingmaker's Rise** where those fields are displayed, updated, or otherwise used in page logic.
+This document maps key PostgreSQL tables and their important columns to the HTML pages in **Thronestead** where those fields are displayed, updated, or otherwise used in page logic.
 
 ### Table: `users`
 **Relevant Columns**: `user_id`, `username`, `display_name`, `kingdom_name`, `profile_picture_url`, `profile_bio`, `region`, `kingdom_id`, `alliance_id`, `alliance_role`, `is_admin`, `setup_complete`

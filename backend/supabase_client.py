@@ -1,10 +1,10 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: supabase_client.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
-Supabase client configuration for Kingmakers Rise©.
+Supabase client configuration for Thronestead©.
 
 Provides a shared connection instance to Supabase using the service role key.
 Used for server-side operations including authentication, data writes, and RLS-sensitive queries.

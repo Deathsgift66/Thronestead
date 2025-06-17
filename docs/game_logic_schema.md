@@ -1,6 +1,6 @@
 # Game Logic Schema
 
-This document outlines the major gameplay systems in **Kingmaker's Rise** and how they interact. It acts as a high-level blueprint for developers.
+This document outlines the major gameplay systems in **Thronestead** and how they interact. It acts as a high-level blueprint for developers.
 
 ## 1. Onboarding and Initial State
 - When a new player completes signup, records are inserted into multiple tables to set up their kingdom: `users`, `kingdoms`, `villages`, `kingdom_resources`, `kingdom_troop_slots` and `kingdom_nobles` among others. These steps are described in `docs/onboarding_setup.md`.

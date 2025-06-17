@@ -1,4 +1,4 @@
-// Project Name: Kingmakers Rise©
+// Project Name: Thronestead©
 // File Name: forgot_password.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66

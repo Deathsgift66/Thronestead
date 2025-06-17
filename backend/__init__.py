@@ -1,10 +1,10 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: __init__.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
-This __init__.py initializes the core backend package for Kingmakers Rise©.
+This __init__.py initializes the core backend package for Thronestead©.
 It sets up environment access, logging, Supabase integration, and utility loading.
 This file assumes FastAPI app structure, Supabase SDK, and environment-based configuration.
 """
@@ -30,7 +30,7 @@ load_dotenv(".ENV")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("KingmakersRise")
+logger = logging.getLogger("Thronestead")
 
 # Supabase configuration from environment variables
 SUPABASE_URL = os.getenv("SUPABASE_URL")

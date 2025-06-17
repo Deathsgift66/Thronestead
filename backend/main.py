@@ -1,10 +1,10 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: main.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
 """
-Main application entry point for the FastAPI server powering Kingmakers Rise©.
+Main application entry point for the FastAPI server powering Thronestead©.
 Loads routers, initializes the DB schema, and serves static frontend content.
 """
 
@@ -22,15 +22,15 @@ from .data import load_game_settings
 from . import routers as router_pkg
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
-logger = logging.getLogger("KingmakersRise.BackendMain")
+logger = logging.getLogger("Thronestead.BackendMain")
 
 # -----------------------
 # ⚙️ FastAPI Initialization
 # -----------------------
 app = FastAPI(
-    title="Kingmaker's Rise API",
+    title="Thronestead API",
     version="6.13.2025.19.49",
-    description="Backend for the Kingmakers Rise strategy MMO.",
+    description="Backend for the Thronestead strategy MMO.",
 )
 
 # -----------------------
@@ -89,4 +89,4 @@ app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 @app.get("/health-check")
 def health_check():
     """Simple endpoint used for uptime checks and load balancers."""
-    return {"status": "online", "service": "Kingmaker's Rise API"}
+    return {"status": "online", "service": "Thronestead API"}

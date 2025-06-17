@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: admin_audit_log.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -24,7 +24,7 @@ from .admin_dashboard import verify_admin
 from services.audit_service import fetch_filtered_logs, fetch_user_related_logs
 
 router = APIRouter(prefix="/api/admin/audit-log", tags=["admin_audit"])
-logger = logging.getLogger("KingmakersRise.AdminAudit")
+logger = logging.getLogger("Thronestead.AdminAudit")
 
 
 # -------------------------

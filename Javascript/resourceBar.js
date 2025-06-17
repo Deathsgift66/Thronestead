@@ -1,4 +1,4 @@
-// Project Name: Kingmakers Rise©
+// Project Name: Thronestead©
 // File Name: resourceBar.js
 // Version 6.15.2025.21.00
 // Developer: Deathsgift66

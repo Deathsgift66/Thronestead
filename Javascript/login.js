@@ -1,4 +1,4 @@
-// Project Name: Kingmakers Rise©
+// Project Name: Thronestead©
 // File Name: login.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
@@ -123,7 +123,7 @@ async function handleReset() {
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://www.kingmakersrise.com/update-password',
+      redirectTo: 'https://www.thronestead.com/update-password',
     });
 
     if (error) {

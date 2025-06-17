@@ -152,7 +152,7 @@ You can run these commands directly or simply execute:
 
 ## 📝 License
 
-Proprietary — Kingmaker’s Rise Project.  
+Proprietary — Thronestead Project.  
 All rights reserved.
 
 No public redistribution or derivative works without explicit permission.

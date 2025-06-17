@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: main.py
 # Version 6.14.2025.20.12
 # Developer: Deathsgift66
@@ -31,12 +31,12 @@ from backend.routers import progression_router
 
 logging.basicConfig(level=logging.INFO)
 
-logger = logging.getLogger("KingmakersRise.Main")
+logger = logging.getLogger("Thronestead.Main")
 
 app = FastAPI(
-    title="Kingmaker's Rise API",
+    title="Thronestead API",
     version="6.14.2025.20.12",
-    description="Backend services for Kingmaker's Rise — resource systems, announcements, region data, and progression.",
+    description="Backend services for Thronestead — resource systems, announcements, region data, and progression.",
 )
 
 

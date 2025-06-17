@@ -1,6 +1,6 @@
 # Page Access Gating
 
-This document summarizes the progression restrictions enforced across key pages and APIs of **Kingmaker's Rise**. Use it as a quick reference when testing progression-related features.
+This document summarizes the progression restrictions enforced across key pages and APIs of **Thronestead**. Use it as a quick reference when testing progression-related features.
 
 **Public Pages**: `index.html`, `signup.html`, `login.html`/`signin.html`, `legal.html` and its policy subpages. These do **not** require authentication. All other pages are protected by `authGuard.js`.
 

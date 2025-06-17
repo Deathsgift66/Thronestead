@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: security.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -18,7 +18,7 @@ from fastapi import Header, HTTPException
 from jose import jwt, JWTError
 
 import logging
-logger = logging.getLogger("KingmakersRise.Security")
+logger = logging.getLogger("Thronestead.Security")
 
 __all__ = ["verify_jwt_token", "require_user_id"]
 

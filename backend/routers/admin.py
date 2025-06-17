@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: admin.py
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -20,7 +20,7 @@ from backend.models import User
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
-logger = logging.getLogger("KingmakersRise.Admin")
+logger = logging.getLogger("Thronestead.Admin")
 
 # -------------------------
 # 🧾 Data Models

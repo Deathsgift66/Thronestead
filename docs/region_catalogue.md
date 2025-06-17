@@ -1,6 +1,6 @@
 # Region Catalogue
 
-This table defines all playable regions in **Kingmakers Rise**. It acts as a static lookup referenced by `kingdoms.region`.
+This table defines all playable regions in **Thronestead**. It acts as a static lookup referenced by `kingdoms.region`.
 
 | Column | Purpose |
 | --- | --- |

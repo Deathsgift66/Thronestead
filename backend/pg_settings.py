@@ -7,7 +7,7 @@ try:
 except Exception:  # pragma: no cover - fallback to python-jose
     from jose import jwt  # type: ignore
 
-logger = logging.getLogger("KingmakersRise.PGSettings")
+logger = logging.getLogger("Thronestead.PGSettings")
 
 
 def inject_claims_as_pg_settings(request: Request) -> dict[str, str]:

@@ -1,10 +1,10 @@
 # buildings_page_forge — Codex Module
 
-This command registers all database tables, frontend assets, API routes, and real-time logic required for the Buildings page in Kingmaker's Rise. Add it to the Codex configuration to fully enable building construction and upgrade functionality.
+This command registers all database tables, frontend assets, API routes, and real-time logic required for the Buildings page in Thronestead. Add it to the Codex configuration to fully enable building construction and upgrade functionality.
 
 ```python
 # CODENAME: buildings_page_forge
-# PURPOSE: Registers all tables, assets, and logic for full building functionality in Kingmaker’s Rise.
+# PURPOSE: Registers all tables, assets, and logic for full building functionality in Thronestead.
 # CONTEXT: Real-time, extensible, role-aware UI/UX and backend support for village buildings system.
 
 register_module("buildings", {
