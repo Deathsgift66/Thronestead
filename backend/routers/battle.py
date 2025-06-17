@@ -314,6 +314,96 @@ def battle_resolution(
     }
 
 
+@router.get("/api/battle/resolution")
+def battle_resolution_alt(
+    war_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token),
+):
+    """Return expanded resolution details."""
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        raise HTTPException(status_code=404, detail="war not found")
+
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="invalid user")
+    if (
+        user.kingdom_id not in [war.attacker_kingdom_id, war.defender_kingdom_id]
+        and not user.is_admin
+    ):
+        raise HTTPException(status_code=403, detail="not authorized")
+
+    res = (
+        db.query(models.BattleResolutionLog)
+        .filter(models.BattleResolutionLog.war_id == war_id)
+        .first()
+    )
+    if not res:
+        raise HTTPException(status_code=404, detail="resolution not found")
+
+    score = (
+        db.query(models.WarScore)
+        .filter(models.WarScore.war_id == war_id)
+        .first()
+    )
+
+    attacker = (
+        db.query(models.Kingdom)
+        .filter(models.Kingdom.kingdom_id == war.attacker_kingdom_id)
+        .all()
+    )
+    defender = (
+        db.query(models.Kingdom)
+        .filter(models.Kingdom.kingdom_id == war.defender_kingdom_id)
+        .all()
+    )
+
+    logs = (
+        db.query(models.CombatLog)
+        .filter(models.CombatLog.war_id == war_id)
+        .order_by(models.CombatLog.tick_number)
+        .all()
+    )
+    timeline = [
+        f"Tick {l.tick_number}: {l.notes or l.event_type}"
+        for l in logs
+    ]
+
+    victor_score = None
+    if score:
+        if res.winner_side == "attacker":
+            victor_score = score.attacker_score
+        elif res.winner_side == "defender":
+            victor_score = score.defender_score
+
+    return {
+        "war_id": war_id,
+        "winner": res.winner_side,
+        "victor_score": victor_score,
+        "duration_ticks": res.total_ticks,
+        "casualties": {
+            "attacker": {"total": res.attacker_casualties},
+            "defender": {"total": res.defender_casualties},
+        },
+        "loot": res.loot_summary or {},
+        "score_breakdown": {
+            "attacker_score": score.attacker_score if score else 0,
+            "defender_score": score.defender_score if score else 0,
+        } if score else {},
+        "timeline": timeline,
+        "stat_changes": {},
+        "participants": {
+            "attacker": [k.kingdom_name for k in attacker],
+            "defender": [k.kingdom_name for k in defender],
+        },
+    }
+
+
 @router.get("/api/battle/replay/{war_id}")
 @router.get("/api/battle-replay/{war_id}")
 def battle_replay(
