@@ -2,7 +2,7 @@
 # File Name: test_changelog_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from backend.routers import changelog
+from backend.routers import system_changelog
 
 class DummyTable:
     def __init__(self, data=None):
@@ -28,8 +28,11 @@ def test_returns_sorted_entries():
         {'version': '1.0.0', 'release_date': '2025-01-01', 'changes': ['init']},
         {'version': '1.1.0', 'release_date': '2025-02-01', 'changes': ['new']},
     ]
+    for row in entries:
+        row['title'] = 't'
     client = DummyClient({'game_changelog': entries})
-    changelog.get_supabase_client = lambda: client
-    result = changelog.get_changelog(user_id='u1')
-    assert result['entries'][0]['version'] == '1.1.0'
-    assert len(result['entries']) == 2
+    system_changelog.get_supabase_client = lambda: client
+    result = system_changelog.get_system_changelog()
+    assert result[0]['version'] == '1.1.0'
+    assert result[0]['title'] == 't'
+    assert len(result) == 2
