@@ -7,11 +7,23 @@ import { escapeHTML } from './utils.js';
 
 let treatyChannel = null;
 let userId = null;
+let allianceId = null;
 
 window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return (window.location.href = 'login.html');
   userId = session.user.id;
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('alliance_id')
+    .eq('user_id', userId)
+    .single();
+  if (error) {
+    console.error('Alliance lookup failed', error);
+    return;
+  }
+  allianceId = data.alliance_id;
 
   await loadSummary();
   await loadTreaties();
@@ -36,7 +48,7 @@ window.addEventListener('beforeunload', () => {
 // ✅ Summary Stats Loader
 async function loadSummary() {
   try {
-    const res = await fetch('/api/diplomacy/summary', { headers: { 'X-User-ID': userId } });
+    const res = await fetch(`/api/diplomacy/metrics/${allianceId}`);
     if (!res.ok) throw new Error('Failed to load summary');
     const data = await res.json();
     document.getElementById('diplomacy-score').textContent = data.diplomacy_score;
@@ -50,10 +62,11 @@ async function loadSummary() {
 // ✅ Treaty Table Loader
 async function loadTreaties() {
   const filter = document.getElementById('treaty-filter')?.value || '';
-  const url = filter ? `/api/diplomacy/treaties?filter=${filter}` : '/api/diplomacy/treaties';
+  const base = `/api/diplomacy/treaties/${allianceId}`;
+  const url = filter ? `${base}?status=${filter}` : base;
 
   try {
-    const res = await fetch(url, { headers: { 'X-User-ID': userId } });
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to load treaties');
     const data = await res.json();
     renderTreatyTable(data || []);
@@ -119,17 +132,17 @@ export async function proposeTreaty() {
   if (!session) return;
   try {
     const payload = {
-      treaty_type: document.getElementById('treaty-type').value,
+      proposer_id: allianceId,
       partner_alliance_id: document.getElementById('partner-alliance-id').value,
+      treaty_type: document.getElementById('treaty-type').value,
       notes: document.getElementById('treaty-notes').value,
       end_date: document.getElementById('treaty-end').value
     };
 
-    const res = await fetch('/api/diplomacy/propose_treaty', {
+    const res = await fetch('/api/diplomacy/treaty/propose', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-User-ID': session.user.id
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
@@ -152,18 +165,17 @@ async function respondTreaty(treatyId, action) {
 
   const endpoint = action === 'renew'
     ? '/api/diplomacy/renew_treaty'
-    : '/api/diplomacy/respond_treaty';
+    : '/api/diplomacy/treaty/respond';
 
   const payload = action === 'renew'
     ? { treaty_id: parseInt(treatyId, 10) }
-    : { treaty_id: parseInt(treatyId, 10), response_action: action };
+    : { treaty_id: parseInt(treatyId, 10), response: action };
 
   try {
     const res = await fetch(endpoint, {
-      method: 'POST',
+      method: action === 'renew' ? 'POST' : 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
-        'X-User-ID': session.user.id
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
