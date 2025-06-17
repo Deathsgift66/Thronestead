@@ -57,9 +57,10 @@ def launch_spy_mission(
         select(Kingdom.tech_level).where(Kingdom.kingdom_id == kingdom_id)
     ).scalar_one() or 1
     def_tech = target.tech_level or 1
-    base = 50 + (atk_tech - def_tech) * 5
+    defense_rating = spies_service.get_spy_defense(db, target.kingdom_id)
+    base = 50 + (atk_tech - def_tech) * 5 - defense_rating
     success_pct = max(5.0, min(95.0, float(base)))
-    detection_pct = max(5.0, min(95.0, 100.0 - success_pct))
+    detection_pct = max(5.0, min(95.0, 100.0 - success_pct + defense_rating))
     accuracy_pct = min(100.0, success_pct + 10.0)
 
     spies_service.start_mission(db, kingdom_id)

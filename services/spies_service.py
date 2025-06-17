@@ -140,6 +140,24 @@ def record_losses(db: Session, kingdom_id: int, loss: int) -> None:
     db.commit()
 
 # ------------------------------------------------------------
+# Spy Defense
+# ------------------------------------------------------------
+
+def get_spy_defense(db: Session, kingdom_id: int) -> int:
+    """Return the espionage defense rating for a kingdom."""
+    try:
+        row = db.execute(
+            text(
+                "SELECT defense_rating FROM spy_defense WHERE kingdom_id = :kid"
+            ),
+            {"kid": kingdom_id},
+        ).fetchone()
+        return int(row[0]) if row else 0
+    except SQLAlchemyError:
+        logger.exception("Failed to fetch spy defense for kingdom %d", kingdom_id)
+        return 0
+
+# ------------------------------------------------------------
 # Spy Missions Table
 # ------------------------------------------------------------
 
