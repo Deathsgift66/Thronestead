@@ -151,10 +151,12 @@ CREATE TABLE public.alliance_treaties (
   status text CHECK (status = ANY (ARRAY['proposed'::text, 'active'::text, 'cancelled'::text])),
   signed_at timestamp with time zone DEFAULT now(),
   CONSTRAINT alliance_treaties_pkey PRIMARY KEY (treaty_id),
-  CONSTRAINT alliance_treaties_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
-  CONSTRAINT alliance_treaties_partner_alliance_id_fkey FOREIGN KEY (partner_alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT alliance_treaties_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id) ON DELETE CASCADE,
+  CONSTRAINT alliance_treaties_partner_alliance_id_fkey FOREIGN KEY (partner_alliance_id) REFERENCES public.alliances(alliance_id) ON DELETE CASCADE,
   CONSTRAINT alliance_treaties_treaty_type_fkey FOREIGN KEY (treaty_type) REFERENCES public.treaty_type_catalogue(treaty_type)
 );
+CREATE INDEX idx_alliance_treaties_alliance_id ON public.alliance_treaties (alliance_id);
+CREATE INDEX idx_alliance_treaties_partner_id ON public.alliance_treaties (partner_alliance_id);
 CREATE TABLE public.alliance_vault (
   alliance_id integer NOT NULL,
   wood bigint DEFAULT 0,
@@ -259,9 +261,11 @@ CREATE TABLE public.alliance_war_preplans (
   start_tile_y integer,
   initial_orders text,
   CONSTRAINT alliance_war_preplans_pkey PRIMARY KEY (preplan_id),
-  CONSTRAINT alliance_war_preplans_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id),
-  CONSTRAINT alliance_war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+  CONSTRAINT alliance_war_preplans_alliance_war_id_fkey FOREIGN KEY (alliance_war_id) REFERENCES public.alliance_wars(alliance_war_id) ON DELETE CASCADE,
+  CONSTRAINT alliance_war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id) ON DELETE CASCADE
 );
+CREATE INDEX idx_alliance_war_preplans_war_id ON public.alliance_war_preplans (alliance_war_id);
+CREATE INDEX idx_alliance_war_preplans_pair ON public.alliance_war_preplans (alliance_war_id, kingdom_id);
 CREATE TABLE public.alliance_war_scores (
   alliance_war_id integer NOT NULL,
   attacker_score integer DEFAULT 0,
@@ -285,6 +289,8 @@ CREATE TABLE public.alliance_wars (
   CONSTRAINT alliance_wars_attacker_alliance_id_fkey FOREIGN KEY (attacker_alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_wars_defender_alliance_id_fkey FOREIGN KEY (defender_alliance_id) REFERENCES public.alliances(alliance_id)
 );
+CREATE INDEX idx_alliance_wars_attacker ON public.alliance_wars (attacker_alliance_id);
+CREATE INDEX idx_alliance_wars_defender ON public.alliance_wars (defender_alliance_id);
 CREATE TABLE public.alliances (
   alliance_id integer NOT NULL DEFAULT nextval('alliances_alliance_id_seq'::regclass),
   name text NOT NULL,
@@ -660,10 +666,12 @@ CREATE TABLE public.kingdom_treaties (
   status text CHECK (status = ANY (ARRAY['proposed'::text, 'active'::text, 'cancelled'::text])),
   signed_at timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_treaties_pkey PRIMARY KEY (treaty_id),
-  CONSTRAINT kingdom_treaties_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
-  CONSTRAINT kingdom_treaties_partner_kingdom_id_fkey FOREIGN KEY (partner_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_treaties_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id) ON DELETE CASCADE,
+  CONSTRAINT kingdom_treaties_partner_kingdom_id_fkey FOREIGN KEY (partner_kingdom_id) REFERENCES public.kingdoms(kingdom_id) ON DELETE CASCADE,
   CONSTRAINT kingdom_treaties_treaty_type_fkey FOREIGN KEY (treaty_type) REFERENCES public.treaty_type_catalogue(treaty_type)
 );
+CREATE INDEX idx_kingdom_treaties_kingdom_id ON public.kingdom_treaties (kingdom_id);
+CREATE INDEX idx_kingdom_treaties_partner_id ON public.kingdom_treaties (partner_kingdom_id);
 CREATE TABLE public.kingdom_troop_slots (
   kingdom_id integer NOT NULL,
   base_slots integer DEFAULT 20,
@@ -1534,10 +1542,12 @@ CREATE TABLE public.war_preplans (
   start_tile_y integer,
   initial_orders text,
   CONSTRAINT war_preplans_pkey PRIMARY KEY (preplan_id),
-  CONSTRAINT war_preplans_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id),
-  CONSTRAINT war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT war_preplans_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id) ON DELETE CASCADE,
+  CONSTRAINT war_preplans_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id) ON DELETE CASCADE,
   CONSTRAINT war_preplans_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id)
 );
+CREATE INDEX idx_war_preplans_war_id ON public.war_preplans (war_id);
+CREATE INDEX idx_war_preplans_pair ON public.war_preplans (war_id, kingdom_id);
 CREATE TABLE public.war_scores (
   war_id integer NOT NULL,
   attacker_score integer DEFAULT 0,
@@ -1574,6 +1584,8 @@ CREATE TABLE public.wars (
   CONSTRAINT wars_pkey PRIMARY KEY (war_id),
   CONSTRAINT wars_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id)
 );
+CREATE INDEX idx_wars_status ON public.wars (status);
+CREATE INDEX idx_wars_start_date ON public.wars (start_date);
 CREATE TABLE public.wars_tactical (
   war_id integer NOT NULL DEFAULT nextval('wars_tactical_war_id_seq'::regclass),
   attacker_kingdom_id integer,
@@ -1599,5 +1611,7 @@ CREATE TABLE public.wars_tactical (
   CONSTRAINT wars_tactical_defender_kingdom_id_fkey FOREIGN KEY (defender_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT wars_tactical_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id),
   CONSTRAINT wars_tactical_terrain_id_fkey FOREIGN KEY (terrain_id) REFERENCES public.terrain_map(terrain_id),
-  CONSTRAINT wars_tactical_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars(war_id)
+  CONSTRAINT wars_tactical_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars(war_id) ON DELETE CASCADE
 );
+CREATE INDEX idx_wars_tactical_attacker ON public.wars_tactical (attacker_kingdom_id);
+CREATE INDEX idx_wars_tactical_defender ON public.wars_tactical (defender_kingdom_id);
