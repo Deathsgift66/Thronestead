@@ -18,6 +18,21 @@ body {
   color: var(--ink);
 }
 
+/* Summary Bar */
+.admin-summary-bar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  gap: 1rem;
+  background: var(--parchment-light);
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+}
+.admin-summary-bar span {
+  font-weight: bold;
+}
+
 /* Layout Container */
 .main-container {
   flex: 1;
@@ -52,16 +67,16 @@ p {
 
 /* Stat Cards */
 .stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 .stat-card {
-  background: var(--parchment-dark);
-  border: 1px solid var(--leather);
-  border-radius: 8px;
+  flex: 1 1 200px;
+  background-color: #f7f0e2;
   padding: 1rem;
-  box-shadow: 2px 2px 6px var(--shadow);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   text-align: center;
   color: var(--ink);
 }
