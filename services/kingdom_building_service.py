@@ -37,11 +37,11 @@ def list_buildings(db: Session, village_id: int) -> list[dict]:
             """
             SELECT vb.building_id, vb.level, vb.construction_status,
                    vb.started_at, vb.completed_at,
-                   bc.name, bc.tier, bc.production_type, bc.modifiers
+                   bc.building_name, bc.category, bc.production_type, bc.modifiers
               FROM village_buildings vb
               JOIN building_catalogue bc ON vb.building_id = bc.building_id
              WHERE vb.village_id = :vid
-             ORDER BY bc.tier, bc.name
+             ORDER BY bc.category, bc.building_id
             """
         ),
         {"vid": village_id},
