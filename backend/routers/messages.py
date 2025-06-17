@@ -16,6 +16,8 @@ router = APIRouter(prefix="/api/messages", tags=["messages"])
 class MessagePayload(BaseModel):
     recipient: str
     content: str
+    subject: str | None = None
+    category: str | None = None
 
     _TAG_RE = re.compile(r"<[^>]+>")
 
@@ -26,6 +28,13 @@ class MessagePayload(BaseModel):
         if len(cleaned) > 5000:
             raise ValueError("Message too long")
         return cleaned.strip()
+
+    @validator("subject")
+    def sanitize_subject(cls, v: str | None) -> str | None:  # noqa: D401
+        if v is None:
+            return None
+        cleaned = cls._TAG_RE.sub("", v)
+        return cleaned.strip()[:200] if cleaned else None
 
 
 class DeletePayload(BaseModel):
@@ -47,6 +56,18 @@ def get_inbox(user_id: str = Depends(verify_jwt_token)):
         .execute()
     )
     rows = getattr(res, "data", res) or []
+    ids = [r["message_id"] for r in rows]
+    meta = {}
+    if ids:
+        meta_res = (
+            supabase.table("message_metadata")
+            .select("message_id,key,value")
+            .in_("message_id", ids)
+            .execute()
+        )
+        for item in getattr(meta_res, "data", meta_res) or []:
+            meta.setdefault(item["message_id"], {})[item["key"]] = item["value"]
+
     return {
         "messages": [
             {
@@ -55,6 +76,8 @@ def get_inbox(user_id: str = Depends(verify_jwt_token)):
                 "sent_at": r["sent_at"],
                 "is_read": r["is_read"],
                 "sender": r.get("users", {}).get("username"),
+                "subject": meta.get(r["message_id"], {}).get("subject"),
+                "category": meta.get(r["message_id"], {}).get("category"),
             }
             for r in rows
         ]
@@ -82,6 +105,14 @@ def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
     supabase.table("player_messages").update({"is_read": True}).eq("message_id", message_id).execute()
 
     r = res.data
+    meta_res = (
+        supabase.table("message_metadata")
+        .select("key,value")
+        .eq("message_id", message_id)
+        .execute()
+    )
+    meta = {m["key"]: m["value"] for m in getattr(meta_res, "data", meta_res) or []}
+
     return {
         "message_id": r["message_id"],
         "message": r["message"],
@@ -89,6 +120,8 @@ def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
         "is_read": True,
         "user_id": r["user_id"],
         "username": r.get("users", {}).get("username"),
+        "subject": meta.get("subject"),
+        "category": meta.get("category"),
     }
 
 
@@ -122,7 +155,16 @@ def send_message(payload: MessagePayload, user_id: str = Depends(verify_jwt_toke
     if not insert.data:
         raise HTTPException(status_code=500, detail="Message send failed")
 
-    return {"message": "sent", "message_id": insert.data[0]["message_id"]}
+    mid = insert.data[0]["message_id"]
+    meta = []
+    if payload.subject:
+        meta.append({"message_id": mid, "key": "subject", "value": payload.subject})
+    if payload.category:
+        meta.append({"message_id": mid, "key": "category", "value": payload.category})
+    if meta:
+        supabase.table("message_metadata").upsert(meta).execute()
+
+    return {"message": "sent", "message_id": mid}
 
 
 @router.post("/delete")
