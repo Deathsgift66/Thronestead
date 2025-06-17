@@ -2,81 +2,70 @@
 // File Name: legal.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
+document.addEventListener('DOMContentLoaded', () => {
+  const legalDocs = [
+    {
+      title: 'Privacy Policy',
+      file: 'Assets/legal/THRONESTEAD_PrivacyPolicy.pdf',
+      desc: 'How we collect, use, and protect your data.'
+    },
+    {
+      title: 'Terms of Service',
+      file: 'Assets/legal/THRONESTEAD_TermsofService.pdf',
+      desc: 'Your rights and responsibilities as a player.'
+    },
+    {
+      title: 'End User License Agreement (EULA)',
+      file: 'Assets/legal/THRONESTEAD_EULA.pdf',
+      desc: 'Game usage terms and content licensing.'
+    },
+    {
+      title: 'Cookie Policy',
+      file: 'Assets/legal/THRONESTEAD_CookiePolicy.pdf',
+      desc: 'Our use of browser cookies and tracking.'
+    },
+    {
+      title: 'Community Guidelines',
+      file: 'Assets/legal/THRONESTEAD_GameRules.pdf',
+      desc: 'Code of conduct for players and alliance members.'
+    },
+    {
+      title: 'Data Processing Addendum (DPA)',
+      file: 'Assets/legal/THRONESTEAD_KingmakersRise_DPA (1).pdf',
+      desc: 'GDPR-compliant processing terms.'
+    }
+  ];
 
-let docs = [];
-let realtimeSub = null;
+  const docGrid = document.getElementById('legal-docs');
+  const searchInput = document.getElementById('doc-search');
 
-// ✅ On page ready, load and watch documents
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadDocuments();
-  setupRealtimeSync();
+  function renderDocs(filter = '') {
+    docGrid.innerHTML = '';
+    const filtered = legalDocs.filter(doc =>
+      doc.title.toLowerCase().includes(filter.toLowerCase()) ||
+      doc.desc.toLowerCase().includes(filter.toLowerCase())
+    );
 
-  const search = document.getElementById('doc-search');
-  if (search) {
-    search.addEventListener('input', filterDocuments);
-  }
-});
+    if (filtered.length === 0) {
+      docGrid.innerHTML = '<p>No documents found.</p>';
+      return;
+    }
 
-// ✅ Load document metadata from backend
-async function loadDocuments() {
-  const container = document.getElementById('legal-docs');
-  container.innerHTML = '<p>Loading documents...</p>';
-  try {
-    const res = await fetch('/api/legal/documents');
-    const data = await res.json();
-    docs = data.documents || [];
-    renderDocuments(docs);
-  } catch (err) {
-    console.error('❌ Failed to fetch legal documents:', err);
-    container.innerHTML = '<p>Failed to load documents.</p>';
-  }
-}
-
-// ✅ Realtime document update handler
-function setupRealtimeSync() {
-  realtimeSub = supabase
-    .channel('legal_documents')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'legal_documents' }, async () => {
-      await loadDocuments();
-    })
-    .subscribe();
-}
-
-// ✅ Clean up listener on exit
-window.addEventListener('beforeunload', () => {
-  realtimeSub?.unsubscribe();
-});
-
-// 🔍 Search documents by title
-function filterDocuments() {
-  const searchEl = document.getElementById('doc-search');
-  const query = searchEl?.value.toLowerCase() || '';
-  const filtered = docs.filter(doc => doc.title.toLowerCase().includes(query));
-  renderDocuments(filtered);
-}
-
-// 🧾 Render document cards
-function renderDocuments(list) {
-  const container = document.getElementById('legal-docs');
-  container.innerHTML = '';
-
-  if (!list.length) {
-    container.innerHTML = '<p>No documents found.</p>';
-    return;
+    filtered.forEach(doc => {
+      const card = document.createElement('div');
+      card.className = 'legal-card';
+      card.innerHTML = `
+        <h3>${doc.title}</h3>
+        <p>${doc.desc}</p>
+        <a class="btn" href="${doc.file}" target="_blank" rel="noopener">📄 View PDF</a>
+      `;
+      docGrid.appendChild(card);
+    });
   }
 
-  list.forEach(doc => {
-    const card = document.createElement('div');
-    card.className = 'legal-card';
-    card.innerHTML = `
-      <h3>${escapeHTML(doc.title)}</h3>
-      <p>${escapeHTML(doc.summary)}</p>
-      <a href="${escapeHTML(doc.url)}" target="_blank" rel="noopener noreferrer">View Document</a>
-    `;
-    container.appendChild(card);
+  searchInput.addEventListener('input', () => {
+    renderDocs(searchInput.value);
   });
-}
 
-// 🧼 Escape HTML output to prevent XSS
+  renderDocs();
+});
