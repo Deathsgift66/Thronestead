@@ -45,8 +45,9 @@ body {
 
 .achievement-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  padding-top: 1rem;
 }
 
 .achievement-badge {
@@ -80,11 +81,13 @@ body {
 .collapsible ul {
   list-style: none;
   padding: 0.5rem;
-  display: none;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-out;
 }
 
 .collapsible.open ul {
-  display: block;
+  max-height: 500px;
 }
 
 @media (max-width: 768px) {
