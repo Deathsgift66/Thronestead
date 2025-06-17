@@ -4,7 +4,7 @@
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, conint, PositiveFloat
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -19,13 +19,13 @@ router = APIRouter(prefix="/api/black-market", tags=["black_market"])
 # ---------------------
 class ListingPayload(BaseModel):
     item: str
-    price: float
-    quantity: int
+    price: PositiveFloat
+    quantity: conint(gt=0)
 
 
 class BuyPayload(BaseModel):
     listing_id: int
-    quantity: int
+    quantity: conint(gt=0)
 
 
 class CancelPayload(BaseModel):
