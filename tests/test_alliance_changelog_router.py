@@ -62,5 +62,28 @@ def test_returns_sorted_list():
     client = DummyClient(tables)
     ac.get_supabase_client = lambda: client
     result = ac.get_alliance_changelog(user_id='u1')
-    assert result[0]['description'] == 'late'
-    assert len(result) == 2
+    assert result['logs'][0]['description'] == 'late'
+    assert len(result['logs']) == 2
+    assert 'last_updated' in result
+
+
+def test_filters_applied():
+    logs = [
+        {'created_at': '2025-01-02T12:00:00', 'user_id': 'u1', 'description': 'war log', 'event_type': 'war'},
+        {'created_at': '2025-01-03T12:00:00', 'user_id': 'u1', 'description': 'quest log', 'event_type': 'quest'},
+    ]
+    tables = {
+        'users': [{'user_id': 'u1'}],
+        'alliance_members': [{'alliance_id': 1}],
+        'alliance_activity_log': [],
+        'alliance_treaties': [],
+        'alliance_wars': [logs[0]],
+        'projects_alliance': [],
+        'quest_alliance_tracking': [logs[1]],
+        'audit_log': [],
+    }
+    client = DummyClient(tables)
+    ac.get_supabase_client = lambda: client
+    res = ac.get_alliance_changelog(start='2025-01-03T00:00:00', event_type='quest', user_id='u1')
+    assert len(res['logs']) == 1
+    assert res['logs'][0]['description'] == 'quest log'

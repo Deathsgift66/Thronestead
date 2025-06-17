@@ -4,13 +4,13 @@
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
+import { authFetchJson } from './fetchJson.js';
 
 let changelogData = [];
-let latestTimestamp = null;
 
 /**
- * Fetch alliance changelog entries from the backend.
- * If `latestTimestamp` is set, only fetch entries since that point.
+ * Fetch alliance changelog entries from the backend
+ * using filter inputs if provided.
  */
 async function fetchChangelog() {
   try {
@@ -20,30 +20,27 @@ async function fetchChangelog() {
       return;
     }
 
-    const url = latestTimestamp
-      ? `/api/alliance/changelog?since=${encodeURIComponent(latestTimestamp)}`
-      : '/api/alliance/changelog';
+    const params = new URLSearchParams();
+    const startVal = document.getElementById('filter-start')?.value;
+    const endVal = document.getElementById('filter-end')?.value;
+    const typeVal = document.getElementById('filter-type')?.value;
+    if (startVal) params.set('start', startVal);
+    if (endVal) params.set('end', endVal);
+    if (typeVal) params.set('type', typeVal);
 
-    const res = await fetch(url, {
-      headers: { 'X-User-ID': session.user.id }
-    });
-    if (!res.ok) throw new Error('Failed to fetch changelog');
-    const newData = await res.json();
+    const data = await authFetchJson(`/api/alliance/changelog?${params}`, session);
 
-    if (latestTimestamp) {
-      const marked = newData.map(e => ({ ...e, new: true }));
-      changelogData = [...marked, ...changelogData];
-    } else {
-      changelogData = newData;
-    }
-
-    if (changelogData.length) {
-      latestTimestamp = changelogData[0].timestamp;
-    }
+    changelogData = data.logs || [];
 
     const lastEl = document.getElementById('last-updated');
-    if (lastEl && latestTimestamp) {
-      lastEl.textContent = new Date(latestTimestamp).toLocaleString();
+    if (lastEl && data.last_updated) {
+      lastEl.textContent = new Date(data.last_updated).toLocaleString();
+    }
+
+    const listEl = document.getElementById('changelog-list');
+    if (changelogData.length === 0) {
+      listEl.innerHTML = '<li class="empty-state">No historical records match your filters.</li>';
+      return;
     }
 
     renderChangelog(changelogData);
@@ -56,28 +53,7 @@ async function fetchChangelog() {
  * Apply filter UI inputs to changelog data.
  */
 function applyFilters() {
-  const startVal = document.getElementById('filter-start')?.value;
-  const endVal = document.getElementById('filter-end')?.value;
-  const typeVal = document.getElementById('filter-type')?.value;
-
-  let filtered = [...changelogData];
-
-  if (startVal) {
-    const startDate = new Date(startVal);
-    filtered = filtered.filter(entry => new Date(entry.timestamp) >= startDate);
-  }
-
-  if (endVal) {
-    const endDate = new Date(endVal);
-    endDate.setDate(endDate.getDate() + 1); // include entire end day
-    filtered = filtered.filter(entry => new Date(entry.timestamp) < endDate);
-  }
-
-  if (typeVal) {
-    filtered = filtered.filter(entry => entry.event_type === typeVal);
-  }
-
-  renderChangelog(filtered);
+  fetchChangelog();
 }
 
 /**
@@ -90,25 +66,23 @@ function renderChangelog(list) {
 
   container.innerHTML = '';
 
-  list.forEach(entry => {
+  list.forEach(log => {
     const li = document.createElement('li');
-    li.classList.add('log-entry');
-    if (entry.new) li.classList.add('new-entry');
-
+    li.classList.add('timeline-entry', log.event_type);
+    li.setAttribute('role', 'article');
+    li.setAttribute('aria-label', 'Changelog entry');
     li.innerHTML = `
-      <div class="log-time">${new Date(entry.timestamp).toLocaleString()}</div>
-      <div class="log-type ${escapeHTML(entry.event_type)}">${escapeHTML(entry.event_type)}</div>
-      <div class="log-description">${escapeHTML(entry.description)}</div>
+      <div class="timeline-bullet"></div>
+      <div class="timeline-content">
+        <span class="log-type">${escapeHTML(log.event_type.toUpperCase())}</span>
+        <p class="log-text">${escapeHTML(log.description)}</p>
+        <time datetime="${log.timestamp}">${new Date(log.timestamp).toLocaleString()}</time>
+      </div>
     `;
 
     container.appendChild(li);
   });
-
-  // Clear new flag after render
-  list.forEach(e => delete e.new);
 }
-
-// Basic HTML escaping to prevent XSS injection
 
 // ✅ Initialize changelog on DOM load
 document.addEventListener('DOMContentLoaded', () => {
