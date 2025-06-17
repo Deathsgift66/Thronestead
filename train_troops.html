@@ -1,108 +1,47 @@
-<!--
-Project Name: Thronestead©
-File Name: train_troops.html
-Version 6.13.2025.19.49
-Developer: Deathsgift66
--->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>The Grand Muster Hall | Thronestead</title>
-  <meta name="description" content="Recruit and manage troops in The Grand Muster Hall of Thronestead — expand your army with elite forces." />
-  <meta name="keywords" content="Thronestead, train troops, recruit, military, army management, muster hall" />
-  <meta name="robots" content="index, follow" />
-  <meta property="og:title" content="The Grand Muster Hall | Thronestead" />
-  <meta property="og:description" content="Recruit and manage troops in The Grand Muster Hall of Thronestead — expand your army with elite forces." />
-  <meta property="og:image" content="https://www.thronestead.com/images/og-preview.jpg" />
-  <meta property="og:url" content="https://www.thronestead.com/train_troops.html" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="The Grand Muster Hall | Thronestead" />
-  <meta name="twitter:description" content="Recruit and manage troops in The Grand Muster Hall of Thronestead — expand your army with elite forces." />
-  <meta name="twitter:image" content="https://www.thronestead.com/images/og-preview.jpg" />
-  <link rel="canonical" href="https://www.thronestead.com/train_troops.html" />
-  <meta name="theme-color" content="#2e2b27" />
-
-  <!-- Page-Specific Assets -->
-  <link rel="stylesheet" href="CSS/train_troops.css" />
-  <script defer type="module" src="Javascript/train_troops.js"></script>
-
-  <!-- Global Assets -->
+  <title>Muster Hall | Thronestead</title>
+  <meta name="description" content="View all unlocked troops by tier and class in Thronestead." />
+  <link rel="stylesheet" href="CSS/unlocked_troops.css" />
+  <script defer type="module" src="Javascript/unlocked_troops.js"></script>
   <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="CSS/root_theme.css" />
   <link rel="stylesheet" href="CSS/kr_navbar.css" />
-  <link rel="stylesheet" href="CSS/progressionBanner.css" />
-  <link rel="stylesheet" href="CSS/resource_bar.css" />
-  <script type="module" src="Javascript/components/authGuard.js"></script>
-  <script type="module" src="Javascript/progressionBanner.js"></script>
-  <script defer type="module" src="Javascript/resourceBar.js"></script>
 </head>
-
 <body>
-
-<!-- Navbar -->
 <div id="navbar-container" role="navigation" aria-label="Main Navigation"></div>
 <script type="module" src="Javascript/navLoader.js"></script>
-
-<!-- Page Banner -->
-<header class="kr-top-banner" aria-label="Train Troops Banner">
-  Thronestead — The Grand Muster Hall
+<header class="kr-top-banner" aria-label="Muster Hall Banner">
+  Thronestead — Muster Hall
 </header>
-
-<!-- Main Content -->
-<main id="main-content" class="main-centered-container" aria-label="Troop Training Interface">
-
-  <section class="alliance-members-container" aria-labelledby="muster-hall-title">
-
-    <!-- Header -->
-    <div class="top-bar">
-      <h2 id="muster-hall-title">The Grand Muster Hall</h2>
-      <p>Recruit troops and expand your military might.</p>
-    </div>
-
-    <!-- Action Controls -->
-    <div class="controls-bar" role="toolbar" aria-label="Training Options">
-      <button id="toggleFilters" class="btn-fantasy">Toggle Filters</button>
-      <button id="toggleQueue" class="btn-fantasy">View Training Queue</button>
-    </div>
-
-    <!-- Main Layout -->
-    <div class="main-content" role="region" aria-label="Training Interface">
-      <div id="troop-catalogue" class="troop-catalogue custom-scrollbar" aria-label="Troop Catalogue">
-        <!-- JS will populate -->
-      </div>
-
-      <aside id="sidebar-panel" class="sidebar-panel custom-scrollbar" aria-label="Troop Info Sidebar">
-        <!-- JS will populate -->
-      </aside>
-    </div>
-
-    <!-- Toggles -->
-    <div class="toggle-section" role="region" aria-label="Training Overview">
-      <div id="training-queue" class="history-log custom-scrollbar" aria-label="Active Training Queue">
-        <!-- JS will populate -->
-      </div>
-      <div id="training-history" class="history-log custom-scrollbar" aria-label="Training History">
-        <!-- JS will populate -->
-      </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
-
+<main class="main-centered-container" aria-label="Unlocked Troops">
+  <section class="units-section" id="infantry" aria-labelledby="infantry-header">
+    <h2 id="infantry-header">Infantry</h2>
+    <div class="units-grid" id="infantry-list"></div>
   </section>
-
+  <section class="units-section" id="archers" aria-labelledby="archers-header">
+    <h2 id="archers-header">Archers</h2>
+    <div class="units-grid" id="archers-list"></div>
+  </section>
+  <section class="units-section" id="cavalry" aria-labelledby="cavalry-header">
+    <h2 id="cavalry-header">Cavalry</h2>
+    <div class="units-grid" id="cavalry-list"></div>
+  </section>
+  <section class="units-section" id="siege" aria-labelledby="siege-header">
+    <h2 id="siege-header">Siege</h2>
+    <div class="units-grid" id="siege-list"></div>
+  </section>
+  <section class="units-section" id="support" aria-labelledby="support-header">
+    <h2 id="support-header">Support</h2>
+    <div class="units-grid" id="support-list"></div>
+  </section>
 </main>
-
-<!-- Footer -->
 <footer class="site-footer" role="contentinfo">
   <div>© 2025 Thronestead</div>
   <div><a href="legal.html">View Legal Documents</a></div>
 </footer>
-
 </body>
 </html>
