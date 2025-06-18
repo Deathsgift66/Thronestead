@@ -1,220 +1,106 @@
 // Project Name: Thronestead©
 // File Name: notifications.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.14.2025.21.12
+// Developer: Codex
+
 import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
 
-let currentSession;
-let notificationChannel;
-let allNotifications = [];
+const feed = document.getElementById('notification-feed');
+const filterInput = document.getElementById('notification-filter');
+const markAllBtn = document.getElementById('mark-all-btn');
+const clearAllBtn = document.getElementById('clear-all-btn');
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
+let currentNotifications = [];
 
-  currentSession = session;
+async function fetchNotifications() {
+  const user = await supabase.auth.getUser();
+  const userId = user.data?.user?.id;
 
-  await loadNotifications();
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
 
-  // ✅ Real-time notification updates
-  notificationChannel = supabase
-    .channel(`notifications-${session.user.id}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'notifications',
-      filter: `user_id=eq.${session.user.id}`
-    }, async () => {
-      await loadNotifications();
-    })
-    .subscribe();
+  if (error) return console.error('Fetch error:', error);
 
-  const filterInput = document.getElementById('notification-filter');
-  if (filterInput) {
-    filterInput.addEventListener('input', filterNotifications);
-  }
-
-  bindToolbar();
-});
-
-window.addEventListener('beforeunload', () => {
-  if (notificationChannel) supabase.removeChannel(notificationChannel);
-});
-
-// ✅ Load Notifications from API
-async function loadNotifications() {
-  const container = document.getElementById("notification-feed");
-  container.innerHTML = "<p>Loading notifications...</p>";
-
-  try {
-    const res = await fetch("/api/notifications/list", {
-      headers: {
-        'Authorization': `Bearer ${currentSession.access_token}`,
-        'X-User-ID': currentSession.user.id
-      }
-    });
-
-    const data = await res.json();
-    allNotifications = data.notifications || [];
-
-    renderNotifications(allNotifications);
-  } catch (err) {
-    console.error("❌ Error loading notifications:", err);
-    container.innerHTML = "<p>Failed to load notifications.</p>";
-  }
+  currentNotifications = data;
+  renderNotifications(currentNotifications);
 }
 
-// ✅ Render Notification Cards
-function renderNotifications(list) {
-  const container = document.getElementById("notification-feed");
-  container.innerHTML = "";
+function renderNotifications(data) {
+  feed.innerHTML = '';
 
-  if (!list || list.length === 0) {
-    container.innerHTML = "<p>No notifications found.</p>";
+  if (!data.length) {
+    feed.innerHTML = '<p class="no-notifications">No notifications available.</p>';
     return;
   }
 
-  // Unread first
-  list.sort((a, b) => (a.is_read === b.is_read) ? 0 : a.is_read ? 1 : -1);
-
-  list.forEach(notification => {
-    const card = document.createElement("div");
-    card.classList.add("notification-item");
-    if (!notification.is_read) card.classList.add("unread");
+  for (const n of data) {
+    const card = document.createElement('div');
+    card.classList.add('notification-card');
+    card.setAttribute('aria-label', 'notification card');
+    if (!n.is_read) card.classList.add('unread');
 
     card.innerHTML = `
-      <div class="meta">
-        <strong>${escapeHTML(notification.title)}</strong> 
-        <span class="pill pill-${notification.priority.toLowerCase()}">${escapeHTML(notification.priority)}</span>
-        <span class="pill">${escapeHTML(notification.category)}</span>
-        <span class="timestamp">${formatDate(notification.created_at)}</span>
+      <div class="notification-header">
+        <strong>${n.title}</strong>
+        <span class="priority-tag ${n.priority}">${n.priority}</span>
       </div>
-      <div class="message">${escapeHTML(notification.message)}</div>
-      <div class="notification-actions">
-        ${notification.link_action ? `<a href="${escapeHTML(notification.link_action)}" class="action-btn">View</a>` : ""}
-        <button class="action-btn mark-read-btn" data-id="${notification.notification_id}">Mark Read</button>
+      <p class="notification-body">${n.message}</p>
+      <div class="notification-footer">
+        <small>${new Date(n.created_at).toLocaleString()}</small>
+        ${n.link_action ? `<a href="${n.link_action}" class="notification-link">View</a>` : ''}
       </div>
     `;
 
-    container.appendChild(card);
-  });
-
-  // ✅ Bind Mark Read Buttons
-  document.querySelectorAll(".mark-read-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const notificationId = btn.dataset.id;
-      await markNotificationRead(notificationId);
-      await loadNotifications();
-    });
-  });
+    card.addEventListener('click', () => markAsRead(n.notification_id));
+    feed.appendChild(card);
+  }
 }
 
-// ✅ Filter by keyword
-function filterNotifications() {
-  const input = document.getElementById('notification-filter');
-  const term = input?.value.toLowerCase() || '';
-  const filtered = allNotifications.filter(n =>
-    n.title.toLowerCase().includes(term) ||
-    n.message.toLowerCase().includes(term) ||
-    n.category.toLowerCase().includes(term) ||
-    n.priority.toLowerCase().includes(term)
+async function markAsRead(notificationId) {
+  await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('notification_id', notificationId);
+
+  fetchNotifications();
+}
+
+markAllBtn.addEventListener('click', async () => {
+  const user = await supabase.auth.getUser();
+  await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', user.data.user.id);
+
+  fetchNotifications();
+});
+
+clearAllBtn.addEventListener('click', async () => {
+  const user = await supabase.auth.getUser();
+  await supabase
+    .from('notifications')
+    .delete()
+    .eq('user_id', user.data.user.id);
+
+  fetchNotifications();
+});
+
+filterInput.addEventListener('input', (e) => {
+  const keyword = e.target.value.toLowerCase();
+  const filtered = currentNotifications.filter(n =>
+    n.title.toLowerCase().includes(keyword) || n.message.toLowerCase().includes(keyword)
   );
   renderNotifications(filtered);
-}
+});
 
-// ✅ Bind toolbar buttons
-function bindToolbar() {
-  const buttons = document.querySelectorAll(".royal-button");
-  buttons.forEach(btn => {
-    const action = btn.textContent.trim();
-    if (action === "Mark All Read") {
-      btn.addEventListener("click", async () => {
-        if (confirm("Mark all notifications as read?")) {
-          await markAllRead();
-          await loadNotifications();
-        }
-      });
-    } else if (action === "Clear All") {
-      btn.addEventListener("click", async () => {
-        if (confirm("Clear all notifications? This cannot be undone.")) {
-          await clearAllNotifications();
-          await loadNotifications();
-        }
-      });
-    }
-  });
-}
+supabase
+  .channel('notification-updates')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+    fetchNotifications();
+  })
+  .subscribe();
 
-// ✅ Mark one notification
-async function markNotificationRead(notificationId) {
-  try {
-    const res = await fetch("/api/notifications/mark_read", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': `Bearer ${currentSession.access_token}`,
-        'X-User-ID': currentSession.user.id
-      },
-      body: JSON.stringify({ notification_id: notificationId })
-    });
-
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Failed");
-  } catch (err) {
-    console.error("❌ Error marking notification:", err);
-    alert("Failed to mark as read.");
-  }
-}
-
-// ✅ Mark all notifications
-async function markAllRead() {
-  try {
-    const res = await fetch("/api/notifications/mark_all_read", {
-      method: "POST",
-      headers: {
-        'Authorization': `Bearer ${currentSession.access_token}`,
-        'X-User-ID': currentSession.user.id
-      }
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Failed");
-    alert("All marked as read.");
-  } catch (err) {
-    console.error("❌ Error marking all read:", err);
-    alert("Failed to mark all read.");
-  }
-}
-
-// ✅ Delete all notifications
-async function clearAllNotifications() {
-  try {
-    const res = await fetch("/api/notifications/clear_all", {
-      method: "POST",
-      headers: {
-        'Authorization': `Bearer ${currentSession.access_token}`,
-        'X-User-ID': currentSession.user.id
-      }
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Failed");
-    alert("All notifications cleared.");
-  } catch (err) {
-    console.error("❌ Error clearing notifications:", err);
-    alert("Failed to clear notifications.");
-  }
-}
-
-// ✅ Format date
-function formatDate(ts) {
-  if (!ts) return "Unknown";
-  const date = new Date(ts);
-  return date.toLocaleDateString(undefined, {
-    year: "numeric", month: "2-digit", day: "2-digit"
-  });
-}
-
-// ✅ Escape dangerous input
+fetchNotifications();

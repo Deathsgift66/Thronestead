@@ -244,3 +244,47 @@ body {
     margin-right: 0.5rem;
   }
 }
+
+/* Notification Card Styles */
+.notification-card {
+  background: #2d2d2d;
+  border-left: 5px solid #a1863e;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.notification-card:hover {
+  background: #3a3a3a;
+}
+.notification-card.unread {
+  border-left-color: #e0b300;
+}
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.priority-tag {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+  font-size: 0.8rem;
+}
+.priority-tag.low { background-color: #447744; }
+.priority-tag.medium { background-color: #888833; }
+.priority-tag.high { background-color: #993333; }
+.notification-body {
+  margin: 0.5rem 0;
+}
+.notification-footer {
+  font-size: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.notification-link {
+  color: #ffc107;
+  text-decoration: underline;
+}
