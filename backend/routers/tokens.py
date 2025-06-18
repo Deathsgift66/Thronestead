@@ -11,7 +11,12 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..security import verify_jwt_token
-from services.token_service import get_balance, consume_tokens
+from services.token_service import (
+    get_balance,
+    consume_tokens,
+    TOKEN_STEALABLE,
+    TOKEN_EXPIRES,
+)
 from services.vip_status_service import upsert_vip_status
 
 router = APIRouter(prefix="/api/tokens", tags=["tokens"])
@@ -29,9 +34,13 @@ PERK_CATALOG = {
 
 @router.get("/balance")
 def token_balance(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
-    """Return current token balance for the user."""
+    """Return current token balance and token properties."""
     tokens = get_balance(db, user_id)
-    return {"tokens": tokens}
+    return {
+        "tokens": tokens,
+        "stealable": TOKEN_STEALABLE,
+        "expires": TOKEN_EXPIRES,
+    }
 
 
 @router.post("/redeem")
