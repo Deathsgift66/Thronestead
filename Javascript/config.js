@@ -7,7 +7,7 @@
   Automatically fallback to environment overrides if present (e.g., Render env vars)
 */
 
-const ENV = window.ENV || {};
+const ENV = (typeof import !== 'undefined' && import.meta && import.meta.env) ? import.meta.env : (window.ENV || {});
 
 export const SUPABASE_URL = ENV.VITE_SUPABASE_URL || window.SUPABASE_URL || '';
 
@@ -21,4 +21,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Optional: Override API base URL (for FastAPI or Express proxy)
-export const API_BASE_URL = window.API_BASE_URL || (location.port === '3000' ? 'http://localhost:8000' : '');
+export const API_BASE_URL =
+  ENV.VITE_API_BASE_URL ||
+  window.API_BASE_URL ||
+  (location.port === '3000' ? 'http://localhost:8000' : '');
