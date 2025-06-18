@@ -22,3 +22,15 @@ def test_redeem_calls_services(monkeypatch):
     assert calls['consume'] == 1
     assert calls['upsert'] == 1
 
+
+def test_balance_includes_metadata(monkeypatch):
+    def dummy_get(db, uid):
+        return 5
+
+    monkeypatch.setattr(tokens, 'get_balance', dummy_get)
+
+    data = tokens.token_balance(user_id='u1', db=DummyDB())
+    assert data['tokens'] == 5
+    assert data['stealable'] is False
+    assert data['expires'] is False
+

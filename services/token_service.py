@@ -8,6 +8,14 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+# ---------------------------------------------------------------------------
+# Token metadata
+# ---------------------------------------------------------------------------
+# Tokens obtained from the Black Market or VIP donations are a permanent
+# account currency. They cannot be stolen via spy actions and never expire.
+TOKEN_STEALABLE = False
+TOKEN_EXPIRES = False
+
 
 def get_balance(db: Session, user_id: str) -> int:
     """Return current token balance for a user."""
