@@ -1,8 +1,8 @@
 /*
 Project Name: Thronestead©
 File Name: news.css
-Version 6.13.2025.19.49
-Developer: Deathsgift66
+Version 6.15.2025.00.00
+Developer: Codex
 */
 @import url("./root_theme.css");
 @import url("./base_styles.css");
@@ -50,15 +50,16 @@ body {
   gap: var(--gap-default);
 }
 
-.news-article-card {
+.news-article-card,
+.article-card {
   background: var(--panel-bg);
   border: var(--border);
   border-radius: var(--border-radius);
   box-shadow: 0 4px 12px var(--shadow);
   padding: 1rem;
 }
-
-.news-article-card h3 {
+.news-article-card h3,
+.article-card .article-title {
   margin-top: 0;
   font-family: var(--font-header);
   color: var(--gold);
@@ -108,4 +109,9 @@ body {
 .article-body {
   margin-top: 1rem;
   line-height: 1.5;
+}
+
+.article-body img {
+  max-width: 100%;
+  height: auto;
 }

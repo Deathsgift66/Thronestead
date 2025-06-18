@@ -1,84 +1,73 @@
 // Project Name: Thronestead©
 // File Name: news.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.15.2025.00.00
+// Developer: Codex
 import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, formatDate } from './utils.js';
 
-let currentUser = null;
 let newsChannel = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = "login.html";
+    window.location.href = 'login.html';
     return;
   }
 
-  currentUser = session.user;
-
-  await loadNewsArticles();
+  await loadNews();
   setupRealtime();
 
   const search = document.getElementById('search-input');
-  if (search) {
-    search.addEventListener('input', filterArticles);
-  }
+  if (search) search.addEventListener('input', filterArticles);
 });
 
 // ✅ Load News Articles
-async function loadNewsArticles() {
-  const container = document.getElementById('articles');
-  if (!container) return;
+async function loadNews() {
+  const articleGrid = document.getElementById('articles');
+  const loadingIndicator = document.getElementById('loading-news');
+  const noResultsMsg = document.getElementById('no-results-message');
 
-  container.innerHTML = "<p>Loading news articles...</p>";
+  if (!articleGrid || !loadingIndicator || !noResultsMsg) return;
 
-  try {
-    const res = await fetch("/api/news/articles", {
-      headers: { 'X-User-ID': currentUser.id }
-    });
+  loadingIndicator.style.display = 'block';
+  noResultsMsg.classList.add('hidden');
+  articleGrid.innerHTML = '';
 
-    if (!res.ok) throw new Error(`Failed to load news. Code: ${res.status}`);
-    const data = await res.json();
+  const { data: articles, error } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('visible', true)
+    .order('created_at', { ascending: false })
+    .limit(50);
 
-    renderArticles(data.articles || []);
-  } catch (err) {
-    console.error("❌ Error loading news articles:", err);
-    container.innerHTML = "<p>Failed to load news articles.</p>";
+  loadingIndicator.style.display = 'none';
+
+  if (error || !articles || articles.length === 0) {
+    noResultsMsg.classList.remove('hidden');
+    return;
   }
+
+  renderArticles(articles);
 }
 
 // ✅ Render News Cards
 function renderArticles(articles) {
   const container = document.getElementById('articles');
-  if (!container) return;
+  const template = document.getElementById('article-template');
+  if (!container || !template) return;
 
   container.innerHTML = '';
 
-  if (!articles.length) {
-    container.innerHTML = '<p>No news articles found.</p>';
-    return;
-  }
-
   articles.forEach(article => {
-    const card = document.createElement('div');
-    card.classList.add('news-article-card');
-    card.dataset.title = (article.title || '').toLowerCase();
-    card.dataset.summary = (article.summary || '').toLowerCase();
-
-    card.innerHTML = `
-      <h3>${escapeHTML(article.title)}</h3>
-      <p class="news-meta">By ${escapeHTML(article.author_name || "System")} — ${formatDate(article.published_at)}</p>
-      <p class="news-summary">${escapeHTML(article.summary || "")}</p>
-      <a href="#" class="action-btn read-more">Read More</a>
-    `;
-
-    card.querySelector('.read-more')?.addEventListener('click', e => {
-      e.preventDefault();
-      openArticleModal(article);
-    });
-
-    container.appendChild(card);
+    const clone = template.content.firstElementChild.cloneNode(true);
+    clone.classList.add('news-article-card');
+    clone.dataset.title = (article.title || '').toLowerCase();
+    clone.dataset.summary = (article.content || '').toLowerCase();
+    clone.querySelector('.article-title').textContent = article.title;
+    clone.querySelector('.article-summary').textContent = `${article.content.slice(0, 140)}...`;
+    clone.querySelector('.article-meta').textContent = new Date(article.created_at).toLocaleString();
+    clone.addEventListener('click', () => openModal(article));
+    container.appendChild(clone);
   });
 }
 
@@ -96,54 +85,30 @@ function filterArticles() {
 // ✅ Real-time Sync via Supabase
 function setupRealtime() {
   newsChannel = supabase
-    .channel('public:news_articles')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'news_articles' },
-      async () => {
-        await loadNewsArticles();
-      }
-    )
-    .subscribe(status => {
-      const indicator = document.getElementById("realtime-indicator");
-      if (indicator) {
-        if (status === "SUBSCRIBED") {
-          indicator.textContent = "Live";
-          indicator.className = "connected";
-        } else {
-          indicator.textContent = "Offline";
-          indicator.className = "disconnected";
-        }
-      }
-    });
+    .channel('news-hub')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => loadNews())
+    .subscribe();
 
-  window.addEventListener("beforeunload", () => {
+  window.addEventListener('beforeunload', () => {
     if (newsChannel) supabase.removeChannel(newsChannel);
   });
 }
 
-// ✅ Format Date
-function formatDate(ts) {
-  if (!ts) return "Unknown";
-  const date = new Date(ts);
-  return date.toLocaleDateString(undefined, {
-    year: "numeric", month: "short", day: "numeric"
-  });
-}
-
-// ✅ Basic HTML Escape
-
 // ✅ Modal viewer for full article
-function openArticleModal(article) {
+function openModal(article) {
   const modal = document.getElementById('article-modal');
   if (!modal) return;
   modal.querySelector('#article-title').textContent = article.title || 'Untitled';
-  modal.querySelector('#article-meta').textContent =
-    `By ${article.author_name || 'System'} — ${formatDate(article.published_at)}`;
-  modal.querySelector('#article-body').textContent = article.content || 'Full article coming soon.';
+  modal.querySelector('#article-meta').textContent = new Date(article.created_at).toLocaleString();
+  modal.querySelector('#article-body').innerHTML = article.content;
   modal.classList.remove('hidden');
 }
 
-document.getElementById('close-article-btn')?.addEventListener('click', () => {
+function closeModal() {
   document.getElementById('article-modal')?.classList.add('hidden');
+}
+
+document.getElementById('close-article-btn')?.addEventListener('click', closeModal);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
 });
