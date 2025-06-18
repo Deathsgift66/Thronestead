@@ -14,5 +14,8 @@ window.ENV = {
   VITE_SUPABASE_URL: 'https://your-project.supabase.co',
 
   // ⚠️ Required: Your public Supabase anon key (can be exposed to client)
-  VITE_SUPABASE_ANON_KEY: 'your-anon-public-api-key'
+  VITE_SUPABASE_ANON_KEY: 'your-anon-public-api-key',
+
+  // Optional: Override API base URL for local development
+  VITE_API_BASE_URL: 'http://localhost:8000'
 };

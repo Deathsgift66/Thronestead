@@ -10,7 +10,9 @@ const originalFetch = window.fetch;
 
 // ✅ Base URL switch for FastAPI depending on environment
 const API_BASE =
-  window.API_BASE_URL || (location.port === '3000' ? 'http://localhost:8000' : '');
+  (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL)
+    ? import.meta.env.VITE_API_BASE_URL
+    : window.API_BASE_URL || (location.port === '3000' ? 'http://localhost:8000' : '');
 
 // ✅ Ensures loading overlay exists and returns reference
 function getOverlay() {
