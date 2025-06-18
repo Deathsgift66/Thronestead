@@ -256,4 +256,6 @@ def transfer_resource(
             )
             db.commit()
         except Exception as exc:
+            db.rollback()
             logger.warning("Failed to log transfer: %s", exc)
+            raise RuntimeError("transfer log insert failed") from exc
