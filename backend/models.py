@@ -1054,10 +1054,25 @@ class BlackMarketListing(Base):
     listing_id = Column(Integer, primary_key=True, autoincrement=True)
     seller_id = Column(UUID(as_uuid=True))
     item = Column(Text)
+    item_type = Column(Text, default="token")
     price = Column(Numeric)
     quantity = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+
+class MarketListing(Base):
+    """Public market listings for resources and equipment."""
+
+    __tablename__ = "market_listings"
+
+    listing_id = Column(Integer, primary_key=True, autoincrement=True)
+    seller_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    item_type = Column(Text, nullable=False)
+    item = Column(Text, nullable=False)
+    price = Column(Numeric, nullable=False)
+    quantity = Column(Integer, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True))
 
 class KingdomSpies(Base):
     """Spy force tracking for each kingdom."""

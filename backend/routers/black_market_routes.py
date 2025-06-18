@@ -68,6 +68,17 @@ _listings: List[Listing] = [
         stock_remaining=5,
         expires_at=datetime.utcnow() + timedelta(hours=12)
     ),
+    Listing(
+        id=3,
+        item_key="vip_token",
+        item_name="VIP Token",
+        description="Token used to unlock VIP features.",
+        quantity=10,
+        price_per_unit=15,
+        currency_type="gems",
+        stock_remaining=10,
+        expires_at=datetime.utcnow() + timedelta(hours=24)
+    ),
 ]
 
 _transactions: List[Transaction] = []
