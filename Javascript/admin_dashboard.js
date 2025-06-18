@@ -204,6 +204,17 @@ async function createGlobalEvent() {
   await handleAdminAction('/api/admin/events/create', { name }, 'Event created');
 }
 
+async function publishNews() {
+  const title = document.getElementById('news-title')?.value.trim();
+  const summary = document.getElementById('news-summary')?.value.trim();
+  const content = document.getElementById('news-content')?.value.trim();
+  if (!title || !summary || !content) return alert('Fill all news fields');
+  await handleAdminAction('/api/admin/news/post', { title, summary, content }, 'News published');
+  document.getElementById('news-title').value = '';
+  document.getElementById('news-summary').value = '';
+  document.getElementById('news-content').value = '';
+}
+
 // 🧩 Initialize DOM Hooks
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboardStats();
@@ -225,4 +236,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('rollback-tick-btn')?.addEventListener('click', rollbackCombatTick);
   document.getElementById('rollback-btn')?.addEventListener('click', rollbackDatabase);
   document.getElementById('create-event')?.addEventListener('click', createGlobalEvent);
+  document.getElementById('publish-news-btn')?.addEventListener('click', publishNews);
 });
