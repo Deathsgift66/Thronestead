@@ -59,17 +59,22 @@ Developer: Deathsgift66
     <!-- Donation Info Panel -->
     <section class="alliance-members-container">
 
-      <h2>Donate & Become VIP</h2>
+      <h2>Donate &amp; Get Tokens</h2>
       <p>
-        Support the development of <strong>Thronestead</strong> and unlock beautiful VIP cosmetic rewards.<br />
-        <em>VIP provides no gameplay advantage — only flair, recognition, and gratitude.</em>
+        Support the development of <strong>Thronestead</strong> and receive <strong>Black Market Tokens</strong> to purchase VIP or other perks.<br />
+        <em>Tokens grant cosmetic benefits only.</em>
       </p>
 
       <div id="current-status-banner" class="vip-expiry-banner" aria-live="polite"></div>
+      <div id="token-balance-banner" class="vip-expiry-banner"></div>
       <div id="founder-preview" class="founder-badge" hidden></div>
 
-      <!-- VIP Tier Cards (JS Injected) -->
-      <div id="vip-tier-cards" class="vip-tier-cards" aria-label="Available VIP Tiers"></div>
+      <!-- Token Packages (JS Injected) -->
+      <div id="token-package-cards" class="vip-tier-cards" aria-label="Token Packages"></div>
+
+      <!-- Redeemable Perks -->
+      <h3 style="margin-top:1rem;">Redeem Tokens</h3>
+      <div id="redeem-cards" class="vip-tier-cards" aria-label="Redeem Options"></div>
 
       <!-- Donation Form -->
       <form id="donation-form" class="vip-donation-form" hidden aria-label="Donation Form">

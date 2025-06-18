@@ -1472,6 +1472,13 @@ class KingdomVipStatus(Base):
     expires_at = Column(DateTime(timezone=True))
     founder = Column(Boolean, default=False)
 
+
+class UserToken(Base):
+    __tablename__ = "user_tokens"
+
+    user_id = Column(UUID(as_uuid=True), primary_key=True)
+    tokens = Column(Integer, default=0)
+
 class TreatyNegotiationLog(Base):
     __tablename__ = "treaty_negotiation_log"
 

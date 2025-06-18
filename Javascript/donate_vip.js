@@ -6,19 +6,25 @@ import { supabase } from "./supabaseClient.js";
 import { escapeHTML } from './utils.js';
 import { authHeaders } from './auth.js';
 
-// Static VIP tier definitions used by the donate page
-const VIP_TIERS = [
+// Static token packages purchasable on this page
+const TOKEN_PACKAGES = [
+  { package_id: 1, name: '1 Token', price_usd: 3.99, tokens: 1 },
+  { package_id: 2, name: '3 Tokens', price_usd: 9.99, tokens: 3 },
+];
+
+// Redeemable perks mapped by ID
+const REDEEM_OPTIONS = [
   {
-    tier_id: 1,
+    perk_id: 'vip1',
     name: 'VIP 1',
-    price_usd: 3.99,
-    perks: ['Gold username', 'VIP chat badge', 'Custom troop names']
+    cost: 1,
+    details: ['Gold username', 'VIP chat badge', 'Custom troop names']
   },
   {
-    tier_id: 2,
+    perk_id: 'vip2',
     name: 'VIP 2',
-    price_usd: 5.99,
-    perks: [
+    cost: 2,
+    details: [
       'All VIP1 perks',
       'Custom troop image',
       'VIP vault skin',
@@ -27,7 +33,7 @@ const VIP_TIERS = [
   }
 ];
 
-let vipTiers = [];
+let tokenPackages = [];
 let vipChannel = null;
 
 // ------------------------------
@@ -40,7 +46,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  await Promise.all([loadPlayerVIPStatus(), loadVIPTiers(), loadLeaderboard()]);
+  await Promise.all([
+    loadPlayerVIPStatus(),
+    loadTokenPackages(),
+    loadTokenBalance(),
+    loadLeaderboard()
+  ]);
   setupRealtimeChannel();
   bindDonationForm();
 });
@@ -80,6 +91,19 @@ export async function loadPlayerVIPStatus() {
 // Backwards compatibility export
 export { loadPlayerVIPStatus as loadVIPStatus };
 
+export async function loadTokenBalance() {
+  try {
+    const res = await fetch('/api/tokens/balance', { headers: await authHeaders() });
+    if (!res.ok) throw new Error('balance');
+    const data = await res.json();
+    const banner = document.getElementById('token-balance-banner');
+    if (banner) banner.textContent = `${data.tokens} Token${data.tokens === 1 ? '' : 's'} available`;
+  } catch {
+    const banner = document.getElementById('token-balance-banner');
+    if (banner) banner.textContent = 'Tokens unavailable';
+  }
+}
+
 function renderStatus(status) {
   const banner = document.getElementById('current-status-banner');
   const badge = document.getElementById('founder-preview');
@@ -101,34 +125,52 @@ function renderStatus(status) {
 }
 
 // ------------------------------
-// VIP Tier Loader and Renderer
+// Token Package Loader and Renderer
 // ------------------------------
-export async function loadVIPTiers() {
-  vipTiers = VIP_TIERS;
-  renderTiers(vipTiers);
+export async function loadTokenPackages() {
+  tokenPackages = TOKEN_PACKAGES;
+  renderPackages(tokenPackages);
+  renderRedeemables(REDEEM_OPTIONS);
 }
 
-function renderTiers(tiers) {
-  const container = document.getElementById("vip-tier-cards");
+function renderPackages(packs) {
+  const container = document.getElementById("token-package-cards");
   if (!container) return;
   container.innerHTML = "";
 
-  tiers.forEach(tier => {
+  packs.forEach(pack => {
     const card = document.createElement('div');
     card.className = 'vip-card';
     card.innerHTML = `
-      <h3>${escapeHTML(tier.name)}</h3>
-      <p>$${tier.price_usd.toFixed(2)} / month</p>
-      <ul>${tier.perks.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul>
-      <button onclick="selectTier(${tier.tier_id})" class="vip-button">Select</button>
+      <h3>${escapeHTML(pack.name)}</h3>
+      <p>$${pack.price_usd.toFixed(2)}</p>
+      <button onclick="selectPackage(${pack.package_id})" class="vip-button">Select</button>
     `;
     container.appendChild(card);
   });
 }
 
-// Triggered when a tier card is selected
-export function selectTier(tierId) {
-  document.getElementById('selected-tier-id').value = tierId;
+function renderRedeemables(options) {
+  const container = document.getElementById('redeem-cards');
+  if (!container) return;
+  container.innerHTML = '';
+
+  options.forEach(perk => {
+    const card = document.createElement('div');
+    card.className = 'vip-card';
+    card.innerHTML = `
+      <h3>${escapeHTML(perk.name)}</h3>
+      <p>${perk.cost} Token${perk.cost > 1 ? 's' : ''}</p>
+      <ul>${perk.details.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul>
+      <button onclick="redeemPerk('${perk.perk_id}')" class="vip-button">Redeem</button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// Triggered when a package card is selected
+export function selectPackage(packId) {
+  document.getElementById('selected-tier-id').value = packId;
   document.getElementById('donation-form').hidden = false;
 }
 
@@ -141,32 +183,52 @@ function bindDonationForm() {
 
   form.addEventListener("submit", async e => {
     e.preventDefault();
-    const tierId = parseInt(document.getElementById("selected-tier-id").value);
-    if (!tierId) return alert("Please select a tier.");
-    await submitVIPDonation(tierId);
+    const packageId = parseInt(document.getElementById("selected-tier-id").value);
+    if (!packageId) return alert("Please select a package.");
+    await purchaseTokens(packageId);
   });
 }
 
-export async function submitVIPDonation(tier_id) {
+export async function purchaseTokens(package_id) {
   try {
-    const res = await fetch("/api/vip/activate", {
+    const res = await fetch("/api/tokens/buy", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(await authHeaders())
       },
-      body: JSON.stringify({ tier_id })
+      body: JSON.stringify({ package_id })
     });
 
     const result = await res.json();
     if (!res.ok) throw new Error(result.detail || "Donation failed");
 
-    await loadPlayerVIPStatus();
+    await loadTokenBalance();
     document.getElementById("donation-form").hidden = true;
-    alert("VIP status updated!");
+    alert("Tokens added!");
   } catch (err) {
     console.error("Donation failed", err);
     alert("Donation failed. Please try again.");
+  }
+}
+
+export async function redeemPerk(perk_id) {
+  try {
+    const res = await fetch('/api/tokens/redeem', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await authHeaders())
+      },
+      body: JSON.stringify({ perk_id })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.detail || 'Redeem failed');
+    await Promise.all([loadPlayerVIPStatus(), loadTokenBalance()]);
+    alert('Perk redeemed!');
+  } catch (err) {
+    console.error('Redeem failed', err);
+    alert('Redeem failed.');
   }
 }
 
