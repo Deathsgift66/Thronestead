@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api/black-market", tags=["black_market"])
 # ---------------------
 class ListingPayload(BaseModel):
     item: str
+    item_type: str = "token"
     price: PositiveFloat
     quantity: conint(gt=0)
 
@@ -41,6 +42,7 @@ def get_market(db: Session = Depends(get_db)):
     """
     rows = (
         db.query(BlackMarketListing)
+        .filter(BlackMarketListing.item_type.in_(["token", "cosmetic", "permit"]))
         .order_by(BlackMarketListing.created_at.desc())
         .limit(100)
         .all()
@@ -70,9 +72,12 @@ def place_item(
     """
     Place an item for sale in the black market.
     """
+    if payload.item_type not in {"token", "cosmetic", "permit"}:
+        raise HTTPException(status_code=400, detail="Invalid item type")
     listing = BlackMarketListing(
         seller_id=user_id,
         item=payload.item,
+        item_type=payload.item_type,
         price=payload.price,
         quantity=payload.quantity,
     )

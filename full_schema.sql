@@ -361,11 +361,25 @@ CREATE TABLE public.black_market_listings (
   listing_id integer NOT NULL DEFAULT nextval('black_market_listings_listing_id_seq'::regclass),
   seller_id uuid,
   item text,
+  item_type text DEFAULT 'token' CHECK (item_type IN ('token','cosmetic','permit')),
   price numeric,
   quantity integer,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT black_market_listings_pkey PRIMARY KEY (listing_id)
 );
+CREATE INDEX idx_black_market_listings_item_type ON public.black_market_listings(item_type);
+
+CREATE TABLE public.market_listings (
+  listing_id SERIAL PRIMARY KEY,
+  seller_id uuid REFERENCES public.users(user_id),
+  item_type text NOT NULL CHECK (item_type IN ('resource','equipment')),
+  item text NOT NULL,
+  price numeric NOT NULL,
+  quantity integer DEFAULT 1,
+  created_at timestamptz DEFAULT now(),
+  expires_at timestamptz
+);
+CREATE INDEX idx_market_listings_item_type ON public.market_listings(item_type);
 CREATE TABLE public.building_catalogue (
   building_id integer NOT NULL DEFAULT nextval('building_catalogue_building_id_seq'::regclass),
   building_name text NOT NULL,

@@ -32,7 +32,7 @@ def test_black_market_flow():
     seller_id = str(uuid.uuid4())
 
     res = place_item(
-        ListingPayload(item="gold", price=10.0, quantity=5),
+        ListingPayload(item="gold", item_type="token", price=10.0, quantity=5),
         user_id=seller_id,
         db=db,
     )
@@ -51,7 +51,7 @@ def test_black_market_flow():
     # Listing fully purchased should be removed
 
     res2 = place_item(
-        ListingPayload(item="gems", price=5.0, quantity=1),
+        ListingPayload(item="gems", item_type="token", price=5.0, quantity=1),
         user_id=seller_id,
         db=db,
     )
