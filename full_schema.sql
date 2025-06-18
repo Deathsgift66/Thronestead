@@ -704,6 +704,11 @@ CREATE TABLE public.kingdom_vip_status (
   founder boolean DEFAULT false,
   CONSTRAINT kingdom_vip_status_pkey PRIMARY KEY (user_id)
 );
+
+CREATE TABLE public.user_tokens (
+  user_id uuid PRIMARY KEY REFERENCES public.users(user_id),
+  tokens integer DEFAULT 0
+);
 CREATE TABLE public.kingdoms (
   kingdom_id integer NOT NULL DEFAULT nextval('kingdoms_kingdom_id_seq'::regclass),
   user_id uuid UNIQUE,
