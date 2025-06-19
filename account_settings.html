@@ -15,7 +15,7 @@ Developer: Deathsgift66
 
   <!-- SEO Metadata -->
   <meta name="description" content="Manage your profile, kingdom, and account preferences in Thronestead." />
-  <link rel="canonical" href="account_settings.html" />
+  <link rel="canonical" href="https://www.thronestead.com/account_settings.html" />
   <meta property="og:title" content="Account Settings | Thronestead" />
   <meta property="og:description" content="Customize your account, banner, and preferences in Thronestead." />
   <meta property="og:image" content="Assets/banner_main.png" />
@@ -188,14 +188,7 @@ Developer: Deathsgift66
   <div id="toast" class="toast-notification" aria-live="polite"></div>
 
   <!-- Live Previews -->
-  <script>
-    document.getElementById('avatar_url').addEventListener('input', e => {
-      document.getElementById('avatar-preview').src = e.target.value;
-    });
-    document.getElementById('profile_banner').addEventListener('input', e => {
-      document.getElementById('banner-preview').src = e.target.value;
-    });
-  </script>
+  <script src="/Javascript/account_previews.js"></script>
 </body>
 
 </html>

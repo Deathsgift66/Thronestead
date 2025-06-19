@@ -18,9 +18,11 @@ export const SUPABASE_ANON_KEY = 'your-anon-key';
 // Optional: Override API base URL for local development
 export const VITE_API_BASE_URL = 'http://localhost:8000';
 
+
 // Support the previous window.ENV style for backward compatibility
 window.ENV = {
   VITE_SUPABASE_URL: SUPABASE_URL,
   VITE_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
   VITE_API_BASE_URL
+
 };
