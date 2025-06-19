@@ -85,6 +85,7 @@ body {
   color: var(--parchment);
 }
 
+
 .legal-card .btn {
   margin-top: 0.75rem;
   display: inline-block;
@@ -94,6 +95,29 @@ body {
   border-radius: 0.5rem;
   font-weight: bold;
   text-decoration: none;
+}
+
+/* Static list of legal documents */
+.legal-doc-list {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.legal-doc-list li {
+  background: var(--stone-panel);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.legal-doc-list a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.legal-doc-list a:hover {
+  text-decoration: underline;
 }
 
 /* Footer - handled globally */
