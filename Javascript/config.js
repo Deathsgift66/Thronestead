@@ -26,4 +26,4 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 export const API_BASE_URL =
   ENV.VITE_API_BASE_URL ||
   window.API_BASE_URL ||
-  (location.port === '3000' ? 'http://localhost:8000' : '');
+  'https://kingmakers-backend.onrender.com';

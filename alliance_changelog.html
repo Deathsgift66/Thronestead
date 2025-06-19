@@ -18,7 +18,7 @@ Developer: Deathsgift66
   <meta name="description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
   <meta name="keywords" content="Thronestead, alliance log, history, changes, updates, policy" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="alliance_changelog.html" />
+  <link rel="canonical" href="https://www.thronestead.com/alliance_changelog.html" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Alliance Changelog | Thronestead" />
@@ -106,15 +106,7 @@ Developer: Deathsgift66
   </footer>
 
   <!-- Event Binding -->
-  <script>
-    // DOM-safe filter function trigger
-    document.getElementById("apply-filters-btn").addEventListener("click", () => {
-      if (typeof applyFilters === "function") applyFilters();
-    });
-    document.getElementById("refresh-btn").addEventListener("click", () => {
-      if (typeof fetchChangelog === "function") fetchChangelog();
-    });
-  </script>
+  <script src="/Javascript/alliance_changelog_events.js"></script>
 </body>
 
 </html>

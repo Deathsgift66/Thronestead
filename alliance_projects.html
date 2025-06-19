@@ -17,7 +17,7 @@ Developer: Deathsgift66
   <meta name="description" content="Manage and view all strategic alliance projects in Thronestead." />
   <meta name="keywords" content="Thronestead, alliance, projects, construction, MMO, strategy" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="alliance_projects.html" />
+  <link rel="canonical" href="https://www.thronestead.com/alliance_projects.html" />
 
   <!-- Open Graph & Twitter -->
   <meta property="og:title" content="Alliance Projects | Thronestead" />
@@ -122,17 +122,7 @@ Developer: Deathsgift66
     </div>
   </footer>
 
-  <!-- Tab Switching Script -->
-  <script>
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById(btn.dataset.tab).classList.add("active");
-      });
-    });
-  </script>
+  <!-- Tab Switching Script handled by alliance_projects.js -->
 </body>
 
 </html>
