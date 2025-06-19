@@ -39,6 +39,11 @@ body {
   margin-bottom: 2rem;
 }
 
+/* Ensure section headings use the standard ink color */
+.section-panel h3 {
+  color: var(--ink);
+}
+
 .quest-card {
   background: rgba(245, 231, 196, 0.95);
   border: 2px solid var(--gold);
