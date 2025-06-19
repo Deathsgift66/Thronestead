@@ -11,3 +11,8 @@
 [context.production.environment]
   NODE_VERSION = "18"                # Ensures compatibility for any Node-based tooling
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+
