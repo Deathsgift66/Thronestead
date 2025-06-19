@@ -90,7 +90,7 @@ The frontend expects the FastAPI backend to be available at
 API server in a separate terminal:
 
 ```bash
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 python main.py
 ```
 
