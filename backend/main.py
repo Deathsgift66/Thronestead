@@ -40,9 +40,9 @@ allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
 if allowed_origins_env:
     origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
 else:
-    origins = []  # Secure default when env var is missing
+    origins = ["https://www.thronestead.com"]
     logger.warning(
-        "ALLOWED_ORIGINS not set; CORS disabled for external domains."
+        "ALLOWED_ORIGINS not set; defaulting to https://www.thronestead.com"
     )
 
 app.add_middleware(
