@@ -161,6 +161,10 @@ You can run these commands directly or simply execute:
 ```bash
 ./scripts/run_tests.sh
 ```
+### Static Link Audit
+
+Run `python check_links.py` to verify that all HTML `src` and `href` attributes point to valid files. The script prints any missing paths to help avoid 404s.
+
 
 ---
 
