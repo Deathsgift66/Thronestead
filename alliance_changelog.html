@@ -106,15 +106,7 @@ Developer: Deathsgift66
   </footer>
 
   <!-- Event Binding -->
-  <script>
-    // DOM-safe filter function trigger
-    document.getElementById("apply-filters-btn").addEventListener("click", () => {
-      if (typeof applyFilters === "function") applyFilters();
-    });
-    document.getElementById("refresh-btn").addEventListener("click", () => {
-      if (typeof fetchChangelog === "function") fetchChangelog();
-    });
-  </script>
+  <script src="/Javascript/alliance_changelog_events.js"></script>
 </body>
 
 </html>

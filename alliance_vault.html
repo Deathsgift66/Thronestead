@@ -39,7 +39,7 @@ Developer: Deathsgift66
   <link href="/CSS/alliance_vault.css" rel="stylesheet" />
 
   <!-- Scripts -->
-  <script>window.requireAlliance = true;</script>
+  <script src="/Javascript/requireAlliance.js"></script>
   <script src="/Javascript/components/authGuard.js" type="module"></script>
   <script src="/Javascript/apiHelper.js" type="module"></script>
   <script src="/Javascript/allianceAppearance.js" type="module"></script>
@@ -165,19 +165,6 @@ Developer: Deathsgift66
     <div><a href="legal.html">View Legal Documents</a></div>
   </footer>
 
-  <!-- Tab Interactivity Script -->
-  <script>
-    document.querySelectorAll('.tab-button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const target = btn.getAttribute('data-tab');
-        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(target).classList.add('active');
-        document.querySelectorAll('.tab-section').forEach(s => s.setAttribute('hidden', true));
-        document.getElementById(target).removeAttribute('hidden');
-      });
-    });
-  </script>
+  <!-- Tab interactivity handled by alliance_vault.js -->
 </body>
 </html>

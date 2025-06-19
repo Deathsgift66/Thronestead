@@ -148,23 +148,7 @@ Developer: Deathsgift66
     </div>
   </footer>
 
-  <!-- Tab Logic Script -->
-  <script>
-    document.querySelectorAll('.tab-button').forEach(button => {
-      button.addEventListener('click', () => {
-        const tab = button.getAttribute('data-tab');
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-section').forEach(section => {
-          section.classList.remove('active');
-          section.setAttribute('hidden', true);
-        });
-
-        button.classList.add('active');
-        document.getElementById(tab).classList.add('active');
-        document.getElementById(tab).removeAttribute('hidden');
-      });
-    });
-  </script>
+  <!-- Tab logic handled by alliance_wars.js -->
 
 </body>
 </html>
