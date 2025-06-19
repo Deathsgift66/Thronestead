@@ -1,7 +1,7 @@
 /*
 Project Name: Thronestead©
 File Name: village_master.css
-Version 6.13.2025.19.49
+Version 6.15.2025.21.00
 Developer: Deathsgift66
 */
 @import url("./root_theme.css");
@@ -15,10 +15,10 @@ body {
 
 
 .alliance-members-container {
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--overlay);
   backdrop-filter: blur(5px);
-  border-radius: 12px;
-  border: 1px solid var(--gold);
+  border-radius: var(--border-radius);
+  border: var(--border);
   box-shadow: 0 6px 14px var(--shadow);
   padding: 2rem;
   width: 100%;
@@ -36,10 +36,10 @@ body {
 }
 
 .overview-panel {
-  background: rgba(251, 240, 217, 0.95);
-  border: 3px solid var(--gold);
-  border-radius: 12px;
-  box-shadow: 0 8px 16px var(--shadow);
+  background: var(--panel-bg);
+  border: var(--card-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   padding: 1rem;
   width: 100%;
   margin-bottom: 1.5rem;
@@ -64,10 +64,10 @@ body {
 .ambient-controls,
 .modal-container,
 .toasts-container {
-  background: rgba(251, 240, 217, 0.95);
-  border: 3px solid var(--gold);
-  border-radius: 12px;
-  box-shadow: 0 8px 16px var(--shadow);
+  background: var(--panel-bg);
+  border: var(--card-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   padding: 1.5rem;
   color: var(--ink);
 }
