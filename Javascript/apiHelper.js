@@ -15,7 +15,7 @@ const API_BASE =
     import.meta.env.VITE_API_BASE_URL)
     ? import.meta.env.VITE_API_BASE_URL
     : window.API_BASE_URL ||
-      'https://kingmakers-backend.onrender.com';
+      'https://thronestead-backend.onrender.com';
 
 // ✅ Ensures loading overlay exists and returns reference
 function getOverlay() {
