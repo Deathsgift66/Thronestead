@@ -5,7 +5,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   // Fetch navbar relative to the current page so deployment under a subpath
   // still resolves correctly
-  const NAVBAR_PATH = "/navbar.html";
+  // Resolve navbar path relative to this script so deployments under a subpath
+  // (e.g. example.com/thronestead/) still locate the correct file
+  const NAVBAR_PATH = new URL("../navbar.html", import.meta.url).pathname;
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 500;
   const target =
