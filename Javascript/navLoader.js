@@ -7,7 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // still resolves correctly
   // Resolve navbar path relative to this script so deployments under a subpath
   // (e.g. example.com/thronestead/) still locate the correct file
-  const NAVBAR_PATH = new URL("../navbar.html", import.meta.url).pathname;
+  // Load the shared navbar fragment from the public directory so it works
+  // across deployments that serve the site from a subpath.
+  const NAVBAR_PATH = new URL("../public/navbar.html", import.meta.url).pathname;
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 500;
   const target =
