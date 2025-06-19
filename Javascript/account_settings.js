@@ -77,14 +77,14 @@ async function loadUserProfile() {
   const info = await res.json();
 
   // Profile fields from users table
-  setSrc('avatar-preview', info.profile_picture_url || 'Assets/avatars/default_avatar_emperor.png');
+  setSrc('avatar-preview', info.profile_picture_url || '/Assets/avatars/default_avatar_emperor.png');
   setValue('avatar_url', info.profile_picture_url || '');
   setValue('display_name', info.display_name || '');
   setValue('motto', info.motto || '');
   setValue('profile_bio', info.bio || '');
   setValue('email', info.email);
   setValue('profile_banner', info.profile_banner || '');
-  setSrc('banner-preview', info.profile_banner || 'Assets/profile_background.png');
+  setSrc('banner-preview', info.profile_banner || '/Assets/profile_background.png');
   setValue('theme_preference', info.theme_preference || 'parchment');
 
   const theme = document.getElementById('theme_preference')?.value;
@@ -234,9 +234,9 @@ function uploadAvatar() {
   if (!preview) return;
   if (url && !isValidURL(url)) {
     showToast('Invalid avatar URL');
-    preview.src = 'Assets/avatars/default_avatar_emperor.png';
+    preview.src = '/Assets/avatars/default_avatar_emperor.png';
   } else {
-    preview.src = url || 'Assets/avatars/default_avatar_emperor.png';
+    preview.src = url || '/Assets/avatars/default_avatar_emperor.png';
   }
 }
 

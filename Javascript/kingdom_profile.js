@@ -44,7 +44,7 @@ async function loadProfile() {
     kNameEl.textContent = data.kingdom_name || 'Unknown Kingdom';
     mottoEl.textContent = data.motto ? `"${data.motto}"` : '';
     rulerEl.textContent = data.ruler_name || '';
-    avatarEl.src = data.profile_picture_url || 'Assets/avatars/default_avatar_emperor.png';
+    avatarEl.src = data.profile_picture_url || '/Assets/avatars/default_avatar_emperor.png';
     prestigeEl.textContent = data.prestige ? `Prestige: ${data.prestige}` : '';
     militaryEl.textContent = `Military: ${data.military_score}`;
     economyEl.textContent = `Economy: ${data.economy_score}`;

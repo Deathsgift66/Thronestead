@@ -78,7 +78,7 @@ function renderAchievementsList(list) {
     card.dataset.description = (ach.description || '').toLowerCase();
 
     const img = document.createElement('img');
-    img.src = ach.icon_url || 'Assets/icon-sword.svg';
+    img.src = ach.icon_url || '/Assets/icon-sword.svg';
     img.alt = ach.name;
     card.appendChild(img);
 
@@ -194,7 +194,7 @@ function displayAchievementDetail(ach) {
       <button class="modal-close" onclick="closeModal()">×</button>
       <h3>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.name) : '???'}</h3>
       <p>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.description) : 'Unlock to reveal details.'}</p>
-      <img src="${ach.icon_url || 'Assets/icon-sword.svg'}" alt="${escapeHTML(ach.name)}" />
+      <img src="${ach.icon_url || '/Assets/icon-sword.svg'}" alt="${escapeHTML(ach.name)}" />
       <p><strong>Points:</strong> ${ach.points || 0}</p>
       <p><strong>Category:</strong> ${escapeHTML(ach.category || 'N/A')}</p>
       <p><strong>Reward:</strong> ${escapeHTML(reward)}</p>

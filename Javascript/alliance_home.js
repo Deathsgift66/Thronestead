@@ -56,7 +56,7 @@ function populateAlliance(data) {
 
   const banner = document.getElementById('alliance-banner-img');
   if (banner) {
-    banner.src = a.banner || 'Assets/banner.png';
+    banner.src = a.banner || '/Assets/banner.png';
     banner.alt = `Banner of ${a.name}`;
   }
 
@@ -153,7 +153,7 @@ function renderTopContributors(members = []) {
 
     const img = document.createElement('img');
     img.className = 'contrib-avatar';
-    img.src = m.avatar || 'Assets/avatars/default_avatar_emperor.png';
+    img.src = m.avatar || '/Assets/avatars/default_avatar_emperor.png';
     img.alt = m.username;
     li.appendChild(img);
 

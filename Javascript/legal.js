@@ -6,32 +6,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const legalDocs = [
     {
       title: 'Privacy Policy',
-      file: 'Assets/legal/THRONESTEAD_PrivacyPolicy.pdf',
+      file: '/Assets/legal/THRONESTEAD_PrivacyPolicy.pdf',
       desc: 'How we collect, use, and protect your data.'
     },
     {
       title: 'Terms of Service',
-      file: 'Assets/legal/THRONESTEAD_TermsofService.pdf',
+      file: '/Assets/legal/THRONESTEAD_TermsofService.pdf',
       desc: 'Your rights and responsibilities as a player.'
     },
     {
       title: 'End User License Agreement (EULA)',
-      file: 'Assets/legal/THRONESTEAD_EULA.pdf',
+      file: '/Assets/legal/THRONESTEAD_EULA.pdf',
       desc: 'Game usage terms and content licensing.'
     },
     {
       title: 'Cookie Policy',
-      file: 'Assets/legal/THRONESTEAD_CookiePolicy.pdf',
+      file: '/Assets/legal/THRONESTEAD_CookiePolicy.pdf',
       desc: 'Our use of browser cookies and tracking.'
     },
     {
       title: 'Community Guidelines',
-      file: 'Assets/legal/THRONESTEAD_GameRules.pdf',
+      file: '/Assets/legal/THRONESTEAD_GameRules.pdf',
       desc: 'Code of conduct for players and alliance members.'
     },
     {
       title: 'Data Processing Addendum (DPA)',
-      file: 'Assets/legal/THRONESTEAD_KingmakersRise_DPA (1).pdf',
+      file: '/Assets/legal/THRONESTEAD_KingmakersRise_DPA (1).pdf',
       desc: 'GDPR-compliant processing terms.'
     }
   ];

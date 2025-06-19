@@ -28,9 +28,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('banner_url').value = data.banner_url || '';
     document.getElementById('emblem_url').value = data.emblem_url || '';
     document.getElementById('banner-preview').src =
-      data.banner_url || 'Assets/profile_background.png';
+      data.banner_url || '/Assets/profile_background.png';
     document.getElementById('emblem-preview').src =
-      data.emblem_url || 'Assets/icon-scroll.svg';
+      data.emblem_url || '/Assets/icon-scroll.svg';
   } catch (err) {
     console.error(err);
     showToast('Failed to load kingdom');
@@ -79,10 +79,10 @@ document.getElementById('kingdom-form').addEventListener('submit', async (e) => 
 // ------------------------------
 document.getElementById('banner_url').addEventListener('input', (e) => {
   document.getElementById('banner-preview').src =
-    e.target.value || 'Assets/profile_background.png';
+    e.target.value || '/Assets/profile_background.png';
 });
 
 document.getElementById('emblem_url').addEventListener('input', (e) => {
   document.getElementById('emblem-preview').src =
-    e.target.value || 'Assets/icon-scroll.svg';
+    e.target.value || '/Assets/icon-scroll.svg';
 });
