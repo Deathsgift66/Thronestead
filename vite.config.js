@@ -1,4 +1,13 @@
 import { resolve } from 'path';
+import { readdirSync } from 'fs';
+
+const htmlEntries = {};
+for (const file of readdirSync(__dirname)) {
+  if (file.endsWith('.html')) {
+    const name = file.replace(/\.html$/, '');
+    htmlEntries[name] = resolve(__dirname, file);
+  }
+}
 
 export default {
   base: '/',
@@ -6,12 +15,7 @@ export default {
     outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        signup: resolve(__dirname, 'signup.html'),
-        login: resolve(__dirname, 'login.html'),
-        about: resolve(__dirname, 'about.html')
-      }
+      input: htmlEntries
     }
   }
 };
