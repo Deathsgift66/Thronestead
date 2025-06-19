@@ -24,12 +24,8 @@ services:
 
 staticSites:
   - name: thronestead-frontend
-    buildCommand: npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /.*
-        destination: /index.html
+    buildCommand: ""  # pure static files
+    staticPublishPath: .
     envVars:
       - key: VITE_SUPABASE_URL
         sync: false
