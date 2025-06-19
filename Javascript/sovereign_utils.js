@@ -98,6 +98,9 @@ export const SovereignUtils = {
       audio.loop = true;
       audio.volume = 0.4;
       audio.setAttribute('aria-hidden', 'true');
+      audio.addEventListener('error', () => {
+        console.warn('Ambient audio missing:', audio.src);
+      });
       document.body.appendChild(audio);
     }
     audio.play().catch(err => console.warn('Audio playback failed:', err));

@@ -182,7 +182,7 @@ function renderUnitCard(unit) {
   return `
     <div class="unit-card border rounded-lg p-4 shadow hover:shadow-lg transition">
       <h3 class="text-xl font-bold">${escapeHTML(unit.name)}</h3>
-      <img src="Assets/troops/${imgName}.png" alt="${escapeHTML(unit.name)}" class="w-16 h-16 mx-auto my-2" />
+      <img src="Assets/troops/${imgName}.png" alt="${escapeHTML(unit.name)}" class="w-16 h-16 mx-auto my-2" onerror="this.src='/Assets/icon-sword.svg'; this.onerror=null;" />
       <p><strong>Type:</strong> ${escapeHTML(unit.type)}</p>
       <p><strong>Training:</strong> ${unit.training_time}s</p>
       <p><strong>Cost:</strong> ${gold} gold</p>
