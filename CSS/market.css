@@ -16,40 +16,6 @@ body {
 }
 
 
-/* Customization Section */
-.alliance-customization-area {
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(5px);
-  border-radius: 12px;
-  border: 1px solid var(--gold);
-  box-shadow: 0 4px 12px var(--shadow);
-  padding: 2rem;
-  width: 100%;
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.alliance-customization-area h2 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold);
-  text-shadow: 1px 1px 3px black;
-  margin-bottom: 1rem;
-}
-
-#custom-image-slot img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-#custom-text-slot {
-  font-size: 1.1rem;
-  color: var(--parchment);
-  padding: 1rem;
-}
-
-/* Core Panel */
 .alliance-members-container {
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(5px);
