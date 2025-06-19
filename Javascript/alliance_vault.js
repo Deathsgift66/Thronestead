@@ -41,10 +41,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!user) return (window.location.href = "login.html");
   currentUser = user;
 
-  document.getElementById("logout-btn")?.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    window.location.href = "index.html";
-  });
 
   setupTabs({ onShow: id => id === 'tab-transactions' && loadTransactions() });
   await Promise.all([

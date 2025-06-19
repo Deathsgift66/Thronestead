@@ -107,26 +107,7 @@ function bindControls() {
     renderVisibleTiles();
   });
 
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
-    });
-  } else {
-    // Wait for logout btn if loaded dynamically
-    const waitId = setInterval(() => {
-      const btn = document.getElementById('logout-btn');
-      if (btn) {
-        btn.addEventListener('click', async () => {
-          await supabase.auth.signOut();
-          window.location.href = 'index.html';
-        });
-        clearInterval(waitId);
-      }
-    }, 100);
-    setTimeout(() => clearInterval(waitId), 3000);
-  }
+
 }
 
 function bindRealtime() {

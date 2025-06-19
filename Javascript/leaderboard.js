@@ -18,13 +18,7 @@ const headers = {
 
 // 🔐 User session + leaderboard loader
 document.addEventListener("DOMContentLoaded", async () => {
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
+
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {

@@ -116,15 +116,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       await fetchAndStorePlayerProgression(user.id);
     }
 
-    const logoutBtn = document.getElementById("logout-btn");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = "index.html";
-      });
-    }
+
 
   } catch (err) {
     console.error("🔥 Critical error:", err);

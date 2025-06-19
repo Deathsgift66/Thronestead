@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await fetchMembers(sortBy, dir);
   setupRealtime();
   setupUIControls();
-  setupLogout();
 });
 
 // 🔐 Enforce user access to alliance-only pages
@@ -244,18 +243,6 @@ async function confirmAndPost(endpoint, payload, successMsg, hardConfirm = false
     console.error(`❌ Action failed:`, err);
     alert(`❌ Failed: ${err.message}`);
   }
-}
-
-// 🚪 Logout logic
-function setupLogout() {
-  const logoutBtn = document.getElementById('logout-btn');
-  if (!logoutBtn) return;
-  logoutBtn.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = 'index.html';
-  });
 }
 
 // 🛡 Escape user-generated content

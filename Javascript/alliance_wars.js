@@ -12,12 +12,6 @@ let combatInterval = null;
 let switchTab = () => {};
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Logout binding
-  document.getElementById("logout-btn")?.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    window.location.href = "index.html";
-  });
-
   // ✅ Init
   switchTab = setupTabs({ onShow: id => id !== 'tab-live' && stopCombatPolling() });
   await loadCustomBoard({ altText: 'Alliance War Banner' });
