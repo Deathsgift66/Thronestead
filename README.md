@@ -132,6 +132,13 @@ This will create all tables referenced by the frontend.
 If your deployment requires additional data seeding or custom tables, load any project-specific SQL migrations after `full_schema.sql`. Example documentation references a `2025_06_08_add_regions.sql` script used to populate the `region_catalogue` table. Another example is the `migrations/2025_06_17_populate_tech_catalogue.sql` script which seeds the `tech_catalogue` table.
 repository.
 
+### Render Deployment
+
+The `render.yaml` file now defines a `staticSites` entry for the frontend. Render
+installs dependencies, runs `npm run build`, and serves the compiled `dist`
+directory. A new `static.json` handles single-page app routing by redirecting all
+paths to `index.html`.
+
 ---
 
 ## Testing
