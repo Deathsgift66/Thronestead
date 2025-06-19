@@ -122,11 +122,16 @@ SUPABASE_SERVICE_ROLE_KEY
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 MASTER_ROLLBACK_PASSWORD
+ALLOWED_ORIGINS
 ```
 
 Update these values with your project credentials to enable API access. Then copy
 `env.example.js` to `env.js` so the frontend can access the public values at
 runtime.
+
+The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
+separated list of allowed domains or `*` to disable origin checks (credentials
+will be ignored when using `*`).
 
 This will create all tables referenced by the frontend.
 If your deployment requires additional data seeding or custom tables, load any project-specific SQL migrations after `full_schema.sql`. Example documentation references a `2025_06_08_add_regions.sql` script used to populate the `region_catalogue` table. Another example is the `migrations/2025_06_17_populate_tech_catalogue.sql` script which seeds the `tech_catalogue` table.
