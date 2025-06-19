@@ -15,7 +15,7 @@ const API_BASE =
     import.meta.env.VITE_API_BASE_URL)
     ? import.meta.env.VITE_API_BASE_URL
     : window.API_BASE_URL ||
-      (location.port === '3000' ? 'http://localhost:8000' : '');
+      'https://kingmakers-backend.onrender.com';
 
 // ✅ Ensures loading overlay exists and returns reference
 function getOverlay() {
@@ -50,7 +50,8 @@ window.fetch = async function(url, options) {
   try {
     // If this is an API call, prepend base URL
     const fullUrl = url.startsWith('/api/') ? API_BASE + url : url;
-    const res = await originalFetch(fullUrl, options);
+    const opts = { ...(options || {}), mode: 'cors' };
+    const res = await originalFetch(fullUrl, opts);
     overlay.classList.remove('visible'); // hide spinner
 
     // If not successful, extract readable error text if available
