@@ -132,7 +132,7 @@ function renderRows(rows) {
     const tickPct = r.battle_tick ? Math.min(r.battle_tick * 100 / 12, 100) : 0;
     const progress = `
       <div class="progress-bar-bg">
-        <div class="progress-bar-fill" style="width:${tickPct}%;" title="Tick Progress: ${r.battle_tick || 0}/12"></div>
+        <div class="progress-bar-fill" data-width="${tickPct}" title="Tick Progress: ${r.battle_tick || 0}/12"></div>
       </div>
     `;
     const phaseClass = `status-${r.phase || 'alert'}`;
@@ -175,7 +175,7 @@ async function openWarModal(warId) {
     modal.innerHTML = `
       <div class="modal-content">
         <h3 id="warDetailHeader">${escapeHTML(w.alliance_a_name || '')} vs ${escapeHTML(w.alliance_b_name || '')}</h3>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${tickPct}%"></div></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" data-width="${tickPct}"></div></div>
         <p>Phase: ${escapeHTML(w.phase || '')}</p>
         <p>Castle HP: ${w.castle_hp ?? ''}</p>
         <p>Score: ${w.attacker_score ?? 0} - ${w.defender_score ?? 0}</p>

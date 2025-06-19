@@ -207,7 +207,7 @@ async function loadProjects() {
         <p>${escapeHTML(projectDef?.description || "")}</p>
         <p>Power Score: ${activeProject.power_score}</p>
         <p>Time Remaining: <span class="countdown" data-ends-at="${activeProject.ends_at}">${formatTime(remainingTime)}</span></p>
-        <div class="progress-bar"><div class="progress-bar-fill" style="width: ${progressPercent}%"></div></div>
+        <div class="progress-bar"><div class="progress-bar-fill" data-width="${progressPercent}"></div></div>
       `;
 
       activeList.appendChild(card);

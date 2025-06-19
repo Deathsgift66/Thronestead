@@ -153,7 +153,7 @@ async function loadContributions(key, element) {
       div.className = 'contrib-entry';
       div.innerHTML = `
         <span>${escapeHTML(r.player_name)}</span>
-        <div class="contrib-bar"><div class="contrib-bar-fill" style="width:${(r.amount / total) * 100}%"></div></div>
+        <div class="contrib-bar"><div class="contrib-bar-fill" data-width="${(r.amount / total) * 100}"></div></div>
       `;
       element.appendChild(div);
     });

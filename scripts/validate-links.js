@@ -56,8 +56,6 @@ async function validate() {
   if (broken) {
     console.error(`Found ${broken} broken link${broken !== 1 ? 's' : ''}.`);
     process.exit(1);
-  } else {
-    console.log('All internal links resolved.');
   }
 }
 

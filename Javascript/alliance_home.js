@@ -176,7 +176,7 @@ function renderQuests(quests = []) {
   quests.forEach(q => {
     const card = document.createElement('div');
     card.className = 'quest-card';
-    card.innerHTML = `<strong>${escapeHTML(q.name)}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${q.progress}%"></div></div>`;
+    card.innerHTML = `<strong>${escapeHTML(q.name)}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" data-width="${q.progress}"></div></div>`;
     container.appendChild(card);
   });
 }
