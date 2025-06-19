@@ -124,7 +124,13 @@ async function loadLeaderboard(type) {
           `;
           break;
       }
-      row.addEventListener('click', () => openPreviewModal(entry));
+      if (entry.kingdom_id) {
+        row.addEventListener('click', () => {
+          window.location.href = `kingdom_profile.html?kingdom_id=${entry.kingdom_id}`;
+        });
+      } else {
+        row.addEventListener('click', () => openPreviewModal(entry));
+      }
 
       tbody.appendChild(row);
     });
