@@ -8,10 +8,6 @@ import { escapeHTML } from './utils.js';
 // -------------------- Initialization --------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('logout-btn')?.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = 'index.html';
-  });
 
   loadTreaties();
   document.getElementById('create-new-treaty')?.addEventListener('click', proposeTreaty);

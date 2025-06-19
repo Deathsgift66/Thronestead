@@ -9,14 +9,7 @@ import { supabase } from './supabaseClient.js';
 let eventSource;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Bind logout
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
-  }
+
 
   // ✅ Enforce admin access (you can add RLS in Supabase, this is frontend safety)
   const { data: { session } } = await supabase.auth.getSession();

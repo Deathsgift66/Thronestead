@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         import("./navbar.js"),
         import("./mobileLinkBar.js"),
         import("./notificationBell.js"),
+        import("./logout.js"),
         // Future expansion hook
         // import("./navPlugins.js")
       ]);
