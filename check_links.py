@@ -15,8 +15,14 @@ for root, dirs, files in os.walk('.'):
                     file_path = os.path.join(base, url.lstrip('/'))
                 else:
                     file_path = os.path.join(os.path.dirname(path), url)
+
                 if not os.path.exists(file_path):
-                    missing.append((path, url))
+                    # Fallback to repo root for injected fragments like
+                    # public/navbar.html which reference files relative to
+                    # the consuming page rather than the fragment location.
+                    alt_path = os.path.join(base, url.lstrip('/'))
+                    if not os.path.exists(alt_path):
+                        missing.append((path, url))
 print('missing count', len(missing))
 for m in missing:
     print(f"{m[0]} => {m[1]}")
