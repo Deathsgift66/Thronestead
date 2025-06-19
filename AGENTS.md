@@ -18,7 +18,7 @@ This repository contains the pre-alpha frontend and accompanying FastAPI backend
 3. **Backend**
    - Install Python dependencies and run the API:
      ```bash
-     pip install -r requirements.txt
+     pip install -r backend/requirements.txt
      python main.py
      ```
    - The FastAPI server will listen on `http://localhost:8000`.
