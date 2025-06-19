@@ -139,10 +139,12 @@ repository.
 
 ### Netlify Deployment
 
-The `netlify.toml` file configures Netlify to serve the repository root as a
-static site. The `[build.processing.html]` setting enables *pretty URLs* so
-requests like `/login` resolve to `login.html` automatically. CORS headers are
-enabled for all routes via the `[[headers]]` section.
+The `netlify.toml` file instructs Netlify to run `npm run build` so Vite can
+generate the optimized static site in the `dist` directory. The
+`[build.processing.html]` setting enables *pretty URLs*, allowing requests like
+`/login` to resolve to `login.html` automatically. CORS headers are enabled for
+all routes via the `[[headers]]` section. Since the site is multi‑page, there is
+no catch‑all redirect to `index.html`.
 
 ---
 
