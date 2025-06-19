@@ -78,7 +78,8 @@ body {
 
 /* Parchment Background Panel */
 .parchment-bg {
-  background: url('../Assets/parchment_background.png') no-repeat center center/cover, var(--parchment-dark);
+  background: url('../Assets/signupparchment.png') no-repeat center center/cover,
+    var(--parchment-dark);
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 6px 14px var(--shadow);
