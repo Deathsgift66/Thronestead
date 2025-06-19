@@ -5,8 +5,8 @@
 # ----------------------------------------
 
 [build]
-  publish = "."                       # Root directory for static files
-  command = ""                        # No build command needed for pure HTML/CSS/JS
+  command = "npm run build"
+  publish = "dist"
 
 [context.production.environment]
   NODE_VERSION = "18"                # Ensures compatibility for any Node-based tooling
@@ -19,3 +19,8 @@
   [headers.values]
     Access-Control-Allow-Origin = "*"
 
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
