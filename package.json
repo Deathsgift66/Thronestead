@@ -7,7 +7,8 @@
   "private": true,
   "scripts": {
     "serve": "http-server ./ -a localhost -p 3000 -c-1 --cors",
-    "build": "vite build && cp -r Assets dist",
+    "build": "vite build && cp -r Assets dist && npm run validate-links",
+    "validate-links": "node scripts/validate-links.js",
     "dev": "vite",
     "lint": "eslint . --ext .js,.mjs --ignore-path .gitignore",
     "preview": "vite preview",
@@ -17,7 +18,8 @@
   "devDependencies": {
     "http-server": "^14.1.1",
     "vite": "^5.2.0",
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "cheerio": "^1.0.0-rc.12"
   },
   "engines": {
     "node": ">=18.0.0"
