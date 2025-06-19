@@ -164,10 +164,10 @@ function toggleLegend() {
     legend.innerHTML = `
       <h4>Treaty Types</h4>
       <ul>
-        <li><span style="color: blue;">&#9679;</span> MDP</li>
-        <li><span style="color: green;">&#9679;</span> Protection</li>
-        <li><span style="color: gold;">&#9679;</span> NAP</li>
-        <li><span style="color: red;">&#9679;</span> War</li>
+        <li><span data-color="blue">&#9679;</span> MDP</li>
+        <li><span data-color="green">&#9679;</span> Protection</li>
+        <li><span data-color="gold">&#9679;</span> NAP</li>
+        <li><span data-color="red">&#9679;</span> War</li>
       </ul>`;
     document.body.appendChild(legend);
   }

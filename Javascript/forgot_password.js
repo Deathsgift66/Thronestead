@@ -140,7 +140,7 @@ function updateStrengthMeter() {
   const color = score >= 4 ? 'var(--success)' : score >= 3 ? 'var(--warning)' : 'var(--error)';
 
   strengthMeter.innerHTML = `
-    <div class="strength-meter-bar" style="width:${percent}%; background:${color};"></div>
+    <div class="strength-meter-bar" data-width="${percent}" data-color="${color}"></div>
   `;
 }
 

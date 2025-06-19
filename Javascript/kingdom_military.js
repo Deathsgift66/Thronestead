@@ -244,7 +244,7 @@ function renderTrainingItem(entry) {
     <div class="training-item border p-3 rounded mb-2 shadow-sm" data-seconds="${secs}" ${endAttr}>
       <strong>${escapeHTML(entry.unit_name)} x${entry.quantity}</strong> — ETA: <span class="eta-countdown">${formatTime(secs)}</span>
       <div class="progress-bar-bg mt-1">
-        <div class="progress-bar-fill" style="width:0%"></div>
+        <div class="progress-bar-fill"></div>
       </div>
     </div>
   `;
