@@ -137,13 +137,12 @@ This will create all tables referenced by the frontend.
 If your deployment requires additional data seeding or custom tables, load any project-specific SQL migrations after `full_schema.sql`. Example documentation references a `2025_06_08_add_regions.sql` script used to populate the `region_catalogue` table. Another example is the `migrations/2025_06_17_populate_tech_catalogue.sql` script which seeds the `tech_catalogue` table.
 repository.
 
-### Render Deployment
+### Netlify Deployment
 
-The `render.yaml` file defines a `staticSites` entry for the frontend. Render
-serves the repository root directly without running a build step, allowing every
-HTML file to be accessed individually. The repository includes a `static.json`
-configuration enabling `cleanUrls`, so requests like `/login` correctly resolve
-to `login.html`.
+The `netlify.toml` file configures Netlify to serve the repository root as a
+static site. The `[build.processing.html]` setting enables *pretty URLs* so
+requests like `/login` resolve to `login.html` automatically. CORS headers are
+enabled for all routes via the `[[headers]]` section.
 
 ---
 
