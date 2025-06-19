@@ -5,6 +5,7 @@
   "author": "Deathsgift66",
   "license": "Proprietary",
   "private": true,
+  "type": "module",
   "scripts": {
     "serve": "http-server ./ -a localhost -p 3000 -c-1 --cors",
     "build": "vite build && cp -r Assets dist && npm run validate-links",
