@@ -11,6 +11,9 @@
 [context.production.environment]
   NODE_VERSION = "18"                # Ensures compatibility for any Node-based tooling
 
+[build.processing.html]
+  pretty_urls = true                 # Allow /page to resolve /page.html
+
 [[headers]]
   for = "/*"
   [headers.values]
