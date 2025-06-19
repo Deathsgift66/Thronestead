@@ -45,6 +45,11 @@ body {
   padding: 1.5rem;
 }
 
+#active-wars-heading,
+#active-wars h4 {
+  color: var(--ink);
+}
+
 #war-list {
   max-height: 500px;
   overflow-y: auto;
