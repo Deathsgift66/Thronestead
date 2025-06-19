@@ -7,14 +7,16 @@
   Automatically fallback to environment overrides if present (e.g., Render env vars)
 */
 
-const ENV = (typeof import !== 'undefined' && import.meta && import.meta.env)
-  ? import.meta.env
-  : (window.ENV || {});
+const ENV = typeof window !== 'undefined' && window.ENV
+  ? window.ENV
+  : (typeof import.meta !== 'undefined' && import.meta.env)
+    ? import.meta.env
+    : {};
 
-export const SUPABASE_URL = ENV.VITE_SUPABASE_URL || window.SUPABASE_URL || '';
+export const SUPABASE_URL = ENV.VITE_SUPABASE_URL || '';
 
 // ❗ Public anon key — NEVER use service_role key in frontend.
-export const SUPABASE_ANON_KEY = ENV.VITE_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY || '';
+export const SUPABASE_ANON_KEY = ENV.VITE_SUPABASE_ANON_KEY || '';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error(
@@ -23,7 +25,4 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Optional: Override API base URL (for FastAPI or Express proxy)
-export const API_BASE_URL =
-  ENV.VITE_API_BASE_URL ||
-  window.API_BASE_URL ||
-  'https://thronestead-backend.onrender.com';
+export const API_BASE_URL = ENV.VITE_API_BASE_URL || '';
