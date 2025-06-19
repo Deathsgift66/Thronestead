@@ -134,10 +134,10 @@ repository.
 
 ### Render Deployment
 
-The `render.yaml` file now defines a `staticSites` entry for the frontend. Render
+The `render.yaml` file defines a `staticSites` entry for the frontend. Render
 installs dependencies, runs `npm run build`, and serves the compiled `dist`
-directory. A new `static.json` handles single-page app routing by redirecting all
-paths to `index.html`.
+directory. Static files are served directly without a catch-all redirect so each
+page can be accessed individually.
 
 ---
 

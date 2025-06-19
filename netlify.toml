@@ -11,8 +11,3 @@
 [context.production.environment]
   NODE_VERSION = "18"                # Ensures compatibility for any Node-based tooling
 
-# Enable single-page app behavior
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
