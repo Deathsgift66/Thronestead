@@ -40,7 +40,7 @@ async function loadPlayerProfile() {
     if (!profileRes.ok) throw new Error(overview.detail || 'Profile load failed');
 
     const data = overview.user || {};
-    avatarImg.src = data.profile_avatar_url || "../Assets/avatars/default_avatar_emperor.png";
+    avatarImg.src = data.profile_avatar_url || "/Assets/avatars/default_avatar_emperor.png";
     avatarImg.alt = `${data.username || 'Player'}'s Avatar`;
 
     playerNameEl.textContent = data.username || "Unnamed Player";

@@ -94,7 +94,7 @@ export const SovereignUtils = {
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'ambient-audio';
-      audio.src = 'Assets/audio/ambient_tavern.mp3'; // Replace with final path
+      audio.src = '/Assets/audio/ambient_tavern.mp3'; // Replace with final path
       audio.loop = true;
       audio.volume = 0.4;
       audio.setAttribute('aria-hidden', 'true');

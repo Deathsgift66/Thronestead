@@ -11,17 +11,17 @@ let vipLevel = 0;
 let selectedAvatar = '';
 const regionMap = {};
 const avatarList = [
-  'Assets/avatars/Default_avatar_english_king.png',
-  'Assets/avatars/Default_avatar_english_queen.png',
-  'Assets/avatars/Default_avatar_slavic_king.png',
-  'Assets/avatars/Default_avatar_slavic_queen.png',
-  'Assets/avatars/Default_avatar_sultan.png',
-  'Assets/avatars/default_avatar_emperor.png',
-  'Assets/avatars/default_avatar_empress.png',
-  'Assets/avatars/default_avatar_indian_king.png',
-  'Assets/avatars/default_avatar_indian_queen.png',
-  'Assets/avatars/default_avatar_nubian_king.png',
-  'Assets/avatars/default_avatar_nubian_queen.png'
+  '/Assets/avatars/Default_avatar_english_king.png',
+  '/Assets/avatars/Default_avatar_english_queen.png',
+  '/Assets/avatars/Default_avatar_slavic_king.png',
+  '/Assets/avatars/Default_avatar_slavic_queen.png',
+  '/Assets/avatars/Default_avatar_sultan.png',
+  '/Assets/avatars/default_avatar_emperor.png',
+  '/Assets/avatars/default_avatar_empress.png',
+  '/Assets/avatars/default_avatar_indian_king.png',
+  '/Assets/avatars/default_avatar_indian_queen.png',
+  '/Assets/avatars/default_avatar_nubian_king.png',
+  '/Assets/avatars/default_avatar_nubian_queen.png'
 ];
 
 document.addEventListener('DOMContentLoaded', async () => {

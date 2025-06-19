@@ -42,7 +42,7 @@ async function loadBuildings(villageId) {
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
-      <td><img src="Assets/buildings/${building.icon}" alt="${building.name}" width="32" height="32"></td>
+      <td><img src="/Assets/buildings/${building.icon}" alt="${building.name}" width="32" height="32"></td>
       <td>${building.name}</td>
       <td>${building.level}</td>
       <td>${building.status}</td>

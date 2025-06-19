@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
 
-const DEFAULT_BANNER = 'Assets/banner.png';
+const DEFAULT_BANNER = '/Assets/banner.png';
 
 /**
  * Applies the alliance's banner, emblem, and background to matching page elements.
