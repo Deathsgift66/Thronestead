@@ -8,7 +8,7 @@ Developer: Deathsgift66
 @import url('./base_styles.css');
 
 body {
-  background: url('../Assets/history_bg.png') no-repeat center center fixed;
+  background: url('../Assets/aged-wood-texture.png') no-repeat center center fixed;
   background-size: cover;
   color: var(--parchment);
 }
