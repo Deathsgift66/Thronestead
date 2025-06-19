@@ -1,0 +1,136 @@
+<!--
+Project Name: Thronestead©
+File Name: navbar.html
+Version 6.14.2025.20.12
+Developer: Deathsgift66
+-->
+
+<nav class="kr-navbar" aria-label="Main Navigation">
+
+  <!-- Hamburger Dropdown Menu -->
+  <div class="dropdown">
+    <div class="dropdown-toggle" role="button" tabindex="0" aria-label="Open Main Menu">☰</div>
+    <div class="dropdown-content" role="menu" aria-label="Main Menu">
+
+      <!-- Kingdom -->
+      <div class="menu-section-header">Kingdom</div>
+      <a href="overview.html" role="menuitem">Overview</a>
+      <a href="resources.html" role="menuitem">Resources</a>
+      <a href="buildings.html" role="menuitem">Buildings</a>
+      <a href="research.html" role="menuitem">Research</a>
+      <a href="village_master.html" role="menuitem">Village Master</a>
+      <a href="villages.html" role="menuitem">Villages</a>
+      <a href="village.html" role="menuitem">Single Village</a>
+      <a href="quests.html" role="menuitem">Quests</a>
+      <a href="projects.html" role="menuitem">Projects</a>
+      <a href="kingdom_history.html" role="menuitem">Kingdom History</a>
+      <a href="kingdom_achievements.html" role="menuitem">Achievements</a>
+      <a href="policies_laws.html" role="menuitem">Policies & Laws</a>
+      <a href="seasonal_effects.html" role="menuitem">Seasonal Effects</a>
+
+      <!-- War -->
+      <div class="menu-section-header">War</div>
+      <a href="wars.html" role="menuitem">Wars</a>
+      <a href="conflicts.html" role="menuitem">Conflicts</a>
+      <a href="train_troops.html" role="menuitem">Train Troops</a>
+      <a href="kingdom_military.html" role="menuitem">Military</a>
+      <a href="spies.html" role="menuitem">Spies</a>
+      <a href="spy_log.html" role="menuitem">Spy Log</a>
+      <a href="battle_live.html" role="menuitem">Battle Live</a>
+      <a href="battle_replay.html" role="menuitem">Battle Replay</a>
+      <a href="battle_resolution.html" role="menuitem">Battle Resolution</a>
+      <a href="preplan_editor.html" role="menuitem">Preplan Editor</a>
+      <a href="treaty_web.html" role="menuitem">Treaty Web</a>
+
+      <!-- Alliance -->
+      <div class="menu-section-header">Alliance</div>
+      <a href="alliance_home.html" role="menuitem">Alliance Home</a>
+      <a href="alliance_members.html" role="menuitem">Members</a>
+      <a href="alliance_projects.html" role="menuitem">Projects</a>
+      <a href="alliance_quests.html" role="menuitem">Quests</a>
+      <a href="alliance_treaties.html" role="menuitem">Treaties</a>
+      <a href="alliance_wars.html" role="menuitem">Alliance Wars</a>
+      <a href="alliance_changelog.html" role="menuitem">Changelog</a>
+      <a href="alliance_vault.html" role="menuitem">Vault</a>
+      <a href="diplomacy_center.html" role="menuitem">Diplomacy Center</a>
+
+      <!-- Economy -->
+      <div class="menu-section-header">Economy</div>
+      <a href="market.html" role="menuitem">Market</a>
+      <a href="black_market.html" role="menuitem">Black Market</a>
+      <a href="trade_logs.html" role="menuitem">Trade Logs</a>
+
+      <!-- World -->
+      <div class="menu-section-header">World</div>
+      <a href="world_map.html" role="menuitem">World Map</a>
+      <a href="temples.html" role="menuitem">Temples</a>
+      <a href="town_criers.html" role="menuitem">Town Criers</a>
+      <a href="leaderboard.html" role="menuitem">Leaderboard</a>
+      <a href="news.html" role="menuitem">News</a>
+      <a href="tutorial.html" role="menuitem">Tutorial</a>
+
+      <!-- Profile -->
+      <div class="menu-section-header">Profile</div>
+      <a href="profile.html" role="menuitem">Profile</a>
+      <a href="messages.html" role="menuitem">Messages</a>
+      <a href="message.html" role="menuitem">View Message</a>
+      <a href="compose.html" role="menuitem">Compose</a>
+      <a href="notifications.html" role="menuitem">Notifications</a>
+      <a href="account_settings.html" role="menuitem">Account Settings</a>
+      <a href="donate_vip.html" role="menuitem">VIP & Donate</a>
+      <a href="signup.html" role="menuitem">Sign Up</a>
+      <a href="login.html" role="menuitem">Login</a>
+      <a href="forgot_password.html" role="menuitem">Forgot Password</a>
+      <a href="index.html" role="menuitem">Home</a>
+      <a href="legal.html" role="menuitem">Legal</a>
+      <a href="changelog.html" role="menuitem">Changelog</a>
+
+      <!-- Admin -->
+      <div class="menu-section-header admin-only">Admin</div>
+      <a href="admin_dashboard.html" class="admin-only" role="menuitem">Dashboard</a>
+      <a href="admin_alerts.html" class="admin-only" role="menuitem">Alerts</a>
+      <a href="player_management.html" class="admin-only" role="menuitem">Player Management</a>
+      <a href="audit_log.html" class="admin-only" role="menuitem">Audit Log</a>
+
+      <!-- Misc -->
+      <div class="menu-section-header">Misc</div>
+      <a href="play.html" role="menuitem">Play Now</a>
+    </div>
+  </div>
+
+  <!-- Quick Access Bar -->
+  <ul class="navbar-links" role="menubar">
+    <li><a href="overview.html" role="menuitem">Overview</a></li>
+    <li><a href="wars.html" role="menuitem">Wars</a></li>
+    <li><a href="villages.html" role="menuitem">Villages</a></li>
+  </ul>
+
+  <!-- Player Info -->
+  <div class="user-info">
+    <img id="nav-profile-pic" src="Assets/avatars/default_avatar_emperor.png" alt="Profile Picture" />
+    <span id="nav-username" aria-label="Username">Player</span>
+    <span id="nav-unread" class="notification-badge" aria-label="Unread Messages"></span>
+
+    <div id="nav-bell" class="nav-bell" aria-label="Notifications">
+      <img src="Assets/icon-bell.svg" alt="Notifications" id="nav-bell-icon" />
+      <span id="nav-bell-count" class="notification-badge" aria-label="Unread Notifications"></span>
+      <div id="bell-dropdown" class="bell-dropdown" role="menu" aria-label="Notification Dropdown"></div>
+    </div>
+  </div>
+
+  <button class="logout-btn" id="logout-btn" aria-label="Logout">Logout</button>
+</nav>
+
+<!-- Mobile Nav -->
+<nav class="mobile-link-bar" aria-label="Mobile Navigation">
+  <a href="notifications.html" aria-label="Notifications">
+    <img src="Assets/icon-bell.svg" alt="Notifications" />
+  </a>
+  <a href="overview.html" aria-label="Overview">
+    <img src="Assets/icon-quill.svg" alt="Overview" />
+  </a>
+  <a href="resources.html" aria-label="Resources">
+    <img src="Assets/icon-scroll.svg" alt="Resources" />
+  </a>
+  <button id="mobile-menu-btn" aria-label="Open Full Menu">☰</button>
+</nav>

@@ -59,9 +59,12 @@ allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
 if allowed_origins_env:
     origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
 else:
-    origins = ["https://www.thronestead.com"]
+    origins = [
+        "https://www.thronestead.com",
+        "http://localhost:3000",
+    ]
     logger.warning(
-        "ALLOWED_ORIGINS not set; defaulting to https://www.thronestead.com"
+        "ALLOWED_ORIGINS not set; defaulting to production and localhost"
     )
 
 app.add_middleware(
