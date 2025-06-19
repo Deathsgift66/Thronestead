@@ -102,7 +102,7 @@ function updateGraph() {
     .attr('fill', '#ccc');
 
   nodeEnter.append('image')
-    .attr('href', d => d.emblem_url || 'assets/emblem-default.png')
+    .attr('href', d => d.emblem_url || '/Assets/avatars/default_avatar_emperor.png')
     .attr('width', 40)
     .attr('height', 40)
     .attr('x', -20)

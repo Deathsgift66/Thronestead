@@ -26,7 +26,7 @@ register_module("buildings", {
         "js": "buildings.js",
         "images": {
             "icon_size": "64x64px",
-            "path": "/assets/buildings/",
+            "path": "/Assets/buildings/",
             "fallback": "building_default.png"
         }
     },
