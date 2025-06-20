@@ -2,7 +2,13 @@
 // File Name: signup.js
 // Version 6.14.2025.20.12
 // Developer: Deathsgift66
-import { showToast, validateEmail, validatePasswordComplexity, debounce } from './utils.js';
+import {
+  showToast,
+  validateEmail,
+  validatePasswordComplexity,
+  debounce
+} from './utils.js';
+import { API_BASE_URL } from './config.js';
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
@@ -55,7 +61,7 @@ async function handleSignup() {
   };
 
   try {
-    const res = await fetch('/api/signup/register', {
+    const res = await fetch(`${API_BASE_URL}/api/signup/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -81,7 +87,7 @@ async function checkAvailability() {
   if (!kingdom && !user) return;
 
   try {
-    const res = await fetch('/api/signup/check', {
+    const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kingdom_name: kingdom, username: user })
@@ -110,7 +116,7 @@ async function loadSignupStats() {
   if (!panel || !list) return;
 
   try {
-    const res = await fetch('/api/signup/stats');
+    const res = await fetch(`${API_BASE_URL}/api/signup/stats`);
     if (!res.ok) return;
     const data = await res.json();
     list.innerHTML = "";
