@@ -13,14 +13,16 @@ const ENV = typeof window !== 'undefined' && window.ENV
     ? import.meta.env
     : {};
 
-export const SUPABASE_URL = ENV.VITE_SUPABASE_URL || '';
+export const SUPABASE_URL =
+  ENV.VITE_PUBLIC_SUPABASE_URL || ENV.VITE_SUPABASE_URL || '';
 
 // ❗ Public anon key — NEVER use service_role key in frontend.
-export const SUPABASE_ANON_KEY = ENV.VITE_SUPABASE_ANON_KEY || '';
+export const SUPABASE_ANON_KEY =
+  ENV.VITE_PUBLIC_SUPABASE_ANON_KEY || ENV.VITE_SUPABASE_ANON_KEY || '';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error(
-    'Supabase credentials missing. Define VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in env.js',
+    'Supabase credentials missing. Define VITE_PUBLIC_SUPABASE_URL/VITE_PUBLIC_SUPABASE_ANON_KEY in env.js',
   );
 }
 

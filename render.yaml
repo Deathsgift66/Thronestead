@@ -27,9 +27,9 @@ staticSites:
     buildCommand: ""  # pure static files
     staticPublishPath: .
     envVars:
-      - key: VITE_SUPABASE_URL
+      - key: VITE_PUBLIC_SUPABASE_URL
         sync: false
-      - key: VITE_SUPABASE_ANON_KEY
+      - key: VITE_PUBLIC_SUPABASE_ANON_KEY
         sync: false
       - key: VITE_API_BASE_URL
         sync: false
