@@ -3,40 +3,33 @@
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
-"""FastAPI application for the Thronestead backend.
+"""FastAPI application for the Thronestead backend."""
 
-This module loads all API routers, ensures the database schema exists, and
-serves the static frontend.  It can be imported as ``backend.main`` or run
-directly for development purposes.
-"""
-
-# Allow running this file directly via ``python backend/main.py`` by adjusting
-# ``sys.path`` so that relative imports resolve correctly.
-if __name__ == "__main__" and __package__ is None:  # pragma: no cover - dev only
+if __name__ == "__main__" and __package__ is None:  # dev-only import fix
     from pathlib import Path
     import sys
-
     sys.path.append(str(Path(__file__).resolve().parent.parent))
     __package__ = "backend"
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .auth_middleware import UserStateMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import logging
 import os
+import traceback
 
+from .auth_middleware import UserStateMiddleware
 from .database import engine
 from .models import Base
 from . import routers as router_pkg
 
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
-logger = logging.getLogger("Thronestead.BackendMain")
-
 # -----------------------
 # ⚙️ FastAPI Initialization
 # -----------------------
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger("Thronestead.BackendMain")
+
 app = FastAPI(
     title="Thronestead API",
     version="6.13.2025.19.49",
@@ -44,7 +37,7 @@ app = FastAPI(
 )
 
 # -----------------------
-# 🔐 Middleware (CORS, security headers, etc.)
+# 🔐 CORS Middleware
 # -----------------------
 allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
 if allowed_origins_env:
@@ -62,9 +55,7 @@ else:
         "http://localhost:5173",
     ]
     allow_credentials = True
-    logger.warning(
-        "ALLOWED_ORIGINS not set; defaulting to production and localhost"
-    )
+    logger.warning("ALLOWED_ORIGINS not set; defaulting to production and localhost")
 
 cors_options = {
     "allow_origins": origins,
@@ -81,47 +72,50 @@ app.add_middleware(UserStateMiddleware)
 if engine:
     Base.metadata.create_all(bind=engine)
 
-# Load game-wide settings into memory (affects all systems)
-import traceback
+# -----------------------
+# ⚙️ Load Global Game Settings
+# -----------------------
 try:
     from . import data
     data.load_game_settings()
-except Exception as e:  # pragma: no cover - ensure visibility in logs
-    import logging
-    logging.exception("\u274c Crash during startup loading: %s", e)
+    logger.info("✅ Loaded game settings.")
+except Exception as e:
+    logger.exception("❌ Crash during startup loading game settings: %s", e)
     traceback.print_exc()
     raise
 
 # -----------------------
-# 📦 Route Imports and Inclusion
+# 📦 Auto-load Routers Safely
 # -----------------------
-
 for name in router_pkg.__all__:
-    module = getattr(router_pkg, name)
-    router_obj = getattr(module, "router", None)
-    if router_obj:
-        app.include_router(router_obj)
-    alt_obj = getattr(module, "alt_router", None)
-    if alt_obj:
-        app.include_router(alt_obj)
+    try:
+        module = getattr(router_pkg, name)
+        router_obj = getattr(module, "router", None)
+        if router_obj:
+            app.include_router(router_obj)
+        alt_obj = getattr(module, "alt_router", None)
+        if alt_obj:
+            app.include_router(alt_obj)
+    except Exception as e:
+        logger.exception(f"❌ Failed to import or include router '{name}': {e}")
+        raise
 
 # -----------------------
-# 🖼️ Serve Static Frontend Files
+# 🖼️ Static File Serving (Frontend SPA)
 # -----------------------
-# ``FRONTEND_DIR`` can override the default directory for serving the static site
 BASE_DIR = Path(os.getenv("FRONTEND_DIR", Path(__file__).resolve().parent.parent))
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
 # -----------------------
-# ✅ Health Check (used by Render or CI/CD)
+# ✅ Health Check Endpoint
 # -----------------------
 @app.get("/health-check")
 def health_check():
-    """Simple endpoint used for uptime checks and load balancers."""
     return {"status": "online", "service": "Thronestead API"}
 
-
-if __name__ == "__main__":  # pragma: no cover - manual execution
+# -----------------------
+# 🧪 Run App Locally (Dev Only)
+# -----------------------
+if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
