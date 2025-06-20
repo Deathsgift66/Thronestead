@@ -16,16 +16,14 @@ export const SUPABASE_URL = 'https://zzqoxgytfrbptojcwrjm.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE';
 
 // Optional: Override API base URL for local development
-export const VITE_API_BASE_URL = 'https://api.thronestead.com';
+export const API_BASE_URL = 'https://api.thronestead.com';
 
 
 // Support the previous window.ENV style for backward compatibility
 window.ENV = {
-  VITE_PUBLIC_SUPABASE_URL: SUPABASE_URL,
-  VITE_PUBLIC_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
-  // Backwards compatibility
-  VITE_SUPABASE_URL: SUPABASE_URL,
-  VITE_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
-  VITE_API_BASE_URL
-
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  API_BASE_URL,
 };
+
+window.API_BASE_URL = API_BASE_URL;
