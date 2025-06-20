@@ -27,4 +27,5 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Optional: Override API base URL (for FastAPI or Express proxy)
-export const API_BASE_URL = ENV.VITE_API_BASE_URL || '';
+export const API_BASE_URL =
+  ENV.VITE_API_BASE_URL || 'https://api.thronestead.com';
