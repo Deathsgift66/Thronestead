@@ -46,8 +46,8 @@ This repository contains the pre-alpha frontend and accompanying FastAPI backend
 
 ## Deployment
 
-- `render.yaml` contains an example configuration for deploying the backend on Render.
-- The frontend is static and can be hosted on Netlify using `netlify.toml`.
+- `render.yaml` deploys only the FastAPI backend on Render.
+- The frontend is served separately on Netlify using `netlify.toml`.
 
 ---
 
