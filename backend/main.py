@@ -29,7 +29,6 @@ import os
 
 from .database import engine
 from .models import Base
-from .data import load_game_settings
 from . import routers as router_pkg
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -83,7 +82,15 @@ if engine:
     Base.metadata.create_all(bind=engine)
 
 # Load game-wide settings into memory (affects all systems)
-load_game_settings()
+import traceback
+try:
+    from . import data
+    data.load_game_settings()
+except Exception as e:  # pragma: no cover - ensure visibility in logs
+    import logging
+    logging.exception("\u274c Crash during startup loading: %s", e)
+    traceback.print_exc()
+    raise
 
 # -----------------------
 # 📦 Route Imports and Inclusion
