@@ -6,12 +6,12 @@ import { supabase } from './supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
 // DOM Elements
-let loginForm, loginIdInput, passwordInput, loginButton, messageContainer;
+let loginForm, emailInput, passwordInput, loginButton, messageContainer;
 let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage, announcementList;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
-  loginIdInput = document.getElementById('login-id');
+  emailInput = document.getElementById('login-email');
   passwordInput = document.getElementById('password');
   loginButton = document.querySelector('#login-form .royal-button');
   messageContainer = document.getElementById('message');
@@ -53,25 +53,8 @@ async function handleLogin(e) {
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
 
-  const loginID = loginIdInput.value.trim();
+  const email = emailInput.value.trim();
   const password = passwordInput.value;
-
-  let email = loginID.includes('@') ? loginID : null;
-
-  if (!email) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('email')
-      .eq('username', loginID)
-      .single();
-
-    if (error || !data) {
-      showMessage('error', '⚠️ No account found with that Ruler Name.');
-      resetLoginButton();
-      return;
-    }
-    email = data.email;
-  }
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
