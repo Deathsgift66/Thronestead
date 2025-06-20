@@ -3,10 +3,21 @@
 # Version: 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""FastAPI application for the Thronestead backend.
+
+This module loads all API routers, ensures the database schema exists, and
+serves the static frontend.  It can be imported as ``backend.main`` or run
+directly for development purposes.
 """
-Main application entry point for the FastAPI server powering Thronestead©.
-Loads routers, initializes the DB schema, and serves static frontend content.
-"""
+
+# Allow running this file directly via ``python backend/main.py`` by adjusting
+# ``sys.path`` so that relative imports resolve correctly.
+if __name__ == "__main__" and __package__ is None:  # pragma: no cover - dev only
+    from pathlib import Path
+    import sys
+
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+    __package__ = "backend"
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,3 +108,9 @@ app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 def health_check():
     """Simple endpoint used for uptime checks and load balancers."""
     return {"status": "online", "service": "Thronestead API"}
+
+
+if __name__ == "__main__":  # pragma: no cover - manual execution
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
