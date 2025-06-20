@@ -20,24 +20,34 @@ import {
 let SUPABASE_URL = CONFIG_URL;
 let SUPABASE_ANON_KEY = CONFIG_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  try {
-    const res = await fetch(`${API_BASE_URL || ''}/api/public-config`);
-    if (res.ok) {
-      const cfg = await res.json();
-      SUPABASE_URL ||= cfg.SUPABASE_URL;
-      SUPABASE_ANON_KEY ||= cfg.SUPABASE_ANON_KEY;
-    } else {
-      console.error('Failed to load Supabase credentials');
+// Wrap credential fetching in an async function to avoid top-level await
+async function fetchConfigIfNeeded() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    try {
+      const res = await fetch(`${API_BASE_URL || ''}/api/public-config`);
+      if (res.ok) {
+        const cfg = await res.json();
+        SUPABASE_URL ||= cfg.SUPABASE_URL;
+        SUPABASE_ANON_KEY ||= cfg.SUPABASE_ANON_KEY;
+        // Reinitialize client once credentials are available
+        if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+          supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+      } else {
+        console.error('Failed to load Supabase credentials');
+      }
+    } catch (err) {
+      console.error('Error fetching Supabase credentials', err);
     }
-  } catch (err) {
-    console.error('Error fetching Supabase credentials', err);
   }
 }
 
+// Kick off async fetch without awaiting to maintain compatibility
+fetchConfigIfNeeded();
+
 // ✅ Create the Supabase client instance
 // This allows you to make authenticated requests, real-time subscriptions, and database queries
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ✅ Export client globally
 // Every script that needs to interact with Supabase will import it from this single source
