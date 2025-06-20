@@ -15,6 +15,9 @@ const API_BASE =
     : window.API_BASE_URL ||
       'https://thronestead-backend.onrender.com';
 
+// ✅ Secondary backend used if the primary API_BASE fails
+const FALLBACK_BASE = 'https://kingmakers-backend.onrender.com';
+
 // ✅ Ensures loading overlay exists and returns reference
 function getOverlay() {
   let el = document.getElementById('loading-overlay');
@@ -45,11 +48,28 @@ window.fetch = async function(url, options) {
   const overlay = getOverlay();
   overlay.classList.add('visible'); // show spinner
 
+  const isApi = url.startsWith('/api/');
+  const opts = { ...(options || {}), mode: 'cors' };
+
+  const attempt = async (base) => {
+    const fullUrl = isApi ? base + url : url;
+    return originalFetch(fullUrl, opts);
+  };
+
   try {
-    // If this is an API call, prepend base URL
-    const fullUrl = url.startsWith('/api/') ? API_BASE + url : url;
-    const opts = { ...(options || {}), mode: 'cors' };
-    const res = await originalFetch(fullUrl, opts);
+    let res = await attempt(API_BASE);
+
+    if (isApi && (!res.ok || res.status >= 500)) {
+      try {
+        const fallbackRes = await attempt(FALLBACK_BASE);
+        if (fallbackRes.ok) {
+          res = fallbackRes;
+        }
+      } catch (_) {
+        // continue to error handling
+      }
+    }
+
     overlay.classList.remove('visible'); // hide spinner
 
     // If not successful, extract readable error text if available
@@ -69,6 +89,32 @@ window.fetch = async function(url, options) {
 
     return res;
   } catch (err) {
+    if (isApi) {
+      try {
+        const res = await attempt(FALLBACK_BASE);
+        overlay.classList.remove('visible');
+
+        if (!res.ok) {
+          const contentType = res.headers.get('Content-Type') || '';
+          let errorText = '';
+
+          if (contentType.includes('application/json')) {
+            const json = await res.json();
+            errorText = json.detail || json.message || res.statusText;
+          } else {
+            errorText = await res.text();
+          }
+
+          showError(errorText || res.statusText);
+        }
+
+        return res;
+      } catch (err2) {
+        overlay.classList.remove('visible');
+        showError('Network error. Please try again.');
+        throw err2;
+      }
+    }
     overlay.classList.remove('visible');
     showError('Network error. Please try again.');
     throw err;
