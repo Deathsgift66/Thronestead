@@ -17,9 +17,25 @@ const strengthMeter = document.getElementById('strength-meter');
 const tipsPanel = document.getElementById('tips-panel');
 const tipsList = document.getElementById('tips-list');
 
+let accessToken = null;
+
 // Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   loadSecurityTips();
+  const params = new URLSearchParams(window.location.hash.substring(1));
+  accessToken = params.get('access_token');
+  if (accessToken) {
+    const { error } = await supabase.auth.getUser(accessToken);
+    if (error) {
+      renderStatusMessage('Invalid or expired link.', true);
+    } else {
+      requestForm.classList.add('hidden');
+      codePanel.classList.add('hidden');
+      newPassPanel.classList.remove('hidden');
+      newPassPanel.setAttribute('aria-hidden', 'false');
+      renderStatusMessage('Enter your new password.', false);
+    }
+  }
 });
 requestForm.addEventListener('submit', e => {
   e.preventDefault();
@@ -89,7 +105,6 @@ async function submitResetCode() {
 // Step 3: Set New Password
 // ================================
 async function submitNewPassword() {
-  const code = resetCodeInput.value.trim();
   const new_password = newPasswordInput.value.trim();
   const confirm_password = confirmPasswordInput.value.trim();
 
@@ -98,18 +113,32 @@ async function submitNewPassword() {
   }
 
   try {
-    const res = await fetch('/api/auth/set-new-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, new_password, confirm_password })
-    });
-
-    if (res.ok) {
+    if (accessToken) {
+      const { error } = await supabase.auth.updateUser(
+        { password: new_password },
+        { accessToken }
+      );
+      if (error) {
+        renderStatusMessage('Reset failed', true);
+        return;
+      }
       renderStatusMessage('Password updated! Redirecting...', false);
-      setTimeout(() => window.location.href = 'login.html', 5000);
+      setTimeout(() => (window.location.href = 'login.html'), 5000);
     } else {
-      const data = await res.json();
-      renderStatusMessage(data.detail || 'Error updating password.', true);
+      const code = resetCodeInput.value.trim();
+      const res = await fetch('/api/auth/set-new-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, new_password, confirm_password })
+      });
+
+      if (res.ok) {
+        renderStatusMessage('Password updated! Redirecting...', false);
+        setTimeout(() => window.location.href = 'login.html', 5000);
+      } else {
+        const data = await res.json();
+        renderStatusMessage(data.detail || 'Error updating password.', true);
+      }
     }
   } catch (err) {
     renderStatusMessage(err.message, true);
