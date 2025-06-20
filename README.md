@@ -131,6 +131,10 @@ runtime.
 The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
 separated list of allowed domains or `*` to disable origin checks (credentials
 will be ignored when using `*`).
+Example:
+```
+ALLOWED_ORIGINS=https://thronestead.com,https://www.thronestead.com,http://localhost:5173
+```
 
 This will create all tables referenced by the frontend.
 If your deployment requires additional data seeding or custom tables, load any project-specific SQL migrations after `full_schema.sql`. Example documentation references a `2025_06_08_add_regions.sql` script used to populate the `region_catalogue` table. Another example is the `migrations/2025_06_17_populate_tech_catalogue.sql` script which seeds the `tech_catalogue` table.

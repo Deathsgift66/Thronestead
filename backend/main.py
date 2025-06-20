@@ -57,7 +57,11 @@ if allowed_origins_env:
         origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
         allow_credentials = True
 else:
-    origins = ["https://www.thronestead.com", "http://localhost:3000"]
+    origins = [
+        "https://thronestead.com",
+        "https://www.thronestead.com",
+        "http://localhost:5173",
+    ]
     allow_credentials = True
     logger.warning(
         "ALLOWED_ORIGINS not set; defaulting to production and localhost"
@@ -66,8 +70,8 @@ else:
 cors_options = {
     "allow_origins": origins,
     "allow_credentials": allow_credentials,
-    "allow_methods": ["GET", "POST", "OPTIONS"],
-    "allow_headers": ["Content-Type", "Authorization"],
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
 }
 app.add_middleware(CORSMiddleware, **cors_options)
 app.add_middleware(UserStateMiddleware)
