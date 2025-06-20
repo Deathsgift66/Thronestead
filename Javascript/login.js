@@ -106,7 +106,7 @@ async function handleReset() {
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://www.thronestead.com/update-password',
+      redirectTo: 'https://www.thronestead.com/reset-password.html',
     });
 
     if (error) {
