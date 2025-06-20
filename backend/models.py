@@ -161,6 +161,7 @@ class AuditLog(Base):
 class ArchivedAuditLog(Base):
     __tablename__ = "archived_audit_log"
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
     log_id = Column(BigInteger)
     user_id = Column(UUID(as_uuid=True))
     action = Column(Text)
