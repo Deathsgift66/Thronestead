@@ -1,0 +1,31 @@
+// Project Name: Thronestead©
+// File Name: env.js
+// Version 6.13.2025.19.49
+// Developer: Deathsgift66
+
+/**
+ * Generated from `env.example.js`.
+ * Replace these values with your Supabase credentials for local development.
+ * DO NOT commit real credentials to version control.
+ */
+
+// Example values used by the frontend during local development.
+// Copy this file to `env.js` and replace with your real credentials.
+
+export const SUPABASE_URL = 'https://zzqoxgytfrbptojcwrjm.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE';
+
+// Optional: Override API base URL for local development
+export const VITE_API_BASE_URL = 'http://localhost:8000';
+
+
+// Support the previous window.ENV style for backward compatibility
+window.ENV = {
+  VITE_PUBLIC_SUPABASE_URL: SUPABASE_URL,
+  VITE_PUBLIC_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
+  // Backwards compatibility
+  VITE_SUPABASE_URL: SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
+  VITE_API_BASE_URL
+
+};
