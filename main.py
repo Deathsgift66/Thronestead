@@ -2,100 +2,16 @@
 # File Name: main.py
 # Version 6.14.2025.20.12
 # Developer: Deathsgift66
+"""Convenience entry point for running the Thronestead backend.
 
-"""
-Entrypoint for the FastAPI application — used for local dev and deployment.
-
-Routers:
-- /api/resources
-- /api/announcements
-- /api/regions
-- /api/progression
+This file simply exposes ``app`` from :mod:`backend.main`, which contains the
+full FastAPI application with all routers registered and the static frontend
+mounted.
 """
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from backend.auth_middleware import UserStateMiddleware
-import logging
-import os
+from backend.main import app
 
-# Ensure environment variables from `.ENV` are loaded via the backend package
-import backend as _backend  # noqa: F401
-
-# Router imports
-from backend.routers import resources
-from backend.routers import login_routes as announcements
-from backend.routers import region
-from backend.routers import progression_router
-from backend.routers import public_kingdom
-from backend.routers import black_market_routes
-from backend.routers import tokens
-from backend.routers import homepage
-from backend.routers import signup
-
-logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger("Thronestead.Main")
-
-app = FastAPI(
-    title="Thronestead API",
-    version="6.14.2025.20.12",
-    description="Backend services for Thronestead — resource systems, announcements, region data, and progression.",
-)
-
-
-# Generic catch-all error handler for unexpected exceptions
-@app.exception_handler(Exception)
-async def handle_unexpected_exception(request: Request, exc: Exception):
-    logger.exception("Unhandled application error")
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal Server Error"},
-    )
-
-
-# Configure CORS
-allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
-if allowed_origins_env:
-    if allowed_origins_env.strip() == "*":
-        origins = ["*"]
-        allow_credentials = False
-        logger.warning("CORS allowing any origin without credentials")
-    else:
-        origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
-        allow_credentials = True
-else:
-    origins = ["https://www.thronestead.com", "http://localhost:3000"]
-    allow_credentials = True
-    logger.warning(
-        "ALLOWED_ORIGINS not set; defaulting to production and localhost"
-    )
-
-cors_options = {
-    "allow_origins": origins,
-    "allow_credentials": allow_credentials,
-    "allow_methods": ["GET", "POST", "OPTIONS"],
-    "allow_headers": ["Content-Type", "Authorization"],
-}
-app.add_middleware(CORSMiddleware, **cors_options)
-app.add_middleware(UserStateMiddleware)
-
-# Register all route modules
-# Each router already defines its API prefix and tags.
-app.include_router(resources.router)
-app.include_router(announcements.router)
-app.include_router(region.router)
-app.include_router(progression_router.router)
-app.include_router(public_kingdom.router)
-app.include_router(black_market_routes.router)
-app.include_router(black_market_routes.alt_router)
-app.include_router(tokens.router)
-app.include_router(homepage.router)
-app.include_router(signup.router)
-
-# Manual launch for `python main.py` use
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover - manual execution
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
