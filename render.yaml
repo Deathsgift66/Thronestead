@@ -16,7 +16,7 @@ services:
         fromDatabase:
           name: thronestead-db
           property: connectionString
-      - key: SUPABASE_SERVICE_ROLE
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: JWT_SECRET
         sync: false
