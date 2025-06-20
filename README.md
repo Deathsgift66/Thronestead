@@ -119,8 +119,7 @@ The key variables are:
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-VITE_PUBLIC_SUPABASE_URL
-VITE_PUBLIC_SUPABASE_ANON_KEY
+API_BASE_URL
 MASTER_ROLLBACK_PASSWORD
 ALLOWED_ORIGINS
 ```
@@ -139,11 +138,11 @@ repository.
 
 ### Netlify Deployment
 
-The `netlify.toml` file instructs Netlify to run `npm run build` so Vite can
-generate the optimized static site in the `dist` directory. The
-`[build.processing.html]` setting enables *pretty URLs*, allowing requests like
-`/login` to resolve to `login.html` automatically. CORS headers are enabled for
-all routes via the `[[headers]]` section. Since the site is multi‑page, there is
+The `netlify.toml` file deploys the repository as a static site with no build
+step. The `[build.processing.html]` setting enables *pretty URLs*, allowing
+requests like `/login` to resolve to `login.html` automatically. CORS headers are
+enabled for all routes via the `[[headers]]` section. Since the site is
+multi‑page, there is
 no catch‑all redirect to `index.html`.
 
 ---

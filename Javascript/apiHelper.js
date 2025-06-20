@@ -10,10 +10,8 @@ const originalFetch = window.fetch;
 
 // ✅ Base URL switch for FastAPI depending on environment
 const API_BASE =
-  (typeof import.meta !== 'undefined' &&
-    import.meta.env &&
-    import.meta.env.VITE_API_BASE_URL)
-    ? import.meta.env.VITE_API_BASE_URL
+  (window.ENV && window.ENV.API_BASE_URL)
+    ? window.ENV.API_BASE_URL
     : window.API_BASE_URL ||
       'https://thronestead-backend.onrender.com';
 

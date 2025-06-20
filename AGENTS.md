@@ -12,7 +12,8 @@ This repository contains the pre-alpha frontend and accompanying FastAPI backend
      ```
 
 2. **Environment Variables**
-   - Copy `.env.example` to `.ENV` and update the Supabase credentials (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `VITE_PUBLIC_SUPABASE_URL`, `VITE_PUBLIC_SUPABASE_ANON_KEY`).
+   - Copy `.env.example` to `.ENV` and update the Supabase credentials (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
+   - Optionally set `API_BASE_URL` if your backend runs on a different host.
    - If you have a service role key, set `SUPABASE_SERVICE_ROLE_KEY` as well.
 
 3. **Backend**

@@ -16,7 +16,7 @@ import {
   API_BASE_URL,
 } from './config.js';
 
-// Allow dynamic retrieval of credentials when not provided via env.js or Vite
+// Allow dynamic retrieval of credentials when not provided via env.js
 let SUPABASE_URL = CONFIG_URL;
 let SUPABASE_ANON_KEY = CONFIG_KEY;
 
