@@ -2,7 +2,7 @@
 // File Name: signup.js
 // Version 6.14.2025.20.12
 // Developer: Deathsgift66
-import { showToast, validateEmail, debounce } from './utils.js';
+import { showToast, validateEmail, validatePasswordComplexity, debounce } from './utils.js';
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');

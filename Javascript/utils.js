@@ -46,6 +46,18 @@ export function validateEmail(email) {
 }
 
 /**
+ * Validate password complexity.
+ * Requires lowercase, uppercase, digit, and symbol.
+ *
+ * @param {string} password Password to validate
+ * @returns {boolean} True if password is complex
+ */
+export function validatePasswordComplexity(password) {
+  const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
+  return pattern.test(password);
+}
+
+/**
  * Determine if a string is a valid URL.
  * @param {string} str Input string
  * @returns {boolean} True if valid URL
