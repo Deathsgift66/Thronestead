@@ -32,6 +32,7 @@ from backend.routers import public_kingdom
 from backend.routers import black_market_routes
 from backend.routers import tokens
 from backend.routers import homepage
+from backend.routers import signup
 
 logging.basicConfig(level=logging.INFO)
 
@@ -91,6 +92,7 @@ app.include_router(black_market_routes.router)
 app.include_router(black_market_routes.alt_router)
 app.include_router(tokens.router)
 app.include_router(homepage.router)
+app.include_router(signup.router)
 
 # Manual launch for `python main.py` use
 if __name__ == "__main__":  # pragma: no cover
