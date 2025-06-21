@@ -2,13 +2,40 @@
 // File Name: edit_kingdom.js
 // Updated for simplified API usage
 import { showToast } from './utils.js';
+import { authHeaders } from './auth.js';
+
+async function loadRegions() {
+  const regionEl = document.getElementById('region');
+  if (!regionEl) return;
+  try {
+    const res = await fetch('/api/kingdom/regions');
+    const regions = await res.json();
+    regionEl.innerHTML = '<option value="">Select Region</option>';
+    regions.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.region_code;
+      opt.textContent = r.region_name;
+      regionEl.appendChild(opt);
+    });
+  } catch {
+    regionEl.innerHTML = '<option value="">Failed to load regions</option>';
+  }
+}
 
 // ------------------------------
 // Load Current Kingdom Data
 // ------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
+  await loadRegions();
+  let headers = null;
   try {
-    const res = await fetch('/api/kingdom/profile');
+    headers = await authHeaders();
+  } catch {
+    return (window.location.href = 'login.html');
+  }
+
+  try {
+    const res = await fetch('/api/kingdom/profile', { headers });
     if (!res.ok) throw new Error('Failed to load kingdom');
     const data = await res.json();
 
@@ -56,9 +83,10 @@ document.getElementById('kingdom-form').addEventListener('submit', async (e) => 
   };
 
   try {
+    const headers = { ...(await authHeaders()), 'Content-Type': 'application/json' };
     const res = await fetch('/api/kingdom/update', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload)
     });
 
