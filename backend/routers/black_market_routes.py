@@ -90,3 +90,54 @@ _resources: dict[str, dict[str, int]] = {
 # ---------------------------------------------
 # Routes
 # ---------------------------------------------
+
+
+@router.get("/listings")
+@alt_router.get("/listings")
+def get_listings():
+    """Return available black market offers."""
+    return {"listings": [l.model_dump() for l in _listings]}
+
+
+@router.post("/purchase")
+@alt_router.post("/purchase")
+def purchase(payload: PurchasePayload, user_id: str = Depends(verify_jwt_token)):
+    """Purchase an item from the in-memory market."""
+    for listing in list(_listings):
+        if listing.id == payload.listing_id:
+            if payload.quantity > listing.stock_remaining:
+                raise HTTPException(status_code=400, detail="Not enough stock")
+
+            listing.stock_remaining -= payload.quantity
+            _resources.setdefault(payload.kingdom_id, {"gold": 0, "gems": 0})
+            cost = payload.quantity * listing.price_per_unit
+            _resources[payload.kingdom_id][listing.currency_type] -= cost
+
+            _transactions.append(
+                Transaction(
+                    kingdom_id=payload.kingdom_id,
+                    black_market_offer_id=listing.id,
+                    item_name=listing.item_name,
+                    quantity=payload.quantity,
+                    price_per_unit=listing.price_per_unit,
+                    currency_type=listing.currency_type,
+                    purchased_at=datetime.utcnow(),
+                )
+            )
+
+            if listing.stock_remaining <= 0:
+                _listings.remove(listing)
+
+            return {"message": "Purchase complete"}
+
+    raise HTTPException(status_code=404, detail="Listing not found")
+
+
+@router.get("/history")
+@alt_router.get("/history")
+def history(kingdom_id: str):
+    """Return purchase history for a kingdom."""
+    trades = [t.model_dump() for t in _transactions if t.kingdom_id == kingdom_id]
+    return {"trades": trades}
+
+
