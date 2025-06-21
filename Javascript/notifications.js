@@ -4,6 +4,7 @@
 // Developer: Codex
 
 import { supabase } from './supabaseClient.js';
+import { showToast } from './utils.js';
 
 const feed = document.getElementById('notification-feed');
 const filterInput = document.getElementById('notification-filter');
@@ -22,7 +23,11 @@ async function fetchNotifications() {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (error) return console.error('Fetch error:', error);
+  if (error) {
+    console.error('Fetch error:', error);
+    showToast('Failed to load notifications');
+    return;
+  }
 
   currentNotifications = data;
   renderNotifications(currentNotifications);
@@ -60,31 +65,43 @@ function renderNotifications(data) {
 }
 
 async function markAsRead(notificationId) {
-  await supabase
+  const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })
     .eq('notification_id', notificationId);
 
+  if (error) {
+    console.error('Mark read failed:', error);
+    showToast('Could not update notification');
+  }
   fetchNotifications();
 }
 
 markAllBtn.addEventListener('click', async () => {
   const user = await supabase.auth.getUser();
-  await supabase
+  const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })
     .eq('user_id', user.data.user.id);
 
+  if (error) {
+    console.error('Mark all failed:', error);
+    showToast('Failed to mark all read');
+  }
   fetchNotifications();
 });
 
 clearAllBtn.addEventListener('click', async () => {
   const user = await supabase.auth.getUser();
-  await supabase
+  const { error } = await supabase
     .from('notifications')
     .delete()
     .eq('user_id', user.data.user.id);
 
+  if (error) {
+    console.error('Clear failed:', error);
+    showToast('Failed to clear notifications');
+  }
   fetchNotifications();
 });
 
