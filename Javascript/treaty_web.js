@@ -25,11 +25,24 @@ async function loadNetwork() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const headers = session ? { 'X-User-ID': session.user.id } : {};
-    const res = await fetch('/api/alliances/treaty-network', { headers });
+    const res = await fetch('/api/treaty_web/data', { headers });
     const data = await res.json();
 
-    rawData.nodes = data.nodes || [];
-    rawData.links = data.edges || [];
+    rawData.nodes = (data.alliances || []).map(a => ({
+      alliance_id: a.alliance_id,
+      name: a.name,
+      level: a.level,
+      emblem_url: a.emblem_url,
+    }));
+
+    rawData.links = (data.treaties || []).map(t => ({
+      treaty_id: t.treaty_id,
+      source: t.alliance_id,
+      target: t.partner_alliance_id,
+      type: t.treaty_type,
+      status: t.status,
+      date_signed: t.signed_at,
+    }));
 
     renderGraph();
     showToast('Treaty network loaded');
