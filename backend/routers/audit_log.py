@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: audit_log.py
-# Version: 6.13.2025.20.15
+# Version: 6.20.2025.22.45
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, Depends, Query
@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/audit-log", tags=["audit_log"])
 # Request body for logging a new action
 class LogPayload(BaseModel):
     user_id: str | None = None
+    kingdom_id: int | None = None
     action: str
     details: str
 
@@ -24,6 +25,7 @@ class LogPayload(BaseModel):
 @router.get("/")
 def get_audit_logs(
     user_id: str | None = Query(None, description="Filter logs by user ID"),
+    kingdom_id: int | None = Query(None, description="Filter logs by Kingdom ID"),
     limit: int = Query(100, ge=1, le=500, description="Max number of logs to return"),
     _uid: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
@@ -32,9 +34,10 @@ def get_audit_logs(
     Retrieve audit logs from the system.
 
     - Optional `user_id` filters logs for a specific user.
+    - Optional `kingdom_id` filters logs for a specific kingdom.
     - `limit` controls the number of logs returned (default: 100).
     """
-    logs = fetch_logs(db, user_id=user_id, limit=limit)
+    logs = fetch_logs(db, user_id=user_id, kingdom_id=kingdom_id, limit=limit)
     return {"logs": logs}
 
 
@@ -48,8 +51,15 @@ def create_audit_log(
     Create a new audit log entry.
 
     - `user_id`: (optional) UUID of the acting user.
+    - `kingdom_id`: (optional) ID of the affected kingdom.
     - `action`: Required string describing the action taken.
     - `details`: Required string describing what occurred.
     """
-    log_action(db, payload.user_id, payload.action, payload.details)
+    log_action(
+        db,
+        user_id=payload.user_id,
+        action=payload.action,
+        details=payload.details,
+        kingdom_id=payload.kingdom_id,
+    )
     return {"message": "Action logged successfully."}

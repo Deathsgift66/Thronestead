@@ -306,7 +306,9 @@ class AlliancePolicy(Base):
 
 class AllianceVault(Base):
     __tablename__ = "alliance_vault"
-    alliance_id = Column(Integer, primary_key=True)
+    alliance_id = Column(
+        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
+    )
     wood = Column(BigInteger, default=0)
     stone = Column(BigInteger, default=0)
     iron_ore = Column(BigInteger, default=0)
@@ -1654,8 +1656,8 @@ class GlobalEventCondition(Base):
     """Conditions required for a global event."""
 
     __tablename__ = "global_event_conditions"
+    condition_id = Column(Integer, primary_key=True, autoincrement=True)
 
-    condition_id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("global_events.event_id"), nullable=False)
     condition_type = Column(Text, nullable=False)
     condition_target = Column(Text)
@@ -1666,7 +1668,7 @@ class GlobalEventEffect(Base):
     """Effects applied by a global event."""
 
     __tablename__ = "global_event_effects"
-
+    effect_id = Column(Integer, primary_key=True, autoincrement=True)
     event_id = Column(Integer, ForeignKey("global_events.event_id"), nullable=False)
     effect_type = Column(Text, nullable=False)
     target = Column(Text)
@@ -1677,7 +1679,7 @@ class GlobalEventReward(Base):
     """Rewards granted upon global event completion."""
 
     __tablename__ = "global_event_rewards"
-
+    reward_id = Column(Integer, primary_key=True, autoincrement=True)
     event_id = Column(Integer, ForeignKey("global_events.event_id"), nullable=False)
     reward_type = Column(Text, nullable=False)
     reward_target = Column(Text)

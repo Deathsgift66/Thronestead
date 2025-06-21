@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: alliance_management.py
-# Version: 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Polished)
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,18 +14,20 @@ from services.audit_service import log_action, log_alliance_activity
 
 router = APIRouter(prefix="/api/alliance", tags=["alliances"])
 
-# Alliance creation cost (can be dynamically loaded from game_settings in future)
-CREATE_COST = {"wood": 1000, "stone": 1000, "gold": 500}
+# 🧮 Alliance creation cost constants
+CREATE_COST = {
+    "wood": 1000,
+    "stone": 1000,
+    "gold": 500,
+}
 
 
 class CreatePayload(BaseModel):
-    """Payload structure for creating a new alliance."""
     name: str
     region: str | None = None
 
 
 class DeletePayload(BaseModel):
-    """Payload structure for deleting an existing alliance (admin override optional)."""
     alliance_id: int | None = None
 
 
@@ -35,10 +37,7 @@ def create_alliance(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """
-    Create a new alliance if the user has no current alliance and enough kingdom resources.
-    Deducts resources and registers the user as Leader.
-    """
+    """Create a new alliance if the user has no current alliance and enough kingdom resources."""
     user = db.query(User).filter_by(user_id=user_id).first()
     if not user or not user.kingdom_id:
         raise HTTPException(status_code=404, detail="Kingdom not found")
@@ -49,16 +48,16 @@ def create_alliance(
     if not resources:
         raise HTTPException(status_code=404, detail="Kingdom resources missing.")
 
-    # Ensure all resource requirements are met
+    # ✅ Check resource sufficiency
     for res, cost in CREATE_COST.items():
         if getattr(resources, res, 0) < cost:
             raise HTTPException(status_code=400, detail=f"Insufficient {res}")
 
-    # Deduct resources
+    # 🔻 Deduct resource cost
     for res, cost in CREATE_COST.items():
         setattr(resources, res, getattr(resources, res) - cost)
 
-    # Create Alliance
+    # 🏰 Create alliance
     alliance = Alliance(
         name=payload.name,
         leader=user_id,
@@ -66,9 +65,9 @@ def create_alliance(
         region=payload.region or user.region,
     )
     db.add(alliance)
-    db.flush()  # Assign alliance_id
+    db.flush()  # Assigns `alliance_id`
 
-    # Register the founding member as Leader
+    # 🧑 Add founding member as Leader
     db.add(AllianceMember(
         alliance_id=alliance.alliance_id,
         user_id=user_id,
@@ -78,15 +77,16 @@ def create_alliance(
         status="active",
     ))
 
-    # Create alliance vault
+    # 💰 Initialize vault
     db.add(AllianceVault(alliance_id=alliance.alliance_id))
 
-    # Update user record
+    # 🔗 Link user
     user.alliance_id = alliance.alliance_id
     user.alliance_role = "Leader"
+
     db.commit()
 
-    # Logging
+    # 📝 Log
     log_action(db, user_id, "create_alliance", payload.name)
     log_alliance_activity(db, alliance.alliance_id, user_id, "Created", payload.name)
 
@@ -99,10 +99,7 @@ def delete_alliance(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """
-    Delete an alliance (only allowed by its leader).
-    Removes all members, vault, and resets user linkage.
-    """
+    """Delete an alliance (only allowed by its leader)."""
     user = db.query(User).filter_by(user_id=user_id).first()
     if not user or not user.alliance_id:
         raise HTTPException(status_code=404, detail="No alliance to delete.")
@@ -114,17 +111,18 @@ def delete_alliance(
     if alliance.leader != user_id:
         raise HTTPException(status_code=403, detail="Only the leader can delete this alliance.")
 
-    # Remove members, vault, and reset user links
+    # 🚫 Remove members and vault
     db.query(AllianceMember).filter_by(alliance_id=aid).delete()
     db.query(AllianceVault).filter_by(alliance_id=aid).delete()
     db.query(Alliance).filter_by(alliance_id=aid).delete()
 
-    # Reset all users from that alliance
+    # 🔄 Reset affected users
     for member in db.query(User).filter(User.alliance_id == aid).all():
         member.alliance_id = None
         member.alliance_role = None
 
     db.commit()
 
+    # 📝 Log
     log_action(db, user_id, "delete_alliance", str(aid))
     return {"status": "deleted"}

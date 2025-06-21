@@ -1,18 +1,18 @@
 # Project Name: Thronestead©
 # File Name: alliance_wars.py
-# Version: 6.13.2025.20.13
+# Version: 6.20.2025.21.10
 # Developer: Deathsgift66
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..security import require_user_id
+from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
-
-
 
 
 # ----------- Request Payloads -----------
@@ -33,7 +33,7 @@ class SurrenderPayload(BaseModel):
 # ----------- War Lifecycle Routes -----------
 
 @router.post("/declare")
-def declare_war(payload: DeclarePayload, db: Session = Depends(get_db)):
+def declare_war(payload: DeclarePayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     row = db.execute(
         text(
             "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "
@@ -42,33 +42,40 @@ def declare_war(payload: DeclarePayload, db: Session = Depends(get_db)):
         {"att": payload.attacker_alliance_id, "def": payload.defender_alliance_id},
     ).fetchone()
     db.commit()
+    log_action(db, user_id, "Declare War", f"{payload.attacker_alliance_id} → {payload.defender_alliance_id}")
     return {"status": "pending", "alliance_war_id": row[0]}
 
 
 @router.post("/respond")
-def respond_war(payload: RespondPayload, db: Session = Depends(get_db)):
+def respond_war(payload: RespondPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     status = "active" if payload.action == "accept" else "cancelled"
     db.execute(
-        text("UPDATE alliance_wars SET war_status = :status, phase = CASE WHEN :status = 'active' THEN 'battle' ELSE phase END, start_date = CASE WHEN :status = 'active' THEN now() ELSE start_date END WHERE alliance_war_id = :wid"),
+        text("""
+            UPDATE alliance_wars
+               SET war_status = :status,
+                   phase = CASE WHEN :status = 'active' THEN 'battle' ELSE phase END,
+                   start_date = CASE WHEN :status = 'active' THEN now() ELSE start_date END
+             WHERE alliance_war_id = :wid
+        """),
         {"status": status, "wid": payload.alliance_war_id},
     )
     db.commit()
+    log_action(db, user_id, f"War {status.title()}", f"War ID {payload.alliance_war_id}")
     return {"status": status}
 
 
 @router.post("/surrender")
-
-def surrender_war(payload: SurrenderPayload, db: Session = Depends(get_db)):
+def surrender_war(payload: SurrenderPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     victor = "defender" if payload.side == "attacker" else "attacker"
     db.execute(
         text(
-            "UPDATE alliance_wars SET war_status = 'surrendered', phase = 'ended', end_date = now()"
-            " WHERE alliance_war_id = :wid"
+            "UPDATE alliance_wars SET war_status = 'surrendered', phase = 'ended', end_date = now() "
+            "WHERE alliance_war_id = :wid"
         ),
         {"wid": payload.alliance_war_id},
     )
-
     db.commit()
+    log_action(db, user_id, "Surrender", f"War ID {payload.alliance_war_id}, {payload.side} surrendered")
     return {"status": "surrendered", "victor": victor}
 
 
@@ -76,12 +83,11 @@ def surrender_war(payload: SurrenderPayload, db: Session = Depends(get_db)):
 
 @router.get("/list")
 def list_wars(alliance_id: int, db: Session = Depends(get_db)):
-    aid = alliance_id
     rows = db.execute(text("""
         SELECT * FROM alliance_wars 
         WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid
         ORDER BY start_date DESC
-    """), {"aid": aid}).mappings().fetchall()
+    """), {"aid": alliance_id}).mappings().fetchall()
 
     wars = [dict(r) for r in rows]
     return {
@@ -93,12 +99,16 @@ def list_wars(alliance_id: int, db: Session = Depends(get_db)):
 
 @router.get("/view")
 def view_war_details(alliance_war_id: int, db: Session = Depends(get_db)):
-    war = db.execute(text("SELECT * FROM alliance_wars WHERE alliance_war_id = :wid"),
-                     {"wid": alliance_war_id}).mappings().first()
+    war = db.execute(
+        text("SELECT * FROM alliance_wars WHERE alliance_war_id = :wid"),
+        {"wid": alliance_war_id},
+    ).mappings().first()
+    if not war:
+        raise HTTPException(status_code=404, detail="War not found")
     return {"war": war}
+
+
 @router.get("/active")
 def list_active_wars(db: Session = Depends(get_db)):
-    rows = db.execute(text("SELECT * FROM alliance_wars WHERE war_status = 'active'")).mappings().fetchall()
-    return {"wars": [dict(r) for r in rows]}
-
-
+    rows = db.execute(text("SELECT * FROM alliance_wars WHERE war_status = 'active'"))
+    return {"wars": [dict(r._mapping) for r in rows]}

@@ -1,7 +1,8 @@
 # Project Name: Thronestead©
 # File Name: admin_news.py
-# Version: 6.14.2025.21.01
+# Version: 6.14.2025.21.01 (Patched)
 # Developer: Codex
+
 """Admin endpoints for publishing news articles."""
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,27 +24,34 @@ class NewsPayload(BaseModel):
     content: str = Field(..., min_length=1)
 
 
-@router.post("/post", summary="Publish a news article")
+@router.post("/post", response_model=None, summary="Publish a news article")
 def post_news(
     payload: NewsPayload,
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ) -> dict:
-    """Insert a new news article authored by an admin."""
+    """
+    Insert a new news article authored by an admin.
+    """
     verify_admin(admin_user_id, db)
     supabase = get_supabase_client()
 
-    prof = (
-        supabase.table("users")
-        .select("display_name")
-        .eq("user_id", admin_user_id)
-        .single()
-        .execute()
-    )
-    prof_row = getattr(prof, "data", prof)
-    if getattr(prof, "error", None) or not prof_row:
-        raise HTTPException(status_code=401, detail="Invalid user")
+    # Fetch admin's display name for attribution
+    try:
+        prof = (
+            supabase.table("users")
+            .select("display_name")
+            .eq("user_id", admin_user_id)
+            .single()
+            .execute()
+        )
+        prof_row = getattr(prof, "data", None) or getattr(prof, "json", {}).get("data")
+        if not prof_row or getattr(prof, "error", None):
+            raise HTTPException(status_code=401, detail="Invalid user")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch author profile") from e
 
+    # Prepare article record
     record = {
         "author_id": admin_user_id,
         "author_name": prof_row.get("display_name"),
@@ -52,6 +60,7 @@ def post_news(
         "content": payload.content,
     }
 
+    # Insert article
     try:
         res = supabase.table("news_articles").insert(record).execute()
         if getattr(res, "status_code", 200) >= 400:
@@ -59,6 +68,6 @@ def post_news(
     except Exception as e:
         raise HTTPException(status_code=500, detail="Error publishing article") from e
 
+    # Audit log
     log_action(db, admin_user_id, "post_news", payload.title)
     return {"status": "posted"}
-

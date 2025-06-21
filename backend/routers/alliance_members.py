@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: alliance_members.py
-# Version: 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Refined)
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -50,10 +50,9 @@ def list_members(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """Return all members of the specified alliance."""
     members = (
         db.query(AllianceMember)
-        .filter(AllianceMember.alliance_id == alliance_id)
+        .filter_by(alliance_id=alliance_id)
         .order_by(AllianceMember.rank, AllianceMember.contribution.desc())
         .all()
     )
@@ -66,7 +65,8 @@ def list_members(
                 "contribution": m.contribution,
                 "status": m.status,
                 "crest": m.crest,
-            } for m in members
+            }
+            for m in members
         ]
     }
 
@@ -77,10 +77,9 @@ def join(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """Directly adds a user to an alliance (for admin/invite bypass)."""
     if db.query(AllianceMember).filter_by(user_id=payload.user_id).first():
         raise HTTPException(status_code=400, detail="User already in an alliance.")
-    
+
     member = AllianceMember(
         alliance_id=payload.alliance_id,
         user_id=payload.user_id,
@@ -96,12 +95,7 @@ def join(
 
 
 @router.post("/leave")
-def leave(
-    payload: MemberAction,
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    """Allows a member to leave an alliance."""
+def leave(payload: MemberAction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if member:
         db.delete(member)
@@ -112,45 +106,43 @@ def leave(
 
 @router.post("/promote")
 def promote(payload: RankPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
-    """Promotes a member to a higher rank."""
     return _change_rank(payload, db, "Promoted")
 
 
 @router.post("/demote")
 def demote(payload: RankPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
-    """Demotes a member to a lower rank."""
     return _change_rank(payload, db, "Demoted")
 
 
 def _change_rank(payload: RankPayload, db: Session, action: str):
-    member = db.query(AllianceMember).filter(
-        AllianceMember.alliance_id == payload.alliance_id,
-        AllianceMember.user_id == payload.user_id,
+    member = db.query(AllianceMember).filter_by(
+        alliance_id=payload.alliance_id,
+        user_id=payload.user_id,
     ).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     member.rank = payload.new_rank
     db.commit()
+    log_action(db, payload.user_id, f"{action.lower()}_rank", payload.new_rank)
     return {"message": action, "user_id": payload.user_id}
 
 
 @router.post("/remove")
 def remove(payload: MemberAction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
-    """Removes a member from the alliance."""
-    member = db.query(AllianceMember).filter(
-        AllianceMember.alliance_id == payload.alliance_id,
-        AllianceMember.user_id == payload.user_id,
+    member = db.query(AllianceMember).filter_by(
+        alliance_id=payload.alliance_id,
+        user_id=payload.user_id,
     ).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     db.delete(member)
     db.commit()
+    log_action(db, user_id, "remove_member", f"Removed {payload.user_id}")
     return {"message": "Removed", "user_id": payload.user_id}
 
 
 @router.post("/contribute")
 def contribute(payload: ContributionPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
-    """Updates a member's contribution score."""
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -161,10 +153,9 @@ def contribute(payload: ContributionPayload, user_id: str = Depends(require_user
 
 @router.post("/apply")
 def apply_to_alliance(payload: JoinPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
-    """Applies to join an alliance (adds user as Applicant)."""
     if db.query(AllianceMember).filter_by(user_id=payload.user_id).first():
         raise HTTPException(status_code=400, detail="Already applied or a member.")
-    
+
     member = AllianceMember(
         alliance_id=payload.alliance_id,
         user_id=payload.user_id,
@@ -180,16 +171,16 @@ def apply_to_alliance(payload: JoinPayload, user_id: str = Depends(require_user_
 
 @router.post("/approve")
 def approve_member(payload: MemberAction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
-    """Approves a pending applicant."""
-    member = db.query(AllianceMember).filter(
-        AllianceMember.alliance_id == payload.alliance_id,
-        AllianceMember.user_id == payload.user_id,
+    member = db.query(AllianceMember).filter_by(
+        alliance_id=payload.alliance_id,
+        user_id=payload.user_id,
     ).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     member.status = "active"
     member.rank = "Member"
     db.commit()
+    log_action(db, user_id, "approve_member", f"Approved {payload.user_id}")
     return {"message": "Member approved"}
 
 
@@ -199,29 +190,29 @@ def transfer_leadership(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """Transfers alliance leadership to another user."""
     alliance = db.query(Alliance).filter_by(alliance_id=payload.alliance_id).first()
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance not found")
     if alliance.leader != user_id:
         raise HTTPException(status_code=403, detail="Only the current leader can transfer leadership.")
 
-    new_leader = db.query(AllianceMember).filter(
-        AllianceMember.alliance_id == payload.alliance_id,
-        AllianceMember.user_id == payload.new_leader_id,
+    new_leader = db.query(AllianceMember).filter_by(
+        alliance_id=payload.alliance_id,
+        user_id=payload.new_leader_id,
     ).first()
     if not new_leader:
         raise HTTPException(status_code=404, detail="Target member not found")
 
-    # Update ranks and leader
-    alliance.leader = new_leader.user_id
-    current_leader = db.query(AllianceMember).filter(
-        AllianceMember.alliance_id == payload.alliance_id,
-        AllianceMember.user_id == user_id,
+    current_leader = db.query(AllianceMember).filter_by(
+        alliance_id=payload.alliance_id,
+        user_id=user_id,
     ).first()
+
     if current_leader:
         current_leader.rank = "Co-Leader"
+
     new_leader.rank = "Leader"
+    alliance.leader = new_leader.user_id
     db.commit()
     log_action(db, user_id, "transfer_leader", f"Transferred to {new_leader.user_id}")
     return {"message": "Leadership transferred", "leader": new_leader.user_id}
