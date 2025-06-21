@@ -5,7 +5,7 @@
 """Routes related to spy missions."""
 
 import random
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text
@@ -115,3 +115,36 @@ async def get_spy_defense(user_id: str = Depends(verify_jwt_token), db: Session 
         {"kid": kingdom[0]},
     ).fetchone()
     return dict(defense._mapping) if defense else {}
+
+
+@router.get("/log")
+def get_spy_log(
+    limit: int = Query(50, ge=1, le=200),
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Return recent spy missions for the player's kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    rows = db.execute(
+        text(
+            """
+            SELECT sm.mission_type,
+                   sm.target_id,
+                   k.kingdom_name AS target_name,
+                   sm.status AS outcome,
+                   sm.accuracy_percent AS accuracy,
+                   sm.was_detected AS detected,
+                   sm.spies_killed AS spies_lost,
+                   COALESCE(sm.completed_at, sm.launched_at) AS timestamp
+              FROM spy_missions sm
+         LEFT JOIN kingdoms k ON sm.target_id = k.kingdom_id
+             WHERE sm.kingdom_id = :kid
+             ORDER BY sm.launched_at DESC
+             LIMIT :lim
+            """
+        ),
+        {"kid": kid, "lim": limit},
+    ).fetchall()
+
+    logs = [dict(r._mapping) for r in rows]
+    return {"logs": logs}
