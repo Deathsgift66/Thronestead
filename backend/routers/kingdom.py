@@ -1,45 +1,23 @@
-# Project Name: Thronestead©
-# File Name: kingdom.py
-# Version 6.13.2025.19.49
-# Developer: Deathsgift66
-
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional
 
 from ..database import get_db
-from ..security import require_user_id, verify_jwt_token
+from ..security import verify_jwt_token
 from services.kingdom_setup_service import create_kingdom_transaction
 from services.research_service import start_research as db_start_research, list_research
 from services.kingdom_quest_service import start_quest as db_start_quest
+from services.audit_service import log_action
 from .progression_router import get_kingdom_id
-from ..data import military_state, recruitable_units, DEFAULT_REGIONS
+from ..data import recruitable_units, DEFAULT_REGIONS
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
+
 # --- Pydantic Models ---
-class ProjectPayload(BaseModel):
-    project: str
-
-class ResearchPayload(BaseModel):
-    tech_code: str
-
-class QuestPayload(BaseModel):
-    quest_code: str
-
-class TemplePayload(BaseModel):
-    temple_type: str
-    temple_name: Optional[str] = None
-    is_major: bool = False
-
-class TrainPayload(BaseModel):
-    unit_id: int
-    quantity: int
-
 class KingdomCreatePayload(BaseModel):
     kingdom_name: str
     ruler_title: Optional[str]
@@ -50,37 +28,57 @@ class KingdomCreatePayload(BaseModel):
     motto: Optional[str] = "From Ashes, Kingdoms Rise"
 
 
-# --- Core State Utility ---
-def get_state():
-    return military_state.setdefault(
-        1, {
-            "base_slots": 20,
-            "used_slots": 0,
-            "morale": 100,
-            "queue": [],
-            "history": [],
-        }
-    )
+class ResearchPayload(BaseModel):
+    tech_code: str
+
+
+class QuestPayload(BaseModel):
+    quest_code: str
+
+
+class TemplePayload(BaseModel):
+    temple_type: str
+    temple_name: Optional[str] = None
+    is_major: bool = False
+
+
+class TrainPayload(BaseModel):
+    unit_id: int
+    quantity: int
+
+
+class KingdomUpdatePayload(BaseModel):
+    ruler_name: Optional[str] = None
+    ruler_title: Optional[str] = None
+    kingdom_name: Optional[str] = None
+    motto: Optional[str] = None
+    description: Optional[str] = None
+    religion: Optional[str] = None
+    region: Optional[str] = None
+    banner_url: Optional[str] = None
+    emblem_url: Optional[str] = None
+
+
+# --- Utility ---
+def get_troop_state(db: Session, kingdom_id: int):
+    row = db.execute(text("SELECT * FROM kingdom_troop_slots WHERE kingdom_id = :kid"), {"kid": kingdom_id}).mappings().fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Troop slot state not found")
+    return row
 
 
 # --- Routes ---
 @router.get("/regions")
 def list_regions(db: Session = Depends(get_db)):
-    """Return all available regions, fallback to default list if DB query fails."""
     try:
         rows = db.execute(text("SELECT * FROM region_catalogue ORDER BY region_name")).mappings().fetchall()
-    except SQLAlchemyError:
-        rows = []
-    return JSONResponse(content=[dict(r) for r in rows] or DEFAULT_REGIONS)
+        return [dict(r) for r in rows] or DEFAULT_REGIONS
+    except:
+        return DEFAULT_REGIONS
 
 
 @router.post("/create")
-def create_kingdom(
-    payload: KingdomCreatePayload,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    """Create a new kingdom with starter data."""
+def create_kingdom(payload: KingdomCreatePayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     try:
         kid = create_kingdom_transaction(
             db=db,
@@ -93,36 +91,22 @@ def create_kingdom(
             emblem_image=payload.emblem_image,
             motto=payload.motto,
         )
+        db.execute(text("INSERT INTO kingdom_troop_slots (kingdom_id) VALUES (:kid)"), {"kid": kid})
+        db.commit()
+        log_action(db, user_id, "create_kingdom", f"Kingdom {payload.kingdom_name} created")
+        return {"kingdom_id": kid}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return {"kingdom_id": kid}
 
 
 @router.get("/overview")
-def overview(
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    """Return basic kingdom overview information."""
+def overview(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
-
-    kingdom = db.execute(
-        text(
-            "SELECT kingdom_name, region, created_at FROM kingdoms WHERE kingdom_id = :kid"
-        ),
-        {"kid": kid},
-    ).mappings().fetchone()
+    kingdom = db.execute(text("SELECT kingdom_name, region, created_at FROM kingdoms WHERE kingdom_id = :kid"), {"kid": kid}).mappings().fetchone()
     if not kingdom:
         raise HTTPException(status_code=404, detail="Kingdom not found")
-
-    resources = db.execute(
-        text(
-            "SELECT gold, food, wood FROM kingdom_resources WHERE kingdom_id = :kid"
-        ),
-        {"kid": kid},
-    ).mappings().fetchone() or {}
-
-    state = get_state()
+    resources = db.execute(text("SELECT gold, food, wood FROM kingdom_resources WHERE kingdom_id = :kid"), {"kid": kid}).mappings().fetchone() or {}
+    state = get_troop_state(db, kid)
     return {
         "kingdom": dict(kingdom),
         "resources": dict(resources),
@@ -135,15 +119,11 @@ def overview(
 
 
 @router.get("/summary")
-def kingdom_summary():
-    """Return resource and troop summary."""
-    state = get_state()
+def summary(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    kid = get_kingdom_id(db, user_id)
+    state = get_troop_state(db, kid)
     return {
-        "resources": {
-            "gold": 1000,
-            "food": 500,
-            "wood": 300,
-        },
+        "resources": {"gold": 1000, "food": 500, "wood": 300},
         "troops": {
             "total": state["used_slots"],
             "slots": {
@@ -155,180 +135,99 @@ def kingdom_summary():
     }
 
 
-
-
 @router.post("/start_research")
-def start_research(
-    payload: ResearchPayload,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    """Begin research on a technology."""
+def start_research(payload: ResearchPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    kid = get_kingdom_id(db, user_id)
     try:
-        kid = get_kingdom_id(db, user_id)
         ends_at = db_start_research(db, kid, payload.tech_code)
+        log_action(db, user_id, "start_research", payload.tech_code)
+        return {"message": "Research started", "tech_code": payload.tech_code, "ends_at": ends_at.isoformat()}
     except ValueError:
         raise HTTPException(status_code=404, detail="Tech not found")
-    return {"message": "Research started", "tech_code": payload.tech_code, "ends_at": ends_at.isoformat()}
 
 
 @router.get("/research")
 def get_research(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
-    """Return all research projects for the kingdom."""
     kid = get_kingdom_id(db, user_id)
     return {"research": list_research(db, kid)}
 
 
 @router.post("/accept_quest")
-def accept_quest(
-    payload: QuestPayload,
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    """Start a kingdom quest."""
-    try:
-        ends_at = db_start_quest(db, 1, payload.quest_code, user_id)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Quest not found")
+def accept_quest(payload: QuestPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    ends_at = db_start_quest(db, 1, payload.quest_code, user_id)
     return {"message": "Quest accepted", "quest_code": payload.quest_code, "ends_at": ends_at.isoformat()}
 
 
 @router.post("/construct_temple")
-def construct_temple(
-    payload: TemplePayload,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    """Construct a new temple in the kingdom."""
+def construct_temple(payload: TemplePayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
-    db.execute(
-        text("""
-            INSERT INTO kingdom_temples (
-                kingdom_id, temple_name, temple_type, level, is_major, constructed_by
-            ) VALUES (
-                :kid, :name, :type, 1, :major, :uid
-            )
-        """),
-        {
-            "kid": kid,
-            "name": payload.temple_name or payload.temple_type,
-            "type": payload.temple_type,
-            "major": payload.is_major,
-            "uid": user_id,
-        },
-    )
+    db.execute(text("""
+        INSERT INTO kingdom_temples (kingdom_id, temple_name, temple_type, level, is_major, constructed_by)
+        VALUES (:kid, :name, :type, 1, :major, :uid)
+    """), {"kid": kid, "name": payload.temple_name or payload.temple_type, "type": payload.temple_type, "major": payload.is_major, "uid": user_id})
     db.commit()
     return {"message": "Temple construction started"}
 
 
 @router.get("/temples")
 def list_temples(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
-    """List all constructed temples for the kingdom."""
     kid = get_kingdom_id(db, user_id)
-    rows = db.execute(
-        text("SELECT * FROM kingdom_temples WHERE kingdom_id = :kid ORDER BY temple_id"),
-        {"kid": kid},
-    ).mappings().fetchall()
+    rows = db.execute(text("SELECT * FROM kingdom_temples WHERE kingdom_id = :kid ORDER BY temple_id"), {"kid": kid}).mappings().fetchall()
     return {"temples": [dict(r) for r in rows]}
 
 
 @router.post("/train_troop")
-def train_troop(payload: TrainPayload):
-    """Queue training for a unit."""
-    state = get_state()
+def train_troop(payload: TrainPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    kid = get_kingdom_id(db, user_id)
+    unit = next((u for u in recruitable_units if u["id"] == payload.unit_id), None)
+    if not unit:
+        raise HTTPException(status_code=404, detail="Unit not found")
 
+    state = get_troop_state(db, kid)
     if payload.quantity <= 0:
         raise HTTPException(status_code=400, detail="Invalid quantity")
     if state["used_slots"] + payload.quantity > state["base_slots"]:
         raise HTTPException(status_code=400, detail="Not enough troop slots")
 
-    unit = next((u for u in recruitable_units if u["id"] == payload.unit_id), None)
-    if not unit:
-        raise HTTPException(status_code=404, detail="Unit not found")
-
-    state["used_slots"] += payload.quantity
-    state["queue"].append({"unit_name": unit["name"], "quantity": payload.quantity})
-
+    db.execute(text("""
+        INSERT INTO training_queue (kingdom_id, unit_id, unit_name, quantity, initiated_by)
+        VALUES (:kid, :unit_id, :unit_name, :qty, :uid)
+    """), {"kid": kid, "unit_id": payload.unit_id, "unit_name": unit["name"], "qty": payload.quantity, "uid": user_id})
+    db.commit()
     return {"message": "Training queued", "unit_id": payload.unit_id}
-
-
-class KingdomUpdatePayload(BaseModel):
-    ruler_name: str | None = None
-    ruler_title: str | None = None
-    kingdom_name: str | None = None
-    motto: str | None = None
-    description: str | None = None
-    religion: str | None = None
-    region: str | None = None
-    banner_url: str | None = None
-    emblem_url: str | None = None
 
 
 @router.get("/profile")
 def kingdom_profile(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
-    """Return editable kingdom profile data for the authenticated user."""
-    row = db.execute(
-        text(
-            """
-            SELECT kingdom_id, ruler_name, ruler_title, kingdom_name,
-                   motto, description, region, banner_url,
-                   emblem_url, is_on_vacation
-            FROM kingdoms WHERE user_id = :uid
-            """
-        ),
-        {"uid": user_id},
-    ).fetchone()
-
+    row = db.execute(text("""
+        SELECT kingdom_id, ruler_name, ruler_title, kingdom_name,
+               motto, description, region, banner_url,
+               emblem_url, is_on_vacation
+        FROM kingdoms WHERE user_id = :uid
+    """), {"uid": user_id}).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Kingdom not found")
-
-    rel = db.execute(
-        text("SELECT religion_name FROM kingdom_religion WHERE kingdom_id = :kid"),
-        {"kid": row[0]},
-    ).fetchone()
-
+    rel = db.execute(text("SELECT religion_name FROM kingdom_religion WHERE kingdom_id = :kid"), {"kid": row[0]}).fetchone()
     return {
-        "ruler_name": row[1],
-        "ruler_title": row[2],
-        "kingdom_name": row[3],
-        "motto": row[4],
-        "description": row[5],
-        "region": row[6],
-        "banner_url": row[7],
-        "emblem_url": row[8],
-        "on_vacation": row[9],
-        "religion": rel[0] if rel else None,
+        "ruler_name": row[1], "ruler_title": row[2], "kingdom_name": row[3], "motto": row[4],
+        "description": row[5], "region": row[6], "banner_url": row[7], "emblem_url": row[8],
+        "on_vacation": row[9], "religion": rel[0] if rel else None
     }
 
 
 @router.post("/update")
-def update_kingdom_profile(
-    payload: KingdomUpdatePayload,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    """Update kingdom profile fields for the authenticated user."""
-    row = db.execute(
-        text("SELECT kingdom_id FROM kingdoms WHERE user_id = :uid"),
-        {"uid": user_id},
-    ).fetchone()
-
+def update_kingdom_profile(payload: KingdomUpdatePayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    row = db.execute(text("SELECT kingdom_id FROM kingdoms WHERE user_id = :uid"), {"uid": user_id}).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Kingdom not found")
-
     kid = row[0]
 
     updates = []
     params = {"kid": kid}
     field_map = {
-        "ruler_name": "ruler_name",
-        "ruler_title": "ruler_title",
-        "kingdom_name": "kingdom_name",
-        "motto": "motto",
-        "description": "description",
-        "region": "region",
-        "banner_url": "banner_url",
-        "emblem_url": "emblem_url",
+        "ruler_name": "ruler_name", "ruler_title": "ruler_title", "kingdom_name": "kingdom_name",
+        "motto": "motto", "description": "description", "region": "region",
+        "banner_url": "banner_url", "emblem_url": "emblem_url",
     }
 
     for attr, column in field_map.items():
@@ -338,21 +237,15 @@ def update_kingdom_profile(
             params[attr] = value
 
     if updates:
-        q = f"UPDATE kingdoms SET {', '.join(updates)} WHERE kingdom_id = :kid"
-        db.execute(text(q), params)
+        db.execute(text(f"UPDATE kingdoms SET {', '.join(updates)} WHERE kingdom_id = :kid"), params)
 
     if payload.religion is not None:
-        db.execute(
-            text(
-                """
-                INSERT INTO kingdom_religion (kingdom_id, religion_name)
-                VALUES (:kid, :religion)
-                ON CONFLICT (kingdom_id)
-                DO UPDATE SET religion_name = EXCLUDED.religion_name
-                """
-            ),
-            {"kid": kid, "religion": payload.religion},
-        )
+        db.execute(text("""
+            INSERT INTO kingdom_religion (kingdom_id, religion_name)
+            VALUES (:kid, :religion)
+            ON CONFLICT (kingdom_id)
+            DO UPDATE SET religion_name = EXCLUDED.religion_name
+        """), {"kid": kid, "religion": payload.religion})
 
     db.commit()
     return {"message": "updated"}
