@@ -135,6 +135,11 @@ Developer: Deathsgift66
   font-size: var(--font-lg);
   color: var(--text-highlight);
 }
+.golden-header {
+  font-family: var(--font-header);
+  color: var(--gold);
+  text-shadow: 1px 1px 3px black;
+}
 .text-body {
   font-family: var(--font-body);
   font-size: var(--font-md);
