@@ -38,7 +38,7 @@ async function loadProfile() {
   kNameEl.textContent = 'Loading...';
 
   try {
-    const res = await fetch(`/api/kingdom/profile?target_id=${targetKingdomId}`);
+    const res = await fetch(`/api/kingdoms/public/${targetKingdomId}`);
     const data = await res.json();
 
     kNameEl.textContent = data.kingdom_name || 'Unknown Kingdom';
@@ -51,7 +51,7 @@ async function loadProfile() {
     diplomacyEl.textContent = `Diplomacy: ${data.diplomacy_score}`;
     villagesEl.textContent = `Villages: ${data.village_count}`;
 
-    if (currentSession && !data.is_self) {
+    if (currentSession) {
       document.getElementById('spy-btn').classList.remove('hidden');
     }
   } catch (err) {
@@ -96,10 +96,10 @@ async function launchMission(missionType) {
   lastAction = now;
 
   try {
-    await authFetchJson('/api/espionage/launch', currentSession, {
+    await authFetchJson('/api/kingdom/spy_missions', currentSession, {
       method: 'POST',
       body: JSON.stringify({
-        target_kingdom_id: targetKingdomId,
+        target_id: targetKingdomId,
         mission_type: missionType
       })
     });
@@ -117,9 +117,9 @@ async function confirmAttack() {
   if (!window.confirm('⚔️ Are you sure you want to attack this kingdom?')) return;
 
   try {
-    const result = await authFetchJson('/api/battle/initiate', currentSession, {
+    const result = await authFetchJson('/api/wars/declare', currentSession, {
       method: 'POST',
-      body: JSON.stringify({ target_kingdom_id: targetKingdomId })
+      body: JSON.stringify({ target: targetKingdomId })
     });
     if (result.success && result.war_id) {
       window.location.href = `/battle_live.html?war_id=${result.war_id}`;
