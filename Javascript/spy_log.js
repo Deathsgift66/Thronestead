@@ -54,8 +54,8 @@ async function loadSpyLog() {
 
 function subscribeRealtime() {
   realtimeChannel = supabase
-    .channel('public:spy_log')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'spy_log' }, loadSpyLog)
+    .channel('public:spy_missions')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'spy_missions' }, loadSpyLog)
     .subscribe(status => {
       const indicator = document.getElementById('realtime-indicator');
       if (indicator) {
