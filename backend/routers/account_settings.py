@@ -1,7 +1,8 @@
 # Project Name: Thronestead©
 # File Name: account_settings.py
-# Version 6.13.2025.19.49
+# Version 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -29,7 +30,7 @@ class SessionPayload(BaseModel):
     session_id: str
 
 
-@router.get("/profile")
+@router.get("/profile", response_model=None)
 def load_profile(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
@@ -54,23 +55,14 @@ def load_profile(
     ).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
+
     keys = [
-        "username",
-        "display_name",
-        "profile_picture_url",
-        "email",
-        "region",
-        "kingdom_name",
-        "alliance_name",
-        "motto",
-        "bio",
-        "theme_preference",
-        "profile_banner",
-        "vip_level",
-        "founder",
-        "expires_at",
+        "username", "display_name", "profile_picture_url", "email", "region",
+        "kingdom_name", "alliance_name", "motto", "bio", "theme_preference",
+        "profile_banner", "vip_level", "founder", "expires_at"
     ]
     profile = {k: row[i] for i, k in enumerate(keys)}
+
     settings_rows = db.execute(
         text(
             "SELECT setting_key, setting_value FROM user_setting_entries "
@@ -81,16 +73,17 @@ def load_profile(
     settings = {r[0]: r[1] for r in settings_rows}
     profile["ip_login_alerts"] = settings.get("ip_login_alerts") == "true"
     profile["email_login_confirmations"] = settings.get("email_login_confirmations") == "true"
+
     session_rows = db.execute(
         text(
-            "SELECT session_id, device, last_seen FROM user_active_sessions WHERE user_id = :uid AND session_status = 'active'"
+            "SELECT session_id, device, last_seen FROM user_active_sessions "
+            "WHERE user_id = :uid AND session_status = 'active'"
         ),
         {"uid": user_id},
     ).fetchall()
-    sessions = [
+    profile["sessions"] = [
         {"session_id": r[0], "device": r[1], "last_seen": r[2]} for r in session_rows
     ]
-    profile["sessions"] = sessions
     return profile
 
 
@@ -100,13 +93,11 @@ def update_profile(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    # fetch current values
     current = db.execute(
-        text(
-            "SELECT display_name, profile_picture_url FROM users WHERE user_id = :uid"
-        ),
+        text("SELECT display_name, profile_picture_url FROM users WHERE user_id = :uid"),
         {"uid": user_id},
     ).fetchone()
+
     settings_current_rows = db.execute(
         text(
             "SELECT setting_key, setting_value FROM user_setting_entries "
@@ -115,6 +106,7 @@ def update_profile(
         {"uid": user_id},
     ).fetchall()
     settings_current = {r[0]: r[1] for r in settings_current_rows}
+
     customization = db.execute(
         text(
             "SELECT motto, bio, theme_preference, profile_banner FROM user_customization WHERE user_id = :uid"
@@ -124,15 +116,11 @@ def update_profile(
 
     db.execute(
         text(
-            "UPDATE users SET display_name = :dn, profile_picture_url = :pic "
-            "WHERE user_id = :uid"
+            "UPDATE users SET display_name = :dn, profile_picture_url = :pic WHERE user_id = :uid"
         ),
-        {
-            "dn": payload.display_name,
-            "pic": payload.profile_picture_url,
-            "uid": user_id,
-        },
+        {"dn": payload.display_name, "pic": payload.profile_picture_url, "uid": user_id},
     )
+
     if payload.ip_login_alerts is not None:
         db.execute(
             text(
@@ -151,16 +139,17 @@ def update_profile(
             ),
             {"uid": user_id, "val": str(payload.email_login_confirmations).lower()},
         )
+
     db.execute(
         text(
             """
             INSERT INTO user_customization (user_id, motto, bio, theme_preference, profile_banner)
             VALUES (:uid, :motto, :bio, :theme, :banner)
-            ON CONFLICT (user_id)
-            DO UPDATE SET motto = EXCLUDED.motto,
-                          bio = EXCLUDED.bio,
-                          theme_preference = EXCLUDED.theme_preference,
-                          profile_banner = EXCLUDED.profile_banner
+            ON CONFLICT (user_id) DO UPDATE SET
+                motto = EXCLUDED.motto,
+                bio = EXCLUDED.bio,
+                theme_preference = EXCLUDED.theme_preference,
+                profile_banner = EXCLUDED.profile_banner
             """
         ),
         {
@@ -211,6 +200,7 @@ def logout_session(
     ).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Session not found")
+
     db.execute(
         text(
             "UPDATE user_active_sessions SET session_status = 'revoked' WHERE session_id = :sid"
