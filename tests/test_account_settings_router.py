@@ -95,3 +95,16 @@ def test_update_profile_updates_security_fields():
     assert db.updated["dn"] == "New"
     assert db.setting_updates[0]["val"] == "false"
     assert db.setting_updates[1]["val"] == "true"
+
+
+def test_get_user_settings_returns_dict():
+    db = DummyDB()
+    db.settings_rows = [("theme", "dark"), ("lang", "en")]
+    result = account_settings.get_user_settings(user_id="u1", db=db)
+    assert result == {"theme": "dark", "lang": "en"}
+
+
+def test_update_user_settings_inserts():
+    db = DummyDB()
+    account_settings.update_user_settings({"theme": "dark"}, user_id="u1", db=db)
+    assert {"uid": "u1", "key": "theme", "val": "dark"} in db.setting_updates
