@@ -123,15 +123,15 @@ function renderTradeTable(trades) {
 
   trades.forEach(t => {
     const row = document.createElement('tr');
-    const total = t.quantity * t.unit_price;
+    const totalPrice = t.quantity * t.unit_price;
 
     row.innerHTML = `
       <td>${new Date(t.timestamp).toLocaleString()}</td>
+      <td>${escapeHTML(t.seller_name)}</td>
+      <td>${escapeHTML(t.buyer_name)}</td>
       <td>${escapeHTML(t.resource)}</td>
       <td>${t.quantity.toLocaleString()}</td>
-      <td>${t.unit_price.toFixed(2)}</td>
-      <td>${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-      <td>${escapeHTML(t.buyer_name)} ⇄ ${escapeHTML(t.seller_name)}</td>
+      <td>${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
     `;
 
     body.appendChild(row);
