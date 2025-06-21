@@ -83,8 +83,14 @@ async function loadWars() {
         <p>Status: ${escapeHTML(war.status)}</p>
         <p>Start: ${new Date(war.start_date).toLocaleString()}</p>
         <p>Score: ${war.attacker_score} - ${war.defender_score}</p>
-        <button class="action-btn" onclick="openWarDetailModal(${war.war_id})">View Details</button>
       `;
+
+      const btn = document.createElement('button');
+      btn.className = 'action-btn';
+      btn.textContent = 'View Details';
+      btn.addEventListener('click', () => openWarDetailModal(war.war_id));
+      card.appendChild(btn);
+
       warListEl.appendChild(card);
     });
 
