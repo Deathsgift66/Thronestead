@@ -284,6 +284,26 @@ a:focus {
   white-space: nowrap;
   border: 0;
 }
+.skip-link {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-link:focus {
+  left: auto;
+  top: 0;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+  background: var(--gold);
+  color: var(--stone-bg);
+  text-decoration: none;
+  z-index: var(--z-index-modal);
+}
 .centered { text-align: center; justify-content: center; align-items: center; }
 .full-width { width: 100%; }
 .full-height { height: 100%; }
