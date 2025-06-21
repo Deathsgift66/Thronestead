@@ -67,3 +67,64 @@ def get_village_buildings(
     ).mappings().fetchall()
 
     return {"buildings": [dict(r) for r in rows]}
+@router.get("/info/{building_id}")
+def get_building_info(
+    building_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    row = db.execute(
+        text("SELECT * FROM building_catalogue WHERE building_id = :bid"),
+        {"bid": building_id},
+    ).mappings().fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Building not found")
+    return {"building": dict(row)}
+
+
+@router.post("/upgrade")
+def upgrade_build(
+    payload: BuildingActionPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    owner = db.execute(
+        text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
+        {"vid": payload.village_id},
+    ).fetchone()
+    if not owner or owner[0] != kid:
+        raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
+    seconds = db.execute(
+        text("SELECT build_time_seconds FROM building_catalogue WHERE building_id = :bid"),
+        {"bid": payload.building_id},
+    ).fetchone()
+    duration = seconds[0] if seconds else 3600
+    from services.kingdom_building_service import upgrade_building
+    upgrade_building(db, payload.village_id, payload.building_id, user_id, duration)
+    log_action(db, user_id, "upgrade_build", payload.dict())
+    return {"message": "Upgrade started"}
+
+
+@router.post("/reset")
+def reset_build(
+    payload: BuildingActionPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    owner = db.execute(
+        text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
+        {"vid": payload.village_id},
+    ).fetchone()
+    if not owner or owner[0] != kid:
+        raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
+    db.execute(
+        text(
+            "UPDATE village_buildings SET level = 0 WHERE village_id = :vid AND building_id = :bid"
+        ),
+        {"vid": payload.village_id, "bid": payload.building_id},
+    )
+    db.commit()
+    log_action(db, user_id, "reset_build", payload.dict())
+    return {"message": "Building reset"}
