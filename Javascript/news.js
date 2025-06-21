@@ -3,7 +3,7 @@
 // Version 6.15.2025.00.00
 // Developer: Codex
 import { supabase } from './supabaseClient.js';
-import { escapeHTML, formatDate } from './utils.js';
+import { formatDate } from './utils.js';
 
 let newsChannel = null;
 
@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const search = document.getElementById('search-input');
   if (search) search.addEventListener('input', filterArticles);
+
+  // Close button for modal
+  document.getElementById('close-article-btn')?.addEventListener('click', closeModal);
 });
 
 // ✅ Load News Articles
@@ -65,7 +68,7 @@ function renderArticles(articles) {
     clone.dataset.summary = (article.content || '').toLowerCase();
     clone.querySelector('.article-title').textContent = article.title;
     clone.querySelector('.article-summary').textContent = `${article.content.slice(0, 140)}...`;
-    clone.querySelector('.article-meta').textContent = new Date(article.created_at).toLocaleString();
+    clone.querySelector('.article-meta').textContent = formatDate(article.created_at);
     clone.addEventListener('click', () => openModal(article));
     container.appendChild(clone);
   });
@@ -99,7 +102,7 @@ function openModal(article) {
   const modal = document.getElementById('article-modal');
   if (!modal) return;
   modal.querySelector('#article-title').textContent = article.title || 'Untitled';
-  modal.querySelector('#article-meta').textContent = new Date(article.created_at).toLocaleString();
+  modal.querySelector('#article-meta').textContent = formatDate(article.created_at);
   modal.querySelector('#article-body').innerHTML = article.content;
   modal.classList.remove('hidden');
 }
@@ -107,8 +110,6 @@ function openModal(article) {
 function closeModal() {
   document.getElementById('article-modal')?.classList.add('hidden');
 }
-
-document.getElementById('close-article-btn')?.addEventListener('click', closeModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
