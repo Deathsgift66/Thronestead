@@ -47,6 +47,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   userId = session.user.id;
   await refreshBattle();
   subscribeScoreboard();
+  pollStatus();
+  setInterval(pollStatus, 5000);
 
   // Auto refresh every 10 seconds
   setInterval(refreshBattle, 10000);
