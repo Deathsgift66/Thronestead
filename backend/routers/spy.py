@@ -99,3 +99,19 @@ def launch_spy_mission(
         "accuracy_pct": accuracy_pct,
         "spies_lost": spies_lost,
     }
+
+
+@router.get("/defense")
+async def get_spy_defense(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    """Return the spy defense stats for the player's kingdom."""
+    kingdom = db.execute(
+        text("SELECT kingdom_id FROM kingdoms WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    if not kingdom:
+        raise HTTPException(status_code=404, detail="Kingdom not found")
+    defense = db.execute(
+        text("SELECT * FROM spy_defense WHERE kingdom_id = :kid"),
+        {"kid": kingdom[0]},
+    ).fetchone()
+    return dict(defense._mapping) if defense else {}

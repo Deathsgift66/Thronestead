@@ -13,6 +13,7 @@ from ..security import verify_jwt_token
 from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/account", tags=["account"])
+alt_router = APIRouter(prefix="/api/user", tags=["account"])
 
 
 class UpdatePayload(BaseModel):
@@ -210,3 +211,32 @@ def logout_session(
     db.commit()
     log_action(db, user_id, "logout_session", payload.session_id)
     return {"message": "session revoked"}
+
+
+@alt_router.get("/settings")
+async def get_user_settings(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    """Return all user setting entries as a key-value map."""
+    rows = db.execute(
+        text("SELECT setting_key, setting_value FROM user_setting_entries WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
+@alt_router.post("/settings")
+async def update_user_settings(settings: dict, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    """Insert or update user setting entries."""
+    for key, value in settings.items():
+        db.execute(
+            text(
+                """
+                INSERT INTO user_setting_entries (user_id, setting_key, setting_value)
+                VALUES (:uid, :key, :val)
+                ON CONFLICT (user_id, setting_key)
+                DO UPDATE SET setting_value = EXCLUDED.setting_value
+                """
+            ),
+            {"uid": user_id, "key": key, "val": value},
+        )
+    db.commit()
+    return {"status": "updated"}
