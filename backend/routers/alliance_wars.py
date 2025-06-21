@@ -159,3 +159,47 @@ def join_war(payload: JoinPayload, user_id: str = Depends(require_user_id), db: 
     db.commit()
     log_action(db, user_id, "Join War", f"War {payload.alliance_war_id} as {payload.side}")
     return {"status": "joined"}
+
+
+# ----------- Pre-Plan Editing -----------
+
+class PreplanPayload(BaseModel):
+    alliance_war_id: int
+    preplan_jsonb: dict
+
+
+@router.get("/preplan")
+def get_preplan(alliance_war_id: int, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+    from .progression_router import get_kingdom_id
+
+    kid = get_kingdom_id(db, user_id)
+    row = db.execute(
+        text(
+            "SELECT preplan_jsonb FROM alliance_war_preplans "
+            "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+        ),
+        {"wid": alliance_war_id, "kid": kid},
+    ).mappings().first()
+
+    return {"plan": row["preplan_jsonb"] if row else {}}
+
+
+@router.post("/preplan/submit")
+def submit_preplan(payload: PreplanPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+    from .progression_router import get_kingdom_id
+
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            """
+            INSERT INTO alliance_war_preplans (alliance_war_id, kingdom_id, preplan_jsonb)
+            VALUES (:wid, :kid, :plan)
+            ON CONFLICT (alliance_war_id, kingdom_id)
+              DO UPDATE SET preplan_jsonb = EXCLUDED.preplan_jsonb, last_updated = now()
+            """
+        ),
+        {"wid": payload.alliance_war_id, "kid": kid, "plan": payload.preplan_jsonb},
+    )
+    db.commit()
+    log_action(db, user_id, "Save Preplan", str(payload.alliance_war_id))
+    return {"status": "saved"}
