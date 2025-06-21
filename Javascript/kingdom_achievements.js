@@ -191,8 +191,8 @@ function displayAchievementDetail(ach) {
 
   modal.innerHTML = `
     <div class="modal-content">
-      <button class="modal-close" onclick="closeModal()">×</button>
-      <h3>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.name) : '???'}</h3>
+      <button class="modal-close" aria-label="Close details" onclick="closeModal()">×</button>
+      <h3 id="achievement-modal-title">${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.name) : '???'}</h3>
       <p>${!ach.is_hidden || ach.is_unlocked ? escapeHTML(ach.description) : 'Unlock to reveal details.'}</p>
       <img src="${ach.icon_url || '/Assets/icon-sword.svg'}" alt="${escapeHTML(ach.name)}" />
       <p><strong>Points:</strong> ${ach.points || 0}</p>
@@ -200,12 +200,20 @@ function displayAchievementDetail(ach) {
       <p><strong>Reward:</strong> ${escapeHTML(reward)}</p>
     </div>`;
   modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
 }
 
 function closeModal() {
   const modal = document.getElementById('achievement-modal');
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
 }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
 
 // ✅ Summary bar at top
 function updateProgressSummary(list) {
