@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadCustomBoard({ altText: 'Alliance War Banner' });
   await loadActiveWars();
   await loadWarHistory();
+  await loadPendingWars();
 
   document.getElementById('declare-alliance-war-btn')?.addEventListener('click', declareWar);
 });

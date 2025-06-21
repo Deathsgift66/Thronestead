@@ -112,3 +112,50 @@ def view_war_details(alliance_war_id: int, db: Session = Depends(get_db)):
 def list_active_wars(db: Session = Depends(get_db)):
     rows = db.execute(text("SELECT * FROM alliance_wars WHERE war_status = 'active'"))
     return {"wars": [dict(r._mapping) for r in rows]}
+
+
+# ----------- Additional Data Endpoints -----------
+
+class JoinPayload(BaseModel):
+    alliance_war_id: int
+    side: str  # "attacker" or "defender"
+
+
+@router.get("/combat-log")
+def get_combat_log(alliance_war_id: int, db: Session = Depends(get_db)):
+    rows = db.execute(
+        text(
+            "SELECT * FROM alliance_war_combat_logs WHERE alliance_war_id = :wid ORDER BY tick_number"
+        ),
+        {"wid": alliance_war_id},
+    ).mappings().fetchall()
+    return {"combat_logs": [dict(r) for r in rows]}
+
+
+@router.get("/scoreboard")
+def get_scoreboard(alliance_war_id: int, db: Session = Depends(get_db)):
+    row = db.execute(
+        text("SELECT * FROM alliance_war_scores WHERE alliance_war_id = :wid"),
+        {"wid": alliance_war_id},
+    ).mappings().first()
+    return row or {}
+
+
+@router.post("/join")
+def join_war(payload: JoinPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+    from .progression_router import get_kingdom_id
+
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            """
+            INSERT INTO alliance_war_participants (alliance_war_id, kingdom_id, role)
+            VALUES (:wid, :kid, :side)
+            ON CONFLICT (alliance_war_id, kingdom_id) DO UPDATE SET role = EXCLUDED.role
+            """
+        ),
+        {"wid": payload.alliance_war_id, "kid": kid, "side": payload.side},
+    )
+    db.commit()
+    log_action(db, user_id, "Join War", f"War {payload.alliance_war_id} as {payload.side}")
+    return {"status": "joined"}
