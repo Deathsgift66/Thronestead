@@ -1657,6 +1657,7 @@ class GlobalEventCondition(Base):
 
     __tablename__ = "global_event_conditions"
     condition_id = Column(Integer, primary_key=True, autoincrement=True)
+
     event_id = Column(Integer, ForeignKey("global_events.event_id"), nullable=False)
     condition_type = Column(Text, nullable=False)
     condition_target = Column(Text)
