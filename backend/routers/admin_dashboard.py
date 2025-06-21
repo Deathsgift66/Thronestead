@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: admin_dashboard.py
-# Version: 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
 """
@@ -40,7 +40,7 @@ def verify_admin(user_id: str, db: Session) -> None:
 # ---------------------
 # 📊 Dashboard Summary
 # ---------------------
-@router.get("/dashboard")
+@router.get("/dashboard", response_model=None)
 def dashboard_summary(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -71,7 +71,7 @@ def dashboard_summary(
 # ---------------------
 # 🔍 Audit Log Search
 # ---------------------
-@router.get("/audit/logs")
+@router.get("/audit/logs", response_model=None)
 def get_audit_logs(
     page: int = 1,
     per_page: int = 50,
@@ -114,7 +114,7 @@ def get_audit_logs(
 # ---------------------
 # ⚙️ System Flag Toggle
 # ---------------------
-@router.post("/flags/toggle")
+@router.post("/flags/toggle", response_model=None)
 def toggle_flag(
     flag_key: str,
     value: bool,
@@ -134,7 +134,7 @@ def toggle_flag(
 # ---------------------
 # 🏰 Kingdom Updates
 # ---------------------
-@router.post("/kingdoms/update")
+@router.post("/kingdoms/update", response_model=None)
 def update_kingdom_field(
     kingdom_id: int,
     field: str,
@@ -166,7 +166,7 @@ def update_kingdom_field(
 # ---------------------
 # 🚩 Flagged User Review
 # ---------------------
-@router.get("/flagged")
+@router.get("/flagged", response_model=None)
 def get_flagged_users(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -184,8 +184,13 @@ def get_flagged_users(
 class WarAction(BaseModel):
     war_id: int
 
-@router.post("/wars/force_end")
-def force_end_war(payload: WarAction, admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+
+@router.post("/wars/force_end", response_model=None)
+def force_end_war(
+    payload: WarAction,
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     verify_admin(admin_user_id, db)
     db.execute(
         text("UPDATE wars_tactical SET war_status = 'completed', is_concluded = TRUE, ended_at = NOW() WHERE war_id = :wid"),
@@ -196,8 +201,12 @@ def force_end_war(payload: WarAction, admin_user_id: str = Depends(require_user_
     return {"status": "ended", "war_id": payload.war_id}
 
 
-@router.post("/wars/rollback_tick")
-def rollback_combat_tick(payload: WarAction, admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+@router.post("/wars/rollback_tick", response_model=None)
+def rollback_combat_tick(
+    payload: WarAction,
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     verify_admin(admin_user_id, db)
 
     db.execute(
@@ -219,8 +228,13 @@ def rollback_combat_tick(payload: WarAction, admin_user_id: str = Depends(requir
 class RollbackRequest(BaseModel):
     password: str
 
-@router.post("/rollback/database")
-def rollback_database(payload: RollbackRequest, admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+
+@router.post("/rollback/database", response_model=None)
+def rollback_database(
+    payload: RollbackRequest,
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     verify_admin(admin_user_id, db)
     master = os.getenv("MASTER_ROLLBACK_PASSWORD")
     if not master or payload.password != master:
