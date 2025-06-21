@@ -254,3 +254,11 @@ body {
   color: #ffc107;
   text-decoration: underline;
 }
+
+/* Empty state */
+.no-notifications {
+  text-align: center;
+  font-style: italic;
+  color: var(--parchment-light);
+  padding: 1rem;
+}
