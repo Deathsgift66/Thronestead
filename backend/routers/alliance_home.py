@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: alliance_home.py
-# Version: 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -19,13 +19,7 @@ def alliance_details(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """
-    Return full summary data for the user's current alliance.
-    Includes: core info, members, vault, projects, quests, wars, treaties, and activity logs.
-    """
-    # --------------------
-    # 🔐 Validate User & Alliance
-    # --------------------
+    """Return full summary data for the user's current alliance."""
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user or not user.alliance_id:
         raise HTTPException(status_code=404, detail="Alliance not found")
@@ -35,9 +29,7 @@ def alliance_details(
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance data missing")
 
-    # --------------------
     # 🧑 Members
-    # --------------------
     member_rows = (
         db.query(AllianceMember, User.username, User.profile_picture_url)
         .join(User, AllianceMember.user_id == User.user_id)
@@ -58,9 +50,7 @@ def alliance_details(
         for m, username, avatar in member_rows
     ]
 
-    # --------------------
     # 💰 Vault
-    # --------------------
     vault = db.query(AllianceVault).filter(AllianceVault.alliance_id == aid).first()
     vault_data = {
         k: getattr(vault, k)
@@ -68,21 +58,15 @@ def alliance_details(
         if k != "alliance_id"
     } if vault else {}
 
-
-    # --------------------
     # 🏗️ Active Projects
-    # --------------------
     projects = db.execute(
-
         text("""
             SELECT p.project_id, c.project_name, p.project_key, p.progress, p.build_state
-
             FROM projects_alliance_in_progress p
             JOIN project_alliance_catalogue c ON p.project_key = c.project_key
             WHERE p.alliance_id = :aid
             ORDER BY p.started_at DESC
         """),
-
         {"aid": aid},
     ).fetchall()
     projects = [
@@ -96,9 +80,7 @@ def alliance_details(
         for r in projects
     ]
 
-    # --------------------
     # 📘 Active Quests
-    # --------------------
     quests = db.execute(
         text("""
             SELECT t.quest_code, q.name, q.description, t.status, t.progress, t.ends_at
@@ -121,17 +103,15 @@ def alliance_details(
         for r in quests
     ]
 
-    # --------------------
     # ⚔️ Active Wars
-    # --------------------
     wars = db.execute(
-        text(
-            "SELECT alliance_war_id, attacker_alliance_id, defender_alliance_id,"
-            " phase, castle_hp, battle_tick, war_status, start_date, end_date "
-            "FROM alliance_wars "
-            "WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid "
-            "ORDER BY start_date DESC"
-        ),
+        text("""
+            SELECT alliance_war_id, attacker_alliance_id, defender_alliance_id,
+                   phase, castle_hp, battle_tick, war_status, start_date, end_date
+            FROM alliance_wars
+            WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid
+            ORDER BY start_date DESC
+        """),
         {"aid": aid},
     ).fetchall()
     wars = [
@@ -149,10 +129,7 @@ def alliance_details(
         for r in wars
     ]
 
-
-    # --------------------
     # 📜 Treaties
-    # --------------------
     treaties = db.execute(
         text("""
             SELECT treaty_id, treaty_type, partner_alliance_id, status, signed_at
@@ -173,10 +150,7 @@ def alliance_details(
         for r in treaties
     ]
 
-
-    # --------------------
     # 📅 Recent Activity
-    # --------------------
     activity = db.execute(
         text("""
             SELECT l.description, u.username, l.created_at
@@ -197,10 +171,7 @@ def alliance_details(
         for r in activity
     ]
 
-
-    # --------------------
-    # 🏰 Final Alliance Info
-    # --------------------
+    # 🏰 Final Info
     alliance_info = {
         "alliance_id": alliance.alliance_id,
         "name": alliance.name,
@@ -224,8 +195,9 @@ def alliance_details(
         "alliance": alliance_info,
         "members": members,
         "vault": vault_data,
+        "projects": projects,
+        "quests": quests,
         "wars": wars,
         "treaties": treaties,
         "activity": activity,
-
     }
