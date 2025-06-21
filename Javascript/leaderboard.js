@@ -157,8 +157,6 @@ function openApplyModal(allianceId, allianceName) {
 
   modalContent.innerHTML = `
     <h3>Apply to ${escapeHTML(allianceName)}</h3>
-    <textarea id="application-message" placeholder="Write your application message..."></textarea>
-    <br>
     <button class="action-btn" id="submit-application">Submit Application</button>
     <button class="action-btn" id="close-application">Cancel</button>
   `;
@@ -166,14 +164,16 @@ function openApplyModal(allianceId, allianceName) {
   modal.classList.remove("hidden");
 
   document.getElementById("submit-application").addEventListener("click", async () => {
-    const message = document.getElementById("application-message").value.trim();
-    if (!message) return alert("Please enter a message.");
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const res = await fetch("/api/alliance_members/apply", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alliance_id: allianceId, message })
+        headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alliance_id: allianceId,
+          user_id: user.id,
+          username: user.user_metadata?.username || user.email
+        })
       });
 
       const result = await res.json();
