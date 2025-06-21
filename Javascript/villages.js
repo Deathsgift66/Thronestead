@@ -55,7 +55,6 @@ function renderVillages(villages) {
     li.innerHTML = `
       <span class="village-name">${escapeHTML(v.village_name)}</span>
       <span class="village-type">${escapeHTML(v.village_type)}</span>
-      <span class="village-population">${v.population.toLocaleString()} peasants</span>
       <span class="village-buildings">Buildings: ${v.building_count.toLocaleString()}</span>
     `;
     return li;
