@@ -5,6 +5,7 @@
 // Sovereign’s Grand Overseer — Page Controller
 
 import { supabase } from './supabaseClient.js';
+import { SovereignUtils } from './sovereign_utils.js';
 
 let realtimeChannel;
 let currentKingdomId;
@@ -260,3 +261,11 @@ function showToast(msg) {
     toastEl.classList.remove("show");
   }, 3000);
 }
+
+// Expose key functions for inline handlers
+window.bulkUpgradeAll = bulkUpgradeAll;
+window.bulkQueueTraining = bulkQueueTraining;
+window.bulkHarvest = bulkHarvest;
+window.filterVillages = filterVillages;
+window.sortVillages = sortVillages;
+
