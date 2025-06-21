@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: alliance_changelog.py
-# Version: 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -13,7 +13,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"])
 
 
-@router.get("")
+@router.get("/", response_model=None)
 def get_alliance_changelog(
     start: Optional[str] = None,
     end: Optional[str] = None,
@@ -26,12 +26,12 @@ def get_alliance_changelog(
     """
     supabase = get_supabase_client()
 
-    # ✅ Validate user existence to prevent forged headers
+    # ✅ Validate user existence
     user_check = supabase.table("users").select("user_id").eq("user_id", user_id).single().execute()
     if getattr(user_check, "error", None) or not getattr(user_check, "data", None):
         raise HTTPException(status_code=401, detail="Invalid user")
 
-    # ✅ Fetch the user's alliance membership
+    # ✅ Fetch alliance membership
     alliance_res = supabase.table("alliance_members").select("alliance_id").eq("user_id", user_id).single().execute()
     if getattr(alliance_res, "error", None) or not getattr(alliance_res, "data", None):
         raise HTTPException(status_code=403, detail="User is not in an alliance")
@@ -82,7 +82,7 @@ def get_alliance_changelog(
     for q in getattr(quests, "data", []):
         add_log("quest", q, f"Quest '{q.get('quest_code')}' Progress: {q.get('progress')}%")
 
-    # 🛡️ 6. Audit Logs
+    # 🛡️ 6. Audit Logs (admin actions)
     audits = supabase.table("audit_log").select("*").eq("user_id", user_id).execute()
     for a in getattr(audits, "data", []):
         add_log("admin", a, a.get("details", ""))
@@ -91,6 +91,7 @@ def get_alliance_changelog(
     all_logs = [log for log in all_logs if log.get("timestamp")]
     all_logs.sort(key=lambda x: x["timestamp"], reverse=True)
 
+    # 🧭 Time Filters
     if start:
         try:
             start_dt = datetime.fromisoformat(start)
@@ -105,16 +106,16 @@ def get_alliance_changelog(
         except ValueError:
             pass
 
+    # 🗂️ Event Type Filter
     if event_type:
         allowed = {t.strip() for t in event_type.split(",") if t.strip()}
         all_logs = [log for log in all_logs if log["event_type"] in allowed]
 
     latest_logs = all_logs[:100]
 
-    # 👤 Resolve actor names
+    # 👤 Resolve actor usernames
     actor_ids = list({log["actor"] for log in latest_logs if log.get("actor")})
     username_map = {}
-
     if actor_ids:
         user_res = supabase.table("users") \
             .select("user_id,username") \
