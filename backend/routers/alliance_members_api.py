@@ -3,12 +3,11 @@
 # Version 6.14.2025
 # Developer: OpenAI Codex
 
-"""Provides a detailed list of alliance members with score data."""
+"""Provides a detailed list of alliance members with score and output data."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-
 from ..database import get_db
 from ..security import require_user_id
 from backend.models import (
@@ -31,25 +30,22 @@ def list_members(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """Return alliance members joined with kingdom scores and output."""
-    viewer = db.query(User).filter(User.user_id == user_id).first()
+    """Return alliance members joined with kingdom scores and production output."""
+
+    viewer = db.query(User).filter_by(user_id=user_id).first()
     if not viewer or not viewer.alliance_id:
         raise HTTPException(status_code=404, detail="Alliance not found")
 
     aid = viewer.alliance_id
 
-    output_sub = (
+    # 🏭 Output per kingdom via villages
+    output_subquery = (
         db.query(
             Kingdom.user_id.label("uid"),
-            func.coalesce(func.sum(VillageProduction.production_rate), 0).label(
-                "total_output"
-            ),
+            func.coalesce(func.sum(VillageProduction.production_rate), 0).label("total_output"),
         )
         .join(KingdomVillage, KingdomVillage.kingdom_id == Kingdom.kingdom_id)
-        .join(
-            VillageProduction,
-            VillageProduction.village_id == KingdomVillage.village_id,
-        )
+        .join(VillageProduction, VillageProduction.village_id == KingdomVillage.village_id)
         .group_by(Kingdom.user_id)
         .subquery()
     )
@@ -65,19 +61,20 @@ def list_members(
             Kingdom.economy_score,
             Kingdom.military_score,
             Kingdom.diplomacy_score,
-            func.coalesce(output_sub.c.total_output, 0).label("total_output"),
+            func.coalesce(output_subquery.c.total_output, 0).label("total_output"),
             User.profile_picture_url.label("crest_url"),
         )
         .join(User, User.user_id == AllianceMember.user_id)
         .outerjoin(AllianceRole, AllianceMember.role_id == AllianceRole.role_id)
         .outerjoin(Kingdom, Kingdom.user_id == AllianceMember.user_id)
-        .outerjoin(output_sub, output_sub.c.uid == AllianceMember.user_id)
+        .outerjoin(output_subquery, output_subquery.c.uid == AllianceMember.user_id)
         .filter(AllianceMember.alliance_id == aid)
     )
 
-    if search:
-        query = query.filter(AllianceMember.username.ilike(f"%{search}%"))
+    if search.strip():
+        query = query.filter(AllianceMember.username.ilike(f"%{search.strip()}%"))
 
+    # 🔀 Sort Handling
     sort_map = {
         "username": AllianceMember.username,
         "rank": AllianceMember.rank,
@@ -86,24 +83,25 @@ def list_members(
         "military_score": Kingdom.military_score,
         "economy_score": Kingdom.economy_score,
         "diplomacy_score": Kingdom.diplomacy_score,
-        "total_output": output_sub.c.total_output,
+        "total_output": output_subquery.c.total_output,
     }
     sort_col = sort_map.get(sort_by, AllianceMember.username)
-    order_col = sort_col.desc() if direction == "desc" else sort_col.asc()
-    query = query.order_by(order_col)
+    order_clause = sort_col.desc() if direction.lower() == "desc" else sort_col.asc()
+    query = query.order_by(order_clause)
 
     rows = query.all()
+
     return [
         {
             "user_id": str(r.user_id),
             "username": r.username,
-            "rank": r.rank,
-            "role": r.role,
+            "rank": r.rank or "Member",
+            "role": r.role or "Member",
             "status": r.status,
-            "contribution": r.contribution,
-            "economy_score": r.economy_score,
-            "military_score": r.military_score,
-            "diplomacy_score": r.diplomacy_score,
+            "contribution": r.contribution or 0,
+            "economy_score": r.economy_score or 0,
+            "military_score": r.military_score or 0,
+            "diplomacy_score": r.diplomacy_score or 0,
             "total_output": float(r.total_output or 0),
             "crest_url": r.crest_url,
         }
