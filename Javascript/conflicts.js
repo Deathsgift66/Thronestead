@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML, debounce, jsonFetch } from './utils.js';
+import { escapeHTML, debounce, jsonFetch, setBarWidths } from './utils.js';
 
 let headers = {};
 const REFRESH_MS = 30000;
@@ -157,6 +157,7 @@ function renderRows(rows) {
     tr.addEventListener('click', () => openWarModal(r.war_id));
     tbody.appendChild(tr);
   });
+  setBarWidths(tbody);
 }
 
 // ✅ Open detail modal
@@ -183,6 +184,8 @@ async function openWarModal(warId) {
         <ul>${participants.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul>
         <button type="button" class="action-btn" id="war-detail-close-btn">Close</button>
       </div>`;
+
+    setBarWidths(modal);
 
     modal.querySelector('#war-detail-close-btn').addEventListener('click', closeWarModal);
   } catch (err) {

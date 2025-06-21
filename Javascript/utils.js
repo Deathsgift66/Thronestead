@@ -200,4 +200,19 @@ export function debounce(fn, delay = 300) {
   };
 }
 
+/**
+ * Apply width styles for elements with a `data-width` attribute.
+ * Constrains the value between 0 and 100 percent.
+ *
+ * @param {ParentNode} root DOM scope to search
+ */
+export function setBarWidths(root = document) {
+  root.querySelectorAll('[data-width]').forEach(el => {
+    const pct = parseFloat(el.dataset.width);
+    if (!Number.isNaN(pct)) {
+      el.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+    }
+  });
+}
+
 
