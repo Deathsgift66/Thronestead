@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: admin_audit_log.py
-# Version: 6.13.2025.19.49
+# Version: 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
 """
@@ -30,7 +30,7 @@ logger = logging.getLogger("Thronestead.AdminAudit")
 # -------------------------
 # 🔍 Filtered Audit Logs
 # -------------------------
-@router.get("")
+@router.get("/", response_model=None)
 def get_audit_logs(
     user_id: Optional[str] = None,
     action: Optional[str] = None,
@@ -65,7 +65,7 @@ def get_audit_logs(
 # -------------------------
 # 👤 User-Specific Log View
 # -------------------------
-@router.get("/user/{user_id}")
+@router.get("/user/{user_id}", response_model=None)
 def get_user_logs(
     user_id: str,
     admin_user_id: str = Depends(require_user_id),
@@ -98,8 +98,8 @@ async def stream_logs(
             logs = fetch_filtered_logs(db, limit=1)
             if logs:
                 latest = logs[0]
-                if latest["log_id"] != last_id:
-                    last_id = latest["log_id"]
+                if latest.get("log_id") != last_id:
+                    last_id = latest.get("log_id")
                     data = json.dumps(latest, default=str)
                     yield f"data: {data}\n\n"
             await asyncio.sleep(5)
