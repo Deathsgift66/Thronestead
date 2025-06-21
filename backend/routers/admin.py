@@ -18,6 +18,7 @@ from ..database import get_db
 from ..security import require_user_id
 from backend.models import User
 from services.audit_service import log_action
+from .admin_dashboard import dashboard_summary, get_audit_logs
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 logger = logging.getLogger("Thronestead.Admin")
@@ -259,3 +260,34 @@ def query_account_alerts(
     sql = text(f"SELECT * FROM account_alerts{where} ORDER BY timestamp DESC LIMIT 100")
     rows = db.execute(sql, params).fetchall()
     return {"alerts": [dict(r._mapping) for r in rows]}
+
+
+# -------------------------
+# 🔗 Legacy Alias Routes
+# -------------------------
+@router.get("/stats", response_model=None)
+def get_admin_stats(
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Alias for dashboard summary statistics."""
+    return dashboard_summary(admin_user_id=admin_user_id, db=db)
+
+
+@router.get("/search_user", response_model=None)
+def search_user(
+    q: str = Query("", alias="q"),
+    db: Session = Depends(get_db),
+):
+    """Alias for player search used by older dashboards."""
+    result = list_players(search=q, db=db)
+    return result.get("players", [])
+
+
+@router.get("/logs", response_model=None)
+def get_logs(
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Alias for recent audit logs."""
+    return get_audit_logs(admin_user_id=admin_user_id, db=db)
