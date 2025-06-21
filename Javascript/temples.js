@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, showToast } from './utils.js';
 
 let currentSession = null;
 let currentKingdomId = null;
@@ -199,18 +199,3 @@ async function constructTemple(type) {
   }
 }
 
-// ✅ Toast Notification Utility
-function showToast(msg) {
-  let el = document.getElementById('toast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'toast';
-    el.className = 'toast-notification';
-    document.body.appendChild(el);
-  }
-  el.textContent = msg;
-  el.classList.add("show");
-  setTimeout(() => el.classList.remove("show"), 3000);
-}
-
-// ✅ HTML Escaper
