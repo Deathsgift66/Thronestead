@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: alliance_projects.py
-# Version: 6.13.2025.19.49
+# Version: 6.14.2025
 # Developer: Deathsgift66
 
 from datetime import datetime, timedelta
@@ -42,15 +42,15 @@ class ContributionPayload(BaseModel):
 def expire_old_projects(db: Session):
     """Mark any outdated projects as expired."""
     now = datetime.utcnow()
-    rows = (
+    expired = (
         db.query(ProjectsAllianceInProgress)
         .filter(ProjectsAllianceInProgress.status == "building")
         .filter(ProjectsAllianceInProgress.expected_end < now)
         .all()
     )
-    for r in rows:
-        r.status = "expired"
-    if rows:
+    for project in expired:
+        project.status = "expired"
+    if expired:
         db.commit()
 
 
@@ -59,8 +59,13 @@ def expire_old_projects(db: Session):
 @router.get("/catalogue")
 def get_all_catalogue_projects(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return all available project blueprints."""
-    rows = db.query(ProjectAllianceCatalogue).filter(ProjectAllianceCatalogue.is_active.is_(True)).all()
-    return {"projects": [{col: getattr(r, col) for col in r.__table__.columns.keys()} for r in rows]}
+    rows = db.query(ProjectAllianceCatalogue).filter_by(is_active=True).all()
+    return {
+        "projects": [
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
+            for r in rows
+        ]
+    }
 
 
 @router.get("/available")
@@ -74,18 +79,23 @@ def get_available_projects(alliance_id: int, user_id: str = Depends(verify_jwt_t
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance not found")
 
-    built_keys = {row[0] for row in db.query(ProjectsAlliance.project_key).filter_by(alliance_id=alliance_id)}
-    active_keys = {row[0] for row in db.query(ProjectsAllianceInProgress.project_key).filter_by(alliance_id=alliance_id)}
+    built_keys = {r[0] for r in db.query(ProjectsAlliance.project_key).filter_by(alliance_id=alliance_id)}
+    active_keys = {r[0] for r in db.query(ProjectsAllianceInProgress.project_key).filter_by(alliance_id=alliance_id)}
     exclude_keys = built_keys | active_keys
 
     eligible = (
         db.query(ProjectAllianceCatalogue)
-        .filter(ProjectAllianceCatalogue.is_active.is_(True))
+        .filter_by(is_active=True)
         .filter(~ProjectAllianceCatalogue.project_key.in_(exclude_keys))
         .filter(ProjectAllianceCatalogue.requires_alliance_level <= alliance.level)
         .all()
     )
-    return {"projects": [{col: getattr(r, col) for col in r.__table__.columns.keys()} for r in eligible]}
+    return {
+        "projects": [
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
+            for r in eligible
+        ]
+    }
 
 
 @router.get("/in_progress")
@@ -95,8 +105,14 @@ def get_in_progress_projects(alliance_id: int, user_id: str = Depends(verify_jwt
     user = db.query(User).filter_by(user_id=user_id).first()
     if not user or user.alliance_id != alliance_id:
         raise HTTPException(status_code=403, detail="Not authorized")
+
     rows = db.query(ProjectsAllianceInProgress).filter_by(alliance_id=alliance_id).all()
-    return {"projects": [{col: getattr(r, col) for col in r.__table__.columns.keys()} for r in rows]}
+    return {
+        "projects": [
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
+            for r in rows
+        ]
+    }
 
 
 @router.get("/completed")
@@ -105,8 +121,14 @@ def get_built_projects(alliance_id: int, user_id: str = Depends(verify_jwt_token
     user = db.query(User).filter_by(user_id=user_id).first()
     if not user or user.alliance_id != alliance_id:
         raise HTTPException(status_code=403, detail="Not authorized")
+
     rows = db.query(ProjectsAlliance).filter_by(alliance_id=alliance_id, build_state="completed").all()
-    return {"projects": [{col: getattr(r, col) for col in r.__table__.columns.keys()} for r in rows]}
+    return {
+        "projects": [
+            {col: getattr(r, col) for col in r.__table__.columns.keys()}
+            for r in rows
+        ]
+    }
 
 
 @router.post("/start")
@@ -168,15 +190,14 @@ def contribute_to_project(payload: ContributionPayload, user_id: str = Depends(v
 
     project.progress = min(100, project.progress + payload.amount)
 
-    contribution = ProjectAllianceContribution(
+    db.add(ProjectAllianceContribution(
         alliance_id=user.alliance_id,
+        user_id=user_id,
         player_name=user.username,
+        project_key=payload.project_key,
         resource_type=payload.resource_type,
         amount=payload.amount,
-        project_key=payload.project_key,
-        user_id=user_id,
-    )
-    db.add(contribution)
+    ))
     db.commit()
     return {"status": "ok"}
 
