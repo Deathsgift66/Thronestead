@@ -34,3 +34,16 @@ def test_balance_includes_metadata(monkeypatch):
     assert data['stealable'] is False
     assert data['expires'] is False
 
+
+def test_buy_tokens(monkeypatch):
+    calls = {}
+
+    def dummy_add(db, uid, amt):
+        calls['add'] = amt
+
+    monkeypatch.setattr(tokens, 'add_tokens', dummy_add)
+
+    result = tokens.buy_tokens(tokens.BuyPayload(package_id=1), user_id='u1', db=DummyDB())
+    assert result['tokens'] == tokens.TOKEN_PACKAGES[1]
+    assert calls['add'] == tokens.TOKEN_PACKAGES[1]
+

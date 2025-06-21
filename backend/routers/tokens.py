@@ -14,6 +14,7 @@ from ..security import verify_jwt_token
 from services.token_service import (
     get_balance,
     consume_tokens,
+    add_tokens,
     TOKEN_STEALABLE,
     TOKEN_EXPIRES,
 )
@@ -26,9 +27,19 @@ class RedeemPayload(BaseModel):
     perk_id: str
 
 
+class BuyPayload(BaseModel):
+    package_id: int
+
+
 PERK_CATALOG = {
     "vip1": {"cost": 1, "vip_level": 1},
     "vip2": {"cost": 2, "vip_level": 2},
+}
+
+
+TOKEN_PACKAGES = {
+    1: 1,
+    2: 3,
 }
 
 
@@ -54,3 +65,13 @@ def redeem_tokens(payload: RedeemPayload, user_id: str = Depends(verify_jwt_toke
     expires = datetime.utcnow() + timedelta(days=30)
     upsert_vip_status(db, user_id, perk["vip_level"], expires)
     return {"message": "redeemed", "perk": payload.perk_id}
+
+
+@router.post("/buy")
+def buy_tokens(payload: BuyPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    """Add tokens to the user's balance for the selected package."""
+    amount = TOKEN_PACKAGES.get(payload.package_id)
+    if not amount:
+        raise HTTPException(status_code=400, detail="Invalid package")
+    add_tokens(db, user_id, amount)
+    return {"message": "added", "tokens": amount}
