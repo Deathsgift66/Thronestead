@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from './supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, showToast } from './utils.js';
 import { setupTabs } from './components/tabControl.js';
 
 let scrollChannel = null;
@@ -148,20 +148,3 @@ async function submitScroll() {
     showToast("Failed to submit scroll.");
   }
 }
-
-// ✅ Toast Utility
-function showToast(message) {
-  let toastEl = document.getElementById('toast');
-  if (!toastEl) {
-    toastEl = document.createElement('div');
-    toastEl.id = 'toast';
-    toastEl.className = 'toast-notification';
-    document.body.appendChild(toastEl);
-  }
-
-  toastEl.textContent = message;
-  toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 3000);
-}
-
-// ✅ Escape HTML
