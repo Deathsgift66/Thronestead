@@ -56,12 +56,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Bind tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      document
+        .querySelectorAll('.tab-btn')
+        .forEach(b => b.classList.remove('active'));
+
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+        tab.classList.remove('active');
+      });
 
       btn.classList.add('active');
       const targetId = btn.dataset.tab;
-      document.getElementById(targetId).classList.remove('hidden');
+      const target = document.getElementById(targetId);
+      target.classList.remove('hidden');
+      target.classList.add('active');
     });
   });
 });
