@@ -77,4 +77,6 @@ def full_history(
             raise HTTPException(status_code=403, detail="Access denied")
 
     data = fetch_full_history(db, kingdom_id)
-    return {"full_history": data}
+    # Return the aggregated dictionary directly so the frontend
+    # can access keys like `timeline` without extra nesting.
+    return data
