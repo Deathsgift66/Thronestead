@@ -32,12 +32,11 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/legal.css" rel="stylesheet" />
+  <script src="/Javascript/legal.js" type="module"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
-  <link href="/CSS/resource_bar.css" rel="stylesheet" />
-  <script src="/Javascript/resourceBar.js" type="module"></script>
 </head>
 
 <body>
@@ -56,17 +55,23 @@ Developer: Deathsgift66
     <h2>Legal Documents</h2>
     <p>View the complete legal documents for Thronestead. All players must comply with these terms to participate in the game.</p>
 
-    <ul class="legal-doc-list">
-      <li><a href="Assets/legal/THRONESTEAD_AccessibilityStatement.pdf" target="_blank" rel="noopener">Accessibility Statement</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf" target="_blank" rel="noopener">Privacy Policy</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_CookiePolicy.pdf" target="_blank" rel="noopener">Cookie Policy</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_RefundPolicy.pdf" target="_blank" rel="noopener">Refund Policy</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_EULA.pdf" target="_blank" rel="noopener">End User License Agreement</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_TermsofSale.pdf" target="_blank" rel="noopener">Terms of Sale</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_GameRules.pdf" target="_blank" rel="noopener">Community Guidelines</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_TermsofService.pdf" target="_blank" rel="noopener">Terms of Service</a></li>
-      <li><a href="Assets/legal/THRONESTEAD_KingmakersRise_DPA (1).pdf" target="_blank" rel="noopener">Data Processing Addendum (DPA)</a></li>
-    </ul>
+    <div id="search-container">
+      <input type="text" id="doc-search" placeholder="Search legal documents..." aria-label="Search Legal Documents" />
+    </div>
+    <div id="legal-docs" class="legal-card-grid"></div>
+    <noscript>
+      <ul class="legal-doc-list">
+        <li><a href="Assets/legal/THRONESTEAD_AccessibilityStatement.pdf" target="_blank" rel="noopener">Accessibility Statement</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf" target="_blank" rel="noopener">Privacy Policy</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_CookiePolicy.pdf" target="_blank" rel="noopener">Cookie Policy</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_RefundPolicy.pdf" target="_blank" rel="noopener">Refund Policy</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_EULA.pdf" target="_blank" rel="noopener">End User License Agreement</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_TermsofSale.pdf" target="_blank" rel="noopener">Terms of Sale</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_GameRules.pdf" target="_blank" rel="noopener">Community Guidelines</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_TermsofService.pdf" target="_blank" rel="noopener">Terms of Service</a></li>
+        <li><a href="Assets/legal/THRONESTEAD_KingmakersRise_DPA (1).pdf" target="_blank" rel="noopener">Data Processing Addendum (DPA)</a></li>
+      </ul>
+    </noscript>
   </section>
 
 </main>
