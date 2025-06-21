@@ -32,7 +32,7 @@ async function loadVillages() {
 
 // Load buildings for a specific village
 async function loadBuildings(villageId) {
-  const res = await fetch(`/api/buildings/by_village/${villageId}`);
+  const res = await fetch(`/api/buildings/village/${villageId}`);
   const json = await res.json();
   const buildings = json.buildings || json;
   const tbody = document.getElementById('buildingsTableBody');
@@ -65,10 +65,11 @@ function attachRowActions() {
       const buildingId = e.target.dataset.id;
       const res = await fetch(`/api/buildings/info/${buildingId}`);
       const data = await res.json();
+      const info = data.building || data;
 
-      document.getElementById('modalBuildingName').textContent = data.name;
-      document.getElementById('modalBuildingDesc').textContent = data.description;
-      document.getElementById('modalBuildCost').textContent = formatCost(data.upgrade_cost);
+      document.getElementById('modalBuildingName').textContent = info.building_name || info.name;
+      document.getElementById('modalBuildingDesc').textContent = info.description || '';
+      document.getElementById('modalBuildCost').textContent = formatCost(info.upgrade_cost);
 
       document.getElementById('buildingModal').classList.remove('hidden');
     });
@@ -77,10 +78,14 @@ function attachRowActions() {
   document.querySelectorAll('.upgrade-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const buildingId = e.target.dataset.id;
+      const villageId = document.getElementById('villageSelect').value;
       const res = await fetch(`/api/buildings/upgrade`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ building_id: parseInt(buildingId) })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          village_id: parseInt(villageId),
+          building_id: parseInt(buildingId)
+        })
       });
       const result = await res.json();
       alert(result.message || 'Upgrade started!');
