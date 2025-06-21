@@ -12,7 +12,7 @@ let changelogData = [];
  * Fetch alliance changelog entries from the backend
  * using filter inputs if provided.
  */
-async function fetchChangelog() {
+export async function fetchChangelog() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -52,7 +52,7 @@ async function fetchChangelog() {
 /**
  * Apply filter UI inputs to changelog data.
  */
-function applyFilters() {
+export function applyFilters() {
   fetchChangelog();
 }
 
@@ -89,3 +89,5 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchChangelog();
   setInterval(fetchChangelog, 30000); // refresh every 30s
 });
+
+export { fetchChangelog, applyFilters };
