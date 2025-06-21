@@ -5,6 +5,7 @@
 import { supabase } from './supabaseClient.js';
 
 let currentUserId = null;
+let currentSession = null;
 let realtimeChannel = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   currentUserId = session.user.id;
+  currentSession = session;
 
   const trainBtn = document.getElementById('train-btn');
   if (trainBtn) trainBtn.addEventListener('click', trainSpies);
@@ -32,7 +34,10 @@ async function loadSpies() {
   infoEl.textContent = 'Loading...';
   try {
     const res = await fetch('/api/kingdom/spies', {
-      headers: { 'X-User-ID': currentUserId }
+      headers: {
+        'X-User-ID': currentUserId,
+        Authorization: `Bearer ${currentSession.access_token}`
+      }
     });
     if (!res.ok) throw new Error('Failed to fetch spies');
     const data = await res.json();
@@ -60,7 +65,10 @@ async function loadMissions() {
   listEl.textContent = 'Loading missions...';
   try {
     const res = await fetch('/api/kingdom/spy_missions', {
-      headers: { 'X-User-ID': currentUserId }
+      headers: {
+        'X-User-ID': currentUserId,
+        Authorization: `Bearer ${currentSession.access_token}`
+      }
     });
     if (!res.ok) throw new Error('Failed to fetch missions');
     const data = await res.json();
@@ -106,7 +114,8 @@ async function trainSpies() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-User-ID': currentUserId
+        'X-User-ID': currentUserId,
+        Authorization: `Bearer ${currentSession.access_token}`
       },
       body: JSON.stringify({ quantity: qty })
     });
