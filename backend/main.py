@@ -44,6 +44,10 @@ origins = [
     "https://www.thronestead.com",
 ]
 
+extra_origins = os.getenv("ALLOWED_ORIGINS")
+if extra_origins:
+    origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
