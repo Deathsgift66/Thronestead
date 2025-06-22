@@ -6,6 +6,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from backend.routers import account_settings
+from starlette.requests import Request
 
 class DummyResult:
     def __init__(self, row=None, rows=None):
@@ -74,9 +75,11 @@ def test_load_profile_returns_security_fields():
         ("ip_login_alerts", "true"),
         ("email_login_confirmations", "false"),
     ]
-    result = account_settings.load_profile(user_id="u1", db=db)
-    assert result["ip_login_alerts"] is True
-    assert result["email_login_confirmations"] is False
+    req = Request({"type": "http"})
+    resp = account_settings.load_profile(req, user_id="u1", db=db)
+    ctx = getattr(resp, "context", {})
+    assert ctx["ip_login_alerts"] is True
+    assert ctx["email_login_confirmations"] is False
 
 def test_update_profile_updates_security_fields():
     db = DummyDB()
