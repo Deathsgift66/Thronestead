@@ -24,7 +24,7 @@ export default defineConfig({
     name: 'copy-env',
     buildEnd() {
       try {
-        copyFileSync('env.js', resolve(__dirname, 'dist/env.js'));
+        copyFileSync('public/env.js', resolve(__dirname, 'dist/env.js'));
       } catch {}
     }
   }],

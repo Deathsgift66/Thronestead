@@ -111,7 +111,7 @@ psql -f full_schema.sql
 
 ### Supabase Configuration
 
-Environment variables for the Supabase connection are loaded from the `.ENV` file at the project root. Copy `.env.example` to `.ENV` and update it with your credentials. Frontend pages read these values via `env.js`, which must be generated from `env.example.js`.
+Environment variables for the Supabase connection are loaded from the `.ENV` file at the project root. After updating your credentials, run `node scripts/generate-env.js` to create `public/env.js` so the frontend can access them.
 
 The key variables are:
 
@@ -124,8 +124,8 @@ MASTER_ROLLBACK_PASSWORD
 ALLOWED_ORIGINS
 ```
 
-Update these values with your project credentials to enable API access. Then copy
-`env.example.js` to `env.js` so the frontend can access the public values at
+Update these values with your project credentials to enable API access. The
+`generate-env.js` script writes the public values to `public/env.js` for use at
 runtime.
 
 The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
