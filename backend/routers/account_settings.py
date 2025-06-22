@@ -3,7 +3,9 @@
 # Version 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from datetime import datetime
 from sqlalchemy import text
@@ -15,6 +17,8 @@ from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/account", tags=["account"])
 alt_router = APIRouter(prefix="/api/user", tags=["account"])
+
+templates = Jinja2Templates(directory=".")
 
 
 class UpdatePayload(BaseModel):
@@ -58,8 +62,9 @@ class UserProfile(BaseModel):
     sessions: list[SessionInfo] = Field(default_factory=list)
 
 
-@router.get("/profile", response_model=UserProfile)
+@router.get("/profile", response_model=None, response_class=HTMLResponse)
 def load_profile(
+    request: Request,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
@@ -112,7 +117,10 @@ def load_profile(
     profile["sessions"] = [
         {"session_id": r[0], "device": r[1], "last_seen": r[2]} for r in session_rows
     ]
-    return profile
+    return templates.TemplateResponse(
+        "profile.html",
+        {"request": request, "profile": profile},
+    )
 
 
 @router.post("/update")
