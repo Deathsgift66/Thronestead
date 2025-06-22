@@ -50,9 +50,7 @@ if allowed_origins_env:
         allow_credentials = True
 else:
     origins = [
-        "https://thronestead.com",
         "https://www.thronestead.com",
-        "http://localhost:5173",
     ]
     allow_credentials = True
     logger.warning("ALLOWED_ORIGINS not set; defaulting to production and localhost")
