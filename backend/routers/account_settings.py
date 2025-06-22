@@ -80,10 +80,7 @@ class UserProfile(BaseModel):
 
 @router.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request):
-    return templates.TemplateResponse(
-        "profile.html",
-        {"request": request},
-    )
+    return templates.TemplateResponse("profile.html", {"request": request})
 
 
 @router.post("/update")
