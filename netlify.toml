@@ -10,6 +10,7 @@
 
 [context.production.environment]
   NODE_VERSION = "18"                # Ensures compatibility for any Node-based tooling
+  API_BASE_URL = "https://thronestead.onrender.com"   # Backend endpoint
 
 [build.processing.html]
   pretty_urls = true                 # Allow /page to resolve /page.html
