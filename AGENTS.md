@@ -12,9 +12,10 @@ This repository contains the pre-alpha frontend and accompanying FastAPI backend
      ```
 
 2. **Environment Variables**
-   - Copy `.env.example` to `.ENV` and update the Supabase credentials (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
+   - Edit `.env` with your Supabase credentials (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
    - Optionally set `API_BASE_URL` if your backend runs on a different host.
    - If you have a service role key, set `SUPABASE_SERVICE_ROLE_KEY` as well.
+   - Run `node scripts/generate-env.js` whenever you need to regenerate `env.js` for the frontend.
 
 3. **Backend**
    - Install Python dependencies and run the API:
