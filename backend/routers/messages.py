@@ -2,6 +2,7 @@
 # File Name: messages.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException

@@ -2,6 +2,7 @@
 # File Name: public_kingdom.py
 # Version 6.14.2025
 # Developer: OpenAI Codex
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text

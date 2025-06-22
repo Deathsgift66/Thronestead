@@ -2,6 +2,7 @@
 # File Name: alliance_wars.py
 # Version: 6.20.2025.21.10
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

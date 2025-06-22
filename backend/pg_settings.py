@@ -1,3 +1,4 @@
+"""Module docstring."""
 from fastapi import Request
 import json
 import logging

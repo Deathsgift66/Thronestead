@@ -2,6 +2,7 @@
 # File Name: leaderboard.py
 # Version 6.16.2025.21.20
 # Developer: Codex
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session

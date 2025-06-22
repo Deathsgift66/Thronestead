@@ -2,6 +2,7 @@
 # File Name: alliance_vault.py
 # Version: 6.20.2025.23.22
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException

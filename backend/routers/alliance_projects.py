@@ -2,6 +2,7 @@
 # File Name: alliance_projects.py
 # Version: 6.14.2025
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException

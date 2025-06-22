@@ -2,6 +2,7 @@
 # File Name: alliance_members_view.py
 # Version: 6.14.2025
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from ..security import require_user_id

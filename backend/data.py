@@ -125,13 +125,13 @@ global_game_settings: Dict[str, Any] = {}
 
 try:
     from sqlalchemy import text
-    from .database import SessionLocal
+    from .database import session_local
 except ImportError:  # When SQLAlchemy is not available in testing
     def text(q: str) -> str:  # type: ignore
         """Fallback text() implementation when SQLAlchemy is missing."""
         return q
 
-    SessionLocal = None  # type: ignore
+    session_local = None  # type: ignore
 
 
 def load_game_settings() -> None:
@@ -139,8 +139,8 @@ def load_game_settings() -> None:
     Load all active global settings from the database into memory.
     These influence game-wide behaviors and can be modified dynamically.
     """
-    if not SessionLocal:
-        logger.warning("SessionLocal not initialized. Skipping game settings load.")
+    if not session_local:
+        logger.warning("session_local not initialized. Skipping game settings load.")
         return
 
     query = text(
@@ -154,7 +154,7 @@ def load_game_settings() -> None:
     )
 
     try:
-        with SessionLocal() as session:
+        with session_local() as session:
             rows = session.execute(query).fetchall()
             # Build the settings dict in one step for efficiency
             global_game_settings.clear()

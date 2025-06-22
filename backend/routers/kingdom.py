@@ -1,3 +1,4 @@
+"""Module docstring."""
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel

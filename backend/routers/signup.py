@@ -2,6 +2,7 @@
 # File Name: signup.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr, constr

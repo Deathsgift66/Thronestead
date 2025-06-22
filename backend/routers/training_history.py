@@ -2,6 +2,7 @@
 # File Name: training_history.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel, Field

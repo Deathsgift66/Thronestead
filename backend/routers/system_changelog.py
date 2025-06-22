@@ -2,6 +2,7 @@
 # File Name: system_changelog.py
 # Version 6.14.2025
 # Developer: OpenAI Codex
+"""Module docstring."""
 
 from fastapi import APIRouter, HTTPException, Query
 from ..supabase_client import get_supabase_client

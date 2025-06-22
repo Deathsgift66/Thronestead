@@ -12,7 +12,7 @@ from typing import Any, Iterable, List, Mapping, Optional
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from .database import SessionLocal
+from .database import session_local
 from . import logger
 
 
@@ -34,7 +34,7 @@ class _DB:
             List[Mapping[str, Any]]: List of rows returned as key-value dicts.
         """
         try:
-            with SessionLocal() as session:
+            with session_local() as session:
                 result = session.execute(text(sql), tuple(params or []))
                 return [dict(row._mapping) for row in result]
         except SQLAlchemyError as e:
@@ -51,7 +51,7 @@ class _DB:
             params (Iterable[Any], optional): Parameters to pass into the SQL statement.
         """
         try:
-            with SessionLocal() as session:
+            with session_local() as session:
                 session.execute(text(sql), tuple(params or []))
                 session.commit()
                 logger.debug(f"✅ DB EXECUTE SUCCESS — SQL: {sql} | Params: {params}")

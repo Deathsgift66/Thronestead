@@ -2,6 +2,7 @@
 # File Name: black_market.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, conint, PositiveFloat

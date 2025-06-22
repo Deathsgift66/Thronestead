@@ -2,6 +2,7 @@
 # File Name: alliance_management.py
 # Version: 6.13.2025.19.49 (Polished)
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

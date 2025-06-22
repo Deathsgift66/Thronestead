@@ -2,6 +2,7 @@
 # File Name: projects_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends

@@ -1,3 +1,4 @@
+"""Module docstring."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, conint, PositiveFloat
 from sqlalchemy import or_

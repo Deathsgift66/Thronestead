@@ -2,6 +2,7 @@
 # File Name: forgot_password.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""Module docstring."""
 
 import hashlib
 import os

@@ -1,3 +1,4 @@
+"""Module docstring."""
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 import asyncio

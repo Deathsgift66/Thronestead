@@ -2,6 +2,7 @@
 # File Name: alliance_treaties_router.py
 # Version 6.13.2025.20.00
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

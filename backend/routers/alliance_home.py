@@ -2,6 +2,7 @@
 # File Name: alliance_home.py
 # Version: 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
+"""Module docstring."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
