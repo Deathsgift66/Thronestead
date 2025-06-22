@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadSpyInfo() {
   try {
-    const res = await fetch('/api/kingdom/spies', {
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom/spies', {
       headers: { 'X-User-ID': currentUserId }
     });
     const data = await res.json();
@@ -85,7 +85,7 @@ async function launchMission(e) {
     return;
   }
   try {
-    const res = await fetch('/api/spy/launch', {
+    const res = await fetch('https://thronestead.onrender.com/api/spy/launch', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

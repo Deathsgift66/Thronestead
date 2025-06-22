@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Real-time updates via SSE
   try {
-    eventSource = new EventSource('/api/admin/audit-log/stream');
+    eventSource = new EventSource('https://thronestead.onrender.com/api/admin/audit-log/stream');
     eventSource.onmessage = (ev) => {
       const log = JSON.parse(ev.data);
       prependLogRow(log);
@@ -66,7 +66,7 @@ async function loadAuditLog() {
     if (to) params.append("date_to", to);
     if (limit) params.append("limit", limit);
 
-    const res = await fetch(`/api/admin/audit-log?${params.toString()}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/admin/audit-log?${params.toString()}`);
     const data = await res.json();
 
     tbody.innerHTML = "";

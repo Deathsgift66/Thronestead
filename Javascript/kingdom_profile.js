@@ -38,7 +38,7 @@ async function loadProfile() {
   kNameEl.textContent = 'Loading...';
 
   try {
-    const res = await fetch(`/api/kingdoms/public/${targetKingdomId}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/kingdoms/public/${targetKingdomId}`);
     const data = await res.json();
 
     kNameEl.textContent = data.kingdom_name || 'Unknown Kingdom';
@@ -96,7 +96,7 @@ async function launchMission(missionType) {
   lastAction = now;
 
   try {
-    await authFetchJson('/api/kingdom/spy_missions', currentSession, {
+    await authFetchJson('https://thronestead.onrender.com/api/kingdom/spy_missions', currentSession, {
       method: 'POST',
       body: JSON.stringify({
         target_id: targetKingdomId,
@@ -117,7 +117,7 @@ async function confirmAttack() {
   if (!window.confirm('⚔️ Are you sure you want to attack this kingdom?')) return;
 
   try {
-    const result = await authFetchJson('/api/wars/declare', currentSession, {
+    const result = await authFetchJson('https://thronestead.onrender.com/api/wars/declare', currentSession, {
       method: 'POST',
       body: JSON.stringify({ target: targetKingdomId })
     });

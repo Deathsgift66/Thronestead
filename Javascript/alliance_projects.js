@@ -61,7 +61,7 @@ async function loadAvailable() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/alliance/projects/available?alliance_id=${allianceId}`);
     const json = await res.json();
     renderAvailable(json.projects || []);
   } catch (err) {
@@ -105,7 +105,7 @@ async function loadInProgress() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
     const json = await res.json();
     renderInProgress(json.projects || []);
   } catch (err) {
@@ -139,7 +139,7 @@ function renderInProgress(list) {
 
 async function loadContributions(key, element) {
   try {
-    const res = await fetch(`/api/alliance/projects/contributions?project_key=${key}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/alliance/projects/contributions?project_key=${key}`);
     const data = await res.json();
     const list = data.contributions || [];
     if (list.length === 0) {
@@ -172,7 +172,7 @@ async function loadCompleted() {
   container.innerHTML = '<p>Loading...</p>';
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/alliance/projects/completed?alliance_id=${allianceId}`);
     const json = await res.json();
     renderCompleted(json.projects || []);
   } catch (err) {
@@ -208,7 +208,7 @@ async function loadCatalogue() {
   if (!container) return;
   container.innerHTML = '<p>Loading...</p>';
   try {
-    const res = await fetch('/api/alliance/projects/catalogue');
+    const res = await fetch('https://thronestead.onrender.com/api/alliance/projects/catalogue');
     const json = await res.json();
     renderCatalogue(json.projects || []);
   } catch (err) {
@@ -245,7 +245,7 @@ function renderCatalogue(list) {
 async function startProject(projectKey) {
   try {
     const { userId } = await getAllianceInfo();
-    const res = await fetch('/api/alliance/projects/start', {
+    const res = await fetch('https://thronestead.onrender.com/api/alliance/projects/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ project_key: projectKey, user_id: userId })

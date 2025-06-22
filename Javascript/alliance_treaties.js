@@ -23,7 +23,7 @@ async function loadTreaties() {
   const container = document.getElementById('treaties-container');
   container.innerHTML = '<p>Loading treaties...</p>';
   try {
-    const res = await fetch('/api/alliance/treaties');
+    const res = await fetch('https://thronestead.onrender.com/api/alliance/treaties');
     const treaties = await res.json();
     if (!treaties.length) {
       container.innerHTML = "<p class='empty-state'>No treaties found.</p>";
@@ -62,7 +62,7 @@ function bindCardActions() {
 // -------------------- Modal --------------------
 
 function openTreatyModal(id) {
-  fetch(`/api/alliance/treaty/${id}`)
+  fetch(`https://thronestead.onrender.com/api/alliance/treaty/${id}`)
     .then(res => res.json())
     .then(t => {
       const box = document.getElementById('treaty-details');
@@ -95,7 +95,7 @@ function closeModal() {
 
 async function respondToTreaty(id, response) {
   try {
-    await fetch('/api/alliance/treaties/respond', {
+    await fetch('https://thronestead.onrender.com/api/alliance/treaties/respond', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ treaty_id: parseInt(id, 10), response })
@@ -112,7 +112,7 @@ async function proposeTreaty() {
   const partnerId = prompt('Enter partner alliance ID:');
   if (!type || !partnerId) return;
   try {
-    await fetch('/api/alliance/treaties/propose', {
+    await fetch('https://thronestead.onrender.com/api/alliance/treaties/propose', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

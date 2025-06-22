@@ -33,7 +33,7 @@ async function loadAlerts() {
   container.innerHTML = '<p>Loading alerts...</p>';
 
   try {
-    const res = await fetch('/api/admin/alerts', {
+    const res = await fetch('https://thronestead.onrender.com/api/admin/alerts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(getFilters())
@@ -81,17 +81,17 @@ function attachActionHandlers() {
 
 // ✅ Action API endpoints
 async function flagPlayer(playerId, alertId) {
-  await postAdminAction('/api/admin/flag', { player_id: playerId, alert_id: alertId });
+  await postAdminAction('https://thronestead.onrender.com/api/admin/flag', { player_id: playerId, alert_id: alertId });
   alert('✅ Player flagged.');
 }
 
 async function freezePlayer(playerId, alertId) {
-  await postAdminAction('/api/admin/freeze', { player_id: playerId, alert_id: alertId });
+  await postAdminAction('https://thronestead.onrender.com/api/admin/freeze', { player_id: playerId, alert_id: alertId });
   alert('✅ Player frozen.');
 }
 
 async function banPlayer(playerId, alertId) {
-  await postAdminAction('/api/admin/ban', { player_id: playerId, alert_id: alertId });
+  await postAdminAction('https://thronestead.onrender.com/api/admin/ban', { player_id: playerId, alert_id: alertId });
   alert('✅ Player banned.');
 }
 
@@ -206,19 +206,19 @@ function renderAlertCard(container, alert) {
 function bindNewActionHandlers() {
   document.querySelectorAll('.flag-ip').forEach(btn => {
     btn.addEventListener('click', async () => {
-      await postAdminAction('/api/admin/flag_ip', { ip: btn.dataset.ip });
+      await postAdminAction('https://thronestead.onrender.com/api/admin/flag_ip', { ip: btn.dataset.ip });
       alert('✅ IP flagged.');
     });
   });
   document.querySelectorAll('.suspend-account').forEach(btn => {
     btn.addEventListener('click', async () => {
-      await postAdminAction('/api/admin/suspend_user', { user_id: btn.dataset.uid });
+      await postAdminAction('https://thronestead.onrender.com/api/admin/suspend_user', { user_id: btn.dataset.uid });
       alert('✅ Account suspended.');
     });
   });
   document.querySelectorAll('.mark-reviewed').forEach(btn => {
     btn.addEventListener('click', async () => {
-      await postAdminAction('/api/admin/mark_alert_handled', { alert_id: btn.dataset.id });
+      await postAdminAction('https://thronestead.onrender.com/api/admin/mark_alert_handled', { alert_id: btn.dataset.id });
       btn.disabled = true;
     });
   });

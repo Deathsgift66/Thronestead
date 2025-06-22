@@ -28,7 +28,7 @@ export async function fetchChangelog() {
     if (endVal) params.set('end', endVal);
     if (typeVal) params.set('type', typeVal);
 
-    const data = await authFetchJson(`/api/alliance/changelog?${params}`, session);
+    const data = await authFetchJson(`https://thronestead.onrender.com/api/alliance/changelog?${params}`, session);
 
     changelogData = data.logs || [];
 

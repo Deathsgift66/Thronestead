@@ -128,7 +128,7 @@ async function renderVisibleTiles() {
   const startY = Math.floor(-offsetY / TILE_SIZE) - Math.floor(rows / 2);
 
   try {
-    const res = await fetch('/api/world-map/tiles', {
+    const res = await fetch('https://thronestead.onrender.com/api/world-map/tiles', {
       headers: {
         'Authorization': `Bearer ${currentSession.access_token}`,
         'X-User-ID': currentSession.user.id

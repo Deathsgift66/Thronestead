@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupTabs({ onShow: id => id === 'tab-transactions' && loadTransactions() });
   await Promise.all([
     loadVaultSummary(),
-    loadCustomBoard({ endpoint: '/api/alliance/custom/vault', fetchFn: authFetch }),
+    loadCustomBoard({ endpoint: 'https://thronestead.onrender.com/api/alliance/custom/vault', fetchFn: authFetch }),
     loadDepositForm(),
     loadWithdrawForm(),
     loadTransactions()
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // permissions check for withdrawals
   try {
-    const res = await authFetch('/api/alliance-members/view');
+    const res = await authFetch('https://thronestead.onrender.com/api/alliance-members/view');
     const json = await res.json();
     const me = (json.alliance_members || []).find(m => m.user_id === currentUser.id);
     if (!me || !(me.can_manage_resources || me.permissions?.can_manage_resources)) {
@@ -98,7 +98,7 @@ async function loadVaultSummary() {
   const container = document.querySelector('.vault-summary');
   container.innerHTML = '<p>Loading vault totals...</p>';
   try {
-    const res = await authFetch('/api/vault/resources');
+    const res = await authFetch('https://thronestead.onrender.com/api/vault/resources');
     const { totals } = await res.json();
     if (!totals || Object.keys(totals).length === 0) {
       container.innerHTML = '<p>No resources in vault.</p>';
@@ -136,7 +136,7 @@ function buildResourceInputForm(type, containerId) {
     if (!payloads.length) return alert('Enter amounts.');
     for (const p of payloads) {
       try {
-        await authFetch(`/api/alliance/vault/${type}`, {
+        await authFetch(`https://thronestead.onrender.com/api/alliance/vault/${type}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ resource: p.res, amount: p.amt })
@@ -173,7 +173,7 @@ async function loadTransactions(action = '', days = '') {
     if (action) params.append('action', action);
     if (days) params.append('days', days);
 
-    const res = await authFetch(`/api/alliance/vault/transactions?${params}`);
+    const res = await authFetch(`https://thronestead.onrender.com/api/alliance/vault/transactions?${params}`);
     const logs = await res.json();
     const history = logs || [];
 

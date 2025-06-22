@@ -20,7 +20,7 @@ async function loadChangelog(forceRefresh = false) {
   container.innerHTML = '<p>Loading updates...</p>';
 
   try {
-    const res = await fetch(`/api/system/changelog${forceRefresh ? '?refresh=true' : ''}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/system/changelog${forceRefresh ? '?refresh=true' : ''}`);
     if (!res.ok) throw new Error('Failed to load changelog.');
 
     const entries = await res.json();

@@ -41,7 +41,7 @@ async function loadOverview() {
 
   try {
     const prog = window.playerProgression;
-    const data = await authFetchJson('/api/overview', currentSession);
+    const data = await authFetchJson('https://thronestead.onrender.com/api/overview', currentSession);
 
     summaryContainer.innerHTML = `
       <p id="summary-region"></p>
@@ -75,7 +75,7 @@ async function loadOverview() {
     }
 
     try {
-      const vipData = await authFetchJson('/api/kingdom/vip_status', currentSession);
+      const vipData = await authFetchJson('https://thronestead.onrender.com/api/kingdom/vip_status', currentSession);
       document.getElementById('vip-level').innerHTML = `<strong>VIP:</strong> ${vipData.vip_level || 0}`;
     } catch {
       document.getElementById('vip-level').textContent = 'VIP: --';
@@ -98,7 +98,7 @@ async function loadOverview() {
     // Modifiers
     if (modifiersContainer) {
       try {
-        const mods = await fetchJson('/api/progression/modifiers');
+        const mods = await fetchJson('https://thronestead.onrender.com/api/progression/modifiers');
         modifiersContainer.innerHTML = '';
         for (const [cat, vals] of Object.entries(mods)) {
           const h4 = document.createElement('h4');

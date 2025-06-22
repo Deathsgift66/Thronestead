@@ -28,7 +28,7 @@ async function loadSeasonalEffects(session) {
   });
 
   try {
-    const res = await fetch('/api/seasonal-effects', {
+    const res = await fetch('https://thronestead.onrender.com/api/seasonal-effects', {
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'X-User-ID': session.user.id
