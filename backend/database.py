@@ -62,7 +62,7 @@ def init_engine(db_url: Optional[str] = None) -> None:
 # Initialize engine on import for normal application startup
 init_engine()
 
-def get_db(request: Request | None = None) -> Generator:
+def get_db(request: Request = None) -> Generator:
     """
     Yields a new SQLAlchemy session and ensures it closes after use.
 
