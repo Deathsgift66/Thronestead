@@ -16,7 +16,7 @@ const API_BASE =
       'https://thronestead.onrender.com';
 
 // ✅ Secondary backend used if the primary API_BASE fails
-const FALLBACK_BASE = 'https://kingmakers-backend.onrender.com';
+const FALLBACK_BASE = 'https://thronestead-backend.onrender.com';
 
 // ✅ Ensures loading overlay exists and returns reference
 function getOverlay() {

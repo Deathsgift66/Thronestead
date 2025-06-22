@@ -1,4 +1,4 @@
-# Project Name: Kingmakers Rise©
+# Project Name: Thronestead©
 # File Name: forgot_password.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
@@ -31,7 +31,7 @@ from services.audit_service import log_action
 
 def send_email(to_email: str, subject: str, body: str) -> None:
     """Minimal email sending stub logging the intended message."""
-    logging.getLogger("KingmakersRise.Email").info(
+    logging.getLogger("Thronestead.Email").info(
         "Sending email to %s with subject %s: %s", to_email, subject, body
     )
 
@@ -110,7 +110,7 @@ def request_password_reset(
         RESET_STORE[token_hash] = (str(user.user_id), time.time() + TOKEN_TTL)
 
         send_email(user.email, subject="Reset Code", body=token)
-        logging.getLogger("KingmakersRise.PasswordReset").info(
+        logging.getLogger("Thronestead.PasswordReset").info(
             "Password reset token generated for %s", user.email
         )
 
@@ -164,7 +164,7 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
         sb = get_supabase_client()
         sb.auth.admin.update_user_by_id(uid, {"password": payload.new_password})
     except Exception as exc:  # pragma: no cover - runtime dependency
-        logging.getLogger("KingmakersRise.PasswordReset").exception(
+        logging.getLogger("Thronestead.PasswordReset").exception(
             "Failed to update password for user %s", uid
         )
         raise HTTPException(status_code=500, detail="Password update failed") from exc
