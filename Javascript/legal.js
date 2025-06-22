@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     {
       title: 'Data Processing Addendum (DPA)',
-      file: '/Assets/legal/THRONESTEAD_KingmakersRise_DPA (1).pdf',
+      file: '/Assets/legal/THRONESTEAD_DPA.pdf',
       desc: 'GDPR-compliant processing terms.'
     }
   ];
