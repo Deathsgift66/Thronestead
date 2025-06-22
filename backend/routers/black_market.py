@@ -3,19 +3,12 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, conint, PositiveFloat
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from backend.models import BlackMarketListing, TradeLog
-from services.audit_service import log_action
-from services.trade_log_service import record_trade
-from services.vip_status_service import get_vip_status, is_vip_active
-from services.resource_service import spend_resources, gain_resources
-from ..security import require_user_id
-from .progression_router import get_kingdom_id
+from backend.models import BlackMarketListing
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market"])
 

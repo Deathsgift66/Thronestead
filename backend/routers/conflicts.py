@@ -3,14 +3,10 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..security import verify_jwt_token
-from .progression_router import get_kingdom_id
-from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/conflicts", tags=["conflicts"])
 

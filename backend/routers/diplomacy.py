@@ -3,12 +3,10 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import text
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend.models import Alliance
-from services.alliance_treaty_service import list_active_treaties
 
 from ..database import get_db
 from ..security import require_user_id

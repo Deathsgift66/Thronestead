@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ..database import get_db
-from backend.models import PlayerMessage, Notification, War, AllianceNotice
+from backend.models import PlayerMessage, War, AllianceNotice
 from ..security import verify_jwt_token
 from services.audit_service import log_action
 
