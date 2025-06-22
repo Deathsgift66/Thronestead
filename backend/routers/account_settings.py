@@ -4,7 +4,7 @@
 # Developer: Deathsgift66
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -55,7 +55,7 @@ class UserProfile(BaseModel):
     expires_at: datetime | None = None
     ip_login_alerts: bool | None = None
     email_login_confirmations: bool | None = None
-    sessions: list[SessionInfo] = []
+    sessions: list[SessionInfo] = Field(default_factory=list)
 
 
 @router.get("/profile", response_model=UserProfile)
