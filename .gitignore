@@ -1,5 +1,5 @@
-# Ignore environment file containing credentials
-.ENV
+# Ignore local environment credentials
+.env
 
 # Node modules and Python caches
 node_modules/
@@ -7,6 +7,7 @@ __pycache__/
 
 # Local frontend runtime config
 env.js
+dist/
 
 # Ensure CI dependencies are tracked
 !dev_requirements.txt
