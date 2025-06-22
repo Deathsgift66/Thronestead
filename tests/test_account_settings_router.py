@@ -53,33 +53,11 @@ class DummyDB:
     def commit(self):
         pass
 
-def test_load_profile_returns_security_fields():
-    db = DummyDB()
-    db.profile_row = (
-        "hero",
-        "Hero",
-        "pic.png",
-        "a@example.com",
-        "NA",
-        "Kingdom",
-        "Alliance",
-        "Hi",
-        "Bio",
-        "parchment",
-        "banner.png",
-        1,
-        False,
-        None,
-    )
-    db.settings_rows = [
-        ("ip_login_alerts", "true"),
-        ("email_login_confirmations", "false"),
-    ]
+def test_profile_returns_template():
     req = Request({"type": "http"})
-    resp = account_settings.load_profile(req, user_id="u1", db=db)
+    resp = account_settings.profile(req)
     ctx = getattr(resp, "context", {})
-    assert ctx["ip_login_alerts"] is True
-    assert ctx["email_login_confirmations"] is False
+    assert ctx.get("request") is req
 
 def test_update_profile_updates_security_fields():
     db = DummyDB()

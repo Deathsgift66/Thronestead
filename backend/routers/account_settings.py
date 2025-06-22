@@ -78,64 +78,11 @@ class UserProfile(BaseModel):
     sessions: list[SessionInfo] = Field(default_factory=list)
 
 
-@router.get("/profile", response_model=None, response_class=HTMLResponse)
-def load_profile(
-    request: Request,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    row = db.execute(
-        text(
-            """
-            SELECT u.username, u.display_name, u.profile_picture_url, u.email, u.region,
-                   k.kingdom_name,
-                   a.name AS alliance_name,
-                   c.motto, c.bio, c.theme_preference, c.profile_banner,
-                   v.vip_level, v.founder, v.expires_at
-            FROM users u
-            LEFT JOIN kingdoms k ON k.user_id = u.user_id
-            LEFT JOIN alliances a ON a.alliance_id = u.alliance_id
-            LEFT JOIN user_customization c ON c.user_id = u.user_id
-            LEFT JOIN kingdom_vip_status v ON v.user_id = u.user_id
-            WHERE u.user_id = :uid
-            """
-        ),
-        {"uid": user_id},
-    ).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    keys = [
-        "username", "display_name", "profile_picture_url", "email", "region",
-        "kingdom_name", "alliance_name", "motto", "bio", "theme_preference",
-        "profile_banner", "vip_level", "founder", "expires_at"
-    ]
-    profile = {k: row[i] for i, k in enumerate(keys)}
-
-    settings_rows = db.execute(
-        text(
-            "SELECT setting_key, setting_value FROM user_setting_entries "
-            "WHERE user_id = :uid AND setting_key IN ('ip_login_alerts','email_login_confirmations')"
-        ),
-        {"uid": user_id},
-    ).fetchall()
-    settings = {r[0]: r[1] for r in settings_rows}
-    profile["ip_login_alerts"] = settings.get("ip_login_alerts") == "true"
-    profile["email_login_confirmations"] = settings.get("email_login_confirmations") == "true"
-
-    session_rows = db.execute(
-        text(
-            "SELECT session_id, device, last_seen FROM user_active_sessions "
-            "WHERE user_id = :uid AND session_status = 'active'"
-        ),
-        {"uid": user_id},
-    ).fetchall()
-    profile["sessions"] = [
-        {"session_id": r[0], "device": r[1], "last_seen": r[2]} for r in session_rows
-    ]
+@router.get("/profile", response_class=HTMLResponse)
+async def profile(request: Request):
     return templates.TemplateResponse(
         "profile.html",
-        {"request": request, **profile},
+        {"request": request},
     )
 
 
