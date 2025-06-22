@@ -17,6 +17,9 @@ export default defineConfig({
       input: htmlEntries,
     },
   },
+  server: {
+    historyApiFallback: true,
+  },
   plugins: [{
     name: 'copy-env',
     buildEnd() {
