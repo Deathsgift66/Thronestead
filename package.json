@@ -11,12 +11,14 @@
     "validate-links": "node scripts/validate-links.js",
     "lint": "eslint . --ext .js,.mjs --ignore-path .gitignore",
     "clean": "rm -rf dist",
+    "build": "vite build && cp -r Assets dist",
     "test": "echo \"No tests defined\""
   },
   "devDependencies": {
     "http-server": "^14.1.1",
     "eslint": "^8.57.0",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "vite": "^5.2.0"
   },
   "engines": {
     "node": ">=18.0.0"
