@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // LOAD RESOLUTION DATA
 // ===============================
 async function fetchBattleResolution(warId) {
-  const res = await fetch(`https://thronestead.onrender.com/api/battle/resolution?war_id=${warId}`, {
+  const res = await fetch(`/api/battle/resolution?war_id=${warId}`, {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'X-User-ID': userId

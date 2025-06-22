@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function fetchAllianceDetails(userId) {
   try {
-    const data = await jsonFetch('https://thronestead.onrender.com/api/alliance-home/details', {
+    const data = await jsonFetch('/api/alliance-home/details', {
       headers: { 'X-User-ID': userId }
     });
     populateAlliance(data);

@@ -11,7 +11,7 @@ import { escapeHTML } from './utils.js';
  * @param {function} [options.fetchFn] Custom fetch function for authenticated requests
  */
 export async function loadCustomBoard({
-  endpoint = 'https://thronestead.onrender.com/api/alliance-vault/custom-board',
+  endpoint = '/api/alliance-vault/custom-board',
   imageSelector = '#custom-image-slot',
   textSelector = '#custom-text-slot',
   altText = 'Custom Banner',

@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const warId = warInput.value;
     if (!warId) return;
     try {
-      const res = await fetch(`https://thronestead.onrender.com/api/alliance-wars/preplan?alliance_war_id=${warId}`);
+      const res = await fetch(`/api/alliance-wars/preplan?alliance_war_id=${warId}`);
       const data = await res.json();
       plan = data.plan || {};
       updatePlanArea();
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!warId) return alert('Enter valid War ID');
 
     try {
-      const res = await fetch('https://thronestead.onrender.com/api/alliance-wars/preplan/submit', {
+      const res = await fetch('/api/alliance-wars/preplan/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

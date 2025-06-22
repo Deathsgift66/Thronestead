@@ -133,7 +133,7 @@ function setupAmbientToggle() {
 async function bulkUpgradeAll() {
   showToast("Initiating bulk upgrade of all buildings...");
   try {
-    const res = await fetch('https://thronestead.onrender.com/api/village-master/bulk_upgrade', {
+    const res = await fetch('/api/village-master/bulk_upgrade', {
       method: 'POST'
     });
     if (!res.ok) throw new Error('Failed');
@@ -148,7 +148,7 @@ async function bulkUpgradeAll() {
 async function bulkQueueTraining() {
   showToast("Queuing troops in all villages...");
   try {
-    const res = await fetch('https://thronestead.onrender.com/api/village-master/bulk_queue_training', {
+    const res = await fetch('/api/village-master/bulk_queue_training', {
       method: 'POST'
     });
     if (!res.ok) throw new Error('Failed');
@@ -163,7 +163,7 @@ async function bulkQueueTraining() {
 async function bulkHarvest() {
   showToast("Harvesting resources from all villages...");
   try {
-    const res = await fetch('https://thronestead.onrender.com/api/village-master/bulk_harvest', {
+    const res = await fetch('/api/village-master/bulk_harvest', {
       method: 'POST'
     });
     if (!res.ok) throw new Error('Failed');
@@ -194,7 +194,7 @@ function sortVillages() {
 async function loadVillageOverview() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch('https://thronestead.onrender.com/api/village-master/overview', {
+    const res = await fetch('/api/village-master/overview', {
       headers: { 'X-User-ID': user.id }
     });
     if (!res.ok) return;

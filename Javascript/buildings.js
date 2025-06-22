@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Fetch and populate the village selector dropdown
 async function loadVillages() {
-  const res = await fetch('https://thronestead.onrender.com/api/kingdom/villages');
+  const res = await fetch('/api/kingdom/villages');
   const json = await res.json();
   const villages = json.villages || json;
   const select = document.getElementById('villageSelect');
@@ -32,7 +32,7 @@ async function loadVillages() {
 
 // Load buildings for a specific village
 async function loadBuildings(villageId) {
-  const res = await fetch(`https://thronestead.onrender.com/api/buildings/village/${villageId}`);
+  const res = await fetch(`/api/buildings/village/${villageId}`);
   const json = await res.json();
   const buildings = json.buildings || json;
   const tbody = document.getElementById('buildingsTableBody');
@@ -63,7 +63,7 @@ function attachRowActions() {
   document.querySelectorAll('.info-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const buildingId = e.target.dataset.id;
-      const res = await fetch(`https://thronestead.onrender.com/api/buildings/info/${buildingId}`);
+      const res = await fetch(`/api/buildings/info/${buildingId}`);
       const data = await res.json();
       const info = data.building || data;
 
@@ -79,7 +79,7 @@ function attachRowActions() {
     btn.addEventListener('click', async (e) => {
       const buildingId = e.target.dataset.id;
       const villageId = document.getElementById('villageSelect').value;
-      const res = await fetch(`https://thronestead.onrender.com/api/buildings/upgrade`, {
+      const res = await fetch(`/api/buildings/upgrade`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

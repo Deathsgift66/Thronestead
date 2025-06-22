@@ -77,7 +77,7 @@ function setupRealtimeChannel() {
 // ------------------------------
 export async function loadPlayerVIPStatus() {
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/vip/status", {
+    const res = await fetch("/api/vip/status", {
       headers: await authHeaders()
     });
     if (!res.ok) throw new Error("Failed to fetch VIP status");
@@ -93,7 +93,7 @@ export { loadPlayerVIPStatus as loadVIPStatus };
 
 export async function loadTokenBalance() {
   try {
-    const res = await fetch('https://thronestead.onrender.com/api/tokens/balance', { headers: await authHeaders() });
+    const res = await fetch('/api/tokens/balance', { headers: await authHeaders() });
     if (!res.ok) throw new Error('balance');
     const data = await res.json();
     const banner = document.getElementById('token-balance-banner');
@@ -191,7 +191,7 @@ function bindDonationForm() {
 
 export async function purchaseTokens(package_id) {
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/tokens/buy", {
+    const res = await fetch("/api/tokens/buy", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -214,7 +214,7 @@ export async function purchaseTokens(package_id) {
 
 export async function redeemPerk(perk_id) {
   try {
-    const res = await fetch('https://thronestead.onrender.com/api/tokens/redeem', {
+    const res = await fetch('/api/tokens/redeem', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -271,7 +271,7 @@ export async function loadLeaderboard() {
   table.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/vip/leaderboard", {
+    const res = await fetch("/api/vip/leaderboard", {
       headers: await authHeaders()
     });
     const { leaders = [] } = await res.json();

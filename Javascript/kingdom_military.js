@@ -35,7 +35,7 @@ async function loadMilitarySummary() {
   container.innerHTML = "<p>Loading military summary...</p>";
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/kingdom_military/summary", { headers: { 'X-User-ID': currentUserId } });
+    const res = await fetch("/api/kingdom_military/summary", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
     container.innerHTML = `
       <p><strong>Total Troops:</strong> ${data.total_troops}</p>
@@ -62,7 +62,7 @@ async function loadRecruitableUnits() {
   container.innerHTML = "<p>Loading recruitable units...</p>";
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/kingdom_military/recruitable", { headers: { 'X-User-ID': currentUserId } });
+    const res = await fetch("/api/kingdom_military/recruitable", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     availableUnits = data.units || [];
@@ -81,7 +81,7 @@ async function loadTrainingQueue() {
   container.innerHTML = "<p>Loading training queue...</p>";
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/kingdom_military/queue", { headers: { 'X-User-ID': currentUserId } });
+    const res = await fetch("/api/kingdom_military/queue", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     container.innerHTML = "";
@@ -101,7 +101,7 @@ async function loadTrainingHistory() {
   container.innerHTML = "<p>Loading training history...</p>";
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/training-history?kingdom_id=1&limit=50", { headers: { 'X-User-ID': currentUserId } });
+    const res = await fetch("/api/training-history?kingdom_id=1&limit=50", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     container.innerHTML = renderTrainingHistory(data.history || []);
@@ -214,7 +214,7 @@ async function handleRecruit(unitId) {
   const qtyInt = parseInt(qty);
   if (!qtyInt || qtyInt <= 0) return alert('Invalid quantity.');
   try {
-    const res = await fetch('https://thronestead.onrender.com/api/kingdom_military/recruit', {
+    const res = await fetch('/api/kingdom_military/recruit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-ID': currentUserId },
       body: JSON.stringify({ unit_id: unitId, quantity: qtyInt })

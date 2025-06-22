@@ -72,7 +72,7 @@ async function loadNews() {
   list.innerHTML = "<li>Loading news...</li>";
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/homepage/featured");
+    const res = await fetch("/api/homepage/featured");
     const data = await res.json();
     list.innerHTML = "";
 

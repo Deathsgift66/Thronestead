@@ -83,7 +83,7 @@ async function loadResources() {
 
     const token = session.access_token;
     const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
-    const payload = await fetchJson('https://thronestead.onrender.com/api/resources', { headers });
+    const payload = await fetchJson('/api/resources', { headers });
 
     updateUI(payload.resources || {});
   } catch (err) {

@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load top 5 recent notifications
   async function loadLatest() {
     try {
-      const res = await fetch('https://thronestead.onrender.com/api/notifications/latest?limit=5', { headers });
+      const res = await fetch('/api/notifications/latest?limit=5', { headers });
       const data = await res.json();
       list.innerHTML = '';
 
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch unread count
   async function fetchCount() {
     try {
-      const res = await fetch('https://thronestead.onrender.com/api/navbar/counters', { headers });
+      const res = await fetch('/api/navbar/counters', { headers });
       const data = await res.json();
       const count = (data.unread_notifications || 0);
       badge.textContent = count > 0 ? count : '';

@@ -43,7 +43,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
     // Retrieve VIP level from API
     let vipLevel = 0;
     try {
-      const vipRes = await fetch('https://thronestead.onrender.com/api/kingdom/vip_status', {
+      const vipRes = await fetch('/api/kingdom/vip_status', {
         headers: { 'X-User-ID': user.id }
       });
       const vipData = await vipRes.json();

@@ -31,12 +31,12 @@ async function loadResourcesNexus() {
     const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
 
     // ✅ Load kingdom resources
-    const { resources: resourcesData } = await fetchJson('https://thronestead.onrender.com/api/resources', { headers });
+    const { resources: resourcesData } = await fetchJson('/api/resources', { headers });
 
     // ✅ Attempt alliance vault fetch
     let vaultData = null;
     try {
-      const { totals } = await fetchJson('https://thronestead.onrender.com/api/vault/resources', { headers });
+      const { totals } = await fetchJson('/api/vault/resources', { headers });
       vaultData = totals;
     } catch {
       vaultData = null;

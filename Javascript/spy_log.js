@@ -23,7 +23,7 @@ async function loadSpyLog() {
   if (!body) return;
   body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
   try {
-    const res = await fetch('https://thronestead.onrender.com/api/spy/log');
+    const res = await fetch('/api/spy/log');
     if (!res.ok) throw new Error('Failed to fetch log');
     const data = await res.json();
     body.innerHTML = '';

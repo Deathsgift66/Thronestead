@@ -11,7 +11,7 @@ import { escapeHTML } from './utils.js';
  * @param {string} status active|completed|expired
  */
 export function loadQuests(status = 'active') {
-  fetch(`https://thronestead.onrender.com/api/alliance/quests?status=${status}`)
+  fetch(`/api/alliance/quests?status=${status}`)
     .then(res => res.json())
     .then(quests => {
       const board = document.getElementById('quest-board');
@@ -75,7 +75,7 @@ function renderQuestCard(q) {
  * Populate and display the quest modal.
  */
 function openQuestModal(id) {
-  fetch(`https://thronestead.onrender.com/api/alliance/quests/${id}`)
+  fetch(`/api/alliance/quests/${id}`)
     .then(res => res.json())
     .then(q => {
       document.getElementById('modal-quest-title').textContent = q.name;

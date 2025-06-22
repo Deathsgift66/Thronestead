@@ -81,7 +81,7 @@ window.addEventListener('beforeunload', () => {
 export async function loadReplay() {
   try {
     const headers = await authHeaders();
-    const res = await fetch(`https://thronestead.onrender.com/api/battle/replay/${warId}`, { headers });
+    const res = await fetch(`/api/battle/replay/${warId}`, { headers });
     replayData = await res.json();
     tickInterval = replayData.tick_interval_seconds * 1000;
     document.getElementById('replay-timeline').max = replayData.total_ticks;
