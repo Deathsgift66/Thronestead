@@ -133,7 +133,7 @@ separated list of allowed domains or `*` to disable origin checks (credentials
 will be ignored when using `*`).
 Example:
 ```
-ALLOWED_ORIGINS=https://www.thronestead.com
+ALLOWED_ORIGINS=https://thronestead.com,https://www.thronestead.com
 ```
 
 This will create all tables referenced by the frontend.
