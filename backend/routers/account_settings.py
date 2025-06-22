@@ -1,21 +1,14 @@
-# Project Name: Thronestead©
-# File Name: account_settings.py
-# Version 6.13.2025.19.49 (Patched)
-# Developer: Deathsgift66
+"""Account settings management routes for Thronestead."""
 
-"""
-Project: Thronestead ©
-File: account_settings.py
-Role: API routes for account settings.
-Version: 2025-06-21
-"""
+from __future__ import annotations
+
+from datetime import datetime
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
 from pydantic import BaseModel, Field
-from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -23,28 +16,30 @@ from ..database import get_db
 from ..security import verify_jwt_token
 from services.audit_service import log_action
 
+
 router = APIRouter(prefix="/api/account", tags=["account"])
 alt_router = APIRouter(prefix="/api/user", tags=["account"])
 
-# Jinja2 template loader for serving HTML pages
+
 try:
     templates = Jinja2Templates(directory=Path(__file__).resolve().parents[2])
-except Exception:  # pragma: no cover - fallback if jinja2 missing
-    class DummyTemplates:
+except Exception:  # pragma: no cover - fallback for missing jinja2
+    class _DummyTemplates:
         def __init__(self, directory: Path):
-            self.directory = Path(directory)
+            self.directory = directory
 
-        def TemplateResponse(self, name: str, context: dict):
-            html_path = self.directory / name
-            html = html_path.read_text(encoding="utf-8")
+        def TemplateResponse(self, name: str, context: dict) -> HTMLResponse:
+            html = (self.directory / name).read_text(encoding="utf-8")
             response = HTMLResponse(content=html)
             setattr(response, "context", context)
             return response
 
-    templates = DummyTemplates(Path(__file__).resolve().parents[2])
+    templates = _DummyTemplates(Path(__file__).resolve().parents[2])
 
 
 class UpdatePayload(BaseModel):
+    """Incoming data for updating account profile details."""
+
     display_name: str | None = None
     motto: str | None = None
     bio: str | None = None
@@ -86,30 +81,33 @@ class UserProfile(BaseModel):
 
 
 @router.get("/profile", response_class=HTMLResponse, response_model=None)
-async def profile(request: Request):
+def profile(request: Request):
+    """Serve the user's profile settings page."""
+
     return templates.TemplateResponse("profile.html", {"request": request})
 
 
 @router.post("/update", response_model=None)
 def update_profile(
-    request: Request,
     payload: UpdatePayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
+    """Apply updates to a user's profile and customization settings."""
+
     current = db.execute(
         text("SELECT display_name, profile_picture_url FROM users WHERE user_id = :uid"),
         {"uid": user_id},
     ).fetchone()
 
-    settings_current_rows = db.execute(
+    settings_rows = db.execute(
         text(
             "SELECT setting_key, setting_value FROM user_setting_entries "
             "WHERE user_id = :uid AND setting_key IN ('ip_login_alerts','email_login_confirmations')"
         ),
         {"uid": user_id},
     ).fetchall()
-    settings_current = {r[0]: r[1] for r in settings_current_rows}
+    settings_current = {r[0]: r[1] for r in settings_rows}
 
     customization = db.execute(
         text(
@@ -119,9 +117,7 @@ def update_profile(
     ).fetchone()
 
     db.execute(
-        text(
-            "UPDATE users SET display_name = :dn, profile_picture_url = :pic WHERE user_id = :uid"
-        ),
+        text("UPDATE users SET display_name = :dn, profile_picture_url = :pic WHERE user_id = :uid"),
         {"dn": payload.display_name, "pic": payload.profile_picture_url, "uid": user_id},
     )
 
@@ -166,15 +162,22 @@ def update_profile(
     )
     db.commit()
 
-    diffs = {}
+    diffs: dict[str, object] = {}
     if current:
         if payload.display_name != current[0]:
             diffs["display_name"] = payload.display_name
         if payload.profile_picture_url != current[1]:
             diffs["profile_picture_url"] = payload.profile_picture_url
-        if payload.ip_login_alerts is not None and payload.ip_login_alerts != (settings_current.get("ip_login_alerts") == "true"):
+        if (
+            payload.ip_login_alerts is not None
+            and payload.ip_login_alerts != (settings_current.get("ip_login_alerts") == "true")
+        ):
             diffs["ip_login_alerts"] = payload.ip_login_alerts
-        if payload.email_login_confirmations is not None and payload.email_login_confirmations != (settings_current.get("email_login_confirmations") == "true"):
+        if (
+            payload.email_login_confirmations is not None
+            and payload.email_login_confirmations
+            != (settings_current.get("email_login_confirmations") == "true")
+        ):
             diffs["email_login_confirmations"] = payload.email_login_confirmations
     if customization:
         if payload.motto != customization[0]:
@@ -196,6 +199,8 @@ def logout_session(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
+    """Revoke an active session for the authenticated user."""
+
     row = db.execute(
         text(
             "SELECT session_id FROM user_active_sessions WHERE session_id = :sid AND user_id = :uid"
@@ -206,9 +211,7 @@ def logout_session(
         raise HTTPException(status_code=404, detail="Session not found")
 
     db.execute(
-        text(
-            "UPDATE user_active_sessions SET session_status = 'revoked' WHERE session_id = :sid"
-        ),
+        text("UPDATE user_active_sessions SET session_status = 'revoked' WHERE session_id = :sid"),
         {"sid": payload.session_id},
     )
     db.commit()
@@ -217,11 +220,12 @@ def logout_session(
 
 
 @alt_router.get("/settings", response_model=None)
-async def get_user_settings(
+def get_user_settings(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """Return all user setting entries as a key-value map."""
+
     rows = db.execute(
         text("SELECT setting_key, setting_value FROM user_setting_entries WHERE user_id = :uid"),
         {"uid": user_id},
@@ -230,12 +234,13 @@ async def get_user_settings(
 
 
 @alt_router.post("/settings", response_model=None)
-async def update_user_settings(
+def update_user_settings(
     settings: dict,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    """Insert or update user setting entries."""
+    """Insert or update arbitrary user setting entries."""
+
     for key, value in settings.items():
         db.execute(
             text(
