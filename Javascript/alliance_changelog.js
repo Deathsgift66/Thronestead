@@ -89,5 +89,3 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchChangelog();
   setInterval(fetchChangelog, 30000); // refresh every 30s
 });
-
-export { fetchChangelog, applyFilters };
