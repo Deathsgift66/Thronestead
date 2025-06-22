@@ -51,7 +51,7 @@ class TransferLeadershipPayload(BaseModel):
 
 # === ROUTES ===
 
-@router.get("", response_model=None)
+@router.get("")
 def list_members(
     alliance_id: int = 1,
     user_id: str = Depends(require_user_id),
@@ -78,7 +78,7 @@ def list_members(
     }
 
 
-@router.post("/join", response_model=None)
+@router.post("/join")
 def join(
     payload: JoinPayload,
     user_id: str = Depends(require_user_id),
@@ -101,7 +101,7 @@ def join(
     return {"message": "Joined"}
 
 
-@router.post("/leave", response_model=None)
+@router.post("/leave")
 def leave(payload: MemberAction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if member:
@@ -111,12 +111,12 @@ def leave(payload: MemberAction, user_id: str = Depends(require_user_id), db: Se
     return {"message": "Left"}
 
 
-@router.post("/promote", response_model=None)
+@router.post("/promote")
 def promote(payload: RankPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     return _change_rank(payload, db, "Promoted")
 
 
-@router.post("/demote", response_model=None)
+@router.post("/demote")
 def demote(payload: RankPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     return _change_rank(payload, db, "Demoted")
 
@@ -134,7 +134,7 @@ def _change_rank(payload: RankPayload, db: Session, action: str):
     return {"message": action, "user_id": payload.user_id}
 
 
-@router.post("/remove", response_model=None)
+@router.post("/remove")
 def remove(payload: MemberAction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     member = db.query(AllianceMember).filter_by(
         alliance_id=payload.alliance_id,
@@ -148,7 +148,7 @@ def remove(payload: MemberAction, user_id: str = Depends(require_user_id), db: S
     return {"message": "Removed", "user_id": payload.user_id}
 
 
-@router.post("/contribute", response_model=None)
+@router.post("/contribute")
 def contribute(payload: ContributionPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if not member:
@@ -158,7 +158,7 @@ def contribute(payload: ContributionPayload, user_id: str = Depends(require_user
     return {"message": "Contribution recorded", "total": member.contribution}
 
 
-@router.post("/apply", response_model=None)
+@router.post("/apply")
 def apply_to_alliance(payload: JoinPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     if db.query(AllianceMember).filter_by(user_id=payload.user_id).first():
         raise HTTPException(status_code=400, detail="Already applied or a member.")
@@ -176,7 +176,7 @@ def apply_to_alliance(payload: JoinPayload, user_id: str = Depends(require_user_
     return {"message": "Application submitted"}
 
 
-@router.post("/approve", response_model=None)
+@router.post("/approve")
 def approve_member(payload: MemberAction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     member = db.query(AllianceMember).filter_by(
         alliance_id=payload.alliance_id,
@@ -191,7 +191,7 @@ def approve_member(payload: MemberAction, user_id: str = Depends(require_user_id
     return {"message": "Member approved"}
 
 
-@router.post("/transfer_leadership", response_model=None)
+@router.post("/transfer_leadership")
 def transfer_leadership(
     payload: TransferLeadershipPayload,
     user_id: str = Depends(require_user_id),

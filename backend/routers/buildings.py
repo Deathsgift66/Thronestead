@@ -32,7 +32,7 @@ class BuildingActionPayload(BaseModel):
 # -------------------------------
 # Get building catalogue
 # -------------------------------
-@router.get("/catalogue", response_model=None)
+@router.get("/catalogue")
 def get_catalogue(db: Session = Depends(get_db)):
     rows = db.execute(
         text("SELECT * FROM building_catalogue ORDER BY building_id")
@@ -43,7 +43,7 @@ def get_catalogue(db: Session = Depends(get_db)):
 # -------------------------------
 # Get buildings for a specific village
 # -------------------------------
-@router.get("/village/{village_id}", response_model=None)
+@router.get("/village/{village_id}")
 def get_village_buildings(
     village_id: int,
     user_id: str = Depends(require_user_id),
@@ -74,7 +74,7 @@ def get_village_buildings(
     ).mappings().fetchall()
 
     return {"buildings": [dict(r) for r in rows]}
-@router.get("/info/{building_id}", response_model=None)
+@router.get("/info/{building_id}")
 def get_building_info(
     building_id: int,
     user_id: str = Depends(require_user_id),
@@ -89,7 +89,7 @@ def get_building_info(
     return {"building": dict(row)}
 
 
-@router.post("/upgrade", response_model=None)
+@router.post("/upgrade")
 def upgrade_build(
     payload: BuildingActionPayload,
     user_id: str = Depends(require_user_id),
@@ -113,7 +113,7 @@ def upgrade_build(
     return {"message": "Upgrade started"}
 
 
-@router.post("/reset", response_model=None)
+@router.post("/reset")
 def reset_build(
     payload: BuildingActionPayload,
     user_id: str = Depends(require_user_id),

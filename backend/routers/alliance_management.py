@@ -38,7 +38,7 @@ class DeletePayload(BaseModel):
     alliance_id: int | None = None
 
 
-@router.post("/create", response_model=None)
+@router.post("/create")
 def create_alliance(
     payload: CreatePayload,
     user_id: str = Depends(verify_jwt_token),
@@ -100,7 +100,7 @@ def create_alliance(
     return {"alliance_id": alliance.alliance_id}
 
 
-@router.post("/delete", response_model=None)
+@router.post("/delete")
 def delete_alliance(
     payload: DeletePayload | None = None,
     user_id: str = Depends(verify_jwt_token),

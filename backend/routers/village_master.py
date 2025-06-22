@@ -22,7 +22,7 @@ from .progression_router import get_kingdom_id
 router = APIRouter(prefix="/api/village-master", tags=["village_master"])
 
 
-@router.get("/overview", summary="Village Overview", response_model=None)
+@router.get("/overview", summary="Village Overview")
 def village_overview(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -43,7 +43,7 @@ def village_overview(
     rows = db.execute(
         text(
             """
-            SELECT v.village_id, 
+            SELECT v.village_id,
                    v.village_name,
                    COUNT(b.building_id) AS building_count,
                    COALESCE(SUM(b.level), 0) AS total_level
@@ -71,7 +71,7 @@ def village_overview(
     }
 
 
-@router.post("/bulk_upgrade", summary="Bulk upgrade all village buildings", response_model=None)
+@router.post("/bulk_upgrade", summary="Bulk upgrade all village buildings")
 def bulk_upgrade_all(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -95,7 +95,7 @@ def bulk_upgrade_all(
     return {"status": "upgraded"}
 
 
-@router.post("/bulk_queue_training", summary="Queue troops in all villages", response_model=None)
+@router.post("/bulk_queue_training", summary="Queue troops in all villages")
 def bulk_queue_training(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -122,7 +122,7 @@ def bulk_queue_training(
     return {"status": "queued"}
 
 
-@router.post("/bulk_harvest", summary="Harvest all village resources", response_model=None)
+@router.post("/bulk_harvest", summary="Harvest all village resources")
 def bulk_harvest(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

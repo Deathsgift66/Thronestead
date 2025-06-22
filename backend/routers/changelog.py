@@ -17,7 +17,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/changelog", tags=["changelog"])
 
 
-@router.get("", response_model=None)
+@router.get("")
 def get_changelog(user_id: str = Depends(verify_jwt_token)):
     """
     Return the public game changelog sorted by most recent release.

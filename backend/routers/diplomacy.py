@@ -24,7 +24,7 @@ from .progression_router import get_kingdom_id
 router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy"])
 
 
-@router.get("/alliances", response_model=None)
+@router.get("/alliances")
 def list_known_alliances(db: Session = Depends(get_db)):
     """Return a list of alliances available for diplomacy."""
     rows = (
@@ -41,7 +41,7 @@ def list_known_alliances(db: Session = Depends(get_db)):
     }
 
 
-@router.get("/treaties", response_model=None)
+@router.get("/treaties")
 async def list_treaties(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

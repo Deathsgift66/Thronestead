@@ -25,14 +25,14 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=None)
+@router.get("")
 async def get_achievements(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """
     ✅ Endpoint: Get Kingdom Achievements
-    
+
     Returns a list of all available achievements and whether they’ve been unlocked
     by the authenticated user's kingdom.
 

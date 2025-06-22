@@ -49,7 +49,7 @@ class AlertFilters(BaseModel):
 # -------------------------
 # 🚨 Admin Action Routes
 # -------------------------
-@router.post("/flag", response_model=None)
+@router.post("/flag")
 def flag_player(
     payload: PlayerAction,
     admin_id: str = Depends(require_user_id),
@@ -59,7 +59,7 @@ def flag_player(
     return {"message": "Flagged", "player_id": payload.player_id}
 
 
-@router.post("/freeze", response_model=None)
+@router.post("/freeze")
 def freeze_player(
     payload: PlayerAction,
     admin_id: str = Depends(require_user_id),
@@ -69,7 +69,7 @@ def freeze_player(
     return {"message": "Frozen", "player_id": payload.player_id}
 
 
-@router.post("/ban", response_model=None)
+@router.post("/ban")
 def ban_player(
     payload: PlayerAction,
     admin_id: str = Depends(require_user_id),
@@ -79,7 +79,7 @@ def ban_player(
     return {"message": "Banned", "player_id": payload.player_id}
 
 
-@router.post("/bulk_action", response_model=None)
+@router.post("/bulk_action")
 def bulk_action(
     payload: BulkAction,
     admin_id: str = Depends(require_user_id),
@@ -94,7 +94,7 @@ def bulk_action(
     return {"message": "Bulk action executed", "action": payload.action}
 
 
-@router.post("/player_action", response_model=None)
+@router.post("/player_action")
 def player_action(
     payload: PlayerAction,
     admin_id: str = Depends(require_user_id),
@@ -104,7 +104,7 @@ def player_action(
     return {"message": "Action executed", "action": payload.alert_id}
 
 
-@router.post("/flag_ip", response_model=None)
+@router.post("/flag_ip")
 def flag_ip(
     payload: dict,
     admin_id: str = Depends(require_user_id),
@@ -115,7 +115,7 @@ def flag_ip(
     return {"message": "IP flagged", "ip": ip}
 
 
-@router.post("/suspend_user", response_model=None)
+@router.post("/suspend_user")
 def suspend_user(
     payload: dict,
     admin_id: str = Depends(require_user_id),
@@ -126,7 +126,7 @@ def suspend_user(
     return {"message": "User suspended", "user_id": uid}
 
 
-@router.post("/mark_alert_handled", response_model=None)
+@router.post("/mark_alert_handled")
 def mark_alert_handled(
     payload: dict,
     admin_id: str = Depends(require_user_id),
@@ -140,7 +140,7 @@ def mark_alert_handled(
 # -------------------------
 # 🧑‍💻 Admin Query Routes
 # -------------------------
-@router.get("/players", response_model=None)
+@router.get("/players")
 def list_players(
     search: str | None = Query(default=None),
     db: Session = Depends(get_db),
@@ -173,7 +173,7 @@ def list_players(
     }
 
 
-@router.get("/alerts", response_model=None)
+@router.get("/alerts")
 def get_admin_alerts(
     start: str | None = Query(default=None),
     end: str | None = Query(default=None),
@@ -228,7 +228,7 @@ def get_admin_alerts(
     }
 
 
-@router.post("/alerts", response_model=None)
+@router.post("/alerts")
 def query_account_alerts(
     filters: AlertFilters,
     admin_id: str = Depends(require_user_id),
@@ -265,7 +265,7 @@ def query_account_alerts(
 # -------------------------
 # 🔗 Legacy Alias Routes
 # -------------------------
-@router.get("/stats", response_model=None)
+@router.get("/stats")
 def get_admin_stats(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -274,7 +274,7 @@ def get_admin_stats(
     return dashboard_summary(admin_user_id=admin_user_id, db=db)
 
 
-@router.get("/search_user", response_model=None)
+@router.get("/search_user")
 def search_user(
     q: str = Query("", alias="q"),
     db: Session = Depends(get_db),
@@ -284,7 +284,7 @@ def search_user(
     return result.get("players", [])
 
 
-@router.get("/logs", response_model=None)
+@router.get("/logs")
 def get_logs(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

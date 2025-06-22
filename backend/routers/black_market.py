@@ -49,7 +49,7 @@ class CancelPayload(BaseModel):
 # ---------------------
 # GET Market Listings
 # ---------------------
-@router.get("", response_model=None)
+@router.get("")
 def get_market(
     item_type: str | None = Query(None),
     max_price: float | None = Query(None, ge=0),

@@ -17,7 +17,7 @@ from ..security import verify_jwt_token
 router = APIRouter(prefix="/api/seasonal-effects", tags=["seasonal_effects"])
 
 
-@router.get("", response_model=None)
+@router.get("")
 def seasonal_data(user_id: str = Depends(verify_jwt_token)):
     """
     Return the current seasonal effect and a short forecast list.

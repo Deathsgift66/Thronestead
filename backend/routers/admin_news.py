@@ -24,7 +24,7 @@ class NewsPayload(BaseModel):
     content: str = Field(..., min_length=1)
 
 
-@router.post("/post", response_model=None, summary="Publish a news article")
+@router.post("/post", summary="Publish a news article")
 def post_news(
     payload: NewsPayload,
     admin_user_id: str = Depends(require_user_id),

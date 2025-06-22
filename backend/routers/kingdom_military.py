@@ -49,7 +49,7 @@ def get_state():
 # 📊 API Endpoints
 # --------------------------
 
-@router.get("/summary", response_model=None)
+@router.get("/summary")
 async def summary(user_id: str = Depends(require_user_id)):
     """
     🧾 Return a summary of military slots and morale.
@@ -66,7 +66,7 @@ async def summary(user_id: str = Depends(require_user_id)):
     }
 
 
-@router.get("/recruitable", response_model=None)
+@router.get("/recruitable")
 async def recruitable(user_id: str = Depends(require_user_id)):
     """
     📋 Return the list of recruitable unit types.
@@ -74,7 +74,7 @@ async def recruitable(user_id: str = Depends(require_user_id)):
     return {"units": recruitable_units}
 
 
-@router.post("/recruit", response_model=None)
+@router.post("/recruit")
 async def recruit(payload: RecruitPayload, user_id: str = Depends(require_user_id)):
     """
     ➕ Queue recruitment for the specified unit type.
@@ -101,7 +101,7 @@ async def recruit(payload: RecruitPayload, user_id: str = Depends(require_user_i
     return {"message": "Training queued", "queued": queued_unit}
 
 
-@router.get("/queue", response_model=None)
+@router.get("/queue")
 async def queue(user_id: str = Depends(require_user_id)):
     """
     📦 View active training queue.
@@ -109,7 +109,7 @@ async def queue(user_id: str = Depends(require_user_id)):
     return {"queue": get_state()["queue"]}
 
 
-@router.get("/history", response_model=None)
+@router.get("/history")
 async def history(user_id: str = Depends(require_user_id)):
     """
     📜 View training history.

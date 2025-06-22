@@ -58,20 +58,20 @@ VIP_TIERS = {
 # --------------------
 # Routes
 # --------------------
-@router.get("/status", response_model=None)
+@router.get("/status")
 def vip_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return current VIP status for the logged-in user."""
     record = get_vip_status(db, user_id)
     return record or {"vip_level": 0, "expires_at": None, "founder": False}
 
 
-@router.get("/tiers", response_model=None)
+@router.get("/tiers")
 def vip_tiers(user_id: str = Depends(verify_jwt_token)):
     """Return available VIP tier options."""
     return {"tiers": [{"tier_id": tid, **data} for tid, data in VIP_TIERS.items()]}
 
 
-@router.get("/leaderboard", response_model=None)
+@router.get("/leaderboard")
 def vip_leaderboard(user_id: str = Depends(verify_jwt_token)):
     """Return top VIP donors from Supabase."""
     supabase = get_supabase_client()
@@ -86,7 +86,7 @@ def vip_leaderboard(user_id: str = Depends(verify_jwt_token)):
     return {"leaders": leaders}
 
 
-@router.post("/donate", response_model=None)
+@router.post("/donate")
 def donate(
     payload: DonationPayload,
     user_id: str = Depends(verify_jwt_token),

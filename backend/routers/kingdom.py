@@ -75,7 +75,7 @@ def get_troop_state(db: Session, kingdom_id: int):
 
 
 # --- Routes ---
-@router.get("/regions", response_model=None)
+@router.get("/regions")
 def list_regions(db: Session = Depends(get_db)):
     try:
         rows = db.execute(text("SELECT * FROM region_catalogue ORDER BY region_name")).mappings().fetchall()
@@ -84,7 +84,7 @@ def list_regions(db: Session = Depends(get_db)):
         return DEFAULT_REGIONS
 
 
-@router.post("/create", response_model=None)
+@router.post("/create")
 def create_kingdom(payload: KingdomCreatePayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     try:
         kid = create_kingdom_transaction(
@@ -106,7 +106,7 @@ def create_kingdom(payload: KingdomCreatePayload, user_id: str = Depends(verify_
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/overview", response_model=None)
+@router.get("/overview")
 def overview(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     kingdom = db.execute(text("SELECT kingdom_name, region, created_at FROM kingdoms WHERE kingdom_id = :kid"), {"kid": kid}).mappings().fetchone()
@@ -125,7 +125,7 @@ def overview(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get
     }
 
 
-@router.get("/summary", response_model=None)
+@router.get("/summary")
 def summary(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     state = get_troop_state(db, kid)
@@ -142,7 +142,7 @@ def summary(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_
     }
 
 
-@router.post("/start_research", response_model=None)
+@router.post("/start_research")
 def start_research(payload: ResearchPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     try:
@@ -153,19 +153,19 @@ def start_research(payload: ResearchPayload, user_id: str = Depends(verify_jwt_t
         raise HTTPException(status_code=404, detail="Tech not found")
 
 
-@router.get("/research", response_model=None)
+@router.get("/research")
 def get_research(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     return {"research": list_research(db, kid)}
 
 
-@router.post("/accept_quest", response_model=None)
+@router.post("/accept_quest")
 def accept_quest(payload: QuestPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     ends_at = db_start_quest(db, 1, payload.quest_code, user_id)
     return {"message": "Quest accepted", "quest_code": payload.quest_code, "ends_at": ends_at.isoformat()}
 
 
-@router.post("/construct_temple", response_model=None)
+@router.post("/construct_temple")
 def construct_temple(payload: TemplePayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     db.execute(text("""
@@ -176,14 +176,14 @@ def construct_temple(payload: TemplePayload, user_id: str = Depends(verify_jwt_t
     return {"message": "Temple construction started"}
 
 
-@router.get("/temples", response_model=None)
+@router.get("/temples")
 def list_temples(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     rows = db.execute(text("SELECT * FROM kingdom_temples WHERE kingdom_id = :kid ORDER BY temple_id"), {"kid": kid}).mappings().fetchall()
     return {"temples": [dict(r) for r in rows]}
 
 
-@router.post("/train_troop", response_model=None)
+@router.post("/train_troop")
 def train_troop(payload: TrainPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     unit = next((u for u in recruitable_units if u["id"] == payload.unit_id), None)
@@ -204,7 +204,7 @@ def train_troop(payload: TrainPayload, user_id: str = Depends(verify_jwt_token),
     return {"message": "Training queued", "unit_id": payload.unit_id}
 
 
-@router.get("/profile", response_model=None)
+@router.get("/profile")
 def kingdom_profile(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     row = db.execute(text("""
         SELECT kingdom_id, ruler_name, ruler_title, kingdom_name,
@@ -222,7 +222,7 @@ def kingdom_profile(user_id: str = Depends(verify_jwt_token), db: Session = Depe
     }
 
 
-@router.post("/update", response_model=None)
+@router.post("/update")
 def update_kingdom_profile(payload: KingdomUpdatePayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     row = db.execute(text("SELECT kingdom_id FROM kingdoms WHERE user_id = :uid"), {"uid": user_id}).fetchone()
     if not row:

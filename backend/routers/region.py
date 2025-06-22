@@ -13,7 +13,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
 
-@router.get("/regions", response_class=JSONResponse, response_model=None)
+@router.get("/regions", response_class=JSONResponse)
 def get_regions():
     """
     Fetch all available regions from the region_catalogue table.

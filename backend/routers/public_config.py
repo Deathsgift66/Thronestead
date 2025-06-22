@@ -17,7 +17,7 @@ import os
 router = APIRouter(prefix="/api", tags=["config"])
 
 
-@router.get("/public-config", response_model=None)
+@router.get("/public-config")
 async def public_config() -> dict:
     """
     Public configuration endpoint exposed to the frontend.

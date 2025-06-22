@@ -36,7 +36,7 @@ class ActiveTitlePayload(BaseModel):
 
 # ---------------------- Endpoints ----------------------
 
-@router.get("/titles", summary="List Kingdom Titles", response_model=None)
+@router.get("/titles", summary="List Kingdom Titles")
 async def list_titles_endpoint(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -47,7 +47,7 @@ async def list_titles_endpoint(
     return {"titles": titles}
 
 
-@router.post("/titles", summary="Award Title to Kingdom", response_model=None)
+@router.post("/titles", summary="Award Title to Kingdom")
 def award_title_endpoint(
     payload: TitlePayload,
     user_id: str = Depends(require_user_id),
@@ -62,7 +62,7 @@ def award_title_endpoint(
         raise HTTPException(status_code=500, detail="Failed to award title") from e
 
 
-@router.post("/active_title", summary="Set Active Kingdom Title", response_model=None)
+@router.post("/active_title", summary="Set Active Kingdom Title")
 def set_active_title_endpoint(
     payload: ActiveTitlePayload,
     user_id: str = Depends(require_user_id),
@@ -77,7 +77,7 @@ def set_active_title_endpoint(
         raise HTTPException(status_code=500, detail="Failed to update active title") from e
 
 
-@router.get("/prestige", summary="Get Prestige Score", response_model=None)
+@router.get("/prestige", summary="Get Prestige Score")
 async def get_prestige(
     user_id: str = Depends(require_user_id)
 ) -> dict:

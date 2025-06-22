@@ -22,7 +22,7 @@ from ..security import verify_jwt_token
 router = APIRouter(prefix="/api/trade-logs", tags=["trade_logs"])
 
 
-@router.get("", summary="Retrieve recent trade logs", response_model=None)
+@router.get("", summary="Retrieve recent trade logs")
 def get_trade_logs(
     player_id: Optional[str] = Query(None, description="Filter logs by player UUID"),
     alliance_id: Optional[int] = Query(None, description="Filter logs by alliance ID"),

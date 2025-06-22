@@ -30,7 +30,7 @@ logger = logging.getLogger("Thronestead.AdminAudit")
 # -------------------------
 # 🔍 Filtered Audit Logs
 # -------------------------
-@router.get("/", response_model=None)
+@router.get("/")
 def get_audit_logs(
     user_id: Optional[str] = None,
     action: Optional[str] = None,
@@ -65,7 +65,7 @@ def get_audit_logs(
 # -------------------------
 # 👤 User-Specific Log View
 # -------------------------
-@router.get("/user/{user_id}", response_model=None)
+@router.get("/user/{user_id}")
 def get_user_logs(
     user_id: str,
     admin_user_id: str = Depends(require_user_id),
@@ -80,7 +80,7 @@ def get_user_logs(
 # -------------------------
 # 📡 Server-Sent Event Stream (Live Feed)
 # -------------------------
-@router.get("/stream", response_class=StreamingResponse, response_model=None)
+@router.get("/stream", response_class=StreamingResponse)
 async def stream_logs(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

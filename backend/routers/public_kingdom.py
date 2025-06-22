@@ -18,7 +18,7 @@ from ..database import get_db
 
 router = APIRouter(prefix="/api/kingdoms", tags=["kingdoms"])
 
-@router.get("/public/{kingdom_id}", response_model=None)
+@router.get("/public/{kingdom_id}")
 def public_profile(kingdom_id: int, db: Session = Depends(get_db)):
     """Return public profile information for the given kingdom."""
     row = db.execute(

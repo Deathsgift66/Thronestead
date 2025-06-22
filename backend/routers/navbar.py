@@ -23,7 +23,7 @@ from services.message_service import count_unread_messages
 router = APIRouter(prefix="/api/navbar", tags=["navbar"])
 
 
-@router.get("/profile", response_model=None)
+@router.get("/profile")
 def navbar_profile(user_id: str = Depends(verify_jwt_token)):
     """
     🎭 Return navbar profile details including username, profile image, and unread messages count.
@@ -54,7 +54,7 @@ def navbar_profile(user_id: str = Depends(verify_jwt_token)):
     }
 
 
-@router.get("/counters", response_model=None)
+@router.get("/counters")
 def navbar_counters(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),

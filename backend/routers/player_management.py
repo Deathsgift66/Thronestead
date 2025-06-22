@@ -39,7 +39,7 @@ class PlayerAction(BaseModel):
 # -----------------------------
 # Endpoint: Get Players
 # -----------------------------
-@router.get("/players", response_model=None)
+@router.get("/players")
 def players(
     search: str | None = None,
     user_id: str = Depends(verify_jwt_token),
@@ -84,7 +84,7 @@ def players(
 # -----------------------------
 # Endpoint: Bulk Admin Actions
 # -----------------------------
-@router.post("/bulk_action", response_model=None)
+@router.post("/bulk_action")
 def bulk_action(
     payload: BulkAction,
     user_id: str = Depends(verify_jwt_token),
@@ -116,7 +116,7 @@ def bulk_action(
 # -----------------------------
 # Endpoint: Single Player Action
 # -----------------------------
-@router.post("/player_action", response_model=None)
+@router.post("/player_action")
 def player_action(
     payload: PlayerAction,
     user_id: str = Depends(verify_jwt_token),
