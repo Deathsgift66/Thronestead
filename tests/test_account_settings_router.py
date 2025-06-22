@@ -4,7 +4,24 @@
 # Developer: Deathsgift66
 import os
 import sys
+import types
+from starlette.requests import Request
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+# Provide minimal jinja2 stub so account_settings can import Jinja2Templates
+sys.modules.setdefault(
+    "jinja2",
+    types.SimpleNamespace(
+        FileSystemLoader=lambda *_a, **_k: None,
+        Environment=lambda **_k: types.SimpleNamespace(
+            get_template=lambda _n: types.SimpleNamespace(render=lambda _c: ""),
+            globals={},
+        ),
+        pass_context=lambda f: f,
+    ),
+)
+
 from backend.routers import account_settings
 
 class DummyResult:
@@ -74,9 +91,12 @@ def test_load_profile_returns_security_fields():
         ("ip_login_alerts", "true"),
         ("email_login_confirmations", "false"),
     ]
-    result = account_settings.load_profile(user_id="u1", db=db)
-    assert result["ip_login_alerts"] is True
-    assert result["email_login_confirmations"] is False
+    request = Request({"type": "http", "path": "/"})
+    response = account_settings.load_profile(request=request, user_id="u1", db=db)
+    assert hasattr(response, "context")
+    profile = response.context["profile"]
+    assert profile["ip_login_alerts"] is True
+    assert profile["email_login_confirmations"] is False
 
 def test_update_profile_updates_security_fields():
     db = DummyDB()
