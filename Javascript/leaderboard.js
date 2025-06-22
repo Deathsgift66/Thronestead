@@ -56,7 +56,7 @@ async function loadLeaderboard(type) {
   tbody.innerHTML = `<tr><td colspan="${cols}">Loading ${type} leaderboard...</td></tr>`;
 
   try {
-    const res = await fetch(`/api/leaderboard/${type}?limit=100`, {
+    const res = await fetch(`https://thronestead.onrender.com/api/leaderboard/${type}?limit=100`, {
       headers: await authHeaders()
     });
     const data = await res.json();
@@ -166,7 +166,7 @@ function openApplyModal(allianceId, allianceName) {
   document.getElementById("submit-application").addEventListener("click", async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const res = await fetch("/api/alliance_members/apply", {
+      const res = await fetch("https://thronestead.onrender.com/api/alliance_members/apply", {
         method: "POST",
         headers: { ...(await authHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({

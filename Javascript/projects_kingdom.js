@@ -168,7 +168,7 @@ async function loadProjects() {
         if (!confirm(`Start project "${projectCode}"?`)) return;
 
         try {
-          const res = await fetch("/api/projects/start", {
+          const res = await fetch("https://thronestead.onrender.com/api/projects/start", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

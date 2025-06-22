@@ -63,7 +63,7 @@ window.addEventListener('beforeunload', () => {
 // =============================================
 async function loadTerrain() {
   try {
-    const response = await fetch(`/api/battle/terrain/${warId}`, {
+    const response = await fetch(`https://thronestead.onrender.com/api/battle/terrain/${warId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-User-ID': userId
@@ -83,7 +83,7 @@ async function loadTerrain() {
 // =============================================
 async function loadUnits() {
   try {
-    const response = await fetch(`/api/battle/units/${warId}`, {
+    const response = await fetch(`https://thronestead.onrender.com/api/battle/units/${warId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-User-ID': userId
@@ -101,7 +101,7 @@ async function loadUnits() {
 // =============================================
 async function loadCombatLogs() {
   try {
-    const response = await fetch(`/api/battle/logs/${warId}?since=${logsTick}`, {
+    const response = await fetch(`https://thronestead.onrender.com/api/battle/logs/${warId}?since=${logsTick}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-User-ID': userId
@@ -126,7 +126,7 @@ let logsTick = 0;
 let statusData = null;
 async function loadStatus() {
   try {
-    const res = await fetch(`/api/battle/status/${warId}`, {
+    const res = await fetch(`https://thronestead.onrender.com/api/battle/status/${warId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-User-ID': userId
@@ -168,7 +168,7 @@ function countdownTick() {
 // =============================================
 export async function triggerNextTick() {
   try {
-    const response = await fetch(`/api/battle/next_tick?war_id=${warId}`, {
+    const response = await fetch(`https://thronestead.onrender.com/api/battle/next_tick?war_id=${warId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -187,7 +187,7 @@ export async function triggerNextTick() {
 // =============================================
 export async function refreshBattle() {
   try {
-    const res = await fetch(`/api/battle/live?war_id=${warId}&since=${logsTick}`, {
+    const res = await fetch(`https://thronestead.onrender.com/api/battle/live?war_id=${warId}&since=${logsTick}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-User-ID': userId
@@ -364,7 +364,7 @@ async function submitOrders() {
   const x = parseInt(document.getElementById('order-x').value, 10);
   const y = parseInt(document.getElementById('order-y').value, 10);
   try {
-    await fetch('/api/battle/orders', {
+    await fetch('https://thronestead.onrender.com/api/battle/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

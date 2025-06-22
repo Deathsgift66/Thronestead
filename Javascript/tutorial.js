@@ -35,7 +35,7 @@ async function loadSteps() {
   const container = document.getElementById('steps');
   container.innerHTML = '<p>📜 Loading tutorial steps...</p>';
   try {
-    const res = await fetch('/api/tutorial/steps', {
+    const res = await fetch('https://thronestead.onrender.com/api/tutorial/steps', {
       headers: { 'X-User-ID': currentUser.id }
     });
     const { steps } = await res.json();

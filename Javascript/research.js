@@ -92,7 +92,7 @@ async function loadResearchData() {
         .eq('is_active', true)
         .order('tier', { ascending: true }),
 
-      fetch('/api/kingdom/research', {
+      fetch('https://thronestead.onrender.com/api/kingdom/research', {
         headers: {
           'Authorization': `Bearer ${currentSession.access_token}`,
           'X-User-ID': currentSession.user.id
@@ -204,7 +204,7 @@ function renderDetails(tech = null, isCompleted = false, isActive = false, unloc
   if (unlocked && !isCompleted && !isActive) {
     document.getElementById('start-research').onclick = async () => {
       try {
-        const res = await fetch('/api/kingdom/start_research', {
+        const res = await fetch('https://thronestead.onrender.com/api/kingdom/start_research', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

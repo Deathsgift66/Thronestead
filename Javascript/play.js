@@ -77,7 +77,7 @@ function bindUIEvents() {
     createBtn.disabled = true;
 
     try {
-      await postJSON('/api/kingdom/create', {
+      await postJSON('https://thronestead.onrender.com/api/kingdom/create', {
         kingdom_name: kingdomName,
         ruler_title: rulerTitle,
         village_name: villageName,
@@ -86,7 +86,7 @@ function bindUIEvents() {
         emblem_url: emblemUrl
       });
 
-      await postJSON('/api/account/update', {
+      await postJSON('https://thronestead.onrender.com/api/account/update', {
         display_name: kingdomName,
         profile_picture_url: selectedAvatar
       });
@@ -146,7 +146,7 @@ async function postJSON(url, body) {
 
 async function loadVIPStatus() {
   try {
-    const data = await jsonFetch('/api/kingdom/vip_status', {
+    const data = await jsonFetch('https://thronestead.onrender.com/api/kingdom/vip_status', {
       headers: { 'X-User-ID': currentUser.id }
     });
     vipLevel = data.vip_level || 0;
@@ -161,7 +161,7 @@ async function loadRegions() {
   if (!regionEl || !infoEl) return;
 
   try {
-    const regions = await jsonFetch('/api/kingdom/regions');
+    const regions = await jsonFetch('https://thronestead.onrender.com/api/kingdom/regions');
     regionEl.innerHTML = '<option value="">Select Region</option>';
 
     regions.forEach(region => {
@@ -198,7 +198,7 @@ async function loadAnnouncements() {
   if (!el) return;
 
   try {
-    const { announcements } = await jsonFetch('/api/login/announcements');
+    const { announcements } = await jsonFetch('https://thronestead.onrender.com/api/login/announcements');
     el.innerHTML = announcements.map(a =>
       `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`
     ).join('');

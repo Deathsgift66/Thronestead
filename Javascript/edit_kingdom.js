@@ -8,7 +8,7 @@ async function loadRegions() {
   const regionEl = document.getElementById('region');
   if (!regionEl) return;
   try {
-    const res = await fetch('/api/kingdom/regions');
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom/regions');
     const regions = await res.json();
     regionEl.innerHTML = '<option value="">Select Region</option>';
     regions.forEach(r => {
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const res = await fetch('/api/kingdom/profile', { headers });
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom/profile', { headers });
     if (!res.ok) throw new Error('Failed to load kingdom');
     const data = await res.json();
 
@@ -84,7 +84,7 @@ document.getElementById('kingdom-form').addEventListener('submit', async (e) => 
 
   try {
     const headers = { ...(await authHeaders()), 'Content-Type': 'application/json' };
-    const res = await fetch('/api/kingdom/update', {
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom/update', {
       method: 'POST',
       headers,
       body: JSON.stringify(payload)

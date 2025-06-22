@@ -153,7 +153,7 @@ async function submitDeclareWar() {
   }
 
   try {
-    const res = await fetch("/api/wars/declare", {
+    const res = await fetch("https://thronestead.onrender.com/api/wars/declare", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -194,7 +194,7 @@ async function openWarDetailModal(warId) {
   closeBtn.addEventListener('click', closeWarDetailModal);
 
   try {
-    const res = await fetch(`/api/wars/view?war_id=${warId}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/wars/view?war_id=${warId}`);
     if (!res.ok) throw new Error('Failed to load war details');
     const { war } = await res.json();
 

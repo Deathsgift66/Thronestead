@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // Fetch basic profile info
-    const res = await fetch('/api/navbar/profile', { headers });
+    const res = await fetch('https://thronestead.onrender.com/api/navbar/profile', { headers });
     if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`);
     const data = await res.json();
 
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function pollCounters(headers, badgeEl) {
   const fetchCounters = async () => {
     try {
-      const res = await fetch('/api/navbar/counters', { headers });
+      const res = await fetch('https://thronestead.onrender.com/api/navbar/counters', { headers });
       if (!res.ok) throw new Error(`Counters fetch failed: ${res.status}`);
       const data = await res.json();
 

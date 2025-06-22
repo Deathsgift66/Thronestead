@@ -11,7 +11,7 @@ let allListings = [];
 
 async function fetchListings() {
   try {
-    const res = await fetch('/api/market/listings');
+    const res = await fetch('https://thronestead.onrender.com/api/market/listings');
     const data = await res.json();
     allListings = data.listings || [];
     renderListings(allListings);
@@ -61,7 +61,7 @@ async function loadMyListings() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return (myListingsContainer.textContent = 'Not logged in.');
-    const res = await fetch('/api/market/listings');
+    const res = await fetch('https://thronestead.onrender.com/api/market/listings');
     const data = await res.json();
     const mine = (data.listings || []).filter(l => l.seller_id === user.id);
     if (!mine.length) {
@@ -89,7 +89,7 @@ async function loadHistory() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return (historyContainer.textContent = 'Not logged in.');
-    const res = await fetch(`/api/market/history/${user.id}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/market/history/${user.id}`);
     const data = await res.json();
     const logs = data.logs || [];
     if (!logs.length) {
@@ -115,7 +115,7 @@ async function loadHistory() {
 async function openPurchase(item) {
   const qty = 1;
   const headers = await authHeaders();
-  await fetch('/api/market/buy', {
+  await fetch('https://thronestead.onrender.com/api/market/buy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({ listing_id: item.listing_id, quantity: qty }),

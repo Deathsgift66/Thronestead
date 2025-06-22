@@ -68,7 +68,7 @@ async function initUserSession() {
 // ========== LISTINGS ==========
 async function loadListings() {
   try {
-    const res = await fetch('/api/black_market/listings', { headers: await authHeaders() });
+    const res = await fetch('https://thronestead.onrender.com/api/black_market/listings', { headers: await authHeaders() });
     const data = await res.json();
     listings = data.listings || [];
     renderListings();
@@ -135,7 +135,7 @@ async function confirmPurchase() {
   if (!currentListing || !qty || qty < 1 || qty > currentListing.stock_remaining) return;
 
   try {
-    await fetch('/api/black_market/purchase', {
+    await fetch('https://thronestead.onrender.com/api/black_market/purchase', {
       method: 'POST',
       headers: {
         ...(await authHeaders()),
@@ -161,7 +161,7 @@ async function confirmPurchase() {
 // ========== HISTORY ==========
 async function loadHistory() {
   try {
-    const res = await fetch(`/api/black_market/history?kingdom_id=${kingdomId}`, { headers: await authHeaders() });
+    const res = await fetch(`https://thronestead.onrender.com/api/black_market/history?kingdom_id=${kingdomId}`, { headers: await authHeaders() });
     const data = await res.json();
     const container = document.getElementById('purchaseHistory');
     container.innerHTML = '';
