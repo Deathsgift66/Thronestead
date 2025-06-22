@@ -5,6 +5,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -31,7 +32,33 @@ class SessionPayload(BaseModel):
     session_id: str
 
 
-@router.get("/profile", response_model=None)
+class SessionInfo(BaseModel):
+    session_id: str
+    device: str
+    last_seen: datetime | None = None
+
+
+class UserProfile(BaseModel):
+    username: str | None = None
+    display_name: str | None = None
+    profile_picture_url: str | None = None
+    email: str | None = None
+    region: str | None = None
+    kingdom_name: str | None = None
+    alliance_name: str | None = None
+    motto: str | None = None
+    bio: str | None = None
+    theme_preference: str | None = None
+    profile_banner: str | None = None
+    vip_level: int | None = None
+    founder: bool | None = None
+    expires_at: datetime | None = None
+    ip_login_alerts: bool | None = None
+    email_login_confirmations: bool | None = None
+    sessions: list[SessionInfo] = []
+
+
+@router.get("/profile", response_model=UserProfile)
 def load_profile(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
