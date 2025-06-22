@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: kingdom_achievements.py
+Role: API routes for kingdom achievements.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 

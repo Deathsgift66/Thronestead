@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: black_market_routes.py
+Role: API routes for black market routes.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, conint
 from typing import List
@@ -139,5 +146,4 @@ def history(kingdom_id: str):
     """Return purchase history for a kingdom."""
     trades = [t.model_dump() for t in _transactions if t.kingdom_id == kingdom_id]
     return {"trades": trades}
-
 

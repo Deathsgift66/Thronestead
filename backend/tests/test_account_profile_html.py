@@ -1,3 +1,10 @@
+"""
+Project: Thronestead ©
+File: test_account_profile_html.py
+Role: Unit tests for test account profile html.
+Version: 2025-06-21
+"""
+
 import pytest
 from httpx import AsyncClient
 from backend.main import app

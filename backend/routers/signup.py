@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: signup.py
+Role: API routes for signup.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional

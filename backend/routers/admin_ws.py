@@ -1,3 +1,10 @@
+"""
+Project: Thronestead ©
+File: admin_ws.py
+Role: API routes for admin ws.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 import asyncio

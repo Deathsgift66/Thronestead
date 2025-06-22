@@ -3,6 +3,13 @@
 # Version 6.14.2025
 # Developer: OpenAI Codex
 
+"""
+Project: Thronestead ©
+File: public_kingdom.py
+Role: API routes for public kingdom.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session

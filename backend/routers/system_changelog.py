@@ -3,6 +3,13 @@
 # Version 6.14.2025
 # Developer: OpenAI Codex
 
+"""
+Project: Thronestead ©
+File: system_changelog.py
+Role: API routes for system changelog.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, HTTPException, Query
 from ..supabase_client import get_supabase_client
 

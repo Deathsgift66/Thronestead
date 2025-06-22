@@ -3,6 +3,13 @@
 # Version: 6.20.2025.21.10
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_wars.py
+Role: API routes for alliance wars.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text

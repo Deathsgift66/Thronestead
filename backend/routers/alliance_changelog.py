@@ -3,6 +3,13 @@
 # Version: 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_changelog.py
+Role: API routes for alliance changelog.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import datetime
 from typing import Optional

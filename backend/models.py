@@ -2,6 +2,13 @@
 # File Name: models.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""
+Project: Thronestead ©
+File: models.py
+Role: SQLAlchemy models.
+Version: 2025-06-21
+"""
+
 from sqlalchemy import (
     Column,
     Integer,
@@ -1710,7 +1717,6 @@ class KingdomResearchTracking(Base):
     status = Column(String)
     progress = Column(Integer, default=0)
     ends_at = Column(DateTime(timezone=True))
-
 
 
 

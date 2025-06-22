@@ -2,6 +2,13 @@
 # File Name: alliance_quests.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""
+Project: Thronestead ©
+File: alliance_quests.py
+Role: API routes for alliance quests.
+Version: 2025-06-21
+"""
+
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -452,4 +459,3 @@ def alt_detail(
     db: Session = Depends(get_db),
 ):
     return quest_detail(quest_code, user_id, db)
-

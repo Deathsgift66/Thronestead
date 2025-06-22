@@ -1,3 +1,10 @@
+"""
+Project: Thronestead ©
+File: auth_middleware.py
+Role: Authentication middleware.
+Version: 2025-06-21
+"""
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 

@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: seasonal_effects.py
+Role: API routes for seasonal effects.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from ..supabase_client import get_supabase_client
 from ..security import verify_jwt_token

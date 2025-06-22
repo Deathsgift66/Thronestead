@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: treaties_router.py
+Role: API routes for treaties router.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from typing import Optional

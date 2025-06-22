@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: account_settings.py
+Role: API routes for account settings.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
