@@ -122,7 +122,7 @@ def ensure_knights(db: Session, kid: int, required: int) -> int:
 
 
 # 🔹 GET: Castle Level
-@router.get("/castle")
+@router.get("/castle", response_model=None)
 def get_castle_level(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     level = db.execute(
@@ -146,7 +146,7 @@ def get_castle_level(user_id: str = Depends(require_user_id), db: Session = Depe
 
 
 # 🔹 POST: Upgrade Castle
-@router.post("/castle")
+@router.post("/castle", response_model=None)
 def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
 
@@ -204,7 +204,7 @@ def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depend
 
 
 # 🔹 GET/POST: Nobles
-@router.get("/nobles")
+@router.get("/nobles", response_model=None)
 def get_nobles(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     names = db.execute(
@@ -214,7 +214,7 @@ def get_nobles(user_id: str = Depends(require_user_id), db: Session = Depends(ge
     return {"nobles": [n[0] for n in names]}
 
 
-@router.post("/nobles")
+@router.post("/nobles", response_model=None)
 def assign_noble(payload: NoblePayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
 
@@ -236,7 +236,7 @@ def assign_noble(payload: NoblePayload, user_id: str = Depends(require_user_id),
 
 
 # 🔹 GET/POST: Knights
-@router.get("/knights")
+@router.get("/knights", response_model=None)
 def get_knights(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     names = db.execute(
@@ -246,7 +246,7 @@ def get_knights(user_id: str = Depends(require_user_id), db: Session = Depends(g
     return {"knights": [k[0] for k in names]}
 
 
-@router.post("/knights")
+@router.post("/knights", response_model=None)
 def assign_knight(payload: KnightPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
 
@@ -268,7 +268,7 @@ def assign_knight(payload: KnightPayload, user_id: str = Depends(require_user_id
 
 
 # 🔹 POST: Force Recalculate Progression
-@router.post("/refresh")
+@router.post("/refresh", response_model=None)
 def refresh_progression(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     total_slots = calculate_troop_slots(db, kid)
@@ -283,7 +283,7 @@ def refresh_progression(user_id: str = Depends(require_user_id), db: Session = D
 
 
 # 🔹 GET: Summary Overview
-@router.get("/summary")
+@router.get("/summary", response_model=None)
 def progression_summary(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
 
@@ -322,7 +322,7 @@ def progression_summary(user_id: str = Depends(require_user_id), db: Session = D
 
 
 # 🔹 GET: Modifiers
-@router.get("/modifiers")
+@router.get("/modifiers", response_model=None)
 def get_modifiers(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
     return get_total_modifiers(db, kid)

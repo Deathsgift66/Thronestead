@@ -35,7 +35,7 @@ def get_alliance_info(user_id: str, db: Session) -> tuple[int, str]:
     return user.alliance_id, user.alliance_role or "Member"
 
 
-@router.get("/catalogue")
+@router.get("/catalogue", response_model=None)
 def get_quest_catalogue(db: Session = Depends(get_db)):
     quests = (
         db.query(QuestAllianceCatalogue)
@@ -60,7 +60,7 @@ def get_quest_catalogue(db: Session = Depends(get_db)):
     ]
 
 
-@router.get("/available")
+@router.get("/available", response_model=None)
 def get_available_quests(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -90,7 +90,7 @@ def get_available_quests(
     ]
 
 
-@router.get("/active")
+@router.get("/active", response_model=None)
 def get_active_quests(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -114,7 +114,7 @@ def get_active_quests(
     ]
 
 
-@router.get("/completed")
+@router.get("/completed", response_model=None)
 def get_completed_quests(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -138,7 +138,7 @@ def get_completed_quests(
     ]
 
 
-@router.post("/start")
+@router.post("/start", response_model=None)
 def start_quest(
     payload: QuestStartPayload,
     user_id: str = Depends(require_user_id),
@@ -191,7 +191,7 @@ def start_quest(
     return {"status": "started"}
 
 
-@router.get("/contributions")
+@router.get("/contributions", response_model=None)
 def get_contributions(
     quest_code: Optional[str] = Query(None),
     user_id: str = Depends(require_user_id),
@@ -217,7 +217,7 @@ def get_contributions(
     ]
 
 
-@router.get("/detail/{quest_code}")
+@router.get("/detail/{quest_code}", response_model=None)
 def quest_detail(
     quest_code: str,
     user_id: str = Depends(require_user_id),
@@ -282,7 +282,7 @@ class ProgressPayload(BaseModel):
     amount: int
 
 
-@router.post("/progress")
+@router.post("/progress", response_model=None)
 def update_progress(
     payload: ProgressPayload,
     user_id: str = Depends(require_user_id),
@@ -342,7 +342,7 @@ class ClaimPayload(BaseModel):
     quest_code: str
 
 
-@router.post("/claim")
+@router.post("/claim", response_model=None)
 def claim_reward(
     payload: ClaimPayload,
     user_id: str = Depends(require_user_id),

@@ -27,7 +27,7 @@ def _optional_user(
 
 router = APIRouter(prefix="/api/leaderboard", tags=["leaderboard"])
 
-@router.get("/{category}")
+@router.get("/{category}", response_model=None)
 def get_leaderboard(
     category: str,
     limit: int = 100,

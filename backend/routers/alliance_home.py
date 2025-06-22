@@ -14,7 +14,7 @@ from backend.models import User, Alliance, AllianceMember, AllianceVault
 router = APIRouter(prefix="/api/alliance-home", tags=["alliance_home"])
 
 
-@router.get("/details")
+@router.get("/details", response_model=None)
 def alliance_details(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

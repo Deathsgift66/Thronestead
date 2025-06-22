@@ -30,7 +30,7 @@ class UpdateLawsPayload(BaseModel):
 # -------------------------------
 # Endpoint: Get Catalogue of Active Policies/Laws
 # -------------------------------
-@router.get("/catalogue")
+@router.get("/catalogue", response_model=None)
 def catalogue(user_id: str = Depends(verify_jwt_token)):
     """
     Return all policies and laws in the catalogue sorted by ID.
@@ -53,7 +53,7 @@ def catalogue(user_id: str = Depends(verify_jwt_token)):
 # -------------------------------
 # Endpoint: Get User's Current Settings
 # -------------------------------
-@router.get("/user")
+@router.get("/user", response_model=None)
 def user_settings(user_id: str = Depends(verify_jwt_token)):
     """
     Return the current policy and active laws for the authenticated user.
@@ -80,7 +80,7 @@ def user_settings(user_id: str = Depends(verify_jwt_token)):
 # -------------------------------
 # Endpoint: Update User Policy
 # -------------------------------
-@router.post("/policy")
+@router.post("/policy", response_model=None)
 def update_user_policy(
     payload: UpdatePolicyPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -103,7 +103,7 @@ def update_user_policy(
 # -------------------------------
 # Endpoint: Update User Laws
 # -------------------------------
-@router.post("/laws")
+@router.post("/laws", response_model=None)
 def update_user_laws(
     payload: UpdateLawsPayload,
     user_id: str = Depends(verify_jwt_token),

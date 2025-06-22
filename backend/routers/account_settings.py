@@ -183,7 +183,7 @@ def update_profile(
     return {"message": "updated"}
 
 
-@router.post("/logout-session")
+@router.post("/logout-session", response_model=None)
 def logout_session(
     payload: SessionPayload,
     user_id: str = Depends(verify_jwt_token),

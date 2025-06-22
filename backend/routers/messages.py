@@ -41,7 +41,7 @@ class DeletePayload(BaseModel):
     message_id: int
 
 
-@router.get("/inbox")
+@router.get("/inbox", response_model=None)
 def get_inbox(user_id: str = Depends(verify_jwt_token)):
     """
     📥 Fetch the latest 100 inbox messages for the current user.
@@ -84,7 +84,7 @@ def get_inbox(user_id: str = Depends(verify_jwt_token)):
     }
 
 
-@router.get("/{message_id}")
+@router.get("/{message_id}", response_model=None)
 def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
     """
     📨 View a specific message by ID and mark it as read.
@@ -125,7 +125,7 @@ def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
     }
 
 
-@router.post("/send")
+@router.post("/send", response_model=None)
 def send_message(payload: MessagePayload, user_id: str = Depends(verify_jwt_token)):
     """
     ✉️ Send a message to another user.
@@ -167,7 +167,7 @@ def send_message(payload: MessagePayload, user_id: str = Depends(verify_jwt_toke
     return {"message": "sent", "message_id": mid}
 
 
-@router.post("/delete")
+@router.post("/delete", response_model=None)
 def delete_message(payload: DeletePayload, user_id: str = Depends(verify_jwt_token)):
     """
     ❌ Soft-delete a message for the recipient.
@@ -189,7 +189,7 @@ def delete_message(payload: DeletePayload, user_id: str = Depends(verify_jwt_tok
     return {"status": "deleted", "message_id": payload.message_id}
 
 
-@router.post("/mark_all_read")
+@router.post("/mark_all_read", response_model=None)
 def mark_all_messages_read(user_id: str = Depends(verify_jwt_token)):
     """
     ✅ Mark all inbox messages as read.

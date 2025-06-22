@@ -30,7 +30,7 @@ class TrainPayload(BaseModel):
 
 # -------------------- Spy Routes --------------------
 
-@router.get("/spies")
+@router.get("/spies", response_model=None)
 def get_spy_info(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
@@ -43,7 +43,7 @@ def get_spy_info(
         raise HTTPException(status_code=500, detail="Failed to load spy data") from e
 
 
-@router.post("/spies/train")
+@router.post("/spies/train", response_model=None)
 def train_spies(
     payload: TrainPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -58,7 +58,7 @@ def train_spies(
         raise HTTPException(status_code=500, detail="Failed to train spies") from e
 
 
-@router.post("/spy_missions")
+@router.post("/spy_missions", response_model=None)
 def launch_spy_mission(
     payload: SpyMissionPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -80,7 +80,7 @@ def launch_spy_mission(
         raise HTTPException(status_code=500, detail="Failed to launch spy mission") from e
 
 
-@router.get("/spy_missions")
+@router.get("/spy_missions", response_model=None)
 def list_spy_missions(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)

@@ -21,7 +21,7 @@ logger = logging.getLogger("Thronestead.Resources")
 # Expose shared constant from resource_service for field filtering
 
 
-@router.get("")
+@router.get("", response_model=None)
 def get_resources(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),

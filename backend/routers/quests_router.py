@@ -43,7 +43,7 @@ def _get_requirements(code: str):
     )
 
 
-@router.post("/complete")
+@router.post("/complete", response_model=None)
 def complete_quest(
     payload: QuestPayload,
     db: Session = Depends(get_db),
@@ -75,7 +75,7 @@ def complete_quest(
     }
 
 
-@router.get("/active")
+@router.get("/active", response_model=None)
 def get_active_quests(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

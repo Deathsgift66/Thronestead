@@ -39,7 +39,7 @@ def get_alliance_info(user_id: str, db: Session) -> tuple[int, str]:
         raise HTTPException(status_code=403, detail="Not in an alliance")
     return user.alliance_id, user.alliance_role or "Member"
 
-@router.get("/summary")
+@router.get("/summary", response_model=None)
 def get_vault_summary(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     alliance_id, _ = get_alliance_info(user_id, db)
     vault = db.query(AllianceVault).filter_by(alliance_id=alliance_id).first()
@@ -47,7 +47,7 @@ def get_vault_summary(user_id: str = Depends(require_user_id), db: Session = Dep
         raise HTTPException(status_code=404, detail="Vault not found")
     return {"totals": {r: getattr(vault, r, 0) for r in VAULT_RESOURCES}}
 
-@router.post("/deposit")
+@router.post("/deposit", response_model=None)
 def deposit_resource(payload: VaultTransaction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     alliance_id, _ = get_alliance_info(user_id, db)
     if payload.resource not in VAULT_RESOURCES:
@@ -71,7 +71,7 @@ def deposit_resource(payload: VaultTransaction, user_id: str = Depends(require_u
     log_action(db, user_id, "deposit_vault", f"Deposited {payload.amount} {payload.resource}")
     return {"message": "Deposited"}
 
-@router.post("/withdraw")
+@router.post("/withdraw", response_model=None)
 def withdraw_resource(payload: VaultTransaction, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     alliance_id, role = get_alliance_info(user_id, db)
     if role not in {"Leader", "Co-Leader", "Officer"}:
@@ -100,7 +100,7 @@ def withdraw_resource(payload: VaultTransaction, user_id: str = Depends(require_
     log_action(db, user_id, "withdraw_vault", f"Withdrew {payload.amount} {payload.resource}")
     return {"message": "Withdrawn"}
 
-@router.get("/history")
+@router.get("/history", response_model=None)
 def get_transaction_history(action: str | None = None, page: int = 1, days: int | None = None, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     alliance_id, _ = get_alliance_info(user_id, db)
     query = db.query(AllianceVaultTransactionLog, User.username).join(User, AllianceVaultTransactionLog.user_id == User.user_id, isouter=True).filter(AllianceVaultTransactionLog.alliance_id == alliance_id)
@@ -122,7 +122,7 @@ def get_transaction_history(action: str | None = None, page: int = 1, days: int 
         } for t, username in records
     ]}
 
-@router.get("/interest")
+@router.get("/interest", response_model=None)
 def calculate_interest(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     alliance_id, _ = get_alliance_info(user_id, db)
     vault = db.query(AllianceVault).filter_by(alliance_id=alliance_id).first()
@@ -133,11 +133,11 @@ def calculate_interest(user_id: str = Depends(require_user_id), db: Session = De
         "interest": {r: round(getattr(vault, r, 0) * interest_rate, 2) for r in VAULT_RESOURCES}
     }
 
-@router.get("/tax-policy")
+@router.get("/tax-policy", response_model=None)
 def view_tax_policy():
     return {"policy": [{"resource": "gold", "rate": 0.05}]}  # Static placeholder
 
-@router.post("/tax-policy")
+@router.post("/tax-policy", response_model=None)
 def update_tax_policy(policies: list[TaxPolicy], user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     _, role = get_alliance_info(user_id, db)
     if role not in {"Leader", "Co-Leader"}:

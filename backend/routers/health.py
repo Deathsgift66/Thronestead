@@ -12,7 +12,7 @@ from ..database import get_db
 router = APIRouter(prefix="/api/health", tags=["health"])
 
 
-@router.get("/", summary="Health Check", description="Basic API health check.")
+@router.get("/", summary="Health Check", description="Basic API health check.", response_model=None)
 def health_check():
     """
     ✅ Basic heartbeat endpoint.
@@ -21,7 +21,7 @@ def health_check():
     return {"status": "ok"}
 
 
-@router.get("/db", summary="Database Health", description="Checks DB connection.")
+@router.get("/db", summary="Database Health", description="Checks DB connection.", response_model=None)
 def database_health(db: Session = Depends(get_db)):
     """
     ✅ Database ping check.

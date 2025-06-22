@@ -28,7 +28,7 @@ class LaunchPayload(BaseModel):
 DAILY_LIMIT = 5
 
 
-@router.post("/launch")
+@router.post("/launch", response_model=None)
 def launch_spy_mission(
     payload: LaunchPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -101,7 +101,7 @@ def launch_spy_mission(
     }
 
 
-@router.get("/defense")
+@router.get("/defense", response_model=None)
 async def get_spy_defense(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return the spy defense stats for the player's kingdom."""
     kingdom = db.execute(
@@ -117,7 +117,7 @@ async def get_spy_defense(user_id: str = Depends(verify_jwt_token), db: Session 
     return dict(defense._mapping) if defense else {}
 
 
-@router.get("/log")
+@router.get("/log", response_model=None)
 def get_spy_log(
     limit: int = Query(50, ge=1, le=200),
     user_id: str = Depends(verify_jwt_token),

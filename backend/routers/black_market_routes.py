@@ -92,14 +92,14 @@ _resources: dict[str, dict[str, int]] = {
 # ---------------------------------------------
 
 
-@router.get("/listings")
+@router.get("/listings", response_model=None)
 @alt_router.get("/listings")
 def get_listings():
     """Return available black market offers."""
     return {"listings": [l.model_dump() for l in _listings]}
 
 
-@router.post("/purchase")
+@router.post("/purchase", response_model=None)
 @alt_router.post("/purchase")
 def purchase(payload: PurchasePayload, user_id: str = Depends(verify_jwt_token)):
     """Purchase an item from the in-memory market."""
@@ -133,7 +133,7 @@ def purchase(payload: PurchasePayload, user_id: str = Depends(verify_jwt_token))
     raise HTTPException(status_code=404, detail="Listing not found")
 
 
-@router.get("/history")
+@router.get("/history", response_model=None)
 @alt_router.get("/history")
 def history(kingdom_id: str):
     """Return purchase history for a kingdom."""
