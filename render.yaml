@@ -21,6 +21,6 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: ALLOWED_ORIGINS
-        value: https://thronestead.com,https://www.thronestead.com,http://localhost:5173
+        value: https://thronestead.com,https://www.thronestead.com,https://thronestead.onrender.com,http://localhost:5173
     autoDeploy: true
 
