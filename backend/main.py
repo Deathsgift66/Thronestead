@@ -109,7 +109,7 @@ app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 # -----------------------
 # ✅ Health Check Endpoint
 # -----------------------
-@app.get("/health-check")
+@app.get("/health-check", response_model=None)
 def health_check():
     return {"status": "online", "service": "Thronestead API"}
 
