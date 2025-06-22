@@ -39,29 +39,18 @@ app = FastAPI(
 # -----------------------
 # 🔐 CORS Middleware
 # -----------------------
-allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
-if allowed_origins_env:
-    if allowed_origins_env.strip() == "*":
-        origins = ["*"]
-        allow_credentials = False
-        logger.warning("CORS allowing any origin without credentials")
-    else:
-        origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
-        allow_credentials = True
-else:
-    origins = [
-        "https://www.thronestead.com",
-    ]
-    allow_credentials = True
-    logger.warning("ALLOWED_ORIGINS not set; defaulting to production and localhost")
+origins = [
+    "https://thronestead.com",
+    "https://www.thronestead.com",
+]
 
-cors_options = {
-    "allow_origins": origins,
-    "allow_credentials": allow_credentials,
-    "allow_methods": ["*"],
-    "allow_headers": ["*"],
-}
-app.add_middleware(CORSMiddleware, **cors_options)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.add_middleware(UserStateMiddleware)
 
 # -----------------------
