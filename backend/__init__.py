@@ -34,7 +34,7 @@ logger = logging.getLogger("Thronestead")
 
 # Supabase configuration from environment variables
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # Use service role key for backend tasks
+SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 supabase = None
 if create_client and SUPABASE_URL and SUPABASE_KEY:

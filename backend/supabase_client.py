@@ -6,7 +6,7 @@
 """
 Supabase client configuration for Thronestead©.
 
-Provides a shared connection instance to Supabase using the service role key.
+Provides a shared connection instance to Supabase using the anonymous key.
 Used for server-side operations including authentication, data writes, and RLS-sensitive queries.
 """
 
@@ -26,29 +26,24 @@ except ImportError as e:  # pragma: no cover
 # 🔐 Load Supabase Credentials
 # -------------------------------
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 # -------------------------------
 # ⚙️ Create Supabase Client
 # -------------------------------
 supabase: "Client | None" = None
 
-if not SUPABASE_URL:
-    logging.error("❌ Missing Supabase URL")
+if not SUPABASE_URL or not SUPABASE_KEY:
+    logging.error(
+        "❌ Missing Supabase credentials. Set SUPABASE_URL and SUPABASE_ANON_KEY."
+    )
 else:
-    key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY
-    if not key:
-        logging.error(
-            "❌ Missing Supabase credentials: SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY not set."
-        )
-    else:
-        try:
-            supabase = create_client(SUPABASE_URL, key)
-            logging.info("✅ Supabase client initialized successfully.")
-        except Exception:
-            logging.exception("❌ Failed to initialize Supabase client.")
-            supabase = None
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        logging.info("✅ Supabase client initialized successfully.")
+    except Exception:
+        logging.exception("❌ Failed to initialize Supabase client.")
+        supabase = None
 
 # -------------------------------
 # 🧰 Exported Client Accessor
