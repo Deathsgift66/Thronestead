@@ -53,7 +53,7 @@ async function submitForgotRequest() {
   if (!email) return renderStatusMessage('Please enter a valid email.', true);
 
   try {
-    const res = await fetch('/api/auth/request-password-reset', {
+    const res = await fetch('https://thronestead.onrender.com/api/auth/request-password-reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
@@ -80,7 +80,7 @@ async function submitResetCode() {
   if (!code) return renderStatusMessage('Enter the reset code.', true);
 
   try {
-    const res = await fetch('/api/auth/verify-reset-code', {
+    const res = await fetch('https://thronestead.onrender.com/api/auth/verify-reset-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
@@ -126,7 +126,7 @@ async function submitNewPassword() {
       setTimeout(() => (window.location.href = 'login.html'), 5000);
     } else {
       const code = resetCodeInput.value.trim();
-      const res = await fetch('/api/auth/set-new-password', {
+      const res = await fetch('https://thronestead.onrender.com/api/auth/set-new-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, new_password, confirm_password })

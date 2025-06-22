@@ -22,7 +22,7 @@ async function loadVillagePage() {
       return;
     }
 
-    const res = await fetch(`/api/kingdom/villages/summary/${villageId}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/kingdom/villages/summary/${villageId}`);
     if (!res.ok) throw new Error('Failed to load village summary');
     const summary = await res.json();
     const village = summary.village;

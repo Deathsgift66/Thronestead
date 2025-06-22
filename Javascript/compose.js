@@ -42,7 +42,7 @@ function setupForms() {
     msgForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        await authFetchJson('/api/compose/message', session, {
+        await authFetchJson('https://thronestead.onrender.com/api/compose/message', session, {
           method: 'POST',
           body: JSON.stringify({
             recipient_id: getValue('msg-recipient'),
@@ -65,7 +65,7 @@ function setupForms() {
     noticeForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        await authFetchJson('/api/compose/notice', session, {
+        await authFetchJson('https://thronestead.onrender.com/api/compose/notice', session, {
           method: 'POST',
           body: JSON.stringify({
             title: getValue('notice-title'),
@@ -89,7 +89,7 @@ function setupForms() {
     treatyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        await authFetchJson('/api/compose/treaty', session, {
+        await authFetchJson('https://thronestead.onrender.com/api/compose/treaty', session, {
           method: 'POST',
           body: JSON.stringify({
             partner_alliance_id: parseInt(getValue('treaty-partner')), 
@@ -111,7 +111,7 @@ function setupForms() {
     warForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        await authFetchJson('/api/compose/war', session, {
+        await authFetchJson('https://thronestead.onrender.com/api/compose/war', session, {
           method: 'POST',
           body: JSON.stringify({
             defender_id: getValue('war-defender'),

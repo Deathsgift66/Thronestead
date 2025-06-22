@@ -13,7 +13,7 @@ const API_BASE =
   (window.ENV && window.ENV.API_BASE_URL)
     ? window.ENV.API_BASE_URL
     : window.API_BASE_URL ||
-      'https://thronestead-backend.onrender.com';
+      'https://thronestead.onrender.com';
 
 // ✅ Secondary backend used if the primary API_BASE fails
 const FALLBACK_BASE = 'https://kingmakers-backend.onrender.com';
@@ -48,7 +48,7 @@ window.fetch = async function(url, options) {
   const overlay = getOverlay();
   overlay.classList.add('visible'); // show spinner
 
-  const isApi = url.startsWith('/api/');
+  const isApi = url.startsWith('https://thronestead.onrender.com/api/');
   const opts = { ...(options || {}), mode: 'cors' };
 
   const attempt = async (base) => {

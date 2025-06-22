@@ -32,7 +32,7 @@ async function init() {
 
 async function loadUnits() {
   try {
-    const res = await fetch('/api/kingdom_troops/unlocked', {
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom_troops/unlocked', {
       headers: { 'X-User-ID': userId }
     });
     if (!res.ok) throw new Error('Failed to load units');

@@ -5,7 +5,7 @@
 // ✅ Fetch progression summary from backend API and store globally + in sessionStorage
 export async function fetchAndStorePlayerProgression(userId) {
   try {
-    const res = await fetch('/api/progression/summary', {
+    const res = await fetch('https://thronestead.onrender.com/api/progression/summary', {
       headers: { 'X-User-ID': userId }
     });
 

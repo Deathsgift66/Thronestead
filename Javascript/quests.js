@@ -113,7 +113,7 @@ function renderQuestCatalogue(catalogue, tracking) {
       const questCode = btn.dataset.code;
       if (!confirm(`Accept quest "${questCode}"?`)) return;
       try {
-        const res = await fetch('/api/kingdom/accept_quest', {
+        const res = await fetch('https://thronestead.onrender.com/api/kingdom/accept_quest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ quest_code: questCode })

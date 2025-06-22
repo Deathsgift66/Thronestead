@@ -10,7 +10,7 @@ const REFRESH_MS = 30000;
 // 📊 Dashboard Stats
 async function loadDashboardStats() {
   try {
-    const res = await fetch('/api/admin/stats');
+    const res = await fetch('https://thronestead.onrender.com/api/admin/stats');
     if (!res.ok) throw new Error('Failed to fetch stats');
     const data = await res.json();
     document.getElementById('total-users').textContent = data.active_users;
@@ -33,7 +33,7 @@ async function loadPlayerList() {
   container.innerHTML = '<p>Loading players...</p>';
 
   try {
-    const url = new URL('/api/admin/search_user', window.location.origin);
+    const url = new URL('https://thronestead.onrender.com/api/admin/search_user', window.location.origin);
     url.searchParams.set('q', search);
     if (status) url.searchParams.set('status', status);
     const res = await fetch(url);
@@ -68,7 +68,7 @@ async function loadAuditLogs() {
   container.innerHTML = '<p>Loading logs...</p>';
 
   try {
-    const res = await fetch('/api/admin/logs');
+    const res = await fetch('https://thronestead.onrender.com/api/admin/logs');
     if (!res.ok) throw new Error('Failed to fetch audit logs');
     const logs = await res.json();
 
@@ -97,7 +97,7 @@ async function loadFlaggedUsers() {
   container.innerHTML = '<p>Loading flagged players...</p>';
 
   try {
-    const res = await fetch('/api/admin/flagged_users');
+    const res = await fetch('https://thronestead.onrender.com/api/admin/flagged_users');
     if (!res.ok) throw new Error('Failed to fetch flagged users');
     const rows = await res.json();
 
@@ -124,7 +124,7 @@ function initAlertSocket() {
   const container = document.getElementById('alerts');
   if (!container) return;
   container.innerHTML = '';
-  const socket = new WebSocket('/api/admin/alerts/live');
+  const socket = new WebSocket('https://thronestead.onrender.com/api/admin/alerts/live');
   socket.onmessage = event => {
     const alert = JSON.parse(event.data);
     const el = document.createElement('div');
@@ -136,9 +136,9 @@ function initAlertSocket() {
 }
 
 // ✅ Admin Actions
-window.flagUser = async userId => handleAdminAction('/api/admin/flag', { player_id: userId }, 'User flagged');
-window.freezeUser = async userId => handleAdminAction('/api/admin/freeze', { player_id: userId }, 'User frozen');
-window.banUser = async userId => handleAdminAction('/api/admin/ban', { player_id: userId }, 'User banned');
+window.flagUser = async userId => handleAdminAction('https://thronestead.onrender.com/api/admin/flag', { player_id: userId }, 'User flagged');
+window.freezeUser = async userId => handleAdminAction('https://thronestead.onrender.com/api/admin/freeze', { player_id: userId }, 'User frozen');
+window.banUser = async userId => handleAdminAction('https://thronestead.onrender.com/api/admin/ban', { player_id: userId }, 'User banned');
 window.showAlertDetails = alertId => alert(`📋 Detailed view for Alert ID: ${alertId} will load here.`);
 
 async function handleAdminAction(endpoint, payload, successMsg) {
@@ -165,7 +165,7 @@ async function toggleFlag() {
   const key = document.getElementById('flag-key')?.value;
   const val = document.getElementById('flag-value')?.value === 'true';
   if (!key) return alert('Enter a flag key');
-  await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value: val }, 'Flag updated');
+  await handleAdminAction('https://thronestead.onrender.com/api/admin/flags/toggle', { flag_key: key, value: val }, 'Flag updated');
 }
 
 async function updateKingdom() {
@@ -173,7 +173,7 @@ async function updateKingdom() {
   const field = document.getElementById('kingdom-field')?.value;
   const value = document.getElementById('kingdom-value')?.value;
   if (!kid || !field) return alert('Missing field/kingdom');
-  await handleAdminAction('/api/admin/kingdom/update_field', {
+  await handleAdminAction('https://thronestead.onrender.com/api/admin/kingdom/update_field', {
     kingdom_id: Number(kid),
     field,
     value
@@ -183,25 +183,25 @@ async function updateKingdom() {
 async function forceEndWar() {
   const wid = document.getElementById('war-id')?.value;
   if (!wid) return alert('Enter war ID');
-  await handleAdminAction('/api/admin/war/force_end', { war_id: Number(wid) }, 'War ended');
+  await handleAdminAction('https://thronestead.onrender.com/api/admin/war/force_end', { war_id: Number(wid) }, 'War ended');
 }
 
 async function rollbackCombatTick() {
   const wid = document.getElementById('war-id')?.value;
   if (!wid) return alert('Enter war ID');
-  await handleAdminAction('/api/admin/war/rollback_tick', { war_id: Number(wid) }, 'Tick rolled back');
+  await handleAdminAction('https://thronestead.onrender.com/api/admin/war/rollback_tick', { war_id: Number(wid) }, 'Tick rolled back');
 }
 
 async function rollbackDatabase() {
   const pass = document.getElementById('rollback-password')?.value;
   if (!pass) return alert('Enter master password');
-  await handleAdminAction('/api/admin/system/rollback', { password: pass }, 'Rollback triggered');
+  await handleAdminAction('https://thronestead.onrender.com/api/admin/system/rollback', { password: pass }, 'Rollback triggered');
 }
 
 async function createGlobalEvent() {
   const name = prompt('Event name?');
   if (!name) return;
-  await handleAdminAction('/api/admin/events/create', { name }, 'Event created');
+  await handleAdminAction('https://thronestead.onrender.com/api/admin/events/create', { name }, 'Event created');
 }
 
 async function publishNews() {
@@ -209,7 +209,7 @@ async function publishNews() {
   const summary = document.getElementById('news-summary')?.value.trim();
   const content = document.getElementById('news-content')?.value.trim();
   if (!title || !summary || !content) return alert('Fill all news fields');
-  await handleAdminAction('/api/admin/news/post', { title, summary, content }, 'News published');
+  await handleAdminAction('https://thronestead.onrender.com/api/admin/news/post', { title, summary, content }, 'News published');
   document.getElementById('news-title').value = '';
   document.getElementById('news-summary').value = '';
   document.getElementById('news-content').value = '';

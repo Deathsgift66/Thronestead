@@ -48,7 +48,7 @@ window.addEventListener('beforeunload', () => {
 // ✅ Summary Stats Loader
 async function loadSummary() {
   try {
-    const res = await fetch(`/api/diplomacy/metrics/${allianceId}`);
+    const res = await fetch(`https://thronestead.onrender.com/api/diplomacy/metrics/${allianceId}`);
     if (!res.ok) throw new Error('Failed to load summary');
     const data = await res.json();
     document.getElementById('diplomacy-score').textContent = data.diplomacy_score;
@@ -62,7 +62,7 @@ async function loadSummary() {
 // ✅ Treaty Table Loader
 async function loadTreaties() {
   const filter = document.getElementById('treaty-filter')?.value || '';
-  const base = `/api/diplomacy/treaties/${allianceId}`;
+  const base = `https://thronestead.onrender.com/api/diplomacy/treaties/${allianceId}`;
   const url = filter ? `${base}?status=${filter}` : base;
 
   try {
@@ -139,7 +139,7 @@ export async function proposeTreaty() {
       end_date: document.getElementById('treaty-end').value
     };
 
-    const res = await fetch('/api/diplomacy/treaty/propose', {
+    const res = await fetch('https://thronestead.onrender.com/api/diplomacy/treaty/propose', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -164,8 +164,8 @@ async function respondTreaty(treatyId, action) {
   if (!session) return;
 
   const endpoint = action === 'renew'
-    ? '/api/diplomacy/renew_treaty'
-    : '/api/diplomacy/treaty/respond';
+    ? 'https://thronestead.onrender.com/api/diplomacy/renew_treaty'
+    : 'https://thronestead.onrender.com/api/diplomacy/treaty/respond';
 
   const payload = action === 'renew'
     ? { treaty_id: parseInt(treatyId, 10) }

@@ -15,7 +15,7 @@ async function applyAllianceAppearance() {
     const userId = session?.user?.id;
     if (!userId) return;
 
-    const res = await fetch('/api/alliance-home/details', {
+    const res = await fetch('https://thronestead.onrender.com/api/alliance-home/details', {
       headers: { 'X-User-ID': userId }
     });
     if (!res.ok) return;

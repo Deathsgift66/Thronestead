@@ -33,7 +33,7 @@ async function loadSpies() {
   const infoEl = document.getElementById('spy-info');
   infoEl.textContent = 'Loading...';
   try {
-    const res = await fetch('/api/kingdom/spies', {
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom/spies', {
       headers: {
         'X-User-ID': currentUserId,
         Authorization: `Bearer ${currentSession.access_token}`
@@ -64,7 +64,7 @@ async function loadMissions() {
   const listEl = document.getElementById('missions');
   listEl.textContent = 'Loading missions...';
   try {
-    const res = await fetch('/api/kingdom/spy_missions', {
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom/spy_missions', {
       headers: {
         'X-User-ID': currentUserId,
         Authorization: `Bearer ${currentSession.access_token}`
@@ -110,7 +110,7 @@ async function trainSpies() {
   }
 
   try {
-    const res = await fetch('/api/kingdom/spies/train', {
+    const res = await fetch('https://thronestead.onrender.com/api/kingdom/spies/train', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

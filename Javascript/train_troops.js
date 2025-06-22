@@ -54,7 +54,7 @@ async function loadGrandMusterHall() {
     const kingdomId = userData.kingdom_id;
     const headers = { Authorization: `Bearer ${accessToken}`, 'X-User-ID': userId };
 
-    const troopsRes = await fetch('/api/training_catalog', { headers });
+    const troopsRes = await fetch('https://thronestead.onrender.com/api/training_catalog', { headers });
     if (!troopsRes.ok) throw new Error('Failed to load catalog');
     const { catalog } = await troopsRes.json();
 
@@ -184,7 +184,7 @@ async function trainTroop(unitId) {
   if (!confirm("Train 10 units of this troop?")) return;
   try {
     const troop = troopLookup.get(unitId);
-    const res = await fetch('/api/training_queue/start', {
+    const res = await fetch('https://thronestead.onrender.com/api/training_queue/start', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -214,7 +214,7 @@ async function trainTroop(unitId) {
 async function cancelTraining(queueId) {
   if (!confirm("Cancel this training order?")) return;
   try {
-    const res = await fetch('/api/training_queue/cancel', {
+    const res = await fetch('https://thronestead.onrender.com/api/training_queue/cancel', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
