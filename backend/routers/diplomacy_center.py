@@ -59,7 +59,7 @@ class TreatyResponse(BaseModel):
 # Endpoints
 # --------------------
 
-@router.get("/metrics/{alliance_id}")
+@router.get("/metrics/{alliance_id}", response_model=None)
 def alliance_metrics(alliance_id: int, db: Session = Depends(get_db)):
     """Return diplomacy metrics for a specific alliance."""
     row = db.execute(
@@ -91,7 +91,7 @@ def alliance_metrics(alliance_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/treaties/{alliance_id}")
+@router.get("/treaties/{alliance_id}", response_model=None)
 def list_treaties(
     alliance_id: int,
     status: str | None = Query(None, description="Filter by treaty status"),
@@ -129,7 +129,7 @@ def list_treaties(
     ]
 
 
-@router.post("/treaty/propose")
+@router.post("/treaty/propose", response_model=None)
 def propose_treaty(
     payload: TreatyProposal,
     user_id: str = Depends(verify_jwt_token),
@@ -151,7 +151,7 @@ def propose_treaty(
     return {"status": "proposed"}
 
 
-@router.patch("/treaty/respond")
+@router.patch("/treaty/respond", response_model=None)
 def respond_treaty(
     payload: TreatyResponse,
     user_id: str = Depends(verify_jwt_token),
@@ -182,7 +182,7 @@ def respond_treaty(
     return {"status": payload.response}
 
 
-@router.post("/renew_treaty")
+@router.post("/renew_treaty", response_model=None)
 def renew_treaty(
     treaty_id: int,
     user_id: str = Depends(verify_jwt_token),

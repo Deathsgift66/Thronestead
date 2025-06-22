@@ -85,7 +85,7 @@ def _hash_token(token: str) -> str:
 # ---------------------------------------------
 # Route: Request Password Reset
 # ---------------------------------------------
-@router.post("/request-password-reset", status_code=status.HTTP_201_CREATED)
+@router.post("/request-password-reset", status_code=status.HTTP_201_CREATED, response_model=None)
 def request_password_reset(
     payload: EmailPayload, request: Request, db: Session = Depends(get_db)
 ):
@@ -113,7 +113,7 @@ def request_password_reset(
 # ---------------------------------------------
 # Route: Verify Reset Code
 # ---------------------------------------------
-@router.post("/verify-reset-code")
+@router.post("/verify-reset-code", response_model=None)
 def verify_reset_code(payload: CodePayload):
     _prune_expired()
     token_hash = _hash_token(payload.code)
@@ -129,7 +129,7 @@ def verify_reset_code(payload: CodePayload):
 # ---------------------------------------------
 # Route: Set New Password
 # ---------------------------------------------
-@router.post("/set-new-password")
+@router.post("/set-new-password", response_model=None)
 def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
     _prune_expired()
 

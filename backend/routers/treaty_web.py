@@ -10,7 +10,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/treaty_web", tags=["treaty_web"])
 
 
-@router.get("/data", summary="Load Treaty Web Data")
+@router.get("/data", summary="Load Treaty Web Data", response_model=None)
 def treaty_web_data(user_id: str = Depends(verify_jwt_token)):
     """
     Return all active data required for rendering the full treaty web:

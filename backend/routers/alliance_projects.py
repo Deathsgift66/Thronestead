@@ -56,7 +56,7 @@ def expire_old_projects(db: Session):
 
 # ---------- ROUTES ----------
 
-@router.get("/catalogue")
+@router.get("/catalogue", response_model=None)
 def get_all_catalogue_projects(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return all available project blueprints."""
     rows = db.query(ProjectAllianceCatalogue).filter_by(is_active=True).all()
@@ -68,7 +68,7 @@ def get_all_catalogue_projects(user_id: str = Depends(verify_jwt_token), db: Ses
     }
 
 
-@router.get("/available")
+@router.get("/available", response_model=None)
 def get_available_projects(alliance_id: int, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return projects that the alliance can still build."""
     user = db.query(User).filter_by(user_id=user_id).first()
@@ -98,7 +98,7 @@ def get_available_projects(alliance_id: int, user_id: str = Depends(verify_jwt_t
     }
 
 
-@router.get("/in_progress")
+@router.get("/in_progress", response_model=None)
 def get_in_progress_projects(alliance_id: int, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return projects currently under construction."""
     expire_old_projects(db)
@@ -115,7 +115,7 @@ def get_in_progress_projects(alliance_id: int, user_id: str = Depends(verify_jwt
     }
 
 
-@router.get("/completed")
+@router.get("/completed", response_model=None)
 def get_built_projects(alliance_id: int, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return completed alliance projects."""
     user = db.query(User).filter_by(user_id=user_id).first()
@@ -131,7 +131,7 @@ def get_built_projects(alliance_id: int, user_id: str = Depends(verify_jwt_token
     }
 
 
-@router.post("/start")
+@router.post("/start", response_model=None)
 def start_alliance_project(payload: StartPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Start construction of a new alliance project."""
     expire_old_projects(db)
@@ -173,7 +173,7 @@ def start_alliance_project(payload: StartPayload, user_id: str = Depends(verify_
     return {"status": "started"}
 
 
-@router.post("/contribute")
+@router.post("/contribute", response_model=None)
 def contribute_to_project(payload: ContributionPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Add contribution to active alliance project."""
     expire_old_projects(db)
@@ -202,7 +202,7 @@ def contribute_to_project(payload: ContributionPayload, user_id: str = Depends(v
     return {"status": "ok"}
 
 
-@router.get("/contributions")
+@router.get("/contributions", response_model=None)
 def project_contributions(project_key: str, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return contribution totals for a given project."""
     user = db.query(User).filter_by(user_id=user_id).first()

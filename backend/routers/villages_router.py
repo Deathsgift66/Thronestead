@@ -57,7 +57,7 @@ def _fetch_villages(db: Session, kid: int):
 
 # ----------------------------- API Endpoints -----------------------------
 
-@router.get("")
+@router.get("", response_model=None)
 async def list_villages(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     """List all villages for the authenticated player."""
     kid = get_kingdom_id(db, user_id)
@@ -65,7 +65,7 @@ async def list_villages(user_id: str = Depends(require_user_id), db: Session = D
     return {"villages": villages}
 
 
-@router.post("")
+@router.post("", response_model=None)
 def create_village(
     payload: VillagePayload,
     user_id: str = Depends(require_user_id),
@@ -117,7 +117,7 @@ def create_village(
     return {"message": "Village created", "village_id": result[0]}
 
 
-@router.get("/summary/{village_id}")
+@router.get("/summary/{village_id}", response_model=None)
 def get_village_summary(
     village_id: int,
     user_id: str = Depends(require_user_id),

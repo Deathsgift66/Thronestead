@@ -57,7 +57,7 @@ class EventPayload(BaseModel):
     event: str
 
 
-@router.post("/event")
+@router.post("/event", response_model=None)
 def log_login_event(
     payload: EventPayload,
     user_id: str = Depends(verify_jwt_token),

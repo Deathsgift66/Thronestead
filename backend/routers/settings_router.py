@@ -22,7 +22,7 @@ class SettingPayload(BaseModel):
     is_active: bool = True    # Activation flag for the setting
 
 
-@router.get("/game/settings")
+@router.get("/game/settings", response_model=None)
 def get_settings() -> dict:
     """
     Public endpoint to retrieve currently loaded game settings.
@@ -33,7 +33,7 @@ def get_settings() -> dict:
     return global_game_settings
 
 
-@router.post("/admin/game_settings")
+@router.post("/admin/game_settings", response_model=None)
 def update_setting(
     payload: SettingPayload,
     admin_id: str = Depends(require_user_id),

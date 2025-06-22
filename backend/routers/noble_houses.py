@@ -40,14 +40,14 @@ def _serialize(row: NobleHouse) -> dict:
 
 # ---------- Route Endpoints ----------
 
-@router.get("")
+@router.get("", response_model=None)
 def list_houses(db: Session = Depends(get_db)):
     """Return a list of all noble houses."""
     rows = db.query(NobleHouse).all()
     return {"houses": [_serialize(r) for r in rows]}
 
 
-@router.get("/{house_id}")
+@router.get("/{house_id}", response_model=None)
 def get_house(house_id: int, db: Session = Depends(get_db)):
     """Return data for a specific noble house."""
     row = db.query(NobleHouse).filter_by(house_id=house_id).first()
@@ -56,7 +56,7 @@ def get_house(house_id: int, db: Session = Depends(get_db)):
     return _serialize(row)
 
 
-@router.post("")
+@router.post("", response_model=None)
 def create_house(payload: HousePayload, db: Session = Depends(get_db)):
     """Create a new noble house entry."""
     house = NobleHouse(
@@ -72,7 +72,7 @@ def create_house(payload: HousePayload, db: Session = Depends(get_db)):
     return {"house_id": house.house_id, "message": "House created successfully"}
 
 
-@router.put("/{house_id}")
+@router.put("/{house_id}", response_model=None)
 def update_house(house_id: int, payload: HousePayload, db: Session = Depends(get_db)):
     """Update an existing noble house entry."""
     house = db.query(NobleHouse).filter_by(house_id=house_id).first()
@@ -90,7 +90,7 @@ def update_house(house_id: int, payload: HousePayload, db: Session = Depends(get
     return {"message": "House updated successfully"}
 
 
-@router.delete("/{house_id}")
+@router.delete("/{house_id}", response_model=None)
 def delete_house(house_id: int, db: Session = Depends(get_db)):
     """Delete an existing noble house."""
     house = db.query(NobleHouse).filter_by(house_id=house_id).first()

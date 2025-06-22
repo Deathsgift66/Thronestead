@@ -25,7 +25,7 @@ class BuyPayload(BaseModel):
     quantity: conint(gt=0)
 
 
-@router.get("/listings")
+@router.get("/listings", response_model=None)
 def get_listings(
     item: str | None = Query(None),
     min_price: float | None = Query(None, ge=0),
@@ -67,7 +67,7 @@ def get_listings(
     return {"listings": listings}
 
 
-@router.post("/list")
+@router.post("/list", response_model=None)
 def list_item(
     payload: ListingPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -124,7 +124,7 @@ def list_item(
     return {"listing_id": listing.listing_id}
 
 
-@router.delete("/listing/{listing_id}")
+@router.delete("/listing/{listing_id}", response_model=None)
 def cancel_listing(
     listing_id: int,
     user_id: str = Depends(verify_jwt_token),
@@ -162,7 +162,7 @@ def cancel_listing(
     return {"message": "Listing cancelled"}
 
 
-@router.post("/buy")
+@router.post("/buy", response_model=None)
 def buy_item(
     payload: BuyPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -218,7 +218,7 @@ def buy_item(
     return {"message": "Purchase complete", "listing_id": payload.listing_id}
 
 
-@router.get("/history/{player_id}")
+@router.get("/history/{player_id}", response_model=None)
 def get_trade_history(player_id: str, db: Session = Depends(get_db)):
     rows = (
         db.query(TradeLog)

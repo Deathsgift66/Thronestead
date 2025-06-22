@@ -22,7 +22,7 @@ from backend.models import (
 router = APIRouter(prefix="/api/alliance/members", tags=["alliance_members"])
 
 
-@router.get("")
+@router.get("", response_model=None)
 def list_members(
     sort_by: str = "username",
     direction: str = "asc",

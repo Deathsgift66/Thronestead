@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 
-@router.get("")
+@router.get("", response_model=None)
 async def get_achievements(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

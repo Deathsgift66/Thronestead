@@ -18,7 +18,7 @@ from services.vacation_mode_service import (
 # Define the API route group
 router = APIRouter(prefix="/api/vacation", tags=["vacation"])
 
-@router.post("/enter", summary="Enable Vacation Mode")
+@router.post("/enter", summary="Enable Vacation Mode", response_model=None)
 def enter_vm(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -36,7 +36,7 @@ def enter_vm(
     return {"message": "Vacation Mode enabled", "expires_at": expires}
 
 
-@router.post("/exit", summary="Disable Vacation Mode")
+@router.post("/exit", summary="Disable Vacation Mode", response_model=None)
 def exit_vm(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

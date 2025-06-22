@@ -16,7 +16,7 @@ from services.audit_service import log_action, log_alliance_activity
 router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
 
 
-@router.get("/types")
+@router.get("/types", response_model=None)
 def get_treaty_types(db: Session = Depends(get_db)):
     """Return all treaty types from the catalogue."""
     rows = (
@@ -75,7 +75,7 @@ def validate_alliance_permission(db: Session, user_id: str, permission: str) -> 
 
 # --- Endpoints ---
 
-@router.get("/my-treaties")
+@router.get("/my-treaties", response_model=None)
 def get_my_treaties(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     aid = get_alliance_id(db, user_id)
     rows = db.execute(
@@ -106,7 +106,7 @@ def get_my_treaties(user_id: str = Depends(require_user_id), db: Session = Depen
     }
 
 
-@router.post("/propose")
+@router.post("/propose", response_model=None)
 def propose_treaty(
     payload: ProposePayload,
     user_id: str = Depends(require_user_id),
@@ -139,7 +139,7 @@ def propose_treaty(
     return {"status": "proposed"}
 
 
-@router.post("/respond")
+@router.post("/respond", response_model=None)
 def respond_to_treaty(
     payload: RespondPayload,
     user_id: str = Depends(require_user_id),
@@ -176,7 +176,7 @@ def respond_to_treaty(
     return {"status": new_status}
 
 
-@router.post("/renew")
+@router.post("/renew", response_model=None)
 def renew_treaty(
     treaty_id: int,
     user_id: str = Depends(require_user_id),
@@ -222,7 +222,7 @@ def renew_treaty(
     return {"status": "renewed"}
 
 
-@router.get("/view/{treaty_id}")
+@router.get("/view/{treaty_id}", response_model=None)
 def view_treaty(
     treaty_id: int,
     user_id: str = Depends(require_user_id),

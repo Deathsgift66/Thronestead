@@ -14,7 +14,7 @@ from services.training_catalog_service import list_units
 router = APIRouter(prefix="/api/training_catalog", tags=["training_catalog"])
 
 
-@router.get("", summary="Retrieve training catalog", response_description="List of all trainable units")
+@router.get("", summary="Retrieve training catalog", response_description="List of all trainable units", response_model=None)
 def get_catalog(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)

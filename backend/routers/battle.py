@@ -63,7 +63,7 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
     return war
 
 
-@router.get("/replay/{war_id}")
+@router.get("/replay/{war_id}", response_model=None)
 def get_battle_replay(
     war_id: int,
     user_id: str = Depends(verify_jwt_token),
@@ -222,7 +222,7 @@ def battle_resolution_alt(
     }
 
 
-@router.get("/resolution")
+@router.get("/resolution", response_model=None)
 def battle_resolution_route(
     war_id: int,
     user_id: str = Depends(verify_jwt_token),

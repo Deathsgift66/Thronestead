@@ -61,7 +61,7 @@ def _get_requirements(code: str) -> dict:
 
 
 # 🔧 Start a new project for the given kingdom
-@router.post("/start")
+@router.post("/start", response_model=None)
 def start_project(
     payload: ProjectPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -108,7 +108,7 @@ def start_project(
 
 
 # 📡 Fetch current and in-progress projects for a kingdom
-@router.get("/status/{kingdom_id}")
+@router.get("/status/{kingdom_id}", response_model=None)
 def project_status(
     kingdom_id: int,
     user_id: str = Depends(verify_jwt_token),

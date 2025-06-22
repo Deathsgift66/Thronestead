@@ -23,7 +23,7 @@ class ScrollPayload(BaseModel):
 # Routes
 # ---------------------------
 
-@router.get("/latest", summary="Fetch latest scrolls")
+@router.get("/latest", summary="Fetch latest scrolls", response_model=None)
 def latest_scrolls(user_id: str = Depends(verify_jwt_token)) -> dict:
     """
     Return recent town crier scrolls (latest 25) for authenticated users.
@@ -65,7 +65,7 @@ def latest_scrolls(user_id: str = Depends(verify_jwt_token)) -> dict:
     return {"scrolls": scrolls}
 
 
-@router.post("/post", summary="Post a new scroll")
+@router.post("/post", summary="Post a new scroll", response_model=None)
 def post_scroll(payload: ScrollPayload, user_id: str = Depends(verify_jwt_token)) -> dict:
     """
     Post a new town crier scroll authored by the current user.

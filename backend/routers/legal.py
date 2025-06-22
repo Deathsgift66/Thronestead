@@ -8,7 +8,7 @@ from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/legal", tags=["legal"])
 
-@router.get("/documents")
+@router.get("/documents", response_model=None)
 def list_documents():
     """
     📚 Retrieve all legal documents (ToS, Privacy Policy, etc.)

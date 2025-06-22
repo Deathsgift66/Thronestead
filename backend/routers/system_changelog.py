@@ -9,7 +9,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/system/changelog", tags=["system_changelog"])
 
 
-@router.get("")
+@router.get("", response_model=None)
 def get_system_changelog(refresh: bool = Query(False, description="Force data refresh")):
     """Return the latest game changelog entries."""
     supabase = get_supabase_client()

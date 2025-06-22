@@ -62,7 +62,7 @@ def _base_query(db: Session, user_id: str):
 # ---------- Endpoints ----------
 
 
-@router.get("/list")
+@router.get("/list", response_model=None)
 def list_notifications(
     limit: int | None = None,
     user_id: str = Depends(require_user_id),
@@ -88,7 +88,7 @@ def list_notifications(
     return {"notifications": [_serialize_notification(r) for r in rows]}
 
 
-@router.get("/latest")
+@router.get("/latest", response_model=None)
 def latest_notifications(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -98,7 +98,7 @@ def latest_notifications(
     return list_notifications(limit=limit, user_id=user_id, db=db)
 
 
-@router.delete("/{notification_id}")
+@router.delete("/{notification_id}", response_model=None)
 def delete_notification(
     notification_id: int,
     user_id: str = Depends(require_user_id),
@@ -155,7 +155,7 @@ async def stream_notifications(
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@router.post("/mark_read")
+@router.post("/mark_read", response_model=None)
 def mark_read(
     payload: NotificationAction,
     user_id: str = Depends(require_user_id),
@@ -178,7 +178,7 @@ def mark_read(
     return {"message": "Marked read", "id": payload.notification_id}
 
 
-@router.post("/mark_all_read")
+@router.post("/mark_all_read", response_model=None)
 def mark_all_read(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -191,7 +191,7 @@ def mark_all_read(
     return {"message": "All marked as read"}
 
 
-@router.post("/clear_all")
+@router.post("/clear_all", response_model=None)
 def clear_all(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -202,7 +202,7 @@ def clear_all(
     return {"message": "All notifications cleared"}
 
 
-@router.post("/cleanup_expired")
+@router.post("/cleanup_expired", response_model=None)
 def cleanup_expired(db: Session = Depends(get_db)):
     """Clean up expired notifications (admin/cron endpoint)."""
     deleted = (
