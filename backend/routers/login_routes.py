@@ -17,7 +17,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/login", tags=["login"])
 
 
-@router.get("/announcements", response_class=JSONResponse)
+@router.get("/announcements", response_class=JSONResponse, response_model=None)
 def get_announcements():
     """
     🔔 Fetch the 10 most recent public login screen announcements.

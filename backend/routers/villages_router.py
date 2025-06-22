@@ -163,7 +163,7 @@ def get_village_summary(
     }
 
 
-@router.get("/stream")
+@router.get("/stream", response_class=StreamingResponse, response_model=None)
 async def stream_villages(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     """Stream village data every 5s in Server-Sent Event format for real-time dashboards."""
     kid = get_kingdom_id(db, user_id)

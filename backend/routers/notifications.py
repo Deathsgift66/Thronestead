@@ -119,7 +119,7 @@ def delete_notification(
     return {"message": "Notification deleted", "id": notification_id}
 
 
-@router.get("/stream")
+@router.get("/stream", response_class=StreamingResponse, response_model=None)
 async def stream_notifications(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
