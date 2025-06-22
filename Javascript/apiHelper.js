@@ -48,11 +48,14 @@ window.fetch = async function(url, options) {
   const overlay = getOverlay();
   overlay.classList.add('visible'); // show spinner
 
-  const isApi = url.startsWith('https://thronestead.onrender.com/api/');
+  const apiMatch = url.match(/^https?:\/\/[^/]+(\/api\/.*)/);
+  const pathMatch = url.startsWith('/api/');
+  const isApi = Boolean(apiMatch) || pathMatch;
+  const apiPath = apiMatch ? apiMatch[1] : pathMatch ? url : '';
   const opts = { ...(options || {}), mode: 'cors' };
 
   const attempt = async (base) => {
-    const fullUrl = isApi ? base + url : url;
+    const fullUrl = isApi ? base + apiPath : url;
     return originalFetch(fullUrl, opts);
   };
 
