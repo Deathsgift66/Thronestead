@@ -78,7 +78,7 @@ class UserProfile(BaseModel):
     sessions: list[SessionInfo] = Field(default_factory=list)
 
 
-@router.get("/profile", response_class=HTMLResponse)
+@router.get("/profile", response_class=HTMLResponse, response_model=None)
 async def profile(request: Request):
     return templates.TemplateResponse("profile.html", {"request": request})
 

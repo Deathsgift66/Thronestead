@@ -80,7 +80,7 @@ def get_user_logs(
 # -------------------------
 # 📡 Server-Sent Event Stream (Live Feed)
 # -------------------------
-@router.get("/stream")
+@router.get("/stream", response_class=StreamingResponse, response_model=None)
 async def stream_logs(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
