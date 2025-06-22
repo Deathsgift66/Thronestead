@@ -7,9 +7,20 @@
   Automatically fallback to environment overrides if present (e.g., Render env vars)
 */
 
-const ENV = typeof window !== 'undefined' && window.ENV
+let ENV = typeof window !== 'undefined' && window.ENV
   ? window.ENV
   : {};
+
+// Attempt to dynamically load env.js if values are missing
+if ((!ENV.SUPABASE_URL || !ENV.SUPABASE_ANON_KEY) && typeof window !== 'undefined') {
+  try {
+    const mod = await import('../env.js');
+    ENV = { ...mod, ...ENV };
+    window.ENV ||= ENV;
+  } catch {
+    // env.js optional; credentials may come from API
+  }
+}
 
 export const SUPABASE_URL =
   ENV.SUPABASE_URL || '';
