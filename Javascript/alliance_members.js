@@ -97,7 +97,7 @@ async function fetchMembers(sortBy = 'username', direction = 'asc', search = '')
   try {
     const { data: { user } } = await supabase.auth.getUser();
     const params = new URLSearchParams({ sort_by: sortBy, direction, search });
-    const res = await fetch(`https://thronestead.onrender.com/api/alliance/members?${params.toString()}`, {
+    const res = await fetch(`/api/alliance/members?${params.toString()}`, {
       headers: { 'X-User-ID': user.id }
     });
 
@@ -206,19 +206,19 @@ function setupRealtime() {
 
 // ⚙️ Manage actions: promote/demote/remove/transfer
 async function promoteMember(userId) {
-  await confirmAndPost('https://thronestead.onrender.com/api/alliance_members/promote', { user_id: userId }, 'Member promoted.');
+  await confirmAndPost('/api/alliance_members/promote', { user_id: userId }, 'Member promoted.');
 }
 
 async function demoteMember(userId) {
-  await confirmAndPost('https://thronestead.onrender.com/api/alliance_members/demote', { user_id: userId }, 'Member demoted.');
+  await confirmAndPost('/api/alliance_members/demote', { user_id: userId }, 'Member demoted.');
 }
 
 async function removeMember(userId) {
-  await confirmAndPost('https://thronestead.onrender.com/api/alliance_members/remove', { user_id: userId }, 'Member removed.', true);
+  await confirmAndPost('/api/alliance_members/remove', { user_id: userId }, 'Member removed.', true);
 }
 
 async function transferLeadership(userId) {
-  await confirmAndPost('https://thronestead.onrender.com/api/alliance_members/transfer_leadership', { new_leader_id: userId }, 'Leadership transferred.');
+  await confirmAndPost('/api/alliance_members/transfer_leadership', { new_leader_id: userId }, 'Leadership transferred.');
 }
 
 async function confirmAndPost(endpoint, payload, successMsg, hardConfirm = false) {

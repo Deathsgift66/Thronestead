@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadFullHistory(headers) {
   try {
-    const res = await fetch(`https://thronestead.onrender.com/api/kingdom-history/${kingdomId}/full`, { headers });
+    const res = await fetch(`/api/kingdom-history/${kingdomId}/full`, { headers });
     const data = await res.json();
 
     renderTimeline(data.timeline || []);

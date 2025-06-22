@@ -50,11 +50,11 @@ async function apiDELETE(url, data = {}) {
 //
 
 export async function getCastleProgression() {
-  return apiGET('https://thronestead.onrender.com/api/progression/castle');
+  return apiGET('/api/progression/castle');
 }
 
 export async function upgradeCastle() {
-  return apiPOST('https://thronestead.onrender.com/api/progression/castle/upgrade');
+  return apiPOST('/api/progression/castle/upgrade');
 }
 
 //
@@ -62,22 +62,22 @@ export async function upgradeCastle() {
 //
 
 export async function viewNobles() {
-  return apiGET('https://thronestead.onrender.com/api/progression/nobles');
+  return apiGET('/api/progression/nobles');
 }
 
 export async function nameNoble(name) {
-  return apiPOST('https://thronestead.onrender.com/api/progression/nobles', { noble_name: name });
+  return apiPOST('/api/progression/nobles', { noble_name: name });
 }
 
 export async function renameNoble(oldName, newName) {
-  return apiPUT('https://thronestead.onrender.com/api/progression/nobles/rename', {
+  return apiPUT('/api/progression/nobles/rename', {
     old_name: oldName,
     new_name: newName
   });
 }
 
 export async function removeNoble(name) {
-  return apiDELETE('https://thronestead.onrender.com/api/progression/nobles', { noble_name: name });
+  return apiDELETE('/api/progression/nobles', { noble_name: name });
 }
 
 //
@@ -85,26 +85,26 @@ export async function removeNoble(name) {
 //
 
 export async function viewKnights() {
-  return apiGET('https://thronestead.onrender.com/api/progression/knights');
+  return apiGET('/api/progression/knights');
 }
 
 export async function nameKnight(name) {
-  return apiPOST('https://thronestead.onrender.com/api/progression/knights', { knight_name: name });
+  return apiPOST('/api/progression/knights', { knight_name: name });
 }
 
 export async function renameKnight(oldName, newName) {
-  return apiPUT('https://thronestead.onrender.com/api/progression/knights/rename', {
+  return apiPUT('/api/progression/knights/rename', {
     old_name: oldName,
     new_name: newName
   });
 }
 
 export async function removeKnight(name) {
-  return apiDELETE('https://thronestead.onrender.com/api/progression/knights', { knight_name: name });
+  return apiDELETE('/api/progression/knights', { knight_name: name });
 }
 
 export async function promoteKnightApi(name) {
-  return apiPOST('https://thronestead.onrender.com/api/progression/knights/promote', { knight_name: name });
+  return apiPOST('/api/progression/knights/promote', { knight_name: name });
 }
 
 //

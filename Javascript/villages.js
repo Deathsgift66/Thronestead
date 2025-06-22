@@ -28,7 +28,7 @@ async function loadVillages() {
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch('https://thronestead.onrender.com/api/kingdom/villages', {
+    const res = await fetch('/api/kingdom/villages', {
       headers: { 'X-User-ID': user.id }
     });
     if (!res.ok) throw new Error('Failed to load villages');
@@ -66,7 +66,7 @@ function renderVillages(villages) {
 // Setup Server-Sent Events connection for real-time updates
 function setupRealtime() {
   try {
-    eventSource = new EventSource('https://thronestead.onrender.com/api/kingdom/villages/stream');
+    eventSource = new EventSource('/api/kingdom/villages/stream');
     eventSource.onmessage = ev => {
       try {
         const villages = JSON.parse(ev.data);
@@ -98,7 +98,7 @@ async function createVillage() {
   }
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch('https://thronestead.onrender.com/api/kingdom/villages', {
+    const res = await fetch('/api/kingdom/villages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

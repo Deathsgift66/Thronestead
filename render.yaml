@@ -18,6 +18,12 @@ services:
           property: connectionString
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: API_BASE_URL
+        value: https://thronestead.onrender.com
       - key: JWT_SECRET
         sync: false
       - key: ALLOWED_ORIGINS

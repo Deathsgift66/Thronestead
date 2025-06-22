@@ -32,7 +32,7 @@ async function loadBoard() {
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch('https://thronestead.onrender.com/api/town-criers/latest', {
+    const res = await fetch('/api/town-criers/latest', {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
         'X-User-ID': session.user.id
@@ -119,7 +119,7 @@ async function submitScroll() {
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch('https://thronestead.onrender.com/api/town-criers/post', {
+    const res = await fetch('/api/town-criers/post', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

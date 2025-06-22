@@ -177,7 +177,7 @@ async function constructTemple(type) {
   if (!confirm(`Construct a new "${type}"?`)) return;
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/kingdom/construct_temple", {
+    const res = await fetch("/api/kingdom/construct_temple", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

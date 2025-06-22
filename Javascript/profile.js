@@ -35,7 +35,7 @@ async function loadPlayerProfile() {
     };
 
     // ✅ Load profile overview
-    const profileRes = await fetch('https://thronestead.onrender.com/api/profile/overview', { headers });
+    const profileRes = await fetch('/api/profile/overview', { headers });
     const overview = await profileRes.json();
     if (!profileRes.ok) throw new Error(overview.detail || 'Profile load failed');
 
@@ -49,7 +49,7 @@ async function loadPlayerProfile() {
 
     // ✅ VIP badge
     try {
-      const vipRes = await fetch('https://thronestead.onrender.com/api/kingdom/vip_status', { headers });
+      const vipRes = await fetch('/api/kingdom/vip_status', { headers });
       const vipData = await vipRes.json();
       const lvl = vipData.vip_level || 0;
       vipBadgeEl.textContent = lvl > 0 ? `VIP ${lvl}` : '';
@@ -61,8 +61,8 @@ async function loadPlayerProfile() {
     // ✅ Prestige + Titles
     try {
       const [prestigeRes, titlesRes] = await Promise.all([
-        fetch('https://thronestead.onrender.com/api/kingdom/prestige', { headers }),
-        fetch('https://thronestead.onrender.com/api/kingdom/titles', { headers })
+        fetch('/api/kingdom/prestige', { headers }),
+        fetch('/api/kingdom/titles', { headers })
       ]);
       const prestige = await prestigeRes.json();
       const titles = await titlesRes.json();
@@ -114,7 +114,7 @@ async function loadRecentActions(userId) {
   tbody.innerHTML = `<tr><td colspan="3">Loading...</td></tr>`;
 
   try {
-    const res = await fetch(`https://thronestead.onrender.com/api/audit-log?user_id=${encodeURIComponent(userId)}&limit=10`);
+    const res = await fetch(`/api/audit-log?user_id=${encodeURIComponent(userId)}&limit=10`);
     const data = await res.json();
 
     tbody.innerHTML = '';

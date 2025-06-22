@@ -13,10 +13,10 @@ const API_BASE =
   (window.ENV && window.ENV.API_BASE_URL)
     ? window.ENV.API_BASE_URL
     : window.API_BASE_URL ||
-      'https://thronestead.onrender.com';
+      '';
 
 // ✅ Secondary backend used if the primary API_BASE fails
-const FALLBACK_BASE = 'https://thronestead.onrender.com';
+const FALLBACK_BASE = '';
 
 // ✅ Ensures loading overlay exists and returns reference
 function getOverlay() {

@@ -60,7 +60,7 @@ async function loadConflicts() {
   tbody.innerHTML = '<tr><td colspan="10">Loading conflicts...</td></tr>';
 
   try {
-    const data = await jsonFetch('https://thronestead.onrender.com/api/conflicts/all', { headers });
+    const data = await jsonFetch('/api/conflicts/all', { headers });
     conflicts = data.wars || [];
     applyFilters();
   } catch (err) {
@@ -168,7 +168,7 @@ async function openWarModal(warId) {
   modal.innerHTML = '<div class="modal-content"><p>Loading...</p></div>';
 
   try {
-    const data = await jsonFetch(`https://thronestead.onrender.com/api/conflicts/${warId}`, { headers });
+    const data = await jsonFetch(`/api/conflicts/${warId}`, { headers });
     const w = data.war || {};
     const tickPct = w.battle_tick ? Math.min(w.battle_tick * 100 / 12, 100) : 0;
     const participants = [w.alliance_a_name, w.alliance_b_name].filter(Boolean);

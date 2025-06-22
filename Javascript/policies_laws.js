@@ -31,8 +31,8 @@ async function loadPoliciesAndLaws() {
     };
 
     const [userData, { entries: catalogData }] = await Promise.all([
-      jsonFetch('https://thronestead.onrender.com/api/policies-laws/user', { headers }),
-      jsonFetch('https://thronestead.onrender.com/api/policies-laws/catalogue', { headers })
+      jsonFetch('/api/policies-laws/user', { headers }),
+      jsonFetch('/api/policies-laws/catalogue', { headers })
     ]);
 
     const activePolicy = userData.active_policy;
@@ -88,7 +88,7 @@ async function loadPoliciesAndLaws() {
         const policyId = parseInt(btn.dataset.id);
         btn.disabled = true;
         try {
-          await jsonFetch('https://thronestead.onrender.com/api/policies-laws/policy', {
+          await jsonFetch('/api/policies-laws/policy', {
             method: 'POST',
             headers,
             body: JSON.stringify({ policy_id: policyId })
@@ -129,7 +129,7 @@ async function updateLawToggles(headers) {
     .map(t => parseInt(t.dataset.id));
 
   try {
-    await jsonFetch('https://thronestead.onrender.com/api/policies-laws/laws', {
+    await jsonFetch('/api/policies-laws/laws', {
       method: 'POST',
       headers,
       body: JSON.stringify({ law_ids: selected })

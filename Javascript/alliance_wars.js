@@ -30,8 +30,8 @@ async function loadAllianceWars() {
 
   try {
     const [activeRes, fullRes] = await Promise.all([
-      fetch('https://thronestead.onrender.com/api/alliance-wars/active'),
-      fetch('https://thronestead.onrender.com/api/alliance-wars/list')
+      fetch('/api/alliance-wars/active'),
+      fetch('/api/alliance-wars/list')
     ]);
     const activeWars = (await activeRes.json()).wars || [];
     const allWars = await fullRes.json();
@@ -91,7 +91,7 @@ async function viewWarDetails(war) {
   currentWarId = war.alliance_war_id || war.id;
   switchTab('tab-overview');
   try {
-    const res = await fetch(`https://thronestead.onrender.com/api/alliance-wars/view?alliance_war_id=${currentWarId}`);
+    const res = await fetch(`/api/alliance-wars/view?alliance_war_id=${currentWarId}`);
     const { war: w, score, map } = await res.json();
     renderWarOverview(w, score);
     renderBattleMap(map?.tile_map || []);
@@ -143,7 +143,7 @@ function renderBattleMap(tileMap) {
 async function loadCombatLogs() {
   if (!currentWarId) return;
   try {
-    const res = await fetch(`https://thronestead.onrender.com/api/alliance-wars/combat-log?alliance_war_id=${currentWarId}`);
+    const res = await fetch(`/api/alliance-wars/combat-log?alliance_war_id=${currentWarId}`);
     const logs = (await res.json()).combat_logs || [];
     const logEl = document.getElementById('combat-log');
     logEl.innerHTML = '<strong>Combat Log:</strong><hr>' + logs.map(l =>
@@ -156,7 +156,7 @@ async function loadCombatLogs() {
 // ✅ Score
 async function loadScoreboard() {
   try {
-    const res = await fetch(`https://thronestead.onrender.com/api/alliance-wars/scoreboard?alliance_war_id=${currentWarId}`);
+    const res = await fetch(`/api/alliance-wars/scoreboard?alliance_war_id=${currentWarId}`);
     renderScoreboard(await res.json());
   } catch (err) {
     console.error("Scoreboard error:", err);
@@ -211,7 +211,7 @@ function stopCombatPolling() {
 async function declareWar() {
   const targetId = document.getElementById('target-alliance-id').value;
   if (!targetId) return;
-  const res = await fetch('https://thronestead.onrender.com/api/battle/declare', {
+  const res = await fetch('/api/battle/declare', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ target_alliance_id: parseInt(targetId) })
@@ -224,7 +224,7 @@ async function declareWar() {
 async function loadPendingWars() {
   const container = document.getElementById('pending-wars-list');
   container.innerHTML = 'Loading...';
-  const res = await fetch('https://thronestead.onrender.com/api/alliance-wars/list');
+  const res = await fetch('/api/alliance-wars/list');
   const data = await res.json();
   const pending = (data.upcoming_wars || []).filter(w => w.war_status === 'pending');
   container.innerHTML = pending.length === 0
@@ -235,7 +235,7 @@ async function loadPendingWars() {
     ).join('');
   document.querySelectorAll('.accept-war-btn').forEach(btn =>
     btn.addEventListener('click', async () => {
-      await fetch('https://thronestead.onrender.com/api/alliance-wars/respond', {
+      await fetch('/api/alliance-wars/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alliance_war_id: parseInt(btn.dataset.id), action: 'accept' })
@@ -246,7 +246,7 @@ async function loadPendingWars() {
 
 // ✅ Join/Surrender
 async function joinWar(side) {
-  await fetch('https://thronestead.onrender.com/api/alliance-wars/join', {
+  await fetch('/api/alliance-wars/join', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ alliance_war_id: currentWarId, side })
@@ -255,7 +255,7 @@ async function joinWar(side) {
   await loadScoreboard();
 }
 async function surrenderWar() {
-  await fetch('https://thronestead.onrender.com/api/alliance-wars/surrender', {
+  await fetch('/api/alliance-wars/surrender', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ alliance_war_id: currentWarId, side: 'attacker' })
@@ -272,7 +272,7 @@ async function surrenderWar() {
 
 // 2. Load Active Wars
 async function loadActiveWars() {
-  const res = await fetch('https://thronestead.onrender.com/api/battle/wars');
+  const res = await fetch('/api/battle/wars');
   const wars = await res.json();
   document.getElementById('wars-container').innerHTML = wars
     .map(w => `
@@ -286,7 +286,7 @@ async function loadActiveWars() {
 
 // 3. Load War History
 async function loadWarHistory() {
-  const res = await fetch('https://thronestead.onrender.com/api/battle/history');
+  const res = await fetch('/api/battle/history');
   const history = await res.json();
   document.getElementById('history-container').innerHTML = history
     .map(
@@ -303,7 +303,7 @@ async function loadWarHistory() {
 
 // 4. Combat Log (Live Battle)
 async function pollCombatLog(warId) {
-  const res = await fetch(`https://thronestead.onrender.com/api/battle/combat_log/${warId}`);
+  const res = await fetch(`/api/battle/combat_log/${warId}`);
   const logs = await res.json();
   document.getElementById('combat-log').innerHTML += logs
     .map(l => `<div>${l.timestamp}: ${l.message}</div>`)

@@ -25,7 +25,7 @@ async function loadNetwork() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const headers = session ? { 'X-User-ID': session.user.id } : {};
-    const res = await fetch('https://thronestead.onrender.com/api/treaty_web/data', { headers });
+    const res = await fetch('/api/treaty_web/data', { headers });
     const data = await res.json();
 
     rawData.nodes = (data.alliances || []).map(a => ({

@@ -54,7 +54,7 @@ async function loadPlayerTable() {
   tableBody.innerHTML = "<tr><td colspan='8'>Loading players...</td></tr>";
 
   try {
-    const res = await fetch(`https://thronestead.onrender.com/api/admin/players?search=${encodeURIComponent(query)}`);
+    const res = await fetch(`/api/admin/players?search=${encodeURIComponent(query)}`);
     const { players } = await res.json();
 
     tableBody.innerHTML = players?.length
@@ -110,7 +110,7 @@ async function handleBulkAction(action) {
   if (!confirm(`Perform "${action}" on ${selected.length} players?`)) return;
 
   try {
-    const res = await fetch("https://thronestead.onrender.com/api/admin/bulk_action", {
+    const res = await fetch("/api/admin/bulk_action", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, player_ids: selected })
@@ -143,7 +143,7 @@ async function showModalConfirm(title, userId, action) {
 
   newConfirmBtn.addEventListener("click", async () => {
     try {
-      const res = await fetch("https://thronestead.onrender.com/api/admin/player_action", {
+      const res = await fetch("/api/admin/player_action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, player_id: userId })
