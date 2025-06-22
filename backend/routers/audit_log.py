@@ -3,6 +3,13 @@
 # Version: 6.20.2025.22.45
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: audit_log.py
+Role: API routes for audit log.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session

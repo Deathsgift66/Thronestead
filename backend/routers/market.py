@@ -1,3 +1,10 @@
+"""
+Project: Thronestead ©
+File: market.py
+Role: API routes for market.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, conint, PositiveFloat
 from sqlalchemy import or_

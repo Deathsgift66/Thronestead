@@ -3,6 +3,13 @@
 # Version 6.13.2025.20.00
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_treaties_router.py
+Role: API routes for alliance treaties router.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text

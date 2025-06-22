@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: kingdom_military.py
+Role: API routes for kingdom military.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 

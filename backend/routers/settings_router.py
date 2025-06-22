@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: settings_router.py
+Role: API routes for settings router.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any

@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: village_modifiers.py
+Role: API routes for village modifiers.
+Version: 2025-06-21
+"""
+
 from datetime import datetime
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel

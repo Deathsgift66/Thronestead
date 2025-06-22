@@ -3,6 +3,13 @@
 # Version: 6.13.2025.19.49 (Polished)
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_management.py
+Role: API routes for alliance management.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session

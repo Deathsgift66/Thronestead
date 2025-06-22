@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: villages_router.py
+Role: API routes for villages router.
+Version: 2025-06-21
+"""
+
 import json
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException

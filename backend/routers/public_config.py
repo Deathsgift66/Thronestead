@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: public_config.py
+Role: API routes for public config.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter
 import os
 

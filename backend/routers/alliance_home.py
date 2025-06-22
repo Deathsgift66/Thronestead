@@ -3,6 +3,13 @@
 # Version: 6.13.2025.19.49 (Patched)
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_home.py
+Role: API routes for alliance home.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text

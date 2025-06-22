@@ -1,3 +1,10 @@
+"""
+Project: Thronestead ©
+File: kingdom.py
+Role: API routes for kingdom.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel

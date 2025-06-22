@@ -1,3 +1,10 @@
+"""
+Project: Thronestead ©
+File: test_profile_route.py
+Role: Unit tests for test profile route.
+Version: 2025-06-21
+"""
+
 import pytest
 from httpx import AsyncClient
 from backend.main import app

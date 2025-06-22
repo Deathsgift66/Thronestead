@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: forgot_password.py
+Role: API routes for forgot password.
+Version: 2025-06-21
+"""
+
 import hashlib
 import os
 import time

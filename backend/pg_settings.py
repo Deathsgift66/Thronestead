@@ -1,3 +1,10 @@
+"""
+Project: Thronestead ©
+File: pg_settings.py
+Role: PostgreSQL configuration helper.
+Version: 2025-06-21
+"""
+
 from fastapi import Request
 import json
 import logging

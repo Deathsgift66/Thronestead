@@ -3,6 +3,13 @@
 # Version 6.16.2025.21.20
 # Developer: Codex
 
+"""
+Project: Thronestead ©
+File: leaderboard.py
+Role: API routes for leaderboard.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, or_

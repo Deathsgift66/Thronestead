@@ -3,6 +3,13 @@
 # Version: 6.14.2025
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_members_view.py
+Role: API routes for alliance members view.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from ..security import require_user_id
 from ..supabase_client import get_supabase_client

@@ -3,6 +3,13 @@
 # Version: 6.20.2025.23.22
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_vault.py
+Role: API routes for alliance vault.
+Version: 2025-06-21
+"""
+
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

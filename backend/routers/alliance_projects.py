@@ -3,6 +3,13 @@
 # Version: 6.14.2025
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: alliance_projects.py
+Role: API routes for alliance projects.
+Version: 2025-06-21
+"""
+
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: homepage.py
+Role: API routes for homepage.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict
 from ..supabase_client import get_supabase_client

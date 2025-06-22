@@ -2,6 +2,13 @@
 # File Name: battle.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+"""
+Project: Thronestead ©
+File: battle.py
+Role: API routes for battle.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel

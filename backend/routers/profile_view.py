@@ -3,6 +3,13 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+"""
+Project: Thronestead ©
+File: profile_view.py
+Role: API routes for profile view.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
