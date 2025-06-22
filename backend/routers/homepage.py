@@ -11,13 +11,30 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, HTTPException
-from typing import List, Dict
+from typing import List
+from pydantic import BaseModel
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/homepage", tags=["homepage"])
 
 
-@router.get("/featured", response_model=Dict[str, List[Dict]], summary="Homepage News", description="Fetches latest 5 published news articles for the homepage.")
+class ArticleSummary(BaseModel):
+    id: int | None = None
+    title: str | None = None
+    summary: str | None = None
+    published_at: str | None = None
+
+
+class FeaturedNewsResponse(BaseModel):
+    articles: List[ArticleSummary]
+
+
+@router.get(
+    "/featured",
+    response_model=FeaturedNewsResponse,
+    summary="Homepage News",
+    description="Fetches latest 5 published news articles for the homepage.",
+)
 def featured_news():
     """
     ✅ Pulls the 5 most recent news articles from the `news_articles` table in Supabase.
@@ -38,13 +55,13 @@ def featured_news():
 
     rows = getattr(res, "data", res) or []
     articles = [
-        {
-            "id": r.get("id"),
-            "title": r.get("title"),
-            "summary": r.get("summary"),
-            "published_at": r.get("published_at"),
-        }
+        ArticleSummary(
+            id=r.get("id"),
+            title=r.get("title"),
+            summary=r.get("summary"),
+            published_at=r.get("published_at"),
+        )
         for r in rows
     ]
 
-    return {"articles": articles}
+    return FeaturedNewsResponse(articles=articles)
