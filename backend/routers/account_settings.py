@@ -83,8 +83,9 @@ async def profile(request: Request):
     return templates.TemplateResponse("profile.html", {"request": request})
 
 
-@router.post("/update")
+@router.post("/update", response_model=None)
 def update_profile(
+    request: Request,
     payload: UpdatePayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
