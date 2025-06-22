@@ -6,6 +6,7 @@
 import { escapeHTML } from './utils.js';
 
 import { supabase } from './supabaseClient.js';
+import { API_BASE_URL } from '../env.js';
 let eventSource;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -31,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Real-time updates via SSE
   try {
-    eventSource = new EventSource('/api/admin/audit-log/stream');
+    eventSource = new EventSource(`${API_BASE_URL}/api/admin/audit-log/stream`);
     eventSource.onmessage = (ev) => {
       const log = JSON.parse(ev.data);
       prependLogRow(log);
