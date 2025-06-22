@@ -43,7 +43,7 @@ TOKEN_PACKAGES = {
 }
 
 
-@router.get("/balance", response_model=None)
+@router.get("/balance")
 def token_balance(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return current token balance and token properties."""
     tokens = get_balance(db, user_id)
@@ -54,7 +54,7 @@ def token_balance(user_id: str = Depends(verify_jwt_token), db: Session = Depend
     }
 
 
-@router.post("/redeem", response_model=None)
+@router.post("/redeem")
 def redeem_tokens(payload: RedeemPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Redeem tokens for a perk."""
     perk = PERK_CATALOG.get(payload.perk_id)
@@ -67,7 +67,7 @@ def redeem_tokens(payload: RedeemPayload, user_id: str = Depends(verify_jwt_toke
     return {"message": "redeemed", "perk": payload.perk_id}
 
 
-@router.post("/buy", response_model=None)
+@router.post("/buy")
 def buy_tokens(payload: BuyPayload, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Add tokens to the user's balance for the selected package."""
     amount = TOKEN_PACKAGES.get(payload.package_id)

@@ -18,7 +18,7 @@ from services.message_service import count_unread_messages
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
 
-@router.get("/overview", response_model=None)
+@router.get("/overview")
 def profile_overview(user_id: str = Depends(verify_jwt_token)):
     """
     Return summary profile information and unread message count for the authenticated user.

@@ -39,7 +39,7 @@ class SurrenderPayload(BaseModel):
 
 # ----------- War Lifecycle Routes -----------
 
-@router.post("/declare", response_model=None)
+@router.post("/declare")
 def declare_war(payload: DeclarePayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     row = db.execute(
         text(
@@ -53,7 +53,7 @@ def declare_war(payload: DeclarePayload, user_id: str = Depends(require_user_id)
     return {"status": "pending", "alliance_war_id": row[0]}
 
 
-@router.post("/respond", response_model=None)
+@router.post("/respond")
 def respond_war(payload: RespondPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     status = "active" if payload.action == "accept" else "cancelled"
     db.execute(
@@ -71,7 +71,7 @@ def respond_war(payload: RespondPayload, user_id: str = Depends(require_user_id)
     return {"status": status}
 
 
-@router.post("/surrender", response_model=None)
+@router.post("/surrender")
 def surrender_war(payload: SurrenderPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     victor = "defender" if payload.side == "attacker" else "attacker"
     db.execute(
@@ -88,10 +88,10 @@ def surrender_war(payload: SurrenderPayload, user_id: str = Depends(require_user
 
 # ----------- Viewing & Tracking -----------
 
-@router.get("/list", response_model=None)
+@router.get("/list")
 def list_wars(alliance_id: int, db: Session = Depends(get_db)):
     rows = db.execute(text("""
-        SELECT * FROM alliance_wars 
+        SELECT * FROM alliance_wars
         WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid
         ORDER BY start_date DESC
     """), {"aid": alliance_id}).mappings().fetchall()
@@ -104,7 +104,7 @@ def list_wars(alliance_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/view", response_model=None)
+@router.get("/view")
 def view_war_details(alliance_war_id: int, db: Session = Depends(get_db)):
     war = db.execute(
         text("SELECT * FROM alliance_wars WHERE alliance_war_id = :wid"),
@@ -115,7 +115,7 @@ def view_war_details(alliance_war_id: int, db: Session = Depends(get_db)):
     return {"war": war}
 
 
-@router.get("/active", response_model=None)
+@router.get("/active")
 def list_active_wars(db: Session = Depends(get_db)):
     rows = db.execute(text("SELECT * FROM alliance_wars WHERE war_status = 'active'"))
     return {"wars": [dict(r._mapping) for r in rows]}
@@ -128,7 +128,7 @@ class JoinPayload(BaseModel):
     side: str  # "attacker" or "defender"
 
 
-@router.get("/combat-log", response_model=None)
+@router.get("/combat-log")
 def get_combat_log(alliance_war_id: int, db: Session = Depends(get_db)):
     rows = db.execute(
         text(
@@ -139,7 +139,7 @@ def get_combat_log(alliance_war_id: int, db: Session = Depends(get_db)):
     return {"combat_logs": [dict(r) for r in rows]}
 
 
-@router.get("/scoreboard", response_model=None)
+@router.get("/scoreboard")
 def get_scoreboard(alliance_war_id: int, db: Session = Depends(get_db)):
     row = db.execute(
         text("SELECT * FROM alliance_war_scores WHERE alliance_war_id = :wid"),
@@ -148,7 +148,7 @@ def get_scoreboard(alliance_war_id: int, db: Session = Depends(get_db)):
     return row or {}
 
 
-@router.post("/join", response_model=None)
+@router.post("/join")
 def join_war(payload: JoinPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     from .progression_router import get_kingdom_id
 
@@ -175,7 +175,7 @@ class PreplanPayload(BaseModel):
     preplan_jsonb: dict
 
 
-@router.get("/preplan", response_model=None)
+@router.get("/preplan")
 def get_preplan(alliance_war_id: int, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     from .progression_router import get_kingdom_id
 
@@ -191,7 +191,7 @@ def get_preplan(alliance_war_id: int, user_id: str = Depends(require_user_id), d
     return {"plan": row["preplan_jsonb"] if row else {}}
 
 
-@router.post("/preplan/submit", response_model=None)
+@router.post("/preplan/submit")
 def submit_preplan(payload: PreplanPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     from .progression_router import get_kingdom_id
 

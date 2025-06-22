@@ -17,7 +17,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/alliance-members", tags=["alliance_members_view"])
 
 
-@router.get("/view", response_model=None)
+@router.get("/view")
 def view_alliance_members(user_id: str = Depends(require_user_id)):
     """
     Returns detailed information about all members in the same alliance

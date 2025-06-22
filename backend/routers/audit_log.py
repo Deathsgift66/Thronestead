@@ -29,7 +29,7 @@ class LogPayload(BaseModel):
     details: str
 
 
-@router.get("/", response_model=None)
+@router.get("/")
 def get_audit_logs(
     user_id: str | None = Query(None, description="Filter logs by user ID"),
     kingdom_id: int | None = Query(None, description="Filter logs by Kingdom ID"),
@@ -48,7 +48,7 @@ def get_audit_logs(
     return {"logs": logs}
 
 
-@router.post("/", response_model=None)
+@router.post("/")
 def create_audit_log(
     payload: LogPayload,
     _uid: str = Depends(verify_jwt_token),

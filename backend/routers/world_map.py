@@ -20,7 +20,7 @@ from ..security import verify_jwt_token
 router = APIRouter(prefix="/api/world-map", tags=["world-map"])
 
 
-@router.get("/tiles", response_model=None)
+@router.get("/tiles")
 def get_world_map_tiles(
     db: Session = Depends(get_db),
     user_id: str = Depends(verify_jwt_token),

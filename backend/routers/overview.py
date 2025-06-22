@@ -22,7 +22,7 @@ from services.resource_service import get_kingdom_resources
 router = APIRouter(prefix="/api/overview", tags=["overview"])
 
 
-@router.get("/", response_model=None)
+@router.get("/")
 def get_overview(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

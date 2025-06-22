@@ -24,7 +24,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/login", tags=["login"])
 
 
-@router.get("/announcements", response_class=JSONResponse, response_model=None)
+@router.get("/announcements", response_class=JSONResponse)
 def get_announcements():
     """
     🔔 Fetch the 10 most recent public login screen announcements.
@@ -64,7 +64,7 @@ class EventPayload(BaseModel):
     event: str
 
 
-@router.post("/event", response_model=None)
+@router.post("/event")
 def log_login_event(
     payload: EventPayload,
     user_id: str = Depends(verify_jwt_token),

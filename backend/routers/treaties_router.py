@@ -29,7 +29,7 @@ class TreatyPayload(BaseModel):
     modifiers: Optional[dict] = Field(default_factory=dict, description="Optional modifiers for the treaty")
 
 
-@router.get("/alliance/treaties", summary="List alliance treaties", response_model=None)
+@router.get("/alliance/treaties", summary="List alliance treaties")
 def list_alliance_treaties() -> dict:
     """
     Return the list of proposed or active treaties for the player's alliance (stubbed as alliance_id=1).
@@ -37,7 +37,7 @@ def list_alliance_treaties() -> dict:
     return {"treaties": alliance_treaties.get(1, [])}
 
 
-@router.post("/alliance/treaties", summary="Propose an alliance treaty", response_model=None)
+@router.post("/alliance/treaties", summary="Propose an alliance treaty")
 def propose_alliance_treaty(payload: TreatyPayload) -> dict:
     """
     Submit a new treaty proposal to the alliance (stubbed as alliance_id=1).
@@ -47,7 +47,7 @@ def propose_alliance_treaty(payload: TreatyPayload) -> dict:
     return {"message": "Treaty proposed", "treaty": payload.dict()}
 
 
-@router.get("/kingdom/treaties", summary="List kingdom treaties", response_model=None)
+@router.get("/kingdom/treaties", summary="List kingdom treaties")
 async def list_kingdom_treaties(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db)
@@ -59,7 +59,7 @@ async def list_kingdom_treaties(
     return {"treaties": kingdom_treaties.get(kid, [])}
 
 
-@router.post("/kingdom/treaties", summary="Propose a kingdom treaty", response_model=None)
+@router.post("/kingdom/treaties", summary="Propose a kingdom treaty")
 def propose_kingdom_treaty(
     payload: TreatyPayload,
     user_id: str = Depends(require_user_id),

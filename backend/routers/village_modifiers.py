@@ -38,7 +38,7 @@ class ModifierPayload(BaseModel):
 
 
 # === GET: List all active modifiers for a village ===
-@router.get("/{village_id}", summary="List Active Modifiers", response_model=None)
+@router.get("/{village_id}", summary="List Active Modifiers")
 def list_modifiers(
     village_id: int,
     _uid: str = Depends(require_user_id),
@@ -79,7 +79,7 @@ def list_modifiers(
 
 
 # === POST: Apply or update a modifier ===
-@router.post("/apply", summary="Apply Village Modifier", response_model=None)
+@router.post("/apply", summary="Apply Village Modifier")
 def apply_modifier(
     payload: ModifierPayload,
     _uid: str = Depends(require_user_id),
@@ -125,7 +125,7 @@ def apply_modifier(
 
 
 # === POST: Cleanup expired modifiers ===
-@router.post("/cleanup_expired", summary="Purge Expired Modifiers", response_model=None)
+@router.post("/cleanup_expired", summary="Purge Expired Modifiers")
 def cleanup_expired(
     _uid: str = Depends(require_user_id),
     db: Session = Depends(get_db),

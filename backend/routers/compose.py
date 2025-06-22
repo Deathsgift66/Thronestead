@@ -56,8 +56,8 @@ class WarPayload(BaseModel):
 # Message Routes
 # ------------------------------
 
-@router.post("/send-message", response_model=None)
-@router.post("/message", response_model=None)
+@router.post("/send-message")
+@router.post("/message")
 def send_message(
     payload: MessagePayload,
     user_id: str = Depends(verify_jwt_token),
@@ -90,7 +90,7 @@ def send_message(
 # Notice Routes
 # ------------------------------
 
-@router.post("/notice", response_model=None)
+@router.post("/notice")
 def create_notice(
     payload: NoticePayload,
     user_id: str = Depends(verify_jwt_token),
@@ -121,7 +121,7 @@ def create_notice(
 # Treaty Routes
 # ------------------------------
 
-@router.post("/treaty", response_model=None)
+@router.post("/treaty")
 def propose_treaty(
     payload: TreatyPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -157,7 +157,7 @@ def propose_treaty(
 # War Routes
 # ------------------------------
 
-@router.post("/war", response_model=None)
+@router.post("/war")
 def declare_war(
     payload: WarPayload,
     user_id: str = Depends(verify_jwt_token),

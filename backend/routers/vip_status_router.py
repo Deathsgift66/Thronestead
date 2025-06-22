@@ -22,7 +22,7 @@ from services.vip_status_service import get_vip_status
 router = APIRouter(prefix="/api/kingdom", tags=["vip"])
 alt_router = APIRouter(tags=["vip"])
 
-@router.get("/vip_status", response_model=None)
+@router.get("/vip_status")
 def vip_status(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),

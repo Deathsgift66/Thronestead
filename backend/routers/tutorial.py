@@ -17,7 +17,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/tutorial", tags=["tutorial"])
 
 
-@router.get("/steps", summary="Get Tutorial Steps", response_model=None)
+@router.get("/steps", summary="Get Tutorial Steps")
 async def steps(user_id: str = Depends(require_user_id)):
     """
     Fetch ordered tutorial steps from the 'tutorial_steps' table for the authenticated user.

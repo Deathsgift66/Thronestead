@@ -49,7 +49,7 @@ class RegisterPayload(BaseModel):
 
 # ------------- Route Endpoints -------------------
 
-@router.post("/check", response_model=None)
+@router.post("/check")
 def check_availability(payload: CheckPayload):
     """
     Check if a kingdom name or username is available.
@@ -90,7 +90,7 @@ def check_availability(payload: CheckPayload):
     }
 
 
-@router.get("/stats", response_model=None)
+@router.get("/stats")
 def signup_stats():
     """
     Return top kingdoms for display on the signup screen.
@@ -110,7 +110,7 @@ def signup_stats():
         raise HTTPException(status_code=500, detail="Failed to fetch kingdom stats") from exc
 
 
-@router.post("/create_user", response_model=None)
+@router.post("/create_user")
 def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
     """
     Create the user's basic profile record after authentication setup.
@@ -159,7 +159,7 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to create user") from e
 
 
-@router.post("/register", response_model=None)
+@router.post("/register")
 def register(payload: RegisterPayload, db: Session = Depends(get_db)):
     """
     Create a Supabase auth user and register their kingdom profile.

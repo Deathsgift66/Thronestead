@@ -29,7 +29,7 @@ class DeclarePayload(BaseModel):
     target: str
     war_reason: str | None = None
 
-@router.post("/declare", response_model=None)
+@router.post("/declare")
 def declare_war(
     payload: DeclarePayload,
     user_id: str = Depends(verify_jwt_token),
@@ -100,7 +100,7 @@ def _serialize_war(war: War) -> dict:
         "defender_score": war.defender_score,
     }
 
-@router.get("/list", response_model=None)
+@router.get("/list")
 def list_wars(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
@@ -117,7 +117,7 @@ def list_wars(
     )
     return {"wars": [_serialize_war(w) for w in rows]}
 
-@router.get("/view", response_model=None)
+@router.get("/view")
 def view_war(
     war_id: int,
     user_id: str = Depends(verify_jwt_token),

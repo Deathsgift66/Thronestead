@@ -41,7 +41,7 @@ class CancelPayload(BaseModel):
     queue_id: int = Field(..., description="Queue ID to cancel")
 
 
-@router.post("/start", summary="Start training", response_description="Queue ID of the training order", response_model=None)
+@router.post("/start", summary="Start training", response_description="Queue ID of the training order")
 def start_training(
     payload: TrainOrderPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -69,7 +69,7 @@ def start_training(
     return {"queue_id": queue_id}
 
 
-@router.get("", summary="List training queue", response_description="All active training orders", response_model=None)
+@router.get("", summary="List training queue", response_description="All active training orders")
 def list_queue(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
@@ -86,7 +86,7 @@ def list_queue(
     return {"queue": queue}
 
 
-@router.post("/cancel", summary="Cancel training order", response_description="Confirmation of cancellation", response_model=None)
+@router.post("/cancel", summary="Cancel training order", response_description="Confirmation of cancellation")
 def cancel_order(
     payload: CancelPayload,
     user_id: str = Depends(verify_jwt_token),

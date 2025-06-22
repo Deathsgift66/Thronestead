@@ -20,7 +20,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"])
 
 
-@router.get("/", response_model=None)
+@router.get("/")
 def get_alliance_changelog(
     start: Optional[str] = None,
     end: Optional[str] = None,
@@ -42,7 +42,7 @@ def get_alliance_changelog(
     alliance_res = supabase.table("alliance_members").select("alliance_id").eq("user_id", user_id).single().execute()
     if getattr(alliance_res, "error", None) or not getattr(alliance_res, "data", None):
         raise HTTPException(status_code=403, detail="User is not in an alliance")
-    
+
     alliance_id = alliance_res.data["alliance_id"]
     all_logs = []
 

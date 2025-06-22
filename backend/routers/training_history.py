@@ -34,7 +34,7 @@ class TrainingPayload(BaseModel):
     modifiers_applied: dict | None = Field(default_factory=dict, description="Applied training modifiers")
 
 
-@router.get("", summary="Get training history", response_description="List of recent training records", response_model=None)
+@router.get("", summary="Get training history", response_description="List of recent training records")
 def get_history(
     kingdom_id: int = Query(..., description="Kingdom ID to fetch history for"),
     limit: int = Query(50, ge=1, le=500, description="Max number of entries to return"),
@@ -51,7 +51,7 @@ def get_history(
     return {"history": records}
 
 
-@router.post("", summary="Record training history", response_description="ID of created history record", response_model=None)
+@router.post("", summary="Record training history", response_description="ID of created history record")
 def create_history(payload: TrainingPayload, db: Session = Depends(get_db)):
     """
     Record a new troop training history event for a given kingdom.

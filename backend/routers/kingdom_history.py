@@ -34,7 +34,7 @@ class HistoryPayload(BaseModel):
     event_details: str
 
 
-@router.get("", response_model=None)
+@router.get("")
 def kingdom_history(
     kingdom_id: int = Query(..., description="Kingdom ID to fetch history for"),
     limit: int = Query(50, le=500, description="Limit number of records returned (max 500)"),
@@ -47,7 +47,7 @@ def kingdom_history(
     return {"history": records}
 
 
-@router.post("", response_model=None)
+@router.post("")
 def create_history(
     payload: HistoryPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -62,7 +62,7 @@ def create_history(
     return {"message": "logged"}
 
 
-@router.get("/{kingdom_id}/full", response_model=None)
+@router.get("/{kingdom_id}/full")
 def full_history(
     kingdom_id: int,
     user_id: str = Depends(verify_jwt_token),

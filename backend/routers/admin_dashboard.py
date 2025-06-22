@@ -40,7 +40,7 @@ def verify_admin(user_id: str, db: Session) -> None:
 # ---------------------
 # 📊 Dashboard Summary
 # ---------------------
-@router.get("/dashboard", response_model=None)
+@router.get("/dashboard")
 def dashboard_summary(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -71,7 +71,7 @@ def dashboard_summary(
 # ---------------------
 # 🔍 Audit Log Search
 # ---------------------
-@router.get("/audit/logs", response_model=None)
+@router.get("/audit/logs")
 def get_audit_logs(
     page: int = 1,
     per_page: int = 50,
@@ -114,7 +114,7 @@ def get_audit_logs(
 # ---------------------
 # ⚙️ System Flag Toggle
 # ---------------------
-@router.post("/flags/toggle", response_model=None)
+@router.post("/flags/toggle")
 def toggle_flag(
     flag_key: str,
     value: bool,
@@ -134,7 +134,7 @@ def toggle_flag(
 # ---------------------
 # 🏰 Kingdom Updates
 # ---------------------
-@router.post("/kingdoms/update", response_model=None)
+@router.post("/kingdoms/update")
 def update_kingdom_field(
     kingdom_id: int,
     field: str,
@@ -166,7 +166,7 @@ def update_kingdom_field(
 # ---------------------
 # 🚩 Flagged User Review
 # ---------------------
-@router.get("/flagged", response_model=None)
+@router.get("/flagged")
 def get_flagged_users(
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -185,7 +185,7 @@ class WarAction(BaseModel):
     war_id: int
 
 
-@router.post("/wars/force_end", response_model=None)
+@router.post("/wars/force_end")
 def force_end_war(
     payload: WarAction,
     admin_user_id: str = Depends(require_user_id),
@@ -201,7 +201,7 @@ def force_end_war(
     return {"status": "ended", "war_id": payload.war_id}
 
 
-@router.post("/wars/rollback_tick", response_model=None)
+@router.post("/wars/rollback_tick")
 def rollback_combat_tick(
     payload: WarAction,
     admin_user_id: str = Depends(require_user_id),
@@ -229,7 +229,7 @@ class RollbackRequest(BaseModel):
     password: str
 
 
-@router.post("/rollback/database", response_model=None)
+@router.post("/rollback/database")
 def rollback_database(
     payload: RollbackRequest,
     admin_user_id: str = Depends(require_user_id),

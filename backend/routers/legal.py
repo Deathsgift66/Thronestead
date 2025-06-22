@@ -15,11 +15,11 @@ from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/legal", tags=["legal"])
 
-@router.get("/documents", response_model=None)
+@router.get("/documents")
 def list_documents():
     """
     📚 Retrieve all legal documents (ToS, Privacy Policy, etc.)
-    
+
     Returns:
         - id (int): Unique document ID
         - title (str): Name of the legal document
