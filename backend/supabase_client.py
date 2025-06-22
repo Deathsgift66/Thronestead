@@ -27,21 +27,28 @@ except ImportError as e:  # pragma: no cover
 # -------------------------------
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 # -------------------------------
 # ⚙️ Create Supabase Client
 # -------------------------------
 supabase: "Client | None" = None
 
-if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-    logging.error("❌ Missing Supabase credentials: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set.")
+if not SUPABASE_URL:
+    logging.error("❌ Missing Supabase URL")
 else:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-        logging.info("✅ Supabase client initialized successfully.")
-    except Exception:
-        logging.exception("❌ Failed to initialize Supabase client.")
-        supabase = None
+    key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY
+    if not key:
+        logging.error(
+            "❌ Missing Supabase credentials: SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY not set."
+        )
+    else:
+        try:
+            supabase = create_client(SUPABASE_URL, key)
+            logging.info("✅ Supabase client initialized successfully.")
+        except Exception:
+            logging.exception("❌ Failed to initialize Supabase client.")
+            supabase = None
 
 # -------------------------------
 # 🧰 Exported Client Accessor
@@ -55,5 +62,7 @@ def get_supabase_client() -> "Client":
         RuntimeError: if the client failed to initialize
     """
     if supabase is None:
-        raise RuntimeError("Supabase client not initialized. Check SUPABASE_URL and SERVICE_ROLE_KEY.")
+        raise RuntimeError(
+            "Supabase client not initialized. Check SUPABASE_URL and credentials."
+        )
     return supabase

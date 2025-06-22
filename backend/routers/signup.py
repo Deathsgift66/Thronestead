@@ -13,6 +13,7 @@ Version: 2025-06-21
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
+import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -20,6 +21,8 @@ from backend.models import Notification
 
 from ..supabase_client import get_supabase_client
 from ..database import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/signup", tags=["signup"])
 
@@ -167,16 +170,25 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
     sb = get_supabase_client()
 
     try:
-        res = sb.auth.admin.create_user(
-            email=payload.email,
-            password=payload.password,
-            user_metadata={
-                "display_name": payload.display_name,
-                "username": payload.username,
-            },
+        res = sb.auth.sign_up(
+            {
+                "email": payload.email,
+                "password": payload.password,
+                "options": {
+                    "data": {
+                        "display_name": payload.display_name,
+                        "username": payload.username,
+                    }
+                },
+            }
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to create auth user") from exc
+        logger.exception("❌ Failed to create auth user")
+        raise HTTPException(status_code=500, detail="Internal server error during signup.") from exc
+
+    if isinstance(res, dict) and res.get("error"):
+        logger.error("Supabase signup error: %s", res["error"])
+        raise HTTPException(status_code=400, detail=res["error"].get("message", "Signup failed"))
 
     # Extract the newly created user ID
     uid = (
