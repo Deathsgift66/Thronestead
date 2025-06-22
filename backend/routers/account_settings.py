@@ -209,8 +209,11 @@ def logout_session(
     return {"message": "session revoked"}
 
 
-@alt_router.get("/settings")
-async def get_user_settings(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+@alt_router.get("/settings", response_model=None)
+async def get_user_settings(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     """Return all user setting entries as a key-value map."""
     rows = db.execute(
         text("SELECT setting_key, setting_value FROM user_setting_entries WHERE user_id = :uid"),
@@ -219,8 +222,12 @@ async def get_user_settings(user_id: str = Depends(verify_jwt_token), db: Sessio
     return {r[0]: r[1] for r in rows}
 
 
-@alt_router.post("/settings")
-async def update_user_settings(settings: dict, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+@alt_router.post("/settings", response_model=None)
+async def update_user_settings(
+    settings: dict,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     """Insert or update user setting entries."""
     for key, value in settings.items():
         db.execute(
