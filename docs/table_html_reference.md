@@ -7,7 +7,6 @@ This document maps key PostgreSQL tables and their important columns to the HTML
 **Used In**:
 - `login.html`: Supabase auth login to read/write `users`
 - `signup.html`: new rows inserted (username, email)
-- `account_settings.html`: update profile fields (display name, bio, avatar)
 - `profile.html`: display avatar, username, kingdom name, motto
 - `alliance_home.html`: query `alliance_id` to load alliance info
 - `overview.html`: fetch `kingdom_id` to load resources
