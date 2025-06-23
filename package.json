@@ -11,7 +11,7 @@
     "validate-links": "node scripts/validate-links.js",
     "lint": "eslint . --ext .js,.mjs --ignore-path .gitignore",
     "clean": "rm -rf dist",
-    "build": "vite build && cp -r Assets dist",
+    "build": "vite build",
     "test": "echo \"No tests defined\""
   },
   "devDependencies": {
