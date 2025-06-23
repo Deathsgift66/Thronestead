@@ -1,12 +1,14 @@
+import { supabase } from '../supabaseClient.js';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-function getAuthToken() {
-  const session = JSON.parse(localStorage.getItem("supabase.auth.token"));
-  return session?.currentSession?.access_token || null;
+async function getAuthToken() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || null;
 }
 
-function getHeaders(isJson = true) {
-  const token = getAuthToken();
+async function getHeaders(isJson = true) {
+  const token = await getAuthToken();
   const headers = {};
 
   if (isJson) headers["Content-Type"] = "application/json";
@@ -31,7 +33,7 @@ async function handleResponse(response) {
 export async function apiGet(endpoint) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: "GET",
-    headers: getHeaders(),
+    headers: await getHeaders(),
   });
   return handleResponse(response);
 }
@@ -39,7 +41,7 @@ export async function apiGet(endpoint) {
 export async function apiPost(endpoint, body = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: "POST",
-    headers: getHeaders(),
+    headers: await getHeaders(),
     body: JSON.stringify(body),
   });
   return handleResponse(response);
@@ -48,7 +50,7 @@ export async function apiPost(endpoint, body = {}) {
 export async function apiPut(endpoint, body = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: "PUT",
-    headers: getHeaders(),
+    headers: await getHeaders(),
     body: JSON.stringify(body),
   });
   return handleResponse(response);
@@ -57,7 +59,7 @@ export async function apiPut(endpoint, body = {}) {
 export async function apiDelete(endpoint) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: "DELETE",
-    headers: getHeaders(),
+    headers: await getHeaders(),
   });
   return handleResponse(response);
 }
