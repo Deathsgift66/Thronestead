@@ -229,6 +229,15 @@ def upgrade_castle(
     return {"message": "Castle upgraded", "castle_level": level}
 
 
+# 🔹 POST: Upgrade Castle (explicit route)
+@router.post("/castle/upgrade")
+def upgrade_castle_explicit(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
+    """Alias for :func:`upgrade_castle` using a more descriptive path."""
+    return upgrade_castle(user_id=user_id, db=db)
+
+
 # 🔹 GET/POST: Nobles
 @router.get("/nobles")
 def get_nobles(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
