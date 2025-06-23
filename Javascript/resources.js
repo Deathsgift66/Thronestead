@@ -61,7 +61,7 @@ function renderResourceSummary(resources) {
 
   const totalResources = Object.entries(resources)
     .filter(([key]) => key !== "kingdom_id")
-    .reduce((sum, [_, val]) => sum + (val || 0), 0);
+    .reduce((sum, [, val]) => sum + (val || 0), 0);
 
   summaryEl.innerHTML = `
     <h3>Total Resources</h3>

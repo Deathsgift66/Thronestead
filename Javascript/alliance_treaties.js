@@ -2,7 +2,6 @@
 // File Name: alliance_treaties.js
 // Version 6.30.2025
 // Developer: Codex
-import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
 // -------------------- Initialization --------------------

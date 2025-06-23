@@ -81,6 +81,10 @@ function setupRealtime() {
       await loadSteps();
     })
     .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    if (tutorialChannel) supabase.removeChannel(tutorialChannel);
+  });
 }
 
 // ✅ Progress bar tracker

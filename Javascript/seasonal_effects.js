@@ -23,7 +23,7 @@ async function loadSeasonalEffects(session) {
   };
 
   // Set placeholders
-  Object.entries(ui).forEach(([_, el]) => {
+  Object.entries(ui).forEach(([, el]) => {
     el.innerHTML = `<p>Loading...</p>`;
   });
 

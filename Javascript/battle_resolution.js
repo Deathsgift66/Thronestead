@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       action: 'view_battle_resolution',
       details: `War ${warId}`
     });
-  } catch (e) {
+  } catch {
     console.warn('audit log insert failed');
   }
 });

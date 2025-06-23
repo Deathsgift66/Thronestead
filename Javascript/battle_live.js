@@ -58,64 +58,6 @@ window.addEventListener('beforeunload', () => {
   if (scoreboardChannel) supabase.removeChannel(scoreboardChannel);
 });
 
-// =============================================
-// LOAD TERRAIN
-// =============================================
-async function loadTerrain() {
-  try {
-    const response = await fetch(`/api/battle/terrain/${warId}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-User-ID': userId
-      }
-    });
-    const data = await response.json();
-    mapWidth = data.map_width;
-    mapHeight = data.map_height;
-    renderBattleMap(data.tile_map);
-  } catch (err) {
-    console.error('Error loading terrain:', err);
-  }
-}
-
-// =============================================
-// LOAD UNITS
-// =============================================
-async function loadUnits() {
-  try {
-    const response = await fetch(`/api/battle/units/${warId}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-User-ID': userId
-      }
-    });
-    const data = await response.json();
-    renderUnits(data.units);
-  } catch (err) {
-    console.error('Error loading units:', err);
-  }
-}
-
-// =============================================
-// LOAD COMBAT LOGS
-// =============================================
-async function loadCombatLogs() {
-  try {
-    const response = await fetch(`/api/battle/logs/${warId}?since=${logsTick}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-User-ID': userId
-      }
-    });
-    const data = await response.json();
-    if (data.combat_logs.length) {
-      logsTick = data.combat_logs[data.combat_logs.length - 1].tick_number;
-    }
-    renderCombatLog(data.combat_logs);
-  } catch (err) {
-    console.error('Error loading combat logs:', err);
-  }
-}
 
 // =============================================
 // LOAD STATUS
@@ -175,7 +117,7 @@ export async function triggerNextTick() {
         'X-User-ID': userId
       }
     });
-    const data = await response.json();
+    await response.json();
     refreshBattle();
   } catch (err) {
     console.error('Error triggering next tick:', err);
@@ -302,19 +244,6 @@ function renderCombatLog(logs) {
 // =============================================
 // SCOREBOARD (Supabase)
 // =============================================
-async function loadScoreboard() {
-  try {
-    const { data, error } = await supabase
-      .from('war_scores')
-      .select('attacker_score, defender_score, victor')
-      .eq('war_id', warId)
-      .single();
-    if (error) throw error;
-    if (data) renderScoreboard(data);
-  } catch (err) {
-    console.error('Error loading scoreboard:', err);
-  }
-}
 
 function renderScoreboard(score) {
   if (!score) return;

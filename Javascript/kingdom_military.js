@@ -114,22 +114,10 @@ async function loadTrainingHistory() {
 }
 
 // 📦 Format cost object to string
-function formatCost(costObj) {
-  if (!costObj || typeof costObj !== "object") return "Unknown";
-  return Object.entries(costObj).map(([k, v]) => `${v} ${k}`).join(", ");
-}
 
 // 🧼 Sanitize display text
 
 // ⏱ Format timestamps to readable string
-function formatTimestamp(ts) {
-  if (!ts) return "Unknown";
-  const date = new Date(ts);
-  return date.toLocaleString(undefined, {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit"
-  });
-}
 
 // 🕓 Update timestamp label
 function updateLastUpdated() {

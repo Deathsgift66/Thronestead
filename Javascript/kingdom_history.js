@@ -6,12 +6,10 @@ import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
 let kingdomId = null;
-let userId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return (window.location.href = 'login.html');
-  userId = user.id;
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return;

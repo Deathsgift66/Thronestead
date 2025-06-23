@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   currentUser = session.user;
   authToken = session.access_token;
 
-  const { data: profile, error } = await supabase
+  const { data: profile } = await supabase
     .from('users')
     .select('setup_complete, display_name, kingdom_id, kingdom_name')
     .eq('user_id', currentUser.id)
@@ -150,7 +150,7 @@ async function loadVIPStatus() {
       headers: { 'X-User-ID': currentUser.id }
     });
     vipLevel = data.vip_level || 0;
-  } catch (err) {
+  } catch {
     console.warn('Could not load VIP status.');
   }
 }
@@ -188,7 +188,7 @@ async function loadRegions() {
       }
       infoEl.innerHTML = html;
     });
-  } catch (err) {
+  } catch {
     regionEl.innerHTML = '<option value="">Failed to load regions</option>';
   }
 }
@@ -202,7 +202,7 @@ async function loadAnnouncements() {
     el.innerHTML = announcements.map(a =>
       `<div class="announcement"><h4>${escapeHTML(a.title)}</h4><p>${escapeHTML(a.content)}</p></div>`
     ).join('');
-  } catch (err) {
+  } catch {
     el.innerHTML = '<p>Error loading announcements.</p>';
   }
 }

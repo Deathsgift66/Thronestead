@@ -11,7 +11,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const warId = parseInt(urlParams.get('war_id'), 10) || 0;
 
 let replayData = null;
-let battleData = [];
 let currentTick = 0;
 let tickInterval = 1000;
 let playTimeline = null;
@@ -107,7 +106,7 @@ export function renderTick(tick) {
     const index = u.position_y * 60 + u.position_x;
     const node = grid.selectAll('div.tile').nodes()[index];
     if (node) {
-      const unitDiv = d3.select(node)
+      d3.select(node)
         .append('div')
         .attr('class', 'unit-icon')
         .text(u.icon)
