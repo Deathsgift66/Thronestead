@@ -41,16 +41,20 @@ Developer: Deathsgift66
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
 
   <!-- Scripts -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
   <script src="/Javascript/preplan_editor.js" type="module"></script>
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/authGuard.js" type="module"></script>
+  <script src="/Javascript/apiHelper.js" type="module"></script>
+  <script src="/Javascript/navLoader.js" type="module"></script>
+  <script src="/Javascript/resourceBar.js" type="module"></script>
 </head>
 
 <body>
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
 
   <!-- Navbar -->
-  <div id="navbar-container" role="navigation" aria-label="Main Menu"></div>
-  <script src="/Javascript/navLoader.js" type="module"></script>
 
   <!-- Header -->
   <header class="kr-top-banner" aria-label="Pre-Plan Editor Banner">
