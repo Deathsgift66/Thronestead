@@ -27,7 +27,8 @@ from . import routers as router_pkg
 # -----------------------
 # ⚙️ FastAPI Initialization
 # -----------------------
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+log_level = os.getenv("LOG_LEVEL")
+logging.basicConfig(level=log_level if log_level else logging.INFO)
 logger = logging.getLogger("Thronestead.BackendMain")
 
 app = FastAPI(
@@ -94,7 +95,8 @@ for name in router_pkg.__all__:
 # -----------------------
 # 🖼️ Static File Serving (Frontend SPA)
 # -----------------------
-BASE_DIR = Path(os.getenv("FRONTEND_DIR", Path(__file__).resolve().parent.parent))
+_frontend = os.getenv("FRONTEND_DIR")
+BASE_DIR = Path(_frontend) if _frontend else Path(__file__).resolve().parent.parent
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
 # -----------------------

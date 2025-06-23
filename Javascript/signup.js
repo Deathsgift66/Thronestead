@@ -8,7 +8,7 @@ import {
   validatePasswordComplexity,
   debounce
 } from './utils.js';
-import { API_BASE_URL } from './config.js';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');

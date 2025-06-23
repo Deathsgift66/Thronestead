@@ -44,9 +44,12 @@ RESET_STORE: dict[str, tuple[str, float]] = {}  # token_hash: (user_id, expiry)
 VERIFIED_SESSIONS: dict[str, tuple[str, float]] = {}  # user_id: (token_hash, expiry)
 RATE_LIMIT: dict[str, list[float]] = {}  # IP: [timestamps]
 
-TOKEN_TTL = int(os.getenv("PASSWORD_RESET_TOKEN_TTL", "900"))  # 15 minutes
-SESSION_TTL = int(os.getenv("PASSWORD_RESET_SESSION_TTL", "600"))  # 10 minutes
-RATE_LIMIT_MAX = int(os.getenv("PASSWORD_RESET_RATE_LIMIT", "3"))  # 3 per hour
+_token_ttl = os.getenv("PASSWORD_RESET_TOKEN_TTL")
+TOKEN_TTL = int(_token_ttl) if _token_ttl else 900  # 15 minutes
+_session_ttl = os.getenv("PASSWORD_RESET_SESSION_TTL")
+SESSION_TTL = int(_session_ttl) if _session_ttl else 600  # 10 minutes
+_rate_limit = os.getenv("PASSWORD_RESET_RATE_LIMIT")
+RATE_LIMIT_MAX = int(_rate_limit) if _rate_limit else 3  # 3 per hour
 
 
 # ---------------------------------------------

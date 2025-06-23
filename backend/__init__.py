@@ -12,12 +12,6 @@ This file assumes FastAPI app structure, Supabase SDK, and environment-based con
 import os
 import logging
 
-try:
-    from dotenv import load_dotenv
-except Exception:  # pragma: no cover - optional in some environments
-    def load_dotenv(*_: object, **__: object) -> None:
-        """Fallback when python-dotenv is unavailable."""
-        return None
 
 try:
     from supabase import create_client, Client
@@ -25,8 +19,7 @@ except Exception:  # pragma: no cover - optional in tests
     create_client = None  # type: ignore
     Client = None  # type: ignore
 
-# Load .ENV variables (Render environment uses system variables by default)
-load_dotenv(".ENV")
+# Environment variables are expected to be provided by the host system
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

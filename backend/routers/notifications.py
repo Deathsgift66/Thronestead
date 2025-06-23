@@ -26,8 +26,10 @@ from backend.models import Notification
 
 # Streaming configuration constants
 # Allow tuning via environment variables for easier production scaling
-STREAM_INTERVAL = int(os.getenv("NOTIFICATION_STREAM_INTERVAL", "5"))
-MAX_STREAM_CYCLES = int(os.getenv("NOTIFICATION_MAX_CYCLES", "30"))
+_interval = os.getenv("NOTIFICATION_STREAM_INTERVAL")
+STREAM_INTERVAL = int(_interval) if _interval else 5
+_cycles = os.getenv("NOTIFICATION_MAX_CYCLES")
+MAX_STREAM_CYCLES = int(_cycles) if _cycles else 30
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
