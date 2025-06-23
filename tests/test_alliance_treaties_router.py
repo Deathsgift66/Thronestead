@@ -25,3 +25,24 @@ def test_get_treaty_types_returns_rows():
     db.rows = [{"treaty_type": "NAP", "display_name": "Non-Aggression Pact"}]
     result = router.get_treaty_types(db=db)
     assert result["types"][0]["treaty_type"] == "NAP"
+
+
+def test_alt_propose_delegates(monkeypatch):
+    """alt_propose_treaty should delegate to propose_treaty."""
+
+    called = {}
+
+    def dummy_propose(payload, user_id=None, db=None):
+        called["payload"] = payload
+        called["user_id"] = user_id
+        called["db"] = db
+        return {"status": "proposed"}
+
+    monkeypatch.setattr(router, "propose_treaty", dummy_propose)
+    payload = router.ProposePayload(treaty_type="NAP", partner_alliance_id=2)
+    db = object()
+    res = router.alt_propose_treaty(payload, user_id="u1", db=db)
+    assert res["status"] == "proposed"
+    assert called["payload"] == payload
+    assert called["user_id"] == "u1"
+    assert called["db"] is db

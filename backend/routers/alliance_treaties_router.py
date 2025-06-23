@@ -21,6 +21,7 @@ from ..database import get_db
 from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
+alt_router = APIRouter(prefix="/api/alliance/treaties", tags=["alliance_treaties"])
 
 
 @router.get("/types")
@@ -147,6 +148,21 @@ def propose_treaty(
     log_alliance_activity(db, aid, user_id, "Treaty Proposed", payload.treaty_type)
     log_action(db, user_id, "Treaty Proposed", payload.treaty_type)
     return {"status": "proposed"}
+
+
+# --------------------
+# Alternative REST-style endpoints
+# --------------------
+
+
+@alt_router.post("/propose")
+def alt_propose_treaty(
+    payload: ProposePayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Alias for :func:`propose_treaty` using REST-style path."""
+    return propose_treaty(payload, user_id, db)
 
 
 @router.post("/respond")
