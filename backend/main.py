@@ -93,6 +93,9 @@ for name in router_pkg.__all__:
         alt_obj = getattr(module, "alt_router", None)
         if alt_obj:
             app.include_router(alt_obj)
+        custom_obj = getattr(module, "custom_router", None)
+        if custom_obj:
+            app.include_router(custom_obj)
     except Exception as e:
         logger.exception(f"❌ Failed to import or include router '{name}': {e}")
         raise
