@@ -229,6 +229,15 @@ def upgrade_castle(
     return {"message": "Castle upgraded", "castle_level": level}
 
 
+# 🔹 POST: Upgrade Castle (explicit route)
+@router.post("/castle/upgrade")
+def upgrade_castle_explicit(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
+    """Alias for :func:`upgrade_castle` using a more descriptive path."""
+    return upgrade_castle(user_id=user_id, db=db)
+
+
 # 🔹 GET/POST: Nobles
 @router.get("/nobles")
 def get_nobles(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
@@ -307,6 +316,42 @@ def assign_knight(
     db.commit()
     calculate_troop_slots(db, kid)
     return {"message": "Knight assigned"}
+
+
+# 🗡️ POST: Promote Knight
+@router.post("/knights/promote")
+def promote_knight(
+    payload: KnightPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+
+    row = db.execute(
+        text(
+            "SELECT knight_id, rank FROM kingdom_knights WHERE kingdom_id = :kid AND knight_name = :name"
+        ),
+        {"kid": kid, "name": payload.knight_name},
+    ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Knight not found")
+
+    knight_id, current_rank = row
+    ranks = ["Squire", "Knight", "Champion", "Paladin"]
+    try:
+        idx = ranks.index(current_rank)
+        new_rank = ranks[idx + 1] if idx < len(ranks) - 1 else current_rank
+    except ValueError:
+        new_rank = "Knight"
+
+    db.execute(
+        text("UPDATE kingdom_knights SET rank = :rank WHERE knight_id = :id"),
+        {"rank": new_rank, "id": knight_id},
+    )
+
+    db.commit()
+    return {"message": "Knight promoted", "new_rank": new_rank}
 
 
 # 🔹 POST: Force Recalculate Progression

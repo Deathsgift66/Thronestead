@@ -26,6 +26,7 @@ router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
 alt_router = APIRouter(prefix="/api/vault", tags=["alliance_vault"])
 custom_router = APIRouter(prefix="/api/alliance/custom", tags=["alliance_vault"])
 
+
 VAULT_RESOURCES = [
     "wood",
     "stone",
@@ -256,4 +257,15 @@ alt_router.post("/withdraw")(withdraw_resource)
 alt_router.get("/transactions")(get_transaction_history)
 alt_router.get("/interest")(calculate_interest)
 alt_router.get("/tax-policy")(view_tax_policy)
+
 custom_router.get("/vault")(custom_board)
+
+
+# CUSTOM ROUTES
+custom_router.get("/summary")(get_vault_summary)
+custom_router.post("/deposit")(deposit_resource)
+custom_router.post("/withdraw")(withdraw_resource)
+custom_router.get("/history")(get_transaction_history)
+custom_router.get("/interest")(calculate_interest)
+custom_router.get("/tax-policy")(view_tax_policy)
+
