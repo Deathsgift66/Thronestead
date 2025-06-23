@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { authFetchJson } from './fetchJson.js';
 import { showToast, getValue, setText } from './utils.js';
 

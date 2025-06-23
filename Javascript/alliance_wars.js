@@ -2,7 +2,7 @@
 // File Name: alliance_wars.js
 // Version 6.16.2025.00.00
 // Developer: Codex
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { loadCustomBoard } from './customBoard.js';
 import { escapeHTML } from './utils.js';
 import { setupTabs } from './components/tabControl.js';

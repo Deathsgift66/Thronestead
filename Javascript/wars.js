@@ -5,7 +5,7 @@
 // Unified War Command Center — Page Controller
 import { escapeHTML } from './utils.js';
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   setupControls();

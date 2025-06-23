@@ -2,7 +2,7 @@
 // File Name: kingdom_profile.js
 // Version 6.15.2025.22.00
 // Developer: Codex
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { authFetchJson } from './fetchJson.js';
 
 let targetKingdomId = null;

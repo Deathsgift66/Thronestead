@@ -6,7 +6,7 @@
 import { escapeHTML } from './utils.js';
 import { fetchJson, authFetchJson } from './fetchJson.js';
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
 // Currently authenticated user and session

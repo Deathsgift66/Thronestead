@@ -2,7 +2,7 @@
 // File Name: alliance_vault.js
 // Version 6.15.2025.00.00
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 import { loadCustomBoard } from './customBoard.js';
 import { escapeHTML } from './utils.js';

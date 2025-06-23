@@ -2,7 +2,7 @@
 // File Name: black_market.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { showToast, escapeHTML } from './utils.js';
 import { authHeaders, getAuth } from './auth.js';
 

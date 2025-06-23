@@ -2,7 +2,7 @@
 // File Name: navbar.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const picEl = document.getElementById('nav-profile-pic');

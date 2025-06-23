@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
-import { readdirSync, copyFileSync } from 'fs';
+import { readdirSync } from 'fs';
 import { resolve } from 'path';
 
-// Discover all HTML files in the project root so Vite builds every page
+// Build all HTML files in the project root
 const htmlEntries = {};
 for (const file of readdirSync(__dirname)) {
   if (file.endsWith('.html')) {
@@ -20,12 +20,4 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
   },
-  plugins: [{
-    name: 'copy-env',
-    buildEnd() {
-      try {
-        copyFileSync('env.js', resolve(__dirname, 'dist/env.js'));
-      } catch {}
-    }
-  }],
 });

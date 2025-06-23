@@ -3,7 +3,7 @@
 // Version 6.14.2025.21.12
 // Developer: Codex
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { showToast } from './utils.js';
 
 const feed = document.getElementById('notification-feed');

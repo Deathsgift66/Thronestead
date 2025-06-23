@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 // world_map.js — Tile-based world map engine for Thronestead
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 let currentSession;
 let mapChannel;

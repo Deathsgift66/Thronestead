@@ -2,7 +2,7 @@
 // File Name: news.js
 // Version 6.15.2025.00.00
 // Developer: Codex
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { formatDate } from './utils.js';
 
 let newsChannel = null;
