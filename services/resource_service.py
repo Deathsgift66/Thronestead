@@ -20,10 +20,33 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------------------
 
 RESOURCE_TYPES = {
-    "wood", "stone", "iron_ore", "gold", "food", "coal", "livestock", "clay", "flax",
-    "tools", "wood_planks", "refined_stone", "iron_ingots", "charcoal", "leather",
-    "arrows", "swords", "axes", "shields", "armour", "wagon", "siege_weapons",
-    "jewelry", "spear", "horses", "pitchforks", "gems"
+    "wood",
+    "stone",
+    "iron_ore",
+    "gold",
+    "food",
+    "coal",
+    "livestock",
+    "clay",
+    "flax",
+    "tools",
+    "wood_planks",
+    "refined_stone",
+    "iron_ingots",
+    "charcoal",
+    "leather",
+    "arrows",
+    "swords",
+    "axes",
+    "shields",
+    "armour",
+    "wagon",
+    "siege_weapons",
+    "jewelry",
+    "spear",
+    "horses",
+    "pitchforks",
+    "gems",
 }
 
 # Fields that should never be returned to clients when using Supabase
@@ -48,7 +71,10 @@ def fetch_supabase_resources(user_id: str) -> Optional[dict[str, int]]:
             .execute()
         )
         if getattr(kid_resp, "status_code", 200) >= 400:
-            logger.error("Supabase error fetching kingdom: %s", getattr(kid_resp, "error", "unknown"))
+            logger.error(
+                "Supabase error fetching kingdom: %s",
+                getattr(kid_resp, "error", "unknown"),
+            )
             return None
 
         kid = (getattr(kid_resp, "data", kid_resp) or {}).get("kingdom_id")
@@ -63,7 +89,10 @@ def fetch_supabase_resources(user_id: str) -> Optional[dict[str, int]]:
             .execute()
         )
         if getattr(res_resp, "status_code", 200) >= 400:
-            logger.error("Supabase error fetching resources: %s", getattr(res_resp, "error", "unknown"))
+            logger.error(
+                "Supabase error fetching resources: %s",
+                getattr(res_resp, "error", "unknown"),
+            )
             return None
 
         row = getattr(res_resp, "data", res_resp) or {}
@@ -75,9 +104,11 @@ def fetch_supabase_resources(user_id: str) -> Optional[dict[str, int]]:
         logger.exception("Error retrieving resources from Supabase")
         return None
 
+
 # ------------------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------------------
+
 
 def validate_resource(resource: str) -> None:
     """Raise ``ValueError`` if ``resource`` is not defined in ``RESOURCE_TYPES``."""
@@ -86,10 +117,7 @@ def validate_resource(resource: str) -> None:
 
 
 def _apply_resource_changes(
-    db: Session,
-    kingdom_id: int,
-    changes: dict[str, int],
-    op: Literal["+", "-"]
+    db: Session, kingdom_id: int, changes: dict[str, int], op: Literal["+", "-"]
 ) -> None:
     """Apply resource increments or decrements atomically.
 
@@ -120,16 +148,24 @@ def _apply_resource_changes(
         if amt < 0:
             raise ValueError("Resource amounts must be positive")
         set_expr.append(
-            f"{res} = COALESCE({res}, 0) + :{res}" if op == "+" else f"{res} = {res} - :{res}"
+            f"{res} = COALESCE({res}, 0) + :{res}"
+            if op == "+"
+            else f"{res} = {res} - :{res}"
         )
 
-    sql = "UPDATE kingdom_resources SET " + ", ".join(set_expr) + " WHERE kingdom_id = :kid"
+    sql = (
+        "UPDATE kingdom_resources SET "
+        + ", ".join(set_expr)
+        + " WHERE kingdom_id = :kid"
+    )
     db.execute(text(sql), {**changes, "kid": kingdom_id})
     db.commit()
+
 
 # ------------------------------------------------------------------------------
 # Public Methods
 # ------------------------------------------------------------------------------
+
 
 def get_kingdom_resources(db: Session, kingdom_id: int, *, lock: bool = False) -> dict:
     """Return current resource values for a kingdom.

@@ -30,6 +30,7 @@ nobles: Set[str] = set()
 # ⚔️ Knights Dictionary (id → data)
 knights: Dict[str, Dict[str, int]] = {}
 
+
 # ---------------------------
 # 🏗️ Castle Progression Logic
 # ---------------------------
@@ -39,6 +40,7 @@ def progress_castle() -> int:
         castle_state["level"] += 1
         logger.info("🏰 Castle leveled up! New level: %s", castle_state["level"])
     return castle_state["level"]
+
 
 # ---------------------------
 # 👑 Noble Management
@@ -52,6 +54,7 @@ def add_noble(name: str) -> None:
         else:
             logger.debug("Noble '%s' already exists.", name)
 
+
 def remove_noble(name: str) -> None:
     """Remove a noble if they exist."""
     with _state_lock:
@@ -60,6 +63,7 @@ def remove_noble(name: str) -> None:
             logger.info("❌ Noble '%s' removed.", name)
         else:
             logger.debug("Noble '%s' not found.", name)
+
 
 # ---------------------------
 # 🛡️ Knight Promotion System
@@ -72,6 +76,7 @@ def add_knight(knight_id: str, rank: int = 1) -> None:
             logger.info("🛡️ Knight '%s' added with rank %s.", knight_id, rank)
         else:
             logger.debug("Knight '%s' already exists.", knight_id)
+
 
 def promote_knight(knight_id: str) -> int:
     """
@@ -89,6 +94,7 @@ def promote_knight(knight_id: str) -> int:
         new_rank = knights[knight_id]["rank"]
         logger.info("⬆️ Knight '%s' promoted to rank %s.", knight_id, new_rank)
         return new_rank
+
 
 # ---------------------------
 # 🔄 State Utilities

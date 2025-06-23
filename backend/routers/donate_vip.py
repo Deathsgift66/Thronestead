@@ -23,6 +23,7 @@ from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/vip", tags=["vip"])
 
+
 # --------------------
 # Pydantic Models
 # --------------------
@@ -107,7 +108,11 @@ def donate(
     is_founder = record.get("founder", False)
 
     # Founders get permanent max-tier status
-    new_expires = None if is_founder else datetime.utcnow() + timedelta(days=tier["duration_days"])
+    new_expires = (
+        None
+        if is_founder
+        else datetime.utcnow() + timedelta(days=tier["duration_days"])
+    )
     if is_founder:
         new_level = max(record["vip_level"], new_level)
 

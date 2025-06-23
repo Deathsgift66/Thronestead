@@ -78,4 +78,11 @@ def test_fetch_filtered_logs_params():
 def test_fetch_user_related_logs_keys():
     db = DummyDB()
     result = fetch_user_related_logs(db, "u2")
-    assert set(result.keys()) >= {"global", "alliance", "vault", "grants", "loans", "training"}
+    assert set(result.keys()) >= {
+        "global",
+        "alliance",
+        "vault",
+        "grants",
+        "loans",
+        "training",
+    }

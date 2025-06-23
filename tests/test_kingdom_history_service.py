@@ -2,7 +2,12 @@
 # File Name: test_kingdom_history_service.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from services.kingdom_history_service import log_event, fetch_history, fetch_full_history
+from services.kingdom_history_service import (
+    log_event,
+    fetch_history,
+    fetch_full_history,
+)
+
 
 class DummyResult:
     def __init__(self, row=None, rows=None):
@@ -17,6 +22,7 @@ class DummyResult:
 
     def mappings(self):
         return self
+
 
 class DummyDB:
     def __init__(self):
@@ -53,6 +59,7 @@ class DummyDB:
 
     def commit(self):
         pass
+
 
 def test_log_event_inserts():
     db = DummyDB()

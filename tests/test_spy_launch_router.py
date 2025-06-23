@@ -25,15 +25,17 @@ def setup_db():
 
 
 def seed_data(db):
-    db.add_all([
-        User(user_id="u1", username="A", email="a@example.com", kingdom_id=1),
-        User(user_id="u2", username="B", email="b@example.com", kingdom_id=2),
-        Kingdom(kingdom_id=1, user_id="u1", kingdom_name="Aking", tech_level=2),
-        Kingdom(kingdom_id=2, user_id="u2", kingdom_name="Bking", tech_level=1),
-        KingdomSpies(kingdom_id=1, spy_count=5),
-        KingdomSpies(kingdom_id=2, spy_count=5),
-        KingdomVillage(village_id=1, kingdom_id=2, village_name="V")
-    ])
+    db.add_all(
+        [
+            User(user_id="u1", username="A", email="a@example.com", kingdom_id=1),
+            User(user_id="u2", username="B", email="b@example.com", kingdom_id=2),
+            Kingdom(kingdom_id=1, user_id="u1", kingdom_name="Aking", tech_level=2),
+            Kingdom(kingdom_id=2, user_id="u2", kingdom_name="Bking", tech_level=1),
+            KingdomSpies(kingdom_id=1, spy_count=5),
+            KingdomSpies(kingdom_id=2, spy_count=5),
+            KingdomVillage(village_id=1, kingdom_id=2, village_name="V"),
+        ]
+    )
     db.add(VillageModifier(village_id=1))
     db.commit()
 
@@ -102,13 +104,16 @@ def test_daily_limit_enforced(monkeypatch):
     db = Session()
     seed_data(db)
 
-    db.query(KingdomSpies).filter_by(kingdom_id=1).update({"daily_attacks_sent": DAILY_LIMIT})
+    db.query(KingdomSpies).filter_by(kingdom_id=1).update(
+        {"daily_attacks_sent": DAILY_LIMIT}
+    )
     db.commit()
 
     with pytest.raises(HTTPException):
         launch_spy_mission(
-            LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+            LaunchPayload(
+                target_kingdom_name="Bking", mission_type="scout", num_spies=1
+            ),
             user_id="u1",
             db=db,
         )
-

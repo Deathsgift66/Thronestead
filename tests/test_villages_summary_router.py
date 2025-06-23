@@ -5,31 +5,43 @@
 from backend.routers.villages_router import get_village_summary
 from fastapi import HTTPException
 
+
 class DummyResult:
     def __init__(self, rows=None):
         self._rows = rows or []
+
     def mappings(self):
         return self
+
     def fetchone(self):
         return self._rows[0] if self._rows else None
+
     def fetchall(self):
         return self._rows
+
 
 class DummyDB:
     def __init__(self):
         self.calls = []
         self.rows = []
+
     def execute(self, query, params=None):
         self.calls.append((str(query), params))
-        if "FROM kingdom_villages WHERE village_id" in str(query) and "RETURNING" not in str(query):
+        if "FROM kingdom_villages WHERE village_id" in str(
+            query
+        ) and "RETURNING" not in str(query):
             if "SELECT kingdom_id" in str(query):
                 return DummyResult([(1,)])
-            return DummyResult([{
-                "village_id": 1,
-                "village_name": "Rivertown",
-                "village_type": "economic",
-                "created_at": 0,
-            }])
+            return DummyResult(
+                [
+                    {
+                        "village_id": 1,
+                        "village_name": "Rivertown",
+                        "village_type": "economic",
+                        "created_at": 0,
+                    }
+                ]
+            )
         if "FROM village_resources" in str(query):
             return DummyResult([{"village_id": 1, "wood": 100}])
         if "FROM village_buildings" in str(query):

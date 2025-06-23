@@ -29,10 +29,14 @@ def treaty_web_data(user_id: str = Depends(verify_jwt_token)):
 
     try:
         alliances_res = supabase.table("alliances").select("alliance_id,name").execute()
-        kingdoms_res = supabase.table("users").select("kingdom_id,kingdom_name").execute()
+        kingdoms_res = (
+            supabase.table("users").select("kingdom_id,kingdom_name").execute()
+        )
         treaties_res = supabase.table("alliance_treaties").select("*").execute()
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to load treaty web data") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to load treaty web data"
+        ) from exc
 
     return {
         "alliances": getattr(alliances_res, "data", alliances_res) or [],

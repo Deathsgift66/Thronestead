@@ -9,6 +9,7 @@ from services.training_queue_service import (
     mark_completed,
 )
 
+
 class DummyResult:
     def __init__(self, row=None, rows=None):
         self._row = row
@@ -19,6 +20,7 @@ class DummyResult:
 
     def fetchall(self):
         return self._rows
+
 
 class DummyDB:
     def __init__(self):

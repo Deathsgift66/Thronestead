@@ -1,5 +1,6 @@
 from backend.routers import admin_news
 
+
 class DummyResult:
     def __init__(self, data=None):
         self.data = data
@@ -11,6 +12,7 @@ class DummyResult:
 
     def fetchone(self):
         return self.data[0] if isinstance(self.data, list) and self.data else None
+
 
 class DummyTable:
     def __init__(self, rows=None):
@@ -39,15 +41,17 @@ class DummyTable:
             return {"data": self.rows[0] if self.rows else None}
         return {"data": self.rows}
 
+
 class DummyClient:
     def __init__(self):
         self.tables = {
             "users": DummyTable([{"display_name": "Admin"}]),
-            "news_articles": DummyTable()
+            "news_articles": DummyTable(),
         }
 
     def table(self, name):
         return self.tables[name]
+
 
 class DummyDB:
     def __init__(self):
@@ -73,4 +77,3 @@ def test_post_news_inserts_and_logs(monkeypatch):
     assert res["status"] == "posted"
     assert client.tables["news_articles"].inserted["title"] == "T"
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
-

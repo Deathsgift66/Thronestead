@@ -49,7 +49,9 @@ async def steps(user_id: str = Depends(require_user_id)):
         )
         rows = getattr(res, "data", res) or []
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to load tutorial steps") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to load tutorial steps"
+        ) from exc
 
     # Return structured tutorial list
     steps = [

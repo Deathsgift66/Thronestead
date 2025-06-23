@@ -21,6 +21,7 @@ from services.audit_service import fetch_logs, log_action
 # FastAPI router for system-wide audit logs
 router = APIRouter(prefix="/api/audit-log", tags=["audit_log"])
 
+
 # Request body for logging a new action
 class LogPayload(BaseModel):
     user_id: str | None = None

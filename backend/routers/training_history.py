@@ -24,17 +24,30 @@ router = APIRouter(prefix="/api/training-history", tags=["training_history"])
 
 class TrainingPayload(BaseModel):
     """Expected structure of a troop training history record."""
+
     kingdom_id: int = Field(..., description="Kingdom ID performing the training")
     unit_id: int = Field(..., description="ID of the trained unit type")
     unit_name: str = Field(..., description="Name of the trained unit")
     quantity: int = Field(..., gt=0, description="Number of units trained")
-    source: str = Field(..., description="Source of training (e.g., 'barracks', 'event')")
-    initiated_at: datetime = Field(..., description="Timestamp when training was initiated")
-    trained_by: str | None = Field(None, description="Trainer's name or admin (optional)")
-    modifiers_applied: dict | None = Field(default_factory=dict, description="Applied training modifiers")
+    source: str = Field(
+        ..., description="Source of training (e.g., 'barracks', 'event')"
+    )
+    initiated_at: datetime = Field(
+        ..., description="Timestamp when training was initiated"
+    )
+    trained_by: str | None = Field(
+        None, description="Trainer's name or admin (optional)"
+    )
+    modifiers_applied: dict | None = Field(
+        default_factory=dict, description="Applied training modifiers"
+    )
 
 
-@router.get("", summary="Get training history", response_description="List of recent training records")
+@router.get(
+    "",
+    summary="Get training history",
+    response_description="List of recent training records",
+)
 def get_history(
     kingdom_id: int = Query(..., description="Kingdom ID to fetch history for"),
     limit: int = Query(50, ge=1, le=500, description="Max number of entries to return"),
@@ -46,12 +59,18 @@ def get_history(
     try:
         records = fetch_history(db, kingdom_id, limit)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch training history") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch training history"
+        ) from e
 
     return {"history": records}
 
 
-@router.post("", summary="Record training history", response_description="ID of created history record")
+@router.post(
+    "",
+    summary="Record training history",
+    response_description="ID of created history record",
+)
 def create_history(payload: TrainingPayload, db: Session = Depends(get_db)):
     """
     Record a new troop training history event for a given kingdom.
@@ -69,6 +88,8 @@ def create_history(payload: TrainingPayload, db: Session = Depends(get_db)):
             modifiers_applied=payload.modifiers_applied or {},
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to record training history") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to record training history"
+        ) from e
 
     return {"history_id": history_id}

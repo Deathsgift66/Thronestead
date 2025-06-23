@@ -12,6 +12,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------
 # Spy Record Management
 # ------------------------------------------------------------
+
 
 def get_spy_record(db: Session, kingdom_id: int) -> dict:
     """
@@ -51,7 +53,9 @@ def get_spy_record(db: Session, kingdom_id: int) -> dict:
         return dict(row._mapping)
 
     except SQLAlchemyError as e:
-        logger.exception("Failed to retrieve or create spy record for kingdom %d", kingdom_id)
+        logger.exception(
+            "Failed to retrieve or create spy record for kingdom %d", kingdom_id
+        )
         raise RuntimeError("Spy record retrieval failed") from e
 
 
@@ -63,23 +67,29 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
         int: new total spy count
     """
     record = get_spy_record(db, kingdom_id)
-    new_count = min(record.get("spy_count", 0) + quantity, record.get("max_spy_capacity", 0))
+    new_count = min(
+        record.get("spy_count", 0) + quantity, record.get("max_spy_capacity", 0)
+    )
 
     db.execute(
-        text("""
+        text(
+            """
             UPDATE kingdom_spies
                SET spy_count = :cnt,
                    last_updated = NOW()
              WHERE kingdom_id = :kid
-        """),
+        """
+        ),
         {"cnt": new_count, "kid": kingdom_id},
     )
     db.commit()
     return new_count
 
+
 # ------------------------------------------------------------
 # Spy Mission Lifecycle
 # ------------------------------------------------------------
+
 
 def start_mission(
     db: Session,
@@ -144,28 +154,30 @@ def record_losses(db: Session, kingdom_id: int, loss: int) -> None:
         loss (int): number of spies lost
     """
     db.execute(
-        text("""
+        text(
+            """
             UPDATE kingdom_spies
                SET spy_count = GREATEST(spy_count - :loss, 0),
                    spies_lost = spies_lost + :loss,
                    last_updated = NOW()
              WHERE kingdom_id = :kid
-        """),
+        """
+        ),
         {"loss": loss, "kid": kingdom_id},
     )
     db.commit()
+
 
 # ------------------------------------------------------------
 # Spy Defense
 # ------------------------------------------------------------
 
+
 def get_spy_defense(db: Session, kingdom_id: int) -> int:
     """Return the espionage defense rating for a kingdom."""
     try:
         row = db.execute(
-            text(
-                "SELECT defense_rating FROM spy_defense WHERE kingdom_id = :kid"
-            ),
+            text("SELECT defense_rating FROM spy_defense WHERE kingdom_id = :kid"),
             {"kid": kingdom_id},
         ).fetchone()
         return int(row[0]) if row else 0
@@ -173,15 +185,14 @@ def get_spy_defense(db: Session, kingdom_id: int) -> int:
         logger.exception("Failed to fetch spy defense for kingdom %d", kingdom_id)
         return 0
 
+
 # ------------------------------------------------------------
 # Spy Missions Table
 # ------------------------------------------------------------
 
+
 def create_spy_mission(
-    db: Session,
-    kingdom_id: int,
-    mission_type: str,
-    target_id: Optional[int] = None
+    db: Session, kingdom_id: int, mission_type: str, target_id: Optional[int] = None
 ) -> int:
     """
     Creates a new spy mission and returns its mission_id.
@@ -194,11 +205,13 @@ def create_spy_mission(
         int: new mission ID
     """
     row = db.execute(
-        text("""
+        text(
+            """
             INSERT INTO spy_missions (kingdom_id, mission_type, target_id, status)
             VALUES (:kid, :type, :tid, 'active')
             RETURNING mission_id
-        """),
+        """
+        ),
         {"kid": kingdom_id, "type": mission_type, "tid": target_id},
     ).fetchone()
     db.commit()
@@ -213,14 +226,16 @@ def list_spy_missions(db: Session, kingdom_id: int, limit: int = 50) -> list[dic
         list of dicts containing mission info
     """
     rows = db.execute(
-        text("""
+        text(
+            """
             SELECT mission_id, kingdom_id, mission_type, target_id, status,
                    launched_at, completed_at
               FROM spy_missions
              WHERE kingdom_id = :kid
              ORDER BY launched_at DESC
              LIMIT :lim
-        """),
+        """
+        ),
         {"kid": kingdom_id, "lim": limit},
     ).fetchall()
     return [dict(r._mapping) for r in rows]
@@ -234,12 +249,14 @@ def update_mission_status(db: Session, mission_id: int, status: str) -> None:
         status (str): must be one of 'success', 'fail', 'cancelled', etc.
     """
     db.execute(
-        text("""
+        text(
+            """
             UPDATE spy_missions
                SET status = :st,
                    completed_at = NOW()
              WHERE mission_id = :mid
-        """),
+        """
+        ),
         {"st": status, "mid": mission_id},
     )
     db.commit()

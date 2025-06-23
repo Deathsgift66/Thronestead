@@ -9,4 +9,3 @@ def sanitize_plain_text(text: str, max_length: int = 255) -> str:
     if len(cleaned) > max_length:
         cleaned = cleaned[:max_length]
     return cleaned
-

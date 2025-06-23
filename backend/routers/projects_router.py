@@ -120,6 +120,4 @@ def project_status(
     kingdom_id: int,
     user_id: str = Depends(verify_jwt_token),
 ):
-    return {
-        "projects": kingdom_projects.get(kingdom_id, [])
-    }
+    return {"projects": kingdom_projects.get(kingdom_id, [])}

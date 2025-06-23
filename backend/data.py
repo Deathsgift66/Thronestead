@@ -42,8 +42,8 @@ military_state: Dict[int, Dict[str, Any]] = {
         "base_slots": 20,
         "used_slots": 0,
         "morale": 100,
-        "queue": [],      # active training queue
-        "history": [],    # completed training logs
+        "queue": [],  # active training queue
+        "history": [],  # completed training logs
     }
 }
 
@@ -98,15 +98,17 @@ DEFAULT_REGIONS: List[Dict[str, Any]] = [
 kingdom_projects: Dict[int, List[Dict]] = {}
 kingdom_villages: Dict[int, List[Dict]] = {}
 
+
 # Function to determine village cap based on castle level
 def get_max_villages_allowed(castle_level: int) -> int:
     """Return the number of villages a kingdom can support based on castle level."""
     return castle_level
 
+
 # 👑 VIP, Prestige, and Titles
-vip_levels: Dict[str, int] = {}              # user_id → vip_level
-player_titles: Dict[str, List[str]] = {}     # user_id → list of title strings
-prestige_scores: Dict[str, int] = {}         # user_id → prestige points
+vip_levels: Dict[str, int] = {}  # user_id → vip_level
+player_titles: Dict[str, List[str]] = {}  # user_id → list of title strings
+prestige_scores: Dict[str, int] = {}  # user_id → prestige points
 
 # 🤝 Diplomacy
 kingdom_treaties: Dict[int, List[Dict]] = {}
@@ -127,6 +129,7 @@ try:
     from sqlalchemy import text
     from .database import SessionLocal
 except ImportError:  # When SQLAlchemy is not available in testing
+
     def text(q: str) -> str:  # type: ignore
         """Fallback text() implementation when SQLAlchemy is missing."""
         return q

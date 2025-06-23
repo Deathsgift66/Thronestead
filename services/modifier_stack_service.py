@@ -13,6 +13,7 @@ try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:
+
     def text(q):  # type: ignore
         return q
 
@@ -67,12 +68,13 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     if region_row:
         region_code = region_row[0]
         rows = db.execute(
-            text("SELECT bonus_type, bonus_value FROM region_bonuses WHERE region_code = :code"),
+            text(
+                "SELECT bonus_type, bonus_value FROM region_bonuses WHERE region_code = :code"
+            ),
             {"code": region_code},
         ).fetchall()
         for btype, val in rows:
             _merge_stack(stack, {btype: {"value": val}}, "Region Bonus")
-
 
     # --- Completed Techs ---
     load_modifier_row(
@@ -123,7 +125,6 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         "Alliance Project",
     )
 
-
     # --- Active Treaties ---
     treaty_rows = db.execute(
         text(
@@ -146,7 +147,6 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     if treaty_mods:
         _merge_stack(stack, treaty_mods, "Treaty")
 
-
     # --- Spy Effects ---
     spy_row = db.execute(
         text("SELECT modifiers FROM kingdom_spies WHERE kingdom_id = :kid"),
@@ -155,14 +155,15 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     if spy_row and spy_row[0]:
         _merge_stack(stack, spy_row[0], "Spies")
 
-
     # --- Prestige Score (activity metric) ---
     # Prestige no longer grants combat bonuses. It is fetched only for display
     # purposes elsewhere in the codebase.
 
     # --- Global Modifiers (Events, VIP, etc.) ---
     global_mods = db.execute(
-        text("SELECT json_modifiers FROM global_modifier_settings WHERE is_active = true")
+        text(
+            "SELECT json_modifiers FROM global_modifier_settings WHERE is_active = true"
+        )
     ).fetchall()
     for (mod,) in global_mods:
         _merge_stack(stack, mod or {}, "Global")
@@ -173,9 +174,6 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
 def summarize_modifiers(mod_stack: dict) -> dict:
     """Flatten and summarize a modifier stack to total values only (no source trace)."""
     return {
-        category: {
-            key: data["total"]
-            for key, data in values.items()
-        }
+        category: {key: data["total"] for key, data in values.items()}
         for category, values in mod_stack.items()
     }

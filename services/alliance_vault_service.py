@@ -13,6 +13,7 @@ try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:  # fallback for test environments
+
     def text(q):  # type: ignore
         return q
 
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------------------
 # Vault Core Interactions
 # ------------------------------------------------------------------------------
+
 
 def get_vault_balance(db: Session, alliance_id: int) -> dict:
     """Return the current resource holdings of the alliance vault."""
@@ -41,7 +43,7 @@ def deposit_to_vault(
     user_id: Optional[str],
     resource_type: str,
     amount: int,
-    notes: str = "manual deposit"
+    notes: str = "manual deposit",
 ) -> None:
     """Deposit a resource into the alliance vault and log it."""
     if amount <= 0:
@@ -49,34 +51,46 @@ def deposit_to_vault(
 
     # Ensure vault row exists
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO alliance_vault (alliance_id)
             VALUES (:aid)
             ON CONFLICT (alliance_id) DO NOTHING
-        """),
+        """
+        ),
         {"aid": alliance_id},
     )
 
     # Apply the deposit
     db.execute(
-        text(f"""
+        text(
+            f"""
             UPDATE alliance_vault
             SET {resource_type} = COALESCE({resource_type}, 0) + :amt
             WHERE alliance_id = :aid
-        """),
+        """
+        ),
         {"aid": alliance_id, "amt": amount},
     )
 
     # Log it
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO alliance_vault_transaction_log (
                 alliance_id, user_id, action, resource_type, amount, notes
             ) VALUES (
                 :aid, :uid, 'deposit', :res, :amt, :note
             )
-        """),
-        {"aid": alliance_id, "uid": user_id, "res": resource_type, "amt": amount, "note": notes},
+        """
+        ),
+        {
+            "aid": alliance_id,
+            "uid": user_id,
+            "res": resource_type,
+            "amt": amount,
+            "note": notes,
+        },
     )
 
     db.commit()
@@ -88,7 +102,7 @@ def withdraw_from_vault(
     user_id: Optional[str],
     resource_type: str,
     amount: int,
-    notes: str = "manual withdrawal"
+    notes: str = "manual withdrawal",
 ) -> None:
     """Withdraw resources from the alliance vault and log the transaction."""
     if amount <= 0:
@@ -96,11 +110,13 @@ def withdraw_from_vault(
 
     # Check current balance
     current = db.execute(
-        text(f"""
+        text(
+            f"""
             SELECT COALESCE({resource_type}, 0)
             FROM alliance_vault
             WHERE alliance_id = :aid
-        """),
+        """
+        ),
         {"aid": alliance_id},
     ).scalar()
 
@@ -109,24 +125,34 @@ def withdraw_from_vault(
 
     # Apply the withdrawal
     db.execute(
-        text(f"""
+        text(
+            f"""
             UPDATE alliance_vault
             SET {resource_type} = GREATEST(COALESCE({resource_type}, 0) - :amt, 0)
             WHERE alliance_id = :aid
-        """),
+        """
+        ),
         {"aid": alliance_id, "amt": amount},
     )
 
     # Log the withdrawal
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO alliance_vault_transaction_log (
                 alliance_id, user_id, action, resource_type, amount, notes
             ) VALUES (
                 :aid, :uid, 'withdraw', :res, :amt, :note
             )
-        """),
-        {"aid": alliance_id, "uid": user_id, "res": resource_type, "amt": amount, "note": notes},
+        """
+        ),
+        {
+            "aid": alliance_id,
+            "uid": user_id,
+            "res": resource_type,
+            "amt": amount,
+            "note": notes,
+        },
     )
 
     db.commit()
@@ -139,14 +165,16 @@ def get_transaction_log(
 ) -> list[dict]:
     """Return recent vault transactions for the alliance."""
     rows = db.execute(
-        text("""
+        text(
+            """
             SELECT transaction_id, user_id, action, resource_type,
                    amount, notes, created_at
             FROM alliance_vault_transaction_log
             WHERE alliance_id = :aid
             ORDER BY created_at DESC
             LIMIT :lim
-        """),
+        """
+        ),
         {"aid": alliance_id, "lim": limit},
     ).fetchall()
 

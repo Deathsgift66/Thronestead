@@ -24,17 +24,40 @@ def test_get_live_battle_returns_data():
     Session = setup_db()
     db = Session()
 
-    db.add(WarsTactical(war_id=1, attacker_kingdom_id=1, defender_kingdom_id=2,
-                        phase="combat", castle_hp=90, battle_tick=5,
-                        tick_interval_seconds=60, fog_of_war=True,
-                        weather="clear"))
-    db.add(TerrainMap(terrain_id=1, war_id=1, tile_map=[["field"]],
-                      map_width=1, map_height=1))
-    db.add(UnitMovement(movement_id=1, war_id=1, kingdom_id=1,
-                        unit_type="infantry", quantity=20,
-                        position_x=0, position_y=0))
-    db.add(CombatLog(combat_id=1, war_id=1, tick_number=5,
-                     event_type="attack", damage_dealt=3))
+    db.add(
+        WarsTactical(
+            war_id=1,
+            attacker_kingdom_id=1,
+            defender_kingdom_id=2,
+            phase="combat",
+            castle_hp=90,
+            battle_tick=5,
+            tick_interval_seconds=60,
+            fog_of_war=True,
+            weather="clear",
+        )
+    )
+    db.add(
+        TerrainMap(
+            terrain_id=1, war_id=1, tile_map=[["field"]], map_width=1, map_height=1
+        )
+    )
+    db.add(
+        UnitMovement(
+            movement_id=1,
+            war_id=1,
+            kingdom_id=1,
+            unit_type="infantry",
+            quantity=20,
+            position_x=0,
+            position_y=0,
+        )
+    )
+    db.add(
+        CombatLog(
+            combat_id=1, war_id=1, tick_number=5, event_type="attack", damage_dealt=3
+        )
+    )
     db.add(WarScore(war_id=1, attacker_score=5, defender_score=1, victor=None))
     db.commit()
 

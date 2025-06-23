@@ -184,9 +184,7 @@ def test_claim_reward_sets_flag():
     Session = setup_db()
     db = Session()
     uid = create_user(db)
-    db.add(
-        QuestAllianceCatalogue(quest_code="q3", name="Three", is_active=True)
-    )
+    db.add(QuestAllianceCatalogue(quest_code="q3", name="Three", is_active=True))
     db.add(
         QuestAllianceTracking(
             alliance_id=1,
@@ -209,18 +207,30 @@ def test_alt_endpoints_work():
     Session = setup_db()
     db = Session()
     uid = create_user(db)
-    db.add(QuestAllianceCatalogue(quest_code="qa", name="AltQuest", is_active=True, duration_hours=1))
+    db.add(
+        QuestAllianceCatalogue(
+            quest_code="qa", name="AltQuest", is_active=True, duration_hours=1
+        )
+    )
     db.commit()
 
-    alliance_quests.alt_start(alliance_quests.QuestStartPayload(quest_code="qa"), user_id=uid, db=db)
+    alliance_quests.alt_start(
+        alliance_quests.QuestStartPayload(quest_code="qa"), user_id=uid, db=db
+    )
     active = alliance_quests.alt_list_quests(status="active", user_id=uid, db=db)
     assert any(q["quest_code"] == "qa" for q in active)
 
-    alliance_quests.alt_contribute(alliance_quests.ProgressPayload(quest_code="qa", amount=10), user_id=uid, db=db)
+    alliance_quests.alt_contribute(
+        alliance_quests.ProgressPayload(quest_code="qa", amount=10), user_id=uid, db=db
+    )
     detail = alliance_quests.alt_detail("qa", user_id=uid, db=db)
     assert detail["progress"] == 10
 
-    alliance_quests.alt_contribute(alliance_quests.ProgressPayload(quest_code="qa", amount=95), user_id=uid, db=db)
-    alliance_quests.alt_claim(alliance_quests.ClaimPayload(quest_code="qa"), user_id=uid, db=db)
+    alliance_quests.alt_contribute(
+        alliance_quests.ProgressPayload(quest_code="qa", amount=95), user_id=uid, db=db
+    )
+    alliance_quests.alt_claim(
+        alliance_quests.ClaimPayload(quest_code="qa"), user_id=uid, db=db
+    )
     heroes = alliance_quests.alt_heroes(user_id=uid, db=db)
     assert heroes and heroes[0]["contributions"] >= 100

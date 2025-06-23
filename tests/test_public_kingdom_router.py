@@ -5,17 +5,21 @@
 from backend.routers import public_kingdom
 from fastapi import HTTPException
 
+
 class DummyResult:
     def __init__(self, row=None):
         self._row = row
+
     def fetchone(self):
         return self._row
+
 
 class DummyDB:
     def __init__(self, row=None, villages=0):
         self.row = row
         self.villages = villages
         self.queries = []
+
     def execute(self, query, params=None):
         self.queries.append((str(query), params))
         q = str(query).lower()

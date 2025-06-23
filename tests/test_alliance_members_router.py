@@ -31,7 +31,11 @@ def test_promote_updates_rank():
     db.add(AllianceMember(alliance_id=1, user_id="u1", username="A", rank="Member"))
     db.commit()
 
-    promote(RankPayload(user_id="u1", alliance_id=1, new_rank="Leader"), user_id="admin", db=db)
+    promote(
+        RankPayload(user_id="u1", alliance_id=1, new_rank="Leader"),
+        user_id="admin",
+        db=db,
+    )
     row = db.query(AllianceMember).filter_by(user_id="u1").first()
     assert row.rank == "Leader"
 
@@ -49,7 +53,9 @@ def test_transfer_leadership_changes_leader():
     db.add(AllianceMember(alliance_id=1, user_id="u2", username="B", rank="Member"))
     db.commit()
 
-    transfer_leadership(TransferLeadershipPayload(new_leader_id="u2"), user_id="u1", db=db)
+    transfer_leadership(
+        TransferLeadershipPayload(new_leader_id="u2"), user_id="u1", db=db
+    )
     alliance = db.query(Alliance).filter_by(alliance_id=1).first()
     assert alliance.leader == "u2"
     m1 = db.query(AllianceMember).filter_by(user_id="u1").first()

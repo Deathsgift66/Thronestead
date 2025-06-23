@@ -25,22 +25,29 @@ router = APIRouter(prefix="/api/kingdom", tags=["spies"])
 
 # -------------------- Request Payloads --------------------
 
+
 class SpyMissionPayload(BaseModel):
-    mission: Optional[str] = Field(None, description="Alias for mission_type for backward compatibility")
+    mission: Optional[str] = Field(
+        None, description="Alias for mission_type for backward compatibility"
+    )
     mission_type: Optional[str] = Field(None, description="Type of mission to launch")
-    target_id: Optional[int] = Field(None, description="Target kingdom ID for the spy mission")
+    target_id: Optional[int] = Field(
+        None, description="Target kingdom ID for the spy mission"
+    )
 
 
 class TrainPayload(BaseModel):
-    quantity: int = Field(..., gt=0, le=100, description="Number of spies to train (1-100 max per call)")
+    quantity: int = Field(
+        ..., gt=0, le=100, description="Number of spies to train (1-100 max per call)"
+    )
 
 
 # -------------------- Spy Routes --------------------
 
+
 @router.get("/spies")
 def get_spy_info(
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db)
+    user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
 ) -> dict:
     """Return the player's spy count and training info."""
     kid = get_kingdom_id(db, user_id)
@@ -54,7 +61,7 @@ def get_spy_info(
 def train_spies(
     payload: TrainPayload,
     user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> dict:
     """Train a number of spies for the kingdom."""
     kid = get_kingdom_id(db, user_id)
@@ -69,7 +76,7 @@ def train_spies(
 def launch_spy_mission(
     payload: SpyMissionPayload,
     user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> dict:
     """Start a new spy mission."""
     kid = get_kingdom_id(db, user_id)
@@ -84,13 +91,14 @@ def launch_spy_mission(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to launch spy mission") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to launch spy mission"
+        ) from e
 
 
 @router.get("/spy_missions")
 def list_spy_missions(
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db)
+    user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
 ) -> dict:
     """Return all spy missions currently active for the player's kingdom."""
     kid = get_kingdom_id(db, user_id)
@@ -98,4 +106,6 @@ def list_spy_missions(
         missions = spies_service.list_spy_missions(db, kid)
         return {"missions": missions}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to load spy missions") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to load spy missions"
+        ) from e

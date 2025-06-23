@@ -21,6 +21,7 @@ from services.audit_service import log_alliance_activity
 
 router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy_center"])
 
+
 # --------------------
 # Utility
 # --------------------
@@ -65,6 +66,7 @@ class TreatyResponse(BaseModel):
 # --------------------
 # Endpoints
 # --------------------
+
 
 @router.get("/metrics/{alliance_id}")
 def alliance_metrics(alliance_id: int, db: Session = Depends(get_db)):
@@ -151,7 +153,9 @@ def propose_treaty(
         from services.alliance_treaty_service import propose_treaty as svc_propose
 
         svc_propose(db, alliance_id, payload.partner_alliance_id, payload.treaty_type)
-        log_alliance_activity(db, alliance_id, user_id, "Treaty Proposed", payload.treaty_type)
+        log_alliance_activity(
+            db, alliance_id, user_id, "Treaty Proposed", payload.treaty_type
+        )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -167,7 +171,9 @@ def respond_treaty(
     """Respond to a treaty proposal (accept or reject)."""
     aid = get_alliance_id(db, user_id)
     row = db.execute(
-        text("SELECT alliance_id, partner_alliance_id FROM alliance_treaties WHERE treaty_id = :tid"),
+        text(
+            "SELECT alliance_id, partner_alliance_id FROM alliance_treaties WHERE treaty_id = :tid"
+        ),
         {"tid": payload.treaty_id},
     ).fetchone()
 
@@ -185,7 +191,9 @@ def respond_treaty(
     else:
         raise HTTPException(status_code=400, detail="Invalid response")
 
-    log_alliance_activity(db, aid, user_id, f"Treaty {payload.response}", str(payload.treaty_id))
+    log_alliance_activity(
+        db, aid, user_id, f"Treaty {payload.response}", str(payload.treaty_id)
+    )
     return {"status": payload.response}
 
 
@@ -197,7 +205,9 @@ def renew_treaty(
 ):
     """Renew an existing treaty by expiring the old one and creating a new active record."""
     row = db.execute(
-        text("SELECT alliance_id, partner_alliance_id, treaty_type FROM alliance_treaties WHERE treaty_id = :tid"),
+        text(
+            "SELECT alliance_id, partner_alliance_id, treaty_type FROM alliance_treaties WHERE treaty_id = :tid"
+        ),
         {"tid": treaty_id},
     ).fetchone()
 
@@ -208,7 +218,10 @@ def renew_treaty(
     if aid not in (row[0], row[1]):
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    db.execute(text("UPDATE alliance_treaties SET status = 'expired' WHERE treaty_id = :tid"), {"tid": treaty_id})
+    db.execute(
+        text("UPDATE alliance_treaties SET status = 'expired' WHERE treaty_id = :tid"),
+        {"tid": treaty_id},
+    )
     db.execute(
         text(
             """

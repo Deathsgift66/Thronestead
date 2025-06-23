@@ -58,9 +58,11 @@ def test_deposit_and_withdraw():
     )
     vault = db.query(AllianceVault).filter_by(alliance_id=1).first()
     assert vault.wood == 60
-    tx2 = db.query(AllianceVaultTransactionLog).order_by(
-        AllianceVaultTransactionLog.transaction_id.desc()
-    ).first()
+    tx2 = (
+        db.query(AllianceVaultTransactionLog)
+        .order_by(AllianceVaultTransactionLog.transaction_id.desc())
+        .first()
+    )
     assert tx2.action == "withdraw" and tx2.amount == 40
 
 
@@ -83,4 +85,6 @@ def test_withdraw_permission_denied():
 
     deposit(VaultTransaction(alliance_id=1, resource="gold", amount=10), user_id, db)
     with pytest.raises(HTTPException):
-        withdraw(VaultTransaction(alliance_id=1, resource="gold", amount=5), user_id, db)
+        withdraw(
+            VaultTransaction(alliance_id=1, resource="gold", amount=5), user_id, db
+        )

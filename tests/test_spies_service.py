@@ -15,9 +15,11 @@ class DummyDB:
     def execute(self, query, params=None):
         self.queries.append(str(query).strip())
         if "spy_defense" in str(query):
+
             class R:
                 def fetchone(_self):
                     return self.row
+
             return R()
         return DummyResult(rowcount=5)
 
@@ -44,4 +46,3 @@ def test_get_spy_defense_default_zero():
     db = DummyDB(row=None)
     rating = get_spy_defense(db, 2)
     assert rating == 0
-

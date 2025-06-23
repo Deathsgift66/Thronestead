@@ -4,10 +4,12 @@
 # Developer: Deathsgift66
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from fastapi import HTTPException
 from backend.routers import seasonal_effects
+
 
 class DummyTable:
     def __init__(self, data=None):
@@ -35,6 +37,7 @@ class DummyTable:
             return {"data": self._data[0] if self._data else None}
         return {"data": self._data}
 
+
 class DummyClient:
     def __init__(self, tables):
         self.tables = tables
@@ -46,7 +49,9 @@ class DummyClient:
 def test_seasonal_data_returns():
     curr = {"name": "Spring", "season_code": "SPR", "active": True}
     upcoming = [{"name": "Summer", "season_code": "SUM"}]
-    seasonal_effects.get_supabase_client = lambda: DummyClient({"seasonal_effects": [curr] + upcoming})
+    seasonal_effects.get_supabase_client = lambda: DummyClient(
+        {"seasonal_effects": [curr] + upcoming}
+    )
     res = seasonal_effects.seasonal_data(user_id="u1")
     assert res["current"]["name"] == "Spring"
     assert len(res["forecast"]) == 2

@@ -89,4 +89,3 @@ def test_rollback_database_bad_password(monkeypatch):
             admin_user_id="a1",
             db=db,
         )
-

@@ -84,4 +84,3 @@ def test_check_vacation_mode_raises():
     except HTTPException:
         raised = True
     assert raised
-

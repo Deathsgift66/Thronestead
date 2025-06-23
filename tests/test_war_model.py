@@ -15,7 +15,13 @@ def test_war_model_basic():
     Base.metadata.create_all(engine)
     db = Session()
 
-    war = War(attacker_name="A", defender_name="D", status="pending", war_type="duel", victory_condition="score")
+    war = War(
+        attacker_name="A",
+        defender_name="D",
+        status="pending",
+        war_type="duel",
+        victory_condition="score",
+    )
     db.add(war)
     db.commit()
 

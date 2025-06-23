@@ -12,6 +12,7 @@ try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:
+
     def text(q):  # type: ignore
         return q
 
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------------------
 # Main Tick Processor
 # ------------------------------------------------------------------------------
+
 
 def process_battle_tick(db: Session, war_id: int) -> dict:
     """Advance battle state by one tick and return outcome summary."""
@@ -80,22 +82,26 @@ def process_battle_tick(db: Session, war_id: int) -> dict:
 # Helper Actions
 # ------------------------------------------------------------------------------
 
+
 def process_orders(db: Session, war_id: int, tick: int) -> None:
     """Read and apply player-issued orders (stance, fallback, patrol, etc)."""
     db.execute(
-        text("""
+        text(
+            """
             UPDATE unit_orders
             SET applied_tick = :tick
             WHERE war_id = :wid AND applied_tick IS NULL
-        """),
-        {"tick": tick, "wid": war_id}
+        """
+        ),
+        {"tick": tick, "wid": war_id},
     )
 
 
 def resolve_combat(db: Session, war_id: int, tick: int) -> None:
     """Simulate combat between opposing units in same tile."""
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO combat_logs (war_id, tick, attacker_unit_id, defender_unit_id, outcome)
             SELECT :wid, :tick, a.unit_id, b.unit_id,
                    CASE WHEN a.power > b.defense THEN 'win' ELSE 'loss' END
@@ -104,30 +110,34 @@ def resolve_combat(db: Session, war_id: int, tick: int) -> None:
               ON a.x = b.x AND a.y = b.y
              AND a.alliance_id != b.alliance_id
             WHERE a.war_id = :wid AND b.war_id = :wid
-        """),
-        {"wid": war_id, "tick": tick}
+        """
+        ),
+        {"wid": war_id, "tick": tick},
     )
 
 
 def update_positions(db: Session, war_id: int, tick: int) -> None:
     """Move units based on movement orders."""
     db.execute(
-        text("""
+        text(
+            """
             UPDATE unit_positions
             SET x = x + dx, y = y + dy, last_moved_tick = :tick
             FROM unit_movements
             WHERE unit_positions.unit_id = unit_movements.unit_id
               AND unit_positions.war_id = :wid
               AND unit_movements.war_id = :wid
-        """),
-        {"tick": tick, "wid": war_id}
+        """
+        ),
+        {"tick": tick, "wid": war_id},
     )
 
 
 def apply_morale_penalties(db: Session, war_id: int, tick: int) -> None:
     """Reduce morale for routed, isolated, or under-fire units."""
     db.execute(
-        text("""
+        text(
+            """
             UPDATE unit_positions
             SET morale = GREATEST(morale - 10, 0)
             WHERE war_id = :wid
@@ -136,19 +146,22 @@ def apply_morale_penalties(db: Session, war_id: int, tick: int) -> None:
                   SELECT unit_id FROM combat_logs
                   WHERE war_id = :wid AND tick = :tick AND outcome = 'loss'
               )
-        """),
-        {"wid": war_id, "tick": tick}
+        """
+        ),
+        {"wid": war_id, "tick": tick},
     )
 
 
 def log_battle_tick(db: Session, war_id: int, tick: int) -> None:
     """Create a summary tick log for replay/resolution."""
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO war_tick_logs (war_id, tick, created_at)
             VALUES (:wid, :tick, now())
-        """),
-        {"wid": war_id, "tick": tick}
+        """
+        ),
+        {"wid": war_id, "tick": tick},
     )
 
 
@@ -156,23 +169,28 @@ def log_battle_tick(db: Session, war_id: int, tick: int) -> None:
 # Battle Conclusion
 # ------------------------------------------------------------------------------
 
+
 def conclude_battle(db: Session, war_id: int) -> None:
     """Finalize battle, calculate final score, set war to concluded."""
     # Calculate score
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO war_results (war_id, final_tick, attacker_score, defender_score)
             SELECT :wid, 12,
                 (SELECT COUNT(*) FROM unit_positions WHERE war_id = :wid AND is_attacker = TRUE),
                 (SELECT COUNT(*) FROM unit_positions WHERE war_id = :wid AND is_attacker = FALSE)
-        """),
-        {"wid": war_id}
+        """
+        ),
+        {"wid": war_id},
     )
 
     # Set war as concluded
     db.execute(
-        text("UPDATE wars SET status = 'concluded', end_date = now() WHERE war_id = :wid"),
-        {"wid": war_id}
+        text(
+            "UPDATE wars SET status = 'concluded', end_date = now() WHERE war_id = :wid"
+        ),
+        {"wid": war_id},
     )
 
     db.commit()
@@ -183,20 +201,26 @@ def conclude_battle(db: Session, war_id: int) -> None:
 # Utility
 # ------------------------------------------------------------------------------
 
+
 def fetch_battle_state(db: Session, war_id: int) -> dict:
     """Return the latest snapshot of a battle's current state."""
-    tick = db.execute(
-        text("SELECT current_tick FROM war_tick_state WHERE war_id = :wid"),
-        {"wid": war_id}
-    ).scalar() or 0
+    tick = (
+        db.execute(
+            text("SELECT current_tick FROM war_tick_state WHERE war_id = :wid"),
+            {"wid": war_id},
+        ).scalar()
+        or 0
+    )
 
     units = db.execute(
-        text("""
+        text(
+            """
             SELECT unit_id, x, y, morale, alliance_id
             FROM unit_positions
             WHERE war_id = :wid
-        """),
-        {"wid": war_id}
+        """
+        ),
+        {"wid": war_id},
     ).fetchall()
 
     return {

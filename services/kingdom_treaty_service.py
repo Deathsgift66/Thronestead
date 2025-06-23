@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Treaty Lifecycle Functions
 # ----------------------------
 
+
 def propose_treaty(
     db: Session,
     kingdom_id: int,
@@ -30,13 +31,15 @@ def propose_treaty(
     """
     try:
         exists = db.execute(
-            text("""
+            text(
+                """
                 SELECT 1 FROM kingdom_treaties
                  WHERE ((kingdom_id = :kid AND partner_kingdom_id = :pid)
                         OR (kingdom_id = :pid AND partner_kingdom_id = :kid))
                    AND treaty_type = :type
                    AND status = 'active'
-            """),
+            """
+            ),
             {"kid": kingdom_id, "pid": partner_kingdom_id, "type": treaty_type},
         ).fetchone()
 
@@ -44,10 +47,12 @@ def propose_treaty(
             raise ValueError("An active treaty of this type already exists.")
 
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO kingdom_treaties (kingdom_id, partner_kingdom_id, treaty_type, status)
                 VALUES (:kid, :pid, :type, 'proposed')
-            """),
+            """
+            ),
             {"kid": kingdom_id, "pid": partner_kingdom_id, "type": treaty_type},
         )
         db.commit()
@@ -67,11 +72,13 @@ def accept_treaty(db: Session, treaty_id: int) -> None:
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE kingdom_treaties
                    SET status = 'active', signed_at = now()
                  WHERE treaty_id = :tid
-            """),
+            """
+            ),
             {"tid": treaty_id},
         )
         db.commit()
@@ -91,11 +98,13 @@ def cancel_treaty(db: Session, treaty_id: int) -> None:
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE kingdom_treaties
                    SET status = 'cancelled', signed_at = now()
                  WHERE treaty_id = :tid
-            """),
+            """
+            ),
             {"tid": treaty_id},
         )
         db.commit()
@@ -105,9 +114,11 @@ def cancel_treaty(db: Session, treaty_id: int) -> None:
         logger.exception("Failed to cancel treaty %d", treaty_id)
         raise RuntimeError("Failed to cancel treaty") from exc
 
+
 # ----------------------------
 # Treaty Listing Functions
 # ----------------------------
+
 
 def list_active_treaties(db: Session, kingdom_id: int) -> list[dict]:
     """
@@ -118,13 +129,15 @@ def list_active_treaties(db: Session, kingdom_id: int) -> list[dict]:
     """
     try:
         rows = db.execute(
-            text("""
+            text(
+                """
                 SELECT treaty_id, kingdom_id, treaty_type, partner_kingdom_id, status, signed_at
                   FROM kingdom_treaties
                  WHERE (kingdom_id = :kid OR partner_kingdom_id = :kid)
                    AND status = 'active'
                  ORDER BY signed_at DESC
-            """),
+            """
+            ),
             {"kid": kingdom_id},
         ).fetchall()
 
@@ -144,12 +157,14 @@ def list_incoming_proposals(db: Session, kingdom_id: int) -> list[dict]:
     """
     try:
         rows = db.execute(
-            text("""
+            text(
+                """
                 SELECT treaty_id, kingdom_id, treaty_type, partner_kingdom_id, status, signed_at
                   FROM kingdom_treaties
                  WHERE partner_kingdom_id = :kid AND status = 'proposed'
                  ORDER BY treaty_id DESC
-            """),
+            """
+            ),
             {"kid": kingdom_id},
         ).fetchall()
 
@@ -169,12 +184,14 @@ def list_outgoing_proposals(db: Session, kingdom_id: int) -> list[dict]:
     """
     try:
         rows = db.execute(
-            text("""
+            text(
+                """
                 SELECT treaty_id, kingdom_id, treaty_type, partner_kingdom_id, status, signed_at
                   FROM kingdom_treaties
                  WHERE kingdom_id = :kid AND status = 'proposed'
                  ORDER BY treaty_id DESC
-            """),
+            """
+            ),
             {"kid": kingdom_id},
         ).fetchall()
 
@@ -184,9 +201,11 @@ def list_outgoing_proposals(db: Session, kingdom_id: int) -> list[dict]:
         logger.exception("Failed to list outgoing proposals for kingdom %d", kingdom_id)
         return []
 
+
 # ----------------------------
 # Utility
 # ----------------------------
+
 
 def _map_treaty_row(row) -> dict:
     """Convert DB row to dict structure."""

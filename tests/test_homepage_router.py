@@ -4,6 +4,7 @@
 # Developer: Deathsgift66
 from backend.routers import homepage
 
+
 class DummyTable:
     def __init__(self, rows=None):
         self._rows = rows or []
@@ -21,12 +22,14 @@ class DummyTable:
     def execute(self):
         return {"data": self._rows}
 
+
 class DummyClient:
     def __init__(self, tables):
         self.tables = tables
 
     def table(self, name):
         return DummyTable(self.tables.get(name, []))
+
 
 def test_featured_news_returns_rows():
     rows = [

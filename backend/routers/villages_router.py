@@ -25,6 +25,7 @@ from ..data import get_max_villages_allowed
 
 router = APIRouter(prefix="/api/kingdom/villages", tags=["villages"])
 
+
 # ----------------------------- Pydantic Schema -----------------------------
 class VillagePayload(BaseModel):
     village_name: str
@@ -64,8 +65,11 @@ def _fetch_villages(db: Session, kid: int):
 
 # ----------------------------- API Endpoints -----------------------------
 
+
 @router.get("")
-async def list_villages(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+async def list_villages(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     """List all villages for the authenticated player."""
     kid = get_kingdom_id(db, user_id)
     villages = _fetch_villages(db, kid)
@@ -87,7 +91,9 @@ def create_village(
 
     # Check current castle level
     record = db.execute(
-        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
+        text(
+            "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+        ),
         {"kid": kid},
     ).fetchone()
     castle_level = record[0] if record else 1
@@ -139,29 +145,45 @@ def get_village_summary(
         {"vid": village_id},
     ).fetchone()
     if not owner or owner[0] != kid:
-        raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
+        raise HTTPException(
+            status_code=403, detail="Village does not belong to your kingdom"
+        )
 
     # Fetch core data
-    village = db.execute(
-        text(
-            """
+    village = (
+        db.execute(
+            text(
+                """
             SELECT village_id, village_name, village_type, created_at
             FROM kingdom_villages
             WHERE village_id = :vid
             """
-        ),
-        {"vid": village_id},
-    ).mappings().fetchone()
+            ),
+            {"vid": village_id},
+        )
+        .mappings()
+        .fetchone()
+    )
 
-    resources = db.execute(
-        text("SELECT * FROM village_resources WHERE village_id = :vid"),
-        {"vid": village_id},
-    ).mappings().fetchone()
+    resources = (
+        db.execute(
+            text("SELECT * FROM village_resources WHERE village_id = :vid"),
+            {"vid": village_id},
+        )
+        .mappings()
+        .fetchone()
+    )
 
-    buildings = db.execute(
-        text("SELECT building_id, level FROM village_buildings WHERE village_id = :vid ORDER BY building_id"),
-        {"vid": village_id},
-    ).mappings().fetchall()
+    buildings = (
+        db.execute(
+            text(
+                "SELECT building_id, level FROM village_buildings WHERE village_id = :vid ORDER BY building_id"
+            ),
+            {"vid": village_id},
+        )
+        .mappings()
+        .fetchall()
+    )
 
     return {
         "village": dict(village) if village else {},
@@ -171,7 +193,9 @@ def get_village_summary(
 
 
 @router.get("/stream", response_class=StreamingResponse)
-async def stream_villages(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+async def stream_villages(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     """Stream village data every 5s in Server-Sent Event format for real-time dashboards."""
     kid = get_kingdom_id(db, user_id)
 

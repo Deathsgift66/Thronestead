@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api/policies-laws", tags=["policies-laws"])
 # Payload Models
 # -------------------------------
 
+
 class UpdatePolicyPayload(BaseModel):
     policy_id: int
 
@@ -38,13 +39,12 @@ def catalogue(user_id: str = Depends(verify_jwt_token)):
     supabase = get_supabase_client()
     try:
         result = (
-            supabase.table("policies_laws_catalogue")
-            .select("*")
-            .order("id")
-            .execute()
+            supabase.table("policies_laws_catalogue").select("*").order("id").execute()
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to fetch catalogue") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch catalogue"
+        ) from exc
 
     entries = getattr(result, "data", result) or []
     return {"entries": entries}
@@ -68,7 +68,9 @@ def user_settings(user_id: str = Depends(verify_jwt_token)):
             .execute()
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to fetch user data") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch user data"
+        ) from exc
 
     data = getattr(result, "data", result) or {}
     return {
@@ -90,10 +92,9 @@ def update_user_policy(
     """
     supabase = get_supabase_client()
     try:
-        supabase.table("users") \
-            .update({"active_policy": payload.policy_id}) \
-            .eq("user_id", user_id) \
-            .execute()
+        supabase.table("users").update({"active_policy": payload.policy_id}).eq(
+            "user_id", user_id
+        ).execute()
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to update policy") from exc
 
@@ -113,10 +114,9 @@ def update_user_laws(
     """
     supabase = get_supabase_client()
     try:
-        supabase.table("users") \
-            .update({"active_laws": payload.law_ids}) \
-            .eq("user_id", user_id) \
-            .execute()
+        supabase.table("users").update({"active_laws": payload.law_ids}).eq(
+            "user_id", user_id
+        ).execute()
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to update laws") from exc
 

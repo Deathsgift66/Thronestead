@@ -11,18 +11,23 @@ from backend.routers.admin import (
     mark_alert_handled,
 )
 
+
 class DummyResult:
     def __init__(self, rows=None):
         self._rows = rows or []
+
     def fetchall(self):
         return self._rows
+
 
 class DummyDB:
     def __init__(self):
         self.queries = []
+
     def execute(self, query, params=None):
         self.queries.append((str(query), params))
         return DummyResult()
+
 
 def test_filters_included_in_query():
     db = DummyDB()
@@ -58,4 +63,3 @@ def test_mark_alert_logs():
     db = DummyDB()
     mark_alert_handled({"alert_id": "a5"}, admin_id="a1", db=db)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
-

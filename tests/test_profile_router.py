@@ -37,7 +37,15 @@ class DummyClient:
 
 def test_profile_overview_returns_data():
     tables = {
-        "users": [{"user_id": "u1", "username": "Hero", "kingdom_name": "Realm", "profile_bio": "bio", "profile_picture_url": "pic.png"}],
+        "users": [
+            {
+                "user_id": "u1",
+                "username": "Hero",
+                "kingdom_name": "Realm",
+                "profile_bio": "bio",
+                "profile_picture_url": "pic.png",
+            }
+        ],
         "player_messages": [
             {"message_id": 1, "recipient_id": "u1", "is_read": False},
             {"message_id": 2, "recipient_id": "u1", "is_read": False},

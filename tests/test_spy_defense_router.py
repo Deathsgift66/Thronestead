@@ -2,16 +2,20 @@ import asyncio
 from fastapi import HTTPException
 from backend.routers.spy import get_spy_defense
 
+
 class DummyResult:
     def __init__(self, row=None):
         self._row = row
+
     def fetchone(self):
         return self._row
+
 
 class DummyDB:
     def __init__(self, kingdom_row=None, defense_row=None):
         self.kingdom_row = kingdom_row
         self.defense_row = defense_row
+
     def execute(self, query, params=None):
         q = str(query).lower()
         if "from kingdoms" in q:
@@ -19,6 +23,7 @@ class DummyDB:
         if "from spy_defense" in q:
             return DummyResult(self.defense_row)
         return DummyResult()
+
 
 def test_get_spy_defense_not_found():
     db = DummyDB(kingdom_row=None)

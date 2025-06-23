@@ -32,7 +32,9 @@ def _optional_user(
             return None
     return None
 
+
 router = APIRouter(prefix="/api/leaderboard", tags=["leaderboard"])
+
 
 @router.get("/{category}")
 def get_leaderboard(
@@ -54,26 +56,26 @@ def get_leaderboard(
         # Define win and loss cases for alliances in wars
         win_case = case(
             (
-                (AllianceWar.attacker_alliance_id == Alliance.alliance_id) &
-                (AllianceWarScore.victor == "attacker"),
+                (AllianceWar.attacker_alliance_id == Alliance.alliance_id)
+                & (AllianceWarScore.victor == "attacker"),
                 1,
             ),
             (
-                (AllianceWar.defender_alliance_id == Alliance.alliance_id) &
-                (AllianceWarScore.victor == "defender"),
+                (AllianceWar.defender_alliance_id == Alliance.alliance_id)
+                & (AllianceWarScore.victor == "defender"),
                 1,
             ),
             else_=0,
         )
         loss_case = case(
             (
-                (AllianceWar.attacker_alliance_id == Alliance.alliance_id) &
-                (AllianceWarScore.victor == "defender"),
+                (AllianceWar.attacker_alliance_id == Alliance.alliance_id)
+                & (AllianceWarScore.victor == "defender"),
                 1,
             ),
             (
-                (AllianceWar.defender_alliance_id == Alliance.alliance_id) &
-                (AllianceWarScore.victor == "attacker"),
+                (AllianceWar.defender_alliance_id == Alliance.alliance_id)
+                & (AllianceWarScore.victor == "attacker"),
                 1,
             ),
             else_=0,
@@ -113,16 +115,20 @@ def get_leaderboard(
 
         entries = []
         for r in rows:
-            entries.append({
-                "alliance_id": r.alliance_id,
-                "alliance_name": r.alliance_name,
-                "military_score": r.military_score or 0,
-                "economy_score": r.economy_score or 0,
-                "diplomacy_score": r.diplomacy_score or 0,
-                "war_wins": r.war_wins or 0,
-                "war_losses": r.war_losses or 0,
-                "is_self": bool(user_alliance_id and r.alliance_id == user_alliance_id),
-            })
+            entries.append(
+                {
+                    "alliance_id": r.alliance_id,
+                    "alliance_name": r.alliance_name,
+                    "military_score": r.military_score or 0,
+                    "economy_score": r.economy_score or 0,
+                    "diplomacy_score": r.diplomacy_score or 0,
+                    "war_wins": r.war_wins or 0,
+                    "war_losses": r.war_losses or 0,
+                    "is_self": bool(
+                        user_alliance_id and r.alliance_id == user_alliance_id
+                    ),
+                }
+            )
 
         return {"category": category, "entries": entries}
 
@@ -148,7 +154,9 @@ def get_leaderboard(
         )
         entries = getattr(result, "data", result) or []
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to fetch leaderboard") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch leaderboard"
+        ) from exc
 
     # Mark current user if present
     if user_id:

@@ -76,7 +76,9 @@ def test_update_kingdom_profile_not_found():
     db = DummyDB()
     db.profile_row = None
     try:
-        kingdom.update_kingdom_profile(kingdom.KingdomUpdatePayload(), user_id="u1", db=db)
+        kingdom.update_kingdom_profile(
+            kingdom.KingdomUpdatePayload(), user_id="u1", db=db
+        )
     except HTTPException as exc:
         assert exc.status_code == 404
     else:

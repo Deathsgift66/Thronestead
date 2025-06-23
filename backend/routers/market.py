@@ -50,9 +50,13 @@ def get_listings(
     if max_price is not None:
         query = query.filter(MarketListing.price <= max_price)
     if alliance_id is not None:
-        query = query.filter(MarketListing.seller_id.in_(
-            db.query(TradeLog.seller_id).filter(TradeLog.seller_alliance_id == alliance_id)
-        ))
+        query = query.filter(
+            MarketListing.seller_id.in_(
+                db.query(TradeLog.seller_id).filter(
+                    TradeLog.seller_alliance_id == alliance_id
+                )
+            )
+        )
 
     rows = (
         query.order_by(MarketListing.created_at.desc())
@@ -189,9 +193,13 @@ def buy_item(
     except Exception:
         pass
     try:
-        seller_kid = get_kingdom_id(db, str(listing.seller_id)) if listing.seller_id else None
+        seller_kid = (
+            get_kingdom_id(db, str(listing.seller_id)) if listing.seller_id else None
+        )
         if seller_kid:
-            gain_resources(db, seller_kid, {"gold": int(listing.price * payload.quantity)})
+            gain_resources(
+                db, seller_kid, {"gold": int(listing.price * payload.quantity)}
+            )
     except Exception:
         pass
 

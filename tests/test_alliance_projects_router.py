@@ -53,9 +53,21 @@ def test_available_excludes_existing():
     Session = setup_db()
     db = Session()
     uid = seed_basic(db)
-    db.add(ProjectAllianceCatalogue(project_key="p1", project_name="One", requires_alliance_level=1))
-    db.add(ProjectAllianceCatalogue(project_key="p2", project_name="Two", requires_alliance_level=2))
-    db.add(ProjectsAlliance(alliance_id=1, name="Built", project_key="p1", build_state="completed"))
+    db.add(
+        ProjectAllianceCatalogue(
+            project_key="p1", project_name="One", requires_alliance_level=1
+        )
+    )
+    db.add(
+        ProjectAllianceCatalogue(
+            project_key="p2", project_name="Two", requires_alliance_level=2
+        )
+    )
+    db.add(
+        ProjectsAlliance(
+            alliance_id=1, name="Built", project_key="p1", build_state="completed"
+        )
+    )
     db.add(ProjectsAllianceInProgress(alliance_id=1, project_key="p2", progress=10))
     db.commit()
 
@@ -67,7 +79,11 @@ def test_start_creates_progress_row():
     Session = setup_db()
     db = Session()
     uid = seed_basic(db)
-    db.add(ProjectAllianceCatalogue(project_key="p3", project_name="Three", build_time_seconds=10))
+    db.add(
+        ProjectAllianceCatalogue(
+            project_key="p3", project_name="Three", build_time_seconds=10
+        )
+    )
     db.commit()
 
     start_alliance_project(StartPayload(project_key="p3", user_id=uid), uid, db)
@@ -82,7 +98,15 @@ def test_start_rejects_if_active():
     uid = seed_basic(db)
     db.add(ProjectAllianceCatalogue(project_key="p4", project_name="Four"))
     db.add(ProjectAllianceCatalogue(project_key="p5", project_name="Five"))
-    db.add(ProjectsAllianceInProgress(alliance_id=1, project_key="p4", progress=0, status="building", expected_end=datetime.utcnow()))
+    db.add(
+        ProjectsAllianceInProgress(
+            alliance_id=1,
+            project_key="p4",
+            progress=0,
+            status="building",
+            expected_end=datetime.utcnow(),
+        )
+    )
     db.commit()
     with pytest.raises(HTTPException):
         start_alliance_project(StartPayload(project_key="p5", user_id=uid), uid, db)
@@ -93,11 +117,21 @@ def test_contribute_records_entry():
     db = Session()
     uid = seed_basic(db)
     db.add(ProjectAllianceCatalogue(project_key="p6", project_name="Six"))
-    db.add(ProjectsAllianceInProgress(alliance_id=1, project_key="p6", progress=0, status="building", expected_end=datetime.utcnow()))
+    db.add(
+        ProjectsAllianceInProgress(
+            alliance_id=1,
+            project_key="p6",
+            progress=0,
+            status="building",
+            expected_end=datetime.utcnow(),
+        )
+    )
     db.commit()
 
     contribute_to_project(
-        ContributionPayload(project_key="p6", resource_type="wood", amount=5, user_id=uid),
+        ContributionPayload(
+            project_key="p6", resource_type="wood", amount=5, user_id=uid
+        ),
         uid,
         db,
     )

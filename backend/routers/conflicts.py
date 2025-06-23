@@ -21,6 +21,7 @@ router = APIRouter(prefix="/api/conflicts", tags=["conflicts"])
 # Helper
 # ----------------------------
 
+
 def get_alliance_id(db: Session, user_id: str) -> int:
     """Fetch alliance ID for the user."""
     row = db.execute(
@@ -30,6 +31,7 @@ def get_alliance_id(db: Session, user_id: str) -> int:
     if not row or not row[0]:
         raise HTTPException(status_code=404, detail="Alliance not found")
     return row[0]
+
 
 # ----------------------------
 # Endpoints

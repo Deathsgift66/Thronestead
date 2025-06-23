@@ -1,20 +1,26 @@
 from backend.routers import diplomacy_center as dc
 
+
 class DummyResult:
     def __init__(self, rows=None, scalar=None):
         self._rows = rows or []
         self._scalar = scalar
+
     def scalar(self):
         return self._scalar
+
     def fetchall(self):
         return self._rows
+
     def fetchone(self):
         return self._rows[0] if self._rows else None
+
 
 class DummyDB:
     def __init__(self):
         self.queries = []
         self.commits = 0
+
     def execute(self, query, params=None):
         q = str(query)
         self.queries.append(q)
@@ -27,10 +33,12 @@ class DummyDB:
         if "FROM alliance_treaties" in q and "JOIN" in q:
             return DummyResult(rows=[(1, "NAP", 2, "active", None, "Partner")])
         if "SELECT alliance_id" in q:
-            return DummyResult(rows=[(1,2,"NAP","proposed",None)])
+            return DummyResult(rows=[(1, 2, "NAP", "proposed", None)])
         return DummyResult()
+
     def commit(self):
         self.commits += 1
+
 
 def test_metrics_returns_counts():
     db = DummyDB()
@@ -38,6 +46,7 @@ def test_metrics_returns_counts():
     assert res["diplomacy_score"] == 5
     assert res["active_treaties"] == 2
     assert res["ongoing_wars"] == 1
+
 
 def test_treaties_returns_list():
     db = DummyDB()
@@ -59,8 +68,9 @@ def test_respond_updates():
             q = str(query)
             self.queries.append(q)
             if "SELECT alliance_id" in q:
-                return DummyResult(rows=[(1,2)])
+                return DummyResult(rows=[(1, 2)])
             return super().execute(query, params)
+
     db = RespDB()
     payload = dc.TreatyResponse(treaty_id=5, response="accept")
     dc.respond_treaty_api(payload, db=db)

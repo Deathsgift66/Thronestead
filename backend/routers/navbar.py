@@ -73,9 +73,7 @@ def navbar_counters(
     # Count unread notifications (global or specific)
     unread_notifications = (
         db.query(Notification)
-        .filter(
-            (Notification.user_id == user_id) | (Notification.user_id.is_(None))
-        )
+        .filter((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
         .filter(Notification.is_read.is_(False))
         .count()
     )

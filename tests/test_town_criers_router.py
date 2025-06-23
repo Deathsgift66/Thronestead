@@ -59,6 +59,8 @@ def test_post_and_fetch():
     client = DummyClient(tables)
     town_criers.get_supabase_client = lambda: client
 
-    town_criers.post_scroll(town_criers.ScrollPayload(title="T", body="B"), user_id="u1")
+    town_criers.post_scroll(
+        town_criers.ScrollPayload(title="T", body="B"), user_id="u1"
+    )
     res = town_criers.latest_scrolls(user_id="u1")
     assert res["scrolls"][0]["title"] == "T"

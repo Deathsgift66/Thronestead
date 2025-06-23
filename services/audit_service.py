@@ -16,14 +16,17 @@ logger = logging.getLogger(__name__)
 # Core Audit Log Functions
 # ------------------------
 
+
 def log_action(db: Session, user_id: Optional[str], action: str, details: str) -> None:
     """Insert a global user action into the audit_log table."""
     try:
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO audit_log (user_id, action, details)
                 VALUES (:uid, :act, :det)
-            """),
+            """
+            ),
             {"uid": user_id, "act": action, "det": details},
         )
         db.commit()
@@ -33,7 +36,9 @@ def log_action(db: Session, user_id: Optional[str], action: str, details: str) -
         raise RuntimeError("Audit log failed") from e
 
 
-def fetch_logs(db: Session, user_id: Optional[str] = None, limit: int = 100) -> list[dict]:
+def fetch_logs(
+    db: Session, user_id: Optional[str] = None, limit: int = 100
+) -> list[dict]:
     """
     Fetch global audit log entries. Can filter by user.
     Returns a list of dicts with keys: log_id, user_id, action, details, created_at.
@@ -66,14 +71,19 @@ def fetch_logs(db: Session, user_id: Optional[str] = None, limit: int = 100) -> 
 # Alliance Activity Logging
 # ------------------------
 
-def log_alliance_activity(db: Session, alliance_id: int, user_id: Optional[str], action: str, description: str) -> None:
+
+def log_alliance_activity(
+    db: Session, alliance_id: int, user_id: Optional[str], action: str, description: str
+) -> None:
     """Insert a new alliance-level action into alliance_activity_log."""
     try:
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO alliance_activity_log (alliance_id, user_id, action, description)
                 VALUES (:aid, :uid, :act, :desc)
-            """),
+            """
+            ),
             {"aid": alliance_id, "uid": user_id, "act": action, "desc": description},
         )
         db.commit()
@@ -87,6 +97,7 @@ def log_alliance_activity(db: Session, alliance_id: int, user_id: Optional[str],
 # Flexible Filtering
 # ------------------------
 
+
 def fetch_filtered_logs(
     db: Session,
     user_id: Optional[str] = None,
@@ -98,7 +109,9 @@ def fetch_filtered_logs(
     """
     Filter audit logs by optional user ID, action keyword, and date range.
     """
-    query = "SELECT log_id, user_id, action, details, created_at FROM audit_log WHERE 1=1"
+    query = (
+        "SELECT log_id, user_id, action, details, created_at FROM audit_log WHERE 1=1"
+    )
     params = {"limit": limit}
     if user_id:
         query += " AND user_id = :uid"
@@ -134,6 +147,7 @@ def fetch_filtered_logs(
 # ------------------------
 # Deep Audit by User
 # ------------------------
+
 
 def fetch_user_related_logs(db: Session, user_id: str) -> dict:
     """

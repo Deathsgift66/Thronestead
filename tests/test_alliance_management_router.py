@@ -27,7 +27,9 @@ def create_user_with_resources(db):
     uid = str(uuid.uuid4())
     db.add(Kingdom(kingdom_id=1, user_id=uid, kingdom_name="K"))
     db.add(KingdomResources(kingdom_id=1, wood=2000, stone=2000, gold=1000))
-    user = User(user_id=uid, username="t", display_name="T", email="t@test.com", kingdom_id=1)
+    user = User(
+        user_id=uid, username="t", display_name="T", email="t@test.com", kingdom_id=1
+    )
     db.add(user)
     db.commit()
     return uid

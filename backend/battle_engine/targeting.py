@@ -11,7 +11,9 @@ from functools import lru_cache
 from ..db import db
 
 
-def select_target(unit: Dict[str, Any], enemies_in_range: List[Dict[str, Any]]) -> Dict[str, Any]:
+def select_target(
+    unit: Dict[str, Any], enemies_in_range: List[Dict[str, Any]]
+) -> Dict[str, Any]:
     """Select the best target for ``unit`` from ``enemies_in_range``."""
 
     priority_list = unit.get("target_priority") or []
@@ -26,7 +28,9 @@ def select_target(unit: Dict[str, Any], enemies_in_range: List[Dict[str, Any]]) 
     position_y = unit.get("position_y")
 
     enemies_in_range.sort(
-        key=lambda e: max(abs(position_x - e.get("position_x")), abs(position_y - e.get("position_y")))
+        key=lambda e: max(
+            abs(position_x - e.get("position_x")), abs(position_y - e.get("position_y"))
+        )
     )
 
     return enemies_in_range[0]

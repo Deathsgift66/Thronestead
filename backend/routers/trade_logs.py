@@ -26,8 +26,12 @@ router = APIRouter(prefix="/api/trade-logs", tags=["trade_logs"])
 def get_trade_logs(
     player_id: Optional[str] = Query(None, description="Filter logs by player UUID"),
     alliance_id: Optional[int] = Query(None, description="Filter logs by alliance ID"),
-    trade_type: Optional[str] = Query(None, description="Type of trade (e.g. market, direct, system)"),
-    limit: int = Query(50, ge=1, le=500, description="Maximum number of logs to return"),
+    trade_type: Optional[str] = Query(
+        None, description="Type of trade (e.g. market, direct, system)"
+    ),
+    limit: int = Query(
+        50, ge=1, le=500, description="Maximum number of logs to return"
+    ),
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
@@ -38,16 +42,13 @@ def get_trade_logs(
 
     if player_id:
         query = query.filter(
-            or_(
-                TradeLog.buyer_id == player_id,
-                TradeLog.seller_id == player_id
-            )
+            or_(TradeLog.buyer_id == player_id, TradeLog.seller_id == player_id)
         )
     if alliance_id:
         query = query.filter(
             or_(
                 TradeLog.buyer_alliance_id == alliance_id,
-                TradeLog.seller_alliance_id == alliance_id
+                TradeLog.seller_alliance_id == alliance_id,
             )
         )
     if trade_type:

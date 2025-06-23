@@ -14,6 +14,7 @@ from enum import Enum
 from typing import List, Tuple, Dict, Set
 from collections import defaultdict
 
+
 # --------------------------
 # 🗺️ Terrain Definitions
 # --------------------------
@@ -129,7 +130,7 @@ class CombatResolver:
 
             to_remove: List[Unit] = []
             for i, attacker in enumerate(units):
-                for defender in units[i + 1:]:
+                for defender in units[i + 1 :]:
                     if attacker.kingdom_id == defender.kingdom_id:
                         continue
 
@@ -147,21 +148,25 @@ class CombatResolver:
                     damage = min(base_damage, defender.hp)
                     defender.hp -= damage
 
-                    logs.append({
-                        "event": "attack",
-                        "attacker_id": attacker.unit_id,
-                        "defender_id": defender.unit_id,
-                        "pos": pos,
-                        "damage": damage,
-                        "critical": critical,
-                    })
+                    logs.append(
+                        {
+                            "event": "attack",
+                            "attacker_id": attacker.unit_id,
+                            "defender_id": defender.unit_id,
+                            "pos": pos,
+                            "damage": damage,
+                            "critical": critical,
+                        }
+                    )
 
                     if defender.hp <= 0 and defender not in to_remove:
-                        logs.append({
-                            "event": "death",
-                            "unit_id": defender.unit_id,
-                            "pos": pos,
-                        })
+                        logs.append(
+                            {
+                                "event": "death",
+                                "unit_id": defender.unit_id,
+                                "pos": pos,
+                            }
+                        )
                         to_remove.append(defender)
 
             for unit in to_remove:
@@ -207,11 +212,13 @@ class BattleTickHandler:
         if siege_count:
             damage = siege_count * 5
             war.castle_hp = max(0, war.castle_hp - damage)
-            logs.append({
-                "event": "siege",
-                "damage": damage,
-                "castle_hp": war.castle_hp,
-            })
+            logs.append(
+                {
+                    "event": "siege",
+                    "damage": damage,
+                    "castle_hp": war.castle_hp,
+                }
+            )
 
         # Tick advance
         war.tick += 1

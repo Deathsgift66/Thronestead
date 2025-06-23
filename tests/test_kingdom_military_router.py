@@ -23,33 +23,33 @@ def test_get_current_user_id_missing():
 
 
 def test_summary_usable_slots():
-    data = summary(user_id='u1')
-    assert data['usable_slots'] == data['base_slots'] - data['used_slots']
+    data = summary(user_id="u1")
+    assert data["usable_slots"] == data["base_slots"] - data["used_slots"]
 
 
 def test_recruit_flow():
     state = get_state()
-    state['used_slots'] = 0
-    state['queue'] = []
-    recruit(RecruitPayload(unit_id=1, quantity=2), user_id='u1')
-    assert state['used_slots'] == 2
-    assert state['queue'][0]['unit_name'] == 'Swordsman'
+    state["used_slots"] = 0
+    state["queue"] = []
+    recruit(RecruitPayload(unit_id=1, quantity=2), user_id="u1")
+    assert state["used_slots"] == 2
+    assert state["queue"][0]["unit_name"] == "Swordsman"
 
 
 def test_recruitable_has_units():
-    data = recruitable(user_id='u1')
-    assert data['units']
+    data = recruitable(user_id="u1")
+    assert data["units"]
 
 
 def test_queue_returns_list():
     state = get_state()
-    state['queue'] = [{'unit_name': 'Spearman', 'quantity': 1}]
-    data = queue(user_id='u1')
-    assert len(data['queue']) == 1
+    state["queue"] = [{"unit_name": "Spearman", "quantity": 1}]
+    data = queue(user_id="u1")
+    assert len(data["queue"]) == 1
 
 
 def test_history_returns_list():
     state = get_state()
-    state['history'] = [{'unit_name': 'Archer', 'quantity': 1}]
-    data = history(user_id='u1')
-    assert data['history'][0]['unit_name'] == 'Archer'
+    state["history"] = [{"unit_name": "Archer", "quantity": 1}]
+    data = history(user_id="u1")
+    assert data["history"][0]["unit_name"] == "Archer"

@@ -13,6 +13,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 # -------------------------------------------------------------
 # Start a New Research
 # -------------------------------------------------------------
+
 
 def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
     """
@@ -38,11 +40,13 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
     try:
         # Check catalog entry
         duration_row = db.execute(
-            text("""
+            text(
+                """
                 SELECT duration_hours, prerequisites
                   FROM tech_catalogue
                  WHERE tech_code = :code AND is_active = true
-            """),
+            """
+            ),
             {"code": tech_code},
         ).fetchone()
 
@@ -55,10 +59,12 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
         # Check prerequisites
         if prereqs:
             rows = db.execute(
-                text("""
+                text(
+                    """
                     SELECT tech_code FROM kingdom_research_tracking
                      WHERE kingdom_id = :kid AND status = 'completed'
-                """),
+                """
+                ),
                 {"kid": kingdom_id},
             ).fetchall()
             completed = {r[0] for r in rows}
@@ -69,7 +75,8 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
 
         # Insert or update
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO kingdom_research_tracking (
                     kingdom_id, tech_code, status, progress, ends_at
                 ) VALUES (:kid, :code, 'active', 0, :end)
@@ -78,7 +85,8 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
                     status = 'active',
                     progress = 0,
                     ends_at = EXCLUDED.ends_at
-            """),
+            """
+            ),
             {"kid": kingdom_id, "code": tech_code, "end": ends_at},
         )
         db.commit()
@@ -86,7 +94,9 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
 
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.exception("Failed to start research %s for kingdom %d", tech_code, kingdom_id)
+        logger.exception(
+            "Failed to start research %s for kingdom %d", tech_code, kingdom_id
+        )
         raise RuntimeError("Research initiation failed") from exc
 
 
@@ -94,31 +104,37 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
 # Complete Expired Research
 # -------------------------------------------------------------
 
+
 def complete_finished_research(db: Session, kingdom_id: int) -> None:
     """
     Automatically marks expired research rows (based on ends_at) as completed.
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE kingdom_research_tracking
                    SET status = 'completed', progress = 100
                  WHERE kingdom_id = :kid
                    AND status = 'active'
                    AND ends_at <= now()
-            """),
+            """
+            ),
             {"kid": kingdom_id},
         )
         db.commit()
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.exception("Failed to complete expired research for kingdom %d", kingdom_id)
+        logger.exception(
+            "Failed to complete expired research for kingdom %d", kingdom_id
+        )
         raise RuntimeError("Research completion update failed") from exc
 
 
 # -------------------------------------------------------------
 # Fetch All Research Entries
 # -------------------------------------------------------------
+
 
 def list_research(db: Session, kingdom_id: int) -> list[dict]:
     """
@@ -157,18 +173,21 @@ def list_research(db: Session, kingdom_id: int) -> list[dict]:
 # Check if Tech is Completed
 # -------------------------------------------------------------
 
+
 def is_tech_completed(db: Session, kingdom_id: int, tech_code: str) -> bool:
     """
     Returns True if the kingdom has completed the given tech.
     """
     try:
         row = db.execute(
-            text("""
+            text(
+                """
                 SELECT 1 FROM kingdom_research_tracking
                  WHERE kingdom_id = :kid
                    AND tech_code = :code
                    AND status = 'completed'
-            """),
+            """
+            ),
             {"kid": kingdom_id, "code": tech_code},
         ).fetchone()
         return row is not None

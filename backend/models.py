@@ -31,7 +31,6 @@ from sqlalchemy.sql import func
 from backend.db_base import Base
 
 
-
 class Kingdom(Base):
     """ORM model for the ``kingdoms`` table."""
 
@@ -109,7 +108,6 @@ class PlayerMessage(Base):
     message = Column(Text)
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
-
 
 
 class Announcement(Base):
@@ -220,6 +218,7 @@ class KingdomAchievement(Base):
     )
     awarded_at = Column(DateTime(timezone=True), server_default=func.now())
 
+
 class MessageMetadata(Base):
     """Key/value metadata attached to ``player_messages``."""
 
@@ -232,8 +231,6 @@ class MessageMetadata(Base):
     )
     key = Column(Text, primary_key=True)
     value = Column(Text)
-
-
 
 
 class Alliance(Base):
@@ -269,12 +266,8 @@ class AllianceMember(Base):
         Index("idx_alliance_members_contribution", "contribution"),
     )
 
-    alliance_id = Column(
-        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
-    )
-    user_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True
-    )
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True)
     username = Column(String)
     rank = Column(String)
     contribution = Column(Integer, default=0)
@@ -300,9 +293,7 @@ class AllianceRole(Base):
 class AlliancePolicy(Base):
     __tablename__ = "alliance_policies"
 
-    alliance_id = Column(
-        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
-    )
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
     policy_id = Column(
         Integer, ForeignKey("policies_laws_catalogue.id"), primary_key=True
     )
@@ -310,12 +301,9 @@ class AlliancePolicy(Base):
     is_active = Column(Boolean, default=True)
 
 
-
 class AllianceVault(Base):
     __tablename__ = "alliance_vault"
-    alliance_id = Column(
-        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
-    )
+    alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
     wood = Column(BigInteger, default=0)
     stone = Column(BigInteger, default=0)
     iron_ore = Column(BigInteger, default=0)
@@ -386,12 +374,13 @@ class TradeLog(Base):
     )
 
 
-
 class AllianceBlacklist(Base):
     __tablename__ = "alliance_blacklist"
 
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
-    target_alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), primary_key=True)
+    target_alliance_id = Column(
+        Integer, ForeignKey("alliances.alliance_id"), primary_key=True
+    )
     reason = Column(Text)
     added_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     created_at = Column(DateTime(timezone=False), server_default=func.now())
@@ -402,7 +391,9 @@ class AllianceGrant(Base):
 
     grant_id = Column(Integer, primary_key=True)
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), nullable=False)
-    recipient_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    recipient_user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False
+    )
     resource_type = Column(Text, nullable=False)
     amount = Column(BigInteger, default=0)
     granted_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -414,7 +405,9 @@ class AllianceLoan(Base):
 
     loan_id = Column(Integer, primary_key=True)
     alliance_id = Column(Integer, ForeignKey("alliances.alliance_id"), nullable=False)
-    borrower_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    borrower_user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False
+    )
     resource_type = Column(Text, nullable=False)
     amount = Column(BigInteger, default=0)
     amount_repaid = Column(BigInteger, default=0)
@@ -511,7 +504,9 @@ class ProjectPlayerCatalogue(Base):
     is_active = Column(Boolean, server_default="true")
     max_active_instances = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     required_tech = Column(ARRAY(Text))
     requires_region = Column(String)
@@ -654,9 +649,7 @@ class WarsTactical(Base):
     current_turn = Column(String)
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
-    last_tick_processed_at = Column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    last_tick_processed_at = Column(DateTime(timezone=True), server_default=func.now())
     tick_interval_seconds = Column(Integer, default=300)
     is_concluded = Column(Boolean, default=False)
     started_at = Column(DateTime(timezone=True))
@@ -668,9 +661,7 @@ class WarsTactical(Base):
 
 class UnitMovement(Base):
     __tablename__ = "unit_movements"
-    __table_args__ = (
-        Index("idx_unit_movements_war_id", "war_id"),
-    )
+    __table_args__ = (Index("idx_unit_movements_war_id", "war_id"),)
     movement_id = Column(Integer, primary_key=True)
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
@@ -775,7 +766,9 @@ class War(Base):
 
     __tablename__ = "wars"
     __table_args__ = (
-        CheckConstraint("outcome IN ('attacker','defender','draw')", name="wars_outcome_check"),
+        CheckConstraint(
+            "outcome IN ('attacker','defender','draw')", name="wars_outcome_check"
+        ),
     )
 
     war_id = Column(Integer, primary_key=True)
@@ -866,10 +859,10 @@ class BattleResolutionLog(Base):
 
 class WarScore(Base):
     __tablename__ = "war_scores"
-    __table_args__ = (
-        CheckConstraint("victor IN ('attacker','defender','draw')"),
+    __table_args__ = (CheckConstraint("victor IN ('attacker','defender','draw')"),)
+    war_id = Column(
+        Integer, ForeignKey("wars_tactical.war_id"), primary_key=True, index=True
     )
-    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), primary_key=True, index=True)
     attacker_score = Column(Integer, default=0)
     defender_score = Column(Integer, default=0)
     victor = Column(String)
@@ -878,9 +871,7 @@ class WarScore(Base):
 
 class TerrainMap(Base):
     __tablename__ = "terrain_map"
-    __table_args__ = (
-        Index("idx_terrain_map_war_id", "war_id"),
-    )
+    __table_args__ = (Index("idx_terrain_map_war_id", "war_id"),)
 
     terrain_id = Column(Integer, primary_key=True)
     war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
@@ -951,7 +942,9 @@ class UnitCounter(Base):
 class UnitUpgradePath(Base):
     __tablename__ = "unit_upgrade_paths"
 
-    from_unit_type = Column(String, ForeignKey("unit_stats.unit_type"), primary_key=True)
+    from_unit_type = Column(
+        String, ForeignKey("unit_stats.unit_type"), primary_key=True
+    )
     to_unit_type = Column(String, ForeignKey("unit_stats.unit_type"), primary_key=True)
     cost = Column(JSONB, server_default=text("'{}'::jsonb"))
     required_level = Column(Integer, default=1)
@@ -1084,6 +1077,7 @@ class MarketListing(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True))
 
+
 class KingdomSpies(Base):
     """Spy force tracking for each kingdom."""
 
@@ -1119,9 +1113,7 @@ class VillageBuilding(Base):
         Integer, ForeignKey("building_catalogue.building_id"), primary_key=True
     )
     level = Column(Integer, default=1)
-    construction_started_at = Column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    construction_started_at = Column(DateTime(timezone=True), server_default=func.now())
     construction_ends_at = Column(DateTime(timezone=True))
     is_under_construction = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -1421,7 +1413,9 @@ class RegionBonus(Base):
 
     __tablename__ = "region_bonuses"
 
-    region_code = Column(String, ForeignKey("region_catalogue.region_code"), primary_key=True)
+    region_code = Column(
+        String, ForeignKey("region_catalogue.region_code"), primary_key=True
+    )
     bonus_type = Column(String, primary_key=True)
     bonus_value = Column(Numeric)
 
@@ -1432,7 +1426,7 @@ class KingdomTemple(Base):
     temple_id = Column(
         Integer,
         primary_key=True,
-        server_default=text("nextval('kingdom_temples_temple_id_seq'::regclass)")
+        server_default=text("nextval('kingdom_temples_temple_id_seq'::regclass)"),
     )
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
     temple_name = Column(String)
@@ -1442,11 +1436,11 @@ class KingdomTemple(Base):
     constructed_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    started_by = Column(UUID(as_uuid=True), ForeignKey('users.user_id'))
+    started_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
 class KingdomResources(Base):
-    __tablename__ = 'kingdom_resources'
+    __tablename__ = "kingdom_resources"
 
     kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"), primary_key=True)
     wood = Column(BigInteger, default=0)
@@ -1478,7 +1472,6 @@ class KingdomResources(Base):
     pitchforks = Column(BigInteger, default=0)
 
 
-
 class KingdomVillage(Base):
     __tablename__ = "kingdom_villages"
 
@@ -1504,6 +1497,7 @@ class UserToken(Base):
     user_id = Column(UUID(as_uuid=True), primary_key=True)
     tokens = Column(Integer, default=0)
 
+
 class TreatyNegotiationLog(Base):
     __tablename__ = "treaty_negotiation_log"
 
@@ -1518,7 +1512,9 @@ class TreatyNegotiationLog(Base):
 class TreatyTerms(Base):
     __tablename__ = "treaty_terms"
 
-    treaty_id = Column(Integer, ForeignKey("alliance_treaties.treaty_id"), primary_key=True)
+    treaty_id = Column(
+        Integer, ForeignKey("alliance_treaties.treaty_id"), primary_key=True
+    )
     term_type = Column(Text, primary_key=True)
     value = Column(Text)
 
@@ -1537,7 +1533,9 @@ class TreatyTypeCatalogue(Base):
     is_exclusive = Column(Boolean, default=False)
     treaty_group = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    last_updated = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
     join_wars = Column(Boolean, default=False)
     blocks_war = Column(Boolean, default=False)
     blocks_spy_ops = Column(Boolean, default=False)
@@ -1610,7 +1608,9 @@ class BuildingCatalogue(Base):
 class BuildingCost(Base):
     __tablename__ = "building_costs"
 
-    building_id = Column(Integer, ForeignKey("building_catalogue.building_id"), primary_key=True)
+    building_id = Column(
+        Integer, ForeignKey("building_catalogue.building_id"), primary_key=True
+    )
     resource_type = Column(Text, primary_key=True)
     amount = Column(Integer, nullable=False)
 
@@ -1655,7 +1655,9 @@ class AllianceTaxPolicy(Base):
     resource_type = Column(Text, primary_key=True)
     tax_rate_percent = Column(Numeric, default=0)
     is_active = Column(Boolean, default=True)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
@@ -1692,6 +1694,7 @@ class GlobalEventReward(Base):
     reward_target = Column(Text)
     reward_amount = Column(Numeric, nullable=False)
 
+
 class KingdomReligion(Base):
     """Religious affiliation and faith details for a kingdom."""
 
@@ -1717,7 +1720,3 @@ class KingdomResearchTracking(Base):
     status = Column(String)
     progress = Column(Integer, default=0)
     ends_at = Column(DateTime(timezone=True))
-
-
-
-

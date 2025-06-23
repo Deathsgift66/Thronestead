@@ -76,14 +76,16 @@ def get_battle_replay(
     db: Session = Depends(get_db),
 ) -> dict:
     """Return aggregated data for a completed battle."""
-    war = db.query(models.WarsTactical).filter(models.WarsTactical.war_id == war_id).first()
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
 
     units = (
-        db.query(models.UnitMovement)
-        .filter(models.UnitMovement.war_id == war_id)
-        .all()
+        db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
     )
     unit_movements = [
         {
@@ -172,7 +174,11 @@ def battle_resolution_alt(
 ) -> dict:
     """Return summarized resolution info for ``war_id``."""
 
-    war = db.query(models.WarsTactical).filter(models.WarsTactical.war_id == war_id).first()
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
     meta = db.query(models.War).filter(models.War.war_id == war_id).first()
@@ -246,11 +252,17 @@ def get_live_battle(
 ) -> dict:
     """Return live battle state for ``war_id``."""
 
-    war = db.query(models.WarsTactical).filter(models.WarsTactical.war_id == war_id).first()
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
 
-    terrain = db.query(models.TerrainMap).filter(models.TerrainMap.war_id == war_id).first()
+    terrain = (
+        db.query(models.TerrainMap).filter(models.TerrainMap.war_id == war_id).first()
+    )
     movements = (
         db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
     )

@@ -38,7 +38,16 @@ def setup_db():
 
 
 def create_user(db, uid, alliance_id=None):
-    db.add(User(user_id=uid, username=f"u{uid}", display_name="U", email=f"{uid}@t.test", kingdom_name="K", alliance_id=alliance_id))
+    db.add(
+        User(
+            user_id=uid,
+            username=f"u{uid}",
+            display_name="U",
+            email=f"{uid}@t.test",
+            kingdom_name="K",
+            alliance_id=alliance_id,
+        )
+    )
     if alliance_id:
         db.add(Alliance(alliance_id=alliance_id, name=f"A{alliance_id}"))
     db.commit()
@@ -73,7 +82,9 @@ def test_propose_treaty_row_created():
     create_user(db, uid, alliance_id=1)
     db.add(Alliance(alliance_id=2, name="B"))
     db.commit()
-    res = propose_treaty(TreatyPayload(partner_alliance_id=2, treaty_type="trade_pact"), uid, db)
+    res = propose_treaty(
+        TreatyPayload(partner_alliance_id=2, treaty_type="trade_pact"), uid, db
+    )
     row = db.execute(text("SELECT * FROM alliance_treaties")).fetchone()
     assert res["status"] == "proposed" and row is not None
 

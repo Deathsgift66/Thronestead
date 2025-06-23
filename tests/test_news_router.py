@@ -51,7 +51,15 @@ def test_invalid_user():
 
 
 def test_returns_articles():
-    rows = [{"id": 1, "title": "A", "summary": "S", "author_name": "B", "published_at": "2025-01-01"}]
+    rows = [
+        {
+            "id": 1,
+            "title": "A",
+            "summary": "S",
+            "author_name": "B",
+            "published_at": "2025-01-01",
+        }
+    ]
     tables = {"users": [{"user_id": "u1"}], "news_articles": rows}
     client = DummyClient(tables)
     news.get_supabase_client = lambda: client

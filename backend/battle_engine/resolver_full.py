@@ -109,6 +109,7 @@ def process_unit_combat(
 # COMBAT RESOLVER — FULL ENGINE SKELETON
 # ============================================
 
+
 def run_combat_tick() -> None:
     """Process one combat tick for all active wars."""
 
@@ -140,6 +141,7 @@ def run_combat_tick() -> None:
 # ============================================
 # PROCESS KINGDOM WAR TICK
 # ============================================
+
 
 def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
     """Advance a single tick for a kingdom vs. kingdom war."""
@@ -189,6 +191,7 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
 # ============================================
 # PROCESS ALLIANCE WAR TICK
 # ============================================
+
 
 def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
     """Advance a single tick for an alliance war."""
@@ -286,6 +289,7 @@ def update_alliance_war_score(alliance_war_id: int) -> None:
 # CHECK VICTORY — KINGDOM WAR
 # ============================================
 
+
 def check_victory_condition_kingdom(war_id: int) -> None:
     war = db.query(
         """
@@ -358,6 +362,7 @@ def check_victory_condition_kingdom(war_id: int) -> None:
 # ============================================
 # CHECK VICTORY — ALLIANCE WAR
 # ============================================
+
 
 def check_victory_condition_alliance(alliance_war_id: int) -> None:
     awar = db.query(
@@ -437,6 +442,7 @@ def check_victory_condition_alliance(alliance_war_id: int) -> None:
 # ============================================
 # DETERMINE VICTOR — EXAMPLE LOGIC
 # ============================================
+
 
 def determine_victor(war_id: int) -> str:
     war = db.query(
@@ -552,6 +558,7 @@ def calculate_alliance_war_casualties(alliance_war_id: int) -> tuple[int, int]:
 # INSERT BATTLE RESOLUTION LOG
 # ============================================
 
+
 def insert_battle_resolution_log(
     battle_type: str,
     war_id: int | None,
@@ -602,4 +609,3 @@ def insert_battle_resolution_log(
             resources_looted,
         ),
     )
-

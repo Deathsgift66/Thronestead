@@ -53,7 +53,9 @@ def test_modifier_flow():
     assert res["modifiers"][0]["resource_bonus"]["wood"] == 10
 
     # expire and cleanup
-    db.query(VillageModifier).update({VillageModifier.expires_at: datetime.utcnow() - timedelta(days=1)})
+    db.query(VillageModifier).update(
+        {VillageModifier.expires_at: datetime.utcnow() - timedelta(days=1)}
+    )
     db.commit()
     cleanup_expired(db)
     res2 = list_modifiers(1, db)

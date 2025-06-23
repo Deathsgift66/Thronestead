@@ -12,6 +12,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------
 # Alliance Tax Processing
 # ------------------------------------------------------------
+
 
 def collect_alliance_tax(
     db: Session,
@@ -50,13 +52,15 @@ def collect_alliance_tax(
     try:
         # Step 1: Fetch tax rate
         rate_row = db.execute(
-            text("""
+            text(
+                """
                 SELECT tax_rate_percent
                   FROM alliance_tax_policies
                  WHERE alliance_id = :aid
                    AND resource_type = :res
                    AND is_active = true
-            """),
+            """
+            ),
             {"aid": alliance_id, "res": resource_type},
         ).fetchone()
 
@@ -74,24 +78,28 @@ def collect_alliance_tax(
 
         # Step 3: Update alliance vault balance
         db.execute(
-            text(f"""
+            text(
+                f"""
                 UPDATE alliance_vault
                    SET {resource_type} = COALESCE({resource_type}, 0) + :amt
                  WHERE alliance_id = :aid
-            """),
+            """
+            ),
             {"amt": tax_amount, "aid": alliance_id},
         )
 
         # Step 4: Log tax collection
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO alliance_tax_collections (
                     alliance_id, user_id, resource_type,
                     amount_collected, source, notes
                 ) VALUES (
                     :aid, :uid, :res, :amt, :src, :note
                 )
-            """),
+            """
+            ),
             {
                 "aid": alliance_id,
                 "uid": user_id,
@@ -104,13 +112,15 @@ def collect_alliance_tax(
 
         # Step 5: Log to alliance vault transaction log
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO alliance_vault_transaction_log (
                     alliance_id, user_id, action, resource_type, amount, notes
                 ) VALUES (
                     :aid, NULL, 'deposit', :res, :amt, :note
                 )
-            """),
+            """
+            ),
             {
                 "aid": alliance_id,
                 "res": resource_type,

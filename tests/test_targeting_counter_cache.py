@@ -16,6 +16,7 @@ module.__package__ = "backend.battle_engine"
 module_path = pathlib.Path("backend/battle_engine/targeting.py")
 exec(module_path.read_text(), module.__dict__)
 
+
 class DummyDB:
     def __init__(self, rows=None):
         self.rows = rows or []

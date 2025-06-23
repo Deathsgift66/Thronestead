@@ -26,6 +26,7 @@ router = APIRouter(prefix="/api/admin", tags=["player_management"])
 # Request Models
 # -----------------------------
 
+
 class BulkAction(BaseModel):
     action: str  # valid: ban, flag, logout, reset_password
     player_ids: list[str]
@@ -50,10 +51,7 @@ def players(
     """
     supabase = get_supabase_client()
 
-    query = (
-        supabase.table("users")
-        .select("user_id,username,email,vip_tier,status")
-    )
+    query = supabase.table("users").select("user_id,username,email,vip_tier,status")
 
     # Apply search filters if provided
     if search:
@@ -102,13 +100,19 @@ def bulk_action(
         raise HTTPException(status_code=400, detail="No player IDs provided")
 
     if payload.action == "ban":
-        supabase.table("users").update({"status": "banned"}).in_("user_id", ids).execute()
+        supabase.table("users").update({"status": "banned"}).in_(
+            "user_id", ids
+        ).execute()
     elif payload.action == "flag":
         supabase.table("users").update({"flagged": True}).in_("user_id", ids).execute()
     elif payload.action == "logout":
-        supabase.table("user_active_sessions").update({"session_status": "expired"}).in_("user_id", ids).execute()
+        supabase.table("user_active_sessions").update(
+            {"session_status": "expired"}
+        ).in_("user_id", ids).execute()
     elif payload.action == "reset_password":
-        supabase.table("users").update({"force_password_reset": True}).in_("user_id", ids).execute()
+        supabase.table("users").update({"force_password_reset": True}).in_(
+            "user_id", ids
+        ).execute()
     else:
         raise HTTPException(status_code=400, detail="Unknown action")
 
@@ -133,11 +137,15 @@ def player_action(
     pid = payload.player_id
 
     if payload.action == "ban":
-        supabase.table("users").update({"status": "banned"}).eq("user_id", pid).execute()
+        supabase.table("users").update({"status": "banned"}).eq(
+            "user_id", pid
+        ).execute()
     elif payload.action == "flag":
         supabase.table("users").update({"flagged": True}).eq("user_id", pid).execute()
     elif payload.action == "freeze":
-        supabase.table("users").update({"status": "frozen"}).eq("user_id", pid).execute()
+        supabase.table("users").update({"status": "frozen"}).eq(
+            "user_id", pid
+        ).execute()
     elif payload.action == "history":
         logs = fetch_user_related_logs(db, pid)
         return {"history": logs}

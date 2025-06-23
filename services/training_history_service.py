@@ -13,6 +13,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------
 # Training History Services
 # ------------------------------------------------------------
+
 
 def record_training(
     db: Session,
@@ -54,7 +56,8 @@ def record_training(
     """
     try:
         result = db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO training_history (
                     kingdom_id, unit_id, unit_name, quantity, completed_at,
                     source, initiated_at, trained_by, modifiers_applied
@@ -63,7 +66,8 @@ def record_training(
                     :src, :init, :tby, :mods
                 )
                 RETURNING history_id
-            """),
+            """
+            ),
             {
                 "kid": kingdom_id,
                 "uid": unit_id,
@@ -99,13 +103,15 @@ def fetch_history(db: Session, kingdom_id: int, limit: int = 50) -> list[dict]:
     """
     try:
         rows = db.execute(
-            text("""
+            text(
+                """
                 SELECT unit_name, quantity, completed_at, source
                 FROM training_history
                 WHERE kingdom_id = :kid
                 ORDER BY completed_at DESC
                 LIMIT :lim
-            """),
+            """
+            ),
             {"kid": kingdom_id, "lim": limit},
         ).fetchall()
 

@@ -13,19 +13,24 @@ try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
     Session = object  # type: ignore
 
 try:
-    from backend.supabase_channels import broadcast_notification  # Optional live update support
+    from backend.supabase_channels import (
+        broadcast_notification,
+    )  # Optional live update support
 except ImportError:  # pragma: no cover - fallback when realtime is unavailable
+
     def broadcast_notification(channel: str, target: str, message: str) -> None:
         """Fallback notifier when Supabase channels are missing."""
         logging.getLogger("Thronestead.NotificationFallback").info(
             "[Fallback] %s -> %s: %s", channel, target, message
         )
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +38,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------------------
 # 🔔 Notification Insertion
 # ------------------------------------------------------------------------------
+
 
 def notify_user(
     db: Session,
@@ -44,14 +50,22 @@ def notify_user(
 ) -> None:
     """Send a notification to a user."""
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO user_notifications (
                 user_id, message, category, priority, created_at, expires_at
             ) VALUES (
                 :uid, :msg, :cat, :pri, now(), :exp
             )
-        """),
-        {"uid": user_id, "msg": message, "cat": category, "pri": priority, "exp": expires_at},
+        """
+        ),
+        {
+            "uid": user_id,
+            "msg": message,
+            "cat": category,
+            "pri": priority,
+            "exp": expires_at,
+        },
     )
     db.commit()
     broadcast_notification("user", user_id, message)
@@ -83,13 +97,19 @@ def notify_alliance(
     expires_at: datetime | None = None,
 ) -> None:
     """Send a notification to all users in an alliance."""
-    user_ids = db.execute(
-        text("""
+    user_ids = (
+        db.execute(
+            text(
+                """
             SELECT user_id FROM alliance_members
             WHERE alliance_id = :aid
-        """),
-        {"aid": alliance_id},
-    ).scalars().all()
+        """
+            ),
+            {"aid": alliance_id},
+        )
+        .scalars()
+        .all()
+    )
 
     for uid in user_ids:
         notify_user(db, uid, message, category, priority, expires_at)
@@ -102,10 +122,12 @@ def notify_system_event(
 ) -> None:
     """Log a system-wide message into the global event log."""
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO system_notifications (message, tag, created_at)
             VALUES (:msg, :tag, now())
-        """),
+        """
+        ),
         {"msg": message, "tag": tag},
     )
     db.commit()
@@ -116,11 +138,9 @@ def notify_system_event(
 # 📦 Notification Retrieval
 # ------------------------------------------------------------------------------
 
+
 def fetch_user_notifications(
-    db: Session,
-    user_id: str,
-    limit: int = 50,
-    include_expired: bool = False
+    db: Session, user_id: str, limit: int = 50, include_expired: bool = False
 ) -> list[dict]:
     """Return recent notifications for a user."""
     query = """
@@ -148,6 +168,7 @@ def clear_user_notifications(db: Session, user_id: str) -> None:
 # ------------------------------------------------------------------------------
 # 🧪 Testing Hook
 # ------------------------------------------------------------------------------
+
 
 def test_notification_flow(db: Session, user_id: str) -> dict:
     """Create and verify a test notification for the user."""

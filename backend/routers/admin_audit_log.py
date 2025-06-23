@@ -51,7 +51,9 @@ def get_audit_logs(
         - limit: Maximum rows (default: 100, max: 1000)
     """
     verify_admin(admin_user_id, db)
-    logger.info(f"🔎 Admin {admin_user_id} fetched audit logs (user={user_id}, action={action})")
+    logger.info(
+        f"🔎 Admin {admin_user_id} fetched audit logs (user={user_id}, action={action})"
+    )
     logs = fetch_filtered_logs(
         db,
         user_id=user_id,

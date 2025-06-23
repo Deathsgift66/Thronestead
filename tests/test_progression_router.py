@@ -4,15 +4,19 @@
 # Developer: Deathsgift66
 from backend.routers import progression_router as pr
 
+
 class DummyResult:
     def __init__(self, row=None):
         self._row = row
+
     def fetchone(self):
         return self._row
+
 
 class DummyDB:
     def __init__(self):
         self.calls = []
+
     def execute(self, query, params=None):
         q = str(query)
         self.calls.append((q, params))
@@ -30,8 +34,10 @@ class DummyDB:
             if "used_slots" in q:
                 return DummyResult((6,))
         return DummyResult(None)
+
     def commit(self):
         pass
+
 
 def test_progression_summary_returns_data():
     db = DummyDB()

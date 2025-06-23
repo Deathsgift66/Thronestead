@@ -36,7 +36,7 @@ def init_engine(db_url: Optional[str] = None) -> None:
     global engine, SessionLocal, Session
     url = db_url or DATABASE_URL
     if not url:
-        logger.warning("\u26A0\uFE0F DATABASE_URL is not set. SQLAlchemy is disabled.")
+        logger.warning("\u26a0\ufe0f DATABASE_URL is not set. SQLAlchemy is disabled.")
         engine = None
         SessionLocal = None
         Session = None
@@ -47,7 +47,7 @@ def init_engine(db_url: Optional[str] = None) -> None:
         Session = SessionLocal
         logger.info("\u2705 SQLAlchemy engine initialized successfully.")
     except OperationalError as err:
-        logger.error("\u274C Failed to initialize SQLAlchemy engine.")
+        logger.error("\u274c Failed to initialize SQLAlchemy engine.")
         logger.exception(err)
         engine = None
         SessionLocal = None

@@ -10,21 +10,27 @@ from backend.routers.training_queue import (
     CancelPayload,
 )
 
+
 class DummyResult:
     def __init__(self, row=None, rows=None):
         self._row = row
         self._rows = rows or []
+
     def fetchone(self):
         return self._row
+
     def fetchall(self):
         return self._rows
+
     def scalar(self):
         return self._row[0] if self._row else None
+
 
 class DummyDB:
     def __init__(self):
         self.executed = []
         self.rows = []
+
     def execute(self, query, params=None):
         q = str(query)
         self.executed.append((q, params))
@@ -37,13 +43,16 @@ class DummyDB:
         if "FROM training_queue" in q:
             return DummyResult(rows=self.rows)
         return DummyResult()
+
     def commit(self):
         pass
 
 
 def test_start_training_returns_id():
     db = DummyDB()
-    payload = TrainOrderPayload(unit_id=2, unit_name="Archer", quantity=5, base_training_seconds=60)
+    payload = TrainOrderPayload(
+        unit_id=2, unit_name="Archer", quantity=5, base_training_seconds=60
+    )
     res = start_training(payload, user_id="u1", db=db)
     assert res["queue_id"] == 5
 
@@ -61,4 +70,3 @@ def test_cancel_order_updates_row():
     cancel_order(CancelPayload(queue_id=2), user_id="u1", db=db)
     executed = " ".join(db.executed[-1][0].split()).lower()
     assert "update training_queue" in executed
-

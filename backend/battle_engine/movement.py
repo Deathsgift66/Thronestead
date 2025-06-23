@@ -61,7 +61,13 @@ def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> Non
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
 
 
-def move_towards(unit: Dict[str, Any], target_x: int, target_y: int, speed: int, terrain: List[List[str]]) -> bool:
+def move_towards(
+    unit: Dict[str, Any],
+    target_x: int,
+    target_y: int,
+    speed: int,
+    terrain: List[List[str]],
+) -> bool:
     """Move ``unit`` toward ``target_x`` and ``target_y``. Return ``True`` if reached."""
 
     cur_x = unit["position_x"]
@@ -104,7 +110,9 @@ def terrain_movement_modifier(terrain_type: str, unit: Dict[str, Any]) -> float:
     return base
 
 
-def select_patrol_target(unit: Dict[str, Any], patrol_zone: Dict[str, int]) -> Dict[str, int]:
+def select_patrol_target(
+    unit: Dict[str, Any], patrol_zone: Dict[str, int]
+) -> Dict[str, int]:
     """Return a random tile within ``patrol_zone`` for patrolling units."""
 
     x1 = patrol_zone.get("x1", 0)

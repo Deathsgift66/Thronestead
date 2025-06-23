@@ -34,9 +34,11 @@ class BuildingActionPayload(BaseModel):
 # -------------------------------
 @router.get("/catalogue")
 def get_catalogue(db: Session = Depends(get_db)):
-    rows = db.execute(
-        text("SELECT * FROM building_catalogue ORDER BY building_id")
-    ).mappings().fetchall()
+    rows = (
+        db.execute(text("SELECT * FROM building_catalogue ORDER BY building_id"))
+        .mappings()
+        .fetchall()
+    )
     return {"buildings": [dict(r) for r in rows]}
 
 
@@ -54,13 +56,15 @@ def get_village_buildings(
     # Verify ownership
     owner = db.execute(
         text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
-        {"vid": village_id}
+        {"vid": village_id},
     ).fetchone()
     if not owner or owner[0] != kingdom_id:
         raise HTTPException(403, "Village does not belong to your kingdom")
 
-    rows = db.execute(
-        text("""
+    rows = (
+        db.execute(
+            text(
+                """
             SELECT bc.*, COALESCE(vb.level, 0) AS level,
                    vb.is_under_construction, vb.construction_started_at,
                    vb.construction_ends_at
@@ -69,21 +73,31 @@ def get_village_buildings(
                 ON vb.building_id = bc.building_id
                AND vb.village_id = :vid
              ORDER BY bc.building_id
-        """),
-        {"vid": village_id}
-    ).mappings().fetchall()
+        """
+            ),
+            {"vid": village_id},
+        )
+        .mappings()
+        .fetchall()
+    )
 
     return {"buildings": [dict(r) for r in rows]}
+
+
 @router.get("/info/{building_id}")
 def get_building_info(
     building_id: int,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    row = db.execute(
-        text("SELECT * FROM building_catalogue WHERE building_id = :bid"),
-        {"bid": building_id},
-    ).mappings().fetchone()
+    row = (
+        db.execute(
+            text("SELECT * FROM building_catalogue WHERE building_id = :bid"),
+            {"bid": building_id},
+        )
+        .mappings()
+        .fetchone()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="Building not found")
     return {"building": dict(row)}
@@ -101,13 +115,18 @@ def upgrade_build(
         {"vid": payload.village_id},
     ).fetchone()
     if not owner or owner[0] != kid:
-        raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
+        raise HTTPException(
+            status_code=403, detail="Village does not belong to your kingdom"
+        )
     seconds = db.execute(
-        text("SELECT build_time_seconds FROM building_catalogue WHERE building_id = :bid"),
+        text(
+            "SELECT build_time_seconds FROM building_catalogue WHERE building_id = :bid"
+        ),
         {"bid": payload.building_id},
     ).fetchone()
     duration = seconds[0] if seconds else 3600
     from services.kingdom_building_service import upgrade_building
+
     upgrade_building(db, payload.village_id, payload.building_id, user_id, duration)
     log_action(db, user_id, "upgrade_build", payload.dict())
     return {"message": "Upgrade started"}
@@ -125,7 +144,9 @@ def reset_build(
         {"vid": payload.village_id},
     ).fetchone()
     if not owner or owner[0] != kid:
-        raise HTTPException(status_code=403, detail="Village does not belong to your kingdom")
+        raise HTTPException(
+            status_code=403, detail="Village does not belong to your kingdom"
+        )
     db.execute(
         text(
             "UPDATE village_buildings SET level = 0 WHERE village_id = :vid AND building_id = :bid"

@@ -24,9 +24,9 @@ router = APIRouter(prefix="/api", tags=["settings"])
 
 
 class SettingPayload(BaseModel):
-    key: str                  # Unique game setting key
-    value: Any                # Updated value (any type supported by the setting)
-    is_active: bool = True    # Activation flag for the setting
+    key: str  # Unique game setting key
+    value: Any  # Updated value (any type supported by the setting)
+    is_active: bool = True  # Activation flag for the setting
 
 
 @router.get("/game/settings")
@@ -93,6 +93,10 @@ def update_setting(
         db.commit()
         load_game_settings()
 
-        return {"message": "Setting updated", "key": payload.key, "new_value": payload.value}
+        return {
+            "message": "Setting updated",
+            "key": payload.key,
+            "new_value": payload.value,
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to update setting") from e

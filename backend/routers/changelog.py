@@ -27,15 +27,16 @@ def get_changelog(user_id: str = Depends(verify_jwt_token)):
 
     try:
         res = (
-            supabase
-            .table("game_changelog")
+            supabase.table("game_changelog")
             .select("*")
             .order("release_date", desc=True)
             .limit(50)
             .execute()
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve changelog: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve changelog: {str(e)}"
+        )
 
     rows = getattr(res, "data", res) or []
 

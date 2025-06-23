@@ -42,10 +42,14 @@ def list_members(
     output_subquery = (
         db.query(
             Kingdom.user_id.label("uid"),
-            func.coalesce(func.sum(VillageProduction.production_rate), 0).label("total_output"),
+            func.coalesce(func.sum(VillageProduction.production_rate), 0).label(
+                "total_output"
+            ),
         )
         .join(KingdomVillage, KingdomVillage.kingdom_id == Kingdom.kingdom_id)
-        .join(VillageProduction, VillageProduction.village_id == KingdomVillage.village_id)
+        .join(
+            VillageProduction, VillageProduction.village_id == KingdomVillage.village_id
+        )
         .group_by(Kingdom.user_id)
         .subquery()
     )

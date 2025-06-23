@@ -29,6 +29,7 @@ router = APIRouter(prefix="/api/signup", tags=["signup"])
 
 # ------------- Payload Models -------------------
 
+
 class CheckPayload(BaseModel):
     kingdom_name: Optional[str] = None
     username: Optional[constr(min_length=3, max_length=20)] = None
@@ -51,6 +52,7 @@ class RegisterPayload(BaseModel):
 
 
 # ------------- Route Endpoints -------------------
+
 
 @router.post("/check")
 def check_availability(payload: CheckPayload):
@@ -85,11 +87,13 @@ def check_availability(payload: CheckPayload):
             available_username = len(rows) == 0
 
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to query availability") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to query availability"
+        ) from exc
 
     return {
         "kingdom_available": available_kingdom,
-        "username_available": available_username
+        "username_available": available_username,
     }
 
 
@@ -110,7 +114,9 @@ def signup_stats():
         data = getattr(res, "data", res) or []
         return {"top_kingdoms": data}
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to fetch kingdom stats") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch kingdom stats"
+        ) from exc
 
 
 @router.post("/create_user")
@@ -184,16 +190,20 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
         )
     except Exception as exc:
         logger.exception("❌ Failed to create auth user")
-        raise HTTPException(status_code=500, detail="Internal server error during signup.") from exc
+        raise HTTPException(
+            status_code=500, detail="Internal server error during signup."
+        ) from exc
 
     if isinstance(res, dict) and res.get("error"):
         logger.error("Supabase signup error: %s", res["error"])
-        raise HTTPException(status_code=400, detail=res["error"].get("message", "Signup failed"))
+        raise HTTPException(
+            status_code=400, detail=res["error"].get("message", "Signup failed")
+        )
 
     # Extract the newly created user ID
-    uid = (
-        getattr(res, "user", None) and getattr(res.user, "id", None)
-    ) or getattr(res, "id", None)
+    uid = (getattr(res, "user", None) and getattr(res.user, "id", None)) or getattr(
+        res, "id", None
+    )
 
     if not uid:
         raise HTTPException(status_code=500, detail="Signup failed - user ID missing")
@@ -224,7 +234,11 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
                 RETURNING kingdom_id
                 """
             ),
-            {"uid": uid, "kingdom": payload.kingdom_name, "display": payload.display_name},
+            {
+                "uid": uid,
+                "kingdom": payload.kingdom_name,
+                "display": payload.display_name,
+            },
         ).fetchone()
         kid = int(row[0]) if row else None
 
@@ -257,6 +271,8 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
 
         db.commit()
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to save user profile") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to save user profile"
+        ) from exc
 
     return {"user_id": uid, "kingdom_id": kid}
