@@ -49,7 +49,7 @@ def vip_status(
 
 
 @alt_router.get("/api/user/vip")
-async def get_vip_status(user_id: str = Depends(require_user_id)):
+async def get_vip_status_alt(user_id: str = Depends(require_user_id)):
     """Return VIP status for the authenticated user."""
     rows = db.query(
         "SELECT * FROM kingdom_vip_status WHERE user_id = :uid",

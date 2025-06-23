@@ -2,12 +2,11 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import TerrainMap, UnitMovement
 
 
 def test_index_definitions_present():
     engine = create_engine("sqlite:///:memory:")
-    Session = sessionmaker(bind=engine)
+    sessionmaker(bind=engine)
     Base.metadata.create_all(engine)
 
     inspector = inspect(engine)

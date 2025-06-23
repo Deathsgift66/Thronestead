@@ -2,9 +2,6 @@ import uuid
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-import uuid
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
 from backend.models import User, Alliance, PlayerMessage, AllianceNotice, War

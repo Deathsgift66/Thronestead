@@ -10,12 +10,10 @@ Role: API routes for diplomacy.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import text
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend.models import Alliance
-from services.alliance_treaty_service import list_active_treaties
 
 from ..database import get_db
 from ..security import require_user_id
@@ -52,4 +50,6 @@ async def list_treaties(
     - alliance_treaties if part of alliance
     - kingdom-level treaties if implemented
     """
-    kid = get_kingdom_id(db, user_id)
+    # TODO: implement returning relevant treaties once diplomacy is fully built
+    get_kingdom_id(db, user_id)
+    return {}

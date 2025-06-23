@@ -6,7 +6,6 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -78,9 +77,11 @@ def get_troop_state(db: Session, kingdom_id: int):
 @router.get("/regions")
 def list_regions(db: Session = Depends(get_db)):
     try:
-        rows = db.execute(text("SELECT * FROM region_catalogue ORDER BY region_name")).mappings().fetchall()
+        rows = db.execute(
+            text("SELECT * FROM region_catalogue ORDER BY region_name")
+        ).mappings().fetchall()
         return [dict(r) for r in rows] or DEFAULT_REGIONS
-    except:
+    except Exception:
         return DEFAULT_REGIONS
 
 
