@@ -178,6 +178,25 @@ def update_kingdom_field(
     return {"status": "updated"}
 
 
+class KingdomFieldUpdate(BaseModel):
+    kingdom_id: int
+    field: str
+    value: Any
+
+
+@router.post("/kingdom/update_field")
+def update_field(payload: KingdomFieldUpdate, verify: str = Depends(verify_api_key), admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+    """Alias for ``/kingdoms/update`` using JSON payload."""
+    return update_kingdom_field(
+        payload.kingdom_id,
+        payload.field,
+        payload.value,
+        verify=verify,
+        admin_user_id=admin_user_id,
+        db=db,
+    )
+
+
 # ---------------------
 # 🚩 Flagged User Review
 # ---------------------
