@@ -11,7 +11,6 @@ Version: 2025-06-21
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 
 from ..database import get_db
 from backend import models
@@ -109,15 +108,15 @@ def get_battle_replay(
     )
     combat_logs = [
         {
-            "tick": l.tick_number,
-            "message": l.notes or l.event_type,
-            "attacker_unit_id": l.attacker_unit_id,
-            "defender_unit_id": l.defender_unit_id,
-            "position_x": l.position_x,
-            "position_y": l.position_y,
-            "damage_dealt": l.damage_dealt,
+            "tick": log_entry.tick_number,
+            "message": log_entry.notes or log_entry.event_type,
+            "attacker_unit_id": log_entry.attacker_unit_id,
+            "defender_unit_id": log_entry.defender_unit_id,
+            "position_x": log_entry.position_x,
+            "position_y": log_entry.position_y,
+            "damage_dealt": log_entry.damage_dealt,
         }
-        for l in logs
+        for log_entry in logs
     ]
 
     resolution = (
@@ -280,11 +279,11 @@ def get_live_battle(
         ],
         "combat_logs": [
             {
-                "tick_number": l.tick_number,
-                "event_type": l.event_type,
-                "damage_dealt": l.damage_dealt,
+                "tick_number": log_entry.tick_number,
+                "event_type": log_entry.event_type,
+                "damage_dealt": log_entry.damage_dealt,
             }
-            for l in logs
+            for log_entry in logs
         ],
         "attacker_score": score.attacker_score if score else 0,
         "defender_score": score.defender_score if score else 0,

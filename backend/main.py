@@ -19,12 +19,12 @@ import logging
 import os
 import traceback
 
-API_SECRET = os.getenv("API_SECRET")
-
 from .auth_middleware import UserStateMiddleware
 from .database import engine
 from .models import Base
 from . import routers as router_pkg
+
+API_SECRET = os.getenv("API_SECRET")
 
 # -----------------------
 # ⚙️ FastAPI Initialization

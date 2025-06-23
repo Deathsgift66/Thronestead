@@ -21,7 +21,7 @@ from backend.progression_service import (
 
 from services.progression_service import get_total_modifiers
 from services.progression_service import _kingdom_project_modifiers
-from services.progression_service import get_total_modifiers, calculate_troop_slots
+from services.progression_service import calculate_troop_slots
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 

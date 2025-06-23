@@ -14,7 +14,7 @@ import base64
 import json
 import os
 from uuid import UUID
-from fastapi import Header, HTTPException, Depends
+from fastapi import Header, HTTPException
 from jose import jwt, JWTError
 
 import logging

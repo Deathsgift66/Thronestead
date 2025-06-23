@@ -103,7 +103,7 @@ _resources: dict[str, dict[str, int]] = {
 @alt_router.get("/listings")
 def get_listings():
     """Return available black market offers."""
-    return {"listings": [l.model_dump() for l in _listings]}
+    return {"listings": [listing.model_dump() for listing in _listings]}
 
 
 @router.post("/purchase")
