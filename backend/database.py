@@ -58,8 +58,8 @@ def init_engine(db_url: Optional[str] = None) -> None:
 init_engine()
 
 
-def get_db(request: Request | None = None) -> Generator:
-    """Yield a new SQLAlchemy session with optional per-request settings."""
+def get_db(request: Request) -> Generator:
+    """Yield a new SQLAlchemy session using request-scoped settings."""
     if SessionLocal is None:
         raise RuntimeError("DATABASE_URL not configured. Cannot create DB session.")
 
