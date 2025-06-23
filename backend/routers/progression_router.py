@@ -64,6 +64,18 @@ class KnightPayload(BaseModel):
         return v.strip()
 
 
+class KnightRenamePayload(BaseModel):
+    current_name: str
+    new_name: str
+
+    @validator("current_name", "new_name")
+    def _validate_rename(cls, v: str) -> str:  # noqa: D401
+        """Validate both knight names."""
+        if not NAME_PATTERN.match(v):
+            raise ValueError("Name must be 1-50 alphanumeric characters or spaces")
+        return v.strip()
+
+
 def _count_records(db: Session, table: str, kid: int) -> int:
     """Return ``COUNT(*)`` for the given table and kingdom."""
     return (
@@ -307,6 +319,35 @@ def assign_knight(
     db.commit()
     calculate_troop_slots(db, kid)
     return {"message": "Knight assigned"}
+
+
+# 🔹 POST: Rename Knight
+@router.post("/knights/rename")
+def rename_knight(
+    payload: KnightRenamePayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+
+    existing = db.execute(
+        text(
+            "SELECT knight_id FROM kingdom_knights WHERE kingdom_id = :kid AND knight_name = :old"
+        ),
+        {"kid": kid, "old": payload.current_name},
+    ).fetchone()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Knight not found")
+
+    db.execute(
+        text(
+            "UPDATE kingdom_knights SET knight_name = :new WHERE kingdom_id = :kid AND knight_name = :old"
+        ),
+        {"kid": kid, "old": payload.current_name, "new": payload.new_name},
+    )
+
+    db.commit()
+    return {"message": "Knight renamed"}
 
 
 # 🔹 POST: Force Recalculate Progression
