@@ -10,7 +10,9 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import text
+
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -298,6 +300,48 @@ def get_live_battle(
     }
 
 
+
+class OrdersPayload(BaseModel):
+    """Payload for issuing a simple movement order."""
+
+    war_id: int
+    unit_id: int
+    x: int
+    y: int
+
+
+@router.post("/orders")
+def issue_orders(
+    payload: OrdersPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Update target coordinates for a unit owned by the player."""
+
+    from .progression_router import get_kingdom_id
+
+    kingdom_id = get_kingdom_id(db, user_id)
+
+    unit = (
+        db.query(models.UnitMovement)
+        .filter(
+            models.UnitMovement.movement_id == payload.unit_id,
+            models.UnitMovement.war_id == payload.war_id,
+        )
+        .first()
+    )
+    if not unit:
+        raise HTTPException(status_code=404, detail="Unit not found")
+    if unit.kingdom_id != kingdom_id:
+        raise HTTPException(status_code=403, detail="Cannot command this unit")
+
+    unit.target_tile_x = payload.x
+    unit.target_tile_y = payload.y
+    unit.issued_by = user_id
+    db.commit()
+
+    return {"status": "updated"}
+
 def _get_alliance_id(db: Session, user_id: str) -> int:
     row = db.execute(
         text("SELECT alliance_id FROM users WHERE user_id = :uid"),
@@ -364,3 +408,4 @@ def list_alliance_wars(
             }
         )
     return wars
+
