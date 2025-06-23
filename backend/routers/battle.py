@@ -10,6 +10,8 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -17,6 +19,7 @@ from backend import models
 from ..battle_engine import TerrainGenerator, Unit, WarState, war_manager
 from ..database import get_db
 from ..security import verify_jwt_token
+from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/battle", tags=["battle"])
 
@@ -309,4 +312,153 @@ def get_battle_history(
     """Return recent completed battles for ``kingdom_id``."""
     records = fetch_battle_history(db, kingdom_id, limit)
     return {"history": records}
+
+
+
+class DeclarePayload(BaseModel):
+    """Payload for declaring an alliance battle."""
+
+    target_alliance_id: int
+
+
+@router.post("/declare")
+def declare_alliance_battle(
+    payload: DeclarePayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Declare a new alliance battle using the caller's alliance."""
+
+
+
+class OrdersPayload(BaseModel):
+    """Payload for issuing a simple movement order."""
+
+    war_id: int
+    unit_id: int
+    x: int
+    y: int
+
+
+@router.post("/orders")
+def issue_orders(
+    payload: OrdersPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Update target coordinates for a unit owned by the player."""
+
+    from .progression_router import get_kingdom_id
+
+    kingdom_id = get_kingdom_id(db, user_id)
+
+    unit = (
+        db.query(models.UnitMovement)
+        .filter(
+            models.UnitMovement.movement_id == payload.unit_id,
+            models.UnitMovement.war_id == payload.war_id,
+        )
+        .first()
+    )
+    if not unit:
+        raise HTTPException(status_code=404, detail="Unit not found")
+    if unit.kingdom_id != kingdom_id:
+        raise HTTPException(status_code=403, detail="Cannot command this unit")
+
+    unit.target_tile_x = payload.x
+    unit.target_tile_y = payload.y
+    unit.issued_by = user_id
+    db.commit()
+
+    return {"status": "updated"}
+
+def _get_alliance_id(db: Session, user_id: str) -> int:
+
+    row = db.execute(
+        text("SELECT alliance_id FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    if not row or row[0] is None:
+        raise HTTPException(status_code=404, detail="Alliance not found")
+
+    attacker_id = row[0]
+
+    res = db.execute(
+        text(
+            "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "
+            "VALUES (:att, :def, 'alert', 'pending') RETURNING alliance_war_id"
+        ),
+        {"att": attacker_id, "def": payload.target_alliance_id},
+    ).fetchone()
+    db.commit()
+
+    log_action(
+        db,
+        user_id,
+        "Declare War",
+        f"{attacker_id} -> {payload.target_alliance_id}",
+    )
+
+    return {"success": True, "alliance_war_id": res[0]}
+
+    return row[0]
+
+
+@router.get("/wars")
+def list_alliance_wars(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Return active wars for the user's alliance."""
+    aid = _get_alliance_id(db, user_id)
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT w.alliance_war_id,
+                       w.phase,
+                       w.attacker_alliance_id,
+                       w.defender_alliance_id,
+                       s.attacker_score,
+                       s.defender_score,
+                       CASE WHEN w.attacker_alliance_id = :aid THEN w.defender_alliance_id
+                            ELSE w.attacker_alliance_id END AS enemy_id
+                  FROM alliance_wars w
+                  LEFT JOIN alliance_war_scores s
+                    ON s.alliance_war_id = w.alliance_war_id
+                 WHERE (w.attacker_alliance_id = :aid OR w.defender_alliance_id = :aid)
+                   AND w.war_status = 'active'
+                 ORDER BY w.start_date DESC
+                """
+            ),
+            {"aid": aid},
+        )
+        .mappings()
+        .fetchall()
+    )
+
+    wars = []
+    for r in rows:
+        enemy_name_row = db.execute(
+            text("SELECT name FROM alliances WHERE alliance_id = :aid"),
+            {"aid": r["enemy_id"]},
+        ).fetchone()
+        enemy_name = enemy_name_row[0] if enemy_name_row else str(r["enemy_id"])
+        if r["attacker_alliance_id"] == aid:
+            our_score = r["attacker_score"] or 0
+            their_score = r["defender_score"] or 0
+        else:
+            our_score = r["defender_score"] or 0
+            their_score = r["attacker_score"] or 0
+        wars.append(
+            {
+                "alliance_war_id": r["alliance_war_id"],
+                "enemy_name": enemy_name,
+                "phase": r["phase"],
+                "our_score": our_score,
+                "their_score": their_score,
+            }
+        )
+    return wars
+
 

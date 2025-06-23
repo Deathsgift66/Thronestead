@@ -48,3 +48,40 @@ def test_progression_summary_returns_data():
     assert result["knights_total"] == 5
     assert result["troop_slots"]["used"] == 6
     assert result["troop_slots"]["available"] == 4
+
+
+
+def test_rename_knight_updates_name(monkeypatch):
+    class RenameDB(DummyDB):
+        def __init__(self):
+            super().__init__()
+            self.rows = {"select": DummyResult((1,))}
+
+        def execute(self, query, params=None):
+            q = str(query)
+            self.calls.append((q, params))
+            if "SELECT knight_id" in q:
+                return self.rows["select"]
+            return DummyResult()
+
+    db = RenameDB()
+
+    monkeypatch.setattr(pr, "get_kingdom_id", lambda d, u: 1)
+    payload = pr.KnightRenamePayload(current_name="Old", new_name="New")
+    pr.rename_knight(payload, user_id="u1", db=db)
+    executed = " ".join(db.calls[-1][0].split()).lower()
+    assert "update kingdom_knights" in executed
+
+
+def test_upgrade_castle_explicit_calls_base(monkeypatch):
+    dummy_db = DummyDB()
+
+    def fake_upgrade_castle(user_id: str, db: DummyDB):
+        assert user_id == "u1"
+        assert db is dummy_db
+        return {"message": "ok"}
+
+    monkeypatch.setattr(pr, "upgrade_castle", fake_upgrade_castle)
+    result = pr.upgrade_castle_explicit(user_id="u1", db=dummy_db)
+    assert result["message"] == "ok"
+

@@ -63,6 +63,15 @@ def test_update_kingdom_field_runs_update():
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
+def test_update_field_payload_alias():
+    db = DummyDB()
+    payload = admin_dashboard.KingdomFieldUpdate(
+        kingdom_id=2, field="motto", value="Hello"
+    )
+    admin_dashboard.update_field(payload, admin_user_id="a1", db=db)
+    assert any("update kingdoms" in q[0].lower() for q in db.queries)
+
+
 def test_get_flagged_users():
     db = DummyDB()
     db.rows = [("u1", "Exploit", "2025-01-02")]
