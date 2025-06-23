@@ -2,7 +2,7 @@
 // File Name: unlocked_troops.js
 // Version 6.14.2025
 // Developer: Codex
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
 let userId = null;

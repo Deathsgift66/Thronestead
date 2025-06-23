@@ -2,7 +2,7 @@
 // File Name: alliance_home.js
 // Version 6.14.2025.20.12
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { escapeHTML, setText, formatDate, fragmentFrom, jsonFetch } from './utils.js';
 
 let activityChannel = null;

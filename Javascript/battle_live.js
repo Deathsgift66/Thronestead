@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 // Live Battle Viewer — fetches terrain, units and combat logs
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 let accessToken = null;
 let userId = null;

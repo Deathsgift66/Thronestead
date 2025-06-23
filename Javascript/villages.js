@@ -4,9 +4,9 @@
 // Developer: Deathsgift66
 // Village Management with Server-Sent Events & Real-Time Updates
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { escapeHTML, showToast, fragmentFrom } from './utils.js';
-import { API_BASE_URL } from '../env.js';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 let eventSource;
 

@@ -2,7 +2,7 @@
 // File Name: login.js
 // Version 6.14.2025.21.00
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
 // DOM Elements

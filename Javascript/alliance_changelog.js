@@ -2,7 +2,7 @@
 // File Name: alliance_changelog.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 import { authFetchJson } from './fetchJson.js';
 

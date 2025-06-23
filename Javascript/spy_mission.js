@@ -2,7 +2,7 @@
 // File Name: spy_mission.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 let currentUserId = null;
 let spyInfo = { spy_count: 0, spy_level: 1 };

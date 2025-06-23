@@ -2,7 +2,7 @@
 // File Name: leaderboard.js
 // Version 6.16.2025.21.20
 // Developer: Codex
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 import { setupTabs } from './components/tabControl.js';
 import { authHeaders } from './auth.js';

@@ -5,8 +5,8 @@
 // Hardened Admin Audit Log Page — with Supabase auth, loading, error handling, and formatting
 import { escapeHTML } from './utils.js';
 
-import { supabase } from './supabaseClient.js';
-import { API_BASE_URL } from '../env.js';
+import { supabase } from '../supabaseClient.js';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 let eventSource;
 
 document.addEventListener("DOMContentLoaded", async () => {

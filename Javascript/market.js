@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { authHeaders } from './auth.js';
 import { showToast, escapeHTML } from './utils.js';
 import { setupTabs } from './components/tabControl.js';

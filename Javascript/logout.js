@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 // Make sure supabase is available
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 // Logout function — clears session from Supabase, browser storage, and cookies
 async function logout() {

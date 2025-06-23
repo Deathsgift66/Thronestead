@@ -2,7 +2,7 @@
 // File Name: resourceBar.js
 // Version 6.15.2025.21.00
 // Developer: Deathsgift66
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { fetchJson } from './fetchJson.js'; // Custom wrapper for JSON fetch
 
 // Dynamically load Bootstrap 5.3 if not already loaded

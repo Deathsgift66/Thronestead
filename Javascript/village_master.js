@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 // Sovereign’s Grand Overseer — Page Controller
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { SovereignUtils } from './sovereign_utils.js';
 
 let realtimeChannel;

@@ -4,7 +4,7 @@
 // Developer: Codex
 // Inbox Viewer + Controls
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 const list = document.getElementById('message-list');
 const countLabel = document.getElementById('message-count');

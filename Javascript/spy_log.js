@@ -2,7 +2,7 @@
 // File Name: spy_log.js
 // Version 6.14.2025.20.12
 // Developer: Codex
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { escapeHTML, showToast } from './utils.js';
 
 let realtimeChannel = null;

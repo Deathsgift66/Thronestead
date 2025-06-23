@@ -4,7 +4,7 @@
 // Developer: Codex
 // Shared helper for retrieving authenticated user and headers
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 let cachedAuth = null;
 

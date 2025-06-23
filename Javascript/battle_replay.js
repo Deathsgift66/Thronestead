@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 // Battle Replay module with timeline playback
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 import { authHeaders } from './auth.js';
 
 const urlParams = new URLSearchParams(window.location.search);
