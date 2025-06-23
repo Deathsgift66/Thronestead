@@ -57,7 +57,7 @@ function renderUnits(unlocked, stats) {
     if (!s || !categories[s.class]) return;
     categories[s.class].push(s);
     const img = new Image();
-    img.src = `/images/troops/${t}.png`;
+    img.src = `/assets/troops/${t}.png`;
   });
 
   for (const cls in categories) {
@@ -76,7 +76,7 @@ function createCard(unit) {
   const card = document.createElement('div');
   card.className = 'unit-card';
   card.innerHTML = `
-    <img src="/images/troops/${unit.unit_type}.png" alt="${escapeHTML(unit.name)}" onerror="this.src='/Assets/icon-sword.svg'; this.onerror=null;">
+    <img src="/assets/troops/${unit.unit_type}.png" alt="${escapeHTML(unit.name)}" onerror="this.src='/Assets/icon-sword.svg'; this.onerror=null;">
     <h3>${escapeHTML(unit.name)}</h3>
     <p>Tier ${unit.tier}</p>
     <ul class="unit-stats">

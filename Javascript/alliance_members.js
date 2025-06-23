@@ -148,7 +148,7 @@ async function renderMembers(data) {
     const showFull = member.same_alliance;
 
     row.innerHTML = `
-      <td><img src="../images/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest"></td>
+      <td><img src="../assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest"></td>
       <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}</td>
       <td title="${escapeHTML(RANK_TOOLTIPS[member.rank] || '')}">${escapeHTML(member.rank)}</td>
       <td>${showFull ? roleBadge(member) : '—'}</td>

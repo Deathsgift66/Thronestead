@@ -124,7 +124,7 @@ function renderMembers(members = []) {
     else if (rank === 'officer') icons += '🛡️ ';
     if ((m.contribution || 0) === highest && highest > 0) icons += '🔥 ';
     row.innerHTML = `
-      <td>${icons}<img src="../images/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${escapeHTML(m.username)}" class="crest"></td>
+      <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${escapeHTML(m.username)}" class="crest"></td>
       <td>${escapeHTML(m.username)}</td>
       <td>${escapeHTML(m.rank)}</td>
       <td>${m.contribution ?? 0}</td>
