@@ -96,6 +96,21 @@ CREATE TABLE public.alliance_members (
   CONSTRAINT alliance_members_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.alliance_roles(role_id),
   CONSTRAINT alliance_members_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
+CREATE TABLE public.alliance_notices (
+  notice_id integer NOT NULL DEFAULT nextval('alliance_notices_notice_id_seq'::regclass),
+  alliance_id integer,
+  title text NOT NULL,
+  message text NOT NULL,
+  category text,
+  link_action text,
+  image_url text,
+  expires_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  created_by uuid,
+  CONSTRAINT alliance_notices_pkey PRIMARY KEY (notice_id),
+  CONSTRAINT alliance_notices_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
+  CONSTRAINT alliance_notices_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.alliance_policies (
   alliance_id integer NOT NULL,
   policy_id integer NOT NULL,
@@ -361,25 +376,12 @@ CREATE TABLE public.black_market_listings (
   listing_id integer NOT NULL DEFAULT nextval('black_market_listings_listing_id_seq'::regclass),
   seller_id uuid,
   item text,
-  item_type text DEFAULT 'token' CHECK (item_type IN ('token','cosmetic','permit')),
   price numeric,
   quantity integer,
   created_at timestamp with time zone DEFAULT now(),
+  item_type text DEFAULT 'token'::text CHECK (item_type = ANY (ARRAY['token'::text, 'cosmetic'::text, 'permit'::text])),
   CONSTRAINT black_market_listings_pkey PRIMARY KEY (listing_id)
 );
-CREATE INDEX idx_black_market_listings_item_type ON public.black_market_listings(item_type);
-
-CREATE TABLE public.market_listings (
-  listing_id SERIAL PRIMARY KEY,
-  seller_id uuid REFERENCES public.users(user_id),
-  item_type text NOT NULL CHECK (item_type IN ('resource','equipment')),
-  item text NOT NULL,
-  price numeric NOT NULL,
-  quantity integer DEFAULT 1,
-  created_at timestamptz DEFAULT now(),
-  expires_at timestamptz
-);
-CREATE INDEX idx_market_listings_item_type ON public.market_listings(item_type);
 CREATE TABLE public.building_catalogue (
   building_id integer NOT NULL DEFAULT nextval('building_catalogue_building_id_seq'::regclass),
   building_name text NOT NULL,
@@ -428,6 +430,13 @@ CREATE TABLE public.building_catalogue (
   jewelry integer DEFAULT 0,
   CONSTRAINT building_catalogue_pkey PRIMARY KEY (building_id),
   CONSTRAINT fk_building_tech_code FOREIGN KEY (requires_tech_id) REFERENCES public.tech_catalogue(tech_code)
+);
+CREATE TABLE public.building_costs (
+  building_id integer NOT NULL,
+  resource_type text NOT NULL,
+  amount integer NOT NULL,
+  CONSTRAINT building_costs_pkey PRIMARY KEY (building_id, resource_type),
+  CONSTRAINT building_costs_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.building_catalogue(building_id)
 );
 CREATE TABLE public.combat_logs (
   combat_id integer NOT NULL DEFAULT nextval('combat_logs_combat_id_seq'::regclass),
@@ -704,11 +713,6 @@ CREATE TABLE public.kingdom_vip_status (
   founder boolean DEFAULT false,
   CONSTRAINT kingdom_vip_status_pkey PRIMARY KEY (user_id)
 );
-
-CREATE TABLE public.user_tokens (
-  user_id uuid PRIMARY KEY REFERENCES public.users(user_id),
-  tokens integer DEFAULT 0
-);
 CREATE TABLE public.kingdoms (
   kingdom_id integer NOT NULL DEFAULT nextval('kingdoms_kingdom_id_seq'::regclass),
   user_id uuid UNIQUE,
@@ -744,12 +748,35 @@ CREATE TABLE public.kingdoms (
   CONSTRAINT kingdoms_pkey PRIMARY KEY (kingdom_id),
   CONSTRAINT kingdoms_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
+CREATE TABLE public.market_listings (
+  listing_id integer NOT NULL DEFAULT nextval('market_listings_listing_id_seq'::regclass),
+  seller_id uuid,
+  item_type text NOT NULL CHECK (item_type = ANY (ARRAY['resource'::text, 'equipment'::text])),
+  item text NOT NULL,
+  price numeric NOT NULL,
+  quantity integer DEFAULT 1,
+  created_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  CONSTRAINT market_listings_pkey PRIMARY KEY (listing_id),
+  CONSTRAINT market_listings_seller_id_fkey FOREIGN KEY (seller_id) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.message_metadata (
   message_id integer NOT NULL,
   key text NOT NULL,
   value text,
   CONSTRAINT message_metadata_pkey PRIMARY KEY (message_id, key),
   CONSTRAINT message_metadata_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.player_messages(message_id)
+);
+CREATE TABLE public.news_articles (
+  id integer NOT NULL DEFAULT nextval('news_articles_id_seq'::regclass),
+  title text NOT NULL,
+  summary text,
+  content text,
+  published_at timestamp with time zone DEFAULT now(),
+  author_id uuid,
+  is_published boolean DEFAULT true,
+  CONSTRAINT news_articles_pkey PRIMARY KEY (id),
+  CONSTRAINT news_articles_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.noble_houses (
   house_id integer NOT NULL DEFAULT nextval('noble_houses_house_id_seq'::regclass),
@@ -1073,6 +1100,13 @@ CREATE TABLE public.quest_kingdom_tracking (
   CONSTRAINT quest_kingdom_tracking_started_by_fkey FOREIGN KEY (started_by) REFERENCES public.users(user_id),
   CONSTRAINT quest_kingdom_tracking_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT quest_kingdom_tracking_quest_code_fkey FOREIGN KEY (quest_code) REFERENCES public.quest_kingdom_catalogue(quest_code)
+);
+CREATE TABLE public.region_bonuses (
+  region_code character varying NOT NULL,
+  bonus_type character varying NOT NULL,
+  bonus_value numeric,
+  CONSTRAINT region_bonuses_pkey PRIMARY KEY (region_code, bonus_type),
+  CONSTRAINT region_bonuses_region_code_fkey FOREIGN KEY (region_code) REFERENCES public.region_catalogue(region_code)
 );
 CREATE TABLE public.region_catalogue (
   region_code text NOT NULL,
@@ -1440,12 +1474,27 @@ CREATE TABLE public.unit_upgrade_paths (
   CONSTRAINT unit_upgrade_paths_from_unit_type_fkey FOREIGN KEY (from_unit_type) REFERENCES public.unit_stats(unit_type),
   CONSTRAINT unit_upgrade_paths_to_unit_type_fkey FOREIGN KEY (to_unit_type) REFERENCES public.unit_stats(unit_type)
 );
+CREATE TABLE public.user_active_sessions (
+  session_id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  device_info text,
+  ip_address text,
+  last_active timestamp with time zone DEFAULT now(),
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_active_sessions_pkey PRIMARY KEY (session_id),
+  CONSTRAINT user_active_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
+);
 CREATE TABLE public.user_setting_entries (
   user_id uuid NOT NULL,
   setting_key text NOT NULL,
   setting_value text,
   CONSTRAINT user_setting_entries_pkey PRIMARY KEY (user_id, setting_key),
   CONSTRAINT user_setting_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
+);
+CREATE TABLE public.user_tokens (
+  user_id uuid NOT NULL,
+  tokens integer,
+  CONSTRAINT user_tokens_pkey PRIMARY KEY (user_id)
 );
 CREATE TABLE public.users (
   user_id uuid NOT NULL,
