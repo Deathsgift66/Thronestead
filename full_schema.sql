@@ -1,3 +1,6 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
 CREATE TABLE public.admin_alerts (
   alert_id integer NOT NULL DEFAULT nextval('admin_alerts_alert_id_seq'::regclass),
   type text,
@@ -540,6 +543,16 @@ CREATE TABLE public.kingdom_achievements (
   awarded_at timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_achievements_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT kingdom_achievements_achievement_code_fkey FOREIGN KEY (achievement_code) REFERENCES public.kingdom_achievement_catalogue(achievement_code)
+);
+CREATE TABLE public.kingdom_castle_progression (
+  kingdom_id integer NOT NULL,
+  castle_level integer DEFAULT 1,
+  max_building_slots integer DEFAULT 3,
+  walls_built boolean DEFAULT false,
+  moat_dug boolean DEFAULT false,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_castle_progression_pkey PRIMARY KEY (kingdom_id),
+  CONSTRAINT kingdom_castle_progression_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
 CREATE TABLE public.kingdom_history_log (
   log_id integer NOT NULL DEFAULT nextval('kingdom_history_log_log_id_seq'::regclass),
@@ -1128,6 +1141,15 @@ CREATE TABLE public.region_structures (
   CONSTRAINT region_structures_pkey PRIMARY KEY (region_code, structure_type),
   CONSTRAINT region_structures_region_code_fkey FOREIGN KEY (region_code) REFERENCES public.region_catalogue(region_code)
 );
+CREATE TABLE public.security_tips (
+  tip_id integer NOT NULL DEFAULT nextval('security_tips_tip_id_seq'::regclass),
+  title text NOT NULL,
+  message text NOT NULL,
+  display_order integer DEFAULT 1,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT security_tips_pkey PRIMARY KEY (tip_id)
+);
 CREATE TABLE public.spy_defense (
   kingdom_id integer NOT NULL,
   detection_level integer DEFAULT 1,
@@ -1211,6 +1233,16 @@ CREATE TABLE public.terrain_map (
   CONSTRAINT terrain_map_pkey PRIMARY KEY (terrain_id),
   CONSTRAINT terrain_map_generated_by_fkey FOREIGN KEY (generated_by) REFERENCES public.users(user_id),
   CONSTRAINT terrain_map_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars_tactical(war_id)
+);
+CREATE TABLE public.town_crier_scrolls (
+  scroll_id integer NOT NULL DEFAULT nextval('town_crier_scrolls_scroll_id_seq'::regclass),
+  title text NOT NULL,
+  content text NOT NULL,
+  posted_at timestamp with time zone DEFAULT now(),
+  is_urgent boolean DEFAULT false,
+  author_id uuid,
+  CONSTRAINT town_crier_scrolls_pkey PRIMARY KEY (scroll_id),
+  CONSTRAINT town_crier_scrolls_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(user_id)
 );
 CREATE TABLE public.trade_logs (
   trade_id integer NOT NULL DEFAULT nextval('trade_logs_trade_id_seq'::regclass),
@@ -1358,6 +1390,16 @@ CREATE TABLE public.treaty_type_catalogue (
   auto_renew boolean DEFAULT false,
   exclusive_with ARRAY DEFAULT '{}'::text[],
   CONSTRAINT treaty_type_catalogue_pkey PRIMARY KEY (treaty_type)
+);
+CREATE TABLE public.tutorial_steps (
+  step_id integer NOT NULL DEFAULT nextval('tutorial_steps_step_id_seq'::regclass),
+  step_number integer,
+  title text NOT NULL,
+  content text NOT NULL,
+  requires_completion_of integer,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tutorial_steps_pkey PRIMARY KEY (step_id),
+  CONSTRAINT tutorial_steps_requires_completion_of_fkey FOREIGN KEY (requires_completion_of) REFERENCES public.tutorial_steps(step_id)
 );
 CREATE TABLE public.unit_counters (
   unit_type text NOT NULL,
@@ -1542,6 +1584,24 @@ CREATE TABLE public.village_buildings (
   CONSTRAINT village_buildings_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_buildings_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.building_catalogue(building_id)
 );
+CREATE TABLE public.village_events (
+  event_id integer NOT NULL DEFAULT nextval('village_events_event_id_seq'::regclass),
+  village_id integer,
+  event_type text,
+  event_description text,
+  occurred_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT village_events_pkey PRIMARY KEY (event_id),
+  CONSTRAINT village_events_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id)
+);
+CREATE TABLE public.village_military (
+  village_id integer NOT NULL,
+  unit_type text NOT NULL,
+  quantity integer DEFAULT 0,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT village_military_pkey PRIMARY KEY (village_id, unit_type),
+  CONSTRAINT village_military_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
+  CONSTRAINT village_military_unit_type_fkey FOREIGN KEY (unit_type) REFERENCES public.unit_stats(unit_type)
+);
 CREATE TABLE public.village_modifiers (
   village_id integer NOT NULL,
   resource_bonus jsonb DEFAULT '{}'::jsonb,
@@ -1578,6 +1638,33 @@ CREATE TABLE public.village_production (
   CONSTRAINT village_production_pkey PRIMARY KEY (village_id, resource_type),
   CONSTRAINT village_production_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_production_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(user_id)
+);
+CREATE TABLE public.village_queue (
+  queue_id integer NOT NULL DEFAULT nextval('village_queue_queue_id_seq'::regclass),
+  village_id integer,
+  task_type text,
+  status text,
+  ends_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT village_queue_pkey PRIMARY KEY (queue_id),
+  CONSTRAINT village_queue_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id)
+);
+CREATE TABLE public.village_resources (
+  village_id integer NOT NULL,
+  resource_type text NOT NULL,
+  amount bigint DEFAULT 0,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT village_resources_pkey PRIMARY KEY (village_id, resource_type),
+  CONSTRAINT village_resources_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id)
+);
+CREATE TABLE public.villages (
+  village_id integer NOT NULL DEFAULT nextval('villages_village_id_seq'::regclass),
+  kingdom_id integer,
+  name text NOT NULL,
+  region text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT villages_pkey PRIMARY KEY (village_id),
+  CONSTRAINT villages_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
 CREATE TABLE public.vip_perk_entries (
   vip_level integer NOT NULL,
