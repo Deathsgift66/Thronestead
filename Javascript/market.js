@@ -16,7 +16,7 @@ async function fetchListings() {
     allListings = data.listings || [];
     renderListings(allListings);
     updated.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
-  } catch (e) {
+  } catch {
     listingsContainer.textContent = 'Failed to load listings.';
   }
 }
@@ -79,7 +79,7 @@ async function loadMyListings() {
       `;
       myListingsContainer.appendChild(card);
     });
-  } catch (e) {
+  } catch {
     myListingsContainer.textContent = 'Failed to load listings.';
   }
 }
@@ -107,7 +107,7 @@ async function loadHistory() {
       `;
       historyContainer.appendChild(row);
     });
-  } catch (e) {
+  } catch {
     historyContainer.textContent = 'Failed to load history.';
   }
 }

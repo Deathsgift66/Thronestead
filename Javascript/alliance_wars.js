@@ -23,68 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 
-// ✅ Load All Active and Completed Wars
-async function loadAllianceWars() {
-  const container = document.getElementById("wars-container");
-  container.innerHTML = "<p>Loading alliance wars...</p>";
 
-  try {
-    const [activeRes, fullRes] = await Promise.all([
-      fetch('/api/alliance-wars/active'),
-      fetch('/api/alliance-wars/list')
-    ]);
-    const activeWars = (await activeRes.json()).wars || [];
-    const allWars = await fullRes.json();
-
-    container.innerHTML = "";
-
-    // Active
-    if (activeWars.length > 0) {
-      container.innerHTML += `<h3>⚔️ Active Wars</h3>`;
-      activeWars.forEach(renderWarCard(container, true));
-    } else {
-      container.innerHTML += `<p>No active wars.</p>`;
-    }
-
-    // Completed
-    if (allWars.completed_wars?.length > 0) {
-      container.innerHTML += `<h3>🏅 Past Wars</h3>`;
-      allWars.completed_wars.forEach(renderWarCard(container, false));
-    }
-
-    // View War Listeners
-    document.querySelectorAll(".view-war-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const war = JSON.parse(btn.dataset.war);
-        viewWarDetails(war);
-      });
-    });
-
-  } catch (err) {
-    console.error("❌ Error loading alliance wars:", err);
-    container.innerHTML = "<p>Failed to load alliance wars.</p>";
-  }
-}
-
-// ✅ Render War Card
-function renderWarCard(container, isActive) {
-  return war => {
-    const card = document.createElement("div");
-    card.className = "war-card";
-    card.innerHTML = `
-      <h4>${escapeHTML(war.opponent)}</h4>
-      ${isActive
-        ? `<p>Status: <strong>${escapeHTML(war.status)}</strong></p>
-           <p>Turns Left: <strong>${escapeHTML(String(war.turns_left))}</strong></p>`
-        : `<p>Result: <strong>${escapeHTML(war.result)}</strong></p>`}
-      <p>Type: <strong>${escapeHTML(war.type)}</strong></p>
-      <p>${isActive ? "Started" : "Ended"}: <strong>${escapeHTML(war.started || war.ended)}</strong></p>
-      <div class="war-actions">
-        <button class="action-btn view-war-btn" data-war='${JSON.stringify(war)}'>View</button>
-      </div>`;
-    container.appendChild(card);
-  };
-}
 
 // ✅ View War Details → Loads battle map, overview, logs, participants
 async function viewWarDetails(war) {
@@ -126,7 +65,6 @@ function renderWarOverview(war, score) {
 function renderBattleMap(tileMap) {
   const battleMap = document.getElementById('battle-map');
   battleMap.innerHTML = '';
-  const height = tileMap.length;
   const width = tileMap[0]?.length || 60;
   battleMap.style.gridTemplateColumns = `repeat(${width}, 20px)`;
   tileMap.flat().forEach(type => {
@@ -301,11 +239,3 @@ async function loadWarHistory() {
     .join('');
 }
 
-// 4. Combat Log (Live Battle)
-async function pollCombatLog(warId) {
-  const res = await fetch(`/api/battle/combat_log/${warId}`);
-  const logs = await res.json();
-  document.getElementById('combat-log').innerHTML += logs
-    .map(l => `<div>${l.timestamp}: ${l.message}</div>`)
-    .join('');
-}
