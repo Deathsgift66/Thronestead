@@ -1,19 +1,20 @@
+import random
+
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import random
 
 from backend.db_base import Base
 from backend.models import (
-    User,
     Kingdom,
     KingdomSpies,
-    SpyMissions,
-    VillageModifier,
     KingdomVillage,
+    SpyMissions,
+    User,
+    VillageModifier,
 )
-from backend.routers.spy import launch_spy_mission, LaunchPayload, DAILY_LIMIT
-from fastapi import HTTPException
-import pytest
+from backend.routers.spy import DAILY_LIMIT, LaunchPayload, launch_spy_mission
 from services import spies_service
 
 

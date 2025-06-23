@@ -14,16 +14,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..database import get_db
 from backend.models import (
     Alliance,
     AllianceMember,
     AllianceVault,
-    User,
     KingdomResources,
+    User,
 )
-from ..security import verify_jwt_token
 from services.audit_service import log_action, log_alliance_activity
+
+from ..database import get_db
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/alliance", tags=["alliances"])
 

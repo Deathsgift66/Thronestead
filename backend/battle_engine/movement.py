@@ -4,9 +4,9 @@
 # Developer: Deathsgift66
 """Utility functions for tactical unit movement."""
 
-from typing import Any, Dict, List, Deque
-from collections import deque
 import random
+from collections import deque
+from typing import Any, Deque, Dict, List
 
 # Database interface for persisting movement state
 from ..db import db

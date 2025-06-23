@@ -6,24 +6,25 @@
 """FastAPI application for the Thronestead backend."""
 
 if __name__ == "__main__" and __package__ is None:  # dev-only import fix
-    from pathlib import Path
     import sys
+    from pathlib import Path
 
     sys.path.append(str(Path(__file__).resolve().parent.parent))
     __package__ = "backend"
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 import logging
 import os
 import traceback
+from pathlib import Path
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from . import routers as router_pkg
 from .auth_middleware import UserStateMiddleware
 from .database import engine
 from .models import Base
-from . import routers as router_pkg
 
 API_SECRET = os.getenv("API_SECRET")
 

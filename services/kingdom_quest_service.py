@@ -4,13 +4,13 @@
 # Developer: Deathsgift66
 # Description: Service functions for handling individual kingdom quest tracking.
 
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 
 try:
     from sqlalchemy import text
-    from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover
 
     def text(q):  # type: ignore

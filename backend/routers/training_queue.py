@@ -14,15 +14,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..security import verify_jwt_token
-from ..database import get_db
-from .progression_router import get_kingdom_id
 from services.training_queue_service import (
     add_training_order,
-    fetch_queue,
     cancel_training,
+    fetch_queue,
 )
 from services.vacation_mode_service import check_vacation_mode
+
+from ..database import get_db
+from ..security import verify_jwt_token
+from .progression_router import get_kingdom_id
 
 # Router setup
 router = APIRouter(prefix="/api/training_queue", tags=["training_queue"])

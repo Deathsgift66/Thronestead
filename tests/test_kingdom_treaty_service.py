@@ -3,12 +3,12 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 from services.kingdom_treaty_service import (
-    propose_treaty,
     accept_treaty,
     cancel_treaty,
     list_active_treaties,
     list_incoming_proposals,
     list_outgoing_proposals,
+    propose_treaty,
 )
 
 

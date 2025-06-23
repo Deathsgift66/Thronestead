@@ -13,10 +13,11 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from services.kingdom_achievement_service import list_achievements
+
 from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
-from services.kingdom_achievement_service import list_achievements
 
 # Set up router
 router = APIRouter(prefix="/api/kingdom/achievements", tags=["kingdom_achievements"])

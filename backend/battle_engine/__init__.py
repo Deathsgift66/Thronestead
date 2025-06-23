@@ -16,32 +16,32 @@ This package exposes all tactical combat mechanics, including:
 
 # Core battle engine components
 from .engine import (
-    TerrainGenerator,
-    FogOfWar,
-    CombatResolver,
     BattleTickHandler,
-    WarState,
-    Unit,
+    CombatResolver,
+    FogOfWar,
+    TerrainGenerator,
     TerrainType,
+    Unit,
+    WarState,
 )
 
 # Combat orchestration and live war state manager
-from .manager import WarManager, war_manager, run_combat_tick
+from .manager import WarManager, run_combat_tick, war_manager
+
+# Movement logic
+from .movement import (
+    move_towards,
+    process_unit_movement,
+    select_patrol_target,
+    terrain_movement_modifier,
+    update_unit_position,
+)
 
 # Alternate full resolution combat (used for simulation or replays)
 from .resolver_full import run_combat_tick as run_full_combat_tick
 
-# Movement logic
-from .movement import (
-    process_unit_movement,
-    move_towards,
-    terrain_movement_modifier,
-    select_patrol_target,
-    update_unit_position,
-)
-
 # Targeting and combat multiplier mechanics
-from .targeting import select_target, get_counter_multiplier
+from .targeting import get_counter_multiplier, select_target
 
 # Vision, line of sight, and terrain-based obscurity
 from .vision import process_unit_vision, terrain_vision_modifier

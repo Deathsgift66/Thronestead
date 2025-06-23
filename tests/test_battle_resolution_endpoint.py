@@ -1,15 +1,15 @@
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi import HTTPException
 
 from backend.db_base import Base
 from backend.models import (
-    WarScore,
     BattleResolutionLog,
-    WarsTactical,
+    CombatLog,
     Kingdom,
     User,
-    CombatLog,
+    WarScore,
+    WarsTactical,
 )
 from backend.routers.battle import battle_resolution_alt
 

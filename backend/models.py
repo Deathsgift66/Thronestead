@@ -10,24 +10,25 @@ Version: 2025-06-21
 """
 
 from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
     Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
     Integer,
+    Numeric,
     String,
     Text,
-    Boolean,
-    BigInteger,
-    Date,
     Time,
-    DateTime,
-    ForeignKey,
-    Numeric,
-    Float,
     text,
-    CheckConstraint,
-    Index,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.sql import func
+
 from backend.db_base import Base
 
 

@@ -3,11 +3,11 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 from backend.routers.training_queue import (
-    start_training,
-    list_queue,
-    cancel_order,
-    TrainOrderPayload,
     CancelPayload,
+    TrainOrderPayload,
+    cancel_order,
+    list_queue,
+    start_training,
 )
 
 

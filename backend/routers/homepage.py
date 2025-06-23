@@ -10,9 +10,11 @@ Role: API routes for homepage.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, HTTPException
 from typing import List
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/homepage", tags=["homepage"])

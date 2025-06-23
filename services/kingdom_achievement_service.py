@@ -6,9 +6,10 @@
 
 import logging
 from typing import Optional
+
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from backend.data import prestige_scores
 from services.kingdom_history_service import log_event

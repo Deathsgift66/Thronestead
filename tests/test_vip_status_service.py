@@ -5,9 +5,9 @@
 from datetime import datetime, timedelta
 
 from services.vip_status_service import (
-    upsert_vip_status,
     get_vip_status,
     is_vip_active,
+    upsert_vip_status,
     vip_levels,
 )
 

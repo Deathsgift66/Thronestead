@@ -5,16 +5,18 @@
 """Routes related to spy missions."""
 
 import random
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
 from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from services import spies_service
 
 from ..database import get_db
 from ..models import Kingdom
-from .progression_router import get_kingdom_id
 from ..security import verify_jwt_token
-from services import spies_service
+from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/spy", tags=["spies"])
 

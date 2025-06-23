@@ -5,6 +5,7 @@
 # Description: Automation helpers for periodic game state updates (strategic tick).
 
 from __future__ import annotations
+
 import logging
 
 try:

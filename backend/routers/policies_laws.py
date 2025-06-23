@@ -7,8 +7,9 @@
 FastAPI router for managing user policies and laws settings.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
 

@@ -5,9 +5,10 @@ Role: PostgreSQL configuration helper.
 Version: 2025-06-21
 """
 
-from fastapi import Request
 import json
 import logging
+
+from fastapi import Request
 
 try:
     import jwt  # PyJWT

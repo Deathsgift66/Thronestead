@@ -10,16 +10,18 @@ Role: API routes for titles router.
 Version: 2025-06-21
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from typing import Optional
 
+from services.kingdom_title_service import award_title, list_titles, set_active_title
+
+from ..data import prestige_scores
 from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
-from services.kingdom_title_service import award_title, list_titles, set_active_title
-from ..data import prestige_scores
 
 router = APIRouter(prefix="/api/kingdom", tags=["titles"])
 

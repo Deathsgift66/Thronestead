@@ -14,9 +14,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from backend.models import AllianceMember, Alliance
+from backend.models import Alliance, AllianceMember
 from services.audit_service import log_action
+
+from ..database import get_db
 from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])

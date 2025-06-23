@@ -10,15 +10,16 @@ Role: API routes for treaties router.
 Version: 2025-06-21
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from typing import Optional
 from sqlalchemy.orm import Session
 
+from ..data import alliance_treaties, kingdom_treaties
 from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
-from ..data import alliance_treaties, kingdom_treaties
 
 router = APIRouter(prefix="/api", tags=["treaties"])
 

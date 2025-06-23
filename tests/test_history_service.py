@@ -2,7 +2,7 @@
 # File Name: test_history_service.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from services.kingdom_history_service import log_event, fetch_history
+from services.kingdom_history_service import fetch_history, log_event
 
 
 class DummyResult:

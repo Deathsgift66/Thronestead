@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import User, Kingdom, War
+from backend.models import Kingdom, User, War
+from backend.routers.wars import DeclarePayload, declare_war
 from models.progression import KingdomKnight
-from backend.routers.wars import declare_war, DeclarePayload
 
 
 def setup_db():

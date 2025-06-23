@@ -10,17 +10,16 @@ Role: API routes for resources.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 import logging
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from backend.models import KingdomResources, User
+from services.resource_service import METADATA_FIELDS, fetch_supabase_resources
+
 from ..database import get_db
-from backend.models import User, KingdomResources
 from ..security import verify_jwt_token
-from services.resource_service import (
-    fetch_supabase_resources,
-    METADATA_FIELDS,
-)
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])
 logger = logging.getLogger("Thronestead.Resources")

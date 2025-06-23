@@ -3,10 +3,10 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 from services.strategic_tick_service import (
-    update_project_progress,
-    expire_treaties,
     activate_pending_wars,
     check_war_status,
+    expire_treaties,
+    update_project_progress,
 )
 
 

@@ -8,16 +8,18 @@ Admin control panel endpoints for moderation, audits, and system alerts.
 All routes are protected by Supabase JWT and require admin authorization.
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-import logging
+
+from backend.models import User
+from services.audit_service import log_action
 
 from ..database import get_db
 from ..security import require_user_id, verify_api_key
-from backend.models import User
-from services.audit_service import log_action
 from .admin_dashboard import dashboard_summary, get_audit_logs
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])

@@ -5,20 +5,22 @@
 """Endpoints for Black Market token balances and redemption."""
 
 from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..security import verify_jwt_token
 from services.token_service import (
-    get_balance,
-    consume_tokens,
-    add_tokens,
-    TOKEN_STEALABLE,
     TOKEN_EXPIRES,
+    TOKEN_STEALABLE,
+    add_tokens,
+    consume_tokens,
+    get_balance,
 )
 from services.vip_status_service import upsert_vip_status
+
+from ..database import get_db
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/tokens", tags=["tokens"])
 

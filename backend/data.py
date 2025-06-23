@@ -9,7 +9,7 @@ for demo, simulation, and real-time performance buffers in Thronestead©.
 """
 
 import logging
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Set up logger for internal debugging
 logger = logging.getLogger("Thronestead.Data")
@@ -127,6 +127,7 @@ global_game_settings: Dict[str, Any] = {}
 
 try:
     from sqlalchemy import text
+
     from .database import SessionLocal
 except ImportError:  # When SQLAlchemy is not available in testing
 

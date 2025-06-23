@@ -3,6 +3,7 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 import uuid
+
 import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine
@@ -10,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
 from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, User
-from backend.routers.alliance_vault import VaultTransaction, deposit, withdraw, summary
+from backend.routers.alliance_vault import VaultTransaction, deposit, summary, withdraw
 
 
 def setup_db():

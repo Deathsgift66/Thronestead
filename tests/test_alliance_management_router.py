@@ -3,16 +3,17 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 import uuid
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import User, Kingdom, KingdomResources, Alliance
+from backend.models import Alliance, Kingdom, KingdomResources, User
 from backend.routers.alliance_management import (
-    create_alliance,
-    delete_alliance,
     CreatePayload,
     DeletePayload,
+    create_alliance,
+    delete_alliance,
 )
 
 

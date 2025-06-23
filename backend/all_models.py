@@ -10,12 +10,12 @@ This allows access to all game-related tables without manually defining ORM clas
 Integrates error logging and safe initialization for production use.
 """
 
-from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import configure_mappers
 
-from .database import engine
 from . import logger
+from .database import engine
 
 # Create automap base class for runtime reflection
 AutomapBase = automap_base()

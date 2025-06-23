@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
 

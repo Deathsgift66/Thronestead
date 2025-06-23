@@ -5,12 +5,13 @@
 # Description: Service functions for alliance tax collections.
 
 from __future__ import annotations
+
 import logging
 
 try:
     from sqlalchemy import text
-    from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover
 
     def text(q):  # type: ignore

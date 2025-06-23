@@ -14,7 +14,6 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-
 router = APIRouter(prefix="/api/conflicts", tags=["conflicts"])
 
 # ----------------------------

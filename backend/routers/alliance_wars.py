@@ -15,9 +15,10 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from services.audit_service import log_action
+
 from ..database import get_db
 from ..security import require_user_id
-from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
 

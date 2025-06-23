@@ -10,15 +10,17 @@ Role: API routes for navbar.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
-from ..security import verify_jwt_token
-from ..supabase_client import get_supabase_client
-from ..database import get_db
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from backend.models import Notification, TradeLog
 from services.message_service import count_unread_messages
+
+from ..database import get_db
+from ..security import verify_jwt_token
+from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/navbar", tags=["navbar"])
 

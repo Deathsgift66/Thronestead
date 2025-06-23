@@ -13,11 +13,12 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from services.resource_service import get_kingdom_resources
+
+from ..data import military_state
+from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
-from ..database import get_db
-from ..data import military_state
-from services.resource_service import get_kingdom_resources
 
 router = APIRouter(prefix="/api/overview", tags=["overview"])
 

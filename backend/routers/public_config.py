@@ -1,5 +1,6 @@
-from fastapi import APIRouter
 import os
+
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/public-config", tags=["config"])
 

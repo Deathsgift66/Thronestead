@@ -13,10 +13,11 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..security import require_user_id
-from ..db import db
 from services.vip_status_service import get_vip_status
+
+from ..database import get_db
+from ..db import db
+from ..security import require_user_id
 
 # Define the API router with kingdom-scoped prefix
 router = APIRouter(prefix="/api/kingdom", tags=["vip"])

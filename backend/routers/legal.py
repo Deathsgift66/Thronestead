@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, HTTPException
+
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/legal", tags=["legal"])

@@ -15,8 +15,8 @@ Each component supports real-time scaling, tick-based updates, and ties into cor
 
 from .progression import (
     KingdomCastleProgression,
-    KingdomNoble,
     KingdomKnight,
+    KingdomNoble,
     TroopSlots,
 )
 

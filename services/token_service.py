@@ -5,8 +5,9 @@
 """Utility functions for managing Black Market token balances."""
 
 from __future__ import annotations
-from sqlalchemy.orm import Session
+
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 # ---------------------------------------------------------------------------
 # Token metadata

@@ -4,9 +4,9 @@
 # Developer: Deathsgift66
 from services.kingdom_title_service import (
     award_title,
+    get_active_title,
     list_titles,
     set_active_title,
-    get_active_title,
 )
 
 

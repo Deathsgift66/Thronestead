@@ -13,14 +13,15 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from services.vacation_mode_service import (
+    can_exit_vacation,
+    enter_vacation_mode,
+    exit_vacation_mode,
+)
+
 from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
-from services.vacation_mode_service import (
-    enter_vacation_mode,
-    exit_vacation_mode,
-    can_exit_vacation,
-)
 
 # Define the API route group
 router = APIRouter(prefix="/api/vacation", tags=["vacation"])

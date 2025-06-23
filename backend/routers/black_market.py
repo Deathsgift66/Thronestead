@@ -11,11 +11,12 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, conint, PositiveFloat
+from pydantic import BaseModel, PositiveFloat, conint
 from sqlalchemy.orm import Session
 
-from ..database import get_db
 from backend.models import BlackMarketListing
+
+from ..database import get_db
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market"])
 

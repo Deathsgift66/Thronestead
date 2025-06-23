@@ -14,9 +14,10 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from services.audit_service import fetch_logs, log_action
+
 from ..database import get_db
 from ..security import verify_jwt_token
-from services.audit_service import fetch_logs, log_action
 
 # FastAPI router for system-wide audit logs
 router = APIRouter(prefix="/api/audit-log", tags=["audit_log"])

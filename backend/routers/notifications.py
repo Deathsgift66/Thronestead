@@ -10,19 +10,21 @@ Role: API routes for notifications.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
-from pydantic import BaseModel
-from datetime import datetime
-import os
 import asyncio
 import json
+import os
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
+
+from backend.models import Notification
 
 from ..database import get_db
 from ..security import require_user_id
-from backend.models import Notification
 
 # Streaming configuration constants
 # Allow tuning via environment variables for easier production scaling

@@ -8,8 +8,8 @@ Admin-only endpoints for accessing and streaming audit logs.
 Supports filtered log queries, user-specific tracing, and live SSE feeds.
 """
 
-import json
 import asyncio
+import json
 import logging
 from datetime import datetime
 from typing import Optional
@@ -18,10 +18,11 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from services.audit_service import fetch_filtered_logs, fetch_user_related_logs
+
 from ..database import get_db
 from ..security import require_user_id, verify_api_key
 from .admin_dashboard import verify_admin
-from services.audit_service import fetch_filtered_logs, fetch_user_related_logs
 
 router = APIRouter(prefix="/api/admin/audit-log", tags=["admin_audit"])
 logger = logging.getLogger("Thronestead.AdminAudit")

@@ -10,17 +10,18 @@ Role: API routes for signup.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, EmailStr, constr
-from typing import Optional
 import logging
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, EmailStr, constr
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import Notification
 
-from ..supabase_client import get_supabase_client
 from ..database import get_db
+from ..supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 

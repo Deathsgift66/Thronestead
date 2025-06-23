@@ -1,5 +1,6 @@
-from backend.routers import vip_status_router
 import asyncio
+
+from backend.routers import vip_status_router
 
 
 class DummyDB:

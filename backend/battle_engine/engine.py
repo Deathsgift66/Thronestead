@@ -9,10 +9,10 @@ Handles terrain generation, fog of war, unit modeling, and combat resolution.
 """
 
 import random
+from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Tuple, Dict, Set
-from collections import defaultdict
+from typing import Dict, List, Set, Tuple
 
 
 # --------------------------

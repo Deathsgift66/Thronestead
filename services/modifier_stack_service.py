@@ -6,6 +6,7 @@
 """Central logic for computing, tracing, and summarizing active kingdom modifiers."""
 
 from __future__ import annotations
+
 import json
 import logging
 

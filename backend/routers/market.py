@@ -6,15 +6,16 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, conint, PositiveFloat
+from pydantic import BaseModel, PositiveFloat, conint
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..security import verify_jwt_token
-from ..models import MarketListing, TradeLog
+from services.resource_service import gain_resources, spend_resources
 from services.trade_log_service import record_trade
-from services.resource_service import spend_resources, gain_resources
+
+from ..database import get_db
+from ..models import MarketListing, TradeLog
+from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/market", tags=["market"])

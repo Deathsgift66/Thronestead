@@ -5,10 +5,10 @@
 from datetime import datetime
 
 from services.kingdom_quest_service import (
+    cancel_quest,
+    complete_quest,
     start_quest,
     update_progress,
-    complete_quest,
-    cancel_quest,
 )
 
 
