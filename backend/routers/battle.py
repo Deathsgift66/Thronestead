@@ -299,6 +299,20 @@ def get_live_battle(
         "defender_score": score.defender_score if score else 0,
     }
 
+from services.battle_history_service import fetch_history as fetch_battle_history
+
+
+@router.get("/history", summary="Get recent battle history")
+def get_battle_history(
+    kingdom_id: int,
+    limit: int = 25,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Return recent completed battles for ``kingdom_id``."""
+    records = fetch_battle_history(db, kingdom_id, limit)
+    return {"history": records}
+
 
 
 class DeclarePayload(BaseModel):
