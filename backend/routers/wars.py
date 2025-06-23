@@ -24,10 +24,12 @@ from services.vacation_mode_service import check_vacation_mode
 
 router = APIRouter(prefix="/api/wars", tags=["wars"])
 
+
 # Payload for declaring war
 class DeclarePayload(BaseModel):
     target: str
     war_reason: str | None = None
+
 
 @router.post("/declare")
 def declare_war(
@@ -100,6 +102,7 @@ def _serialize_war(war: War) -> dict:
         "defender_score": war.defender_score,
     }
 
+
 @router.get("/list")
 def list_wars(
     user_id: str = Depends(verify_jwt_token),
@@ -109,13 +112,9 @@ def list_wars(
     List the most recent wars, sorted by start date.
     Limited to 25 entries.
     """
-    rows = (
-        db.query(War)
-        .order_by(War.start_date.desc())
-        .limit(25)
-        .all()
-    )
+    rows = db.query(War).order_by(War.start_date.desc()).limit(25).all()
     return {"wars": [_serialize_war(w) for w in rows]}
+
 
 @router.get("/view")
 def view_war(

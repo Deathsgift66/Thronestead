@@ -53,6 +53,7 @@ class NoblePayload(BaseModel):
             raise ValueError("Name must be 1-50 alphanumeric characters or spaces")
         return v.strip()
 
+
 class KnightPayload(BaseModel):
     knight_name: str
 
@@ -89,8 +90,7 @@ def _ensure_records(
 
     if current < required:
         rows = [
-            {"kid": kid, "name": f"{prefix} {i + 1}"}
-            for i in range(current, required)
+            {"kid": kid, "name": f"{prefix} {i + 1}"} for i in range(current, required)
         ]
         if rows:
             db.execute(
@@ -130,21 +130,29 @@ def ensure_knights(db: Session, kid: int, required: int) -> int:
 
 # 🔹 GET: Castle Level
 @router.get("/castle")
-def get_castle_level(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def get_castle_level(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     kid = get_kingdom_id(db, user_id)
     level = db.execute(
-        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        text(
+            "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+        ),
+        {"kid": kid},
     ).fetchone()
 
     if not level:
         db.execute(
-            text("INSERT INTO kingdom_castle_progression (kingdom_id, castle_level, xp) VALUES (:kid, 1, 0)"),
-            {"kid": kid}
+            text(
+                "INSERT INTO kingdom_castle_progression (kingdom_id, castle_level, xp) VALUES (:kid, 1, 0)"
+            ),
+            {"kid": kid},
         )
         db.execute(
-            text("INSERT INTO kingdom_troop_slots (kingdom_id) VALUES (:kid) ON CONFLICT DO NOTHING"),
-            {"kid": kid}
+            text(
+                "INSERT INTO kingdom_troop_slots (kingdom_id) VALUES (:kid) ON CONFLICT DO NOTHING"
+            ),
+            {"kid": kid},
         )
         db.commit()
         return {"castle_level": 1}
@@ -154,7 +162,9 @@ def get_castle_level(user_id: str = Depends(require_user_id), db: Session = Depe
 
 # 🔹 POST: Upgrade Castle
 @router.post("/castle")
-def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def upgrade_castle(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     kid = get_kingdom_id(db, user_id)
 
     # Upgrade or insert castle level
@@ -173,26 +183,34 @@ def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depend
 
     # Ensure troop slots record exists
     db.execute(
-        text("INSERT INTO kingdom_troop_slots (kingdom_id) VALUES (:kid) ON CONFLICT DO NOTHING"),
-        {"kid": kid}
+        text(
+            "INSERT INTO kingdom_troop_slots (kingdom_id) VALUES (:kid) ON CONFLICT DO NOTHING"
+        ),
+        {"kid": kid},
     )
     db.execute(
-        text("UPDATE kingdom_troop_slots SET slots_from_buildings = slots_from_buildings + 1 WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        text(
+            "UPDATE kingdom_troop_slots SET slots_from_buildings = slots_from_buildings + 1 WHERE kingdom_id = :kid"
+        ),
+        {"kid": kid},
     )
 
     # Get new level after upgrade
     level = db.execute(
-        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        text(
+            "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+        ),
+        {"kid": kid},
     ).fetchone()[0]
 
     # 💠 Handle Noble Unlocks
     if level >= 2:
         noble_count = ensure_nobles(db, kid, 2)
         db.execute(
-            text("UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"),
-            {"count": noble_count, "kid": kid}
+            text(
+                "UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"
+            ),
+            {"count": noble_count, "kid": kid},
         )
 
     # 💠 Handle Knight Unlocks
@@ -200,8 +218,10 @@ def upgrade_castle(user_id: str = Depends(require_user_id), db: Session = Depend
         required = 1 if level == 3 else 2
         knight_count = ensure_knights(db, kid, required)
         db.execute(
-            text("UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"),
-            {"bonus": knight_count * 2, "kid": kid}
+            text(
+                "UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"
+            ),
+            {"bonus": knight_count * 2, "kid": kid},
         )
 
     db.commit()
@@ -216,25 +236,33 @@ def get_nobles(user_id: str = Depends(require_user_id), db: Session = Depends(ge
     kid = get_kingdom_id(db, user_id)
     names = db.execute(
         text("SELECT noble_name FROM kingdom_nobles WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        {"kid": kid},
     ).fetchall()
     return {"nobles": [n[0] for n in names]}
 
 
 @router.post("/nobles")
-def assign_noble(payload: NoblePayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def assign_noble(
+    payload: NoblePayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     kid = get_kingdom_id(db, user_id)
 
     db.execute(
-        text("INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"),
-        {"kid": kid, "name": payload.noble_name}
+        text(
+            "INSERT INTO kingdom_nobles (kingdom_id, noble_name) VALUES (:kid, :name)"
+        ),
+        {"kid": kid, "name": payload.noble_name},
     )
 
     count = _count_records(db, "kingdom_nobles", kid)
 
     db.execute(
-        text("UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"),
-        {"count": count, "kid": kid}
+        text(
+            "UPDATE kingdom_troop_slots SET slots_from_projects = :count WHERE kingdom_id = :kid"
+        ),
+        {"count": count, "kid": kid},
     )
 
     db.commit()
@@ -248,25 +276,33 @@ def get_knights(user_id: str = Depends(require_user_id), db: Session = Depends(g
     kid = get_kingdom_id(db, user_id)
     names = db.execute(
         text("SELECT knight_name FROM kingdom_knights WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        {"kid": kid},
     ).fetchall()
     return {"knights": [k[0] for k in names]}
 
 
 @router.post("/knights")
-def assign_knight(payload: KnightPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def assign_knight(
+    payload: KnightPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     kid = get_kingdom_id(db, user_id)
 
     db.execute(
-        text("INSERT INTO kingdom_knights (kingdom_id, knight_name) VALUES (:kid, :name)"),
-        {"kid": kid, "name": payload.knight_name}
+        text(
+            "INSERT INTO kingdom_knights (kingdom_id, knight_name) VALUES (:kid, :name)"
+        ),
+        {"kid": kid, "name": payload.knight_name},
     )
 
     count = _count_records(db, "kingdom_knights", kid)
 
     db.execute(
-        text("UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"),
-        {"bonus": count * 2, "kid": kid}
+        text(
+            "UPDATE kingdom_troop_slots SET slots_from_events = :bonus WHERE kingdom_id = :kid"
+        ),
+        {"bonus": count * 2, "kid": kid},
     )
 
     db.commit()
@@ -276,27 +312,32 @@ def assign_knight(payload: KnightPayload, user_id: str = Depends(require_user_id
 
 # 🔹 POST: Force Recalculate Progression
 @router.post("/refresh")
-def refresh_progression(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def refresh_progression(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     kid = get_kingdom_id(db, user_id)
     total_slots = calculate_troop_slots(db, kid)
     level = db.execute(
-        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        text(
+            "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+        ),
+        {"kid": kid},
     ).fetchone()
-    return {
-        "castle_level": level[0] if level else 1,
-        "troop_slots": total_slots
-    }
+    return {"castle_level": level[0] if level else 1, "troop_slots": total_slots}
 
 
 # 🔹 GET: Summary Overview
 @router.get("/summary")
-def progression_summary(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def progression_summary(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     kid = get_kingdom_id(db, user_id)
 
     level_row = db.execute(
-        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        text(
+            "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+        ),
+        {"kid": kid},
     ).fetchone()
     castle_level = level_row[0] if level_row else 1
 
@@ -308,7 +349,7 @@ def progression_summary(user_id: str = Depends(require_user_id), db: Session = D
 
     used_slots = db.execute(
         text("SELECT used_slots FROM kingdom_troop_slots WHERE kingdom_id = :kid"),
-        {"kid": kid}
+        {"kid": kid},
     ).fetchone()
     used = used_slots[0] if used_slots else 0
     total = calculate_troop_slots(db, kid)
@@ -330,6 +371,8 @@ def progression_summary(user_id: str = Depends(require_user_id), db: Session = D
 
 # 🔹 GET: Modifiers
 @router.get("/modifiers")
-def get_modifiers(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def get_modifiers(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     kid = get_kingdom_id(db, user_id)
     return get_total_modifiers(db, kid)

@@ -8,27 +8,40 @@ from fastapi import HTTPException
 import json
 import pytest
 
+
 class DummyTable:
     def __init__(self, data=None):
         self._data = data or []
+
     def select(self, *args):
         return self
+
     def order(self, *args, **kwargs):
         return self
+
     def limit(self, *args):
         return self
+
     def execute(self):
         return {"data": self._data}
+
 
 class DummyClient:
     def __init__(self, tables):
         self.tables = tables
+
     def table(self, name):
         return DummyTable(self.tables.get(name, []))
 
+
 def test_announcements_returned():
     rows = [
-        {"id": 1, "title": "Welcome", "content": "Greetings", "created_at": "2025-01-01"}
+        {
+            "id": 1,
+            "title": "Welcome",
+            "content": "Greetings",
+            "created_at": "2025-01-01",
+        }
     ]
     login_routes.get_supabase_client = lambda: DummyClient({"announcements": rows})
     resp = login_routes.get_announcements()

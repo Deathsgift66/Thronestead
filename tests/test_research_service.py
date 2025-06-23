@@ -76,4 +76,3 @@ def test_list_and_check():
     results = list_research(db, 1)
     assert results[0]["tech_code"] == "tech_a"
     assert is_tech_completed(db, 1, "tech_a") is True
-

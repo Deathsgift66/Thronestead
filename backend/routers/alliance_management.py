@@ -15,7 +15,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from backend.models import Alliance, AllianceMember, AllianceVault, User, KingdomResources
+from backend.models import (
+    Alliance,
+    AllianceMember,
+    AllianceVault,
+    User,
+    KingdomResources,
+)
 from ..security import verify_jwt_token
 from services.audit_service import log_action, log_alliance_activity
 
@@ -75,14 +81,16 @@ def create_alliance(
     db.flush()  # Assigns `alliance_id`
 
     # 🧑 Add founding member as Leader
-    db.add(AllianceMember(
-        alliance_id=alliance.alliance_id,
-        user_id=user_id,
-        username=user.username,
-        rank="Leader",
-        contribution=0,
-        status="active",
-    ))
+    db.add(
+        AllianceMember(
+            alliance_id=alliance.alliance_id,
+            user_id=user_id,
+            username=user.username,
+            rank="Leader",
+            contribution=0,
+            status="active",
+        )
+    )
 
     # 💰 Initialize vault
     db.add(AllianceVault(alliance_id=alliance.alliance_id))
@@ -116,7 +124,9 @@ def delete_alliance(
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance not found")
     if alliance.leader != user_id:
-        raise HTTPException(status_code=403, detail="Only the leader can delete this alliance.")
+        raise HTTPException(
+            status_code=403, detail="Only the leader can delete this alliance."
+        )
 
     # 🚫 Remove members and vault
     db.query(AllianceMember).filter_by(alliance_id=aid).delete()

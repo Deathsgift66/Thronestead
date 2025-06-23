@@ -40,12 +40,13 @@ def view_alliance_members(user_id: str = Depends(require_user_id)):
         raise HTTPException(status_code=403, detail="You are not in an alliance")
 
     # 🚀 Call Supabase RPC to get enriched member data
-    members_res = (
-        supabase.rpc("get_alliance_members_detailed", {"viewer_user_id": user_id})
-        .execute()
-    )
+    members_res = supabase.rpc(
+        "get_alliance_members_detailed", {"viewer_user_id": user_id}
+    ).execute()
     if getattr(members_res, "error", None):
-        raise HTTPException(status_code=500, detail="RPC failed: could not fetch members")
+        raise HTTPException(
+            status_code=500, detail="RPC failed: could not fetch members"
+        )
 
     members = getattr(members_res, "data", members_res)
     return {"alliance_members": members}

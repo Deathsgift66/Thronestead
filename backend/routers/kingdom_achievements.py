@@ -19,10 +19,7 @@ from .progression_router import get_kingdom_id
 from services.kingdom_achievement_service import list_achievements
 
 # Set up router
-router = APIRouter(
-    prefix="/api/kingdom/achievements",
-    tags=["kingdom_achievements"]
-)
+router = APIRouter(prefix="/api/kingdom/achievements", tags=["kingdom_achievements"])
 
 
 @router.get("")

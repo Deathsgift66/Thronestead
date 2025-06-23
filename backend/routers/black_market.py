@@ -21,6 +21,7 @@ router = APIRouter(prefix="/api/black-market", tags=["black_market"])
 
 ALLOWED_ITEM_TYPES = {"token", "cosmetic", "permit", "contraband", "artifact"}
 
+
 # ---------------------
 # Pydantic Schemas
 # ---------------------
@@ -38,6 +39,7 @@ class BuyPayload(BaseModel):
 
 class CancelPayload(BaseModel):
     listing_id: int
+
 
 # ---------------------
 # GET Market Listings

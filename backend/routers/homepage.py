@@ -31,7 +31,6 @@ class FeaturedNewsResponse(BaseModel):
 
 @router.get(
     "/featured",
-
     summary="Homepage News",
     description="Fetches latest 5 published news articles for the homepage.",
 )

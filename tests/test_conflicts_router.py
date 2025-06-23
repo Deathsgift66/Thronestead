@@ -106,7 +106,9 @@ def test_get_war_details_denies_unrelated():
     db = Session()
     uid = seed_user(db)
     war = {"war_id": 2, "attacker_kingdom_id": 3, "defender_kingdom_id": 4}
-    conflicts.get_supabase_client = lambda: DummyClient({"wars": [war], "war_scores": []})
+    conflicts.get_supabase_client = lambda: DummyClient(
+        {"wars": [war], "war_scores": []}
+    )
     try:
         conflicts.get_war_details(2, user_id=uid, db=db)
     except HTTPException as e:

@@ -89,9 +89,11 @@ def apply_modifier(
     Apply or update a modifier for a specific village based on the source tag.
     This supports stacking rules and time-based expiration.
     """
-    existing = db.query(VillageModifier).filter(
-        VillageModifier.village_id == payload.village_id
-    ).first()
+    existing = (
+        db.query(VillageModifier)
+        .filter(VillageModifier.village_id == payload.village_id)
+        .first()
+    )
 
     if existing:
         # Update existing modifier

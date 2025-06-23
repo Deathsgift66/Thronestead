@@ -8,6 +8,7 @@ Version: 2025-06-21
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
+
 class UserStateMiddleware(BaseHTTPMiddleware):
     """Attach a minimal user object with the JWT token to ``request.state``."""
 

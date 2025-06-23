@@ -21,10 +21,13 @@ from services.training_catalog_service import list_units
 router = APIRouter(prefix="/api/training_catalog", tags=["training_catalog"])
 
 
-@router.get("", summary="Retrieve training catalog", response_description="List of all trainable units")
+@router.get(
+    "",
+    summary="Retrieve training catalog",
+    response_description="List of all trainable units",
+)
 def get_catalog(
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db)
+    user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
 ):
     """
     Return the full training catalog of unit types, including their tier,

@@ -26,15 +26,21 @@ router = APIRouter(prefix="/api/kingdom", tags=["titles"])
 
 # ---------------------- Payload Models ----------------------
 
+
 class TitlePayload(BaseModel):
-    title: str = Field(..., min_length=2, max_length=100, description="The name of the title to award")
+    title: str = Field(
+        ..., min_length=2, max_length=100, description="The name of the title to award"
+    )
 
 
 class ActiveTitlePayload(BaseModel):
-    title: Optional[str] = Field(None, description="The title to set as active (or null to clear)")
+    title: Optional[str] = Field(
+        None, description="The title to set as active (or null to clear)"
+    )
 
 
 # ---------------------- Endpoints ----------------------
+
 
 @router.get("/titles", summary="List Kingdom Titles")
 async def list_titles_endpoint(
@@ -74,12 +80,12 @@ def set_active_title_endpoint(
         set_active_title(db, kingdom_id, payload.title)
         return {"message": "Active title updated"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to update active title") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to update active title"
+        ) from e
 
 
 @router.get("/prestige", summary="Get Prestige Score")
-async def get_prestige(
-    user_id: str = Depends(require_user_id)
-) -> dict:
+async def get_prestige(user_id: str = Depends(require_user_id)) -> dict:
     """Return the current prestige score for the user."""
     return {"prestige_score": prestige_scores.get(user_id, 0)}

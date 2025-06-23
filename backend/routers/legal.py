@@ -15,6 +15,7 @@ from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/legal", tags=["legal"])
 
+
 @router.get("/documents")
 def list_documents():
     """
@@ -29,8 +30,7 @@ def list_documents():
     supabase = get_supabase_client()
     try:
         response = (
-            supabase
-            .table("legal_documents")
+            supabase.table("legal_documents")
             .select("id,title,summary,url,display_order")
             .order("display_order")
             .execute()

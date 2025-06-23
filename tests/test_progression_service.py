@@ -4,6 +4,7 @@
 # Developer: Deathsgift66
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import pytest
@@ -24,7 +25,6 @@ from services.progression_service import _kingdom_project_modifiers
 from services.progression_service import calculate_troop_slots
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-
 
 
 def setup_function():
@@ -92,7 +92,6 @@ def test_get_total_modifiers_default():
     }
 
 
-
 def test_kingdom_project_modifiers_exclude_expired():
     engine = create_engine("sqlite:///:memory:")
     conn = engine.connect()
@@ -127,6 +126,7 @@ def test_kingdom_project_modifiers_exclude_expired():
     mods = _kingdom_project_modifiers(db, 1)
     assert mods == {"resource_bonus": {"wood": 10}}
 
+
 def test_calculate_troop_slots_includes_region_bonus():
     class DummyResult:
         def __init__(self, row=None):
@@ -146,4 +146,3 @@ def test_calculate_troop_slots_includes_region_bonus():
 
     total = calculate_troop_slots(DummyDB(), 1)
     assert total == 17
-

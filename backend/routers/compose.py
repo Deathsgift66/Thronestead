@@ -27,6 +27,7 @@ router = APIRouter(prefix="/api/compose", tags=["compose"])
 # Payload Schemas
 # ------------------------------
 
+
 class MessagePayload(BaseModel):
     recipient_id: str
     message: str
@@ -52,9 +53,11 @@ class WarPayload(BaseModel):
     defender_id: str
     war_reason: str
 
+
 # ------------------------------
 # Message Routes
 # ------------------------------
+
 
 @router.post("/send-message")
 @router.post("/message")
@@ -90,6 +93,7 @@ def send_message(
 # Notice Routes
 # ------------------------------
 
+
 @router.post("/notice")
 def create_notice(
     payload: NoticePayload,
@@ -120,6 +124,7 @@ def create_notice(
 # ------------------------------
 # Treaty Routes
 # ------------------------------
+
 
 @router.post("/treaty")
 def propose_treaty(
@@ -156,6 +161,7 @@ def propose_treaty(
 # ------------------------------
 # War Routes
 # ------------------------------
+
 
 @router.post("/war")
 def declare_war(

@@ -21,10 +21,13 @@ logger = logging.getLogger(__name__)
 # Project Management Logic
 # ------------------------------------------------------------------------------
 
+
 def list_available_projects(db: Session) -> list[dict]:
     """Return all projects that alliances can start (from catalogue)."""
     rows = db.execute(
-        text("SELECT * FROM project_alliance_catalogue WHERE is_active = true ORDER BY project_name")
+        text(
+            "SELECT * FROM project_alliance_catalogue WHERE is_active = true ORDER BY project_name"
+        )
     ).fetchall()
     return [dict(r._mapping) for r in rows]
 
@@ -81,9 +84,7 @@ def start_alliance_project(
     """Initiate a new alliance project if it's valid and not already active."""
     row = db.execute(
         text(
-
             "SELECT build_time_seconds, resource_costs FROM project_alliance_catalogue "
-
             "WHERE project_key = :key AND is_active = true"
         ),
         {"key": project_key},
@@ -92,10 +93,8 @@ def start_alliance_project(
     if not row:
         raise HTTPException(status_code=404, detail="Invalid or inactive project code")
 
-
     build_seconds, requirements = row
     ends_at = datetime.utcnow() + timedelta(seconds=build_seconds or 0)
-
 
     exists = db.execute(
         text(
@@ -105,7 +104,9 @@ def start_alliance_project(
     ).fetchone()
 
     if exists:
-        raise HTTPException(status_code=409, detail="Project already exists for this alliance")
+        raise HTTPException(
+            status_code=409, detail="Project already exists for this alliance"
+        )
 
     active = db.execute(
         text(
@@ -130,7 +131,6 @@ def start_alliance_project(
             )
         """
         ),
-
         {
             "aid": alliance_id,
             "key": project_key,
@@ -138,7 +138,6 @@ def start_alliance_project(
             "req": sum((requirements or {}).values()),
             "uid": initiated_by,
         },
-
     )
 
     db.commit()
@@ -174,7 +173,9 @@ def contribute_to_project(
     new_total = min(current + amount, 100)
 
     db.execute(
-        text("UPDATE projects_alliance_in_progress SET progress = :val WHERE progress_id = :pid"),
+        text(
+            "UPDATE projects_alliance_in_progress SET progress = :val WHERE progress_id = :pid"
+        ),
         {"val": new_total, "pid": pid},
     )
 
@@ -188,14 +189,19 @@ def contribute_to_project(
             )
             """
         ),
-        {"aid": alliance_id, "uid": user_id, "rtype": "resource", "amt": amount, "key": project_key},
+        {
+            "aid": alliance_id,
+            "uid": user_id,
+            "rtype": "resource",
+            "amt": amount,
+            "key": project_key,
+        },
     )
 
     db.commit()
 
 
 def complete_project_if_ready(db: Session, alliance_id: int, project_key: str) -> bool:
-
     """Manually check if a project has met requirements and complete it."""
     row = db.execute(
         text(
@@ -233,16 +239,16 @@ def complete_project_if_ready(db: Session, alliance_id: int, project_key: str) -
         {"aid": alliance_id, "pid": pid},
     )
     db.execute(
-        text("UPDATE projects_alliance_in_progress SET status = 'completed' WHERE progress_id = :pid"),
+        text(
+            "UPDATE projects_alliance_in_progress SET status = 'completed' WHERE progress_id = :pid"
+        ),
         {"pid": pid},
     )
     db.commit()
     return True
 
 
-def get_project_modifiers(
-    db: Session, alliance_id: int
-) -> dict:
+def get_project_modifiers(db: Session, alliance_id: int) -> dict:
     """Return cumulative modifiers from all completed alliance projects."""
     rows = db.execute(
         text(

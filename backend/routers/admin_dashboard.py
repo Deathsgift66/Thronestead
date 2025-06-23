@@ -55,10 +55,12 @@ def dashboard_summary(
     ).scalar()
 
     logs = db.execute(
-        text("""
+        text(
+            """
             SELECT log_id, user_id, action, details, created_at
             FROM audit_log ORDER BY created_at DESC LIMIT 10
-        """)
+        """
+        )
     ).fetchall()
 
     return {
@@ -149,21 +151,29 @@ def update_kingdom_field(
     verify_admin(admin_user_id, db)
 
     allowed_fields = {
-        "castle_level", "prestige_score", "status", "motto", "ruler_name",
-        "alliance_id", "description", "national_theme"
+        "castle_level",
+        "prestige_score",
+        "status",
+        "motto",
+        "ruler_name",
+        "alliance_id",
+        "description",
+        "national_theme",
     }
     if field not in allowed_fields:
-        raise HTTPException(status_code=400, detail="Field not allowed for direct update.")
+        raise HTTPException(
+            status_code=400, detail="Field not allowed for direct update."
+        )
 
     column = getattr(Kingdom, field)
     stmt = (
-        update(Kingdom)
-        .where(Kingdom.kingdom_id == kingdom_id)
-        .values({column: value})
+        update(Kingdom).where(Kingdom.kingdom_id == kingdom_id).values({column: value})
     )
     db.execute(stmt)
     db.commit()
-    log_action(db, admin_user_id, "Update Kingdom", f"{field} → {value} for {kingdom_id}")
+    log_action(
+        db, admin_user_id, "Update Kingdom", f"{field} → {value} for {kingdom_id}"
+    )
     return {"status": "updated"}
 
 
@@ -178,7 +188,9 @@ def get_flagged_users(
 ):
     verify_admin(admin_user_id, db)
     rows = db.execute(
-        text("SELECT player_id, alert_type, created_at FROM account_alerts ORDER BY created_at DESC")
+        text(
+            "SELECT player_id, alert_type, created_at FROM account_alerts ORDER BY created_at DESC"
+        )
     ).fetchall()
     return [dict(r._mapping) for r in rows]
 
@@ -199,8 +211,10 @@ def force_end_war(
 ):
     verify_admin(admin_user_id, db)
     db.execute(
-        text("UPDATE wars_tactical SET war_status = 'completed', is_concluded = TRUE, ended_at = NOW() WHERE war_id = :wid"),
-        {"wid": payload.war_id}
+        text(
+            "UPDATE wars_tactical SET war_status = 'completed', is_concluded = TRUE, ended_at = NOW() WHERE war_id = :wid"
+        ),
+        {"wid": payload.war_id},
     )
     db.commit()
     log_action(db, admin_user_id, "Force End War", f"War {payload.war_id}")
@@ -217,12 +231,16 @@ def rollback_combat_tick(
     verify_admin(admin_user_id, db)
 
     db.execute(
-        text("UPDATE wars_tactical SET battle_tick = battle_tick - 1 WHERE war_id = :wid AND battle_tick > 0"),
-        {"wid": payload.war_id}
+        text(
+            "UPDATE wars_tactical SET battle_tick = battle_tick - 1 WHERE war_id = :wid AND battle_tick > 0"
+        ),
+        {"wid": payload.war_id},
     )
     db.execute(
-        text("DELETE FROM combat_logs WHERE combat_id IN (SELECT combat_id FROM combat_logs WHERE war_id = :wid ORDER BY tick_number DESC LIMIT 1)"),
-        {"wid": payload.war_id}
+        text(
+            "DELETE FROM combat_logs WHERE combat_id IN (SELECT combat_id FROM combat_logs WHERE war_id = :wid ORDER BY tick_number DESC LIMIT 1)"
+        ),
+        {"wid": payload.war_id},
     )
     db.commit()
     log_action(db, admin_user_id, "Rollback Combat Tick", f"War {payload.war_id}")

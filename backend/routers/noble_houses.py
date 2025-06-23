@@ -22,8 +22,10 @@ router = APIRouter(prefix="/api/noble_houses", tags=["noble_houses"])
 
 # ---------- Data Models ----------
 
+
 class HousePayload(BaseModel):
     """Request payload for creating or updating noble houses."""
+
     name: str
     motto: str | None = None
     crest: str | None = None
@@ -32,6 +34,7 @@ class HousePayload(BaseModel):
 
 
 # ---------- Internal Utilities ----------
+
 
 def _serialize(row: NobleHouse) -> dict:
     """Convert a NobleHouse ORM object into a dictionary."""
@@ -46,6 +49,7 @@ def _serialize(row: NobleHouse) -> dict:
 
 
 # ---------- Route Endpoints ----------
+
 
 @router.get("")
 def list_houses(db: Session = Depends(get_db)):

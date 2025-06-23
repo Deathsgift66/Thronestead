@@ -61,8 +61,15 @@ def test_catalogue_sorted():
     result = policies_laws.catalogue(user_id="u1")
     assert result["entries"][0]["id"] == 1
 
+
 def test_user_settings():
-    client = DummyClient({"users": DummyTable([{"user_id": "u1", "active_policy": 3, "active_laws": [1]}])})
+    client = DummyClient(
+        {
+            "users": DummyTable(
+                [{"user_id": "u1", "active_policy": 3, "active_laws": [1]}]
+            )
+        }
+    )
     policies_laws.get_supabase_client = lambda: client
     result = policies_laws.user_settings(user_id="u1")
     assert result["active_policy"] == 3
@@ -73,7 +80,11 @@ def test_updates_call_update():
     table = DummyTable([{}])
     client = DummyClient({"users": table})
     policies_laws.get_supabase_client = lambda: client
-    policies_laws.update_policy(policies_laws.UpdatePolicyPayload(policy_id=5), user_id="u1")
-    policies_laws.update_laws(policies_laws.UpdateLawsPayload(law_ids=[1, 2]), user_id="u1")
+    policies_laws.update_policy(
+        policies_laws.UpdatePolicyPayload(policy_id=5), user_id="u1"
+    )
+    policies_laws.update_laws(
+        policies_laws.UpdateLawsPayload(law_ids=[1, 2]), user_id="u1"
+    )
     assert table.updated[0] == {"active_policy": 5}
     assert table.updated[1] == {"active_laws": [1, 2]}

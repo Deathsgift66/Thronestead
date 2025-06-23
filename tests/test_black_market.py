@@ -55,5 +55,7 @@ def test_black_market_flow():
         user_id=seller_id,
         db=db,
     )
-    cancel_listing(CancelPayload(listing_id=res2["listing_id"]), user_id=seller_id, db=db)
+    cancel_listing(
+        CancelPayload(listing_id=res2["listing_id"]), user_id=seller_id, db=db
+    )
     assert db.query(BlackMarketListing).get(res2["listing_id"]) is None

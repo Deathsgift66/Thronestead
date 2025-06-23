@@ -24,6 +24,7 @@ alt_router = APIRouter(prefix="/api/black_market", tags=["black_market_v2"])
 # Pydantic Models
 # ---------------------------------------------
 
+
 class Listing(BaseModel):
     id: int
     item_key: str
@@ -35,10 +36,12 @@ class Listing(BaseModel):
     stock_remaining: conint(ge=0)
     expires_at: datetime
 
+
 class PurchasePayload(BaseModel):
     listing_id: int
     quantity: conint(gt=0)
     kingdom_id: str
+
 
 class Transaction(BaseModel):
     kingdom_id: str
@@ -48,6 +51,7 @@ class Transaction(BaseModel):
     price_per_unit: int
     currency_type: str
     purchased_at: datetime
+
 
 # ---------------------------------------------
 # In-memory Store (stubbed for testing/demo)
@@ -62,7 +66,7 @@ _listings: List[Listing] = [
         price_per_unit=10,
         currency_type="gold",
         stock_remaining=50,
-        expires_at=datetime.utcnow() + timedelta(days=1)
+        expires_at=datetime.utcnow() + timedelta(days=1),
     ),
     Listing(
         id=2,
@@ -73,7 +77,7 @@ _listings: List[Listing] = [
         price_per_unit=30,
         currency_type="gems",
         stock_remaining=5,
-        expires_at=datetime.utcnow() + timedelta(hours=12)
+        expires_at=datetime.utcnow() + timedelta(hours=12),
     ),
     Listing(
         id=3,
@@ -84,15 +88,13 @@ _listings: List[Listing] = [
         price_per_unit=15,
         currency_type="gems",
         stock_remaining=10,
-        expires_at=datetime.utcnow() + timedelta(hours=24)
+        expires_at=datetime.utcnow() + timedelta(hours=24),
     ),
 ]
 
 _transactions: List[Transaction] = []
 
-_resources: dict[str, dict[str, int]] = {
-    "demo-kingdom": {"gold": 100, "gems": 20}
-}
+_resources: dict[str, dict[str, int]] = {"demo-kingdom": {"gold": 100, "gems": 20}}
 
 # ---------------------------------------------
 # Routes
@@ -146,4 +148,3 @@ def history(kingdom_id: str):
     """Return purchase history for a kingdom."""
     trades = [t.model_dump() for t in _transactions if t.kingdom_id == kingdom_id]
     return {"trades": trades}
-

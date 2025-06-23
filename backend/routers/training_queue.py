@@ -30,18 +30,26 @@ router = APIRouter(prefix="/api/training_queue", tags=["training_queue"])
 
 class TrainOrderPayload(BaseModel):
     """Payload for initiating a training order."""
+
     unit_id: int = Field(..., description="ID of the unit being trained")
     unit_name: str = Field(..., description="Name of the unit being trained")
     quantity: int = Field(..., gt=0, description="Number of units to train")
-    base_training_seconds: int = Field(60, ge=1, description="Base training time per unit in seconds")
+    base_training_seconds: int = Field(
+        60, ge=1, description="Base training time per unit in seconds"
+    )
 
 
 class CancelPayload(BaseModel):
     """Payload to cancel a queued training order."""
+
     queue_id: int = Field(..., description="Queue ID to cancel")
 
 
-@router.post("/start", summary="Start training", response_description="Queue ID of the training order")
+@router.post(
+    "/start",
+    summary="Start training",
+    response_description="Queue ID of the training order",
+)
 def start_training(
     payload: TrainOrderPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -64,12 +72,16 @@ def start_training(
             base_training_seconds=payload.base_training_seconds,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to start training order") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to start training order"
+        ) from e
 
     return {"queue_id": queue_id}
 
 
-@router.get("", summary="List training queue", response_description="All active training orders")
+@router.get(
+    "", summary="List training queue", response_description="All active training orders"
+)
 def list_queue(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
@@ -81,12 +93,18 @@ def list_queue(
     try:
         queue = fetch_queue(db, kingdom_id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch training queue") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch training queue"
+        ) from e
 
     return {"queue": queue}
 
 
-@router.post("/cancel", summary="Cancel training order", response_description="Confirmation of cancellation")
+@router.post(
+    "/cancel",
+    summary="Cancel training order",
+    response_description="Confirmation of cancellation",
+)
 def cancel_order(
     payload: CancelPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -102,6 +120,8 @@ def cancel_order(
     try:
         cancel_training(db, payload.queue_id, kingdom_id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to cancel training order") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to cancel training order"
+        ) from e
 
     return {"message": "Training cancelled"}

@@ -12,6 +12,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -24,7 +25,10 @@ logger = logging.getLogger(__name__)
 # 🚀 Start or Reset a Quest
 # -----------------------------------------------------
 
-def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) -> datetime:
+
+def start_quest(
+    db: Session, kingdom_id: int, quest_code: str, started_by: str
+) -> datetime:
     """
     Starts (or resets) a quest for a given kingdom.
 
@@ -40,7 +44,9 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
     try:
         # Fetch duration from quest catalog
         duration_row = db.execute(
-            text("SELECT duration_hours FROM quest_kingdom_catalogue WHERE quest_code = :code"),
+            text(
+                "SELECT duration_hours FROM quest_kingdom_catalogue WHERE quest_code = :code"
+            ),
             {"code": quest_code},
         ).fetchone()
         if not duration_row:
@@ -51,7 +57,8 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
 
         # Upsert the quest tracking row
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO quest_kingdom_tracking (
                     kingdom_id, quest_code, status, progress, progress_details,
                     ends_at, started_by, attempt_count, objective_progress,
@@ -72,7 +79,8 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
                     is_complete = false,
                     started_at = now(),
                     last_updated = now()
-            """),
+            """
+            ),
             {"kid": kingdom_id, "code": quest_code, "end": ends_at, "uid": started_by},
         )
         db.commit()
@@ -80,7 +88,9 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
 
     except SQLAlchemyError as e:
         db.rollback()
-        logger.exception("Failed to start quest: %s for kingdom %d", quest_code, kingdom_id)
+        logger.exception(
+            "Failed to start quest: %s for kingdom %d", quest_code, kingdom_id
+        )
         raise RuntimeError("Failed to start quest") from e
 
 
@@ -88,7 +98,15 @@ def start_quest(db: Session, kingdom_id: int, quest_code: str, started_by: str) 
 # 🔄 Progress Update
 # -----------------------------------------------------
 
-def update_progress(db: Session, kingdom_id: int, quest_code: str, progress: int, details: dict, objective_progress: int | None = None) -> None:
+
+def update_progress(
+    db: Session,
+    kingdom_id: int,
+    quest_code: str,
+    progress: int,
+    details: dict,
+    objective_progress: int | None = None,
+) -> None:
     """
     Updates the progress and progress_details of an active quest.
 
@@ -101,14 +119,16 @@ def update_progress(db: Session, kingdom_id: int, quest_code: str, progress: int
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE quest_kingdom_tracking
                    SET progress = :prog,
                        progress_details = :details,
                        last_updated = now(),
                        objective_progress = COALESCE(:obj_prog, objective_progress)
                  WHERE kingdom_id = :kid AND quest_code = :code
-            """),
+            """
+            ),
             {
                 "kid": kingdom_id,
                 "code": quest_code,
@@ -128,6 +148,7 @@ def update_progress(db: Session, kingdom_id: int, quest_code: str, progress: int
 # ✅ Completion & Cancellation
 # -----------------------------------------------------
 
+
 def complete_quest(db: Session, kingdom_id: int, quest_code: str) -> None:
     """
     Marks a quest as completed.
@@ -139,13 +160,15 @@ def complete_quest(db: Session, kingdom_id: int, quest_code: str) -> None:
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE quest_kingdom_tracking
                    SET status = 'completed',
                        is_complete = true,
                        last_updated = now()
                  WHERE kingdom_id = :kid AND quest_code = :code
-            """),
+            """
+            ),
             {"kid": kingdom_id, "code": quest_code},
         )
         db.commit()
@@ -166,11 +189,13 @@ def cancel_quest(db: Session, kingdom_id: int, quest_code: str) -> None:
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE quest_kingdom_tracking
                    SET status = 'cancelled', last_updated = now()
                  WHERE kingdom_id = :kid AND quest_code = :code
-            """),
+            """
+            ),
             {"kid": kingdom_id, "code": quest_code},
         )
         db.commit()
@@ -184,6 +209,7 @@ def cancel_quest(db: Session, kingdom_id: int, quest_code: str) -> None:
 # 🕓 Expiry Handler
 # -----------------------------------------------------
 
+
 def expire_quests(db: Session) -> int:
     """
     Expires all quests whose `ends_at` timestamp is past due and are still marked as 'active'.
@@ -193,11 +219,13 @@ def expire_quests(db: Session) -> int:
     """
     try:
         result = db.execute(
-            text("""
+            text(
+                """
                 UPDATE quest_kingdom_tracking
                    SET status = 'expired', last_updated = now()
                  WHERE status = 'active' AND ends_at < now()
-            """)
+            """
+            )
         )
         db.commit()
         return getattr(result, "rowcount", 0)

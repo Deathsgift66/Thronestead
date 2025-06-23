@@ -18,6 +18,7 @@ from fastapi import Header, HTTPException
 from jose import jwt, JWTError
 
 import logging
+
 logger = logging.getLogger("Thronestead.Security")
 
 __all__ = ["verify_jwt_token", "require_user_id", "verify_api_key"]
@@ -33,7 +34,7 @@ def verify_jwt_token(
     - Extracts `sub` field from payload (base64-encoded).
     - Compares it to the X-User-ID header value.
     - Does NOT verify signature (handled by Supabase edge or proxy).
-    
+
     Args:
         authorization: Bearer token from `Authorization` header
         x_user_id: User ID expected from Supabase (passed in `X-User-ID`)
@@ -46,7 +47,9 @@ def verify_jwt_token(
     """
     if not authorization or not authorization.startswith("Bearer "):
         logger.warning("Missing or malformed Authorization header.")
-        raise HTTPException(status_code=401, detail="Authorization header missing or invalid")
+        raise HTTPException(
+            status_code=401, detail="Authorization header missing or invalid"
+        )
 
     token = authorization.split()[1]
 

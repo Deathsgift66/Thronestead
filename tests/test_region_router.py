@@ -54,4 +54,3 @@ def test_get_regions_error():
         assert e.status_code == 500
     else:
         assert False, "Expected HTTPException"
-

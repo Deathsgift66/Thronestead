@@ -48,9 +48,7 @@ def test_invalid_user():
 
 
 def test_returns_steps():
-    rows = [
-        {"id": 1, "title": "Intro", "description": "d", "step_number": 1}
-    ]
+    rows = [{"id": 1, "title": "Intro", "description": "d", "step_number": 1}]
     tables = {"users": [{"user_id": "u1"}], "tutorial_steps": rows}
     client = DummyClient(tables)
     tutorial.get_supabase_client = lambda: client

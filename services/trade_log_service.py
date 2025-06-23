@@ -13,6 +13,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------
 # Trade Logging Services
 # ------------------------------------------------------------
+
 
 def record_trade(
     db: Session,
@@ -62,7 +64,8 @@ def record_trade(
     """
     try:
         result = db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO trade_logs (
                     resource, quantity, unit_price,
                     buyer_id, seller_id,
@@ -77,7 +80,8 @@ def record_trade(
                     :ttype, :tstatus, :sys
                 )
                 RETURNING trade_id
-            """),
+            """
+            ),
             {
                 "res": resource,
                 "qty": quantity,
@@ -114,11 +118,13 @@ def update_trade_status(db: Session, trade_id: int, status: str) -> None:
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE trade_logs
                    SET trade_status = :st, last_updated = now()
                  WHERE trade_id = :tid
-            """),
+            """
+            ),
             {"st": status, "tid": trade_id},
         )
         db.commit()

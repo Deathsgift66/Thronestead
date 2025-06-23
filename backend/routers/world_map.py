@@ -36,11 +36,7 @@ def get_world_map_tiles(
     - Requires authentication
     - Returns empty tile array if no world map exists
     """
-    latest_map = (
-        db.query(TerrainMap)
-        .order_by(TerrainMap.generated_at.desc())
-        .first()
-    )
+    latest_map = db.query(TerrainMap).order_by(TerrainMap.generated_at.desc()).first()
 
     if not latest_map:
         return {

@@ -27,9 +27,7 @@ router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
 def get_treaty_types(db: Session = Depends(get_db)):
     """Return all treaty types from the catalogue."""
     rows = (
-        db.execute(
-            text("SELECT * FROM treaty_type_catalogue ORDER BY treaty_type")
-        )
+        db.execute(text("SELECT * FROM treaty_type_catalogue ORDER BY treaty_type"))
         .mappings()
         .fetchall()
     )
@@ -37,6 +35,7 @@ def get_treaty_types(db: Session = Depends(get_db)):
 
 
 # --- Payload Models ---
+
 
 class ProposePayload(BaseModel):
     treaty_type: str
@@ -49,6 +48,7 @@ class RespondPayload(BaseModel):
 
 
 # --- Utility Methods ---
+
 
 def get_alliance_id(db: Session, user_id: str) -> int:
     row = db.execute(
@@ -82,8 +82,11 @@ def validate_alliance_permission(db: Session, user_id: str, permission: str) -> 
 
 # --- Endpoints ---
 
+
 @router.get("/my-treaties")
-def get_my_treaties(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def get_my_treaties(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
     aid = get_alliance_id(db, user_id)
     rows = db.execute(
         text(
@@ -153,7 +156,9 @@ def respond_to_treaty(
     db: Session = Depends(get_db),
 ):
     treaty = db.execute(
-        text("SELECT alliance_id, partner_alliance_id FROM alliance_treaties WHERE treaty_id = :tid"),
+        text(
+            "SELECT alliance_id, partner_alliance_id FROM alliance_treaties WHERE treaty_id = :tid"
+        ),
         {"tid": payload.treaty_id},
     ).fetchone()
 
@@ -170,15 +175,19 @@ def respond_to_treaty(
     new_status = "active" if payload.action == "accept" else "cancelled"
 
     db.execute(
-        text("""
+        text(
+            """
             UPDATE alliance_treaties
                SET status = :st, signed_at = NOW()
              WHERE treaty_id = :tid
-        """),
+        """
+        ),
         {"st": new_status, "tid": payload.treaty_id},
     )
     db.commit()
-    log_alliance_activity(db, aid, user_id, f"Treaty {new_status.title()}", str(payload.treaty_id))
+    log_alliance_activity(
+        db, aid, user_id, f"Treaty {new_status.title()}", str(payload.treaty_id)
+    )
     log_action(db, user_id, f"Treaty {new_status}", str(payload.treaty_id))
     return {"status": new_status}
 
@@ -190,11 +199,13 @@ def renew_treaty(
     db: Session = Depends(get_db),
 ):
     row = db.execute(
-        text("""
+        text(
+            """
             SELECT alliance_id, partner_alliance_id, treaty_type
               FROM alliance_treaties
              WHERE treaty_id = :tid
-        """),
+        """
+        ),
         {"tid": treaty_id},
     ).fetchone()
 

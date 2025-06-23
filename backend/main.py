@@ -8,6 +8,7 @@
 if __name__ == "__main__" and __package__ is None:  # dev-only import fix
     from pathlib import Path
     import sys
+
     sys.path.append(str(Path(__file__).resolve().parent.parent))
     __package__ = "backend"
 
@@ -71,6 +72,7 @@ if engine:
 # -----------------------
 try:
     from . import data
+
     data.load_game_settings()
     logger.info("✅ Loaded game settings.")
 except Exception as e:
@@ -101,6 +103,7 @@ _frontend = os.getenv("FRONTEND_DIR")
 BASE_DIR = Path(_frontend) if _frontend else Path(__file__).resolve().parent.parent
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
+
 # -----------------------
 # ✅ Health Check Endpoint
 # -----------------------
@@ -108,9 +111,11 @@ app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 def health_check():
     return {"status": "online", "service": "Thronestead API"}
 
+
 # -----------------------
 # 🧪 Run App Locally (Dev Only)
 # -----------------------
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

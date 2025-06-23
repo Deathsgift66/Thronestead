@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # Treaty Service Functions
 # ----------------------------
 
+
 def propose_treaty(
     db: Session,
     alliance_id: int,
@@ -28,24 +29,30 @@ def propose_treaty(
     """
     try:
         exists = db.execute(
-            text("""
+            text(
+                """
                 SELECT 1 FROM alliance_treaties
                  WHERE ((alliance_id = :aid AND partner_alliance_id = :pid)
                         OR (alliance_id = :pid AND partner_alliance_id = :aid))
                    AND treaty_type = :type
                    AND status = 'active'
-            """),
+            """
+            ),
             {"aid": alliance_id, "pid": partner_alliance_id, "type": treaty_type},
         ).fetchone()
 
         if exists:
-            raise ValueError("An active treaty of this type already exists between the two alliances.")
+            raise ValueError(
+                "An active treaty of this type already exists between the two alliances."
+            )
 
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO alliance_treaties (alliance_id, partner_alliance_id, treaty_type, status)
                 VALUES (:aid, :pid, :type, 'proposed')
-            """),
+            """
+            ),
             {"aid": alliance_id, "pid": partner_alliance_id, "type": treaty_type},
         )
         db.commit()
@@ -62,11 +69,13 @@ def accept_treaty(db: Session, treaty_id: int) -> None:
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE alliance_treaties
                    SET status = 'active', signed_at = now()
                  WHERE treaty_id = :tid
-            """),
+            """
+            ),
             {"tid": treaty_id},
         )
         db.commit()
@@ -83,11 +92,13 @@ def cancel_treaty(db: Session, treaty_id: int) -> None:
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE alliance_treaties
                    SET status = 'cancelled', signed_at = now()
                  WHERE treaty_id = :tid
-            """),
+            """
+            ),
             {"tid": treaty_id},
         )
         db.commit()
@@ -103,13 +114,15 @@ def list_active_treaties(db: Session, alliance_id: int) -> list[dict]:
     List all active treaties involving the specified alliance (as initiator or partner).
     """
     rows = db.execute(
-        text("""
+        text(
+            """
             SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at
               FROM alliance_treaties
              WHERE (alliance_id = :aid OR partner_alliance_id = :aid)
                AND status = 'active'
              ORDER BY signed_at DESC
-        """),
+        """
+        ),
         {"aid": alliance_id},
     ).fetchall()
 
@@ -121,13 +134,15 @@ def list_incoming_proposals(db: Session, alliance_id: int) -> list[dict]:
     List treaties proposed to the specified alliance.
     """
     rows = db.execute(
-        text("""
+        text(
+            """
             SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at
               FROM alliance_treaties
              WHERE partner_alliance_id = :aid
                AND status = 'proposed'
              ORDER BY treaty_id DESC
-        """),
+        """
+        ),
         {"aid": alliance_id},
     ).fetchall()
 
@@ -139,13 +154,15 @@ def list_outgoing_proposals(db: Session, alliance_id: int) -> list[dict]:
     List treaty proposals sent by the specified alliance.
     """
     rows = db.execute(
-        text("""
+        text(
+            """
             SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id, status, signed_at
               FROM alliance_treaties
              WHERE alliance_id = :aid
                AND status = 'proposed'
              ORDER BY treaty_id DESC
-        """),
+        """
+        ),
         {"aid": alliance_id},
     ).fetchall()
 
@@ -155,6 +172,7 @@ def list_outgoing_proposals(db: Session, alliance_id: int) -> list[dict]:
 # ----------------------------
 # Internal Utility
 # ----------------------------
+
 
 def _map_treaty_row(row) -> dict:
     """Convert DB row into a dictionary for frontend consumption."""

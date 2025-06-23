@@ -18,6 +18,7 @@ from backend.routers.messages import (
 )
 from backend.routers import messages
 
+
 def setup_db():
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
@@ -27,10 +28,13 @@ def setup_db():
 
 def create_user(db, username="u1"):
     uid = str(uuid.uuid4())
-    user = User(user_id=uid, username=username, display_name=username, email=f"{username}@e.com")
+    user = User(
+        user_id=uid, username=username, display_name=username, email=f"{username}@e.com"
+    )
     db.add(user)
     db.commit()
     return uid
+
 
 def test_full_message_flow():
     Session = setup_db()
@@ -39,7 +43,9 @@ def test_full_message_flow():
     recipient = create_user(db, "rec")
 
     send_message(
-        MessagePayload(recipient="rec", content="Hello", subject="Hi", category="player"),
+        MessagePayload(
+            recipient="rec", content="Hello", subject="Hi", category="player"
+        ),
         user_id=sender,
     )
     res = messages.list_inbox(user_id=recipient, db=db)
@@ -54,6 +60,7 @@ def test_full_message_flow():
     assert msg.is_read
 
     delete_message(DeletePayload(message_id=mid), user_id=recipient)
+
 
 def seed_users(db):
     u1 = User(user_id="u1", username="Arthur", email="a@example.com")
@@ -71,7 +78,9 @@ def test_list_inbox_returns_messages():
     db.add(msg)
     db.commit()
     db.execute(
-        text("INSERT INTO message_metadata (message_id, key, value) VALUES (:mid, 'subject', 'Greetings')"),
+        text(
+            "INSERT INTO message_metadata (message_id, key, value) VALUES (:mid, 'subject', 'Greetings')"
+        ),
         {"mid": msg.message_id},
     )
     db.commit()
@@ -90,7 +99,9 @@ def test_view_message_marks_read():
     db.add(msg)
     db.commit()
     db.execute(
-        text("INSERT INTO message_metadata (message_id, key, value) VALUES (:mid, 'subject', 'Hey')"),
+        text(
+            "INSERT INTO message_metadata (message_id, key, value) VALUES (:mid, 'subject', 'Hey')"
+        ),
         {"mid": msg.message_id},
     )
     db.commit()
@@ -125,4 +136,3 @@ def test_mark_all_read_updates_rows():
     messages.mark_all_read(user_id=uid1)
     rows = db.query(PlayerMessage).filter_by(recipient_id=uid1).all()
     assert all(r.is_read for r in rows)
-

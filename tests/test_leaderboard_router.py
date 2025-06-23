@@ -20,13 +20,31 @@ def setup_db():
 def test_alliance_leaderboard_returns_stats_and_self():
     Session = setup_db()
     db = Session()
-    db.add_all([
-        Alliance(alliance_id=1, name="A", military_score=10, economy_score=5, diplomacy_score=2),
-        Alliance(alliance_id=2, name="B", military_score=8, economy_score=7, diplomacy_score=3),
-        AllianceWar(alliance_war_id=1, attacker_alliance_id=1, defender_alliance_id=2),
-        AllianceWarScore(alliance_war_id=1, attacker_score=5, defender_score=2, victor="attacker"),
-        User(user_id="u1", username="x", kingdom_name="k", alliance_id=1),
-    ])
+    db.add_all(
+        [
+            Alliance(
+                alliance_id=1,
+                name="A",
+                military_score=10,
+                economy_score=5,
+                diplomacy_score=2,
+            ),
+            Alliance(
+                alliance_id=2,
+                name="B",
+                military_score=8,
+                economy_score=7,
+                diplomacy_score=3,
+            ),
+            AllianceWar(
+                alliance_war_id=1, attacker_alliance_id=1, defender_alliance_id=2
+            ),
+            AllianceWarScore(
+                alliance_war_id=1, attacker_score=5, defender_score=2, victor="attacker"
+            ),
+            User(user_id="u1", username="x", kingdom_name="k", alliance_id=1),
+        ]
+    )
     db.commit()
 
     result = leaderboard.get_leaderboard("alliances", user_id="u1", db=db)
@@ -65,7 +83,9 @@ def test_kingdom_leaderboard_marks_self_and_limit():
         {"user_id": "u1", "kingdom_name": "A", "ruler_name": "r1", "rank": 1},
         {"user_id": "u2", "kingdom_name": "B", "ruler_name": "r2", "rank": 2},
     ]
-    leaderboard.get_supabase_client = lambda: DummyClient({"leaderboard_kingdoms": data})
+    leaderboard.get_supabase_client = lambda: DummyClient(
+        {"leaderboard_kingdoms": data}
+    )
     result = leaderboard.get_leaderboard("kingdoms", limit=1, user_id="u1", db=None)
     assert len(result["entries"]) == 1
     assert result["entries"][0]["is_self"] is True

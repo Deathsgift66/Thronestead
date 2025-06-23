@@ -37,7 +37,9 @@ class HistoryPayload(BaseModel):
 @router.get("")
 def kingdom_history(
     kingdom_id: int = Query(..., description="Kingdom ID to fetch history for"),
-    limit: int = Query(50, le=500, description="Limit number of records returned (max 500)"),
+    limit: int = Query(
+        50, le=500, description="Limit number of records returned (max 500)"
+    ),
     db: Session = Depends(get_db),
 ):
     """

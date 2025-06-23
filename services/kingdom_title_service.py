@@ -27,10 +27,12 @@ def award_title(db: Session, kingdom_id: int, title: str) -> None:
     """
     try:
         row = db.execute(
-            text("""
+            text(
+                """
                 SELECT 1 FROM kingdom_titles
                  WHERE kingdom_id = :kid AND title = :title
-            """),
+            """
+            ),
             {"kid": kingdom_id, "title": title},
         ).fetchone()
 
@@ -38,10 +40,12 @@ def award_title(db: Session, kingdom_id: int, title: str) -> None:
             return  # Title already exists
 
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO kingdom_titles (kingdom_id, title)
                 VALUES (:kid, :title)
-            """),
+            """
+            ),
             {"kid": kingdom_id, "title": title},
         )
         db.commit()
@@ -61,12 +65,14 @@ def list_titles(db: Session, kingdom_id: int) -> list[dict]:
     """
     try:
         rows = db.execute(
-            text("""
+            text(
+                """
                 SELECT title, awarded_at
                   FROM kingdom_titles
                  WHERE kingdom_id = :kid
                  ORDER BY awarded_at DESC
-            """),
+            """
+            ),
             {"kid": kingdom_id},
         ).fetchall()
 
@@ -86,11 +92,13 @@ def set_active_title(db: Session, kingdom_id: int, title: Optional[str]) -> None
     """
     try:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE kingdoms
                    SET active_title = :title
                  WHERE kingdom_id = :kid
-            """),
+            """
+            ),
             {"title": title, "kid": kingdom_id},
         )
         db.commit()
@@ -110,11 +118,13 @@ def get_active_title(db: Session, kingdom_id: int) -> Optional[str]:
     """
     try:
         row = db.execute(
-            text("""
+            text(
+                """
                 SELECT active_title
                   FROM kingdoms
                  WHERE kingdom_id = :kid
-            """),
+            """
+            ),
             {"kid": kingdom_id},
         ).fetchone()
 

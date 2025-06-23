@@ -2,22 +2,32 @@
 # File Name: test_admin_war_actions.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from backend.routers.admin_dashboard import force_end_war, rollback_combat_tick, WarAction
+from backend.routers.admin_dashboard import (
+    force_end_war,
+    rollback_combat_tick,
+    WarAction,
+)
+
 
 class DummyResult:
     def __init__(self, rows=None):
         self._rows = rows or []
+
     def fetchall(self):
         return self._rows
+
     def fetchone(self):
         return None
+
 
 class DummyDB:
     def __init__(self):
         self.queries = []
+
     def execute(self, query, params=None):
         self.queries.append((str(query), params))
         return DummyResult()
+
     def commit(self):
         pass
 

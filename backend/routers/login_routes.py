@@ -40,8 +40,7 @@ def get_announcements():
 
     try:
         response = (
-            supabase
-            .table("announcements")
+            supabase.table("announcements")
             .select("title,content,created_at")
             .order("created_at", desc=True)
             .limit(10)
@@ -54,8 +53,7 @@ def get_announcements():
     except Exception as e:
         logging.exception("Error loading announcements")
         raise HTTPException(
-            status_code=500,
-            detail="Server error loading announcements."
+            status_code=500, detail="Server error loading announcements."
         ) from e
     return JSONResponse(content={"announcements": announcements}, status_code=200)
 

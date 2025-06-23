@@ -81,4 +81,3 @@ def test_list_functions():
     assert active[0]["treaty_id"] == 1
     assert incoming[0]["treaty_id"] == 1
     assert outgoing[0]["treaty_id"] == 1
-

@@ -10,9 +10,7 @@ import importlib
 import pkgutil
 
 __all__ = [
-    name
-    for _, name, _ in pkgutil.iter_modules(__path__)
-    if not name.startswith("_")
+    name for _, name, _ in pkgutil.iter_modules(__path__) if not name.startswith("_")
 ]
 
 
@@ -22,4 +20,3 @@ def __getattr__(name: str):
         globals()[name] = module
         return module
     raise AttributeError(f"module {__name__} has no attribute {name}")
-

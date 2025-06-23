@@ -22,6 +22,7 @@ router = APIRouter(prefix="/api/kingdom_military", tags=["kingdom_military"])
 # 📦 Pydantic Payload Models
 # --------------------------
 
+
 class RecruitPayload(BaseModel):
     unit_id: int
     quantity: int
@@ -30,6 +31,7 @@ class RecruitPayload(BaseModel):
 # --------------------------
 # 🧠 Utility
 # --------------------------
+
 
 def get_state():
     """Retrieve or initialize kingdom military state. (Currently fixed to kingdom_id=1)"""
@@ -48,6 +50,7 @@ def get_state():
 # --------------------------
 # 📊 API Endpoints
 # --------------------------
+
 
 @router.get("/summary")
 async def summary(user_id: str = Depends(require_user_id)):

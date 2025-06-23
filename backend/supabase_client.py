@@ -26,9 +26,7 @@ except ImportError as e:  # pragma: no cover
 # 🔐 Load Supabase Credentials
 # -------------------------------
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv(
-    "SUPABASE_ANON_KEY"
-)
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
 
 # -------------------------------
 # ⚙️ Create Supabase Client
@@ -47,6 +45,7 @@ else:
     except Exception:
         logging.exception("❌ Failed to initialize Supabase client.")
         supabase = None
+
 
 # -------------------------------
 # 🧰 Exported Client Accessor

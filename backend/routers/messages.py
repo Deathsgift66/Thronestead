@@ -109,7 +109,9 @@ def get_message(message_id: int, user_id: str = Depends(verify_jwt_token)):
         raise HTTPException(status_code=404, detail="Message not found")
 
     # Mark message as read
-    supabase.table("player_messages").update({"is_read": True}).eq("message_id", message_id).execute()
+    supabase.table("player_messages").update({"is_read": True}).eq(
+        "message_id", message_id
+    ).execute()
 
     r = res.data
     meta_res = (
@@ -191,7 +193,9 @@ def delete_message(payload: DeletePayload, user_id: str = Depends(verify_jwt_tok
     if not verify.data:
         raise HTTPException(status_code=404, detail="Message not found")
 
-    supabase.table("player_messages").delete().eq("message_id", payload.message_id).execute()
+    supabase.table("player_messages").delete().eq(
+        "message_id", payload.message_id
+    ).execute()
 
     return {"status": "deleted", "message_id": payload.message_id}
 
@@ -202,8 +206,11 @@ def mark_all_messages_read(user_id: str = Depends(verify_jwt_token)):
     ✅ Mark all inbox messages as read.
     """
     supabase = get_supabase_client()
-    supabase.table("player_messages").update({"is_read": True}).eq("recipient_id", user_id).execute()
+    supabase.table("player_messages").update({"is_read": True}).eq(
+        "recipient_id", user_id
+    ).execute()
     return {"message": "All marked read"}
+
 
 # Aliases used by internal tests
 list_inbox = get_inbox

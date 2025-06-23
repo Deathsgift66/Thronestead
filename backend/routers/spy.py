@@ -53,9 +53,12 @@ def launch_spy_mission(
     ):
         raise HTTPException(status_code=400, detail="Daily spy limit exceeded")
 
-    atk_tech = db.execute(
-        select(Kingdom.tech_level).where(Kingdom.kingdom_id == kingdom_id)
-    ).scalar_one() or 1
+    atk_tech = (
+        db.execute(
+            select(Kingdom.tech_level).where(Kingdom.kingdom_id == kingdom_id)
+        ).scalar_one()
+        or 1
+    )
     def_tech = target.tech_level or 1
     defense_rating = spies_service.get_spy_defense(db, target.kingdom_id)
     base = 50 + (atk_tech - def_tech) * 5 - defense_rating
@@ -102,7 +105,9 @@ def launch_spy_mission(
 
 
 @router.get("/defense")
-async def get_spy_defense(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+async def get_spy_defense(
+    user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
+):
     """Return the spy defense stats for the player's kingdom."""
     kingdom = db.execute(
         text("SELECT kingdom_id FROM kingdoms WHERE user_id = :uid"),

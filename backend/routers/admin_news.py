@@ -50,7 +50,9 @@ def post_news(
         if not prof_row or getattr(prof, "error", None):
             raise HTTPException(status_code=401, detail="Invalid user")
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch author profile") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch author profile"
+        ) from e
 
     # Prepare article record
     record = {

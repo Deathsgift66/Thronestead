@@ -78,7 +78,16 @@ def test_award_existing_returns_none():
 def test_list_achievements_filters_hidden():
     db = DummyDB()
     db.list_rows = [
-        ("first_gold", "First Gold", "Earn 1000", "economic", {"gold": 100}, 5, False, None),
+        (
+            "first_gold",
+            "First Gold",
+            "Earn 1000",
+            "economic",
+            {"gold": 100},
+            5,
+            False,
+            None,
+        ),
         ("secret", "Secret", "Hidden details", "exploration", {}, 0, True, None),
         ("battle", "Battle", "Win", "military", {}, 10, False, "2025-01-01"),
     ]

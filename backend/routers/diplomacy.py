@@ -31,12 +31,7 @@ def list_known_alliances(db: Session = Depends(get_db)):
         .limit(100)
         .all()
     )
-    return {
-        "alliances": [
-            {"alliance_id": r.alliance_id, "name": r.name}
-            for r in rows
-        ]
-    }
+    return {"alliances": [{"alliance_id": r.alliance_id, "name": r.name} for r in rows]}
 
 
 @router.get("/treaties")

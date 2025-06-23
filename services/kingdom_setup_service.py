@@ -11,6 +11,7 @@ try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -126,7 +127,6 @@ def create_kingdom_transaction(
             {"kid": kingdom_id},
         )
 
-
         # Fallback building: ensure the starting village has a castle
         db.execute(
             text(
@@ -134,7 +134,6 @@ def create_kingdom_transaction(
                 "VALUES (:vid, 1, 1) ON CONFLICT DO NOTHING"
             ),
             {"vid": village_id},
-
         )
 
         # Insert the first noble so progression can begin immediately
@@ -192,7 +191,7 @@ def create_kingdom_transaction(
                 "INSERT INTO audit_log (user_id, action, details) "
                 "VALUES (:uid, 'kingdom_create', :det)"
             ),
-            {"uid": user_id, "det": f'Created kingdom {kingdom_name}'},
+            {"uid": user_id, "det": f"Created kingdom {kingdom_name}"},
         )
 
         db.execute(
@@ -200,7 +199,7 @@ def create_kingdom_transaction(
                 "INSERT INTO kingdom_history_log (kingdom_id, event_type, event_details) "
                 "VALUES (:kid, 'created', :det)"
             ),
-            {"kid": kingdom_id, "det": f'Kingdom {kingdom_name} created'},
+            {"kid": kingdom_id, "det": f"Kingdom {kingdom_name} created"},
         )
 
         db.execute(
@@ -231,9 +230,7 @@ def create_kingdom_transaction(
         db.commit()
 
         notification_service.notify_user(
-            db,
-            user_id,
-            f"Your kingdom '{kingdom_name}' has been established."
+            db, user_id, f"Your kingdom '{kingdom_name}' has been established."
         )
         return kingdom_id
     except Exception:

@@ -15,6 +15,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover - fallback for test environments
+
     def text(q):  # type: ignore
         return q
 
@@ -31,6 +32,7 @@ _VACATION_COOLDOWN = 3
 # ------------------------------------------------------------
 # Vacation Mode Service
 # ------------------------------------------------------------
+
 
 def enter_vacation_mode(db: Session, kingdom_id: int) -> datetime:
     """
@@ -126,9 +128,7 @@ def can_exit_vacation(db: Session, kingdom_id: int) -> bool:
     """
     try:
         row = db.execute(
-            text(
-                "SELECT vacation_expires_at FROM kingdoms WHERE kingdom_id = :kid"
-            ),
+            text("SELECT vacation_expires_at FROM kingdoms WHERE kingdom_id = :kid"),
             {"kid": kingdom_id},
         ).fetchone()
 
@@ -139,7 +139,9 @@ def can_exit_vacation(db: Session, kingdom_id: int) -> bool:
         return expires is None or datetime.utcnow() >= expires
 
     except SQLAlchemyError:
-        logger.warning("Failed to check vacation expiration for kingdom_id=%s", kingdom_id)
+        logger.warning(
+            "Failed to check vacation expiration for kingdom_id=%s", kingdom_id
+        )
         return False
 
 

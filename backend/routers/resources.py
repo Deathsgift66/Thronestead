@@ -50,11 +50,7 @@ def get_resources(
     if not user or not user.kingdom_id:
         raise HTTPException(status_code=404, detail="Kingdom not found")
 
-    row = (
-        db.query(KingdomResources)
-        .filter_by(kingdom_id=user.kingdom_id)
-        .first()
-    )
+    row = db.query(KingdomResources).filter_by(kingdom_id=user.kingdom_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Resources not found")
 

@@ -24,13 +24,16 @@ router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
 
 # ----------- Request Payloads -----------
 
+
 class DeclarePayload(BaseModel):
     attacker_alliance_id: int
     defender_alliance_id: int
 
+
 class RespondPayload(BaseModel):
     alliance_war_id: int
     action: str  # "accept" or "cancel"
+
 
 class SurrenderPayload(BaseModel):
     alliance_war_id: int
@@ -39,8 +42,13 @@ class SurrenderPayload(BaseModel):
 
 # ----------- War Lifecycle Routes -----------
 
+
 @router.post("/declare")
-def declare_war(payload: DeclarePayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def declare_war(
+    payload: DeclarePayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     row = db.execute(
         text(
             "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "
@@ -49,30 +57,47 @@ def declare_war(payload: DeclarePayload, user_id: str = Depends(require_user_id)
         {"att": payload.attacker_alliance_id, "def": payload.defender_alliance_id},
     ).fetchone()
     db.commit()
-    log_action(db, user_id, "Declare War", f"{payload.attacker_alliance_id} → {payload.defender_alliance_id}")
+    log_action(
+        db,
+        user_id,
+        "Declare War",
+        f"{payload.attacker_alliance_id} → {payload.defender_alliance_id}",
+    )
     return {"status": "pending", "alliance_war_id": row[0]}
 
 
 @router.post("/respond")
-def respond_war(payload: RespondPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def respond_war(
+    payload: RespondPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     status = "active" if payload.action == "accept" else "cancelled"
     db.execute(
-        text("""
+        text(
+            """
             UPDATE alliance_wars
                SET war_status = :status,
                    phase = CASE WHEN :status = 'active' THEN 'battle' ELSE phase END,
                    start_date = CASE WHEN :status = 'active' THEN now() ELSE start_date END
              WHERE alliance_war_id = :wid
-        """),
+        """
+        ),
         {"status": status, "wid": payload.alliance_war_id},
     )
     db.commit()
-    log_action(db, user_id, f"War {status.title()}", f"War ID {payload.alliance_war_id}")
+    log_action(
+        db, user_id, f"War {status.title()}", f"War ID {payload.alliance_war_id}"
+    )
     return {"status": status}
 
 
 @router.post("/surrender")
-def surrender_war(payload: SurrenderPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def surrender_war(
+    payload: SurrenderPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     victor = "defender" if payload.side == "attacker" else "attacker"
     db.execute(
         text(
@@ -82,34 +107,55 @@ def surrender_war(payload: SurrenderPayload, user_id: str = Depends(require_user
         {"wid": payload.alliance_war_id},
     )
     db.commit()
-    log_action(db, user_id, "Surrender", f"War ID {payload.alliance_war_id}, {payload.side} surrendered")
+    log_action(
+        db,
+        user_id,
+        "Surrender",
+        f"War ID {payload.alliance_war_id}, {payload.side} surrendered",
+    )
     return {"status": "surrendered", "victor": victor}
 
 
 # ----------- Viewing & Tracking -----------
 
+
 @router.get("/list")
 def list_wars(alliance_id: int, db: Session = Depends(get_db)):
-    rows = db.execute(text("""
+    rows = (
+        db.execute(
+            text(
+                """
         SELECT * FROM alliance_wars
         WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid
         ORDER BY start_date DESC
-    """), {"aid": alliance_id}).mappings().fetchall()
+    """
+            ),
+            {"aid": alliance_id},
+        )
+        .mappings()
+        .fetchall()
+    )
 
     wars = [dict(r) for r in rows]
     return {
         "active_wars": [w for w in wars if w["war_status"] == "active"],
         "completed_wars": [w for w in wars if w["war_status"] == "completed"],
-        "upcoming_wars": [w for w in wars if w["war_status"] not in ("active", "completed")],
+        "upcoming_wars": [
+            w for w in wars if w["war_status"] not in ("active", "completed")
+        ],
     }
 
 
 @router.get("/view")
 def view_war_details(alliance_war_id: int, db: Session = Depends(get_db)):
-    war = db.execute(
-        text("SELECT * FROM alliance_wars WHERE alliance_war_id = :wid"),
-        {"wid": alliance_war_id},
-    ).mappings().first()
+    war = (
+        db.execute(
+            text("SELECT * FROM alliance_wars WHERE alliance_war_id = :wid"),
+            {"wid": alliance_war_id},
+        )
+        .mappings()
+        .first()
+    )
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
     return {"war": war}
@@ -123,6 +169,7 @@ def list_active_wars(db: Session = Depends(get_db)):
 
 # ----------- Additional Data Endpoints -----------
 
+
 class JoinPayload(BaseModel):
     alliance_war_id: int
     side: str  # "attacker" or "defender"
@@ -130,26 +177,38 @@ class JoinPayload(BaseModel):
 
 @router.get("/combat-log")
 def get_combat_log(alliance_war_id: int, db: Session = Depends(get_db)):
-    rows = db.execute(
-        text(
-            "SELECT * FROM alliance_war_combat_logs WHERE alliance_war_id = :wid ORDER BY tick_number"
-        ),
-        {"wid": alliance_war_id},
-    ).mappings().fetchall()
+    rows = (
+        db.execute(
+            text(
+                "SELECT * FROM alliance_war_combat_logs WHERE alliance_war_id = :wid ORDER BY tick_number"
+            ),
+            {"wid": alliance_war_id},
+        )
+        .mappings()
+        .fetchall()
+    )
     return {"combat_logs": [dict(r) for r in rows]}
 
 
 @router.get("/scoreboard")
 def get_scoreboard(alliance_war_id: int, db: Session = Depends(get_db)):
-    row = db.execute(
-        text("SELECT * FROM alliance_war_scores WHERE alliance_war_id = :wid"),
-        {"wid": alliance_war_id},
-    ).mappings().first()
+    row = (
+        db.execute(
+            text("SELECT * FROM alliance_war_scores WHERE alliance_war_id = :wid"),
+            {"wid": alliance_war_id},
+        )
+        .mappings()
+        .first()
+    )
     return row or {}
 
 
 @router.post("/join")
-def join_war(payload: JoinPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def join_war(
+    payload: JoinPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     from .progression_router import get_kingdom_id
 
     kid = get_kingdom_id(db, user_id)
@@ -164,11 +223,14 @@ def join_war(payload: JoinPayload, user_id: str = Depends(require_user_id), db: 
         {"wid": payload.alliance_war_id, "kid": kid, "side": payload.side},
     )
     db.commit()
-    log_action(db, user_id, "Join War", f"War {payload.alliance_war_id} as {payload.side}")
+    log_action(
+        db, user_id, "Join War", f"War {payload.alliance_war_id} as {payload.side}"
+    )
     return {"status": "joined"}
 
 
 # ----------- Pre-Plan Editing -----------
+
 
 class PreplanPayload(BaseModel):
     alliance_war_id: int
@@ -176,23 +238,35 @@ class PreplanPayload(BaseModel):
 
 
 @router.get("/preplan")
-def get_preplan(alliance_war_id: int, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def get_preplan(
+    alliance_war_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     from .progression_router import get_kingdom_id
 
     kid = get_kingdom_id(db, user_id)
-    row = db.execute(
-        text(
-            "SELECT preplan_jsonb FROM alliance_war_preplans "
-            "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
-        ),
-        {"wid": alliance_war_id, "kid": kid},
-    ).mappings().first()
+    row = (
+        db.execute(
+            text(
+                "SELECT preplan_jsonb FROM alliance_war_preplans "
+                "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+            ),
+            {"wid": alliance_war_id, "kid": kid},
+        )
+        .mappings()
+        .first()
+    )
 
     return {"plan": row["preplan_jsonb"] if row else {}}
 
 
 @router.post("/preplan/submit")
-def submit_preplan(payload: PreplanPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def submit_preplan(
+    payload: PreplanPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     from .progression_router import get_kingdom_id
 
     kid = get_kingdom_id(db, user_id)

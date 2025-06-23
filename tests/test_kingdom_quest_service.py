@@ -59,4 +59,3 @@ def test_update_and_complete():
     cancel_quest(db, 1, "demo")
     assert any("status='cancelled'" in q for q, _ in db.queries)
     assert db.commits == 3
-

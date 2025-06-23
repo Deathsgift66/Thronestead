@@ -25,8 +25,11 @@ router = APIRouter(prefix="/api", tags=["treaties"])
 
 class TreatyPayload(BaseModel):
     """Schema for proposing a new treaty."""
+
     name: str = Field(..., description="Treaty name/title")
-    modifiers: Optional[dict] = Field(default_factory=dict, description="Optional modifiers for the treaty")
+    modifiers: Optional[dict] = Field(
+        default_factory=dict, description="Optional modifiers for the treaty"
+    )
 
 
 @router.get("/alliance/treaties", summary="List alliance treaties")
@@ -49,8 +52,7 @@ def propose_alliance_treaty(payload: TreatyPayload) -> dict:
 
 @router.get("/kingdom/treaties", summary="List kingdom treaties")
 async def list_kingdom_treaties(
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db)
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
 ) -> dict:
     """
     Return all kingdom-level treaties for the authenticated user's kingdom.

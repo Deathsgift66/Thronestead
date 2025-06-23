@@ -79,7 +79,9 @@ def get_available_quests(
         .all()
     )
     codes = [s.quest_code for s in started]
-    query = db.query(QuestAllianceCatalogue).filter(QuestAllianceCatalogue.is_active.is_(True))
+    query = db.query(QuestAllianceCatalogue).filter(
+        QuestAllianceCatalogue.is_active.is_(True)
+    )
     if codes:
         query = query.filter(~QuestAllianceCatalogue.quest_code.in_(codes))
     quests = query.all()
@@ -181,7 +183,9 @@ def start_quest(
             db.commit()
             log_action(db, user_id, "Alliance Quest Restarted", payload.quest_code)
             return {"status": "started"}
-        raise HTTPException(status_code=400, detail="Quest already started or completed")
+        raise HTTPException(
+            status_code=400, detail="Quest already started or completed"
+        )
     hours = quest.duration_hours or 0
     ends_at = datetime.utcnow() + timedelta(hours=hours)
     tracking = QuestAllianceTracking(
@@ -336,8 +340,7 @@ def update_progress(
                                 quest_code=next_code,
                                 status="active",
                                 progress=0,
-                                ends_at=datetime.utcnow()
-                                + timedelta(hours=hours),
+                                ends_at=datetime.utcnow() + timedelta(hours=hours),
                                 started_by=user_id,
                             )
                         )
@@ -379,6 +382,7 @@ def claim_reward(
 # Alternative REST-style endpoints used by frontend
 # -------------------------------------------------
 
+
 @alt_router.get("")
 def alt_list_quests(
     status: str = Query("active"),
@@ -412,23 +416,39 @@ def alt_list_quests(
 
 
 @alt_router.post("/start")
-def alt_start(payload: QuestStartPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def alt_start(
+    payload: QuestStartPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     return start_quest(payload, user_id, db)
 
 
 @alt_router.post("/accept")
-def alt_accept(payload: QuestStartPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def alt_accept(
+    payload: QuestStartPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     # For now, accept mirrors start until individual acceptance logic exists
     return start_quest(payload, user_id, db)
 
 
 @alt_router.post("/contribute")
-def alt_contribute(payload: ProgressPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def alt_contribute(
+    payload: ProgressPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     return update_progress(payload, user_id, db)
 
 
 @alt_router.post("/claim")
-def alt_claim(payload: ClaimPayload, user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def alt_claim(
+    payload: ClaimPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
     return claim_reward(payload, user_id, db)
 
 
@@ -446,10 +466,7 @@ def alt_heroes(user_id: str = Depends(require_user_id), db: Session = Depends(ge
         .limit(10)
         .all()
     )
-    return [
-        {"name": r.player_name, "contributions": r.total}
-        for r in rows
-    ]
+    return [{"name": r.player_name, "contributions": r.total} for r in rows]
 
 
 @alt_router.get("/{quest_code}")

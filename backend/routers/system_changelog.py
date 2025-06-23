@@ -17,21 +17,24 @@ router = APIRouter(prefix="/api/system/changelog", tags=["system_changelog"])
 
 
 @router.get("")
-def get_system_changelog(refresh: bool = Query(False, description="Force data refresh")):
+def get_system_changelog(
+    refresh: bool = Query(False, description="Force data refresh")
+):
     """Return the latest game changelog entries."""
     supabase = get_supabase_client()
 
     try:
         res = (
-            supabase
-            .table("game_changelog")
+            supabase.table("game_changelog")
             .select("*")
             .order("release_date", desc=True)
             .limit(50)
             .execute()
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve changelog: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve changelog: {str(e)}"
+        )
 
     rows = getattr(res, "data", res) or []
     entries = [

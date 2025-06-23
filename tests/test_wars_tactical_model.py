@@ -18,7 +18,12 @@ def test_wars_tactical_model_creation():
     base_war = War(attacker_name="A", defender_name="B", status="active")
     db.add(base_war)
     db.flush()
-    wt = WarsTactical(war_id=base_war.war_id, attacker_kingdom_id=1, defender_kingdom_id=2, phase="alert")
+    wt = WarsTactical(
+        war_id=base_war.war_id,
+        attacker_kingdom_id=1,
+        defender_kingdom_id=2,
+        phase="alert",
+    )
     db.add(wt)
     db.commit()
 

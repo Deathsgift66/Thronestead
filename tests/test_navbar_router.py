@@ -40,9 +40,7 @@ def test_navbar_profile_returns_data():
         "users": [
             {"user_id": "u1", "username": "Hero", "profile_picture_url": "pic.png"}
         ],
-        "player_messages": [
-            {"message_id": 1, "recipient_id": "u1", "is_read": False}
-        ],
+        "player_messages": [{"message_id": 1, "recipient_id": "u1", "is_read": False}],
     }
     navbar.get_supabase_client = lambda: DummyClient(tables)
     result = navbar.navbar_profile(user_id="u1")

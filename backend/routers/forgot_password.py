@@ -35,6 +35,7 @@ def send_email(to_email: str, subject: str, body: str) -> None:
         "Sending email to %s with subject %s: %s", to_email, subject, body
     )
 
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ---------------------------------------------
@@ -75,12 +76,8 @@ class PasswordPayload(BaseModel):
 def _prune_expired() -> None:
     """Remove expired tokens, sessions, and prune old IP rate entries."""
     now = time.time()
-    RESET_STORE.update({
-        k: v for k, v in RESET_STORE.items() if v[1] > now
-    })
-    VERIFIED_SESSIONS.update({
-        k: v for k, v in VERIFIED_SESSIONS.items() if v[1] > now
-    })
+    RESET_STORE.update({k: v for k, v in RESET_STORE.items() if v[1] > now})
+    VERIFIED_SESSIONS.update({k: v for k, v in VERIFIED_SESSIONS.items() if v[1] > now})
     for ip in list(RATE_LIMIT.keys()):
         RATE_LIMIT[ip] = [t for t in RATE_LIMIT[ip] if now - t < 3600]
         if not RATE_LIMIT[ip]:
@@ -173,20 +170,23 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Password update failed") from exc
 
     db.execute(
-        text("UPDATE users SET updated_at = now() WHERE user_id = :uid"),
-        {"uid": uid}
+        text("UPDATE users SET updated_at = now() WHERE user_id = :uid"), {"uid": uid}
     )
 
-    log_action(db, uid, "password_reset", f"Password successfully reset for user: {uid}")
+    log_action(
+        db, uid, "password_reset", f"Password successfully reset for user: {uid}"
+    )
 
-    db.add(Notification(
-        user_id=uid,
-        title="Password Reset Confirmed",
-        message="Your password has been securely changed. If this wasn't you, contact support.",
-        priority="high",
-        category="security",
-        link_action="/login.html",
-    ))
+    db.add(
+        Notification(
+            user_id=uid,
+            title="Password Reset Confirmed",
+            message="Your password has been securely changed. If this wasn't you, contact support.",
+            priority="high",
+            category="security",
+            link_action="/login.html",
+        )
+    )
     db.commit()
 
     RESET_STORE.pop(token_hash, None)

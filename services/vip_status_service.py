@@ -18,6 +18,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover - SQLAlchemy fallback
+
     def text(q):  # type: ignore
         return q
 
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------
 # VIP Services
 # ------------------------------------------------------------
+
 
 def upsert_vip_status(
     db: Session,

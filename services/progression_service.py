@@ -15,6 +15,7 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
 except ImportError:  # pragma: no cover
+
     def text(q):  # type: ignore
         return q
 
@@ -47,6 +48,7 @@ _CACHE_TTL = 60
 # Troop Slot Calculation
 # --------------------------------------------------------
 
+
 def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     """
     Calculates total available troop slots for a kingdom from all bonus sources.
@@ -56,8 +58,8 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
     """
     try:
         result = db.execute(
-
-            text("""
+            text(
+                """
                 SELECT kts.base_slots,
                        kts.slots_from_buildings,
                        kts.slots_from_tech,
@@ -69,8 +71,8 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
              LEFT JOIN region_bonuses rb ON rb.region_code = k.region
                                         AND rb.bonus_type = 'base_slots'
                  WHERE kts.kingdom_id = :kid
-            """),
-
+            """
+            ),
             {"kid": kingdom_id},
         ).fetchone()
 
@@ -110,6 +112,7 @@ def check_troop_slots(db: Session, kingdom_id: int, troops_requested: int) -> No
 # Progression Requirements
 # --------------------------------------------------------
 
+
 def check_progression_requirements(
     db: Session,
     kingdom_id: int,
@@ -124,29 +127,40 @@ def check_progression_requirements(
         HTTPException(403) if any requirement is not satisfied.
     """
     # Castle level
-    level = db.execute(
-        text("SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"),
-        {"kid": kingdom_id},
-    ).scalar() or 1
+    level = (
+        db.execute(
+            text(
+                "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+            ),
+            {"kid": kingdom_id},
+        ).scalar()
+        or 1
+    )
 
     if level < required_castle_level:
         raise HTTPException(status_code=403, detail="Castle level too low")
 
     # Noble count
     if required_nobles > 0:
-        nobles = db.execute(
-            text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
-            {"kid": kingdom_id},
-        ).scalar() or 0
+        nobles = (
+            db.execute(
+                text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
+                {"kid": kingdom_id},
+            ).scalar()
+            or 0
+        )
         if nobles < required_nobles:
             raise HTTPException(status_code=403, detail="Not enough nobles")
 
     # Knight count
     if required_knights > 0:
-        knights = db.execute(
-            text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
-            {"kid": kingdom_id},
-        ).scalar() or 0
+        knights = (
+            db.execute(
+                text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
+                {"kid": kingdom_id},
+            ).scalar()
+            or 0
+        )
         if knights < required_knights:
             raise HTTPException(status_code=403, detail="Not enough knights")
 
@@ -154,6 +168,7 @@ def check_progression_requirements(
 # --------------------------------------------------------
 # Modifier Aggregation
 # --------------------------------------------------------
+
 
 def _merge_modifiers(target: dict, mods: dict) -> None:
     """
@@ -179,9 +194,7 @@ def _region_modifiers(db: Session, kingdom_id: int) -> dict:
         return {}
     rows = db.execute(
         text(
-
             "SELECT bonus_type, bonus_value FROM region_bonuses WHERE region_code = :code"
-
         ),
         {"code": region_code},
     ).fetchall()
@@ -193,7 +206,6 @@ def _region_modifiers(db: Session, kingdom_id: int) -> dict:
         bucket = mods.setdefault(btype, {})
         bucket["value"] = val
     return mods
-
 
 
 def _tech_modifiers(db: Session, kingdom_id: int) -> dict:
@@ -338,8 +350,9 @@ def _global_event_modifiers(_: Session, __: int) -> dict:
     return global_game_settings.get("event_modifiers", {})
 
 
-
-def get_total_modifiers(db: Session, kingdom_id: int, *, use_cache: bool = True) -> dict:
+def get_total_modifiers(
+    db: Session, kingdom_id: int, *, use_cache: bool = True
+) -> dict:
     """Return aggregated modifiers for a kingdom with optional caching."""
 
     if use_cache:
