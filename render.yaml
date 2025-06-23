@@ -24,6 +24,8 @@ services:
         value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE
       - key: API_BASE_URL
         value: https://thronestead.onrender.com
+      - key: API_SECRET
+        sync: false
       - key: JWT_SECRET
         sync: false
       - key: ALLOWED_ORIGINS
