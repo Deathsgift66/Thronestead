@@ -1,13 +1,15 @@
-"""
+"""Websocket endpoints for admin alerts.
+
 Project: Thronestead ©
 File: admin_ws.py
-Role: API routes for admin ws.
-Version: 2025-06-21
+Role: API routes for admin websocket.
+Version: 2025-06-22
 """
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 import asyncio
+import os
 
 router = APIRouter()
 
@@ -16,7 +18,12 @@ connected_admins: list[WebSocket] = []
 
 @router.websocket("/api/admin/alerts/live")
 async def live_admin_alerts(websocket: WebSocket):
-    # TODO: Missing API key protection
+    """Stream live admin alerts once API key verified."""
+    api_key = websocket.headers.get("x-api-key")
+    if api_key != os.getenv("API_SECRET"):
+        await websocket.close(code=1008)
+        return
+
     await websocket.accept()
     connected_admins.append(websocket)
     try:
