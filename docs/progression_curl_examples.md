@@ -23,6 +23,14 @@ curl -X POST -H "X-User-Id: <USER>" \
      http://localhost:8000/api/progression/nobles
 ```
 
+## Rename Noble
+```bash
+curl -X POST -H "X-User-Id: <USER>" \
+     -H "Content-Type: application/json" \
+     -d '{"old_name": "Arthur", "new_name": "Uther"}' \
+     http://localhost:8000/api/progression/nobles/rename
+```
+
 ## List Knights
 ```bash
 curl -H "X-User-Id: <USER>" http://localhost:8000/api/progression/knights

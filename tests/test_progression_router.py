@@ -48,3 +48,54 @@ def test_progression_summary_returns_data():
     assert result["knights_total"] == 5
     assert result["troop_slots"]["used"] == 6
     assert result["troop_slots"]["available"] == 4
+
+
+def test_rename_noble_executes_update():
+    class RenameDB(DummyDB):
+        def __init__(self):
+            super().__init__()
+            self.result = type("R", (), {"rowcount": 1})()
+
+        def execute(self, query, params=None):
+            q = str(query)
+            self.calls.append((q, params))
+            if "FROM kingdoms" in q:
+                return DummyResult((1,))
+            if q.strip().startswith("UPDATE kingdom_nobles"):
+                return self.result
+            return DummyResult()
+
+    db = RenameDB()
+    pr.rename_noble(
+        pr.NobleRenamePayload(old_name="Old", new_name="New"),
+        user_id="u1",
+        db=db,
+    )
+    assert any("UPDATE kingdom_nobles" in q for q, _ in db.calls)
+
+
+def test_rename_noble_not_found():
+    class RenameDB(DummyDB):
+        def __init__(self):
+            super().__init__()
+            self.result = type("R", (), {"rowcount": 0})()
+
+        def execute(self, query, params=None):
+            q = str(query)
+            if "FROM kingdoms" in q:
+                return DummyResult((1,))
+            if q.strip().startswith("UPDATE kingdom_nobles"):
+                return self.result
+            return DummyResult()
+
+    db = RenameDB()
+    try:
+        pr.rename_noble(
+            pr.NobleRenamePayload(old_name="A", new_name="B"),
+            user_id="u1",
+            db=db,
+        )
+    except pr.HTTPException as e:
+        assert e.status_code == 404
+    else:
+        assert False, "Expected HTTPException"

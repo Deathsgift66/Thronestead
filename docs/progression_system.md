@@ -17,7 +17,7 @@ Castle upgrades require resources. When costs are paid the castle level increase
 
 ## Nobles Management
 - Nobles are represented as a list of names.
-- You can add or remove nobles through the API.
+- You can add, rename, or remove nobles through the API.
 
 ## Knights Management
 - Knights are stored in a dictionary of `id -> {"rank": int}`.

@@ -269,6 +269,39 @@ def assign_noble(
     return {"message": "Noble assigned"}
 
 
+# 🔹 POST: Rename Noble
+class NobleRenamePayload(BaseModel):
+    old_name: str
+    new_name: str
+
+    @validator("new_name")
+    def _validate_new_name(cls, v: str) -> str:  # noqa: D401
+        """Validate new noble name format."""
+        if not NAME_PATTERN.match(v):
+            raise ValueError("Name must be 1-50 alphanumeric characters or spaces")
+        return v.strip()
+
+
+@router.post("/nobles/rename")
+def rename_noble(
+    payload: NobleRenamePayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    result = db.execute(
+        text(
+            "UPDATE kingdom_nobles SET noble_name = :new WHERE kingdom_id = :kid AND noble_name = :old"
+        ),
+        {"new": payload.new_name, "kid": kid, "old": payload.old_name},
+    )
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Noble not found")
+
+    db.commit()
+    return {"message": "Noble renamed"}
+
+
 # 🔹 GET/POST: Knights
 @router.get("/knights")
 def get_knights(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
