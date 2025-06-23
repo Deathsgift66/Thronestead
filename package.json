@@ -9,7 +9,7 @@
   "scripts": {
     "serve": "http-server ./ -a localhost -p 3000 -c-1 --cors",
     "validate-links": "node scripts/validate-links.js",
-    "lint": "eslint . --ext .js,.mjs --ignore-path .gitignore",
+    "lint": "eslint . --ext .js,.mjs",
     "clean": "rm -rf dist",
     "build": "vite build",
     "test": "echo \"No tests defined\""
