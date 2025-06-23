@@ -11,6 +11,8 @@ Version: 2025-06-21
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import text
+
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -298,6 +300,7 @@ def get_live_battle(
     }
 
 
+
 class OrdersPayload(BaseModel):
     """Payload for issuing a simple movement order."""
 
@@ -338,3 +341,71 @@ def issue_orders(
     db.commit()
 
     return {"status": "updated"}
+
+def _get_alliance_id(db: Session, user_id: str) -> int:
+    row = db.execute(
+        text("SELECT alliance_id FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    if not row or row[0] is None:
+        raise HTTPException(status_code=404, detail="Alliance not found")
+    return row[0]
+
+
+@router.get("/wars")
+def list_alliance_wars(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Return active wars for the user's alliance."""
+    aid = _get_alliance_id(db, user_id)
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT w.alliance_war_id,
+                       w.phase,
+                       w.attacker_alliance_id,
+                       w.defender_alliance_id,
+                       s.attacker_score,
+                       s.defender_score,
+                       CASE WHEN w.attacker_alliance_id = :aid THEN w.defender_alliance_id
+                            ELSE w.attacker_alliance_id END AS enemy_id
+                  FROM alliance_wars w
+                  LEFT JOIN alliance_war_scores s
+                    ON s.alliance_war_id = w.alliance_war_id
+                 WHERE (w.attacker_alliance_id = :aid OR w.defender_alliance_id = :aid)
+                   AND w.war_status = 'active'
+                 ORDER BY w.start_date DESC
+                """
+            ),
+            {"aid": aid},
+        )
+        .mappings()
+        .fetchall()
+    )
+
+    wars = []
+    for r in rows:
+        enemy_name_row = db.execute(
+            text("SELECT name FROM alliances WHERE alliance_id = :aid"),
+            {"aid": r["enemy_id"]},
+        ).fetchone()
+        enemy_name = enemy_name_row[0] if enemy_name_row else str(r["enemy_id"])
+        if r["attacker_alliance_id"] == aid:
+            our_score = r["attacker_score"] or 0
+            their_score = r["defender_score"] or 0
+        else:
+            our_score = r["defender_score"] or 0
+            their_score = r["attacker_score"] or 0
+        wars.append(
+            {
+                "alliance_war_id": r["alliance_war_id"],
+                "enemy_name": enemy_name,
+                "phase": r["phase"],
+                "our_score": our_score,
+                "their_score": their_score,
+            }
+        )
+    return wars
+

@@ -10,15 +10,17 @@ Role: API routes for black market.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, PositiveFloat, conint
 from sqlalchemy.orm import Session
 
 from backend.models import BlackMarketListing
 
 from ..database import get_db
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market"])
+alt_router = APIRouter(prefix="/api/black_market", tags=["black_market"])
 
 ALLOWED_ITEM_TYPES = {"token", "cosmetic", "permit", "contraband", "artifact"}
 
@@ -78,3 +80,83 @@ def get_market(
         for row in rows
     ]
     return {"listings": listings}
+
+
+# ---------------------
+# Create Listing
+# ---------------------
+@router.post("/list")
+@alt_router.post("/list")
+def place_item(
+    payload: ListingPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """List an item on the black market."""
+    if payload.item_type not in ALLOWED_ITEM_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid item type")
+
+    listing = BlackMarketListing(
+        seller_id=user_id,
+        item=payload.item,
+        item_type=payload.item_type,
+        price=payload.price,
+        quantity=payload.quantity,
+    )
+    db.add(listing)
+    db.commit()
+    db.refresh(listing)
+    return {"listing_id": listing.listing_id}
+
+
+# ---------------------
+# Purchase Item
+# ---------------------
+@router.post("/purchase")
+@alt_router.post("/purchase")
+def buy_item(
+    payload: BuyPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Purchase quantity from a black market listing."""
+    listing = (
+        db.query(BlackMarketListing)
+        .filter_by(listing_id=payload.listing_id)
+        .first()
+    )
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if payload.quantity > listing.quantity:
+        raise HTTPException(status_code=400, detail="Not enough quantity available")
+
+    if payload.quantity < listing.quantity:
+        listing.quantity -= payload.quantity
+    else:
+        db.delete(listing)
+
+    db.commit()
+    return {"message": "Purchase complete", "listing_id": payload.listing_id}
+
+
+# ---------------------
+# Cancel Listing
+# ---------------------
+@router.post("/cancel")
+@alt_router.post("/cancel")
+def cancel_listing(
+    payload: CancelPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Remove a listing created by the current user."""
+    listing = (
+        db.query(BlackMarketListing)
+        .filter_by(listing_id=payload.listing_id, seller_id=user_id)
+        .first()
+    )
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found or unauthorized")
+    db.delete(listing)
+    db.commit()
+    return {"message": "Listing cancelled"}
