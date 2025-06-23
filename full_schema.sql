@@ -828,6 +828,7 @@ CREATE TABLE public.player_messages (
   message text,
   sent_at timestamp with time zone DEFAULT now(),
   is_read boolean DEFAULT false,
+  category text DEFAULT 'general'::text,
   CONSTRAINT player_messages_pkey PRIMARY KEY (message_id),
   CONSTRAINT player_messages_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public.users(user_id)
 );
