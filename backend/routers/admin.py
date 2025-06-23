@@ -15,7 +15,7 @@ from pydantic import BaseModel
 import logging
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, verify_api_key
 from backend.models import User
 from services.audit_service import log_action
 from .admin_dashboard import dashboard_summary, get_audit_logs
@@ -52,6 +52,7 @@ class AlertFilters(BaseModel):
 @router.post("/flag")
 def flag_player(
     payload: PlayerAction,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -62,6 +63,7 @@ def flag_player(
 @router.post("/freeze")
 def freeze_player(
     payload: PlayerAction,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -72,6 +74,7 @@ def freeze_player(
 @router.post("/ban")
 def ban_player(
     payload: PlayerAction,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -82,6 +85,7 @@ def ban_player(
 @router.post("/bulk_action")
 def bulk_action(
     payload: BulkAction,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -97,6 +101,7 @@ def bulk_action(
 @router.post("/player_action")
 def player_action(
     payload: PlayerAction,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -107,6 +112,7 @@ def player_action(
 @router.post("/flag_ip")
 def flag_ip(
     payload: dict,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -118,6 +124,7 @@ def flag_ip(
 @router.post("/suspend_user")
 def suspend_user(
     payload: dict,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -129,6 +136,7 @@ def suspend_user(
 @router.post("/mark_alert_handled")
 def mark_alert_handled(
     payload: dict,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -143,6 +151,7 @@ def mark_alert_handled(
 @router.get("/players")
 def list_players(
     search: str | None = Query(default=None),
+    verify: str = Depends(verify_api_key),
     db: Session = Depends(get_db),
 ):
     query = db.query(
@@ -177,6 +186,7 @@ def list_players(
 def get_admin_alerts(
     start: str | None = Query(default=None),
     end: str | None = Query(default=None),
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -231,6 +241,7 @@ def get_admin_alerts(
 @router.post("/alerts")
 def query_account_alerts(
     filters: AlertFilters,
+    verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -267,6 +278,7 @@ def query_account_alerts(
 # -------------------------
 @router.get("/stats")
 def get_admin_stats(
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -277,6 +289,7 @@ def get_admin_stats(
 @router.get("/search_user")
 def search_user(
     q: str = Query("", alias="q"),
+    verify: str = Depends(verify_api_key),
     db: Session = Depends(get_db),
 ):
     """Alias for player search used by older dashboards."""
@@ -286,6 +299,7 @@ def search_user(
 
 @router.get("/logs")
 def get_logs(
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):

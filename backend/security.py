@@ -14,13 +14,13 @@ import base64
 import json
 import os
 from uuid import UUID
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, Depends
 from jose import jwt, JWTError
 
 import logging
 logger = logging.getLogger("Thronestead.Security")
 
-__all__ = ["verify_jwt_token", "require_user_id"]
+__all__ = ["verify_jwt_token", "require_user_id", "verify_api_key"]
 
 
 def verify_jwt_token(
@@ -109,3 +109,9 @@ def require_user_id(
         verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
 
     return x_user_id
+
+
+def verify_api_key(x_api_key: str = Header(...)):
+    """Simple API key verification against the `API_SECRET` env variable."""
+    if x_api_key != os.getenv("API_SECRET"):
+        raise HTTPException(status_code=401, detail="Unauthorized")

@@ -16,6 +16,7 @@ connected_admins: list[WebSocket] = []
 
 @router.websocket("/api/admin/alerts/live")
 async def live_admin_alerts(websocket: WebSocket):
+    # TODO: Missing API key protection
     await websocket.accept()
     connected_admins.append(websocket)
     try:

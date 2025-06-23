@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, verify_api_key
 from .admin_dashboard import verify_admin
 from services.audit_service import fetch_filtered_logs, fetch_user_related_logs
 
@@ -37,6 +37,7 @@ def get_audit_logs(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
     limit: int = Query(100, ge=1, le=1000),
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -68,6 +69,7 @@ def get_audit_logs(
 @router.get("/user/{user_id}")
 def get_user_logs(
     user_id: str,
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -82,6 +84,7 @@ def get_user_logs(
 # -------------------------
 @router.get("/stream", response_class=StreamingResponse)
 async def stream_logs(
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
