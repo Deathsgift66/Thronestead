@@ -368,36 +368,33 @@ def assign_knight(
 @router.post("/knights/rename")
 def rename_knight(
     payload: KnightRenamePayload,
-
-# 🗡️ POST: Promote Knight
-@router.post("/knights/promote")
-def promote_knight(
-    payload: KnightPayload,
-
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
 
-
-    existing = db.execute(
-        text(
-            "SELECT knight_id FROM kingdom_knights WHERE kingdom_id = :kid AND knight_name = :old"
-        ),
-        {"kid": kid, "old": payload.current_name},
-    ).fetchone()
-    if not existing:
-        raise HTTPException(status_code=404, detail="Knight not found")
-
-    db.execute(
+    result = db.execute(
         text(
             "UPDATE kingdom_knights SET knight_name = :new WHERE kingdom_id = :kid AND knight_name = :old"
         ),
-        {"kid": kid, "old": payload.current_name, "new": payload.new_name},
+        {"new": payload.new_name, "kid": kid, "old": payload.current_name},
     )
+
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Knight not found")
 
     db.commit()
     return {"message": "Knight renamed"}
+
+
+# 🗡️ POST: Promote Knight
+@router.post("/knights/promote")
+def promote_knight(
+    payload: KnightPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
 
     row = db.execute(
         text(
