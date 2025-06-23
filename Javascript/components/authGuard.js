@@ -20,6 +20,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       data: { user },
       error: userErr
     } = await supabase.auth.getUser();
+    if (userErr) console.error('auth error:', userErr);
 
     if (!user) return (window.location.href = "login.html");
 
@@ -48,7 +49,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       });
       const vipData = await vipRes.json();
       vipLevel = vipData.vip_level || 0;
-    } catch (e) {
+    } catch {
       vipLevel = 0;
     }
 
