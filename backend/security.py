@@ -12,12 +12,12 @@ Signature validation is expected to be handled by Supabase middleware/gateway.
 
 import base64
 import json
+import logging
 import os
 from uuid import UUID
-from fastapi import Header, HTTPException
-from jose import jwt, JWTError
 
-import logging
+from fastapi import Header, HTTPException
+from jose import JWTError, jwt
 
 logger = logging.getLogger("Thronestead.Security")
 

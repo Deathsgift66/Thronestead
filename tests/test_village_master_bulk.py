@@ -1,7 +1,7 @@
 from backend.routers.village_master import (
-    bulk_upgrade_all,
-    bulk_queue_training,
     bulk_harvest,
+    bulk_queue_training,
+    bulk_upgrade_all,
 )
 
 

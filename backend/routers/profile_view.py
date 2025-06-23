@@ -11,9 +11,11 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+
+from services.message_service import count_unread_messages
+
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
-from services.message_service import count_unread_messages
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 

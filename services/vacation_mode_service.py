@@ -5,15 +5,16 @@
 # Description: Handles logic for entering, exiting, and enforcing vacation mode for kingdoms.
 
 from __future__ import annotations
-from datetime import datetime, timedelta
+
 import logging
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException
 
 try:
     from sqlalchemy import text
-    from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover - fallback for test environments
 
     def text(q):  # type: ignore

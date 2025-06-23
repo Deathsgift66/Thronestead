@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from fastapi import HTTPException
+
 from backend.routers import seasonal_effects
 
 

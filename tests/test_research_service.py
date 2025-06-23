@@ -7,10 +7,10 @@ from datetime import datetime
 import pytest
 
 from services.research_service import (
-    start_research,
     complete_finished_research,
-    list_research,
     is_tech_completed,
+    list_research,
+    start_research,
 )
 
 

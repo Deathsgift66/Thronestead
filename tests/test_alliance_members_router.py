@@ -2,20 +2,20 @@
 # File Name: test_alliance_members_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import AllianceMember, Alliance
+from backend.models import Alliance, AllianceMember
 from backend.routers.alliance_members import (
-    promote,
     RankPayload,
-    transfer_leadership,
     TransferLeadershipPayload,
+    get_current_user_id,
+    promote,
+    transfer_leadership,
 )
-import pytest
-from fastapi import HTTPException
-from backend.routers.alliance_members import get_current_user_id
 
 
 def setup_db():

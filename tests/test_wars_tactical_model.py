@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import WarsTactical, War
+from backend.models import War, WarsTactical
 
 
 def test_wars_tactical_model_creation():

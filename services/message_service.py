@@ -6,9 +6,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import logging
+from typing import Any
 
 try:  # pragma: no cover - optional dependency
     from supabase import Client

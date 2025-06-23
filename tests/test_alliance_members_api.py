@@ -3,11 +3,11 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
 from backend.models import (
-    User,
     Alliance,
     AllianceMember,
     Kingdom,
     KingdomVillage,
+    User,
     VillageProduction,
 )
 from backend.routers.alliance_members_api import list_members

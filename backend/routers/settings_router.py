@@ -10,9 +10,10 @@ Role: API routes for settings router.
 Version: 2025-06-21
 """
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 

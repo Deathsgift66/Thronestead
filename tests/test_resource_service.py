@@ -1,7 +1,7 @@
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi import HTTPException
 
 from backend.db_base import Base
 from backend.models import KingdomResources

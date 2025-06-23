@@ -10,19 +10,18 @@ Role: API routes for progression router.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-from pydantic import BaseModel, validator
 import re
 
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, validator
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from services.progression_service import calculate_troop_slots, get_total_modifiers
+
+from ..data import get_max_villages_allowed
 from ..database import get_db
 from ..security import require_user_id
-from ..data import get_max_villages_allowed
-from services.progression_service import (
-    calculate_troop_slots,
-    get_total_modifiers,
-)
 
 # Allowed characters for noble and knight names (alphanumeric & spaces)
 NAME_PATTERN = re.compile(r"^[A-Za-z0-9 ]{1,50}$")

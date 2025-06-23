@@ -5,13 +5,14 @@
 # Description: Handles adding, updating, and viewing training queue entries for troops.
 
 from __future__ import annotations
+
 import logging
 from typing import Optional
 
 try:
     from sqlalchemy import text
-    from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover
 
     def text(q):  # type: ignore

@@ -10,9 +10,10 @@ Role: API routes for alliance changelog.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import datetime
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..security import require_user_id
 from ..supabase_client import get_supabase_client

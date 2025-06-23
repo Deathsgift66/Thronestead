@@ -5,11 +5,13 @@
 """Service logic for managing kingdom buildings across villages."""
 
 from __future__ import annotations
+
+import logging
 from typing import Optional
+
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-import logging
 
 logger = logging.getLogger(__name__)
 

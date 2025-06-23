@@ -3,9 +3,9 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 from backend.routers.admin_dashboard import (
+    WarAction,
     force_end_war,
     rollback_combat_tick,
-    WarAction,
 )
 
 

@@ -8,9 +8,9 @@ Manages all active wars and coordinates battle ticks in Thronestead©.
 Used as the backend executor for hourly tick engines and live battle resolutions.
 """
 
-from typing import Dict, List, Optional
-from threading import Lock
 import logging
+from threading import Lock
+from typing import Dict, List, Optional
 
 from .engine import BattleTickHandler, WarState
 

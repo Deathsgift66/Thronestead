@@ -13,18 +13,19 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 from pydantic import BaseModel
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from ..database import get_db
 from backend.models import (
-    User,
     QuestAllianceCatalogue,
-    QuestAllianceTracking,
     QuestAllianceContribution,
+    QuestAllianceTracking,
+    User,
 )
 from services.audit_service import log_action
+
+from ..database import get_db
 from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance-quests", tags=["alliance_quests"])

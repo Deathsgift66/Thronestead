@@ -2,8 +2,9 @@
 # File Name: test_profile_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from backend.routers import profile_view
 from fastapi import HTTPException
+
+from backend.routers import profile_view
 
 
 class DummyTable:

@@ -10,15 +10,17 @@ Role: API routes for login routes.
 Version: 2025-06-21
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-import logging
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from services.audit_service import log_action
+
 from ..database import get_db
 from ..security import verify_jwt_token
-from services.audit_service import log_action
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/login", tags=["login"])

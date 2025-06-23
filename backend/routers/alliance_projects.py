@@ -11,21 +11,23 @@ Version: 2025-06-21
 """
 
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from pydantic import BaseModel
 
-from ..database import get_db
-from ..security import verify_jwt_token
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from backend.models import (
     Alliance,
     ProjectAllianceCatalogue,
+    ProjectAllianceContribution,
     ProjectsAlliance,
     ProjectsAllianceInProgress,
-    ProjectAllianceContribution,
     User,
 )
+
+from ..database import get_db
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/alliance/projects", tags=["alliance_projects"])
 

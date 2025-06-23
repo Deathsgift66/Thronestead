@@ -8,10 +8,10 @@ from sqlalchemy.orm import sessionmaker
 from backend.db_base import Base
 from backend.models import (
     Alliance,
-    User,
     QuestAllianceCatalogue,
-    QuestAllianceTracking,
     QuestAllianceContribution,
+    QuestAllianceTracking,
+    User,
 )
 from backend.routers import alliance_quests
 

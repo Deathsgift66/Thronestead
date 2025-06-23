@@ -2,8 +2,9 @@
 # Version 6.14.2025
 # Developer: OpenAI Codex
 
-from backend.routers import public_kingdom
 from fastapi import HTTPException
+
+from backend.routers import public_kingdom
 
 
 class DummyResult:

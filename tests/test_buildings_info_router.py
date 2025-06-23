@@ -2,8 +2,9 @@
 # File Name: test_buildings_info_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from backend.routers.buildings import get_building_info
 from fastapi import HTTPException
+
+from backend.routers.buildings import get_building_info
 
 
 class DummyResult:

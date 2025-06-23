@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+
 from ..security import require_user_id
 from ..supabase_client import get_supabase_client
 

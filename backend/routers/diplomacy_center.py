@@ -15,9 +15,10 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from services.audit_service import log_alliance_activity
+
 from ..database import get_db
 from ..security import verify_jwt_token
-from services.audit_service import log_alliance_activity
 
 router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy_center"])
 

@@ -10,13 +10,15 @@ Role: API routes for trade logs.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from ..database import get_db
 from backend.models import TradeLog
+
+from ..database import get_db
 from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/trade-logs", tags=["trade_logs"])

@@ -10,16 +10,17 @@ Role: API routes for quests router.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..database import get_db
 from backend.models import QuestKingdomTracking
+from services.vacation_mode_service import check_vacation_mode
+
+from ..data import castle_progression_state
+from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
-from ..data import castle_progression_state
-from services.vacation_mode_service import check_vacation_mode
 
 router = APIRouter(prefix="/api/quests", tags=["quests"])
 

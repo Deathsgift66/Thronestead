@@ -5,9 +5,10 @@
 # Description: Tracks kingdom history logs and aggregates comprehensive event timelines.
 
 import logging
+
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

@@ -2,21 +2,21 @@
 # File Name: test_messages_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+import uuid
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-import uuid
-
 from backend.db_base import Base
-from backend.models import User, PlayerMessage
-from backend.routers.messages import (
-    send_message,
-    get_message,
-    delete_message,
-    MessagePayload,
-    DeletePayload,
-)
+from backend.models import PlayerMessage, User
 from backend.routers import messages
+from backend.routers.messages import (
+    DeletePayload,
+    MessagePayload,
+    delete_message,
+    get_message,
+    send_message,
+)
 
 
 def setup_db():

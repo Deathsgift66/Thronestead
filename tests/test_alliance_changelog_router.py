@@ -2,8 +2,9 @@
 # File Name: test_alliance_changelog_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from backend.routers import alliance_changelog as ac
 from fastapi import HTTPException
+
+from backend.routers import alliance_changelog as ac
 
 
 class DummyTable:

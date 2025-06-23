@@ -9,12 +9,11 @@ It sets up environment access, logging, Supabase integration, and utility loadin
 This file assumes FastAPI app structure, Supabase SDK, and environment-based configuration.
 """
 
-import os
 import logging
-
+import os
 
 try:
-    from supabase import create_client, Client
+    from supabase import Client, create_client
 except Exception:  # pragma: no cover - optional in tests
     create_client = None  # type: ignore
     Client = None  # type: ignore

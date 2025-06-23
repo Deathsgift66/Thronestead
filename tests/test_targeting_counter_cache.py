@@ -1,6 +1,6 @@
-import types
 import pathlib
 import sys
+import types
 
 # Set up dummy package structure for relative imports
 backend_pkg = types.ModuleType("backend")

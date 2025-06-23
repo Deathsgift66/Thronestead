@@ -2,9 +2,9 @@
 # File Name: test_battle_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi import HTTPException
 
 from backend.db_base import Base
 from backend.models import WarScore

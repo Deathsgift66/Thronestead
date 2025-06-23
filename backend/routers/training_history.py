@@ -10,13 +10,15 @@ Role: API routes for training history.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, Query, HTTPException
-from pydantic import BaseModel, Field
 from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from services.training_history_service import fetch_history, record_training
+
 from ..database import get_db
-from services.training_history_service import record_training, fetch_history
 
 # Define router prefix and grouping tag
 router = APIRouter(prefix="/api/training-history", tags=["training_history"])

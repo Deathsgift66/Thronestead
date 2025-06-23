@@ -6,14 +6,14 @@ import pytest
 from fastapi import HTTPException
 
 from backend.routers.kingdom_military import (
-    get_current_user_id,
-    summary,
-    recruitable,
-    recruit,
-    queue,
-    history,
     RecruitPayload,
+    get_current_user_id,
     get_state,
+    history,
+    queue,
+    recruit,
+    recruitable,
+    summary,
 )
 
 

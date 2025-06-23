@@ -4,8 +4,8 @@
 # Developer: Deathsgift66
 from services.training_queue_service import (
     add_training_order,
-    fetch_queue,
     cancel_training,
+    fetch_queue,
     mark_completed,
 )
 

@@ -12,16 +12,11 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..database import get_db
 from backend import models
-from ..security import verify_jwt_token
 
-from ..battle_engine import (
-    TerrainGenerator,
-    WarState,
-    Unit,
-    war_manager,
-)
+from ..battle_engine import TerrainGenerator, Unit, WarState, war_manager
+from ..database import get_db
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/battle", tags=["battle"])
 

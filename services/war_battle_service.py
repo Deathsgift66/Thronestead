@@ -6,6 +6,7 @@
 """Service logic for executing and resolving live tactical war battles."""
 
 from __future__ import annotations
+
 import logging
 
 try:

@@ -8,23 +8,24 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import pytest
-
-from backend.progression_service import (
-    progress_castle,
-    add_noble,
-    remove_noble,
-    add_knight,
-    promote_knight,
-    castle_state,
-    nobles,
-    knights,
-)
-
-from services.progression_service import get_total_modifiers
-from services.progression_service import _kingdom_project_modifiers
-from services.progression_service import calculate_troop_slots
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
+from backend.progression_service import (
+    add_knight,
+    add_noble,
+    castle_state,
+    knights,
+    nobles,
+    progress_castle,
+    promote_knight,
+    remove_noble,
+)
+from services.progression_service import (
+    _kingdom_project_modifiers,
+    calculate_troop_slots,
+    get_total_modifiers,
+)
 
 
 def setup_function():

@@ -1,4 +1,4 @@
-from services.spies_service import reset_daily_attack_counts, get_spy_defense
+from services.spies_service import get_spy_defense, reset_daily_attack_counts
 
 
 class DummyResult:

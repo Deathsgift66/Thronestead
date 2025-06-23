@@ -10,9 +10,9 @@ requiring a database. All operations are protected by a :class:`threading.Lock`
 so that concurrent test scenarios behave predictably.
 """
 
-from typing import Dict, Set
-from threading import Lock
 import logging
+from threading import Lock
+from typing import Dict, Set
 
 logger = logging.getLogger("Thronestead.Progression")
 

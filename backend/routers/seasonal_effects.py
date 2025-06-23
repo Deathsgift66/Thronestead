@@ -11,8 +11,9 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from ..supabase_client import get_supabase_client
+
 from ..security import verify_jwt_token
+from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/seasonal-effects", tags=["seasonal_effects"])
 

@@ -10,19 +10,20 @@ Role: API routes for kingdom history.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from services.kingdom_history_service import (
+    fetch_full_history,
+    fetch_history,
+    log_event,
+)
 
 from ..database import get_db
-from services.kingdom_history_service import (
-    log_event,
-    fetch_history,
-    fetch_full_history,
-)
-from .progression_router import get_kingdom_id
-from .admin_dashboard import verify_admin
 from ..security import verify_jwt_token
+from .admin_dashboard import verify_admin
+from .progression_router import get_kingdom_id
 
 # API Router configuration
 router = APIRouter(prefix="/api/kingdom-history", tags=["kingdom_history"])

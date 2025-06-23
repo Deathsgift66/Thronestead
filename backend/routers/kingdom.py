@@ -5,20 +5,23 @@ Role: API routes for kingdom.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from typing import Optional
 
+from services.audit_service import log_action
+from services.kingdom_quest_service import start_quest as db_start_quest
+from services.kingdom_setup_service import create_kingdom_transaction
+from services.research_service import list_research
+from services.research_service import start_research as db_start_research
+
+from ..data import DEFAULT_REGIONS, recruitable_units
 from ..database import get_db
 from ..security import verify_jwt_token
-from services.kingdom_setup_service import create_kingdom_transaction
-from services.research_service import start_research as db_start_research, list_research
-from services.kingdom_quest_service import start_quest as db_start_quest
-from services.audit_service import log_action
 from .progression_router import get_kingdom_id
-from ..data import recruitable_units, DEFAULT_REGIONS
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 

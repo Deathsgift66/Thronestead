@@ -10,14 +10,15 @@ Role: API routes for leaderboard.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import func, case, or_
 
+from backend.models import Alliance, AllianceWar, AllianceWarScore, User
+
+from ..database import get_db
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
-from ..database import get_db
-from backend.models import Alliance, AllianceWar, AllianceWarScore, User
 
 
 def _optional_user(

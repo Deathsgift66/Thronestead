@@ -11,12 +11,13 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from backend.models import Alliance, AllianceMember, AllianceVault, User
 
 from ..database import get_db
 from ..security import require_user_id
-from backend.models import User, Alliance, AllianceMember, AllianceVault
 
 router = APIRouter(prefix="/api/alliance-home", tags=["alliance_home"])
 

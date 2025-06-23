@@ -10,18 +10,19 @@ Role: API routes for villages router.
 Version: 2025-06-21
 """
 
-import json
 import asyncio
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..data import get_max_villages_allowed
 from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
-from ..data import get_max_villages_allowed
 
 router = APIRouter(prefix="/api/kingdom/villages", tags=["villages"])
 

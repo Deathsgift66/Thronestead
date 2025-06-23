@@ -5,11 +5,12 @@
 import hashlib
 import time
 import uuid
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import User, Notification
+from backend.models import Notification, User
 from backend.routers import forgot_password as fp
 
 

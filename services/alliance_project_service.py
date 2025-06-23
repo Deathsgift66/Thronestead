@@ -6,13 +6,14 @@
 """Service functions for managing alliance-wide projects."""
 
 from __future__ import annotations
+
+import json
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-import json
-import logging
 
 logger = logging.getLogger(__name__)
 

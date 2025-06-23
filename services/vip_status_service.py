@@ -5,8 +5,9 @@
 # Description: Handles VIP tier tracking, validation, and updates per user.
 
 from __future__ import annotations
-from datetime import datetime
+
 import logging
+from datetime import datetime
 
 try:
     from backend.data import vip_levels
@@ -15,8 +16,8 @@ except Exception:  # pragma: no cover - when backend.data not available
 
 try:
     from sqlalchemy import text
-    from sqlalchemy.orm import Session
     from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.orm import Session
 except ImportError:  # pragma: no cover - SQLAlchemy fallback
 
     def text(q):  # type: ignore

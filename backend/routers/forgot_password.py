@@ -11,22 +11,22 @@ Version: 2025-06-21
 """
 
 import hashlib
+import logging
 import os
+import re
 import time
 import uuid
-import re
-import logging
 
-from fastapi import APIRouter, HTTPException, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
-from pydantic import BaseModel, EmailStr
 
-from ..supabase_client import get_supabase_client
+from backend.models import Notification, User
+from services.audit_service import log_action
 
 from ..database import get_db
-from backend.models import User, Notification
-from services.audit_service import log_action
+from ..supabase_client import get_supabase_client
 
 
 def send_email(to_email: str, subject: str, body: str) -> None:

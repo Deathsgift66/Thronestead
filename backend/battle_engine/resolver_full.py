@@ -4,13 +4,12 @@
 # Developer: Deathsgift66
 """Full combat resolver processing kingdom and alliance wars."""
 
-from typing import Any, Dict, List
 import logging
-
-from .movement import process_unit_movement
-from .vision import process_unit_vision
+from typing import Any, Dict, List
 
 from ..db import db
+from .movement import process_unit_movement
+from .vision import process_unit_vision
 
 logger = logging.getLogger("Thronestead.BattleEngine")
 

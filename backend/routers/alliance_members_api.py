@@ -6,18 +6,20 @@
 """Provides a detailed list of alliance members with score and output data."""
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy import func
-from ..database import get_db
-from ..security import require_user_id
+from sqlalchemy.orm import Session
+
 from backend.models import (
-    User,
     AllianceMember,
     AllianceRole,
     Kingdom,
     KingdomVillage,
+    User,
     VillageProduction,
 )
+
+from ..database import get_db
+from ..security import require_user_id
 
 router = APIRouter(prefix="/api/alliance/members", tags=["alliance_members"])
 

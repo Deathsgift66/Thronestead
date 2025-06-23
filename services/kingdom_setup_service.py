@@ -2,8 +2,8 @@
 # File Name: kingdom_setup_service.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from typing import Optional
 import json
+from typing import Optional
 
 from services import notification_service
 

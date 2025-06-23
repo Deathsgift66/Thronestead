@@ -5,12 +5,14 @@
 """Service utilities for the kingdom resource economy."""
 
 from __future__ import annotations
+
+import logging
 from typing import Literal, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-import logging
+
 from .text_utils import sanitize_plain_text
 
 logger = logging.getLogger(__name__)

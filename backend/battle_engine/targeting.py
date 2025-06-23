@@ -4,8 +4,8 @@
 # Developer: Deathsgift66
 """Utilities for selecting combat targets and applying unit counters."""
 
-from typing import Any, Dict, List
 from functools import lru_cache
+from typing import Any, Dict, List
 
 # Database interface for counters
 from ..db import db

@@ -11,14 +11,16 @@ Version: 2025-06-21
 """
 
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from services.vacation_mode_service import check_vacation_mode
+
+from ..data import castle_progression_state, kingdom_projects
 from ..database import get_db
 from ..security import verify_jwt_token
-from services.vacation_mode_service import check_vacation_mode
-from ..data import castle_progression_state, kingdom_projects
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 

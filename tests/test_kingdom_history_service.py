@@ -3,9 +3,9 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 from services.kingdom_history_service import (
-    log_event,
-    fetch_history,
     fetch_full_history,
+    fetch_history,
+    log_event,
 )
 
 

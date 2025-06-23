@@ -10,15 +10,17 @@ Role: API routes for spies router.
 Version: 2025-06-21
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from .progression_router import get_kingdom_id
-from ..security import verify_jwt_token
 from services import spies_service
+
+from ..database import get_db
+from ..security import verify_jwt_token
+from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/kingdom", tags=["spies"])
 
