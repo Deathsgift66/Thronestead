@@ -11,7 +11,13 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
 from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, User
-from backend.routers.alliance_vault import VaultTransaction, deposit, summary, withdraw
+from backend.routers.alliance_vault import (
+    VaultTransaction,
+    deposit,
+    summary,
+    withdraw,
+    custom_board,
+)
 
 
 def setup_db():
@@ -89,3 +95,16 @@ def test_withdraw_permission_denied():
         withdraw(
             VaultTransaction(alliance_id=1, resource="gold", amount=5), user_id, db
         )
+
+
+def test_custom_board_returns_alliance_banner_and_text():
+    Session = setup_db()
+    db = Session()
+    user_id = create_user(db)
+    alliance = db.query(Alliance).filter_by(alliance_id=1).first()
+    alliance.banner = "img.png"
+    alliance.motd = "Hello"
+    db.commit()
+
+    res = custom_board(user_id=user_id, db=db)
+    assert res == {"image_url": "img.png", "custom_text": "Hello"}
