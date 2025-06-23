@@ -12,7 +12,6 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
-
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -20,6 +19,7 @@ from backend import models
 from ..battle_engine import TerrainGenerator, Unit, WarState, war_manager
 from ..database import get_db
 from ..security import verify_jwt_token
+from services.audit_service import log_action
 
 router = APIRouter(prefix="/api/battle", tags=["battle"])
 
@@ -301,6 +301,22 @@ def get_live_battle(
 
 
 
+class DeclarePayload(BaseModel):
+    """Payload for declaring an alliance battle."""
+
+    target_alliance_id: int
+
+
+@router.post("/declare")
+def declare_alliance_battle(
+    payload: DeclarePayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Declare a new alliance battle using the caller's alliance."""
+
+
+
 class OrdersPayload(BaseModel):
     """Payload for issuing a simple movement order."""
 
@@ -343,12 +359,34 @@ def issue_orders(
     return {"status": "updated"}
 
 def _get_alliance_id(db: Session, user_id: str) -> int:
+
     row = db.execute(
         text("SELECT alliance_id FROM users WHERE user_id = :uid"),
         {"uid": user_id},
     ).fetchone()
     if not row or row[0] is None:
         raise HTTPException(status_code=404, detail="Alliance not found")
+
+    attacker_id = row[0]
+
+    res = db.execute(
+        text(
+            "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "
+            "VALUES (:att, :def, 'alert', 'pending') RETURNING alliance_war_id"
+        ),
+        {"att": attacker_id, "def": payload.target_alliance_id},
+    ).fetchone()
+    db.commit()
+
+    log_action(
+        db,
+        user_id,
+        "Declare War",
+        f"{attacker_id} -> {payload.target_alliance_id}",
+    )
+
+    return {"success": True, "alliance_war_id": res[0]}
+
     return row[0]
 
 
@@ -408,4 +446,5 @@ def list_alliance_wars(
             }
         )
     return wars
+
 
