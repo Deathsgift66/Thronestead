@@ -1,5 +1,8 @@
 export default [
   {
+    ignores: ['dist/**', 'node_modules/**']
+  },
+  {
     files: ['Javascript/**/*.js', 'supabaseClient.js'],
     languageOptions: {
       sourceType: 'module',
