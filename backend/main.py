@@ -19,6 +19,8 @@ import logging
 import os
 import traceback
 
+API_SECRET = os.getenv("API_SECRET")
+
 from .auth_middleware import UserStateMiddleware
 from .database import engine
 from .models import Base

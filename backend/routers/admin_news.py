@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..security import require_user_id
+from ..security import require_user_id, verify_api_key
 from ..supabase_client import get_supabase_client
 from .admin_dashboard import verify_admin
 from ..database import get_db
@@ -27,6 +27,7 @@ class NewsPayload(BaseModel):
 @router.post("/post", summary="Publish a news article")
 def post_news(
     payload: NewsPayload,
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ) -> dict:

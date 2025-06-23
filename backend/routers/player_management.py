@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..supabase_client import get_supabase_client
-from ..security import verify_jwt_token
+from ..security import verify_jwt_token, verify_api_key
 from ..database import get_db
 from services.audit_service import fetch_user_related_logs
 
@@ -42,6 +42,7 @@ class PlayerAction(BaseModel):
 @router.get("/players")
 def players(
     search: str | None = None,
+    verify: str = Depends(verify_api_key),
     user_id: str = Depends(verify_jwt_token),
 ):
     """
@@ -87,6 +88,7 @@ def players(
 @router.post("/bulk_action")
 def bulk_action(
     payload: BulkAction,
+    verify: str = Depends(verify_api_key),
     user_id: str = Depends(verify_jwt_token),
 ):
     """
@@ -119,6 +121,7 @@ def bulk_action(
 @router.post("/player_action")
 def player_action(
     payload: PlayerAction,
+    verify: str = Depends(verify_api_key),
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):

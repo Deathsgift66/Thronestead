@@ -17,7 +17,7 @@ from sqlalchemy import text, update
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, verify_api_key
 from backend.models import Kingdom
 from services.audit_service import log_action
 
@@ -42,6 +42,7 @@ def verify_admin(user_id: str, db: Session) -> None:
 # ---------------------
 @router.get("/dashboard")
 def dashboard_summary(
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -79,6 +80,7 @@ def get_audit_logs(
     sort_by: str = "created_at",
     sort_dir: str = "desc",
     user_id: Optional[str] = Query(None),
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -118,6 +120,7 @@ def get_audit_logs(
 def toggle_flag(
     flag_key: str,
     value: bool,
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -139,6 +142,7 @@ def update_kingdom_field(
     kingdom_id: int,
     field: str,
     value: Any,
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -168,6 +172,7 @@ def update_kingdom_field(
 # ---------------------
 @router.get("/flagged")
 def get_flagged_users(
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -188,6 +193,7 @@ class WarAction(BaseModel):
 @router.post("/wars/force_end")
 def force_end_war(
     payload: WarAction,
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -204,6 +210,7 @@ def force_end_war(
 @router.post("/wars/rollback_tick")
 def rollback_combat_tick(
     payload: WarAction,
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -232,6 +239,7 @@ class RollbackRequest(BaseModel):
 @router.post("/rollback/database")
 def rollback_database(
     payload: RollbackRequest,
+    verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
