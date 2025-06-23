@@ -1,6 +1,3 @@
--- WARNING: This schema is for context only and is not meant to be run.
--- Table order and constraints may not be valid for execution.
-
 CREATE TABLE public.admin_alerts (
   alert_id integer NOT NULL DEFAULT nextval('admin_alerts_alert_id_seq'::regclass),
   type text,
