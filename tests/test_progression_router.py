@@ -48,3 +48,16 @@ def test_progression_summary_returns_data():
     assert result["knights_total"] == 5
     assert result["troop_slots"]["used"] == 6
     assert result["troop_slots"]["available"] == 4
+
+
+def test_upgrade_castle_explicit_calls_base(monkeypatch):
+    dummy_db = DummyDB()
+
+    def fake_upgrade_castle(user_id: str, db: DummyDB):
+        assert user_id == "u1"
+        assert db is dummy_db
+        return {"message": "ok"}
+
+    monkeypatch.setattr(pr, "upgrade_castle", fake_upgrade_castle)
+    result = pr.upgrade_castle_explicit(user_id="u1", db=dummy_db)
+    assert result["message"] == "ok"
