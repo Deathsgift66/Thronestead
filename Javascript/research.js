@@ -92,7 +92,7 @@ async function loadResearchData() {
         .eq('is_active', true)
         .order('tier', { ascending: true }),
 
-      fetch('/api/kingdom/research', {
+      fetch('/api/kingdom/research/list', {
         headers: {
           'Authorization': `Bearer ${currentSession.access_token}`,
           'X-User-ID': currentSession.user.id
@@ -100,12 +100,16 @@ async function loadResearchData() {
       })
     ]);
 
-    const tracking = await trackingRes.json();
-    const completed = tracking.research.filter(r => r.status === 'completed');
-    const active = tracking.research.find(r => r.status === 'active');
+    const overview = await trackingRes.json();
+    const progress = [
+      ...overview.completed.map(t => ({ tech_code: t.tech_code, status: 'completed', ends_at: t.ends_at })),
+      ...overview.in_progress.map(t => ({ tech_code: t.tech_code, status: 'active', ends_at: t.ends_at }))
+    ];
+    const completed = overview.completed;
+    const active = overview.in_progress[0];
 
     renderFilters(techs);
-    renderTree(techs, tracking.research);
+    renderTree(techs, progress);
     renderDetails(); // default blank
     renderActive(active, techs);
     renderCompleted(completed, techs);
