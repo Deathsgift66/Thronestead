@@ -2,7 +2,7 @@
 # File Name: test_vacation_mode_service.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
@@ -58,15 +58,15 @@ def test_enter_and_exit():
 
 def test_can_exit_vacation():
     db = DummyDB()
-    db.row = (datetime.utcnow() - timedelta(days=1),)
+    db.row = (datetime.now(timezone.utc) - timedelta(days=1),)
     assert can_exit_vacation(db, 1)
-    db.row = (datetime.utcnow() + timedelta(days=1),)
+    db.row = (datetime.now(timezone.utc) + timedelta(days=1),)
     assert not can_exit_vacation(db, 1)
 
 
 def test_enter_during_cooldown_raises():
     db = DummyDB()
-    db.row_sequence = [(False, datetime.utcnow() + timedelta(days=1))]
+    db.row_sequence = [(False, datetime.now(timezone.utc) + timedelta(days=1))]
     raised = False
     try:
         enter_vacation_mode(db, 1)

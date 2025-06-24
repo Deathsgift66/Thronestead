@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
@@ -46,7 +46,7 @@ def enter_vacation_mode(db: Session, kingdom_id: int) -> datetime:
     Returns:
         datetime: Timestamp when vacation mode will expire
     """
-    expires = datetime.utcnow() + timedelta(days=_VACATION_DURATION)
+    expires = datetime.now(timezone.utc) + timedelta(days=_VACATION_DURATION)
 
     try:
         row = db.execute(
@@ -60,7 +60,7 @@ def enter_vacation_mode(db: Session, kingdom_id: int) -> datetime:
             raise HTTPException(status_code=400, detail="Already in Vacation Mode")
 
         cooldown_until = row[1] if row else None
-        if cooldown_until and datetime.utcnow() < cooldown_until:
+        if cooldown_until and datetime.now(timezone.utc) < cooldown_until:
             raise HTTPException(status_code=403, detail="Vacation Mode cooldown active")
 
         db.execute(
@@ -137,7 +137,7 @@ def can_exit_vacation(db: Session, kingdom_id: int) -> bool:
             return False
 
         expires = row[0]
-        return expires is None or datetime.utcnow() >= expires
+        return expires is None or datetime.now(timezone.utc) >= expires
 
     except SQLAlchemyError:
         logger.warning(
