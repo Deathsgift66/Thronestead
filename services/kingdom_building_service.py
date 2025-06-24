@@ -90,7 +90,7 @@ def construct_building(
                 initiated_by
             ) VALUES (
                 :vid, :bid, 1,
-                'in_progress',
+                'under_construction',
                 now(),
                 now() + (:duration * interval '1 second'),
                 :uid
@@ -142,7 +142,7 @@ def upgrade_building(
             """
             UPDATE village_buildings
                SET level = :lvl,
-                   construction_status = 'in_progress',
+                   construction_status = 'under_construction',
                    construction_started_at = now(),
                    construction_ends_at = now() + (:duration * interval '1 second'),
                    initiated_by = :uid
@@ -167,7 +167,7 @@ def mark_completed_buildings(db: Session) -> int:
             UPDATE village_buildings
                SET construction_status = 'complete',
                    last_updated = now()
-             WHERE construction_status = 'in_progress'
+             WHERE construction_status = 'under_construction'
                AND construction_ends_at <= now()
             """
         )
