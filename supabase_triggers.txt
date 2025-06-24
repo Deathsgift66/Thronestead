@@ -1,175 +1,121 @@
-Name	Table	Function	Events	Orientation	Enabled	
-audit_alliance_treaties	
-alliance_treaties
+Name	Arguments	Return type	Security	
 
 audit_trigger
+-
 
-AFTER INSERT
-AFTER DELETE
-AFTER UPDATE
-ROW
+trigger
 
+Invoker	
 
-audit_kingdom_resources	
-kingdom_resources
-
-audit_trigger
-
-AFTER INSERT
-AFTER DELETE
-AFTER UPDATE
-ROW
-
-
-audit_trigger_alliance_members	
-alliance_members
-
-log_audit_alliance_members
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_trigger_alliance_vault_transaction_log	
-alliance_vault_transaction_log
-
-log_audit_alliance_vault_transaction_log
-
-AFTER UPDATE
-AFTER INSERT
-AFTER DELETE
-ROW
-
-
-audit_trigger_alliances	
-alliances
-
-log_audit_alliances
-
-AFTER UPDATE
-AFTER INSERT
-AFTER DELETE
-ROW
-
-
-audit_trigger_kingdom_troops	
-kingdom_troops
-
-log_audit_kingdom_troops
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_trigger_kingdoms	
-kingdoms
-
-log_audit_kingdoms
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_trigger_projects_alliance	
-projects_alliance
-
-log_audit_projects_alliance
-
-AFTER UPDATE
-AFTER INSERT
-AFTER DELETE
-ROW
-
-
-audit_trigger_projects_player	
-projects_player
-
-log_audit_projects_player
-
-AFTER INSERT
-AFTER DELETE
-AFTER UPDATE
-ROW
-
-
-audit_trigger_training_history	
-training_history
-
-log_audit_training_history
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_trigger_training_queue	
-training_queue
-
-log_audit_training_queue
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_trigger_users	
-users
-
-log_audit_users
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_trigger_village_buildings	
-village_buildings
-
-log_audit_village_buildings
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_trigger_wars	
-wars
-
-log_audit_wars
-
-AFTER DELETE
-AFTER INSERT
-AFTER UPDATE
-ROW
-
-
-audit_village_resources	
-village_resources
-
-audit_trigger
-
-AFTER INSERT
-AFTER DELETE
-AFTER UPDATE
-ROW
-
-
-trg_init_spy_defense	
-kingdoms
 
 init_spy_defense
+-
 
-AFTER INSERT
-ROW
+trigger
 
+Invoker	
+
+
+log_audit_alliance_members
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_alliance_vault_transaction_log
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_alliances
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_kingdom_troops
+-
+
+trigger
+
+Definer	
+
+
+log_audit_kingdom_troops
+p_kingdom_id integer, p_user_id uuid, p_action text, p_details text
+
+void
+
+Definer	
+
+
+log_audit_kingdoms
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_projects_alliance
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_projects_player
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_training_history
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_training_queue
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_users
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_village_buildings
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_wars
+-
+
+trigger
+
+Invoker	
 
