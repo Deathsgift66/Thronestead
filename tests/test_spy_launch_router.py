@@ -58,7 +58,7 @@ def test_launch_spy_mission_inserts_row(monkeypatch):
     mission = db.query(SpyMissions).first()
     assert mission is not None
     assert res["mission_id"] == mission.mission_id
-    assert res["outcome"] in {"success", "failed"}
+    assert res["outcome"] in {"success", "fail"}
 
 
 def test_spy_defense_modifies_success(monkeypatch):
