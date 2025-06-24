@@ -9,7 +9,12 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+import datetime
+from fastapi import HTTPException
+
 from services.training_history_service import record_training
+from services import resource_service
+from services import kingdom_history_service
 
 try:
     from sqlalchemy import text
@@ -43,27 +48,94 @@ def add_training_order(
     initiated_by: Optional[str] = None,
     priority: int = 1,
 ) -> int:
-    """
-    Add a new training job to the queue.
+    """Queue a new troop training order applying costs and cooldowns."""
 
-    Args:
-        db: DB session
-        kingdom_id: ID of the training kingdom
-        unit_id: ID of the unit being trained
-        unit_name: Display name
-        quantity: Quantity of units to train
-        base_training_seconds: Base time in seconds
-        training_speed_modifier: Multiplier (e.g., 0.8 = 20% faster)
-        training_speed_multiplier: Additional speed multiplier
-        xp_per_unit: XP granted per unit when complete
-        modifiers_applied: Modifier details for tracking
-        initiated_by: User ID
-        priority: Queue priority (higher = earlier)
-
-    Returns:
-        int: ID of the newly inserted training queue entry
-    """
     try:
+        # Fetch base unit definition for costs and cooldowns
+        unit_row = (
+            db.execute(
+                text(
+                    "SELECT training_time, tier, cooldown_seconds, "
+                    "cost_wood, cost_stone, cost_gold, cost_food "
+                    "FROM training_catalog WHERE unit_id = :uid"
+                ),
+                {"uid": unit_id},
+            )
+            .mappings()
+            .fetchone()
+        )
+
+        if not unit_row:
+            raise HTTPException(status_code=404, detail="Unit not found")
+
+        cost = {}
+        for res in ("wood", "stone", "gold", "food"):
+            val = unit_row.get(f"cost_{res}") or 0
+            if val:
+                cost[res] = int(val) * quantity
+
+        try:
+            resource_service.spend_resources(db, kingdom_id, cost, commit=False)
+        except HTTPException as exc:
+            kingdom_history_service.log_event(
+                db, kingdom_id, "training_order", "rejected_insufficient_resources"
+            )
+            raise
+
+        # Determine building speed bonus
+        b_row = db.execute(
+            text(
+                """
+                SELECT bt.speed_multiplier
+                  FROM village_buildings vb
+                  JOIN kingdom_villages kv ON vb.village_id = kv.village_id
+                  JOIN building_catalogue bc ON vb.building_id = bc.building_id
+                  JOIN building_tiers bt ON bt.building_id = vb.building_id
+                                         AND bt.level = vb.level
+                 WHERE kv.kingdom_id = :kid
+                   AND bc.production_type = 'training'
+                   AND vb.construction_status = 'complete'
+                 ORDER BY vb.level DESC
+                 LIMIT 1
+                """
+            ),
+            {"kid": kingdom_id},
+        ).fetchone()
+
+        building_multiplier = float(b_row[0]) if b_row else 1.0
+
+        base_seconds = unit_row.get("training_time", base_training_seconds)
+        total_seconds = (
+            base_seconds
+            * quantity
+            * training_speed_modifier
+            / (training_speed_multiplier * building_multiplier)
+        )
+
+        # Enforce cooldown based on most recent training
+        cooldown = int(unit_row.get("cooldown_seconds") or 0)
+        if cooldown > 0:
+            last_row = db.execute(
+                text(
+                    """
+                    SELECT completed_at FROM training_history
+                     WHERE kingdom_id = :kid AND unit_id = :uid
+                     ORDER BY completed_at DESC LIMIT 1
+                    """
+                ),
+                {"kid": kingdom_id, "uid": unit_id},
+            ).fetchone()
+
+            if last_row and last_row[0]:
+                last_time = last_row[0]
+                if isinstance(last_time, str):
+                    last_time = datetime.datetime.fromisoformat(last_time)
+                if last_time + datetime.timedelta(seconds=cooldown) > datetime.datetime.now(datetime.timezone.utc):
+                    kingdom_history_service.log_event(
+                        db, kingdom_id, "training_order", "rejected_cooldown"
+                    )
+                    raise HTTPException(status_code=400, detail="Training cooldown active")
+
         result = db.execute(
             text(
                 """
@@ -75,11 +147,9 @@ def add_training_order(
                     initiated_by, priority
                 ) VALUES (
                     :kid, :uid, :uname, :qty,
-                    now() + (:base * :speed / :mult) * interval '1 second', now(), 'queued',
+                    now() + :secs * interval '1 second', now(), 'queued',
                     :speed, :mult,
                     :xp, :mods,
-                    now() + (:base * :qty * :speed) * interval '1 second', now(), 'queued',
-                    :speed, :mods,
                     :init, :pri
                 )
                 RETURNING queue_id
@@ -90,7 +160,7 @@ def add_training_order(
                 "uid": unit_id,
                 "uname": unit_name,
                 "qty": quantity,
-                "base": base_training_seconds,
+                "secs": total_seconds,
                 "speed": training_speed_modifier,
                 "mult": training_speed_multiplier,
                 "xp": xp_per_unit,
@@ -100,6 +170,12 @@ def add_training_order(
             },
         )
         row = result.fetchone()
+        kingdom_history_service.log_event(
+            db,
+            kingdom_id,
+            "training_order",
+            "queued_with_bonus" if training_speed_multiplier > 1 else "queued",
+        )
         db.commit()
         return int(row[0]) if row else 0
 
