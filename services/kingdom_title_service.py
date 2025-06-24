@@ -11,6 +11,19 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from services.kingdom_history_service import log_event
+
+TITLE_MAP = {
+    1: "Defender of the Realm",
+    2: "Master Strategist",
+    3: "Warden of the North",
+}
+
+
+def get_title_name_from_id(honor_reward_id: int) -> Optional[str]:
+    """Return the title string for the given honor reward id."""
+    return TITLE_MAP.get(honor_reward_id)
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +63,8 @@ def award_title(db: Session, kingdom_id: int, title: str) -> None:
             {"kid": kingdom_id, "title": title},
         )
         db.commit()
+        # Log title award event
+        log_event(db, kingdom_id, "TITLE_AWARDED", title)
 
     except SQLAlchemyError as exc:
         db.rollback()

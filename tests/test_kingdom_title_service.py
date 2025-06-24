@@ -28,6 +28,7 @@ class DummyDB:
         self.select_rows = []
         self.updated = []
         self.check_row = None
+        self.history_logs = []
 
     def execute(self, query, params=None):
         q = str(query).strip()
@@ -36,6 +37,9 @@ class DummyDB:
             return DummyResult(self.check_row)
         if q.startswith("INSERT INTO kingdom_titles"):
             self.inserted.append(params)
+            return DummyResult()
+        if q.startswith("INSERT INTO kingdom_history_log"):
+            self.history_logs.append(params)
             return DummyResult()
         if q.startswith("SELECT title, awarded_at"):
             return DummyResult(rows=self.select_rows)
@@ -58,6 +62,7 @@ def test_award_title_inserts_when_new():
     db.check_row = None
     award_title(db, 1, "Defender")
     assert db.inserted[0]["title"] == "Defender"
+    assert len(db.history_logs) == 1
 
 
 def test_award_title_skips_existing():
@@ -65,6 +70,7 @@ def test_award_title_skips_existing():
     db.check_row = (1,)
     award_title(db, 1, "Defender")
     assert db.inserted == []
+    assert db.history_logs == []
 
 
 def test_list_titles_returns_rows():

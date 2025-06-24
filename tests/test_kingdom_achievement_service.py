@@ -22,9 +22,12 @@ class DummyDB:
         self.inserted = []
         self.check_rows = []
         self.reward = None
+        self.honor_reward = 0
         self.list_rows = []
         self.prestige_updates = []
         self.history_logs = []
+        self.title_checks = []
+        self.title_inserts = []
 
     def execute(self, query, params=None):
         q = str(query).strip()
@@ -34,10 +37,15 @@ class DummyDB:
         if q.startswith("INSERT INTO kingdom_achievements"):
             self.inserted.append(params)
             return DummyResult()
-        if "SELECT reward, points FROM kingdom_achievement_catalogue" in q:
-            return DummyResult((self.reward, 5))
+        if "SELECT reward, points, honor_reward" in q:
+            return DummyResult((self.reward, 5, self.honor_reward))
         if "SELECT reward FROM kingdom_achievement_catalogue" in q:
             return DummyResult((self.reward,))
+        if q.startswith("SELECT 1 FROM kingdom_titles"):
+            return DummyResult(self.title_checks.pop(0) if self.title_checks else None)
+        if q.startswith("INSERT INTO kingdom_titles"):
+            self.title_inserts.append(params)
+            return DummyResult()
         if q.startswith("UPDATE kingdoms SET prestige_score"):
             self.prestige_updates.append(params)
             return DummyResult()
@@ -58,19 +66,24 @@ def test_award_new_achievement():
     db = DummyDB()
     db.check_rows = [None]
     db.reward = {"gold": 100}
+    db.honor_reward = 1
+    db.title_checks = [None]
     reward = award_achievement(db, 1, "first_gold")
     assert reward == {"gold": 100}
     assert db.inserted[0]["kid"] == 1
+    assert len(db.title_inserts) == 1
     assert len(db.prestige_updates) == 1
-    assert len(db.history_logs) == 1
+    assert len(db.history_logs) == 2
 
 
 def test_award_existing_returns_none():
     db = DummyDB()
     db.check_rows = [(1,)]
+    db.honor_reward = 1
     reward = award_achievement(db, 1, "first_gold")
     assert reward is None
     assert db.inserted == []
+    assert db.title_inserts == []
     assert db.prestige_updates == []
     assert db.history_logs == []
 
