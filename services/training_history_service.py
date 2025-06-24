@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+XP_PER_LEVEL = 100
+
 try:
     from sqlalchemy import text
     from sqlalchemy.exc import SQLAlchemyError
@@ -27,6 +29,72 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------
 
 
+def _add_unit_xp(
+    db: Session,
+    kingdom_id: int,
+    unit_type: str,
+    quantity: int,
+    xp_per_unit: int,
+) -> None:
+    """Increase XP on the kingdom_troops row for this unit."""
+    xp = xp_per_unit * quantity
+    db.execute(
+        text(
+            """
+            INSERT INTO kingdom_troops (kingdom_id, unit_type, unit_level, quantity, unit_xp)
+            VALUES (:kid, :unit, 1, :qty, :xp)
+            ON CONFLICT (kingdom_id, unit_type, unit_level)
+            DO UPDATE SET quantity = kingdom_troops.quantity + :qty,
+                          unit_xp = kingdom_troops.unit_xp + :xp
+            """
+        ),
+        {"kid": kingdom_id, "unit": unit_type, "qty": quantity, "xp": xp},
+    )
+
+
+def level_up_units(db: Session, kingdom_id: int, unit_type: str) -> None:
+    """Convert accumulated XP into unit levels."""
+    row = db.execute(
+        text(
+            "SELECT quantity, unit_xp, unit_level FROM kingdom_troops "
+            "WHERE kingdom_id = :kid AND unit_type = :unit "
+            "ORDER BY unit_level ASC LIMIT 1"
+        ),
+        {"kid": kingdom_id, "unit": unit_type},
+    ).fetchone()
+
+    if not row:
+        return
+
+    qty, xp, level = row
+    if xp < XP_PER_LEVEL:
+        return
+
+    levels = xp // XP_PER_LEVEL
+    new_level = level + levels
+    remaining = xp % XP_PER_LEVEL
+
+    db.execute(
+        text(
+            "UPDATE kingdom_troops SET quantity = 0, unit_xp = :xp "
+            "WHERE kingdom_id = :kid AND unit_type = :unit AND unit_level = :lvl"
+        ),
+        {"xp": remaining, "kid": kingdom_id, "unit": unit_type, "lvl": level},
+    )
+
+    db.execute(
+        text(
+            """
+            INSERT INTO kingdom_troops (kingdom_id, unit_type, unit_level, quantity)
+            VALUES (:kid, :unit, :lvl, :qty)
+            ON CONFLICT (kingdom_id, unit_type, unit_level)
+            DO UPDATE SET quantity = kingdom_troops.quantity + EXCLUDED.quantity
+            """
+        ),
+        {"kid": kingdom_id, "unit": unit_type, "lvl": new_level, "qty": qty},
+    )
+
+
 def record_training(
     db: Session,
     kingdom_id: int,
@@ -37,6 +105,7 @@ def record_training(
     initiated_at: str,
     trained_by: Optional[str],
     modifiers_applied: Optional[dict],
+    xp_per_unit: int = 0,
 ) -> int:
     """
     Record a completed unit training session.
@@ -81,6 +150,10 @@ def record_training(
             },
         )
         row = result.fetchone()
+
+        _add_unit_xp(db, kingdom_id, unit_name, quantity, xp_per_unit)
+        level_up_units(db, kingdom_id, unit_name)
+
         db.commit()
         return int(row[0]) if row else 0
 
