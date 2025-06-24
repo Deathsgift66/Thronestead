@@ -77,10 +77,10 @@ async function loadYourScrolls() {
 
 // ✅ Scroll Card Renderer
 function renderScrollCard(scroll) {
-  const author = escapeHTML(scroll.author_display_name || 'Unknown');
+  const author = escapeHTML(scroll.author_name || ' (user)' || 'Unknown');
   const title = escapeHTML(scroll.title);
-  const body = escapeHTML(scroll.body);
-  const date = new Date(scroll.created_at).toLocaleString();
+  const body = escapeHTML(scroll.content);
+  const date = new Date(scroll.posted_at).toLocaleString();
 
   return `
     <div class="scroll-card">
