@@ -32,6 +32,15 @@ class DummyDB:
             return [{"kingdom_id": 1}]
         if "from terrain_map" in s:
             return DummyResult([{"tile_map": [["plains"]]}])
+        if "from kingdom_troop_slots" in s:
+            return [
+                {
+                    "kingdom_id": 1,
+                    "morale_bonus_buildings": 0,
+                    "morale_bonus_tech": 0,
+                    "morale_bonus_events": 0,
+                }
+            ]
         return []
     def execute(self, sql, params=None):
         self.queries.append((str(sql).lower(), params))

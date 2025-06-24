@@ -27,13 +27,22 @@ def test_process_unit_combat_applies_morale(monkeypatch):
         "quantity": 8,
         "morale": 100,
     }
-    resolver.process_unit_combat(attacker, [attacker, defender], [["plains"]], 1, 1, "kingdom")
+    bonuses = {1: 2, 2: 1}
+    resolver.process_unit_combat(
+        attacker,
+        [attacker, defender],
+        [["plains"]],
+        1,
+        1,
+        "kingdom",
+        bonuses,
+    )
 
     update_def = db.queries[0]
     assert "update unit_movements" in update_def[0]
     # params: remaining qty, new morale, remaining qty, id
     assert update_def[1][0] == 0
-    assert update_def[1][1] == 90.0
+    assert update_def[1][1] == 91.0
 
     update_att = db.queries[1]
     assert update_att[1] == (100.0, 1)
@@ -41,4 +50,4 @@ def test_process_unit_combat_applies_morale(monkeypatch):
     insert = db.queries[2]
     assert "insert into combat_logs" in insert[0]
     # morale shift parameter is at index 8
-    assert insert[1][8] == -10.0
+    assert insert[1][7] == -9.0
