@@ -135,6 +135,17 @@ def upgrade_building(
         )
 
     vb_id, current_level = row
+
+    # Fetch the maximum allowed level for this building
+    max_row = db.execute(
+        text("SELECT max_level FROM building_catalogue WHERE building_id = :bid"),
+        {"bid": building_id},
+    ).fetchone()
+    max_level = max_row[0] if max_row else None
+
+    if max_level is not None and current_level >= max_level:
+        raise HTTPException(status_code=400, detail="Building already at max level")
+
     next_level = current_level + 1
 
     db.execute(
