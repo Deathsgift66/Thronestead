@@ -1,0 +1,2206 @@
+Schema	Table	Name	
+public
+
+admin_alerts
+
+admin_alerts_pkey
+
+
+View definition
+
+public
+
+alliance_achievement_catalogue
+
+alliance_achievement_catalogue_pkey
+
+
+View definition
+
+public
+
+alliance_activity_log
+
+alliance_activity_log_pkey
+
+
+View definition
+
+public
+
+alliance_blacklist
+
+alliance_blacklist_pkey
+
+
+View definition
+
+public
+
+alliance_grants
+
+alliance_grants_pkey
+
+
+View definition
+
+public
+
+alliance_loans
+
+alliance_loans_pkey
+
+
+View definition
+
+public
+
+alliance_members
+
+alliance_members_pkey
+
+
+View definition
+
+public
+
+alliance_notices
+
+alliance_notices_pkey
+
+
+View definition
+
+public
+
+alliance_policies
+
+alliance_policies_pkey
+
+
+View definition
+
+public
+
+alliance_roles
+
+alliance_roles_pkey
+
+
+View definition
+
+public
+
+alliance_surrenders
+
+alliance_surrenders_pkey
+
+
+View definition
+
+public
+
+alliance_tax_collections
+
+alliance_tax_collections_pkey
+
+
+View definition
+
+public
+
+alliance_tax_policies
+
+alliance_tax_policies_pkey
+
+
+View definition
+
+public
+
+alliance_treaties
+
+alliance_treaties_pkey
+
+
+View definition
+
+public
+
+alliance_vault
+
+alliance_vault_pkey
+
+
+View definition
+
+public
+
+alliance_vault_transaction_log
+
+alliance_vault_transaction_log_pkey
+
+
+View definition
+
+public
+
+alliance_votes
+
+alliance_votes_pkey
+
+
+View definition
+
+public
+
+alliance_war_combat_logs
+
+alliance_war_combat_logs_pkey
+
+
+View definition
+
+public
+
+alliance_war_participants
+
+alliance_war_participants_pkey
+
+
+View definition
+
+public
+
+alliance_war_preplans
+
+alliance_war_preplans_pkey
+
+
+View definition
+
+public
+
+alliance_war_scores
+
+alliance_war_scores_pkey
+
+
+View definition
+
+public
+
+alliance_wars
+
+alliance_wars_pkey
+
+
+View definition
+
+public
+
+alliances
+
+alliances_pkey
+
+
+View definition
+
+public
+
+announcements
+
+announcements_pkey
+
+
+View definition
+
+public
+
+audit_log
+
+audit_log_pkey
+
+
+View definition
+
+public
+
+battle_resolution_logs
+
+battle_resolution_logs_pkey
+
+
+View definition
+
+public
+
+black_market_listings
+
+black_market_listings_pkey
+
+
+View definition
+
+public
+
+building_catalogue
+
+building_catalogue_pkey
+
+
+View definition
+
+public
+
+building_costs
+
+building_costs_pkey
+
+
+View definition
+
+public
+
+combat_logs
+
+combat_logs_pkey
+
+
+View definition
+
+public
+
+custom_troop_profiles
+
+custom_troop_profiles_pkey
+
+
+View definition
+
+public
+
+game_setting_values
+
+game_setting_values_pkey
+
+
+View definition
+
+public
+
+game_settings
+
+game_settings_pkey
+
+
+View definition
+
+public
+
+global_events
+
+global_events_pkey
+
+
+View definition
+
+public
+
+alliance_achievements
+
+idx_alliance_achievements_alliance_id
+
+
+View definition
+
+public
+
+alliance_activity_log
+
+idx_alliance_activity_log_alliance_id
+
+
+View definition
+
+public
+
+alliance_activity_log
+
+idx_alliance_activity_log_user_id
+
+
+View definition
+
+public
+
+alliance_grants
+
+idx_alliance_grants_alliance_id
+
+
+View definition
+
+public
+
+alliance_grants
+
+idx_alliance_grants_recipient_user_id
+
+
+View definition
+
+public
+
+alliance_loans
+
+idx_alliance_loans_alliance_id
+
+
+View definition
+
+public
+
+alliance_loans
+
+idx_alliance_loans_borrower_user_id
+
+
+View definition
+
+public
+
+alliance_members
+
+idx_alliance_members_alliance_id
+
+
+View definition
+
+public
+
+alliance_members
+
+idx_alliance_members_role_id
+
+
+View definition
+
+public
+
+alliance_members
+
+idx_alliance_members_user_id
+
+
+View definition
+
+public
+
+alliance_policies
+
+idx_alliance_policies_policy_id
+
+
+View definition
+
+public
+
+alliance_roles
+
+idx_alliance_roles_alliance_id
+
+
+View definition
+
+public
+
+alliance_tax_collections
+
+idx_alliance_tax_collections_user_id
+
+
+View definition
+
+public
+
+alliance_tax_policies
+
+idx_alliance_tax_policies_updated_by
+
+
+View definition
+
+public
+
+alliance_treaties
+
+idx_alliance_treaties_partner
+
+
+View definition
+
+public
+
+alliance_vault_transaction_log
+
+idx_alliance_vault_transaction_log_user_id
+
+
+View definition
+
+public
+
+alliance_votes
+
+idx_alliance_votes_alliance_id
+
+
+View definition
+
+public
+
+alliance_votes
+
+idx_alliance_votes_status
+
+
+View definition
+
+public
+
+alliance_war_combat_logs
+
+idx_alliance_war_combat_logs_alliance_war_id
+
+
+View definition
+
+public
+
+alliance_war_participants
+
+idx_alliance_war_participants_alliance_war_id
+
+
+View definition
+
+public
+
+alliance_war_participants
+
+idx_alliance_war_participants_kingdom_id
+
+
+View definition
+
+public
+
+alliance_war_preplans
+
+idx_alliance_war_preplans_alliance_war_id
+
+
+View definition
+
+public
+
+alliance_war_preplans
+
+idx_alliance_war_preplans_kingdom_id
+
+
+View definition
+
+public
+
+alliance_wars
+
+idx_alliance_wars_attacker
+
+
+View definition
+
+public
+
+alliance_wars
+
+idx_alliance_wars_attacker_alliance_id
+
+
+View definition
+
+public
+
+alliance_wars
+
+idx_alliance_wars_defender
+
+
+View definition
+
+public
+
+alliance_wars
+
+idx_alliance_wars_defender_alliance_id
+
+
+View definition
+
+public
+
+audit_log
+
+idx_audit_log_kingdom_id
+
+
+View definition
+
+public
+
+audit_log
+
+idx_audit_log_user_id
+
+
+View definition
+
+public
+
+battle_resolution_logs
+
+idx_battle_resolution_logs_alliance_war_id
+
+
+View definition
+
+public
+
+battle_resolution_logs
+
+idx_battle_resolution_logs_war_id
+
+
+View definition
+
+public
+
+black_market_listings
+
+idx_black_market_listings_item_type
+
+
+View definition
+
+public
+
+black_market_listings
+
+idx_black_market_listings_seller
+
+
+View definition
+
+public
+
+black_market_listings
+
+idx_black_market_listings_seller_id
+
+
+View definition
+
+public
+
+combat_logs
+
+idx_combat_logs_war
+
+
+View definition
+
+public
+
+combat_logs
+
+idx_combat_logs_war_id
+
+
+View definition
+
+public
+
+game_settings
+
+idx_game_settings_updated_by
+
+
+View definition
+
+public
+
+kingdom_achievements
+
+idx_kingdom_achievements_kingdom_id
+
+
+View definition
+
+public
+
+kingdom_history_log
+
+idx_kingdom_history_log_kingdom_id
+
+
+View definition
+
+public
+
+kingdom_religion
+
+idx_kingdom_religion_kingdom_id
+
+
+View definition
+
+public
+
+kingdom_research_tracking
+
+idx_kingdom_research_tracking_kingdom
+
+
+View definition
+
+public
+
+kingdom_research_tracking
+
+idx_kingdom_research_tracking_kingdom_id
+
+
+View definition
+
+public
+
+kingdom_research_tracking
+
+idx_kingdom_research_tracking_tech_code
+
+
+View definition
+
+public
+
+kingdom_spies
+
+idx_kingdom_spies_kingdom_id
+
+
+View definition
+
+public
+
+kingdom_titles
+
+idx_kingdom_titles_kingdom_id
+
+
+View definition
+
+public
+
+kingdom_treaties
+
+idx_kingdom_treaties_partner_id
+
+
+View definition
+
+public
+
+kingdom_troops
+
+idx_kingdom_troops_kingdom_id
+
+
+View definition
+
+public
+
+kingdom_troops
+
+idx_kingdom_troops_unit_type
+
+
+View definition
+
+public
+
+kingdom_villages
+
+idx_kingdom_villages_kingdom_id
+
+
+View definition
+
+public
+
+kingdoms
+
+idx_kingdoms_alliance_id
+
+
+View definition
+
+public
+
+kingdoms
+
+idx_kingdoms_region
+
+
+View definition
+
+public
+
+kingdoms
+
+idx_kingdoms_status
+
+
+View definition
+
+public
+
+kingdoms
+
+idx_kingdoms_user_id
+
+
+View definition
+
+public
+
+market_listings
+
+idx_market_listings_item_type
+
+
+View definition
+
+public
+
+news_articles
+
+idx_news_articles_published_at
+
+
+View definition
+
+public
+
+notifications
+
+idx_notifications_user_id
+
+
+View definition
+
+public
+
+player_messages
+
+idx_player_messages_recipient_id
+
+
+View definition
+
+public
+
+player_messages
+
+idx_player_messages_user_id
+
+
+View definition
+
+public
+
+project_alliance_catalogue
+
+idx_project_alliance_catalogue_key
+
+
+View definition
+
+public
+
+project_player_catalogue
+
+idx_project_player_catalogue_modified_by
+
+
+View definition
+
+public
+
+project_player_catalogue
+
+idx_project_player_catalogue_user_id
+
+
+View definition
+
+public
+
+projects_alliance
+
+idx_projects_alliance_alliance_id
+
+
+View definition
+
+public
+
+projects_alliance
+
+idx_projects_alliance_built_by
+
+
+View definition
+
+public
+
+projects_alliance_in_progress
+
+idx_projects_alliance_in_progress_built_by
+
+
+View definition
+
+public
+
+projects_player
+
+idx_projects_player_kingdom
+
+
+View definition
+
+public
+
+projects_player
+
+idx_projects_player_kingdom_id
+
+
+View definition
+
+public
+
+projects_player
+
+idx_projects_player_project_code
+
+
+View definition
+
+public
+
+quest_alliance_contributions
+
+idx_quest_alliance_contributions_alliance
+
+
+View definition
+
+public
+
+quest_alliance_contributions
+
+idx_quest_alliance_contributions_quest_code
+
+
+View definition
+
+public
+
+quest_alliance_contributions
+
+idx_quest_alliance_contributions_user_id
+
+
+View definition
+
+public
+
+quest_alliance_tracking
+
+idx_quest_alliance_tracking_alliance_id
+
+
+View definition
+
+public
+
+quest_alliance_tracking
+
+idx_quest_alliance_tracking_quest_code
+
+
+View definition
+
+public
+
+quest_alliance_tracking
+
+idx_quest_alliance_tracking_started_by
+
+
+View definition
+
+public
+
+quest_kingdom_tracking
+
+idx_quest_kingdom_tracking_kingdom_id
+
+
+View definition
+
+public
+
+quest_kingdom_tracking
+
+idx_quest_kingdom_tracking_quest_code
+
+
+View definition
+
+public
+
+region_catalogue
+
+idx_region_catalogue_region_name
+
+
+View definition
+
+public
+
+spy_missions
+
+idx_spy_missions_active
+
+
+View definition
+
+public
+
+spy_missions
+
+idx_spy_missions_kingdom_id
+
+
+View definition
+
+public
+
+tech_catalogue
+
+idx_tech_catalogue_category
+
+
+View definition
+
+public
+
+tech_catalogue
+
+idx_tech_catalogue_modifiers_gin
+
+
+View definition
+
+public
+
+terrain_map
+
+idx_terrain_map_features_gin
+
+
+View definition
+
+public
+
+terrain_map
+
+idx_terrain_map_generated_by
+
+
+View definition
+
+public
+
+terrain_map
+
+idx_terrain_map_war
+
+
+View definition
+
+public
+
+trade_logs
+
+idx_trade_logs_buyer
+
+
+View definition
+
+public
+
+trade_logs
+
+idx_trade_logs_seller
+
+
+View definition
+
+public
+
+training_history
+
+idx_training_history_kingdom
+
+
+View definition
+
+public
+
+training_history
+
+idx_training_history_kingdom_id
+
+
+View definition
+
+public
+
+training_history
+
+idx_training_history_modifiers_gin
+
+
+View definition
+
+public
+
+training_history
+
+idx_training_history_unit_id
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_active
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_initiated_by
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_kingdom
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_kingdom_id
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_kingdom_status
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_modifiers_gin
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_status
+
+
+View definition
+
+public
+
+training_queue
+
+idx_training_queue_unit_id
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_kingdom
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_kingdom_id
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_movement_path_gin
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_path_gin
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_target_priority_gin
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_visible_enemies_gin
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_war
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_war_id
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_war_kingdom
+
+
+View definition
+
+public
+
+unit_movements
+
+idx_unit_movements_war_status
+
+
+View definition
+
+public
+
+unit_stats
+
+idx_unit_stats_special_traits_gin
+
+
+View definition
+
+public
+
+user_active_sessions
+
+idx_user_active_sessions_user_id
+
+
+View definition
+
+public
+
+users
+
+idx_users_alliance_id
+
+
+View definition
+
+public
+
+users
+
+idx_users_auth_user_id
+
+
+View definition
+
+public
+
+users
+
+idx_users_is_admin
+
+
+View definition
+
+public
+
+users
+
+idx_users_kingdom_id
+
+
+View definition
+
+public
+
+village_buildings
+
+idx_village_buildings_constructed_by
+
+
+View definition
+
+public
+
+village_modifiers
+
+idx_village_modifiers_applied_by
+
+
+View definition
+
+public
+
+village_production
+
+idx_village_production_updated_by
+
+
+View definition
+
+public
+
+war_preplans
+
+idx_war_preplans_kingdom
+
+
+View definition
+
+public
+
+war_preplans
+
+idx_war_preplans_kingdom_id
+
+
+View definition
+
+public
+
+war_preplans
+
+idx_war_preplans_war
+
+
+View definition
+
+public
+
+war_preplans
+
+idx_war_preplans_war_id
+
+
+View definition
+
+public
+
+wars
+
+idx_wars_attacker
+
+
+View definition
+
+public
+
+wars
+
+idx_wars_attacker_id
+
+
+View definition
+
+public
+
+wars
+
+idx_wars_defender
+
+
+View definition
+
+public
+
+wars
+
+idx_wars_defender_id
+
+
+View definition
+
+public
+
+wars_tactical
+
+idx_wars_tactical_attacker
+
+
+View definition
+
+public
+
+wars_tactical
+
+idx_wars_tactical_defender
+
+
+View definition
+
+public
+
+kingdom_achievement_catalogue
+
+kingdom_achievement_catalogue_pkey
+
+
+View definition
+
+public
+
+kingdom_castle_progression
+
+kingdom_castle_progression_pkey
+
+
+View definition
+
+public
+
+kingdom_history_log
+
+kingdom_history_log_pkey
+
+
+View definition
+
+public
+
+kingdom_knights
+
+kingdom_knights_pkey
+
+
+View definition
+
+public
+
+kingdom_nobles
+
+kingdom_nobles_pkey
+
+
+View definition
+
+public
+
+kingdom_religion
+
+kingdom_religion_pkey
+
+
+View definition
+
+public
+
+kingdom_research_tracking
+
+kingdom_research_tracking_pkey
+
+
+View definition
+
+public
+
+kingdom_resource_transfers
+
+kingdom_resource_transfers_pkey
+
+
+View definition
+
+public
+
+kingdom_resources
+
+kingdom_resources_pkey
+
+
+View definition
+
+public
+
+kingdom_spies
+
+kingdom_spies_pkey
+
+
+View definition
+
+public
+
+kingdom_temples
+
+kingdom_temples_pkey
+
+
+View definition
+
+public
+
+kingdom_treaties
+
+kingdom_treaties_pkey
+
+
+View definition
+
+public
+
+kingdom_troop_slots
+
+kingdom_troop_slots_pkey
+
+
+View definition
+
+public
+
+kingdom_troops
+
+kingdom_troops_pkey
+
+
+View definition
+
+public
+
+kingdom_villages
+
+kingdom_villages_pkey
+
+
+View definition
+
+public
+
+kingdom_vip_status
+
+kingdom_vip_status_pkey
+
+
+View definition
+
+public
+
+kingdoms
+
+kingdoms_pkey
+
+
+View definition
+
+public
+
+kingdoms
+
+kingdoms_user_id_key
+
+
+View definition
+
+public
+
+market_listings
+
+market_listings_pkey
+
+
+View definition
+
+public
+
+message_metadata
+
+message_metadata_pkey
+
+
+View definition
+
+public
+
+news_articles
+
+news_articles_pkey
+
+
+View definition
+
+public
+
+noble_houses
+
+noble_houses_pkey
+
+
+View definition
+
+public
+
+notification_metadata
+
+notification_metadata_pkey
+
+
+View definition
+
+public
+
+notifications
+
+notifications_pkey
+
+
+View definition
+
+public
+
+player_messages
+
+player_messages_pkey
+
+
+View definition
+
+public
+
+policies_laws_catalogue
+
+policies_laws_catalogue_pkey
+
+
+View definition
+
+public
+
+policy_change_log
+
+policy_change_log_pkey
+
+
+View definition
+
+public
+
+project_alliance_catalogue
+
+project_alliance_catalogue_pkey
+
+
+View definition
+
+public
+
+project_alliance_catalogue
+
+project_alliance_catalogue_project_key_unique
+
+
+View definition
+
+public
+
+project_alliance_contributions
+
+project_alliance_contributions_pkey
+
+
+View definition
+
+public
+
+project_modifiers
+
+project_modifiers_pkey
+
+
+View definition
+
+public
+
+project_player_catalogue
+
+project_player_catalogue_pkey
+
+
+View definition
+
+public
+
+projects_alliance_in_progress
+
+projects_alliance_in_progress_pkey
+
+
+View definition
+
+public
+
+projects_alliance
+
+projects_alliance_pkey
+
+
+View definition
+
+public
+
+projects_player
+
+projects_player_pkey
+
+
+View definition
+
+public
+
+quest_alliance_catalogue
+
+quest_alliance_catalogue_pkey
+
+
+View definition
+
+public
+
+quest_alliance_contributions
+
+quest_alliance_contributions_pkey
+
+
+View definition
+
+public
+
+quest_alliance_tracking
+
+quest_alliance_tracking_pkey
+
+
+View definition
+
+public
+
+quest_kingdom_catalogue
+
+quest_kingdom_catalogue_pkey
+
+
+View definition
+
+public
+
+quest_kingdom_tracking
+
+quest_kingdom_tracking_pkey
+
+
+View definition
+
+public
+
+region_bonuses
+
+region_bonuses_pkey
+
+
+View definition
+
+public
+
+region_catalogue
+
+region_catalogue_pkey
+
+
+View definition
+
+public
+
+region_structures
+
+region_structures_pkey
+
+
+View definition
+
+public
+
+security_tips
+
+security_tips_pkey
+
+
+View definition
+
+public
+
+spy_defense
+
+spy_defense_pkey
+
+
+View definition
+
+public
+
+spy_missions
+
+spy_missions_pkey
+
+
+View definition
+
+public
+
+system_event_hooks
+
+system_event_hooks_pkey
+
+
+View definition
+
+public
+
+tech_catalogue
+
+tech_catalogue_pkey
+
+
+View definition
+
+public
+
+terrain_map
+
+terrain_map_pkey
+
+
+View definition
+
+public
+
+town_crier_scrolls
+
+town_crier_scrolls_pkey
+
+
+View definition
+
+public
+
+trade_logs
+
+trade_logs_pkey
+
+
+View definition
+
+public
+
+training_catalog
+
+training_catalog_pkey
+
+
+View definition
+
+public
+
+training_catalog
+
+training_catalog_unit_name_key
+
+
+View definition
+
+public
+
+training_costs
+
+training_costs_pkey
+
+
+View definition
+
+public
+
+training_history
+
+training_history_pkey
+
+
+View definition
+
+public
+
+training_queue
+
+training_queue_pkey
+
+
+View definition
+
+public
+
+treaty_modifiers
+
+treaty_modifiers_pkey
+
+
+View definition
+
+public
+
+treaty_negotiation_log
+
+treaty_negotiation_log_pkey
+
+
+View definition
+
+public
+
+treaty_terms
+
+treaty_terms_pkey
+
+
+View definition
+
+public
+
+treaty_type_catalogue
+
+treaty_type_catalogue_pkey
+
+
+View definition
+
+public
+
+tutorial_steps
+
+tutorial_steps_pkey
+
+
+View definition
+
+public
+
+unit_counters
+
+unit_counters_pkey
+
+
+View definition
+
+public
+
+unit_meta_groups
+
+unit_meta_groups_pkey
+
+
+View definition
+
+public
+
+unit_movements
+
+unit_movements_pkey
+
+
+View definition
+
+public
+
+unit_stats
+
+unit_stats_pkey
+
+
+View definition
+
+public
+
+unit_upgrade_paths
+
+unit_upgrade_paths_pkey
+
+
+View definition
+
+public
+
+user_active_sessions
+
+user_active_sessions_pkey
+
+
+View definition
+
+public
+
+user_setting_entries
+
+user_setting_entries_pkey
+
+
+View definition
+
+public
+
+user_tokens
+
+user_tokens_pkey
+
+
+View definition
+
+public
+
+users
+
+users_email_key
+
+
+View definition
+
+public
+
+users
+
+users_pkey
+
+
+View definition
+
+public
+
+users
+
+users_username_key
+
+
+View definition
+
+public
+
+village_buildings
+
+village_buildings_pkey
+
+
+View definition
+
+public
+
+village_events
+
+village_events_pkey
+
+
+View definition
+
+public
+
+village_military
+
+village_military_pkey
+
+
+View definition
+
+public
+
+village_modifiers
+
+village_modifiers_pkey
+
+
+View definition
+
+public
+
+village_production
+
+village_production_pkey
+
+
+View definition
+
+public
+
+village_queue
+
+village_queue_pkey
+
+
+View definition
+
+public
+
+village_resources
+
+village_resources_pkey
+
+
+View definition
+
+public
+
+villages
+
+villages_pkey
+
+
+View definition
+
+public
+
+vip_perk_entries
+
+vip_perk_entries_pkey
+
+
+View definition
+
+public
+
+war_preplans
+
+war_preplans_pkey
+
+
+View definition
+
+public
+
+war_scores
+
+war_scores_pkey
+
+
+View definition
+
+public
+
+wars
+
+wars_pkey
+
+
+View definition
+
+public
+
+wars_tactical
+
+wars_tactical_pkey
+
+
+View definition
+
