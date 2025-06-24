@@ -5,6 +5,8 @@ Role: API routes for market.
 Version: 2025-06-21
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, PositiveFloat, conint
 from sqlalchemy import or_
@@ -19,6 +21,7 @@ from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/market", tags=["market"])
+logger = logging.getLogger("Thronestead.Market")
 
 
 class ListingPayload(BaseModel):
@@ -91,8 +94,11 @@ def list_item(
     try:
         kid = get_kingdom_id(db, user_id)
         spend_resources(db, kid, {payload.item: payload.quantity})
-    except Exception:
-        pass
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to reserve listing resources: %s", exc)
+        raise HTTPException(status_code=500, detail="Unable to list item") from exc
 
     existing = (
         db.query(MarketListing)
@@ -152,8 +158,11 @@ def cancel_listing(
     try:
         kid = get_kingdom_id(db, user_id)
         gain_resources(db, kid, {listing.item: listing.quantity})
-    except Exception:
-        pass
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to refund listing resources: %s", exc)
+        raise HTTPException(status_code=500, detail="Unable to cancel listing") from exc
 
     db.delete(listing)
     db.commit()
@@ -191,8 +200,12 @@ def buy_item(
     try:
         buyer_kid = get_kingdom_id(db, user_id)
         spend_resources(db, buyer_kid, {"gold": int(listing.price * payload.quantity)})
-    except Exception:
-        pass
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Buyer resource deduction failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Purchase failed") from exc
+
     try:
         seller_kid = (
             get_kingdom_id(db, str(listing.seller_id)) if listing.seller_id else None
@@ -201,14 +214,20 @@ def buy_item(
             gain_resources(
                 db, seller_kid, {"gold": int(listing.price * payload.quantity)}
             )
-    except Exception:
-        pass
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Seller gold credit failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Purchase failed") from exc
 
     try:
         if buyer_kid:
             gain_resources(db, buyer_kid, {listing.item: payload.quantity})
-    except Exception:
-        pass
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Buyer item credit failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Purchase failed") from exc
 
     if payload.quantity < listing.quantity:
         listing.quantity -= payload.quantity
