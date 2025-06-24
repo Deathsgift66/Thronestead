@@ -34,8 +34,8 @@ class DummyDB:
         if q.startswith("INSERT INTO kingdom_achievements"):
             self.inserted.append(params)
             return DummyResult()
-        if "SELECT reward, points FROM kingdom_achievement_catalogue" in q:
-            return DummyResult((self.reward, 5))
+        if "SELECT reward, prestige_reward, name" in q:
+            return DummyResult((self.reward, 5, "First Gold"))
         if "SELECT reward FROM kingdom_achievement_catalogue" in q:
             return DummyResult((self.reward,))
         if q.startswith("UPDATE kingdoms SET prestige_score"):
@@ -63,6 +63,8 @@ def test_award_new_achievement():
     assert db.inserted[0]["kid"] == 1
     assert len(db.prestige_updates) == 1
     assert len(db.history_logs) == 1
+    assert db.history_logs[0]["etype"] == "ACHIEVEMENT_UNLOCKED"
+    assert db.history_logs[0]["details"] == "Earned First Gold"
 
 
 def test_award_existing_returns_none():
