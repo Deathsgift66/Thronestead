@@ -205,9 +205,18 @@ def restore_kingdom_morale(db: Session) -> int:
         text(
             """
             UPDATE kingdom_troop_slots
-               SET morale = LEAST(100, morale + 5 + morale_bonus_buildings + morale_bonus_tech + morale_bonus_events),
-                   last_morale_update = now()
+               SET morale = LEAST(
+                       100,
+                       morale
+                       + 5
+                       + morale_bonus_buildings
+                       + morale_bonus_tech
+                       + morale_bonus_events
+                   ),
+                   last_morale_update = NOW()
              WHERE morale < 100
+               AND NOT currently_in_combat
+               AND last_morale_update + morale_cooldown_seconds * interval '1 second' <= NOW()
             """
         )
     )

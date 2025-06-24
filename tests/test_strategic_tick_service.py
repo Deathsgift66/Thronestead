@@ -80,6 +80,9 @@ def test_restore_kingdom_morale_updates():
     db = DummyDB()
     count = restore_kingdom_morale(db)
     assert count == 1
-    assert any("kingdom_troop_slots" in q for q in db.queries)
+    joined = " ".join(db.queries)
+    assert "kingdom_troop_slots" in joined
+    assert "currently_in_combat" in joined
+    assert "morale_cooldown_seconds" in joined
     assert db.commits == 1
 
