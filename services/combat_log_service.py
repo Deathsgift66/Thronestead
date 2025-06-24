@@ -180,3 +180,42 @@ def summarize_combat_outcome(db: Session, war_id: int) -> dict:
         "total_damage": result[1] or 0,
         "total_morale_shift": result[2] or 0,
     }
+
+def apply_war_outcome_morale(db: Session, war_id: int) -> int:
+    """Apply morale bonuses or penalties to kingdoms based on war outcome."""
+    row = db.execute(
+        text(
+            """
+            SELECT attacker_kingdom_id, defender_kingdom_id, outcome
+              FROM wars
+             WHERE war_id = :wid
+            """
+        ),
+        {"wid": war_id},
+    ).fetchone()
+    if not row:
+        return 0
+
+    attacker_id, defender_id, outcome = row
+    updates: list[tuple[int, int]]
+    if outcome == "attacker_win":
+        updates = [(attacker_id, 10), (defender_id, -15)]
+    elif outcome == "defender_win":
+        updates = [(defender_id, 10), (attacker_id, -15)]
+    else:
+        updates = [(attacker_id, -5), (defender_id, -5)]
+
+    for kid, delta in updates:
+        db.execute(
+            text(
+                """
+                UPDATE kingdom_troop_slots
+                   SET morale = LEAST(GREATEST(morale + :delta, 0), 100),
+                       last_morale_update = now()
+                 WHERE kingdom_id = :kid
+                """
+            ),
+            {"delta": delta, "kid": kid},
+        )
+
+    return len(updates)
