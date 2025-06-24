@@ -161,11 +161,12 @@ function subscribeRealtime() {
 function renderUnitCard(unit) {
   const gold = unit.cost?.gold || 0;
   const imgName = escapeHTML(unit.unit_name || unit.name);
+  const role = unit.is_support ? 'Support' : unit.is_siege ? 'Siege' : unit.type;
   return `
     <div class="unit-card border rounded-lg p-4 shadow hover:shadow-lg transition">
       <h3 class="text-xl font-bold">${escapeHTML(unit.name)}</h3>
       <img src="Assets/troops/${imgName}.png" alt="${escapeHTML(unit.name)}" class="w-16 h-16 mx-auto my-2" onerror="this.src='/Assets/icon-sword.svg'; this.onerror=null;" />
-      <p><strong>Type:</strong> ${escapeHTML(unit.type)}</p>
+      <p><strong>Type:</strong> ${escapeHTML(role)}</p>
       <p><strong>Training:</strong> ${unit.training_time}s</p>
       <p><strong>Cost:</strong> ${gold} gold</p>
       <button class="btn mt-2 recruit-btn" data-unit-id="${unit.id}">Train</button>
@@ -222,9 +223,10 @@ function renderTrainingItem(entry) {
   const unit = availableUnits.find(u => u.name === entry.unit_name) || {};
   const secs = (unit.training_time || 0) * (entry.quantity || 1);
   const endAttr = entry.training_ends_at ? `data-end="${entry.training_ends_at}"` : '';
+  const roleTag = entry.is_support ? ' (Support)' : entry.is_siege ? ' (Siege)' : '';
   return `
     <div class="training-item border p-3 rounded mb-2 shadow-sm" data-seconds="${secs}" ${endAttr}>
-      <strong>${escapeHTML(entry.unit_name)} x${entry.quantity}</strong> — ETA: <span class="eta-countdown">${formatTime(secs)}</span>
+      <strong>${escapeHTML(entry.unit_name)}${roleTag} x${entry.quantity}</strong> — ETA: <span class="eta-countdown">${formatTime(secs)}</span>
       <div class="progress-bar-bg mt-1">
         <div class="progress-bar-fill"></div>
       </div>

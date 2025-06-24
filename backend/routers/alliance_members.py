@@ -12,6 +12,7 @@ Version: 2025-06-21
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import Alliance, AllianceMember
@@ -49,6 +50,25 @@ class ContributionPayload(BaseModel):
 class TransferLeadershipPayload(BaseModel):
     new_leader_id: str
     alliance_id: int = 1
+
+
+# === Utility ===
+
+
+MANAGEMENT_ROLES = {"Leader", "Co-Leader", "Officer"}
+
+
+def validate_management_role(db: Session, user_id: str) -> int:
+    row = db.execute(
+        text("SELECT alliance_id, alliance_role FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    if not row or row[0] is None:
+        raise HTTPException(status_code=403, detail="Not in an alliance")
+    aid, role = row
+    if role not in MANAGEMENT_ROLES:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    return aid
 
 
 # === ROUTES ===
@@ -134,7 +154,7 @@ def promote(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    return _change_rank(payload, db, "Promoted")
+    return _change_rank(payload, db, "Promoted", user_id)
 
 
 @router.post("/demote")
@@ -143,10 +163,11 @@ def demote(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    return _change_rank(payload, db, "Demoted")
+    return _change_rank(payload, db, "Demoted", user_id)
 
 
-def _change_rank(payload: RankPayload, db: Session, action: str):
+def _change_rank(payload: RankPayload, db: Session, action: str, acting_user_id: str):
+    aid = validate_management_role(db, acting_user_id)
     member = (
         db.query(AllianceMember)
         .filter_by(
@@ -157,6 +178,8 @@ def _change_rank(payload: RankPayload, db: Session, action: str):
     )
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
+    if member.alliance_id != aid:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     member.rank = payload.new_rank
     db.commit()
     log_action(db, payload.user_id, f"{action.lower()}_rank", payload.new_rank)
@@ -169,6 +192,7 @@ def remove(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    aid = validate_management_role(db, user_id)
     member = (
         db.query(AllianceMember)
         .filter_by(
@@ -179,6 +203,8 @@ def remove(
     )
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
+    if member.alliance_id != aid:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db.delete(member)
     db.commit()
     log_action(db, user_id, "remove_member", f"Removed {payload.user_id}")
@@ -191,9 +217,12 @@ def contribute(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    aid = validate_management_role(db, user_id)
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
+    if member.alliance_id != aid:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     member.contribution += payload.amount
     db.commit()
     return {"message": "Contribution recorded", "total": member.contribution}

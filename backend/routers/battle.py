@@ -54,6 +54,11 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
         db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
     )
     for mov in movements:
+        stat = (
+            db.query(models.UnitStat)
+            .filter(models.UnitStat.unit_type == mov.unit_type)
+            .first()
+        )
         war.units.append(
             Unit(
                 unit_id=mov.movement_id,
@@ -63,6 +68,8 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
                 x=mov.position_x,
                 y=mov.position_y,
                 stance=mov.stance,
+                is_support=bool(stat.is_support) if stat else False,
+                is_siege=bool(stat.is_siege) if stat else False,
             )
         )
     return war
@@ -163,6 +170,36 @@ def get_battle_scoreboard(
         "attacker_score": row.attacker_score,
         "defender_score": row.defender_score,
         "victor": row.victor,
+    }
+
+
+@router.get("/status/{war_id}")
+def get_battle_status(
+    war_id: int,
+    user_id: str | None = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Return current status info for ``war_id``."""
+
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        raise HTTPException(status_code=404, detail="War not found")
+
+    score = db.query(models.WarScore).filter(models.WarScore.war_id == war_id).first()
+
+    return {
+        "weather": war.weather,
+        "phase": war.phase,
+        "castle_hp": war.castle_hp,
+        "battle_tick": war.battle_tick,
+        "tick_interval_seconds": war.tick_interval_seconds,
+        "attacker_score": score.attacker_score if score else 0,
+        "defender_score": score.defender_score if score else 0,
+        "fog_of_war": bool(war.fog_of_war),
     }
 
 
@@ -277,6 +314,11 @@ def get_live_battle(
         "war_id": war_id,
         "map_width": terrain.map_width if terrain else None,
         "map_height": terrain.map_height if terrain else None,
+        "weather": war.weather,
+        "phase": war.phase,
+        "castle_hp": war.castle_hp,
+        "battle_tick": war.battle_tick,
+        "tick_interval_seconds": war.tick_interval_seconds,
         "units": [
             {
                 "movement_id": m.movement_id,

@@ -1752,3 +1752,15 @@ CREATE TABLE public.wars_tactical (
   CONSTRAINT wars_tactical_terrain_id_fkey FOREIGN KEY (terrain_id) REFERENCES public.terrain_map(terrain_id),
   CONSTRAINT wars_tactical_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars(war_id)
 );
+CREATE TABLE public.kingdom_resource_transfers (
+  transfer_id integer NOT NULL DEFAULT nextval('kingdom_resource_transfers_transfer_id_seq'::regclass),
+  from_kingdom_id integer,
+  to_kingdom_id integer,
+  resource_type text,
+  amount bigint,
+  reason text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_resource_transfers_pkey PRIMARY KEY (transfer_id),
+  CONSTRAINT kingdom_resource_transfers_from_kingdom_id_fkey FOREIGN KEY (from_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_resource_transfers_to_kingdom_id_fkey FOREIGN KEY (to_kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);

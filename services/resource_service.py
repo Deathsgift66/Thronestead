@@ -13,6 +13,8 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend.models import KingdomResourceTransfer
+
 from .text_utils import sanitize_plain_text
 
 logger = logging.getLogger(__name__)

@@ -41,6 +41,8 @@ class Unit:
     stance: str
     morale: float = 1.0
     hp: int = 100
+    is_support: bool = False
+    is_siege: bool = False
 
 
 @dataclass
@@ -50,6 +52,7 @@ class WarState:
     castle_hp: int
     map_width: int
     map_height: int
+    weather: str = "clear"
     units: List[Unit] = field(default_factory=list)
     terrain: List[List[TerrainType]] = field(default_factory=list)
 
@@ -83,9 +86,12 @@ class FogOfWar:
     """Visibility calculations taking terrain and unit vision into account."""
 
     def visible_tiles(
-        self, units: List[Unit], terrain: List[List[TerrainType]]
+        self,
+        units: List[Unit],
+        terrain: List[List[TerrainType]],
+        weather: str = "clear",
     ) -> Set[Tuple[int, int]]:
-        """Return all tiles visible to the provided units."""
+        """Return all tiles visible to the provided units factoring in weather."""
 
         visible: Set[Tuple[int, int]] = set()
         width = TerrainGenerator.WIDTH
@@ -98,6 +104,12 @@ class FogOfWar:
                 vision += 2
             elif tile == TerrainType.FOREST:
                 vision -= 1
+
+            if weather == "fog":
+                vision -= 2
+            elif weather == "rain":
+                vision -= 1
+            vision = max(1, vision)
 
             min_y = max(0, u.y - vision)
             max_y = min(height - 1, u.y + vision)
@@ -127,6 +139,23 @@ class CombatResolver:
         for pos, units in units_by_pos.items():
             if len(units) < 2:
                 continue
+
+            # Apply support buffs/heals before attacks
+            support_units = [u for u in units if u.is_support]
+            if support_units:
+                for sup in support_units:
+                    for ally in units:
+                        if ally.kingdom_id == sup.kingdom_id and ally is not sup:
+                            ally.hp = min(ally.hp + 5, 100)
+                            ally.morale = min(1.0, ally.morale + 0.05)
+                            logs.append(
+                                {
+                                    "event": "support",
+                                    "support_id": sup.unit_id,
+                                    "target_id": ally.unit_id,
+                                    "pos": pos,
+                                }
+                            )
 
             to_remove: List[Unit] = []
             for i, attacker in enumerate(units):
@@ -201,14 +230,14 @@ class BattleTickHandler:
         logs: List[Dict] = []
 
         # Vision pass (for client rendering)
-        visible = self.fog.visible_tiles(war.units, war.terrain)
+        visible = self.fog.visible_tiles(war.units, war.terrain, war.weather)
         logs.append({"event": "vision_update", "tiles": len(visible)})
 
         # Resolve combat
         self.combat.resolve(war, logs)
 
         # Siege damage phase (castle damage from siege units)
-        siege_count = sum(1 for u in war.units if u.unit_type == "siege")
+        siege_count = sum(1 for u in war.units if u.is_siege)
         if siege_count:
             damage = siege_count * 5
             war.castle_hp = max(0, war.castle_hp - damage)

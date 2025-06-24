@@ -1473,6 +1473,20 @@ class KingdomResources(Base):
     pitchforks = Column(BigInteger, default=0)
 
 
+class KingdomResourceTransfer(Base):
+    """Log of kingdom-to-kingdom resource transfers."""
+
+    __tablename__ = "kingdom_resource_transfers"
+
+    transfer_id = Column(Integer, primary_key=True, autoincrement=True)
+    from_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
+    to_kingdom_id = Column(Integer, ForeignKey("kingdoms.kingdom_id"))
+    resource_type = Column(Text)
+    amount = Column(BigInteger)
+    reason = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class KingdomVillage(Base):
     __tablename__ = "kingdom_villages"
 

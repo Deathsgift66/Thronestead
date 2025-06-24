@@ -199,6 +199,25 @@ def check_war_status(db: Session) -> int:
     return count
 
 
+def restore_kingdom_morale(db: Session) -> int:
+    """Gradually restore troop morale for all kingdoms."""
+    result = db.execute(
+        text(
+            """
+            UPDATE kingdom_troop_slots
+               SET morale = LEAST(100, morale + 5 + morale_bonus_buildings + morale_bonus_tech + morale_bonus_events),
+                   last_morale_update = now()
+             WHERE morale < 100
+            """
+        )
+    )
+    db.commit()
+    count = getattr(result, "rowcount", 0)
+    if count:
+        _log_unified(db, "morale_restored", f"{count} kingdoms morale restored")
+    return count
+
+
 # ------------------------------------------------------------
 # Strategic Tick Executor
 # ------------------------------------------------------------
@@ -221,6 +240,7 @@ def process_tick(db: Session) -> None:
             "treaties": expire_treaties(db),
             "wars_started": activate_pending_wars(db),
             "wars_concluded": check_war_status(db),
+            "morale_restored": restore_kingdom_morale(db),
         }
         logger.info("[Strategic Tick] %s", results)
     except Exception as e:

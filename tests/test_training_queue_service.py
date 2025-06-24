@@ -61,10 +61,12 @@ def test_add_training_order_inserts():
 
 def test_fetch_queue_returns_rows():
     db = DummyDB()
-    db.rows = [(1, "Knight", 10, "2025-06-10", "queued")]
+    db.rows = [(1, "Knight", 10, "2025-06-10", "queued", False, False)]
     rows = fetch_queue(db, 1)
     assert len(rows) == 1
     assert rows[0]["unit_name"] == "Knight"
+    assert rows[0]["is_support"] is False
+    assert rows[0]["is_siege"] is False
 
 
 def test_cancel_and_complete():

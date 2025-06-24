@@ -121,10 +121,11 @@ function renderTrainingQueue(queue) {
     card.className = "queue-card";
     const endMs = new Date(entry.training_ends_at).getTime();
     const endsIn = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
+    const roleTag = entry.is_support ? ' (Support)' : entry.is_siege ? ' (Siege)' : '';
 
     card.dataset.end = endMs;
     card.innerHTML = `
-      <h4>${escapeHTML(entry.unit_name)} x ${entry.quantity}</h4>
+      <h4>${escapeHTML(entry.unit_name)}${roleTag} x ${entry.quantity}</h4>
       <p>Ends In: <span class="countdown">${formatTime(endsIn)}</span></p>
       <button class="action-btn cancel-btn" data-qid="${entry.queue_id}">Cancel</button>
     `;

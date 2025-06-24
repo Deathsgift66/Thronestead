@@ -8,11 +8,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import Alliance, AllianceMember
+from backend.models import Alliance, AllianceMember, User
 from backend.routers.alliance_members import (
     RankPayload,
     TransferLeadershipPayload,
-    get_current_user_id,
     promote,
     transfer_leadership,
 )
@@ -29,6 +28,15 @@ def test_promote_updates_rank():
     Session = setup_db()
     db = Session()
     db.add(AllianceMember(alliance_id=1, user_id="u1", username="A", rank="Member"))
+    db.add(
+        User(
+            user_id="admin",
+            username="Admin",
+            email="a@test.com",
+            alliance_id=1,
+            alliance_role="Leader",
+        )
+    )
     db.commit()
 
     promote(
@@ -38,11 +46,6 @@ def test_promote_updates_rank():
     )
     row = db.query(AllianceMember).filter_by(user_id="u1").first()
     assert row.rank == "Leader"
-
-
-def test_get_current_user_id_raises():
-    with pytest.raises(HTTPException):
-        get_current_user_id(None)
 
 
 def test_transfer_leadership_changes_leader():

@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 from ..db import db
 from .movement import process_unit_movement
 from .vision import process_unit_vision
+from ..enums import WarPhase
 
 logger = logging.getLogger("Thronestead.BattleEngine")
 
@@ -46,16 +47,39 @@ def process_unit_combat(
         if casualties <= 0:
             continue
 
+        defender_start_qty = other.get("quantity", 0)
+        casualty_ratio = casualties / defender_start_qty if defender_start_qty else 0
+        defender_shift = round(casualty_ratio * -10.0, 2)
+        attacker_shift = round(casualty_ratio * 5.0, 2)
+
+        other_morale = other.get("morale", 100)
+        new_other_morale = max(0.0, min(100.0, other_morale + defender_shift))
+        attacker_morale = unit.get("morale", 100)
+        new_attacker_morale = max(0.0, min(100.0, attacker_morale + attacker_shift))
+
         remaining = max(0, other["quantity"] - casualties)
         other["quantity"] = remaining
+        other["morale"] = new_other_morale
+        unit["morale"] = new_attacker_morale
 
         db.execute(
             """
             UPDATE unit_movements
-            SET quantity = %s, status = CASE WHEN %s = 0 THEN 'defeated' ELSE status END
+            SET quantity = %s,
+                morale = %s,
+                status = CASE WHEN %s = 0 THEN 'defeated' ELSE status END
             WHERE movement_id = %s
             """,
-            (remaining, remaining, other["movement_id"]),
+            (remaining, new_other_morale, remaining, other["movement_id"]),
+        )
+
+        db.execute(
+            """
+            UPDATE unit_movements
+            SET morale = %s
+            WHERE movement_id = %s
+            """,
+            (new_attacker_morale, unit_id),
         )
 
         if war_type == "alliance":
@@ -76,7 +100,7 @@ def process_unit_combat(
                     other["position_x"],
                     other["position_y"],
                     casualties,
-                    0.0,
+                    defender_shift,
                     "alliance",
                 ),
             )
@@ -98,7 +122,7 @@ def process_unit_combat(
                     other["position_x"],
                     other["position_y"],
                     casualties,
-                    0.0,
+                    defender_shift,
                     war_type,
                 ),
             )
@@ -115,10 +139,11 @@ def run_combat_tick() -> None:
     # --- Process Kingdom Wars ---
     active_kingdom_wars = db.query(
         """
-        SELECT war_id, phase, castle_hp, battle_tick
+        SELECT war_id, phase, castle_hp, battle_tick, weather
         FROM wars_tactical
-        WHERE phase = 'battle' AND war_status = 'active'
-        """
+        WHERE phase = %s AND war_status = 'active'
+        """,
+        (WarPhase.LIVE.value,),
     )
 
     for war in active_kingdom_wars:
@@ -127,10 +152,11 @@ def run_combat_tick() -> None:
     # --- Process Alliance Wars ---
     active_alliance_wars = db.query(
         """
-        SELECT alliance_war_id, phase, castle_hp, battle_tick
+        SELECT alliance_war_id, phase, castle_hp, battle_tick, weather
         FROM alliance_wars
-        WHERE phase = 'battle' AND war_status = 'active'
-        """
+        WHERE phase = %s AND war_status = 'active'
+        """,
+        (WarPhase.LIVE.value,),
     )
 
     for awar in active_alliance_wars:
@@ -146,12 +172,14 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
     """Advance a single tick for a kingdom vs. kingdom war."""
     war_id = war["war_id"]
     tick = war["battle_tick"] + 1
+    weather = war.get("weather")
 
     logger.info("Processing Kingdom War ID %s — Tick %s", war_id, tick)
 
     units = db.query(
         """
-        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        SELECT um.*, us.speed, us."class", us.can_build_bridge,
+               us.can_damage_castle
         FROM unit_movements AS um
         JOIN unit_stats AS us ON um.unit_type = us.unit_type
         WHERE um.war_id = %s AND um.status = 'active'
@@ -169,18 +197,38 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
 
     # --- MAIN LOOP ---
     for unit in units:
-        process_unit_movement(unit, terrain)
-        process_unit_vision(unit, units, terrain)
+        process_unit_movement(unit, terrain, weather)
+        process_unit_vision(unit, units, terrain, weather)
         process_unit_combat(unit, units, terrain, war_id, tick, "kingdom")
+
+    # --- CASTLE DAMAGE ---
+    damaging = [
+        u for u in units if u.get("can_damage_castle") or u.get("class") == "siege"
+    ]
+    total = sum(u.get("quantity", 0) for u in damaging)
+    damage = total * 5
+    if damage:
+        new_hp = max(0, war["castle_hp"] - damage)
+        war["castle_hp"] = new_hp
+        db.execute(
+            """
+            INSERT INTO combat_logs (
+                war_id, tick_number, event_type, damage_dealt, notes
+            ) VALUES (%s, %s, 'castle_damage', %s, 'siege')
+            """,
+            (war_id, tick, damage),
+        )
+    else:
+        new_hp = war["castle_hp"]
 
     # --- UPDATE TICK ---
     db.execute(
         """
         UPDATE wars_tactical
-        SET battle_tick = %s
+        SET battle_tick = %s, castle_hp = %s
         WHERE war_id = %s
         """,
-        (tick, war_id),
+        (tick, new_hp, war_id),
     )
 
     # --- CHECK VICTORY ---
@@ -196,6 +244,7 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
     """Advance a single tick for an alliance war."""
     alliance_war_id = awar["alliance_war_id"]
     tick = awar["battle_tick"] + 1
+    weather = awar.get("weather")
 
     logger.info("Processing Alliance War ID %s — Tick %s", alliance_war_id, tick)
 
@@ -211,7 +260,8 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
 
     units = db.query(
         """
-        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        SELECT um.*, us.speed, us."class", us.can_build_bridge,
+               us.can_damage_castle
         FROM unit_movements AS um
         JOIN unit_stats AS us ON um.unit_type = us.unit_type
         WHERE um.kingdom_id = ANY(%s) AND um.war_id IS NULL
@@ -230,18 +280,38 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
 
     # --- MAIN LOOP ---
     for unit in units:
-        process_unit_movement(unit, terrain)
-        process_unit_vision(unit, units, terrain)
+        process_unit_movement(unit, terrain, weather)
+        process_unit_vision(unit, units, terrain, weather)
         process_unit_combat(unit, units, terrain, alliance_war_id, tick, "alliance")
+
+    # --- CASTLE DAMAGE ---
+    damaging = [
+        u for u in units if u.get("can_damage_castle") or u.get("class") == "siege"
+    ]
+    total = sum(u.get("quantity", 0) for u in damaging)
+    damage = total * 5
+    if damage:
+        new_hp = max(0, awar["castle_hp"] - damage)
+        awar["castle_hp"] = new_hp
+        db.execute(
+            """
+            INSERT INTO alliance_war_combat_logs (
+                alliance_war_id, tick_number, event_type, damage_dealt, notes
+            ) VALUES (%s, %s, 'castle_damage', %s, 'siege')
+            """,
+            (alliance_war_id, tick, damage),
+        )
+    else:
+        new_hp = awar["castle_hp"]
 
     # --- UPDATE TICK ---
     db.execute(
         """
         UPDATE alliance_wars
-        SET battle_tick = %s
+        SET battle_tick = %s, castle_hp = %s
         WHERE alliance_war_id = %s
         """,
-        (tick, alliance_war_id),
+        (tick, new_hp, alliance_war_id),
     )
 
     update_alliance_war_score(alliance_war_id)

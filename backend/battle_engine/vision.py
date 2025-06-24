@@ -20,7 +20,10 @@ _VISION_PENALTIES: Dict[str, float] = {
 
 
 def process_unit_vision(
-    unit: Dict[str, Any], all_units: List[Dict[str, Any]], terrain: List[List[str]]
+    unit: Dict[str, Any],
+    all_units: List[Dict[str, Any]],
+    terrain: List[List[str]],
+    weather: str | None = None,
 ) -> None:
     """Update ``unit`` visible enemies based on vision range and surrounding terrain."""
 
@@ -33,6 +36,10 @@ def process_unit_vision(
     )
 
     vision_range = rows[0]["vision"] if rows else 0
+    if weather == "fog":
+        vision_range = max(1, vision_range - 2)
+    elif weather == "rain":
+        vision_range = max(1, vision_range - 1)
     position_x = unit["position_x"]
     position_y = unit["position_y"]
 

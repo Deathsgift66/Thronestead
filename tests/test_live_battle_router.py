@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
 from backend.models import CombatLog, TerrainMap, UnitMovement, WarScore, WarsTactical
-from backend.routers.battle import get_live_battle
+from backend.routers.battle import get_live_battle, get_battle_status
 
 
 def setup_db():
@@ -23,7 +23,7 @@ def test_get_live_battle_returns_data():
             war_id=1,
             attacker_kingdom_id=1,
             defender_kingdom_id=2,
-            phase="combat",
+            phase="live",
             castle_hp=90,
             battle_tick=5,
             tick_interval_seconds=60,
@@ -61,6 +61,7 @@ def test_get_live_battle_returns_data():
     assert result["combat_logs"][0]["event_type"] == "attack"
     assert result["attacker_score"] == 5
     assert result["map_width"] == 1
+    assert result["weather"] == "clear"
 
 
 def test_get_live_battle_404():
@@ -72,3 +73,29 @@ def test_get_live_battle_404():
         assert exc.status_code == 404
     else:
         assert False
+
+
+def test_get_battle_status():
+    Session = setup_db()
+    db = Session()
+
+    db.add(
+        WarsTactical(
+            war_id=2,
+            attacker_kingdom_id=1,
+            defender_kingdom_id=2,
+            phase="battle",
+            castle_hp=80,
+            battle_tick=3,
+            tick_interval_seconds=30,
+            fog_of_war=False,
+            weather="rain",
+        )
+    )
+    db.add(WarScore(war_id=2, attacker_score=7, defender_score=2, victor=None))
+    db.commit()
+
+    result = get_battle_status(2, db=db, user_id="u1")
+    assert result["weather"] == "rain"
+    assert result["castle_hp"] == 80
+    assert result["attacker_score"] == 7

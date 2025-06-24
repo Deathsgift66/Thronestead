@@ -1,17 +1,20 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from fastapi import HTTPException
 
 from backend.db_base import Base
-from backend.models import Alliance, AllianceWar
+from backend.models import Alliance, AllianceWar, AllianceMember, AllianceRole
 from backend.routers.alliance_wars import (
     DeclarePayload,
     RespondPayload,
     SurrenderPayload,
+    JoinPayload,
     declare_war,
     list_active_wars,
     list_wars,
     respond_war,
     surrender_war,
+    join_war,
 )
 
 
@@ -27,6 +30,13 @@ def seed_alliance(db, aid):
     db.commit()
 
 
+def seed_member(db, aid, uid, perms):
+    role_id = aid
+    db.add(AllianceRole(role_id=role_id, alliance_id=aid, role_name="Leader", permissions=perms))
+    db.add(AllianceMember(alliance_id=aid, user_id=uid, username="U", role_id=role_id))
+    db.commit()
+
+
 def test_list_wars_groups_by_status():
     Session = setup_db()
     db = Session()
@@ -38,7 +48,7 @@ def test_list_wars_groups_by_status():
             attacker_alliance_id=1,
             defender_alliance_id=2,
             war_status="active",
-            phase="battle",
+            phase="live",
         )
     )
     db.add(
@@ -61,9 +71,12 @@ def test_declare_war_creates_record():
     db = Session()
     seed_alliance(db, 1)
     seed_alliance(db, 2)
+    seed_member(db, 1, "u1", ["can_manage_wars"])
 
     res = declare_war(
-        DeclarePayload(attacker_alliance_id=1, defender_alliance_id=2), db=db
+        DeclarePayload(attacker_alliance_id=1, defender_alliance_id=2),
+        user_id="u1",
+        db=db,
     )
     row = (
         db.query(AllianceWar)
@@ -75,11 +88,31 @@ def test_declare_war_creates_record():
     assert res["status"] == "pending"
 
 
+def test_declare_war_forbidden():
+    Session = setup_db()
+    db = Session()
+    seed_alliance(db, 1)
+    seed_alliance(db, 2)
+    seed_member(db, 1, "u1", ["can_manage_wars"])
+    try:
+        declare_war(
+            DeclarePayload(attacker_alliance_id=2, defender_alliance_id=1),
+            user_id="u1",
+            db=db,
+        )
+    except HTTPException as e:
+        assert e.status_code == 403
+    else:
+        assert False
+
+
 def test_accept_war_updates_status():
     Session = setup_db()
     db = Session()
     seed_alliance(db, 1)
     seed_alliance(db, 2)
+    seed_member(db, 1, "u1", ["can_manage_wars"])
+    seed_member(db, 2, "u2", ["can_manage_wars"])
     db.add(
         AllianceWar(
             alliance_war_id=10,
@@ -91,7 +124,11 @@ def test_accept_war_updates_status():
     )
     db.commit()
 
-    respond_war(RespondPayload(alliance_war_id=10, action="accept"), db=db)
+    respond_war(
+        RespondPayload(alliance_war_id=10, action="accept"),
+        user_id="u1",
+        db=db,
+    )
     row = db.query(AllianceWar).filter_by(alliance_war_id=10).first()
     assert row.war_status == "active"
 
@@ -101,17 +138,23 @@ def test_surrender_updates_status():
     db = Session()
     seed_alliance(db, 1)
     seed_alliance(db, 2)
+    seed_member(db, 1, "u1", ["can_manage_wars"])
+    seed_member(db, 2, "u2", ["can_manage_wars"])
     db.add(
         AllianceWar(
             alliance_war_id=30,
             attacker_alliance_id=1,
             defender_alliance_id=2,
             war_status="active",
-            phase="battle",
+            phase="live",
         )
     )
     db.commit()
-    surrender_war(SurrenderPayload(alliance_war_id=30, side="attacker"), db=db)
+    surrender_war(
+        SurrenderPayload(alliance_war_id=30, side="attacker"),
+        user_id="u1",
+        db=db,
+    )
     war = db.query(AllianceWar).filter_by(alliance_war_id=30).first()
     assert war.war_status == "surrendered"
 
@@ -128,7 +171,7 @@ def test_active_wars_endpoint_lists_active():
             attacker_alliance_id=1,
             defender_alliance_id=2,
             war_status="active",
-            phase="battle",
+            phase="live",
         )
     )
     db.add(
@@ -143,3 +186,31 @@ def test_active_wars_endpoint_lists_active():
     db.commit()
     res = list_active_wars(db=db)
     assert len(res["wars"]) == 1
+
+
+def test_join_war_forbidden():
+    Session = setup_db()
+    db = Session()
+    seed_alliance(db, 1)
+    seed_alliance(db, 2)
+    seed_member(db, 1, "u1", ["can_join_wars"])
+    db.add(
+        AllianceWar(
+            alliance_war_id=50,
+            attacker_alliance_id=2,
+            defender_alliance_id=1,
+            war_status="active",
+            phase="battle",
+        )
+    )
+    db.commit()
+    try:
+        join_war(
+            JoinPayload(alliance_war_id=50, side="attacker"),
+            user_id="u1",
+            db=db,
+        )
+    except HTTPException as e:
+        assert e.status_code == 403
+    else:
+        assert False
