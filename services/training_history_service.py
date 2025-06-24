@@ -106,6 +106,7 @@ def record_training(
     trained_by: Optional[str],
     modifiers_applied: Optional[dict],
     xp_per_unit: int = 0,
+    speed_modifier: float = 1.0,
 ) -> int:
     """
     Record a completed unit training session.
@@ -120,23 +121,29 @@ def record_training(
         initiated_at: Timestamp when training started
         trained_by: User ID who initiated the training (if available)
         modifiers_applied: Dictionary of production modifiers applied
+        xp_per_unit: XP each unit grants before modifiers
+        speed_modifier: Multiplier applied to XP reward
 
     Returns:
         int: ID of the new training_history row
     """
     try:
+        xp_awarded = int(xp_per_unit * quantity * speed_modifier)
+
         result = db.execute(
             text(
                 """
                 INSERT INTO training_history (
                     kingdom_id, unit_id, unit_name, quantity, completed_at,
-                    source, initiated_at, trained_by, modifiers_applied
+                    source, initiated_at, trained_by, xp_awarded,
+                    modifiers_applied, speed_modifier
                 ) VALUES (
                     :kid, :uid, :uname, :qty, now(),
-                    :src, :init, :tby, :mods
+                    :src, :init, :tby, :xp,
+                    :mods, :speed
                 )
                 RETURNING history_id
-            """
+                """
             ),
             {
                 "kid": kingdom_id,
@@ -146,12 +153,14 @@ def record_training(
                 "src": source,
                 "init": initiated_at,
                 "tby": trained_by,
+                "xp": xp_awarded,
                 "mods": modifiers_applied or {},
+                "speed": speed_modifier,
             },
         )
         row = result.fetchone()
 
-        _add_unit_xp(db, kingdom_id, unit_name, quantity, xp_per_unit)
+        _add_unit_xp(db, kingdom_id, unit_name, quantity, int(xp_per_unit * speed_modifier))
         level_up_units(db, kingdom_id, unit_name)
 
         db.commit()

@@ -26,14 +26,19 @@ class DummyDB:
     def __init__(self):
         self.executed = []
         self.rows = []
+        self.troop_row = (10, 0, 1)
 
     def execute(self, query, params=None):
-        q = str(query)
+        q = str(query).lower()
         self.executed.append((q, params))
-        if q.strip().startswith("INSERT INTO training_queue"):
+        if q.strip().startswith("insert into training_queue"):
             return DummyResult((1,))
-        if "FROM training_queue" in q:
+        if "from training_queue" in q:
             return DummyResult(rows=self.rows)
+        if q.strip().startswith("insert into training_history"):
+            return DummyResult((1,))
+        if "select quantity, unit_xp, unit_level from kingdom_troops" in q:
+            return DummyResult(row=self.troop_row)
         return DummyResult()
 
     def commit(self):
@@ -50,6 +55,8 @@ def test_add_training_order_inserts():
         quantity=10,
         base_training_seconds=60,
         training_speed_modifier=1.0,
+        training_speed_multiplier=2.0,
+        xp_per_unit=5,
         modifiers_applied=None,
         initiated_by="u1",
         priority=1,
@@ -71,7 +78,19 @@ def test_fetch_queue_returns_rows():
 
 def test_cancel_and_complete():
     db = DummyDB()
+    db.rows = [(
+        1,
+        5,
+        "Knight",
+        10,
+        "2025-06-09",
+        "u1",
+        {},
+        5,
+        2.0,
+    )]
     cancel_training(db, 2, 1)
     mark_completed(db, 3)
     queries = " ".join(q for q, _ in db.executed)
-    assert "UPDATE training_queue" in queries
+    assert "update training_queue" in queries
+    assert "insert into training_history" in queries

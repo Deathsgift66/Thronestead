@@ -54,11 +54,13 @@ def test_record_training_inserts():
         initiated_at="2025-06-09 10:00",
         trained_by="u1",
         modifiers_applied={"bonus": 10},
-        xp_per_unit=0,
+        xp_per_unit=5,
+        speed_modifier=2.0,
     )
     assert hid == 1
     joined = " ".join(q for q, _ in db.executed)
     assert "insert into training_history" in joined
+    assert "xp_awarded" in joined
     assert "insert into kingdom_troops" in joined
 
 

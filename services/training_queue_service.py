@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from services.training_history_service import record_training
+
 try:
     from sqlalchemy import text
     from sqlalchemy.exc import SQLAlchemyError
@@ -35,6 +37,8 @@ def add_training_order(
     quantity: int,
     base_training_seconds: int,
     training_speed_modifier: float = 1.0,
+    training_speed_multiplier: float = 1.0,
+    xp_per_unit: int = 0,
     modifiers_applied: Optional[dict] = None,
     initiated_by: Optional[str] = None,
     priority: int = 1,
@@ -50,6 +54,8 @@ def add_training_order(
         quantity: Quantity of units to train
         base_training_seconds: Base time in seconds
         training_speed_modifier: Multiplier (e.g., 0.8 = 20% faster)
+        training_speed_multiplier: Additional speed multiplier
+        xp_per_unit: XP granted per unit when complete
         modifiers_applied: Modifier details for tracking
         initiated_by: User ID
         priority: Queue priority (higher = earlier)
@@ -64,12 +70,14 @@ def add_training_order(
                 INSERT INTO training_queue (
                     kingdom_id, unit_id, unit_name, quantity,
                     training_ends_at, started_at, status,
-                    training_speed_modifier, modifiers_applied,
+                    training_speed_modifier, training_speed_multiplier,
+                    xp_per_unit, modifiers_applied,
                     initiated_by, priority
                 ) VALUES (
                     :kid, :uid, :uname, :qty,
-                    now() + (:base * :speed) * interval '1 second', now(), 'queued',
-                    :speed, :mods,
+                    now() + (:base * :speed / :mult) * interval '1 second', now(), 'queued',
+                    :speed, :mult,
+                    :xp, :mods,
                     :init, :pri
                 )
                 RETURNING queue_id
@@ -82,6 +90,8 @@ def add_training_order(
                 "qty": quantity,
                 "base": base_training_seconds,
                 "speed": training_speed_modifier,
+                "mult": training_speed_multiplier,
+                "xp": xp_per_unit,
                 "mods": modifiers_applied or {},
                 "init": initiated_by,
                 "pri": priority,
@@ -179,16 +189,45 @@ def mark_completed(db: Session, queue_id: int) -> None:
         queue_id: ID of the queue row to complete
     """
     try:
+        row = db.execute(
+            text(
+                """
+                SELECT kingdom_id, unit_id, unit_name, quantity,
+                       started_at, initiated_by, modifiers_applied,
+                       xp_per_unit, training_speed_multiplier
+                  FROM training_queue
+                 WHERE queue_id = :qid
+                """
+            ),
+            {"qid": queue_id},
+        ).fetchone()
+
         db.execute(
             text(
                 """
                 UPDATE training_queue
-                SET status = 'completed', last_updated = now()
-                WHERE queue_id = :qid
+                   SET status = 'completed', last_updated = now()
+                 WHERE queue_id = :qid
                 """
             ),
             {"qid": queue_id},
         )
+
+        if row:
+            record_training(
+                db,
+                kingdom_id=row[0],
+                unit_id=row[1],
+                unit_name=row[2],
+                quantity=row[3],
+                source="training_queue",
+                initiated_at=row[4],
+                trained_by=row[5],
+                modifiers_applied=row[6],
+                xp_per_unit=row[7],
+                speed_modifier=row[8],
+            )
+
         db.commit()
     except SQLAlchemyError:
         db.rollback()
