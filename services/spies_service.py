@@ -83,7 +83,10 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
         return current
 
     total_cost = SPY_TRAIN_COST_GOLD * trainable
-    resource_service.adjust_gold(db, kingdom_id, -total_cost)
+    # Deduct gold using centralized resource helper
+    resource_service.spend_resources(
+        db, kingdom_id, {"gold": total_cost}, commit=False
+    )
 
     new_count = current + trainable
     xp_gain = trainable * 5
