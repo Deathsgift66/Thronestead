@@ -124,7 +124,7 @@ def launch_spy_mission(
 
     return {
         "mission_id": mission_id,
-        "outcome": "success" if success else "failed",
+        "outcome": "success" if success else "fail",
         "success_pct": success_pct,
         "detected": detected,
         "accuracy_pct": accuracy_pct,
