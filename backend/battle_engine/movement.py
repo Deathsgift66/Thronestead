@@ -21,7 +21,9 @@ TERRAIN_BASE_MODIFIERS: Dict[str, float] = {
 }
 
 
-def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> None:
+def process_unit_movement(
+    unit: Dict[str, Any], terrain: List[List[str]], weather: str | None = None
+) -> None:
     """Advance ``unit`` based on stance, path, and morale, persisting position."""
 
     unit_id = unit["movement_id"]
@@ -36,7 +38,7 @@ def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> Non
     morale = unit.get("morale") or 1.0
 
     if withdraw_threshold > 0 and morale < (withdraw_threshold / 100):
-        move_towards(unit, fallback_x, fallback_y, speed, terrain)
+        move_towards(unit, fallback_x, fallback_y, speed, terrain, weather)
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
         return
 
@@ -44,19 +46,26 @@ def process_unit_movement(unit: Dict[str, Any], terrain: List[List[str]]) -> Non
         return
 
     if stance == "advance_engage" and movement_path:
-        if advance_along_path(unit, movement_path, speed, terrain):
+        if advance_along_path(unit, movement_path, speed, terrain, weather):
             persist_movement_path(unit_id, movement_path)
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
         return
 
     if stance == "patrol_zone" and patrol_zone:
         patrol_target = select_patrol_target(unit, patrol_zone)
-        move_towards(unit, patrol_target["x"], patrol_target["y"], speed, terrain)
+        move_towards(
+            unit,
+            patrol_target["x"],
+            patrol_target["y"],
+            speed,
+            terrain,
+            weather,
+        )
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
         return
 
     if movement_path:
-        if advance_along_path(unit, movement_path, speed, terrain):
+        if advance_along_path(unit, movement_path, speed, terrain, weather):
             persist_movement_path(unit_id, movement_path)
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
 
@@ -67,6 +76,7 @@ def move_towards(
     target_y: int,
     speed: int,
     terrain: List[List[str]],
+    weather: str | None = None,
 ) -> bool:
     """Move ``unit`` toward ``target_x`` and ``target_y``. Return ``True`` if reached."""
 
@@ -79,8 +89,14 @@ def move_towards(
     if dx == 0 and dy == 0:
         return True
 
-    move_x = min(speed, abs(dx)) * (1 if dx > 0 else -1 if dx < 0 else 0)
-    move_y = min(speed, abs(dy)) * (1 if dy > 0 else -1 if dy < 0 else 0)
+    adj_speed = speed
+    if weather == "rain":
+        adj_speed = max(1, speed - 1)
+    elif weather == "snow":
+        adj_speed = max(1, speed - 2)
+
+    move_x = min(adj_speed, abs(dx)) * (1 if dx > 0 else -1 if dx < 0 else 0)
+    move_y = min(adj_speed, abs(dy)) * (1 if dy > 0 else -1 if dy < 0 else 0)
 
     terrain_type = terrain[cur_y][cur_x]
     movement_penalty = terrain_movement_modifier(terrain_type, unit)
@@ -146,6 +162,7 @@ def advance_along_path(
     path: Deque[Dict[str, int]],
     speed: int,
     terrain: List[List[str]],
+    weather: str | None = None,
 ) -> bool:
     """Advance ``unit`` toward the next waypoint in ``path``."""
 
@@ -153,7 +170,14 @@ def advance_along_path(
         return False
 
     next_tile = path[0]
-    reached = move_towards(unit, next_tile["x"], next_tile["y"], speed, terrain)
+    reached = move_towards(
+        unit,
+        next_tile["x"],
+        next_tile["y"],
+        speed,
+        terrain,
+        weather,
+    )
     if reached:
         path.popleft()
     return reached

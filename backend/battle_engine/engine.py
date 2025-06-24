@@ -50,6 +50,7 @@ class WarState:
     castle_hp: int
     map_width: int
     map_height: int
+    weather: str = "clear"
     units: List[Unit] = field(default_factory=list)
     terrain: List[List[TerrainType]] = field(default_factory=list)
 
@@ -83,9 +84,12 @@ class FogOfWar:
     """Visibility calculations taking terrain and unit vision into account."""
 
     def visible_tiles(
-        self, units: List[Unit], terrain: List[List[TerrainType]]
+        self,
+        units: List[Unit],
+        terrain: List[List[TerrainType]],
+        weather: str = "clear",
     ) -> Set[Tuple[int, int]]:
-        """Return all tiles visible to the provided units."""
+        """Return all tiles visible to the provided units factoring in weather."""
 
         visible: Set[Tuple[int, int]] = set()
         width = TerrainGenerator.WIDTH
@@ -98,6 +102,12 @@ class FogOfWar:
                 vision += 2
             elif tile == TerrainType.FOREST:
                 vision -= 1
+
+            if weather == "fog":
+                vision -= 2
+            elif weather == "rain":
+                vision -= 1
+            vision = max(1, vision)
 
             min_y = max(0, u.y - vision)
             max_y = min(height - 1, u.y + vision)
@@ -201,7 +211,7 @@ class BattleTickHandler:
         logs: List[Dict] = []
 
         # Vision pass (for client rendering)
-        visible = self.fog.visible_tiles(war.units, war.terrain)
+        visible = self.fog.visible_tiles(war.units, war.terrain, war.weather)
         logs.append({"event": "vision_update", "tiles": len(visible)})
 
         # Resolve combat

@@ -166,6 +166,36 @@ def get_battle_scoreboard(
     }
 
 
+@router.get("/status/{war_id}")
+def get_battle_status(
+    war_id: int,
+    user_id: str | None = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Return current status info for ``war_id``."""
+
+    war = (
+        db.query(models.WarsTactical)
+        .filter(models.WarsTactical.war_id == war_id)
+        .first()
+    )
+    if not war:
+        raise HTTPException(status_code=404, detail="War not found")
+
+    score = db.query(models.WarScore).filter(models.WarScore.war_id == war_id).first()
+
+    return {
+        "weather": war.weather,
+        "phase": war.phase,
+        "castle_hp": war.castle_hp,
+        "battle_tick": war.battle_tick,
+        "tick_interval_seconds": war.tick_interval_seconds,
+        "attacker_score": score.attacker_score if score else 0,
+        "defender_score": score.defender_score if score else 0,
+        "fog_of_war": bool(war.fog_of_war),
+    }
+
+
 def battle_resolution_alt(
     war_id: int,
     user_id: str | None = Depends(verify_jwt_token),
@@ -277,6 +307,11 @@ def get_live_battle(
         "war_id": war_id,
         "map_width": terrain.map_width if terrain else None,
         "map_height": terrain.map_height if terrain else None,
+        "weather": war.weather,
+        "phase": war.phase,
+        "castle_hp": war.castle_hp,
+        "battle_tick": war.battle_tick,
+        "tick_interval_seconds": war.tick_interval_seconds,
         "units": [
             {
                 "movement_id": m.movement_id,

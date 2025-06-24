@@ -115,7 +115,7 @@ def run_combat_tick() -> None:
     # --- Process Kingdom Wars ---
     active_kingdom_wars = db.query(
         """
-        SELECT war_id, phase, castle_hp, battle_tick
+        SELECT war_id, phase, castle_hp, battle_tick, weather
         FROM wars_tactical
         WHERE phase = 'battle' AND war_status = 'active'
         """
@@ -127,7 +127,7 @@ def run_combat_tick() -> None:
     # --- Process Alliance Wars ---
     active_alliance_wars = db.query(
         """
-        SELECT alliance_war_id, phase, castle_hp, battle_tick
+        SELECT alliance_war_id, phase, castle_hp, battle_tick, weather
         FROM alliance_wars
         WHERE phase = 'battle' AND war_status = 'active'
         """
@@ -146,6 +146,7 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
     """Advance a single tick for a kingdom vs. kingdom war."""
     war_id = war["war_id"]
     tick = war["battle_tick"] + 1
+    weather = war.get("weather")
 
     logger.info("Processing Kingdom War ID %s — Tick %s", war_id, tick)
 
@@ -169,8 +170,8 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
 
     # --- MAIN LOOP ---
     for unit in units:
-        process_unit_movement(unit, terrain)
-        process_unit_vision(unit, units, terrain)
+        process_unit_movement(unit, terrain, weather)
+        process_unit_vision(unit, units, terrain, weather)
         process_unit_combat(unit, units, terrain, war_id, tick, "kingdom")
 
     # --- UPDATE TICK ---
@@ -196,6 +197,7 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
     """Advance a single tick for an alliance war."""
     alliance_war_id = awar["alliance_war_id"]
     tick = awar["battle_tick"] + 1
+    weather = awar.get("weather")
 
     logger.info("Processing Alliance War ID %s — Tick %s", alliance_war_id, tick)
 
@@ -230,8 +232,8 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
 
     # --- MAIN LOOP ---
     for unit in units:
-        process_unit_movement(unit, terrain)
-        process_unit_vision(unit, units, terrain)
+        process_unit_movement(unit, terrain, weather)
+        process_unit_vision(unit, units, terrain, weather)
         process_unit_combat(unit, units, terrain, alliance_war_id, tick, "alliance")
 
     # --- UPDATE TICK ---
