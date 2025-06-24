@@ -186,6 +186,13 @@ def conclude_battle(db: Session, war_id: int) -> None:
         {"wid": war_id},
     )
 
+    ids_row = db.execute(
+        text(
+            "SELECT attacker_kingdom_id, defender_kingdom_id FROM wars WHERE war_id = :wid"
+        ),
+        {"wid": war_id},
+    ).fetchone()
+
     # Set war as concluded
     db.execute(
         text(
@@ -193,6 +200,23 @@ def conclude_battle(db: Session, war_id: int) -> None:
         ),
         {"wid": war_id},
     )
+
+    if ids_row:
+        attacker_id, defender_id = ids_row
+        if attacker_id:
+            db.execute(
+                text(
+                    "UPDATE kingdom_troop_slots SET currently_in_combat = false WHERE kingdom_id = :kid"
+                ),
+                {"kid": attacker_id},
+            )
+        if defender_id:
+            db.execute(
+                text(
+                    "UPDATE kingdom_troop_slots SET currently_in_combat = false WHERE kingdom_id = :kid"
+                ),
+                {"kid": defender_id},
+            )
 
     # Apply morale adjustments based on the outcome
     try:

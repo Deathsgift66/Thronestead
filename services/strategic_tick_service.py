@@ -159,10 +159,37 @@ def activate_pending_wars(db: Session) -> int:
             UPDATE wars
                SET status='active'
              WHERE status = 'pending' AND start_date <= now()
-             RETURNING war_id
+             RETURNING war_id, attacker_kingdom_id, defender_kingdom_id
         """
         )
     ).fetchall()
+
+    for _, atk, defn in rows:
+        if atk:
+            db.execute(
+                text(
+                    """
+                    UPDATE kingdom_troop_slots
+                       SET currently_in_combat = true,
+                           last_in_combat_at = now()
+                     WHERE kingdom_id = :kid
+                    """
+                ),
+                {"kid": atk},
+            )
+        if defn:
+            db.execute(
+                text(
+                    """
+                    UPDATE kingdom_troop_slots
+                       SET currently_in_combat = true,
+                           last_in_combat_at = now()
+                     WHERE kingdom_id = :kid
+                    """
+                ),
+                {"kid": defn},
+            )
+
     db.commit()
     war_ids = [r[0] for r in rows]
 
