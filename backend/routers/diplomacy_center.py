@@ -113,10 +113,16 @@ def list_treaties(
                t.treaty_type,
                CASE WHEN t.alliance_id = :aid THEN a2.name ELSE a1.name END AS partner_name,
                t.status,
-               t.signed_at
+               t.signed_at,
+               CASE
+                   WHEN c.duration_days > 0
+                   THEN t.signed_at + (c.duration_days || ' days')::interval
+                   ELSE NULL
+               END AS end_date
           FROM alliance_treaties t
           JOIN alliances a1 ON t.alliance_id = a1.alliance_id
           JOIN alliances a2 ON t.partner_alliance_id = a2.alliance_id
+          JOIN treaty_type_catalogue c ON t.treaty_type = c.treaty_type
          WHERE t.alliance_id = :aid OR t.partner_alliance_id = :aid
     """
     params = {"aid": alliance_id}
@@ -133,7 +139,7 @@ def list_treaties(
             "partner_name": r[2],
             "status": r[3],
             "signed_at": r[4].isoformat() if r[4] else None,
-            "end_date": None,
+            "end_date": r[5].isoformat() if r[5] else None,
         }
         for r in rows
     ]
