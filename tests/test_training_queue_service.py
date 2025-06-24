@@ -2,6 +2,9 @@
 # File Name: test_training_queue_service.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+import datetime
+import pytest
+from fastapi import HTTPException
 from services.training_queue_service import (
     add_training_order,
     begin_training,
@@ -13,6 +16,7 @@ from services.training_queue_service import (
 )
 import services.training_queue_service as training_queue_service
 import services.training_history_service as training_history_service
+from services import resource_service, kingdom_history_service
 
 
 class DummyResult:
@@ -156,4 +160,100 @@ def test_finalize_completed_orders(monkeypatch):
     assert called["mark"] == [1]
     assert called["record"] == 3
     assert any("DELETE FROM training_queue" in q for q, _ in db.executed)
+
+
+class ExtendedDummyDB(DummyDB):
+    """DummyDB with additional query handling for new logic."""
+
+    def __init__(self):
+        super().__init__()
+        self.catalog_row = {
+            "training_time": 60,
+            "tier": 1,
+            "cooldown_seconds": 3600,
+            "cost_wood": 1,
+            "cost_stone": 0,
+            "cost_gold": 0,
+            "cost_food": 2,
+        }
+        self.build_row = (2.0,)
+        self.history_row = None
+
+    def execute(self, query, params=None):
+        q = str(query).lower()
+        self.executed.append((q, params))
+        if "from training_catalog" in q:
+            return DummyResult(row=self.catalog_row)
+        if "from village_buildings" in q and "building_tiers" in q:
+            return DummyResult(row=self.build_row)
+        if "from training_history" in q:
+            return DummyResult(row=self.history_row)
+        return super().execute(query, params)
+
+
+def test_training_requires_resources(monkeypatch):
+    db = ExtendedDummyDB()
+
+    def fail_spend(*args, **kwargs):
+        raise HTTPException(status_code=400, detail="not enough")
+
+    logged = {}
+
+    monkeypatch.setattr(resource_service, "spend_resources", fail_spend)
+    monkeypatch.setattr(
+        kingdom_history_service,
+        "log_event",
+        lambda *a, **k: logged.setdefault("status", a[3]),
+    )
+
+    with pytest.raises(HTTPException):
+        add_training_order(db, 1, 1, "Militia", 5, 60)
+
+    assert logged.get("status") == "rejected_insufficient_resources"
+
+
+def test_building_level_affects_training_speed(monkeypatch):
+    db = ExtendedDummyDB()
+    monkeypatch.setattr(resource_service, "spend_resources", lambda *a, **k: None)
+    monkeypatch.setattr(kingdom_history_service, "log_event", lambda *a, **k: None)
+
+    add_training_order(db, 1, 1, "Militia", 5, 60)
+
+    joined = " ".join(q for q, _ in db.executed)
+    assert "building_tiers" in joined
+    assert "insert into training_queue" in joined
+
+
+def test_training_cooldown_prevents_requeue(monkeypatch):
+    db = ExtendedDummyDB()
+    # Pretend last training was just now
+    db.history_row = (datetime.datetime.now(datetime.timezone.utc),)
+
+    monkeypatch.setattr(resource_service, "spend_resources", lambda *a, **k: None)
+    logged = {}
+    monkeypatch.setattr(
+        kingdom_history_service,
+        "log_event",
+        lambda *a, **k: logged.setdefault("status", a[3]),
+    )
+
+    with pytest.raises(HTTPException):
+        add_training_order(db, 1, 1, "Militia", 5, 60)
+
+    assert logged.get("status") == "rejected_cooldown"
+
+
+def test_successful_training_logs_history(monkeypatch):
+    db = ExtendedDummyDB()
+    monkeypatch.setattr(resource_service, "spend_resources", lambda *a, **k: None)
+    logged = {}
+    monkeypatch.setattr(
+        kingdom_history_service,
+        "log_event",
+        lambda *a, **k: logged.setdefault("status", a[3]),
+    )
+
+    qid = add_training_order(db, 1, 1, "Militia", 5, 60)
+    assert qid == 1
+    assert logged.get("status") == "queued"
 
