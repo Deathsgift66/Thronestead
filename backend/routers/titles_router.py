@@ -12,7 +12,7 @@ Version: 2025-06-21
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -20,8 +20,9 @@ from services.kingdom_title_service import award_title, list_titles, set_active_
 
 from ..data import prestige_scores
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, verify_api_key
 from .progression_router import get_kingdom_id
+from .admin_dashboard import verify_admin
 
 router = APIRouter(prefix="/api/kingdom", tags=["titles"])
 
@@ -60,8 +61,19 @@ def award_title_endpoint(
     payload: TitlePayload,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
+    x_api_key: str | None = Header(None),
 ) -> dict:
     """Award a title to the player's kingdom."""
+
+    # Only admins or internal events (via API key) may award titles
+    if x_api_key:
+        verify_api_key(x_api_key)
+    else:
+        try:
+            verify_admin(user_id, db)
+        except HTTPException:
+            raise HTTPException(status_code=403, detail="Admin access required")
+
     kingdom_id = get_kingdom_id(db, user_id)
     try:
         award_title(db, kingdom_id, payload.title)
