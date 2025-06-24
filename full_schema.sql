@@ -560,6 +560,35 @@ CREATE TABLE public.kingdom_history_log (
   CONSTRAINT kingdom_history_log_pkey PRIMARY KEY (log_id),
   CONSTRAINT kingdom_history_log_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
+CREATE TABLE public.kingdom_knights (
+  knight_id integer NOT NULL DEFAULT nextval('kingdom_knights_knight_id_seq'::regclass),
+  kingdom_id integer NOT NULL,
+  knight_name text NOT NULL,
+  rank text NOT NULL DEFAULT 'Squire'::text,
+  level integer NOT NULL DEFAULT 1,
+  leadership integer NOT NULL DEFAULT 10,
+  tactics integer NOT NULL DEFAULT 10,
+  morale_aura integer NOT NULL DEFAULT 0,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT kingdom_knights_pkey PRIMARY KEY (knight_id),
+  CONSTRAINT kingdom_knights_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
+CREATE TABLE public.kingdom_nobles (
+  noble_id integer NOT NULL DEFAULT nextval('kingdom_nobles_noble_id_seq'::regclass),
+  kingdom_id integer NOT NULL,
+  noble_name text NOT NULL,
+  title text NOT NULL DEFAULT 'Noble'::text,
+  level integer NOT NULL DEFAULT 1,
+  loyalty integer NOT NULL DEFAULT 50 CHECK (loyalty >= 0 AND loyalty <= 100),
+  specialization text NOT NULL DEFAULT 'general'::text,
+  assigned_village_id integer,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT kingdom_nobles_pkey PRIMARY KEY (noble_id),
+  CONSTRAINT kingdom_nobles_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_nobles_assigned_village_id_fkey FOREIGN KEY (assigned_village_id) REFERENCES public.kingdom_villages(village_id)
+);
 CREATE TABLE public.kingdom_religion (
   kingdom_id integer NOT NULL,
   religion_name text,
