@@ -7,7 +7,10 @@ from services.training_queue_service import (
     cancel_training,
     fetch_queue,
     mark_completed,
+    finalize_completed_orders,
 )
+import services.training_queue_service as training_queue_service
+import services.training_history_service as training_history_service
 
 
 class DummyResult:
@@ -77,3 +80,48 @@ def test_cancel_and_complete():
     mark_completed(db, 3)
     queries = " ".join(q for q, _ in db.executed)
     assert "UPDATE training_queue" in queries
+
+
+def test_finalize_completed_orders(monkeypatch):
+    db = DummyDB()
+    db.rows = [
+        (
+            1,
+            1,
+            2,
+            "Knight",
+            5,
+            "2025-06-10",
+            "u1",
+            {},
+            3,
+        )
+    ]
+
+    called = {}
+
+    def fake_mark(db_arg, qid):
+        called.setdefault("mark", []).append(qid)
+
+    def fake_record(
+        db_arg,
+        kingdom_id,
+        unit_id,
+        unit_name,
+        quantity,
+        source,
+        initiated_at,
+        trained_by,
+        modifiers_applied,
+        xp_per_unit=0,
+    ):
+        called["record"] = xp_per_unit
+
+    monkeypatch.setattr(training_queue_service, "mark_completed", fake_mark)
+    monkeypatch.setattr(training_history_service, "record_training", fake_record)
+
+    processed = training_queue_service.finalize_completed_orders(db)
+    assert processed == 1
+    assert called["mark"] == [1]
+    assert called["record"] == 3
+    assert any("DELETE FROM training_queue" in q for q, _ in db.executed)
