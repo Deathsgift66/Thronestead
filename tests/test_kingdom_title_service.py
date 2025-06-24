@@ -39,10 +39,13 @@ class DummyDB:
             return DummyResult()
         if q.startswith("SELECT title, awarded_at"):
             return DummyResult(rows=self.select_rows)
-        if q.startswith("UPDATE kingdoms SET active_title"):
+        if q.startswith("UPDATE kingdoms SET customizations = customizations - 'active_title'"):
+            self.updated.append({'title': None, **params})
+            return DummyResult()
+        if q.startswith("UPDATE kingdoms SET customizations = customizations ||"):
             self.updated.append(params)
             return DummyResult()
-        if q.startswith("SELECT active_title"):
+        if q.startswith("SELECT customizations ->> 'active_title'"):
             return DummyResult(row=("Champion",))
         return DummyResult()
 
@@ -75,6 +78,12 @@ def test_set_active_title_updates():
     db = DummyDB()
     set_active_title(db, 1, "Champion")
     assert db.updated[0]["title"] == "Champion"
+
+
+def test_set_active_title_clears_when_none():
+    db = DummyDB()
+    set_active_title(db, 1, None)
+    assert db.updated[0]["title"] is None
 
 
 def test_get_active_title():

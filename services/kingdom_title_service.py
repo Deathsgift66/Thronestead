@@ -92,16 +92,29 @@ def set_active_title(db: Session, kingdom_id: int, title: Optional[str]) -> None
         title (Optional[str]): Can be None to clear title.
     """
     try:
-        db.execute(
-            text(
-                """
-                UPDATE kingdoms
-                   SET active_title = :title
-                 WHERE kingdom_id = :kid
-            """
-            ),
-            {"title": title, "kid": kingdom_id},
-        )
+        if title is None:
+            db.execute(
+                text(
+                    """
+                    UPDATE kingdoms
+                       SET customizations = customizations - 'active_title'
+                     WHERE kingdom_id = :kid
+                    """
+                ),
+                {"kid": kingdom_id},
+            )
+        else:
+            db.execute(
+                text(
+                    """
+                    UPDATE kingdoms
+                       SET customizations = customizations ||
+                           jsonb_build_object('active_title', :title)
+                     WHERE kingdom_id = :kid
+                    """
+                ),
+                {"title": title, "kid": kingdom_id},
+            )
         db.commit()
 
     except SQLAlchemyError as exc:
@@ -121,10 +134,10 @@ def get_active_title(db: Session, kingdom_id: int) -> Optional[str]:
         row = db.execute(
             text(
                 """
-                SELECT active_title
+                SELECT customizations ->> 'active_title'
                   FROM kingdoms
                  WHERE kingdom_id = :kid
-            """
+                """
             ),
             {"kid": kingdom_id},
         ).fetchone()
