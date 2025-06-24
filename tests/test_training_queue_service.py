@@ -56,7 +56,9 @@ def test_add_training_order_inserts():
     )
     assert qid == 1
     assert len(db.executed) == 1
-    assert "INSERT INTO training_queue" in db.executed[0][0]
+    query = db.executed[0][0]
+    assert "INSERT INTO training_queue" in query
+    assert ":base * :qty * :speed" in query
 
 
 def test_fetch_queue_returns_rows():

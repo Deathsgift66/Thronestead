@@ -68,7 +68,7 @@ def add_training_order(
                     initiated_by, priority
                 ) VALUES (
                     :kid, :uid, :uname, :qty,
-                    now() + (:base * :speed) * interval '1 second', now(), 'queued',
+                    now() + (:base * :qty * :speed) * interval '1 second', now(), 'queued',
                     :speed, :mods,
                     :init, :pri
                 )
