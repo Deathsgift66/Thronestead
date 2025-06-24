@@ -118,3 +118,25 @@ def test_daily_limit_enforced(monkeypatch):
             user_id="u1",
             db=db,
         )
+
+
+def test_launch_respects_cooldown(monkeypatch):
+    Session = setup_db()
+    db = Session()
+    seed_data(db)
+
+    monkeypatch.setattr(random, "random", lambda: 0.01)
+    monkeypatch.setattr(random, "randint", lambda a, b: a)
+
+    launch_spy_mission(
+        LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+        user_id="u1",
+        db=db,
+    )
+
+    with pytest.raises(HTTPException):
+        launch_spy_mission(
+            LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+            user_id="u1",
+            db=db,
+        )

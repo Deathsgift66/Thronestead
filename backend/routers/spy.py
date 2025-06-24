@@ -68,7 +68,10 @@ def launch_spy_mission(
     detection_pct = max(5.0, min(95.0, 100.0 - success_pct + defense_rating))
     accuracy_pct = min(100.0, success_pct + 10.0)
 
-    spies_service.start_mission(db, kingdom_id, target.kingdom_id)
+    try:
+        spies_service.start_mission(db, kingdom_id, target.kingdom_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     mission_id = spies_service.create_spy_mission(
         db, kingdom_id, payload.mission_type, target.kingdom_id
     )
