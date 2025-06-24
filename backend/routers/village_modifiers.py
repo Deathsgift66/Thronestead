@@ -87,42 +87,46 @@ def apply_modifier(
     _uid: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """
-    Apply or update a modifier for a specific village based on the source tag.
-    This supports stacking rules and time-based expiration.
-    """
-    existing = (
-        db.query(VillageModifier)
-        .filter(VillageModifier.village_id == payload.village_id)
-        .first()
-    )
+    """Apply or update a modifier via an upsert."""
 
-    if existing:
-        # Update existing modifier
-        existing.resource_bonus = payload.resource_bonus or {}
-        existing.troop_bonus = payload.troop_bonus or {}
-        existing.construction_speed_bonus = payload.construction_speed_bonus or 0
-        existing.defense_bonus = payload.defense_bonus or 0
-        existing.trade_bonus = payload.trade_bonus or 0
-        existing.stacking_rules = payload.stacking_rules or {}
-        existing.expires_at = payload.expires_at
-        existing.applied_by = payload.applied_by
-        existing.last_updated = func.now()
-    else:
-        # Insert new modifier
-        mod = VillageModifier(
-            village_id=payload.village_id,
-            resource_bonus=payload.resource_bonus or {},
-            troop_bonus=payload.troop_bonus or {},
-            construction_speed_bonus=payload.construction_speed_bonus or 0,
-            defense_bonus=payload.defense_bonus or 0,
-            trade_bonus=payload.trade_bonus or 0,
-            source=payload.source,
-            stacking_rules=payload.stacking_rules or {},
-            expires_at=payload.expires_at,
-            applied_by=payload.applied_by,
-        )
-        db.add(mod)
+    db.execute(
+        text(
+            """
+            INSERT INTO village_modifiers (
+                village_id, resource_bonus, troop_bonus,
+                construction_speed_bonus, defense_bonus,
+                trade_bonus, source, stacking_rules, expires_at,
+                applied_by
+            ) VALUES (
+                :village_id, :resource_bonus, :troop_bonus,
+                :csb, :def_bonus, :trade_bonus, :source,
+                :stacking_rules, :expires_at, :applied_by
+            )
+            ON CONFLICT (village_id, source) DO UPDATE
+            SET resource_bonus = EXCLUDED.resource_bonus,
+                troop_bonus = EXCLUDED.troop_bonus,
+                construction_speed_bonus = EXCLUDED.construction_speed_bonus,
+                defense_bonus = EXCLUDED.defense_bonus,
+                trade_bonus = EXCLUDED.trade_bonus,
+                stacking_rules = EXCLUDED.stacking_rules,
+                expires_at = EXCLUDED.expires_at,
+                applied_by = EXCLUDED.applied_by,
+                last_updated = NOW()
+            """
+        ),
+        {
+            "village_id": payload.village_id,
+            "resource_bonus": payload.resource_bonus or {},
+            "troop_bonus": payload.troop_bonus or {},
+            "csb": payload.construction_speed_bonus or 0,
+            "def_bonus": payload.defense_bonus or 0,
+            "trade_bonus": payload.trade_bonus or 0,
+            "source": payload.source,
+            "stacking_rules": payload.stacking_rules or {},
+            "expires_at": payload.expires_at,
+            "applied_by": payload.applied_by,
+        },
+    )
 
     db.commit()
     return {"message": "modifier applied"}

@@ -60,3 +60,35 @@ def test_modifier_flow():
     cleanup_expired(db)
     res2 = list_modifiers(1, db)
     assert len(res2["modifiers"]) == 0
+
+
+def test_multiple_modifiers_coexist():
+    Session = setup_db()
+    db = Session()
+    uid = create_user(db)
+
+    apply_modifier(
+        ModifierPayload(
+            village_id=1,
+            resource_bonus={"wood": 5},
+            source="quest",
+            applied_by=uid,
+            expires_at=None,
+        ),
+        db,
+    )
+
+    apply_modifier(
+        ModifierPayload(
+            village_id=1,
+            troop_bonus={"attack": 3},
+            source="building",
+            applied_by=uid,
+            expires_at=None,
+        ),
+        db,
+    )
+
+    res = list_modifiers(1, db)
+    sources = {m["source"] for m in res["modifiers"]}
+    assert sources == {"quest", "building"}

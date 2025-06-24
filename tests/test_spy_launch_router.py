@@ -37,7 +37,7 @@ def seed_data(db):
             KingdomVillage(village_id=1, kingdom_id=2, village_name="V"),
         ]
     )
-    db.add(VillageModifier(village_id=1))
+    db.add(VillageModifier(village_id=1, source="system"))
     db.commit()
 
 
