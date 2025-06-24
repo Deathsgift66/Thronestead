@@ -1,5 +1,13 @@
 Name	Arguments	Return type	Security	
 
+audit_trigger
+-
+
+trigger
+
+Invoker	
+
+
 init_spy_defense
 -
 
