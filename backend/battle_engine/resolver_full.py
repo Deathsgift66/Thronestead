@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 from ..db import db
 from .movement import process_unit_movement
 from .vision import process_unit_vision
+from ..enums import WarPhase
 
 logger = logging.getLogger("Thronestead.BattleEngine")
 
@@ -140,8 +141,9 @@ def run_combat_tick() -> None:
         """
         SELECT war_id, phase, castle_hp, battle_tick, weather
         FROM wars_tactical
-        WHERE phase = 'battle' AND war_status = 'active'
-        """
+        WHERE phase = %s AND war_status = 'active'
+        """,
+        (WarPhase.LIVE.value,),
     )
 
     for war in active_kingdom_wars:
@@ -152,8 +154,9 @@ def run_combat_tick() -> None:
         """
         SELECT alliance_war_id, phase, castle_hp, battle_tick, weather
         FROM alliance_wars
-        WHERE phase = 'battle' AND war_status = 'active'
-        """
+        WHERE phase = %s AND war_status = 'active'
+        """,
+        (WarPhase.LIVE.value,),
     )
 
     for awar in active_alliance_wars:

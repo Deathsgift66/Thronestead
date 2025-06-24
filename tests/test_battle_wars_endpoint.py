@@ -25,7 +25,7 @@ def test_list_alliance_wars_returns_active():
             alliance_war_id=1,
             attacker_alliance_id=1,
             defender_alliance_id=2,
-            phase="battle",
+            phase="live",
             war_status="active",
         ),
         AllianceWarScore(alliance_war_id=1, attacker_score=10, defender_score=3),
@@ -36,7 +36,7 @@ def test_list_alliance_wars_returns_active():
     assert len(res) == 1
     war = res[0]
     assert war["enemy_name"] == "A2"
-    assert war["phase"] == "battle"
+    assert war["phase"] == "live"
     assert war["our_score"] == 10
     assert war["their_score"] == 3
 
