@@ -76,7 +76,7 @@ def declare_war(
         attacker_name=attacker_name[0] if attacker_name else "Unknown",
         defender_name=defender_name[0],
         war_reason=payload.war_reason,
-        status="pending",
+        status="active",
         attacker_kingdom_id=kid,
         defender_kingdom_id=get_kingdom_id(db, payload.target),
         submitted_by=user_id,
