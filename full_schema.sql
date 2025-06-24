@@ -582,6 +582,18 @@ CREATE TABLE public.kingdom_research_tracking (
   CONSTRAINT kingdom_research_tracking_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id),
   CONSTRAINT kingdom_research_tracking_tech_code_fkey FOREIGN KEY (tech_code) REFERENCES public.tech_catalogue(tech_code)
 );
+CREATE TABLE public.kingdom_resource_transfers (
+  transfer_id integer NOT NULL DEFAULT nextval('kingdom_resource_transfers_transfer_id_seq'::regclass),
+  from_kingdom_id integer,
+  to_kingdom_id integer,
+  resource_type text,
+  amount bigint,
+  reason text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT kingdom_resource_transfers_pkey PRIMARY KEY (transfer_id),
+  CONSTRAINT kingdom_resource_transfers_from_kingdom_id_fkey FOREIGN KEY (from_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
+  CONSTRAINT kingdom_resource_transfers_to_kingdom_id_fkey FOREIGN KEY (to_kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
 CREATE TABLE public.kingdom_resources (
   kingdom_id integer NOT NULL,
   wood bigint DEFAULT 0,
@@ -1608,7 +1620,7 @@ CREATE TABLE public.village_modifiers (
   defense_bonus numeric DEFAULT 0,
   trade_bonus numeric DEFAULT 0,
   last_updated timestamp with time zone DEFAULT now(),
-  source text DEFAULT 'system'::text NOT NULL,
+  source text DEFAULT 'system'::text,
   stacking_rules jsonb DEFAULT '{}'::jsonb,
   expires_at timestamp with time zone,
   applied_by uuid,
@@ -1617,7 +1629,7 @@ CREATE TABLE public.village_modifiers (
   troop_training_speed numeric DEFAULT 0,
   noble_killed boolean DEFAULT false,
   knight_killed boolean DEFAULT false,
-  CONSTRAINT village_modifiers_pkey PRIMARY KEY (village_id, source),
+  CONSTRAINT village_modifiers_pkey PRIMARY KEY (village_id),
   CONSTRAINT village_modifiers_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_modifiers_applied_by_fkey FOREIGN KEY (applied_by) REFERENCES public.users(user_id)
 );
@@ -1751,16 +1763,4 @@ CREATE TABLE public.wars_tactical (
   CONSTRAINT wars_tactical_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id),
   CONSTRAINT wars_tactical_terrain_id_fkey FOREIGN KEY (terrain_id) REFERENCES public.terrain_map(terrain_id),
   CONSTRAINT wars_tactical_war_id_fkey FOREIGN KEY (war_id) REFERENCES public.wars(war_id)
-);
-CREATE TABLE public.kingdom_resource_transfers (
-  transfer_id integer NOT NULL DEFAULT nextval('kingdom_resource_transfers_transfer_id_seq'::regclass),
-  from_kingdom_id integer,
-  to_kingdom_id integer,
-  resource_type text,
-  amount bigint,
-  reason text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT kingdom_resource_transfers_pkey PRIMARY KEY (transfer_id),
-  CONSTRAINT kingdom_resource_transfers_from_kingdom_id_fkey FOREIGN KEY (from_kingdom_id) REFERENCES public.kingdoms(kingdom_id),
-  CONSTRAINT kingdom_resource_transfers_to_kingdom_id_fkey FOREIGN KEY (to_kingdom_id) REFERENCES public.kingdoms(kingdom_id)
 );
