@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   realtimeSub = supabase
     .channel('admin_alerts')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'account_alerts' }, loadAlerts)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'admin_alerts' }, loadAlerts)
     .subscribe();
 
   document.getElementById('refresh-alerts')?.addEventListener('click', loadAlerts);
@@ -96,7 +96,7 @@ async function banPlayer(playerId, alertId) {
 }
 
 async function dismissAlert(alertId) {
-  const { error } = await supabase.from('account_alerts').delete().eq('id', alertId);
+  const { error } = await supabase.from('admin_alerts').delete().eq('id', alertId);
   if (error) throw new Error('Dismiss failed: ' + error.message);
   alert('✅ Alert dismissed.');
 }

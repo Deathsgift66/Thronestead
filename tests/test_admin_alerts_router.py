@@ -7,7 +7,7 @@ from backend.routers.admin import (
     flag_ip,
     get_admin_alerts,
     mark_alert_handled,
-    query_account_alerts,
+    query_admin_alerts,
     suspend_user,
 )
 
@@ -40,7 +40,7 @@ def test_filters_included_in_query():
 def test_account_alert_filters():
     db = DummyDB()
     filters = AlertFilters(start="2025-01-01", severity="high", kingdom="1")
-    query_account_alerts(filters, admin_id="a1", db=db)
+    query_admin_alerts(filters, admin_id="a1", db=db)
     q = " ".join(db.queries[0][0].split()).lower()
     assert "timestamp >= :start" in q
     assert "severity = :severity" in q
