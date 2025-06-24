@@ -8,6 +8,9 @@ import logging
 import datetime
 from typing import Optional
 
+from services import resource_service
+from services.training_history_service import XP_PER_LEVEL
+
 try:
     from sqlalchemy import text
     from sqlalchemy.exc import SQLAlchemyError
@@ -20,6 +23,11 @@ except ImportError:  # pragma: no cover
     Session = object
 
 logger = logging.getLogger(__name__)
+
+# Cost and scaling constants
+SPY_TRAIN_COST_GOLD = 250
+UPKEEP_PER_SPY = 1
+
 
 # ------------------------------------------------------------
 # Spy Record Management
@@ -68,20 +76,41 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
         int: new total spy count
     """
     record = get_spy_record(db, kingdom_id)
-    new_count = min(
-        record.get("spy_count", 0) + quantity, record.get("max_spy_capacity", 0)
-    )
+    capacity = record.get("max_spy_capacity", 0)
+    current = record.get("spy_count", 0)
+    trainable = min(quantity, capacity - current)
+    if trainable <= 0:
+        return current
+
+    total_cost = SPY_TRAIN_COST_GOLD * trainable
+    resource_service.adjust_gold(db, kingdom_id, -total_cost)
+
+    new_count = current + trainable
+    xp_gain = trainable * 5
+    new_xp = (record.get("spy_xp", 0) or 0) + xp_gain
+    upkeep_gain = trainable * UPKEEP_PER_SPY
+    new_upkeep = (record.get("spy_upkeep_gold", 0) or 0) + upkeep_gain
+    new_level = 1 + new_xp // XP_PER_LEVEL
 
     db.execute(
         text(
             """
             UPDATE kingdom_spies
                SET spy_count = :cnt,
+                   spy_xp = :xp,
+                   spy_upkeep_gold = :upkeep,
+                   spy_level = :lvl,
                    last_updated = NOW()
              WHERE kingdom_id = :kid
         """
         ),
-        {"cnt": new_count, "kid": kingdom_id},
+        {
+            "cnt": new_count,
+            "xp": new_xp,
+            "upkeep": new_upkeep,
+            "lvl": new_level,
+            "kid": kingdom_id,
+        },
     )
     db.commit()
     return new_count
@@ -294,6 +323,36 @@ def update_mission_status(db: Session, mission_id: int, status: str) -> None:
         """
         ),
         {"st": status, "mid": mission_id},
+    )
+    db.commit()
+
+
+def finalize_mission(
+    db: Session,
+    mission_id: int,
+    *,
+    accuracy: float,
+    detected: bool,
+    spies_killed: int,
+) -> None:
+    """Set final mission details like accuracy and detection."""
+
+    db.execute(
+        text(
+            """
+            UPDATE spy_missions
+               SET accuracy_percent = :acc,
+                   was_detected = :det,
+                   spies_killed = :loss
+             WHERE mission_id = :mid
+            """
+        ),
+        {
+            "acc": accuracy,
+            "det": detected,
+            "loss": spies_killed,
+            "mid": mission_id,
+        },
     )
     db.commit()
 
