@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from backend.data import prestige_scores
 from services.kingdom_history_service import log_event
+from services.kingdom_title_service import award_title, get_title_name_from_id
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ def award_achievement(
         reward_row = db.execute(
             text(
                 """
-                SELECT reward, prestige_reward, name
+                SELECT reward, prestige_reward, name, honor_reward
                   FROM kingdom_achievement_catalogue
                  WHERE achievement_code = :code
                 """
@@ -72,6 +73,7 @@ def award_achievement(
         reward = reward_row[0] if reward_row else None
         points = reward_row[1] if reward_row else 0
         achievement_name = reward_row[2] if reward_row else achievement_code
+        honor_reward_id = reward_row[3] if reward_row else 0
 
         if points:
             # Update prestige score in the database
@@ -93,6 +95,11 @@ def award_achievement(
 
         # Log achievement unlock
         log_event(db, kingdom_id, "ACHIEVEMENT_UNLOCKED", f"Earned {achievement_name}")
+
+        if honor_reward_id:
+            honor_title = get_title_name_from_id(honor_reward_id)
+            if honor_title:
+                award_title(db, kingdom_id, honor_title)
 
         db.commit()
         return reward
