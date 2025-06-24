@@ -32,7 +32,7 @@ This document outlines the major gameplay systems in **Thronestead** and how the
 - Participants, pre-plans and combat logs all reference the war ID, tying diplomacy and military actions together.
 
 ## 7. Strategic Tick
-- Periodic maintenance tasks are performed by `process_tick` in `services/strategic_tick_service.py`. It updates project progress, quest status, treaty expiration, activates scheduled wars and concludes finished wars.
+- Periodic maintenance tasks are performed by `process_tick` in `services/strategic_tick_service.py`. It updates project progress, quest status, treaty expiration, activates scheduled wars, concludes finished wars, decrements morale cooldowns and restores troop morale. Unified event logs and notifications are recorded when wars start.
 - These automated updates keep game state consistent even when players are offline.
 
 ## 8. History and Achievements
@@ -41,7 +41,7 @@ This document outlines the major gameplay systems in **Thronestead** and how the
 ## 9. Overall Flow
 1. **Onboarding** creates the baseline kingdom state.
 2. **Progression** loops drive players to gather resources, train troops, complete projects and participate in diplomacy.
-3. **Strategic Tick** processes ongoing timers and keeps wars and treaties up to date.
+3. **Strategic Tick** processes ongoing timers, restores morale and keeps wars and treaties up to date.
 4. **Modifiers** from regions, buildings, projects and treaties aggregate to shape each kingdom’s capabilities.
 5. **Wars and quests** feed back into progression by providing resources and prestige, restarting the loops.
 
