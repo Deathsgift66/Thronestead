@@ -22,6 +22,7 @@ class DummyDB:
         self.inserted = []
         self.check_rows = []
         self.reward = None
+        self.honor_reward = 0
         self.list_rows = []
         self.prestige_updates = []
         self.history_logs = []
@@ -34,8 +35,8 @@ class DummyDB:
         if q.startswith("INSERT INTO kingdom_achievements"):
             self.inserted.append(params)
             return DummyResult()
-        if "SELECT reward, prestige_reward, name" in q:
-            return DummyResult((self.reward, 5, "First Gold"))
+        if "SELECT reward, prestige_reward, name, honor_reward" in q:
+            return DummyResult((self.reward, 5, "First Gold", self.honor_reward))
         if "SELECT reward FROM kingdom_achievement_catalogue" in q:
             return DummyResult((self.reward,))
         if q.startswith("UPDATE kingdoms SET prestige_score"):
@@ -54,10 +55,19 @@ class DummyDB:
         pass
 
 
-def test_award_new_achievement():
+def test_award_new_achievement(monkeypatch):
     db = DummyDB()
     db.check_rows = [None]
     db.reward = {"gold": 100}
+    db.honor_reward = 1
+
+    called = {}
+    import services.kingdom_achievement_service as kas
+    kas_get = lambda rid: "Defender" if rid == 1 else None
+    kas_award = lambda _db, kid, title: called.update({"kid": kid, "title": title})
+    monkeypatch.setattr(kas, "get_title_name_from_id", kas_get)
+    monkeypatch.setattr(kas, "award_title", kas_award)
+
     reward = award_achievement(db, 1, "first_gold")
     assert reward == {"gold": 100}
     assert db.inserted[0]["kid"] == 1
@@ -65,6 +75,7 @@ def test_award_new_achievement():
     assert len(db.history_logs) == 1
     assert db.history_logs[0]["etype"] == "ACHIEVEMENT_UNLOCKED"
     assert db.history_logs[0]["details"] == "Earned First Gold"
+    assert called["title"] == "Defender"
 
 
 def test_award_existing_returns_none():

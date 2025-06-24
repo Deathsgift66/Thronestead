@@ -53,16 +53,27 @@ class DummyDB:
         pass
 
 
-def test_award_title_inserts_when_new():
+def test_award_title_inserts_when_new(monkeypatch):
     db = DummyDB()
     db.check_row = None
+    called = {}
+    monkeypatch.setattr(
+        "services.kingdom_title_service.log_event",
+        lambda db_, kid, etype, details: called.update({"etype": etype, "details": details}),
+    )
     award_title(db, 1, "Defender")
     assert db.inserted[0]["title"] == "Defender"
+    assert called["etype"] == "TITLE_AWARDED"
+    assert called["details"] == "Defender"
 
 
-def test_award_title_skips_existing():
+def test_award_title_skips_existing(monkeypatch):
     db = DummyDB()
     db.check_row = (1,)
+    monkeypatch.setattr(
+        "services.kingdom_title_service.log_event",
+        lambda db_, kid, etype, details: (_ for _ in ()).throw(Exception("log called")),
+    )
     award_title(db, 1, "Defender")
     assert db.inserted == []
 
