@@ -2,7 +2,11 @@
 # File Name: test_training_history_service.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from services.training_history_service import fetch_history, record_training
+from services.training_history_service import (
+    fetch_history,
+    record_training,
+    level_up_units,
+)
 
 
 class DummyResult:
@@ -18,17 +22,20 @@ class DummyResult:
 
 
 class DummyDB:
-    def __init__(self):
+    def __init__(self, troop_row=None):
         self.executed = []
         self.rows = []
+        self.troop_row = troop_row
 
     def execute(self, query, params=None):
-        q = str(query)
+        q = str(query).lower()
         self.executed.append((q, params))
-        if q.strip().startswith("INSERT INTO training_history"):
+        if q.strip().startswith("insert into training_history"):
             return DummyResult((1,))
-        if "FROM training_history" in q:
+        if "from training_history" in q:
             return DummyResult(rows=self.rows)
+        if "select quantity, unit_xp, unit_level from kingdom_troops" in q:
+            return DummyResult(row=self.troop_row)
         return DummyResult()
 
     def commit(self):
@@ -36,7 +43,7 @@ class DummyDB:
 
 
 def test_record_training_inserts():
-    db = DummyDB()
+    db = DummyDB(troop_row=(10, 0, 1))
     hid = record_training(
         db,
         kingdom_id=1,
@@ -47,10 +54,12 @@ def test_record_training_inserts():
         initiated_at="2025-06-09 10:00",
         trained_by="u1",
         modifiers_applied={"bonus": 10},
+        xp_per_unit=0,
     )
     assert hid == 1
-    assert len(db.executed) == 1
-    assert "INSERT INTO training_history" in db.executed[0][0]
+    joined = " ".join(q for q, _ in db.executed)
+    assert "insert into training_history" in joined
+    assert "insert into kingdom_troops" in joined
 
 
 def test_fetch_history_returns_rows():
@@ -59,3 +68,11 @@ def test_fetch_history_returns_rows():
     rows = fetch_history(db, 1, 20)
     assert len(rows) == 1
     assert rows[0]["unit_name"] == "Knight"
+
+
+def test_level_up_units_moves_quantity():
+    db = DummyDB(troop_row=(5, 120, 1))
+    level_up_units(db, 1, "Knight")
+    joined = " ".join(q for q, _ in db.executed)
+    assert "update kingdom_troops" in joined
+    assert joined.count("insert into kingdom_troops") >= 1
