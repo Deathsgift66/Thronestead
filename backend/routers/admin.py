@@ -226,8 +226,6 @@ def get_admin_alerts(
 
     return {
         "audit": fetch("audit_log"),
-        "admin_actions": fetch("admin_actions"),
-        "moderation_notes": fetch("admin_notes"),
         "recent_war_logs": fetch(
             "alliance_war_combat_logs",
             alt_where=where_clause.replace("created_at", "timestamp"),
