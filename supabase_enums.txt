@@ -1,0 +1,89 @@
+Schema	Name	Values	
+public
+
+battle_type	kingdom, alliance	
+
+public
+
+build_state	queued, building, completed, expired	
+
+public
+
+construction_status	idle, queued, under_construction, paused, complete	
+
+public
+
+contribution_type	resource, troop, action	
+
+public
+
+law_policy_type	policy, law	
+
+public
+
+loan_status	active, repaid, defaulted	
+
+public
+
+project_progress_status	building, paused, completed	
+
+public
+
+quest_status_alliance	active, completed	
+
+public
+
+quest_status_kingdom	active, completed, cancelled, expired	
+
+public
+
+resource_type	Wood, Stone, Iron Ore, Gold, Gems, Food, Coal, Livestock, Clay, Flax, Tools, Wood Planks, Refined Stone, Iron Ingots, Charcoal, Leather, Arrows, Swords, Axes, Shields, Armour, Wagon, Siege Weapons, Jewelry, Spear, Horses, Pitchforks	
+
+public
+
+spy_mission_status	active, success, fail	
+
+public
+
+trade_status	completed, cancelled, pending, refunded	
+
+public
+
+trade_type	player_trade, market_sale, alliance_trade, black_market, system_grant, taxation	
+
+public
+
+training_queue_status	queued, training, paused, completed, cancelled	
+
+public
+
+treaty_status	proposed, active, cancelled	
+
+public
+
+unit_movement_status	active, retreating, defeated, waiting, engaged, completed	
+
+public
+
+vault_action	deposit, withdraw, transfer, trade	
+
+public
+
+war_participant_role	attacker, defender	
+
+public
+
+war_phase	alert, planning, battle, completed	
+
+public
+
+war_status	active, completed	
+
+public
+
+war_victor	attacker, defender, draw	
+
+public
+
+winner_side	attacker, defender, draw	
+
