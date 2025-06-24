@@ -34,6 +34,7 @@ def test_recruit_flow():
     recruit(RecruitPayload(unit_id=1, quantity=2), user_id="u1")
     assert state["used_slots"] == 2
     assert state["queue"][0]["unit_name"] == "Swordsman"
+    assert "is_support" in state["queue"][0]
 
 
 def test_recruitable_has_units():
@@ -43,7 +44,7 @@ def test_recruitable_has_units():
 
 def test_queue_returns_list():
     state = get_state()
-    state["queue"] = [{"unit_name": "Spearman", "quantity": 1}]
+    state["queue"] = [{"unit_name": "Spearman", "quantity": 1, "is_support": False, "is_siege": False}]
     data = queue(user_id="u1")
     assert len(data["queue"]) == 1
 

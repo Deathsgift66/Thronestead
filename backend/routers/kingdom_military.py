@@ -98,6 +98,8 @@ async def recruit(payload: RecruitPayload, user_id: str = Depends(require_user_i
     queued_unit = {
         "unit_name": unit["name"],
         "quantity": payload.quantity,
+        "is_support": unit.get("is_support", False),
+        "is_siege": unit.get("is_siege", False),
     }
     state["queue"].append(queued_unit)
 

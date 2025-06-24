@@ -114,11 +114,14 @@ def fetch_queue(db: Session, kingdom_id: int) -> list[dict]:
         rows = db.execute(
             text(
                 """
-                SELECT queue_id, unit_name, quantity, training_ends_at, status
-                FROM training_queue
-                WHERE kingdom_id = :kid
-                  AND status IN ('queued', 'training')
-                ORDER BY priority DESC, started_at ASC
+                SELECT q.queue_id, q.unit_name, q.quantity, q.training_ends_at, q.status,
+                       COALESCE(us.is_support, false) AS is_support,
+                       COALESCE(us.is_siege, false) AS is_siege
+                FROM training_queue q
+                LEFT JOIN unit_stats us ON q.unit_name = us.unit_type
+                WHERE q.kingdom_id = :kid
+                  AND q.status IN ('queued', 'training')
+                ORDER BY q.priority DESC, q.started_at ASC
                 """
             ),
             {"kid": kingdom_id},
@@ -131,6 +134,8 @@ def fetch_queue(db: Session, kingdom_id: int) -> list[dict]:
                 "quantity": r[2],
                 "training_ends_at": r[3],
                 "status": r[4],
+                "is_support": r[5],
+                "is_siege": r[6],
             }
             for r in rows
         ]

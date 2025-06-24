@@ -41,6 +41,8 @@ class Unit:
     stance: str
     morale: float = 1.0
     hp: int = 100
+    is_support: bool = False
+    is_siege: bool = False
 
 
 @dataclass
@@ -128,6 +130,23 @@ class CombatResolver:
             if len(units) < 2:
                 continue
 
+            # Apply support buffs/heals before attacks
+            support_units = [u for u in units if u.is_support]
+            if support_units:
+                for sup in support_units:
+                    for ally in units:
+                        if ally.kingdom_id == sup.kingdom_id and ally is not sup:
+                            ally.hp = min(ally.hp + 5, 100)
+                            ally.morale = min(1.0, ally.morale + 0.05)
+                            logs.append(
+                                {
+                                    "event": "support",
+                                    "support_id": sup.unit_id,
+                                    "target_id": ally.unit_id,
+                                    "pos": pos,
+                                }
+                            )
+
             to_remove: List[Unit] = []
             for i, attacker in enumerate(units):
                 for defender in units[i + 1 :]:
@@ -208,7 +227,7 @@ class BattleTickHandler:
         self.combat.resolve(war, logs)
 
         # Siege damage phase (castle damage from siege units)
-        siege_count = sum(1 for u in war.units if u.unit_type == "siege")
+        siege_count = sum(1 for u in war.units if u.is_siege)
         if siege_count:
             damage = siege_count * 5
             war.castle_hp = max(0, war.castle_hp - damage)
