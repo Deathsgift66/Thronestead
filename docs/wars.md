@@ -40,3 +40,8 @@ CREATE INDEX IF NOT EXISTS idx_wars_defender ON public.wars (defender_id);
 CREATE INDEX IF NOT EXISTS idx_wars_status ON public.wars (status);
 CREATE INDEX IF NOT EXISTS idx_wars_type ON public.wars (war_type);
 ```
+
+## Audit Logging
+
+Every insert, update, or delete on this table triggers `trg_wars_audit`, which
+creates a descriptive entry in `audit_log`.
