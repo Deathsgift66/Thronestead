@@ -39,13 +39,12 @@ class DummyDB:
     def execute(self, query, params=None):
         q = str(query).strip()
         self.queries.append((q, params))
-        if "FROM tech_catalogue" in q:
+        lower = q.lower()
+        if "duration_hours" in lower:
             return DummyResult(row=self.tech_row)
-        if "kingdom_castle_progression" in q:
-            return DummyResult(row=self.castle_row)
-        if "FROM kingdoms" in q:
-            return DummyResult(row=self.region_row)
-        if "FROM kingdom_research_tracking" in q:
+
+        if "from kingdom_research_tracking" in lower:
+
             return DummyResult(rows=self.rows)
         return DummyResult()
 
@@ -98,3 +97,15 @@ def test_list_and_check():
     results = list_research(db, 1)
     assert results[0]["tech_code"] == "tech_a"
     assert is_tech_completed(db, 1, "tech_a") is True
+
+
+def test_list_research_category_filter():
+    db = DummyDB()
+    db.rows = [("tech_b", "active", 0, "2025-01-02")]
+    results = list_research(db, 1, category="military")
+    # last query executed should contain the join and category filter
+    q = " ".join(db.queries[-1][0].split()).lower()
+    assert "join tech_catalogue" in q
+    assert "category = :category" in q
+    assert db.queries[-1][1]["category"] == "military"
+    assert results[0]["tech_code"] == "tech_b"

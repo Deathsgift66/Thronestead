@@ -204,10 +204,12 @@ def start_research(
 
 @router.get("/research")
 def get_research(
-    user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
+    category: Optional[str] = None,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
 ):
     kid = get_kingdom_id(db, user_id)
-    return {"research": list_research(db, kid)}
+    return {"research": list_research(db, kid, category=category)}
 
 
 @router.post("/accept_quest")
