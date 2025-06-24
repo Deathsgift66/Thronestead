@@ -109,7 +109,7 @@ async function loadFlaggedUsers() {
       const card = document.createElement('div');
       card.className = 'flagged-card';
       card.innerHTML = `
-        <p><strong>${escapeHTML(row.player_id)}</strong> — ${escapeHTML(row.alert_type)}</p>
+        <p><strong>${escapeHTML(row.user_id)}</strong> — ${escapeHTML(row.type)}</p>
         <p>${new Date(row.created_at).toLocaleString()}</p>`;
       container.appendChild(card);
     });

@@ -197,7 +197,7 @@ function renderAlertCard(container, alert) {
   actions.innerHTML = `
     <button class="btn btn-small flag-ip" data-ip="${alert.ip || ''}">Flag IP</button>
     <button class="btn btn-small suspend-account" data-uid="${alert.user_id || ''}">Suspend</button>
-    <button class="btn btn-small mark-reviewed" data-id="${alert.id}">Mark Reviewed</button>
+    <button class="btn btn-small mark-reviewed" data-id="${alert.alert_id}">Mark Reviewed</button>
   `;
   el.appendChild(actions);
   container.appendChild(el);

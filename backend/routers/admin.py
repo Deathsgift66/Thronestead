@@ -249,13 +249,13 @@ def query_admin_alerts(
     params: dict[str, str] = {}
 
     if filters.start:
-        where_parts.append("timestamp >= :start")
+        where_parts.append("created_at >= :start")
         params["start"] = filters.start
     if filters.end:
-        where_parts.append("timestamp <= :end")
+        where_parts.append("created_at <= :end")
         params["end"] = filters.end
     if filters.type:
-        where_parts.append("alert_type = :type")
+        where_parts.append("type = :type")
         params["type"] = filters.type
     if filters.severity:
         where_parts.append("severity = :severity")
@@ -268,7 +268,7 @@ def query_admin_alerts(
         params["alliance"] = filters.alliance
 
     where = " WHERE " + " AND ".join(where_parts) if where_parts else ""
-    sql = text(f"SELECT * FROM admin_alerts{where} ORDER BY timestamp DESC LIMIT 100")
+    sql = text(f"SELECT * FROM admin_alerts{where} ORDER BY created_at DESC LIMIT 100")
     rows = db.execute(sql, params).fetchall()
     return {"alerts": [dict(r._mapping) for r in rows]}
 
