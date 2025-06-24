@@ -30,19 +30,16 @@ from services.progression_service import (
 
 def setup_function():
     castle_state["level"] = 1
-    castle_state["xp"] = 0
     nobles.clear()
     knights.clear()
 
 
 def test_progress_castle_level_up():
-    level = progress_castle(50)
-    assert level == 1
-    assert castle_state["xp"] == 50
-
-    level = progress_castle(60)
+    level = progress_castle()
     assert level == 2
-    assert castle_state["xp"] == 0
+
+    level = progress_castle()
+    assert level == 3
 
 
 def test_noble_management():

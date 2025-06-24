@@ -155,7 +155,7 @@ def get_castle_level(
     if not level:
         db.execute(
             text(
-                "INSERT INTO kingdom_castle_progression (kingdom_id, castle_level, xp) VALUES (:kid, 1, 0)"
+                "INSERT INTO kingdom_castle_progression (kingdom_id, castle_level) VALUES (:kid, 1)"
             ),
             {"kid": kid},
         )
@@ -182,11 +182,10 @@ def upgrade_castle(
     db.execute(
         text(
             """
-            INSERT INTO kingdom_castle_progression (kingdom_id, castle_level, xp)
-            VALUES (:kid, 1, 0)
+            INSERT INTO kingdom_castle_progression (kingdom_id, castle_level)
+            VALUES (:kid, 1)
             ON CONFLICT (kingdom_id) DO UPDATE
-                SET castle_level = kingdom_castle_progression.castle_level + 1,
-                    xp = 0
+                SET castle_level = kingdom_castle_progression.castle_level + 1
             """
         ),
         {"kid": kid},
