@@ -2,11 +2,8 @@
 # File Name: test_training_history_service.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
-from services.training_history_service import (
-    fetch_history,
-    record_training,
-    level_up_units,
-)
+from services.training_history_service import fetch_history, record_training
+from services.unit_xp_service import level_up_units
 
 
 class DummyResult:

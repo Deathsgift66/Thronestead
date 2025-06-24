@@ -160,6 +160,14 @@ def upgrade_troops(
         raise HTTPException(status_code=400, detail="Not enough resources")
 
     resource_service.spend_resources(db, kid, cost)
+    if xp_needed:
+        db.execute(
+            text(
+                "UPDATE kingdom_troops SET unit_xp = unit_xp - :xp "
+                "WHERE kingdom_id = :kid AND unit_type = :ut AND unit_level = :lvl"
+            ),
+            {"xp": xp_needed, "kid": kid, "ut": payload.from_unit, "lvl": req_level},
+        )
 
     db.execute(
         text(
