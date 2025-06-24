@@ -1,4 +1,26 @@
 Name	Table	Function	Events	Orientation	Enabled	
+audit_alliance_treaties	
+alliance_treaties
+
+audit_trigger
+
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
+
+
+audit_kingdom_resources	
+kingdom_resources
+
+audit_trigger
+
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
+
+
 audit_trigger_alliance_members	
 alliance_members
 
@@ -15,9 +37,9 @@ alliance_vault_transaction_log
 
 log_audit_alliance_vault_transaction_log
 
-AFTER DELETE
-AFTER INSERT
 AFTER UPDATE
+AFTER INSERT
+AFTER DELETE
 ROW
 
 
@@ -48,9 +70,9 @@ kingdoms
 
 log_audit_kingdoms
 
-AFTER UPDATE
-AFTER INSERT
 AFTER DELETE
+AFTER INSERT
+AFTER UPDATE
 ROW
 
 
@@ -59,9 +81,9 @@ projects_alliance
 
 log_audit_projects_alliance
 
+AFTER UPDATE
 AFTER INSERT
 AFTER DELETE
-AFTER UPDATE
 ROW
 
 
@@ -70,9 +92,9 @@ projects_player
 
 log_audit_projects_player
 
-AFTER UPDATE
 AFTER INSERT
 AFTER DELETE
+AFTER UPDATE
 ROW
 
 
@@ -127,6 +149,17 @@ log_audit_wars
 
 AFTER DELETE
 AFTER INSERT
+AFTER UPDATE
+ROW
+
+
+audit_village_resources	
+village_resources
+
+audit_trigger
+
+AFTER INSERT
+AFTER DELETE
 AFTER UPDATE
 ROW
 
