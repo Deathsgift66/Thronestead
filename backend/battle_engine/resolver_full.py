@@ -46,16 +46,39 @@ def process_unit_combat(
         if casualties <= 0:
             continue
 
+        defender_start_qty = other.get("quantity", 0)
+        casualty_ratio = casualties / defender_start_qty if defender_start_qty else 0
+        defender_shift = round(casualty_ratio * -10.0, 2)
+        attacker_shift = round(casualty_ratio * 5.0, 2)
+
+        other_morale = other.get("morale", 100)
+        new_other_morale = max(0.0, min(100.0, other_morale + defender_shift))
+        attacker_morale = unit.get("morale", 100)
+        new_attacker_morale = max(0.0, min(100.0, attacker_morale + attacker_shift))
+
         remaining = max(0, other["quantity"] - casualties)
         other["quantity"] = remaining
+        other["morale"] = new_other_morale
+        unit["morale"] = new_attacker_morale
 
         db.execute(
             """
             UPDATE unit_movements
-            SET quantity = %s, status = CASE WHEN %s = 0 THEN 'defeated' ELSE status END
+            SET quantity = %s,
+                morale = %s,
+                status = CASE WHEN %s = 0 THEN 'defeated' ELSE status END
             WHERE movement_id = %s
             """,
-            (remaining, remaining, other["movement_id"]),
+            (remaining, new_other_morale, remaining, other["movement_id"]),
+        )
+
+        db.execute(
+            """
+            UPDATE unit_movements
+            SET morale = %s
+            WHERE movement_id = %s
+            """,
+            (new_attacker_morale, unit_id),
         )
 
         if war_type == "alliance":
@@ -76,7 +99,7 @@ def process_unit_combat(
                     other["position_x"],
                     other["position_y"],
                     casualties,
-                    0.0,
+                    defender_shift,
                     "alliance",
                 ),
             )
@@ -98,7 +121,7 @@ def process_unit_combat(
                     other["position_x"],
                     other["position_y"],
                     casualties,
-                    0.0,
+                    defender_shift,
                     war_type,
                 ),
             )
