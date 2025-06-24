@@ -294,6 +294,34 @@ def join_war(
         ),
         {"wid": payload.alliance_war_id, "kid": kid, "side": payload.side},
     )
+
+    morale_row = db.execute(
+        text(
+            """
+            SELECT morale, morale_bonus_buildings, morale_bonus_tech, morale_bonus_events
+              FROM kingdom_troop_slots WHERE kingdom_id = :kid
+            """
+        ),
+        {"kid": kid},
+    ).fetchone()
+
+    base = morale_row[0] if morale_row else 0
+    bld = morale_row[1] if morale_row else 0
+    tech = morale_row[2] if morale_row else 0
+    events = morale_row[3] if morale_row else 0
+    morale = min(100, (base or 0) + (bld or 0) + (tech or 0) + (events or 0))
+
+    db.execute(
+        text(
+            """
+            INSERT INTO unit_movements (
+                war_id, kingdom_id, unit_type, quantity,
+                position_x, position_y, stance, morale
+            ) VALUES (:wid, :kid, 'infantry', 10, 0, 0, 'hold_ground', :morale)
+            """
+        ),
+        {"wid": payload.alliance_war_id, "kid": kid, "morale": morale},
+    )
     db.commit()
     log_action(
         db, user_id, "Join War", f"War {payload.alliance_war_id} as {payload.side}"
