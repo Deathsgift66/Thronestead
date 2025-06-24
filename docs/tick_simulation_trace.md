@@ -25,4 +25,10 @@ This guide provides a step-by-step log-style walkthrough of a full game tick usi
    - `village_id=8` produced +180 wood
    - `village_id=9` produced +120 iron_ore
 
+6. 😀 Morale Cooldowns Reduced:
+   - All kingdoms had `morale_cooldown_seconds` reduced by 60
+
+7. 💪 Morale Restored:
+   - Troop slots gained +5 base morale plus building and tech bonuses
+
 **⏱ Tick Complete: Duration 78ms**
