@@ -209,7 +209,7 @@ def get_flagged_users(
     verify_admin(admin_user_id, db)
     rows = db.execute(
         text(
-            "SELECT player_id, alert_type, created_at FROM admin_alerts ORDER BY created_at DESC"
+            "SELECT user_id, type, created_at FROM admin_alerts ORDER BY created_at DESC"
         )
     ).fetchall()
     return [dict(r._mapping) for r in rows]
