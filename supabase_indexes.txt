@@ -1180,6 +1180,24 @@ View definition
 
 public
 
+kingdom_resource_transfers
+
+idx_transfers_from_kingdom
+
+
+View definition
+
+public
+
+kingdom_resource_transfers
+
+idx_transfers_to_kingdom
+
+
+View definition
+
+public
+
 unit_movements
 
 idx_unit_movements_kingdom
