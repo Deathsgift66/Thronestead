@@ -18,24 +18,9 @@ from ..database import get_db
 from ..security import require_user_id
 from ..supabase_client import get_supabase_client
 from .progression_router import get_kingdom_id
+from services.alliance_service import get_alliance_id
 
 router = APIRouter(prefix="/api/conflicts", tags=["conflicts"])
-
-# ----------------------------
-# Helper
-# ----------------------------
-
-
-def get_alliance_id(db: Session, user_id: str) -> int:
-    """Fetch alliance ID for the user."""
-    row = db.execute(
-        text("SELECT alliance_id FROM users WHERE user_id = :uid"),
-        {"uid": user_id},
-    ).fetchone()
-    if not row or not row[0]:
-        raise HTTPException(status_code=404, detail="Alliance not found")
-    return row[0]
-
 
 # ----------------------------
 # Endpoints

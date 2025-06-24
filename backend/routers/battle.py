@@ -20,6 +20,7 @@ from ..battle_engine import TerrainGenerator, Unit, WarState, war_manager
 from ..database import get_db
 from ..security import verify_jwt_token
 from services.audit_service import log_action
+from services.alliance_service import get_alliance_id
 
 router = APIRouter(prefix="/api/battle", tags=["battle"])
 
@@ -329,7 +330,7 @@ def declare_alliance_battle(
 ) -> dict:
     """Declare a new alliance battle using the caller's alliance."""
 
-    attacker_id = _get_alliance_id(db, user_id)
+    attacker_id = get_alliance_id(db, user_id)
 
     row = db.execute(
         text(
@@ -390,24 +391,13 @@ def issue_orders(
 
     return {"status": "updated"}
 
-def _get_alliance_id(db: Session, user_id: str) -> int:
-    row = db.execute(
-        text("SELECT alliance_id FROM users WHERE user_id = :uid"),
-        {"uid": user_id},
-    ).fetchone()
-    if not row or row[0] is None:
-        raise HTTPException(status_code=404, detail="Alliance not found")
-
-    return row[0]
-
-
 @router.get("/wars")
 def list_alliance_wars(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ) -> list[dict]:
     """Return active wars for the user's alliance."""
-    aid = _get_alliance_id(db, user_id)
+    aid = get_alliance_id(db, user_id)
     rows = (
         db.execute(
             text(

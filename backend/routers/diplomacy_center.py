@@ -19,22 +19,9 @@ from services.audit_service import log_alliance_activity
 
 from ..database import get_db
 from ..security import verify_jwt_token
+from services.alliance_service import get_alliance_id
 
 router = APIRouter(prefix="/api/diplomacy", tags=["diplomacy_center"])
-
-
-# --------------------
-# Utility
-# --------------------
-def get_alliance_id(db: Session, user_id: str) -> int:
-    """Retrieve the alliance_id of a given user."""
-    row = db.execute(
-        text("SELECT alliance_id FROM users WHERE user_id = :uid"),
-        {"uid": user_id},
-    ).fetchone()
-    if not row or row[0] is None:
-        raise HTTPException(status_code=404, detail="Alliance not found")
-    return row[0]
 
 
 # --------------------

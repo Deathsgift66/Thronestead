@@ -16,6 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from services.audit_service import log_action, log_alliance_activity
+from services.alliance_service import get_alliance_id
 
 from ..database import get_db
 from ..security import require_user_id
@@ -49,16 +50,6 @@ class RespondPayload(BaseModel):
 
 
 # --- Utility Methods ---
-
-
-def get_alliance_id(db: Session, user_id: str) -> int:
-    row = db.execute(
-        text("SELECT alliance_id FROM users WHERE user_id = :uid"),
-        {"uid": user_id},
-    ).fetchone()
-    if not row or row[0] is None:
-        raise HTTPException(status_code=404, detail="Alliance not found")
-    return row[0]
 
 
 def validate_alliance_permission(db: Session, user_id: str, permission: str) -> int:
