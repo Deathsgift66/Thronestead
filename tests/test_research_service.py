@@ -31,7 +31,9 @@ class DummyDB:
         self.queries = []
         self.rows = []
         self.row = None
-        self.tech_row = (1, [])
+        self.tech_row = (1, [], 0, None)
+        self.castle_row = (1,)
+        self.region_row = ("north",)
         self.commits = 0
 
     def execute(self, query, params=None):
@@ -39,6 +41,10 @@ class DummyDB:
         self.queries.append((q, params))
         if "FROM tech_catalogue" in q:
             return DummyResult(row=self.tech_row)
+        if "kingdom_castle_progression" in q:
+            return DummyResult(row=self.castle_row)
+        if "FROM kingdoms" in q:
+            return DummyResult(row=self.region_row)
         if "FROM kingdom_research_tracking" in q:
             return DummyResult(rows=self.rows)
         return DummyResult()
@@ -57,8 +63,24 @@ def test_start_research_inserts():
 
 def test_start_research_prereq_check():
     db = DummyDB()
-    db.tech_row = (1, ["req1"])  # tech requires req1
+    db.tech_row = (1, ["req1"], 0, None)  # tech requires req1
     db.rows = []  # no completed techs
+    with pytest.raises(ValueError):
+        start_research(db, 1, "tech_a")
+
+
+def test_start_research_level_requirement():
+    db = DummyDB()
+    db.tech_row = (1, [], 2, None)  # requires castle level 2
+    db.castle_row = (1,)
+    with pytest.raises(ValueError):
+        start_research(db, 1, "tech_a")
+
+
+def test_start_research_region_requirement():
+    db = DummyDB()
+    db.tech_row = (1, [], 0, "north")
+    db.region_row = ("south",)
     with pytest.raises(ValueError):
         start_research(db, 1, "tech_a")
 
