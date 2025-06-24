@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
 
 # Optional in-memory/game-state sources
 try:
-    from backend.data import (
+from backend.data import (
         global_game_settings,
         kingdom_spies,
         kingdom_treaties,
@@ -36,6 +36,8 @@ except ImportError:
     kingdom_treaties = {}
     kingdom_spies = {}
     global_game_settings = {}
+
+from .faith_service import _get_faith_modifiers
 
 logger = logging.getLogger(__name__)
 
@@ -451,6 +453,7 @@ def get_total_modifiers(
         _kingdom_project_modifiers,
         _alliance_project_modifiers,
         _vip_modifiers,
+        _get_faith_modifiers,
         _prestige_modifiers,
         _village_modifiers,
         _village_modifier_rows,
@@ -470,3 +473,8 @@ def get_total_modifiers(
         _modifier_cache[kingdom_id] = (time.time(), total)
 
     return total
+
+
+def invalidate_cache(kingdom_id: int) -> None:
+    """Clear cached modifiers for the given kingdom."""
+    _modifier_cache.pop(kingdom_id, None)
