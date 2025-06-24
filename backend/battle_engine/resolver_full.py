@@ -151,7 +151,8 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
 
     units = db.query(
         """
-        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        SELECT um.*, us.speed, us."class", us.can_build_bridge,
+               us.can_damage_castle
         FROM unit_movements AS um
         JOIN unit_stats AS us ON um.unit_type = us.unit_type
         WHERE um.war_id = %s AND um.status = 'active'
@@ -173,14 +174,34 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
         process_unit_vision(unit, units, terrain)
         process_unit_combat(unit, units, terrain, war_id, tick, "kingdom")
 
+    # --- CASTLE DAMAGE ---
+    damaging = [
+        u for u in units if u.get("can_damage_castle") or u.get("class") == "siege"
+    ]
+    total = sum(u.get("quantity", 0) for u in damaging)
+    damage = total * 5
+    if damage:
+        new_hp = max(0, war["castle_hp"] - damage)
+        war["castle_hp"] = new_hp
+        db.execute(
+            """
+            INSERT INTO combat_logs (
+                war_id, tick_number, event_type, damage_dealt, notes
+            ) VALUES (%s, %s, 'castle_damage', %s, 'siege')
+            """,
+            (war_id, tick, damage),
+        )
+    else:
+        new_hp = war["castle_hp"]
+
     # --- UPDATE TICK ---
     db.execute(
         """
         UPDATE wars_tactical
-        SET battle_tick = %s
+        SET battle_tick = %s, castle_hp = %s
         WHERE war_id = %s
         """,
-        (tick, war_id),
+        (tick, new_hp, war_id),
     )
 
     # --- CHECK VICTORY ---
@@ -211,7 +232,8 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
 
     units = db.query(
         """
-        SELECT um.*, us.speed, us."class", us.can_build_bridge
+        SELECT um.*, us.speed, us."class", us.can_build_bridge,
+               us.can_damage_castle
         FROM unit_movements AS um
         JOIN unit_stats AS us ON um.unit_type = us.unit_type
         WHERE um.kingdom_id = ANY(%s) AND um.war_id IS NULL
@@ -234,14 +256,34 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
         process_unit_vision(unit, units, terrain)
         process_unit_combat(unit, units, terrain, alliance_war_id, tick, "alliance")
 
+    # --- CASTLE DAMAGE ---
+    damaging = [
+        u for u in units if u.get("can_damage_castle") or u.get("class") == "siege"
+    ]
+    total = sum(u.get("quantity", 0) for u in damaging)
+    damage = total * 5
+    if damage:
+        new_hp = max(0, awar["castle_hp"] - damage)
+        awar["castle_hp"] = new_hp
+        db.execute(
+            """
+            INSERT INTO alliance_war_combat_logs (
+                alliance_war_id, tick_number, event_type, damage_dealt, notes
+            ) VALUES (%s, %s, 'castle_damage', %s, 'siege')
+            """,
+            (alliance_war_id, tick, damage),
+        )
+    else:
+        new_hp = awar["castle_hp"]
+
     # --- UPDATE TICK ---
     db.execute(
         """
         UPDATE alliance_wars
-        SET battle_tick = %s
+        SET battle_tick = %s, castle_hp = %s
         WHERE alliance_war_id = %s
         """,
-        (tick, alliance_war_id),
+        (tick, new_hp, alliance_war_id),
     )
 
     update_alliance_war_score(alliance_war_id)
