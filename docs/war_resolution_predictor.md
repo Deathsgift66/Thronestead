@@ -1,6 +1,7 @@
 # 📉 Battle Score Curve & Resolution Prediction
 
 Provides a pre-resolution predictor and post-resolution analyzer based on combat logs.
+Changes to `combat_logs` are automatically written to `audit_log` via trigger `trg_combat_logs_audit`.
 
 ## Inputs
 - `combat_logs` (ticks 0 → N)

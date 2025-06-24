@@ -116,6 +116,7 @@ This document maps key PostgreSQL tables and their important columns to the HTML
 - `wars.html`: list active wars and allow declarations via modal
 - `battle_live.html`, `battle_replay.html`, `battle_resolution.html`: display war results and scores
 - `alliance_wars.html`: show alliance-specific war history
+- Changes automatically logged via `trg_wars_audit` trigger
 
 ### Table: `training_catalog`
 **Relevant Columns**: `unit_id`, `unit_name`, `tier`, `training_time`, `cost_gold`, `cost_food`, `cost_iron`, `cost_wood`, `cost_horses`
@@ -131,6 +132,7 @@ This document maps key PostgreSQL tables and their important columns to the HTML
 **Relevant Columns**: `history_id`, `kingdom_id`, `unit_name`, `quantity`, `completed_at`, `source`
 **Used In**:
 - `train_troops.html`: recent training history list
+- Changes automatically logged via `trg_training_history_audit` trigger
 
 ### Table: `trade_logs`
 **Relevant Columns**: `trade_id`, `sender_id`, `receiver_id`, `resource_type`, `amount`, `timestamp`, `status`
