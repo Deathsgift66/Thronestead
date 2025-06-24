@@ -184,6 +184,27 @@ def _merge_modifiers(target: dict, mods: dict) -> None:
             bucket[key] = bucket.get(key, 0) + val
 
 
+def _merge_modifiers_with_rules(target: dict, mods: dict, rules: dict) -> None:
+    """Merge modifiers applying simple stacking rules."""
+    if not isinstance(mods, dict):
+        return
+    for cat, inner in mods.items():
+        if not isinstance(inner, dict):
+            continue
+        bucket = target.setdefault(cat, {})
+        rule_cat = rules.get(cat, {}) if isinstance(rules, dict) else {}
+        for key, val in inner.items():
+            rule = (
+                rule_cat.get(key)
+                if isinstance(rule_cat, dict)
+                else rule_cat
+            )
+            if rule == "max":
+                bucket[key] = max(bucket.get(key, 0), val)
+            else:
+                bucket[key] = bucket.get(key, 0) + val
+
+
 def _region_modifiers(db: Session, kingdom_id: int) -> dict:
     """Return modifiers granted by the kingdom's region."""
     region_code = db.execute(
@@ -316,6 +337,60 @@ def _village_modifiers(db: Session, kingdom_id: int) -> dict:
     return {"production_bonus": {"villages": count}}
 
 
+def _village_modifier_rows(db: Session, kingdom_id: int) -> dict:
+    """Return modifiers from active rows in village_modifiers."""
+    rows = db.execute(
+        text(
+            """
+            SELECT vm.resource_bonus,
+                   vm.troop_bonus,
+                   vm.construction_speed_bonus,
+                   vm.defense_bonus,
+                   vm.trade_bonus,
+                   vm.stacking_rules
+              FROM village_modifiers vm
+              JOIN kingdom_villages kv ON kv.village_id = vm.village_id
+             WHERE kv.kingdom_id = :kid
+               AND (vm.expires_at IS NULL OR vm.expires_at > now())
+            """
+        ),
+        {"kid": kingdom_id},
+    ).fetchall()
+    mods: dict = {}
+    for rb, tb, csb, dbonus, tradeb, rules in rows:
+        row_mod: dict = {}
+        if rb:
+            if isinstance(rb, str):
+                try:
+                    rb = json.loads(rb)
+                except Exception:
+                    rb = {}
+            row_mod["resource_bonus"] = rb
+        if tb:
+            if isinstance(tb, str):
+                try:
+                    tb = json.loads(tb)
+                except Exception:
+                    tb = {}
+            row_mod["troop_bonus"] = tb
+        if csb:
+            row_mod.setdefault("production_bonus", {})[
+                "construction_speed_bonus"
+            ] = float(csb)
+        if dbonus:
+            row_mod.setdefault("defense_bonus", {})["village"] = float(dbonus)
+        if tradeb:
+            row_mod.setdefault("economic_bonus", {})["trade_bonus"] = float(tradeb)
+        r_rules = rules or {}
+        if isinstance(r_rules, str):
+            try:
+                r_rules = json.loads(r_rules)
+            except Exception:
+                r_rules = {}
+        _merge_modifiers_with_rules(mods, row_mod, r_rules)
+    return mods
+
+
 def _treaty_modifiers(db: Session, kingdom_id: int) -> dict:
     """Return modifiers from active treaties stored in the database."""
     rows = db.execute(
@@ -378,6 +453,7 @@ def get_total_modifiers(
         _vip_modifiers,
         _prestige_modifiers,
         _village_modifiers,
+        _village_modifier_rows,
         _treaty_modifiers,
         _spy_modifiers,
         _global_event_modifiers,

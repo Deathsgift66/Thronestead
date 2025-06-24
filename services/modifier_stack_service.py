@@ -36,6 +36,32 @@ def _merge_stack(stack: dict, modifiers: dict, source: str) -> None:
             item["sources"].append({"source": source, "value": val})
 
 
+def _merge_stack_with_rules(
+    stack: dict, modifiers: dict, rules: dict, source: str
+) -> None:
+    """Merge modifiers using simple stacking rules."""
+    if not isinstance(modifiers, dict):
+        return
+
+    for category, values in modifiers.items():
+        if not isinstance(values, dict):
+            continue
+        cat_entry = stack.setdefault(category, {})
+        rule_cat = rules.get(category, {}) if isinstance(rules, dict) else {}
+        for key, val in values.items():
+            rule = (
+                rule_cat.get(key)
+                if isinstance(rule_cat, dict)
+                else rule_cat
+            )
+            item = cat_entry.setdefault(key, {"total": 0, "sources": []})
+            if rule == "max":
+                item["total"] = max(item["total"], val)
+            else:  # additive or unknown
+                item["total"] += val
+            item["sources"].append({"source": source, "value": val})
+
+
 def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     """Compute the full modifier stack with breakdown for the given kingdom."""
 
@@ -155,6 +181,62 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
     ).fetchone()
     if spy_row and spy_row[0]:
         _merge_stack(stack, spy_row[0], "Spies")
+
+    # --- Village Modifiers ---
+    try:
+        v_rows = db.execute(
+            text(
+                """
+                SELECT vm.resource_bonus,
+                       vm.troop_bonus,
+                       vm.construction_speed_bonus,
+                       vm.defense_bonus,
+                       vm.trade_bonus,
+                       vm.source,
+                       vm.stacking_rules
+                  FROM village_modifiers vm
+                  JOIN kingdom_villages kv ON kv.village_id = vm.village_id
+                 WHERE kv.kingdom_id = :kid
+                   AND (vm.expires_at IS NULL OR vm.expires_at > now())
+                """
+            ),
+            {"kid": kingdom_id},
+        ).fetchall()
+        for rb, tb, csb, dbonus, tradeb, src, rules in v_rows:
+            mod: dict = {}
+            if rb:
+                if isinstance(rb, str):
+                    try:
+                        rb = json.loads(rb)
+                    except Exception:
+                        rb = {}
+                mod["resource_bonus"] = rb
+            if tb:
+                if isinstance(tb, str):
+                    try:
+                        tb = json.loads(tb)
+                    except Exception:
+                        tb = {}
+                mod["troop_bonus"] = tb
+            if csb:
+                mod.setdefault("production_bonus", {})[
+                    "construction_speed_bonus"
+                ] = float(csb)
+            if dbonus:
+                mod.setdefault("defense_bonus", {})["village"] = float(dbonus)
+            if tradeb:
+                mod.setdefault("economic_bonus", {})["trade_bonus"] = float(tradeb)
+            r_rules = rules or {}
+            if isinstance(r_rules, str):
+                try:
+                    r_rules = json.loads(r_rules)
+                except Exception:
+                    r_rules = {}
+            _merge_stack_with_rules(
+                stack, mod, r_rules, src or "Village Modifier"
+            )
+    except Exception as e:
+        logging.warning(f"Failed to load village modifiers: {e}")
 
     # --- Prestige Score (activity metric) ---
     # Prestige no longer grants combat bonuses. It is fetched only for display
