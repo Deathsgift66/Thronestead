@@ -180,33 +180,56 @@ async function loadVillageQueue(villageId) {
   const queueEl = document.getElementById('queue-list');
   queueEl.innerHTML = '<p>Loading queue...</p>';
 
-  const { data: queue, error } = await supabase
-    .from('village_queue')
-    .select('*')
-    .eq('village_id', villageId)
-    .order('queue_ends_at', { ascending: true });
-
-  if (error) {
-    console.error('❌ Error loading queue:', error);
+  const res = await fetch(`/api/village/building/queue?village_id=${villageId}`);
+  if (!res.ok) {
     queueEl.innerHTML = '<p>Failed to load queue.</p>';
     return;
   }
+  const { queue } = await res.json();
 
   queueEl.innerHTML = '';
 
-  if (queue.length === 0) {
-    queueEl.innerHTML = '<p>No active build or training queue.</p>';
+  if (!queue || queue.length === 0) {
+    queueEl.innerHTML = '<p>No queued construction.</p>';
     return;
   }
 
   queue.forEach(entry => {
     const card = document.createElement('div');
     card.classList.add('queue-card');
+
+    const end = new Date(entry.ends_at).getTime();
+    let progress = 0;
+    if (entry.starts_at) {
+      const start = new Date(entry.starts_at).getTime();
+      const now = Date.now();
+      progress = Math.min(
+        Math.round(((now - start) / (end - start)) * 100),
+        100
+      );
+    }
+
     card.innerHTML = `
-      <h4>${entry.queue_type}: ${entry.item_name}</h4>
-      <p>Ends: ${new Date(entry.queue_ends_at).toLocaleString()}</p>
+      <h4>${entry.building_type} → Lv${entry.target_level}</h4>
+      <div class="progress-bar"><div class="progress" style="width:${progress}%"></div></div>
     `;
+
+    if (entry.status !== 'in_progress') {
+      const btn = document.createElement('button');
+      btn.textContent = 'Cancel';
+      btn.onclick = () => cancelQueueItem(entry.queue_id);
+      card.appendChild(btn);
+    }
+
     queueEl.appendChild(card);
+  });
+}
+
+async function cancelQueueItem(queueId) {
+  await fetch('/api/village/building/queue/cancel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ queue_id: queueId })
   });
 }
 

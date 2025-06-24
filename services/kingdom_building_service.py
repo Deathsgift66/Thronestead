@@ -78,8 +78,18 @@ def construct_building(
             {"vid": village_id, "bid": building_id},
         )
 
+    # Ensure no other construction is active in this village
+    active = db.execute(
+        text(
+            "SELECT 1 FROM village_buildings WHERE village_id = :vid AND construction_status = 'under_construction'"
+        ),
+        {"vid": village_id},
+    ).fetchone()
+    if active:
+        raise HTTPException(400, "Another construction already in progress")
+
     # Start construction
-    result = db.execute(
+    db.execute(
         text(
             """
             INSERT INTO village_buildings (
@@ -87,16 +97,16 @@ def construct_building(
                 construction_status,
                 construction_started_at,
                 construction_ends_at,
-                initiated_by,
+                constructed_by,
                 is_under_construction
             ) VALUES (
                 :vid, :bid, 1,
-                'in_progress',
+                'under_construction',
                 now(),
                 now() + (:duration * interval '1 second'),
                 :uid,
                 true
-            ) RETURNING id
+            )
             """
         ),
         {
@@ -108,8 +118,7 @@ def construct_building(
     )
 
     db.commit()
-    row = result.fetchone()
-    return row[0] if row else 0
+    return 1
 
 
 def upgrade_building(
@@ -123,7 +132,7 @@ def upgrade_building(
     row = db.execute(
         text(
             """
-            SELECT id, level FROM village_buildings
+            SELECT level FROM village_buildings
              WHERE village_id = :vid AND building_id = :bid
                AND construction_status = 'complete'
             """
@@ -136,7 +145,7 @@ def upgrade_building(
             status_code=400, detail="Building not found or already upgrading"
         )
 
-    vb_id, current_level = row
+    current_level = row[0]
 
     # Fetch the maximum allowed level for this building
     max_row = db.execute(
@@ -155,19 +164,20 @@ def upgrade_building(
             """
             UPDATE village_buildings
                SET level = :lvl,
-                   construction_status = 'in_progress',
+                   construction_status = 'under_construction',
                    construction_started_at = now(),
                    construction_ends_at = now() + (:duration * interval '1 second'),
-                   initiated_by = :uid,
+                   constructed_by = :uid,
                    is_under_construction = true
-             WHERE id = :vbid
+             WHERE village_id = :vid AND building_id = :bid
             """
         ),
         {
             "lvl": next_level,
             "duration": construction_time_seconds,
             "uid": initiated_by,
-            "vbid": vb_id,
+            "vid": village_id,
+            "bid": building_id,
         },
     )
     db.commit()
@@ -182,13 +192,18 @@ def mark_completed_buildings(db: Session) -> int:
                SET construction_status = 'complete',
                    last_updated = now(),
                    is_under_construction = false
-             WHERE construction_status = 'in_progress'
+             WHERE construction_status = 'under_construction'
                AND construction_ends_at <= now()
             """
         )
     )
     db.commit()
-    return getattr(result, "rowcount", 0)
+
+    from services.village_queue_service import mark_completed_queued_buildings
+
+    processed = mark_completed_queued_buildings(db)
+
+    return getattr(result, "rowcount", 0) + processed
 
 
 def get_building_level(db: Session, village_id: int, building_id: int) -> Optional[int]:
