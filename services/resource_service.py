@@ -318,3 +318,15 @@ def transfer_resource(
         db.rollback()
         raise
 
+
+def adjust_gold(db: Session, kingdom_id: int, amount: int, *, commit: bool = True) -> None:
+    """Adjust a kingdom's gold balance up or down."""
+
+    if amount == 0:
+        return
+
+    if amount > 0:
+        gain_resources(db, kingdom_id, {"gold": amount}, commit=commit)
+    else:
+        spend_resources(db, kingdom_id, {"gold": -amount}, commit=commit)
+

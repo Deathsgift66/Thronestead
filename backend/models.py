@@ -1088,6 +1088,7 @@ class KingdomSpies(Base):
     spy_level = Column(Integer, default=1)
     spy_count = Column(Integer, default=0)
     max_spy_capacity = Column(Integer, default=10)
+    spy_xp = Column(Integer, default=0)
     spy_upkeep_gold = Column(Integer, default=0)
     last_mission_at = Column(DateTime(timezone=True))
     cooldown_seconds = Column(Integer, default=0)

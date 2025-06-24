@@ -12,6 +12,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from services import spies_service
+from services.spies_service import XP_PER_LEVEL
 
 from ..database import get_db
 from ..models import Kingdom
@@ -65,8 +66,15 @@ def launch_spy_mission(
     defense_rating = spies_service.get_spy_defense(db, target.kingdom_id)
     base = 50 + (atk_tech - def_tech) * 5 - defense_rating
     success_pct = max(5.0, min(95.0, float(base)))
-    detection_pct = max(5.0, min(95.0, 100.0 - success_pct + defense_rating))
     accuracy_pct = min(100.0, success_pct + 10.0)
+
+    attacker_level = 1 + attacker_record.get("spy_xp", 0) // XP_PER_LEVEL
+    def_row = db.execute(
+        text("SELECT detection_level FROM spy_defense WHERE kingdom_id = :kid"),
+        {"kid": target.kingdom_id},
+    ).fetchone()
+    defender_level = int(def_row[0]) if def_row else 1
+    detection_chance = max(5.0, 50.0 + defender_level - attacker_level)
 
     try:
         spies_service.start_mission(db, kingdom_id, target.kingdom_id)
@@ -77,7 +85,7 @@ def launch_spy_mission(
     )
 
     success = random.random() * 100 < success_pct
-    detected = random.random() * 100 < detection_pct
+    detected = random.random() * 100 < detection_chance
     spies_lost = 0
 
     if success:
@@ -88,6 +96,13 @@ def launch_spy_mission(
         spies_service.record_losses(db, kingdom_id, spies_lost)
         spies_service.update_mission_status(db, mission_id, "fail")
 
+    if detected:
+        db.execute(
+            text(
+                "UPDATE spy_defense SET daily_spy_detections = daily_spy_detections + 1 WHERE kingdom_id = :kid"
+            ),
+            {"kid": target.kingdom_id},
+        )
     if payload.mission_type == "assassination" and success:
         db.execute(
             text(
@@ -98,6 +113,14 @@ def launch_spy_mission(
             {"kid": target.kingdom_id},
         )
         db.commit()
+
+    spies_service.finalize_mission(
+        db,
+        mission_id,
+        accuracy=accuracy_pct,
+        detected=detected,
+        spies_killed=spies_lost,
+    )
 
     return {
         "mission_id": mission_id,
