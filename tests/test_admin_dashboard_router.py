@@ -32,7 +32,7 @@ class DummyDB:
             return DummyResult([(True,)])
         if "from audit_log" in lower:
             return DummyResult(self.rows)
-        if "from account_alerts" in lower:
+        if "from admin_alerts" in lower:
             return DummyResult(self.rows)
         return DummyResult()
 

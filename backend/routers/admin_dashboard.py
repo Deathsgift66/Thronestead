@@ -50,7 +50,7 @@ def dashboard_summary(
     verify_admin(admin_user_id, db)
 
     total_users = db.execute(text("SELECT COUNT(*) FROM users")).scalar()
-    flagged = db.execute(text("SELECT COUNT(*) FROM account_alerts")).scalar()
+    flagged = db.execute(text("SELECT COUNT(*) FROM admin_alerts")).scalar()
     open_wars = db.execute(
         text("SELECT COUNT(*) FROM alliance_wars WHERE war_status = 'active'")
     ).scalar()
@@ -209,7 +209,7 @@ def get_flagged_users(
     verify_admin(admin_user_id, db)
     rows = db.execute(
         text(
-            "SELECT player_id, alert_type, created_at FROM account_alerts ORDER BY created_at DESC"
+            "SELECT player_id, alert_type, created_at FROM admin_alerts ORDER BY created_at DESC"
         )
     ).fetchall()
     return [dict(r._mapping) for r in rows]

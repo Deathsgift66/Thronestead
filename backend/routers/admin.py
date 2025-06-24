@@ -241,7 +241,7 @@ def get_admin_alerts(
 
 
 @router.post("/alerts")
-def query_account_alerts(
+def query_admin_alerts(
     filters: AlertFilters,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
@@ -270,7 +270,7 @@ def query_account_alerts(
         params["alliance"] = filters.alliance
 
     where = " WHERE " + " AND ".join(where_parts) if where_parts else ""
-    sql = text(f"SELECT * FROM account_alerts{where} ORDER BY timestamp DESC LIMIT 100")
+    sql = text(f"SELECT * FROM admin_alerts{where} ORDER BY timestamp DESC LIMIT 100")
     rows = db.execute(sql, params).fetchall()
     return {"alerts": [dict(r._mapping) for r in rows]}
 
