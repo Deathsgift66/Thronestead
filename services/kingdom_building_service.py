@@ -10,8 +10,16 @@ import logging
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+
+try:
+    from sqlalchemy import text
+    from sqlalchemy.orm import Session
+except ImportError:  # pragma: no cover - allow tests without SQLAlchemy
+
+    def text(q):  # type: ignore
+        return q
+
+    Session = object  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -134,15 +142,13 @@ def upgrade_building(
             status_code=400, detail="Building not found or already upgrading"
         )
 
-    vb_id, current_level = row
-    next_level = current_level + 1
+    vb_id, _current_level = row
 
     db.execute(
         text(
             """
             UPDATE village_buildings
-               SET level = :lvl,
-                   construction_status = 'in_progress',
+               SET construction_status = 'in_progress',
                    construction_started_at = now(),
                    construction_ends_at = now() + (:duration * interval '1 second'),
                    initiated_by = :uid
@@ -150,7 +156,6 @@ def upgrade_building(
             """
         ),
         {
-            "lvl": next_level,
             "duration": construction_time_seconds,
             "uid": initiated_by,
             "vbid": vb_id,
@@ -165,7 +170,8 @@ def mark_completed_buildings(db: Session) -> int:
         text(
             """
             UPDATE village_buildings
-               SET construction_status = 'complete',
+               SET level = level + 1,
+                   construction_status = 'complete',
                    last_updated = now()
              WHERE construction_status = 'in_progress'
                AND construction_ends_at <= now()
