@@ -22,6 +22,7 @@ def process_unit_combat(
     war_id: int,
     tick: int,
     war_type: str,
+    morale_bonuses: Dict[int, int] | None = None,
 ) -> None:
     """Resolve combat for ``unit`` against nearby enemies."""
 
@@ -49,8 +50,11 @@ def process_unit_combat(
 
         defender_start_qty = other.get("quantity", 0)
         casualty_ratio = casualties / defender_start_qty if defender_start_qty else 0
-        defender_shift = round(casualty_ratio * -10.0, 2)
-        attacker_shift = round(casualty_ratio * 5.0, 2)
+        bonuses = morale_bonuses or {}
+        def_bonus = bonuses.get(other["kingdom_id"], 0)
+        atk_bonus = bonuses.get(kingdom_id, 0)
+        defender_shift = round(casualty_ratio * (-10.0 + def_bonus), 2)
+        attacker_shift = round(casualty_ratio * (5.0 + atk_bonus), 2)
 
         other_morale = other.get("morale", 100)
         new_other_morale = max(0.0, min(100.0, other_morale + defender_shift))
@@ -195,11 +199,36 @@ def process_kingdom_war_tick(war: Dict[str, Any]) -> None:
         (war_id,),
     ).first()["tile_map"]
 
+    kingdom_ids = [u["kingdom_id"] for u in units]
+    bonus_rows = db.query(
+        """
+        SELECT kingdom_id, morale_bonus_buildings, morale_bonus_tech,
+               morale_bonus_events
+        FROM kingdom_troop_slots
+        WHERE kingdom_id = ANY(%s)
+        """,
+        (kingdom_ids,),
+    )
+    morale_bonuses = {
+        r["kingdom_id"]: r.get("morale_bonus_buildings", 0)
+        + r.get("morale_bonus_tech", 0)
+        + r.get("morale_bonus_events", 0)
+        for r in bonus_rows
+    }
+
     # --- MAIN LOOP ---
     for unit in units:
         process_unit_movement(unit, terrain, weather)
         process_unit_vision(unit, units, terrain, weather)
-        process_unit_combat(unit, units, terrain, war_id, tick, "kingdom")
+        process_unit_combat(
+            unit,
+            units,
+            terrain,
+            war_id,
+            tick,
+            "kingdom",
+            morale_bonuses,
+        )
 
     # --- CASTLE DAMAGE ---
     damaging = [
@@ -278,11 +307,35 @@ def process_alliance_war_tick(awar: Dict[str, Any]) -> None:
         (alliance_war_id,),
     ).first()["tile_map"]
 
+    bonus_rows = db.query(
+        """
+        SELECT kingdom_id, morale_bonus_buildings, morale_bonus_tech,
+               morale_bonus_events
+        FROM kingdom_troop_slots
+        WHERE kingdom_id = ANY(%s)
+        """,
+        (participant_kingdom_ids,),
+    )
+    morale_bonuses = {
+        r["kingdom_id"]: r.get("morale_bonus_buildings", 0)
+        + r.get("morale_bonus_tech", 0)
+        + r.get("morale_bonus_events", 0)
+        for r in bonus_rows
+    }
+
     # --- MAIN LOOP ---
     for unit in units:
         process_unit_movement(unit, terrain, weather)
         process_unit_vision(unit, units, terrain, weather)
-        process_unit_combat(unit, units, terrain, alliance_war_id, tick, "alliance")
+        process_unit_combat(
+            unit,
+            units,
+            terrain,
+            alliance_war_id,
+            tick,
+            "alliance",
+            morale_bonuses,
+        )
 
     # --- CASTLE DAMAGE ---
     damaging = [
