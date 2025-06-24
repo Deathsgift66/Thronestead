@@ -13,6 +13,8 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from services import resource_service
+
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------------------------
@@ -123,6 +125,7 @@ def construct_building(
 
 def upgrade_building(
     db: Session,
+    kingdom_id: int,
     village_id: int,
     building_id: int,
     initiated_by: str,
@@ -158,6 +161,35 @@ def upgrade_building(
         raise HTTPException(status_code=400, detail="Building already at max level")
 
     next_level = current_level + 1
+
+    # Determine resource costs for this upgrade
+    cost_row = db.execute(
+        text(
+            "SELECT wood_cost, stone_cost, iron_cost, gold_cost, "
+            "wood_plan_cost, iron_ingot_cost "
+            "FROM building_catalogue WHERE building_id = :bid"
+        ),
+        {"bid": building_id},
+    ).fetchone()
+
+    spend_cost: dict[str, int] = {}
+    if cost_row:
+        wood_c, stone_c, iron_c, gold_c, planks_c, ingots_c = cost_row
+        if wood_c:
+            spend_cost["wood"] = int(wood_c) * next_level
+        if stone_c:
+            spend_cost["stone"] = int(stone_c) * next_level
+        if iron_c:
+            spend_cost["iron_ore"] = int(iron_c) * next_level
+        if gold_c:
+            spend_cost["gold"] = int(gold_c) * next_level
+        if planks_c:
+            spend_cost["wood_planks"] = int(planks_c) * next_level
+        if ingots_c:
+            spend_cost["iron_ingots"] = int(ingots_c) * next_level
+
+    if spend_cost:
+        resource_service.spend_resources(db, kingdom_id, spend_cost, commit=False)
 
     db.execute(
         text(

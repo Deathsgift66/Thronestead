@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 
 from services.kingdom_building_service import upgrade_building
+from services import resource_service
 
 
 class DummyResult:
@@ -30,21 +31,31 @@ class DummyDB:
         self.committed = True
 
 
-def test_upgrade_building_at_max_level_raises():
+import pytest
+
+
+def test_upgrade_building_at_max_level_raises(monkeypatch):
     db = DummyDB()
-    db.row_sequence = [(1, 3), (3,)]  # current level 3, max_level 3
-    try:
-        upgrade_building(db, 1, 1, "u1", 60)
-    except HTTPException as exc:
-        assert exc.status_code == 400
-    else:
-        assert False, "Expected HTTPException"
+    db.row_sequence = [
+        (1, 3),  # current level 3
+        (3,),    # max_level 3
+        (0, 0, 0, 0, 0, 0),  # cost row
+    ]
+    monkeypatch.setattr(resource_service, "spend_resources", lambda *a, **k: None)
+    with pytest.raises(HTTPException) as exc:
+        upgrade_building(db, 99, 1, 1, "u1", 60)
+    assert exc.value.status_code == 400
     assert not any("UPDATE village_buildings" in q for q in db.queries)
 
 
-def test_upgrade_building_success():
+def test_upgrade_building_success(monkeypatch):
     db = DummyDB()
-    db.row_sequence = [(1, 2), (3,)]  # current level 2, max_level 3
-    upgrade_building(db, 1, 1, "u1", 60)
+    db.row_sequence = [
+        (1, 2),  # current level 2
+        (3,),    # max_level 3
+        (1, 1, 1, 1, 0, 0),  # cost row
+    ]
+    monkeypatch.setattr(resource_service, "spend_resources", lambda *a, **k: None)
+    upgrade_building(db, 1, 1, 1, "u1", 60)
     assert any("UPDATE village_buildings" in q for q in db.queries)
     assert db.committed

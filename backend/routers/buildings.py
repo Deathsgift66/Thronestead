@@ -128,7 +128,9 @@ def upgrade_build(
     duration = seconds[0] if seconds else 3600
     from services.kingdom_building_service import upgrade_building
 
-    upgrade_building(db, payload.village_id, payload.building_id, user_id, duration)
+    upgrade_building(
+        db, kid, payload.village_id, payload.building_id, user_id, duration
+    )
     log_action(db, user_id, "upgrade_build", payload.dict())
     return {"message": "Upgrade started"}
 
