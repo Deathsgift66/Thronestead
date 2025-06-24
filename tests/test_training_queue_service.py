@@ -9,7 +9,10 @@ from services.training_queue_service import (
     fetch_queue,
     pause_training,
     mark_completed,
+    finalize_completed_orders,
 )
+import services.training_queue_service as training_queue_service
+import services.training_history_service as training_history_service
 
 
 class DummyResult:
@@ -58,7 +61,9 @@ def test_add_training_order_inserts():
     )
     assert qid == 1
     assert len(db.executed) == 1
-    assert "INSERT INTO training_queue" in db.executed[0][0]
+    query = db.executed[0][0]
+    assert "INSERT INTO training_queue" in query
+    assert ":base * :qty * :speed" in query
 
 
 def test_fetch_queue_returns_rows():
@@ -79,9 +84,55 @@ def test_cancel_and_complete():
     assert "UPDATE training_queue" in queries
 
 
+
 def test_begin_and_pause():
     db = DummyDB()
     begin_training(db, 4, 1)
     pause_training(db, 4, 1)
     assert "training'" in db.executed[-2][0]
     assert "paused" in db.executed[-1][0]
+
+def test_finalize_completed_orders(monkeypatch):
+    db = DummyDB()
+    db.rows = [
+        (
+            1,
+            1,
+            2,
+            "Knight",
+            5,
+            "2025-06-10",
+            "u1",
+            {},
+            3,
+        )
+    ]
+
+    called = {}
+
+    def fake_mark(db_arg, qid):
+        called.setdefault("mark", []).append(qid)
+
+    def fake_record(
+        db_arg,
+        kingdom_id,
+        unit_id,
+        unit_name,
+        quantity,
+        source,
+        initiated_at,
+        trained_by,
+        modifiers_applied,
+        xp_per_unit=0,
+    ):
+        called["record"] = xp_per_unit
+
+    monkeypatch.setattr(training_queue_service, "mark_completed", fake_mark)
+    monkeypatch.setattr(training_history_service, "record_training", fake_record)
+
+    processed = training_queue_service.finalize_completed_orders(db)
+    assert processed == 1
+    assert called["mark"] == [1]
+    assert called["record"] == 3
+    assert any("DELETE FROM training_queue" in q for q, _ in db.executed)
+

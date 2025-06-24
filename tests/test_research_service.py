@@ -31,15 +31,20 @@ class DummyDB:
         self.queries = []
         self.rows = []
         self.row = None
-        self.tech_row = (1, [])
+        self.tech_row = (1, [], 0, None)
+        self.castle_row = (1,)
+        self.region_row = ("north",)
         self.commits = 0
 
     def execute(self, query, params=None):
         q = str(query).strip()
         self.queries.append((q, params))
-        if "FROM tech_catalogue" in q:
+        lower = q.lower()
+        if "duration_hours" in lower:
             return DummyResult(row=self.tech_row)
-        if "FROM kingdom_research_tracking" in q:
+
+        if "from kingdom_research_tracking" in lower:
+
             return DummyResult(rows=self.rows)
         return DummyResult()
 
@@ -57,8 +62,24 @@ def test_start_research_inserts():
 
 def test_start_research_prereq_check():
     db = DummyDB()
-    db.tech_row = (1, ["req1"])  # tech requires req1
+    db.tech_row = (1, ["req1"], 0, None)  # tech requires req1
     db.rows = []  # no completed techs
+    with pytest.raises(ValueError):
+        start_research(db, 1, "tech_a")
+
+
+def test_start_research_level_requirement():
+    db = DummyDB()
+    db.tech_row = (1, [], 2, None)  # requires castle level 2
+    db.castle_row = (1,)
+    with pytest.raises(ValueError):
+        start_research(db, 1, "tech_a")
+
+
+def test_start_research_region_requirement():
+    db = DummyDB()
+    db.tech_row = (1, [], 0, "north")
+    db.region_row = ("south",)
     with pytest.raises(ValueError):
         start_research(db, 1, "tech_a")
 
@@ -76,3 +97,15 @@ def test_list_and_check():
     results = list_research(db, 1)
     assert results[0]["tech_code"] == "tech_a"
     assert is_tech_completed(db, 1, "tech_a") is True
+
+
+def test_list_research_category_filter():
+    db = DummyDB()
+    db.rows = [("tech_b", "active", 0, "2025-01-02")]
+    results = list_research(db, 1, category="military")
+    # last query executed should contain the join and category filter
+    q = " ".join(db.queries[-1][0].split()).lower()
+    assert "join tech_catalogue" in q
+    assert "category = :category" in q
+    assert db.queries[-1][1]["category"] == "military"
+    assert results[0]["tech_code"] == "tech_b"
