@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
 
 # Optional in-memory/game-state sources
 try:
-from backend.data import (
+    from backend.data import (
         global_game_settings,
         kingdom_spies,
         kingdom_treaties,
