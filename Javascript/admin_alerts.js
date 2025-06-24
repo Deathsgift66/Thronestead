@@ -96,7 +96,7 @@ async function banPlayer(playerId, alertId) {
 }
 
 async function dismissAlert(alertId) {
-  const { error } = await supabase.from('admin_alerts').delete().eq('id', alertId);
+  const { error } = await supabase.from('admin_alerts').delete().eq('alert_id', alertId);
   if (error) throw new Error('Dismiss failed: ' + error.message);
   alert('✅ Alert dismissed.');
 }
