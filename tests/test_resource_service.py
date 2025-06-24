@@ -51,3 +51,30 @@ def test_transfer_resource_logs_row():
     assert transfer.resource_type == "wood"
     assert transfer.amount == 20
     assert transfer.reason == "gift"
+
+
+def test_transfer_resource_rolls_back_on_log_error(monkeypatch):
+    Session = setup_db()
+    db = Session()
+    db.add(KingdomResources(kingdom_id=1, wood=50))
+    db.add(KingdomResources(kingdom_id=2, wood=10))
+    db.commit()
+
+    original_execute = db.execute
+
+    def fail_on_insert(query, params=None, *args, **kwargs):
+        if "kingdom_resource_transfers" in str(query):
+            raise Exception("fail")
+        return original_execute(query, params, *args, **kwargs)
+
+    monkeypatch.setattr(db, "execute", fail_on_insert)
+
+    with pytest.raises(RuntimeError):
+        resource_service.transfer_resource(db, 1, 2, "wood", 20, reason="gift")
+
+    s_res = db.query(KingdomResources).filter_by(kingdom_id=1).one()
+    r_res = db.query(KingdomResources).filter_by(kingdom_id=2).one()
+    assert s_res.wood == 50
+    assert r_res.wood == 10
+    assert db.query(KingdomResourceTransfer).count() == 0
+
