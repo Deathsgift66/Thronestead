@@ -4,8 +4,10 @@
 # Developer: Deathsgift66
 from services.training_queue_service import (
     add_training_order,
+    begin_training,
     cancel_training,
     fetch_queue,
+    pause_training,
     mark_completed,
     finalize_completed_orders,
 )
@@ -82,6 +84,14 @@ def test_cancel_and_complete():
     assert "UPDATE training_queue" in queries
 
 
+
+def test_begin_and_pause():
+    db = DummyDB()
+    begin_training(db, 4, 1)
+    pause_training(db, 4, 1)
+    assert "training'" in db.executed[-2][0]
+    assert "paused" in db.executed[-1][0]
+
 def test_finalize_completed_orders(monkeypatch):
     db = DummyDB()
     db.rows = [
@@ -125,3 +135,4 @@ def test_finalize_completed_orders(monkeypatch):
     assert called["mark"] == [1]
     assert called["record"] == 3
     assert any("DELETE FROM training_queue" in q for q, _ in db.executed)
+
