@@ -1143,7 +1143,7 @@ class VillageModifier(Base):
     last_updated = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    source = Column(Text, server_default="system")
+    source = Column(Text, server_default="system", primary_key=True)
     stacking_rules = Column(JSONB, server_default=text("'{}'::jsonb"))
     expires_at = Column(DateTime(timezone=True))
     applied_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))

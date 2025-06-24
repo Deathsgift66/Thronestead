@@ -1608,7 +1608,7 @@ CREATE TABLE public.village_modifiers (
   defense_bonus numeric DEFAULT 0,
   trade_bonus numeric DEFAULT 0,
   last_updated timestamp with time zone DEFAULT now(),
-  source text DEFAULT 'system'::text,
+  source text DEFAULT 'system'::text NOT NULL,
   stacking_rules jsonb DEFAULT '{}'::jsonb,
   expires_at timestamp with time zone,
   applied_by uuid,
@@ -1617,7 +1617,7 @@ CREATE TABLE public.village_modifiers (
   troop_training_speed numeric DEFAULT 0,
   noble_killed boolean DEFAULT false,
   knight_killed boolean DEFAULT false,
-  CONSTRAINT village_modifiers_pkey PRIMARY KEY (village_id),
+  CONSTRAINT village_modifiers_pkey PRIMARY KEY (village_id, source),
   CONSTRAINT village_modifiers_village_id_fkey FOREIGN KEY (village_id) REFERENCES public.kingdom_villages(village_id),
   CONSTRAINT village_modifiers_applied_by_fkey FOREIGN KEY (applied_by) REFERENCES public.users(user_id)
 );
