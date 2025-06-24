@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from services.training_history_service import record_training
+
 try:
     from sqlalchemy import text
     from sqlalchemy.exc import SQLAlchemyError
@@ -193,3 +195,60 @@ def mark_completed(db: Session, queue_id: int) -> None:
     except SQLAlchemyError:
         db.rollback()
         logger.warning("Failed to mark queue_id=%s as completed", queue_id)
+
+
+def finalize_completed_orders(db: Session) -> int:
+    """Finalize finished training orders.
+
+    Finds all queue rows where ``training_ends_at`` has passed and the status is
+    either ``queued`` or ``training``. Each found row is marked completed,
+    recorded in the training history and then removed from the queue.
+
+    Args:
+        db: Active database session
+
+    Returns:
+        int: Number of orders processed
+    """
+    try:
+        rows = db.execute(
+            text(
+                """
+                SELECT queue_id, kingdom_id, unit_id, unit_name, quantity,
+                       started_at, initiated_by, modifiers_applied, xp_per_unit
+                  FROM training_queue
+                 WHERE training_ends_at <= now()
+                   AND status IN ('queued', 'training')
+                """
+            )
+        ).fetchall()
+
+        processed = 0
+        for r in rows:
+            qid, kid, uid, uname, qty, started_at, initiated_by, mods, xp = r
+            mark_completed(db, qid)
+            record_training(
+                db,
+                kingdom_id=kid,
+                unit_id=uid,
+                unit_name=uname,
+                quantity=qty,
+                source="training_queue",
+                initiated_at=started_at,
+                trained_by=initiated_by,
+                modifiers_applied=mods,
+                xp_per_unit=xp or 0,
+            )
+            db.execute(
+                text("DELETE FROM training_queue WHERE queue_id = :qid"),
+                {"qid": qid},
+            )
+            db.commit()
+            processed += 1
+
+        return processed
+
+    except SQLAlchemyError:
+        db.rollback()
+        logger.exception("Failed to finalize completed training orders")
+        return 0
