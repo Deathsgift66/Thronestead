@@ -9,7 +9,7 @@ This table stores the master record for each alliance war. It defines which alli
 | `alliance_war_id` | Unique war ID (primary key) |
 | `attacker_alliance_id` | Which alliance is the attacker |
 | `defender_alliance_id` | Which alliance is the defender |
-| `phase` | War phase: `alert`, `planning`, `battle`, `ended`, etc. (enum: `war_phase`) |
+| `phase` | War phase: `alert`, `planning`, `live`, `resolved`, etc. (enum: `war_phase`) |
 | `castle_hp` | Current HP of the defending alliance's castle |
 | `battle_tick` | Current battle tick (advances each battle loop / timer) |
 | `war_status` | War status: `active`, `ended`, `cancelled`, etc. (enum: `war_status`) |
@@ -39,7 +39,7 @@ WHERE alliance_war_id = :war_id;
 ### Changing phase
 ```sql
 UPDATE alliance_wars
-SET phase = 'battle'
+SET phase = 'live'
 WHERE alliance_war_id = :war_id;
 ```
 

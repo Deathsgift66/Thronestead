@@ -19,6 +19,7 @@ from services.audit_service import log_action
 
 from ..database import get_db
 from ..security import require_user_id
+from ..enums import WarPhase
 
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
 
@@ -79,12 +80,12 @@ def respond_war(
             """
             UPDATE alliance_wars
                SET war_status = :status,
-                   phase = CASE WHEN :status = 'active' THEN 'battle' ELSE phase END,
+                   phase = CASE WHEN :status = 'active' THEN :live_phase ELSE phase END,
                    start_date = CASE WHEN :status = 'active' THEN now() ELSE start_date END
              WHERE alliance_war_id = :wid
         """
         ),
-        {"status": status, "wid": payload.alliance_war_id},
+        {"status": status, "wid": payload.alliance_war_id, "live_phase": WarPhase.LIVE.value},
     )
     db.commit()
     log_action(

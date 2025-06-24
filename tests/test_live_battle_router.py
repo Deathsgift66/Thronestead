@@ -23,7 +23,7 @@ def test_get_live_battle_returns_data():
             war_id=1,
             attacker_kingdom_id=1,
             defender_kingdom_id=2,
-            phase="combat",
+            phase="live",
             castle_hp=90,
             battle_tick=5,
             tick_interval_seconds=60,

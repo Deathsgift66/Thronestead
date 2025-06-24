@@ -38,7 +38,7 @@ def test_list_wars_groups_by_status():
             attacker_alliance_id=1,
             defender_alliance_id=2,
             war_status="active",
-            phase="battle",
+            phase="live",
         )
     )
     db.add(
@@ -107,7 +107,7 @@ def test_surrender_updates_status():
             attacker_alliance_id=1,
             defender_alliance_id=2,
             war_status="active",
-            phase="battle",
+            phase="live",
         )
     )
     db.commit()
@@ -128,7 +128,7 @@ def test_active_wars_endpoint_lists_active():
             attacker_alliance_id=1,
             defender_alliance_id=2,
             war_status="active",
-            phase="battle",
+            phase="live",
         )
     )
     db.add(
