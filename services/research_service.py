@@ -231,3 +231,88 @@ def is_tech_completed(db: Session, kingdom_id: int, tech_code: str) -> bool:
     except SQLAlchemyError:
         logger.warning("Failed to verify tech completion for %s", tech_code)
         return False
+
+
+# -------------------------------------------------------------
+# Detailed Research Listing
+# -------------------------------------------------------------
+
+
+def research_overview(db: Session, kingdom_id: int) -> dict:
+    """Return categorized research data for the given kingdom."""
+    try:
+        complete_finished_research(db, kingdom_id)
+
+        tracking_rows = db.execute(
+            text(
+                "SELECT tech_code, status, ends_at FROM kingdom_research_tracking "
+                "WHERE kingdom_id = :kid"
+            ),
+            {"kid": kingdom_id},
+        ).fetchall()
+
+        castle_level = (
+            db.execute(
+                text(
+                    "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+                ),
+                {"kid": kingdom_id},
+            ).scalar()
+            or 1
+        )
+
+        region = (
+            db.execute(
+                text("SELECT region FROM kingdoms WHERE kingdom_id = :kid"),
+                {"kid": kingdom_id},
+            ).scalar()
+        )
+
+        tech_rows = db.execute(
+            text(
+                "SELECT tech_code, prerequisites, required_kingdom_level, required_region "
+                "FROM tech_catalogue WHERE is_active = true"
+            )
+        ).fetchall()
+
+        completed = []
+        in_progress = []
+        completed_codes = set()
+        active_codes = set()
+
+        for code, status, ends in tracking_rows:
+            if status == "completed":
+                completed.append({"tech_code": code, "ends_at": ends})
+                completed_codes.add(code)
+            elif status == "active":
+                in_progress.append({"tech_code": code, "ends_at": ends})
+                active_codes.add(code)
+
+        available = []
+        locked = []
+
+        for code, prereqs, req_level, req_region in tech_rows:
+            prereqs = prereqs or []
+            if code in completed_codes or code in active_codes:
+                continue
+            if prereqs and not set(prereqs).issubset(completed_codes):
+                locked.append({"tech_code": code, "reason": "prerequisites"})
+                continue
+            if req_level and castle_level < req_level:
+                locked.append({"tech_code": code, "reason": "castle_level"})
+                continue
+            if req_region and region != req_region:
+                locked.append({"tech_code": code, "reason": "region"})
+                continue
+            available.append(code)
+
+        return {
+            "completed": completed,
+            "in_progress": in_progress,
+            "available": available,
+            "locked": locked,
+        }
+
+    except SQLAlchemyError:
+        logger.exception("Failed to build research overview for kingdom %d", kingdom_id)
+        return {"completed": [], "in_progress": [], "available": [], "locked": []}

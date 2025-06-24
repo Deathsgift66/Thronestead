@@ -15,8 +15,11 @@ from sqlalchemy.orm import Session
 from services.audit_service import log_action
 from services.kingdom_quest_service import start_quest as db_start_quest
 from services.kingdom_setup_service import create_kingdom_transaction
-from services.research_service import list_research
-from services.research_service import start_research as db_start_research
+from services.research_service import (
+    list_research,
+    research_overview,
+    start_research as db_start_research,
+)
 
 from ..data import DEFAULT_REGIONS, recruitable_units
 from ..database import get_db
@@ -210,6 +213,15 @@ def get_research(
 ):
     kid = get_kingdom_id(db, user_id)
     return {"research": list_research(db, kid, category=category)}
+
+
+@router.get("/research/list")
+def research_list(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    kid = get_kingdom_id(db, user_id)
+    return research_overview(db, kid)
 
 
 @router.post("/accept_quest")

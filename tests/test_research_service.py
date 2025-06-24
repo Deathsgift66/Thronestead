@@ -10,6 +10,7 @@ from services.research_service import (
     complete_finished_research,
     is_tech_completed,
     list_research,
+    research_overview,
     start_research,
 )
 
@@ -34,6 +35,7 @@ class DummyDB:
         self.tech_row = (1, [], 0, None)
         self.castle_row = (1,)
         self.region_row = ("north",)
+        self.catalog_rows = []
         self.commits = 0
 
     def execute(self, query, params=None):
@@ -42,6 +44,9 @@ class DummyDB:
         lower = q.lower()
         if "duration_hours" in lower:
             return DummyResult(row=self.tech_row)
+
+        if "from tech_catalogue" in lower:
+            return DummyResult(rows=self.catalog_rows)
 
         if "from kingdom_research_tracking" in lower:
 
@@ -109,3 +114,32 @@ def test_list_research_category_filter():
     assert "category = :category" in q
     assert db.queries[-1][1]["category"] == "military"
     assert results[0]["tech_code"] == "tech_b"
+
+
+def test_research_overview_structure():
+    db = DummyDB()
+    db.rows = [("tech_a", "completed", 100, "2025-01-01")]
+    # Tech catalogue rows returned when "FROM tech_catalogue" in query
+    db.catalog_rows = [
+        ("tech_a", [], 1, None),
+        ("tech_b", ["tech_a"], 1, None),
+    ]
+
+    def execute_override(query, params=None):
+        q = str(query).lower()
+        db.queries.append((q, params))
+        if "from tech_catalogue" in q:
+            return DummyResult(rows=db.catalog_rows)
+        if "from kingdom_research_tracking" in q:
+            return DummyResult(rows=db.rows)
+        if "kingdom_castle_progression" in q:
+            return DummyResult(row=db.castle_row)
+        if "from kingdoms where kingdom_id" in q:
+            return DummyResult(row=db.region_row)
+        return DummyResult()
+
+    db.execute = execute_override  # type: ignore
+
+    overview = research_overview(db, 1)
+    assert overview["completed"][0]["tech_code"] == "tech_a"
+    assert "tech_b" in overview["available"]
