@@ -71,7 +71,13 @@ async function loadPlayerProfile() {
       titlesListEl.innerHTML = '';
       (titles.titles || []).forEach(title => {
         const li = document.createElement('li');
-        li.textContent = title;
+        const name = title.title ?? title; // fallback if API returns string
+        if (title.awarded_at) {
+          const date = formatTimestamp(title.awarded_at);
+          li.textContent = `${name} — awarded ${date}`;
+        } else {
+          li.textContent = name;
+        }
         titlesListEl.appendChild(li);
       });
     } catch {
