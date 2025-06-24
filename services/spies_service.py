@@ -5,6 +5,7 @@
 # Description: Database helpers for kingdom spy management system.
 
 import logging
+import datetime
 from typing import Optional
 
 try:
@@ -91,6 +92,38 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
 # ------------------------------------------------------------
 
 
+def can_launch_mission(db: Session, kingdom_id: int) -> bool:
+    """Return True if the kingdom's spy mission cooldown has elapsed."""
+
+    try:
+        row = db.execute(
+            text(
+                """
+                SELECT last_mission_at, cooldown_seconds
+                  FROM kingdom_spies
+                 WHERE kingdom_id = :kid
+                """
+            ),
+            {"kid": kingdom_id},
+        ).fetchone()
+
+        if not row:
+            return True
+
+        last_time = row[0]
+        cooldown = row[1] or 0
+
+        if last_time is None:
+            return True
+
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return last_time + datetime.timedelta(seconds=cooldown) <= now
+
+    except SQLAlchemyError:
+        logger.exception("Failed to check spy mission cooldown for kingdom %d", kingdom_id)
+        return False
+
+
 def start_mission(
     db: Session,
     kingdom_id: int,
@@ -98,6 +131,9 @@ def start_mission(
     cooldown: int = 3600,
 ) -> None:
     """Starts a spy mission, updating cooldown and daily counters."""
+
+    if not can_launch_mission(db, kingdom_id):
+        raise ValueError("Mission still on cooldown")
 
     db.execute(
         text(
