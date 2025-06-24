@@ -121,7 +121,12 @@ def validate_resource(resource: str) -> None:
 
 
 def _apply_resource_changes(
-    db: Session, kingdom_id: int, changes: dict[str, int], op: Literal["+", "-"]
+    db: Session,
+    kingdom_id: int,
+    changes: dict[str, int],
+    op: Literal["+", "-"],
+    *,
+    commit: bool = True,
 ) -> None:
     """Apply resource increments or decrements atomically.
 
@@ -163,7 +168,8 @@ def _apply_resource_changes(
         + " WHERE kingdom_id = :kid"
     )
     db.execute(text(sql), {**changes, "kid": kingdom_id})
-    db.commit()
+    if commit:
+        db.commit()
 
 
 # ------------------------------------------------------------------------------
@@ -197,7 +203,9 @@ def get_kingdom_resources(db: Session, kingdom_id: int, *, lock: bool = False) -
     return dict(row)
 
 
-def spend_resources(db: Session, kingdom_id: int, cost: dict[str, int]) -> None:
+def spend_resources(
+    db: Session, kingdom_id: int, cost: dict[str, int], *, commit: bool = True
+) -> None:
     """Deduct specified resources from the kingdom.
 
     Parameters
@@ -223,10 +231,12 @@ def spend_resources(db: Session, kingdom_id: int, cost: dict[str, int]) -> None:
         if current.get(res, 0) < amt:
             raise HTTPException(status_code=400, detail=f"Not enough {res}")
 
-    _apply_resource_changes(db, kingdom_id, cost, "-")
+    _apply_resource_changes(db, kingdom_id, cost, "-", commit=commit)
 
 
-def gain_resources(db: Session, kingdom_id: int, gain: dict[str, int]) -> None:
+def gain_resources(
+    db: Session, kingdom_id: int, gain: dict[str, int], *, commit: bool = True
+) -> None:
     """
     Add specified resources to the kingdom.
     """
@@ -235,7 +245,7 @@ def gain_resources(db: Session, kingdom_id: int, gain: dict[str, int]) -> None:
         if amt < 0:
             raise ValueError("Negative gain not allowed")
 
-    _apply_resource_changes(db, kingdom_id, gain, "+")
+    _apply_resource_changes(db, kingdom_id, gain, "+", commit=commit)
 
 
 def has_enough_resources(db: Session, kingdom_id: int, cost: dict[str, int]) -> bool:
@@ -268,34 +278,43 @@ def transfer_resource(
 
     clean_reason = sanitize_plain_text(reason, 255)
 
-    # Spend from sender
-    spend_resources(db, from_kingdom_id, {resource: amount})
-    # Give to recipient
-    gain_resources(db, to_kingdom_id, {resource: amount})
-
-    if log:
-        try:
-            db.execute(
-                text(
-                    """
-                    INSERT INTO kingdom_resource_transfers (
-                        from_kingdom_id, to_kingdom_id, resource_type,
-                        amount, reason
-                    ) VALUES (
-                        :from_id, :to_id, :res, :amt, :reason
-                    )
-                    """
-                ),
-                {
-                    "from_id": from_kingdom_id,
-                    "to_id": to_kingdom_id,
-                    "res": resource,
-                    "amt": amount,
-                    "reason": clean_reason or "unlogged",
-                },
+    try:
+        with db.begin():
+            # Spend from sender
+            spend_resources(
+                db,
+                from_kingdom_id,
+                {resource: amount},
+                commit=False,
             )
-            db.commit()
-        except Exception as exc:
-            db.rollback()
-            logger.warning("Failed to log transfer: %s", exc)
-            raise RuntimeError("transfer log insert failed") from exc
+            # Give to recipient
+            gain_resources(db, to_kingdom_id, {resource: amount}, commit=False)
+
+            if log:
+                try:
+                    db.execute(
+                        text(
+                            """
+                            INSERT INTO kingdom_resource_transfers (
+                                from_kingdom_id, to_kingdom_id, resource_type,
+                                amount, reason
+                            ) VALUES (
+                                :from_id, :to_id, :res, :amt, :reason
+                            )
+                            """
+                        ),
+                        {
+                            "from_id": from_kingdom_id,
+                            "to_id": to_kingdom_id,
+                            "res": resource,
+                            "amt": amount,
+                            "reason": clean_reason or "unlogged",
+                        },
+                    )
+                except Exception as exc:
+                    logger.warning("Failed to log transfer: %s", exc)
+                    raise RuntimeError("transfer log insert failed") from exc
+    except Exception:
+        db.rollback()
+        raise
+
