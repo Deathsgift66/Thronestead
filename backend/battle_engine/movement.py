@@ -35,9 +35,9 @@ def process_unit_movement(
     fallback_x = unit.get("fallback_point_x")
     fallback_y = unit.get("fallback_point_y")
     withdraw_threshold = unit.get("withdraw_threshold_percent", 0)
-    morale = unit.get("morale") or 1.0
+    morale = unit.get("morale") or 100.0
 
-    if withdraw_threshold > 0 and morale < (withdraw_threshold / 100):
+    if withdraw_threshold > 0 and morale < withdraw_threshold:
         move_towards(unit, fallback_x, fallback_y, speed, terrain, weather)
         update_unit_position(unit_id, unit["position_x"], unit["position_y"])
         return

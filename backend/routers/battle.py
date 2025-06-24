@@ -59,6 +59,9 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
             .filter(models.UnitStat.unit_type == mov.unit_type)
             .first()
         )
+        morale = float(mov.morale) if mov.morale is not None else 100.0
+        if morale <= 1:
+            morale *= 100
         war.units.append(
             Unit(
                 unit_id=mov.movement_id,
@@ -68,6 +71,7 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
                 x=mov.position_x,
                 y=mov.position_y,
                 stance=mov.stance,
+                morale=morale,
                 is_support=bool(stat.is_support) if stat else False,
                 is_siege=bool(stat.is_siege) if stat else False,
             )
