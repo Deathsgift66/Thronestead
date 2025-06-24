@@ -205,9 +205,20 @@ def restore_kingdom_morale(db: Session) -> int:
         text(
             """
             UPDATE kingdom_troop_slots
-               SET morale = LEAST(100, morale + 5 + morale_bonus_buildings + morale_bonus_tech + morale_bonus_events),
+               SET morale = LEAST(
+                       100,
+                       morale
+                           + 5
+                           + morale_bonus_buildings
+                           + morale_bonus_tech
+                           + morale_bonus_events
+                   ),
                    last_morale_update = now()
              WHERE morale < 100
+               AND (
+                       morale_cooldown_seconds <= 0
+                    OR last_morale_update + morale_cooldown_seconds * interval '1 second' <= now()
+               )
             """
         )
     )
@@ -216,6 +227,22 @@ def restore_kingdom_morale(db: Session) -> int:
     if count:
         _log_unified(db, "morale_restored", f"{count} kingdoms morale restored")
     return count
+
+
+def decrement_morale_cooldowns(db: Session, seconds: int = 60) -> int:
+    """Reduce morale cooldown timers for all kingdoms."""
+    result = db.execute(
+        text(
+            """
+            UPDATE kingdom_troop_slots
+               SET morale_cooldown_seconds = GREATEST(0, morale_cooldown_seconds - :sec)
+             WHERE morale_cooldown_seconds > 0
+            """
+        ),
+        {"sec": seconds},
+    )
+    db.commit()
+    return getattr(result, "rowcount", 0)
 
 
 # ------------------------------------------------------------
@@ -240,6 +267,7 @@ def process_tick(db: Session) -> None:
             "treaties": expire_treaties(db),
             "wars_started": activate_pending_wars(db),
             "wars_concluded": check_war_status(db),
+            "morale_cooldown": decrement_morale_cooldowns(db),
             "morale_restored": restore_kingdom_morale(db),
         }
         logger.info("[Strategic Tick] %s", results)
