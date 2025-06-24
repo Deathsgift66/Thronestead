@@ -193,3 +193,41 @@ def mark_completed(db: Session, queue_id: int) -> None:
     except SQLAlchemyError:
         db.rollback()
         logger.warning("Failed to mark queue_id=%s as completed", queue_id)
+
+
+def begin_training(db: Session, queue_id: int, kingdom_id: int) -> None:
+    """Set a queued order to 'training'."""
+    try:
+        db.execute(
+            text(
+                """
+                UPDATE training_queue
+                   SET status = 'training', last_updated = now()
+                 WHERE queue_id = :qid AND kingdom_id = :kid
+                """
+            ),
+            {"qid": queue_id, "kid": kingdom_id},
+        )
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        logger.warning("Failed to start training for queue_id=%s", queue_id)
+
+
+def pause_training(db: Session, queue_id: int, kingdom_id: int) -> None:
+    """Pause an active training order."""
+    try:
+        db.execute(
+            text(
+                """
+                UPDATE training_queue
+                   SET status = 'paused', last_updated = now()
+                 WHERE queue_id = :qid AND kingdom_id = :kid
+                """
+            ),
+            {"qid": queue_id, "kid": kingdom_id},
+        )
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        logger.warning("Failed to pause training for queue_id=%s", queue_id)

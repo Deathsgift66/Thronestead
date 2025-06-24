@@ -4,8 +4,10 @@
 # Developer: Deathsgift66
 from services.training_queue_service import (
     add_training_order,
+    begin_training,
     cancel_training,
     fetch_queue,
+    pause_training,
     mark_completed,
 )
 
@@ -75,3 +77,11 @@ def test_cancel_and_complete():
     mark_completed(db, 3)
     queries = " ".join(q for q, _ in db.executed)
     assert "UPDATE training_queue" in queries
+
+
+def test_begin_and_pause():
+    db = DummyDB()
+    begin_training(db, 4, 1)
+    pause_training(db, 4, 1)
+    assert "training'" in db.executed[-2][0]
+    assert "paused" in db.executed[-1][0]
