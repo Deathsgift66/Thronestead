@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from .resource_service import validate_resource
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
@@ -47,6 +49,7 @@ def deposit_to_vault(
     notes: str = "manual deposit",
 ) -> None:
     """Deposit a resource into the alliance vault and log it."""
+    validate_resource(resource_type)
     if amount <= 0:
         raise ValueError("Deposit amount must be positive")
 
@@ -106,6 +109,7 @@ def withdraw_from_vault(
     notes: str = "manual withdrawal",
 ) -> None:
     """Withdraw resources from the alliance vault and log the transaction."""
+    validate_resource(resource_type)
     if amount <= 0:
         raise ValueError("Withdrawal amount must be positive")
 
