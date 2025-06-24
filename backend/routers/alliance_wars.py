@@ -23,6 +23,30 @@ from ..security import require_user_id
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
 
 
+# --- Utility Functions ---
+
+
+def validate_alliance_permission(db: Session, user_id: str, permission: str) -> int:
+    """Return the user's alliance_id if they have ``permission`` or raise 403."""
+    row = db.execute(
+        text(
+            """
+            SELECT m.alliance_id, r.permissions
+              FROM alliance_members m
+              JOIN alliance_roles r ON m.role_id = r.role_id
+             WHERE m.user_id = :uid
+            """
+        ),
+        {"uid": user_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    alliance_id, perms = row
+    if not perms or permission not in perms:
+        raise HTTPException(status_code=403, detail="Permission required")
+    return alliance_id
+
+
 # ----------- Request Payloads -----------
 
 
@@ -50,6 +74,10 @@ def declare_war(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    aid = validate_alliance_permission(db, user_id, "can_manage_wars")
+    if aid != payload.attacker_alliance_id:
+        raise HTTPException(status_code=403, detail="Cannot declare for this alliance")
+
     row = db.execute(
         text(
             "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "
@@ -74,6 +102,19 @@ def respond_war(
     db: Session = Depends(get_db),
 ):
     status = "active" if payload.action == "accept" else "cancelled"
+    war_row = db.execute(
+        text(
+            "SELECT attacker_alliance_id, defender_alliance_id FROM alliance_wars WHERE alliance_war_id = :wid"
+        ),
+        {"wid": payload.alliance_war_id},
+    ).fetchone()
+    if not war_row:
+        raise HTTPException(status_code=404, detail="War not found")
+
+    aid = validate_alliance_permission(db, user_id, "can_manage_wars")
+    if aid not in war_row:
+        raise HTTPException(status_code=403, detail="Not part of this war")
+
     db.execute(
         text(
             """
@@ -100,6 +141,21 @@ def surrender_war(
     db: Session = Depends(get_db),
 ):
     victor = "defender" if payload.side == "attacker" else "attacker"
+    war_row = db.execute(
+        text(
+            "SELECT attacker_alliance_id, defender_alliance_id FROM alliance_wars WHERE alliance_war_id = :wid"
+        ),
+        {"wid": payload.alliance_war_id},
+    ).fetchone()
+    if not war_row:
+        raise HTTPException(status_code=404, detail="War not found")
+
+    aid = validate_alliance_permission(db, user_id, "can_manage_wars")
+    if payload.side == "attacker" and aid != war_row[0]:
+        raise HTTPException(status_code=403, detail="Cannot surrender for this side")
+    if payload.side == "defender" and aid != war_row[1]:
+        raise HTTPException(status_code=403, detail="Cannot surrender for this side")
+
     db.execute(
         text(
             "UPDATE alliance_wars SET war_status = 'surrendered', phase = 'ended', end_date = now() "
@@ -211,8 +267,22 @@ def join_war(
     db: Session = Depends(get_db),
 ):
     from .progression_router import get_kingdom_id
-
     kid = get_kingdom_id(db, user_id)
+
+    war_row = db.execute(
+        text(
+            "SELECT attacker_alliance_id, defender_alliance_id FROM alliance_wars WHERE alliance_war_id = :wid"
+        ),
+        {"wid": payload.alliance_war_id},
+    ).fetchone()
+    if not war_row:
+        raise HTTPException(status_code=404, detail="War not found")
+
+    aid = validate_alliance_permission(db, user_id, "can_join_wars")
+    target = war_row[0] if payload.side == "attacker" else war_row[1]
+    if aid != target:
+        raise HTTPException(status_code=403, detail="Cannot join for this side")
+
     db.execute(
         text(
             """
