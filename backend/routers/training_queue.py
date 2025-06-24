@@ -16,8 +16,10 @@ from sqlalchemy.orm import Session
 
 from services.training_queue_service import (
     add_training_order,
+    begin_training,
     cancel_training,
     fetch_queue,
+    pause_training,
 )
 from services.vacation_mode_service import check_vacation_mode
 
@@ -44,6 +46,12 @@ class CancelPayload(BaseModel):
     """Payload to cancel a queued training order."""
 
     queue_id: int = Field(..., description="Queue ID to cancel")
+
+
+class QueueActionPayload(BaseModel):
+    """Payload for starting or pausing an existing training job."""
+
+    queue_id: int = Field(..., description="Queue ID to update")
 
 
 @router.post(
@@ -126,3 +134,51 @@ def cancel_order(
         ) from e
 
     return {"message": "Training cancelled"}
+
+
+@router.post(
+    "/begin",
+    summary="Begin queued training",
+    response_description="Confirmation of status update",
+)
+def begin_order(
+    payload: QueueActionPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Change a queue entry's status to 'training'."""
+    kingdom_id = get_kingdom_id(db, user_id)
+    check_vacation_mode(db, kingdom_id)
+
+    try:
+        begin_training(db, payload.queue_id, kingdom_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to begin training"
+        ) from e
+
+    return {"message": "Training started"}
+
+
+@router.post(
+    "/pause",
+    summary="Pause active training",
+    response_description="Confirmation of status update",
+)
+def pause_order(
+    payload: QueueActionPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Pause an active training order."""
+    kingdom_id = get_kingdom_id(db, user_id)
+    check_vacation_mode(db, kingdom_id)
+
+    try:
+        pause_training(db, payload.queue_id, kingdom_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to pause training"
+        ) from e
+
+    return {"message": "Training paused"}

@@ -84,13 +84,28 @@ Available upgrade paths are defined in the `unit_upgrade_paths` table. Each row 
 - Resource costs in individual columns and optional extra keys in `cost`
 - XP needed stored under `cost -> 'xp'`
 
+`required_level` represents the minimum level of the **source** stack that may
+be upgraded. For example a row with `required_level = 2` means only level two
+troops can be promoted to the new type. Resource columns on the row are added to
+any values within the JSON `cost` field to determine the total price. The XP
+cost is deducted from the current stack's accumulated experience.
+
 Call `/api/kingdom_troops/upgrade` with a JSON body:
 
 ```json
 { "from_unit": "Spearman", "to_unit": "Pikeman", "quantity": 10 }
 ```
 
-The endpoint verifies you have enough source troops, required XP and resources. On success the quantity is moved to the upgraded unit type.
+When invoked the endpoint validates:
+
+1. An upgrade row exists for the provided unit pair.
+2. You have at least the specified quantity of the `from_unit` at the
+   `required_level`.
+3. The stack's accumulated XP meets or exceeds the `xp` cost.
+4. Your kingdom has all resource costs available.
+
+If any check fails a `400` error is returned. On success the quantity is moved
+to the upgraded unit type and the resources/XP are deducted.
 
 ## Morale Effects
 

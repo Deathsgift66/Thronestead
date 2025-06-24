@@ -5,8 +5,10 @@
 from backend.routers.training_queue import (
     CancelPayload,
     TrainOrderPayload,
+    begin_order,
     cancel_order,
     list_queue,
+    pause_order,
     start_training,
 )
 
@@ -70,3 +72,17 @@ def test_cancel_order_updates_row():
     cancel_order(CancelPayload(queue_id=2), user_id="u1", db=db)
     executed = " ".join(db.executed[-1][0].split()).lower()
     assert "update training_queue" in executed
+
+
+def test_begin_order_updates_status():
+    db = DummyDB()
+    begin_order(CancelPayload(queue_id=3), user_id="u1", db=db)
+    executed = db.executed[-1][0].lower()
+    assert "training'" in executed
+
+
+def test_pause_order_updates_status():
+    db = DummyDB()
+    pause_order(CancelPayload(queue_id=4), user_id="u1", db=db)
+    executed = db.executed[-1][0].lower()
+    assert "paused" in executed

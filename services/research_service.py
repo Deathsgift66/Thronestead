@@ -43,7 +43,8 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
         duration_row = db.execute(
             text(
                 """
-                SELECT duration_hours, prerequisites
+                SELECT duration_hours, prerequisites,
+                       required_kingdom_level, required_region
                   FROM tech_catalogue
                  WHERE tech_code = :code AND is_active = true
             """
@@ -54,8 +55,33 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
         if not duration_row:
             raise ValueError("Tech not found or not active")
 
-        duration_hours, prereqs = duration_row
+        duration_hours, prereqs, req_level, req_region = duration_row
         prereqs = prereqs or []
+
+        # Castle level requirement
+        if req_level:
+            castle_level = (
+                db.execute(
+                    text(
+                        "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+                    ),
+                    {"kid": kingdom_id},
+                ).scalar()
+                or 1
+            )
+            if castle_level < req_level:
+                raise ValueError("Castle level requirement not met")
+
+        # Region requirement
+        if req_region:
+            region_code = (
+                db.execute(
+                    text("SELECT region FROM kingdoms WHERE kingdom_id = :kid"),
+                    {"kid": kingdom_id},
+                ).scalar()
+            )
+            if region_code != req_region:
+                raise ValueError("Region requirement not met")
 
         # Check prerequisites
         if prereqs:
@@ -137,9 +163,16 @@ def complete_finished_research(db: Session, kingdom_id: int) -> None:
 # -------------------------------------------------------------
 
 
-def list_research(db: Session, kingdom_id: int) -> list[dict]:
+def list_research(
+    db: Session, kingdom_id: int, category: str | None = None
+) -> list[dict]:
     """
     Returns all research tracking rows for the given kingdom.
+
+    Args:
+        db: database session
+        kingdom_id: kingdom identifier
+        category: optional tech category to filter by
 
     Returns:
         list of dicts with: tech_code, status, progress, ends_at
@@ -148,17 +181,19 @@ def list_research(db: Session, kingdom_id: int) -> list[dict]:
         # Auto-complete any research that has finished since the last check
         complete_finished_research(db, kingdom_id)
 
-        rows = db.execute(
-            text(
-                """
-                SELECT tech_code, status, progress, ends_at
-                  FROM kingdom_research_tracking
-                 WHERE kingdom_id = :kid
-                 ORDER BY tech_code
-                """
-            ),
-            {"kid": kingdom_id},
-        ).fetchall()
+        query = """
+                SELECT tr.tech_code, tr.status, tr.progress, tr.ends_at
+                  FROM kingdom_research_tracking AS tr
+                  JOIN tech_catalogue AS tc ON tc.tech_code = tr.tech_code
+                 WHERE tr.kingdom_id = :kid
+        """
+        params = {"kid": kingdom_id}
+        if category:
+            query += " AND tc.category = :category"
+            params["category"] = category
+        query += " ORDER BY tr.tech_code"
+
+        rows = db.execute(text(query), params).fetchall()
 
         return [
             {"tech_code": r[0], "status": r[1], "progress": r[2], "ends_at": r[3]}
