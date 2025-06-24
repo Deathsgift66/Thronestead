@@ -43,7 +43,8 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
         duration_row = db.execute(
             text(
                 """
-                SELECT duration_hours, prerequisites
+                SELECT duration_hours, prerequisites,
+                       required_kingdom_level, required_region
                   FROM tech_catalogue
                  WHERE tech_code = :code AND is_active = true
             """
@@ -54,8 +55,33 @@ def start_research(db: Session, kingdom_id: int, tech_code: str) -> datetime:
         if not duration_row:
             raise ValueError("Tech not found or not active")
 
-        duration_hours, prereqs = duration_row
+        duration_hours, prereqs, req_level, req_region = duration_row
         prereqs = prereqs or []
+
+        # Castle level requirement
+        if req_level:
+            castle_level = (
+                db.execute(
+                    text(
+                        "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+                    ),
+                    {"kid": kingdom_id},
+                ).scalar()
+                or 1
+            )
+            if castle_level < req_level:
+                raise ValueError("Castle level requirement not met")
+
+        # Region requirement
+        if req_region:
+            region_code = (
+                db.execute(
+                    text("SELECT region FROM kingdoms WHERE kingdom_id = :kid"),
+                    {"kid": kingdom_id},
+                ).scalar()
+            )
+            if region_code != req_region:
+                raise ValueError("Region requirement not met")
 
         # Check prerequisites
         if prereqs:
