@@ -74,3 +74,20 @@ Use `in_training` while units are in the queue. When training completes, move th
 
 This structure supports leveled troops, training queues, wounded recovery, morale tracking, and audit history. Treat updates as critical game state and audit via `last_modified_by`.
 
+## Upgrading troops
+
+Available upgrade paths are defined in the `unit_upgrade_paths` table. Each row specifies:
+
+- `from_unit_type` → `to_unit_type`
+- `required_level` of the source unit stack
+- Resource costs in individual columns and optional extra keys in `cost`
+- XP needed stored under `cost -> 'xp'`
+
+Call `/api/kingdom_troops/upgrade` with a JSON body:
+
+```json
+{ "from_unit": "Spearman", "to_unit": "Pikeman", "quantity": 10 }
+```
+
+The endpoint verifies you have enough source troops, required XP and resources. On success the quantity is moved to the upgraded unit type.
+
