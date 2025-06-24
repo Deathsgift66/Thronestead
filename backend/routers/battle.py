@@ -9,7 +9,7 @@ Role: API routes for battle.
 Version: 2025-06-21
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -19,6 +19,7 @@ from backend import models
 from ..battle_engine import TerrainGenerator, Unit, WarState, war_manager
 from ..database import get_db
 from ..security import verify_jwt_token
+from .progression_router import get_kingdom_id
 from services.audit_service import log_action
 from services.alliance_service import get_alliance_id
 
@@ -217,6 +218,13 @@ def battle_resolution_alt(
     )
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
+    if user_id is not None:
+        kid = get_kingdom_id(db, user_id)
+        if war.attacker_kingdom_id != kid and war.defender_kingdom_id != kid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied",
+            )
     meta = db.query(models.War).filter(models.War.war_id == war_id).first()
 
     resolution = (

@@ -1,7 +1,7 @@
-from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from fastapi import HTTPException, status
 from backend.db_base import Base
 from backend.models import (
     BattleResolutionLog,
@@ -68,6 +68,6 @@ def test_battle_resolution_alt_forbidden():
     try:
         battle_resolution_alt(1, db=db, user_id="u2")
     except HTTPException as e:
-        assert e.status_code == 403
+        assert e.status_code == status.HTTP_403_FORBIDDEN
     else:
         assert False
