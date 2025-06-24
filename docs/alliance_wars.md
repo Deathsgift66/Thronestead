@@ -47,7 +47,7 @@ WHERE alliance_war_id = :war_id;
 ```sql
 UPDATE alliance_wars
 SET war_status = 'ended',
-    phase = 'ended',
+    phase = 'resolved',
     end_date = now()
 WHERE alliance_war_id = :war_id;
 ```

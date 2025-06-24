@@ -82,9 +82,13 @@ def declare_war(
     row = db.execute(
         text(
             "INSERT INTO alliance_wars (attacker_alliance_id, defender_alliance_id, phase, war_status) "
-            "VALUES (:att, :def, 'alert', 'pending') RETURNING alliance_war_id"
+            "VALUES (:att, :def, :phase, 'pending') RETURNING alliance_war_id"
         ),
-        {"att": payload.attacker_alliance_id, "def": payload.defender_alliance_id},
+        {
+            "att": payload.attacker_alliance_id,
+            "def": payload.defender_alliance_id,
+            "phase": WarPhase.ALERT.value,
+        },
     ).fetchone()
     db.commit()
     log_action(
@@ -159,10 +163,10 @@ def surrender_war(
 
     db.execute(
         text(
-            "UPDATE alliance_wars SET war_status = 'surrendered', phase = 'ended', end_date = now() "
+            "UPDATE alliance_wars SET war_status = 'surrendered', phase = :phase, end_date = now() "
             "WHERE alliance_war_id = :wid"
         ),
-        {"wid": payload.alliance_war_id},
+        {"wid": payload.alliance_war_id, "phase": WarPhase.RESOLVED.value},
     )
     db.commit()
     log_action(
