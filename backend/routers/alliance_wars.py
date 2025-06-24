@@ -309,7 +309,10 @@ def join_war(
     bld = morale_row[1] if morale_row else 0
     tech = morale_row[2] if morale_row else 0
     events = morale_row[3] if morale_row else 0
-    morale = min(100, (base or 0) + (bld or 0) + (tech or 0) + (events or 0))
+    morale = (base or 0) + (bld or 0) + (tech or 0) + (events or 0)
+    if morale <= 1:
+        morale *= 100
+    morale = min(100, morale)
 
     db.execute(
         text(

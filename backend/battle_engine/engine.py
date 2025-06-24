@@ -39,7 +39,7 @@ class Unit:
     x: int
     y: int
     stance: str
-    morale: float = 1.0
+    morale: float = 100.0
     hp: int = 100
     is_support: bool = False
     is_siege: bool = False
@@ -147,7 +147,7 @@ class CombatResolver:
                     for ally in units:
                         if ally.kingdom_id == sup.kingdom_id and ally is not sup:
                             ally.hp = min(ally.hp + 5, 100)
-                            ally.morale = min(1.0, ally.morale + 0.05)
+                            ally.morale = min(100.0, ally.morale + 5)
                             logs.append(
                                 {
                                     "event": "support",
@@ -165,8 +165,8 @@ class CombatResolver:
 
                     base_damage = attacker.quantity * 10
                     crit_chance = 0.0
-                    if attacker.morale > 0.6:
-                        crit_chance = ((attacker.morale - 0.6) / 0.4) * 0.05
+                    if attacker.morale > 60:
+                        crit_chance = ((attacker.morale - 60) / 40) * 0.05
                         crit_chance = min(0.05, crit_chance)
 
                     critical = False
