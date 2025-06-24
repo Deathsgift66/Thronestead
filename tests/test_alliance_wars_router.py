@@ -3,7 +3,16 @@ from sqlalchemy.orm import sessionmaker
 from fastapi import HTTPException
 
 from backend.db_base import Base
-from backend.models import Alliance, AllianceWar, AllianceMember, AllianceRole
+from backend.models import (
+    Alliance,
+    AllianceWar,
+    AllianceMember,
+    AllianceRole,
+    User,
+    Kingdom,
+    TroopSlots,
+    UnitMovement,
+)
 from backend.routers.alliance_wars import (
     DeclarePayload,
     RespondPayload,
@@ -214,3 +223,31 @@ def test_join_war_forbidden():
         assert e.status_code == 403
     else:
         assert False
+
+
+def test_join_war_inserts_movement_with_morale():
+    Session = setup_db()
+    db = Session()
+    seed_alliance(db, 1)
+    seed_alliance(db, 2)
+    seed_member(db, 1, "u1", ["can_join_wars"])
+    db.add_all(
+        [
+            User(user_id="u1", username="U", email="u@test.com", kingdom_id=1, alliance_id=1),
+            Kingdom(kingdom_id=1, user_id="u1", kingdom_name="K1", alliance_id=1),
+            TroopSlots(kingdom_id=1, morale=90, morale_bonus_buildings=5, morale_bonus_tech=10),
+            AllianceWar(
+                alliance_war_id=60,
+                attacker_alliance_id=1,
+                defender_alliance_id=2,
+                war_status="active",
+                phase="live",
+            ),
+        ]
+    )
+    db.commit()
+
+    join_war(JoinPayload(alliance_war_id=60, side="attacker"), user_id="u1", db=db)
+    movement = db.query(UnitMovement).filter_by(war_id=60, kingdom_id=1).first()
+    assert movement is not None
+    assert movement.morale == 100
