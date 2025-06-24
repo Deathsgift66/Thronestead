@@ -12,6 +12,9 @@ class DummyResult:
         self._row = row
         self._rows = rows or []
 
+    def mappings(self):
+        return self
+
     def fetchone(self):
         return self._row
 
@@ -31,7 +34,7 @@ class DummyDB:
             "wood": 2,
         }
         self.troop_row = (10, 6)
-        self.resource_row = (10,)
+        self.resource_row = {"wood": 10}
 
     def execute(self, query, params=None):
         q = str(query)
@@ -133,5 +136,41 @@ def test_upgrade_troops_not_enough_xp():
         upgrade_troops(payload, user_id="u1", db=db)
     except HTTPException as exc:
         assert exc.status_code == 400
+    else:
+        assert False, "Expected HTTPException"
+
+
+def test_upgrade_troops_not_enough_resources():
+    db = DummyDB()
+    db.resource_row = {"wood": 1}
+    payload = UpgradePayload(from_unit="Spearman", to_unit="Pikeman", quantity=5)
+    try:
+        upgrade_troops(payload, user_id="u1", db=db)
+    except HTTPException as exc:
+        assert exc.status_code == 400
+    else:
+        assert False, "Expected HTTPException"
+
+
+def test_upgrade_troops_not_enough_troops():
+    db = DummyDB()
+    db.troop_row = (3, 10)
+    payload = UpgradePayload(from_unit="Spearman", to_unit="Pikeman", quantity=5)
+    try:
+        upgrade_troops(payload, user_id="u1", db=db)
+    except HTTPException as exc:
+        assert exc.status_code == 400
+    else:
+        assert False, "Expected HTTPException"
+
+
+def test_upgrade_troops_path_missing():
+    db = DummyDB()
+    db.upgrade_path = None
+    payload = UpgradePayload(from_unit="Spearman", to_unit="Pikeman", quantity=5)
+    try:
+        upgrade_troops(payload, user_id="u1", db=db)
+    except HTTPException as exc:
+        assert exc.status_code == 404
     else:
         assert False, "Expected HTTPException"
