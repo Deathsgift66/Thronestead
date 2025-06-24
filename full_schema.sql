@@ -526,6 +526,7 @@ CREATE TABLE public.kingdom_achievement_catalogue (
   description text,
   category text,
   reward jsonb DEFAULT '{}'::jsonb,
+  prestige_reward integer DEFAULT 0,
   points integer DEFAULT 0,
   is_hidden boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
@@ -666,6 +667,12 @@ CREATE TABLE public.kingdom_titles (
   title text,
   awarded_at timestamp with time zone DEFAULT now(),
   CONSTRAINT kingdom_titles_kingdom_id_fkey FOREIGN KEY (kingdom_id) REFERENCES public.kingdoms(kingdom_id)
+);
+CREATE TABLE public.prestige_titles (
+  title_id SERIAL PRIMARY KEY,
+  title_name text,
+  min_score integer,
+  description text
 );
 CREATE TABLE public.kingdom_treaties (
   treaty_id integer NOT NULL DEFAULT nextval('kingdom_treaties_treaty_id_seq'::regclass),

@@ -57,19 +57,21 @@ def award_achievement(
             {"kid": kingdom_id, "code": achievement_code},
         )
 
-        # Fetch reward metadata and point value
+        # Fetch reward metadata and prestige value
         reward_row = db.execute(
             text(
                 """
-                SELECT reward, points FROM kingdom_achievement_catalogue
+                SELECT reward, prestige_reward, name
+                  FROM kingdom_achievement_catalogue
                  WHERE achievement_code = :code
-            """
+                """
             ),
             {"code": achievement_code},
         ).fetchone()
 
         reward = reward_row[0] if reward_row else None
         points = reward_row[1] if reward_row else 0
+        achievement_name = reward_row[2] if reward_row else achievement_code
 
         if points:
             # Update prestige score in the database
@@ -90,7 +92,7 @@ def award_achievement(
                 prestige_scores[uid] = prestige_scores.get(uid, 0) + points
 
         # Log achievement unlock
-        log_event(db, kingdom_id, "achievement_unlocked", achievement_code)
+        log_event(db, kingdom_id, "ACHIEVEMENT_UNLOCKED", f"Earned {achievement_name}")
 
         db.commit()
         return reward
