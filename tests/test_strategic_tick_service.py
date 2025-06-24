@@ -8,6 +8,7 @@ from services.strategic_tick_service import (
     expire_treaties,
     update_project_progress,
     restore_kingdom_morale,
+    decrement_morale_cooldowns,
 )
 
 
@@ -81,5 +82,21 @@ def test_restore_kingdom_morale_updates():
     count = restore_kingdom_morale(db)
     assert count == 1
     assert any("kingdom_troop_slots" in q for q in db.queries)
+    assert db.commits == 1
+
+
+def test_restore_morale_includes_cooldown_check():
+    db = DummyDB()
+    restore_kingdom_morale(db)
+    joined = " ".join(db.queries)
+    assert "morale_cooldown_seconds" in joined
+    assert "interval '1 second'" in joined
+
+
+def test_decrement_morale_cooldowns_updates():
+    db = DummyDB()
+    count = decrement_morale_cooldowns(db, 30)
+    assert count == 1
+    assert any("morale_cooldown_seconds" in q for q in db.queries)
     assert db.commits == 1
 
