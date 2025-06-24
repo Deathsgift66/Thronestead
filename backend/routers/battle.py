@@ -54,6 +54,11 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
         db.query(models.UnitMovement).filter(models.UnitMovement.war_id == war_id).all()
     )
     for mov in movements:
+        stat = (
+            db.query(models.UnitStat)
+            .filter(models.UnitStat.unit_type == mov.unit_type)
+            .first()
+        )
         war.units.append(
             Unit(
                 unit_id=mov.movement_id,
@@ -63,6 +68,8 @@ def _load_war_from_db(war_id: int, db: Session) -> WarState:
                 x=mov.position_x,
                 y=mov.position_y,
                 stance=mov.stance,
+                is_support=bool(stat.is_support) if stat else False,
+                is_siege=bool(stat.is_siege) if stat else False,
             )
         )
     return war

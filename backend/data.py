@@ -24,6 +24,8 @@ recruitable_units: List[Dict[str, Any]] = [
         "type": "Infantry",
         "training_time": 60,  # in seconds
         "cost": {"gold": 10, "food": 5},
+        "is_support": False,
+        "is_siege": False,
     },
     {
         "id": 2,
@@ -31,6 +33,26 @@ recruitable_units: List[Dict[str, Any]] = [
         "type": "Ranged",
         "training_time": 45,
         "cost": {"gold": 8, "wood": 5},
+        "is_support": False,
+        "is_siege": False,
+    },
+    {
+        "id": 3,
+        "name": "Catapult",
+        "type": "Siege",
+        "training_time": 120,
+        "cost": {"gold": 20, "wood": 10},
+        "is_support": False,
+        "is_siege": True,
+    },
+    {
+        "id": 4,
+        "name": "Cleric",
+        "type": "Support",
+        "training_time": 90,
+        "cost": {"gold": 15, "food": 8},
+        "is_support": True,
+        "is_siege": False,
     },
 ]
 
