@@ -13,6 +13,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from services.audit_service import log_action
+from services import resource_service
+from services.training_queue_service import add_training_order
 from services.kingdom_quest_service import start_quest as db_start_quest
 from services.kingdom_setup_service import create_kingdom_transaction
 from services.research_service import list_research
@@ -287,23 +289,20 @@ def train_troop(
     if state["used_slots"] + payload.quantity > state["base_slots"]:
         raise HTTPException(status_code=400, detail="Not enough troop slots")
 
-    db.execute(
-        text(
-            """
-        INSERT INTO training_queue (kingdom_id, unit_id, unit_name, quantity, initiated_by)
-        VALUES (:kid, :unit_id, :unit_name, :qty, :uid)
-    """
-        ),
-        {
-            "kid": kid,
-            "unit_id": payload.unit_id,
-            "unit_name": unit["name"],
-            "qty": payload.quantity,
-            "uid": user_id,
-        },
+    cost = {res: amt * payload.quantity for res, amt in (unit.get("cost") or {}).items()}
+
+    queue_id = add_training_order(
+        db,
+        kingdom_id=kid,
+        unit_id=payload.unit_id,
+        unit_name=unit["name"],
+        quantity=payload.quantity,
+        base_training_seconds=unit.get("training_time", 60),
+        cost=cost,
+        initiated_by=user_id,
     )
-    db.commit()
-    return {"message": "Training queued", "unit_id": payload.unit_id}
+
+    return {"message": "Training queued", "queue_id": queue_id}
 
 
 @router.get("/profile")

@@ -73,6 +73,26 @@ def test_add_training_order_inserts():
     assert ":base * :qty * :speed" in query
 
 
+def test_add_training_order_spends(monkeypatch):
+    db = DummyDB()
+    spent = {}
+    monkeypatch.setattr(
+        training_queue_service.resource_service,
+        "spend_resources",
+        lambda *_args, **_kw: spent.setdefault("called", True),
+    )
+    add_training_order(
+        db,
+        kingdom_id=1,
+        unit_id=1,
+        unit_name="Knight",
+        quantity=5,
+        base_training_seconds=60,
+        cost={"gold": 5},
+    )
+    assert spent.get("called")
+
+
 def test_fetch_queue_returns_rows():
     db = DummyDB()
     db.rows = [(1, "Knight", 10, "2025-06-10", "queued", False, False)]

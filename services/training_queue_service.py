@@ -10,6 +10,7 @@ import logging
 from typing import Optional
 
 from services.training_history_service import record_training
+from . import resource_service
 
 try:
     from sqlalchemy import text
@@ -42,6 +43,7 @@ def add_training_order(
     modifiers_applied: Optional[dict] = None,
     initiated_by: Optional[str] = None,
     priority: int = 1,
+    cost: Optional[dict[str, int]] = None,
 ) -> int:
     """
     Add a new training job to the queue.
@@ -59,11 +61,15 @@ def add_training_order(
         modifiers_applied: Modifier details for tracking
         initiated_by: User ID
         priority: Queue priority (higher = earlier)
+        cost: Optional resource cost to deduct before queuing
 
     Returns:
         int: ID of the newly inserted training queue entry
     """
     try:
+        if cost:
+            resource_service.spend_resources(db, kingdom_id, cost, commit=False)
+
         result = db.execute(
             text(
                 """

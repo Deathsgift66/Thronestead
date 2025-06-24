@@ -22,6 +22,9 @@ from services.training_queue_service import (
     pause_training,
 )
 from services.vacation_mode_service import check_vacation_mode
+from services import resource_service
+
+from ..data import recruitable_units
 
 from ..database import get_db
 from ..security import verify_jwt_token
@@ -72,6 +75,15 @@ def start_training(
     check_vacation_mode(db, kingdom_id)
 
     try:
+        unit = next((u for u in recruitable_units if u["id"] == payload.unit_id), None)
+        if not unit:
+            raise ValueError("Unit not found")
+
+        cost = {
+            res: amt * payload.quantity
+            for res, amt in (unit.get("cost") or {}).items()
+        }
+
         queue_id = add_training_order(
             db=db,
             kingdom_id=kingdom_id,
@@ -79,6 +91,7 @@ def start_training(
             unit_name=payload.unit_name,
             quantity=payload.quantity,
             base_training_seconds=payload.base_training_seconds,
+            cost=cost,
         )
     except Exception as e:
         raise HTTPException(

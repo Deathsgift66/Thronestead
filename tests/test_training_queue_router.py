@@ -2,6 +2,7 @@
 # File Name: test_training_queue_router.py
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
+import pytest
 from backend.routers.training_queue import (
     CancelPayload,
     TrainOrderPayload,
@@ -55,7 +56,13 @@ def test_start_training_returns_id():
     payload = TrainOrderPayload(
         unit_id=2, unit_name="Archer", quantity=5, base_training_seconds=60
     )
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(
+        "backend.routers.training_queue.resource_service.spend_resources",
+        lambda *_a, **_k: None,
+    )
     res = start_training(payload, user_id="u1", db=db)
+    monkeypatch.undo()
     assert res["queue_id"] == 5
 
 

@@ -13,6 +13,8 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from . import resource_service
+
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------------------------
@@ -68,6 +70,34 @@ def construct_building(
     Returns the `village_buildings.id` for the row.
     """
     _validate_building_id(db, building_id)
+
+    kid_row = db.execute(
+        text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
+        {"vid": village_id},
+    ).fetchone()
+    if not kid_row:
+        raise HTTPException(status_code=404, detail="Village not found")
+    kingdom_id = kid_row[0]
+
+    cost_row = (
+        db.execute(
+            text(
+                "SELECT "
+                + ", ".join(resource_service.RESOURCE_TYPES)
+                + " FROM building_catalogue WHERE building_id = :bid"
+            ),
+            {"bid": building_id},
+        )
+        .mappings()
+        .fetchone()
+    )
+    cost = {
+        res: int(cost_row.get(res, 0))
+        for res in resource_service.RESOURCE_TYPES
+        if cost_row.get(res)
+    }
+    if cost:
+        resource_service.spend_resources(db, kingdom_id, cost, commit=False)
 
     # Optionally remove the existing structure
     if replace_existing:
@@ -138,15 +168,38 @@ def upgrade_building(
 
     vb_id, current_level = row
 
-    # Fetch the maximum allowed level for this building
-    max_row = db.execute(
-        text("SELECT max_level FROM building_catalogue WHERE building_id = :bid"),
-        {"bid": building_id},
-    ).fetchone()
-    max_level = max_row[0] if max_row else None
+    info_row = (
+        db.execute(
+            text(
+                "SELECT max_level, "
+                + ", ".join(resource_service.RESOURCE_TYPES)
+                + " FROM building_catalogue WHERE building_id = :bid"
+            ),
+            {"bid": building_id},
+        )
+        .mappings()
+        .fetchone()
+    )
+    max_level = info_row.get("max_level") if info_row else None
 
     if max_level is not None and current_level >= max_level:
         raise HTTPException(status_code=400, detail="Building already at max level")
+
+    kid_row = db.execute(
+        text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
+        {"vid": village_id},
+    ).fetchone()
+    if not kid_row:
+        raise HTTPException(status_code=404, detail="Village not found")
+    kingdom_id = kid_row[0]
+
+    cost = {
+        res: int(info_row.get(res, 0))
+        for res in resource_service.RESOURCE_TYPES
+        if info_row.get(res)
+    }
+    if cost:
+        resource_service.spend_resources(db, kingdom_id, cost, commit=False)
 
     next_level = current_level + 1
 

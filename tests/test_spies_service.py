@@ -1,4 +1,5 @@
-from services.spies_service import get_spy_defense, reset_daily_attack_counts
+from services.spies_service import get_spy_defense, reset_daily_attack_counts, train_spies
+import services.spies_service as spies_service
 
 
 class DummyResult:
@@ -46,3 +47,16 @@ def test_get_spy_defense_default_zero():
     db = DummyDB(row=None)
     rating = get_spy_defense(db, 2)
     assert rating == 0
+
+
+def test_train_spies_spends(monkeypatch):
+    db = DummyDB()
+    monkeypatch.setattr(spies_service, "get_spy_record", lambda *_: {"spy_count": 0, "max_spy_capacity": 10})
+    spent = {}
+    monkeypatch.setattr(
+        spies_service.resource_service,
+        "spend_resources",
+        lambda *_a, **_k: spent.setdefault("ok", True),
+    )
+    train_spies(db, 1, 2)
+    assert spent.get("ok")

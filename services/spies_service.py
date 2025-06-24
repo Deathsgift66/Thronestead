@@ -8,6 +8,10 @@ import logging
 import datetime
 from typing import Optional
 
+from . import resource_service
+
+SPY_TRAIN_COST = {"gold": 10}
+
 try:
     from sqlalchemy import text
     from sqlalchemy.exc import SQLAlchemyError
@@ -71,6 +75,9 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
     new_count = min(
         record.get("spy_count", 0) + quantity, record.get("max_spy_capacity", 0)
     )
+
+    cost = {res: amt * quantity for res, amt in SPY_TRAIN_COST.items()}
+    resource_service.spend_resources(db, kingdom_id, cost, commit=False)
 
     db.execute(
         text(
