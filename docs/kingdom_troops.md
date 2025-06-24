@@ -74,3 +74,10 @@ Use `in_training` while units are in the queue. When training completes, move th
 
 This structure supports leveled troops, training queues, wounded recovery, morale tracking, and audit history. Treat updates as critical game state and audit via `last_modified_by`.
 
+## Morale Effects
+
+- Each troop stack has a `last_morale` value from **0** to **100**.
+- Morale influences combat rolls; every 10 points grants roughly a 2% boost to attack and defense.
+- Wars modify morale on conclusion. Victors gain +10 morale while losers suffer −15. Draws reduce both sides by 5.
+- During the strategic tick, morale is automatically restored by 5 points plus bonuses from buildings or researched technologies (`morale_bonus_buildings`, `morale_bonus_tech`, `morale_bonus_events`).
+

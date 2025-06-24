@@ -194,6 +194,14 @@ def conclude_battle(db: Session, war_id: int) -> None:
         {"wid": war_id},
     )
 
+    # Apply morale adjustments based on the outcome
+    try:
+        from services.combat_log_service import apply_war_outcome_morale
+
+        apply_war_outcome_morale(db, war_id)
+    except Exception as e:  # pragma: no cover - log but don't block conclusion
+        logger.debug("Morale update failed: %s", e)
+
     db.commit()
     logger.info(f"War {war_id} concluded at tick 12.")
 

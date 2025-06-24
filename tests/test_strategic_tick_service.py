@@ -7,6 +7,7 @@ from services.strategic_tick_service import (
     check_war_status,
     expire_treaties,
     update_project_progress,
+    restore_kingdom_morale,
 )
 
 
@@ -73,3 +74,12 @@ def test_check_war_status_updates():
         "UPDATE alliance_wars SET war_status='concluded'" in q for q in db.queries
     )
     assert db.commits == 1
+
+
+def test_restore_kingdom_morale_updates():
+    db = DummyDB()
+    count = restore_kingdom_morale(db)
+    assert count == 1
+    assert any("kingdom_troop_slots" in q for q in db.queries)
+    assert db.commits == 1
+
