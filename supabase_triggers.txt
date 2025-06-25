@@ -1,121 +1,175 @@
-Name	Arguments	Return type	Security	
+Name	Table	Function	Events	Orientation	Enabled	
+audit_alliance_treaties	
+alliance_treaties
 
 audit_trigger
--
 
-trigger
+AFTER DELETE
+AFTER UPDATE
+AFTER INSERT
+ROW
 
-Invoker	
+
+audit_kingdom_resources	
+kingdom_resources
+
+audit_trigger
+
+AFTER DELETE
+AFTER UPDATE
+AFTER INSERT
+ROW
 
 
-init_spy_defense
--
-
-trigger
-
-Invoker	
-
+audit_trigger_alliance_members	
+alliance_members
 
 log_audit_alliance_members
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_alliance_vault_transaction_log	
+alliance_vault_transaction_log
 
 log_audit_alliance_vault_transaction_log
--
 
-trigger
+AFTER DELETE
+AFTER UPDATE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_alliances	
+alliances
 
 log_audit_alliances
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
-
-log_audit_kingdom_troops
--
-
-trigger
-
-Definer	
-
+audit_trigger_kingdom_troops	
+kingdom_troops
 
 log_audit_kingdom_troops
-p_kingdom_id integer, p_user_id uuid, p_action text, p_details text
 
-void
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Definer	
 
+audit_trigger_kingdoms	
+kingdoms
 
 log_audit_kingdoms
--
 
-trigger
+AFTER UPDATE
+AFTER INSERT
+AFTER DELETE
+ROW
 
-Invoker	
 
+audit_trigger_projects_alliance	
+projects_alliance
 
 log_audit_projects_alliance
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_projects_player	
+projects_player
 
 log_audit_projects_player
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_training_history	
+training_history
 
 log_audit_training_history
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_training_queue	
+training_queue
 
 log_audit_training_queue
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_users	
+users
 
 log_audit_users
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_village_buildings	
+village_buildings
 
 log_audit_village_buildings
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_wars	
+wars
 
 log_audit_wars
--
 
-trigger
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
 
-Invoker	
+
+audit_village_resources	
+village_resources
+
+audit_trigger
+
+AFTER INSERT
+AFTER DELETE
+AFTER UPDATE
+ROW
+
+
+trg_init_spy_defense	
+kingdoms
+
+init_spy_defense
+
+BEFORE INSERT
+ROW
+
 
