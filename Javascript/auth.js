@@ -9,6 +9,16 @@ import { supabase } from '../supabaseClient.js';
 let cachedAuth = null;
 
 /**
+ * Manually update the cached user/session.
+ * Useful after login without a page reload.
+ * @param {object} user Supabase user info
+ * @param {object} session Supabase session data
+ */
+export function setAuthCache(user, session) {
+  cachedAuth = { user, session };
+}
+
+/**
  * Retrieve the current user and session from Supabase.
  * The result is cached for the lifetime of the page to avoid
  * redundant API calls.

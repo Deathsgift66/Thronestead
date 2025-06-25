@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { toggleLoading, authJsonFetch } from './utils.js';
 import { validateEmail } from './utils.js';
+import { setAuthCache } from './auth.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -226,6 +227,9 @@ async function handleLogin(e) {
       storage.setItem('currentUser', JSON.stringify(userInfo));
       altStorage.removeItem('authToken');
       altStorage.removeItem('currentUser');
+
+      // Update in-memory auth cache for current page
+      setAuthCache(userInfo, result.session);
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
