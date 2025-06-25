@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: login.js
-// Version 6.14.2025.21.00
+// Version 6.14.2025.21.01
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
@@ -10,6 +10,51 @@ let loginForm, emailInput, passwordInput, loginButton, messageContainer;
 let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage;
 let authLink, authModal, closeAuthBtn, sendAuthBtn, authMessage;
 let announcementList;
+const ATTEMPT_LIMIT = 5;
+const ATTEMPT_WINDOW = 5 * 60 * 1000;
+const COOLDOWN_TIME = 10 * 60 * 1000;
+
+function getAttemptData() {
+  try {
+    return JSON.parse(localStorage.getItem('loginAttempts')) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAttemptData(data) {
+  localStorage.setItem('loginAttempts', JSON.stringify(data));
+}
+
+function clearAttempts() {
+  localStorage.removeItem('loginAttempts');
+}
+
+function recordAttempt() {
+  const now = Date.now();
+  const data = getAttemptData();
+  if (!data.first) {
+    data.first = now;
+    data.count = 1;
+  } else if (now - data.first > ATTEMPT_WINDOW) {
+    data.first = now;
+    data.count = 1;
+  } else {
+    data.count = (data.count || 0) + 1;
+  }
+  if (data.count >= ATTEMPT_LIMIT) {
+    data.blocked = now + COOLDOWN_TIME;
+  }
+  saveAttemptData(data);
+}
+
+function getCooldownMinutes() {
+  const data = getAttemptData();
+  if (data.blocked && Date.now() < data.blocked) {
+    return Math.ceil((data.blocked - Date.now()) / 60000);
+  }
+  return 0;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
@@ -64,6 +109,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (loginForm) {
     loginForm.addEventListener('submit', handleLogin);
   }
+  if (loginButton) {
+    loginButton.addEventListener('click', handleLogin);
+  }
 
   await loadAnnouncements();
 });
@@ -71,12 +119,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 🔐 Handle login form submission
 async function handleLogin(e) {
   e.preventDefault();
-  messageContainer.textContent = '🔐 Authenticating...';
-  loginButton.disabled = true;
-  loginButton.textContent = 'Entering Realm...';
+  const cooldown = getCooldownMinutes();
+  if (cooldown) {
+    showMessage('error', `Too many attempts. Wait ${cooldown}m.`);
+    return;
+  }
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!email || !password || !emailValid) {
+    showMessage('error', 'Please provide a valid email and password.');
+    return;
+  }
+
+  messageContainer.textContent = '🔐 Authenticating...';
+  loginButton.disabled = true;
+  loginButton.textContent = 'Entering Realm...';
   if (authLink) authLink.classList.add('hidden');
 
   try {
@@ -90,22 +149,26 @@ async function handleLogin(e) {
       } else {
         showMessage('error', '❌ Invalid credentials. Try again.');
       }
+      recordAttempt();
     } else if (data?.user) {
-      await fetchAndStorePlayerProgression(data.user.id);
-
-      const token = data.session?.access_token;
-      const statusRes = await fetch('/api/login/status', {
-        headers: {
-          'X-User-ID': data.user.id,
-          Authorization: `Bearer ${token}`
+      clearAttempts();
+      let setupComplete = true;
+      try {
+        await fetchAndStorePlayerProgression(data.user.id);
+        const token = data.session?.access_token;
+        const statusRes = await fetch('/api/login/status', {
+          headers: {
+            'X-User-ID': data.user.id,
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          setupComplete = statusData?.setup_complete === true;
         }
-      });
-      if (!statusRes.ok) {
-        showMessage('error', 'Failed to check setup status.');
-        return;
+      } catch (err) {
+        console.error('Setup check failed:', err);
       }
-      const statusData = await statusRes.json();
-      const setupComplete = statusData?.setup_complete === true;
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
@@ -114,6 +177,7 @@ async function handleLogin(e) {
     }
   } catch (err) {
     showMessage('error', `Unexpected error: ${err.message}`);
+    recordAttempt();
   } finally {
     resetLoginButton();
   }
