@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
 from backend.models import Kingdom, KingdomVipStatus, User
+from sqlalchemy import text
 from backend.routers import signup
 from fastapi import Request
 
@@ -62,9 +63,17 @@ def test_register_creates_user_row(db_session):
     user = db_session.query(User).get("newid")
     kingdom = db_session.query(Kingdom).get(1)
     vip = db_session.query(KingdomVipStatus).get("newid")
+    res_row = db_session.execute(
+        text("SELECT 1 FROM kingdom_resources WHERE kingdom_id = 1")
+    ).fetchone()
+    title_row = db_session.execute(
+        text("SELECT title FROM kingdom_titles WHERE kingdom_id = 1")
+    ).fetchone()
     assert user.email == "e@example.com"
     assert kingdom.kingdom_name == "Realm"
     assert vip.vip_level == 0
+    assert res_row is not None
+    assert title_row is not None
 
 
 def test_register_handles_error(db_session):
@@ -101,6 +110,20 @@ def test_register_returns_supabase_error(db_session):
         assert e.status_code == 400
     else:
         assert False
+
+
+def test_register_invalid_username(db_session):
+    signup.get_supabase_client = lambda: DummyClient("id")
+    payload = signup.RegisterPayload(
+        email="x@x.com",
+        password="p",
+        username="bad!name",
+        kingdom_name="k",
+        display_name="u",
+        captcha_token="t",
+    )
+    with pytest.raises(HTTPException):
+        signup.register(make_request(), payload, db=db_session)
 
 
 def test_resend_confirmation_success():

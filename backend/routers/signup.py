@@ -19,6 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import Notification
+from services.resource_service import ensure_kingdom_resource_row
 
 from ..database import get_db
 from ..supabase_client import get_supabase_client
@@ -204,6 +205,9 @@ def register(
     if existing_kingdom:
         raise HTTPException(status_code=409, detail="Kingdom name already exists")
 
+    if not payload.username.isalnum():
+        raise HTTPException(status_code=400, detail="Username must be alphanumeric")
+
     try:
         res = sb.auth.sign_up(
             {
@@ -294,6 +298,12 @@ def register(
         ).fetchone()
         kid = int(row[0]) if row else None
 
+        ensure_kingdom_resource_row(db, kid)
+        db.execute(
+            text("INSERT INTO kingdom_titles (kingdom_id, title) VALUES (:kid, 'Founder')"),
+            {"kid": kid},
+        )
+
         db.execute(
             text(
                 "INSERT INTO kingdom_vip_status (user_id, vip_level) VALUES (:uid, 0) ON CONFLICT (user_id) DO NOTHING"
@@ -324,6 +334,7 @@ def register(
         db.commit()
         log_action(db, uid, "signup", f"User {uid} registered")
     except Exception as exc:
+        logger.exception("Failed to save user profile")
         raise HTTPException(
             status_code=500, detail="Failed to save user profile"
         ) from exc
