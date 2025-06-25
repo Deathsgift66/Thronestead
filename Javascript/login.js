@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: login.js
-// Version 6.14.2025.21.01
+// Version 6.17.2025.21.04
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
@@ -59,6 +59,17 @@ function getCooldownMinutes() {
     return Math.ceil((data.blocked - Date.now()) / 60000);
   }
   return 0;
+}
+
+// ✅ Validate login form inputs
+function validateLoginInputs(email, password) {
+  if (!email || !password) {
+    return 'Email and password are required.';
+  }
+  if (!validateEmail(email)) {
+    return 'Please enter a valid email address.';
+  }
+  return '';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -137,8 +148,9 @@ async function handleLogin(e) {
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  if (!email || !password || !validateEmail(email)) {
-    showMessage('error', 'Please provide a valid email and password.');
+  const validationError = validateLoginInputs(email, password);
+  if (validationError) {
+    showMessage('error', validationError);
     return;
   }
 
