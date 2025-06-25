@@ -122,3 +122,57 @@ def test_login_user_invalid_credentials():
     with pytest.raises(HTTPException) as exc:
         login.login_user(payload)
     assert exc.value.status_code == 401
+
+
+# ---- authenticate endpoint tests ----
+
+class DummyClientAuth:
+    def __init__(self, mode="ok"):
+        self.mode = mode
+        self.auth = self
+
+    def sign_in_with_password(self, *_args, **_kwargs):
+        if self.mode == "error":
+            return {"error": {"message": "bad"}}
+        if self.mode == "fail":
+            raise Exception("fail")
+        return {"session": "token", "user": {"id": "u1", "confirmed_at": "now"}}
+
+
+class DummyDBAuth:
+    def execute(self, *_args, **_kwargs):
+        class R:
+            def fetchone(self):
+                return ("name", 1, 2, True)
+
+        return R()
+
+
+def test_authenticate_success():
+    login_routes.get_supabase_client = lambda: DummyClientAuth()
+    db = DummyDBAuth()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    res = login_routes.authenticate(payload, db=db)
+    assert res["session"] == "token"
+    assert res["username"] == "name"
+    assert res["kingdom_id"] == 1
+    assert res["alliance_id"] == 2
+    assert res["setup_complete"] is True
+
+
+def test_authenticate_invalid():
+    login_routes.get_supabase_client = lambda: DummyClientAuth("error")
+    db = DummyDBAuth()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(payload, db=db)
+    assert exc.value.status_code == 401
+
+
+def test_authenticate_failure():
+    login_routes.get_supabase_client = lambda: DummyClientAuth("fail")
+    db = DummyDBAuth()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(payload, db=db)
+    assert exc.value.status_code == 500
