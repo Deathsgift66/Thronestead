@@ -121,6 +121,27 @@ def check_availability(payload: CheckPayload):
     }
 
 
+@router.get("/check")
+def check_kingdom_name(kingdom: str):
+    """Return whether the provided kingdom name is available."""
+    sb = get_supabase_client()
+    try:
+        res = (
+            sb.table("kingdoms")
+            .select("kingdom_id")
+            .eq("kingdom_name", kingdom)
+            .limit(1)
+            .execute()
+        )
+        rows = getattr(res, "data", res) or []
+        available = len(rows) == 0
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail="Failed to query availability"
+        ) from exc
+    return {"available": available}
+
+
 @router.get("/stats")
 def signup_stats():
     """

@@ -34,14 +34,12 @@ let messageEl;
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
-  const usernameEl = document.getElementById('username');
   signupButton = form.querySelector('button[type="submit"]');
   messageEl = document.getElementById('signup-message');
 
   // ✅ Debounced availability checker
   const check = debounce(checkAvailability, 400);
   kingdomNameEl.addEventListener('input', check);
-  usernameEl.addEventListener('input', check);
 
   // ✅ Bind form submit
   form.addEventListener('submit', async (e) => {
@@ -194,25 +192,27 @@ async function handleSignup() {
   }
 }
 
-// ✅ Realtime check name availability
+// ✅ Realtime check kingdom availability
 async function checkAvailability() {
   const kingdom = document.getElementById('kingdomName').value.trim();
-  const user = document.getElementById('username').value.trim();
-  if (!kingdom && !user) return;
+  if (!kingdom || kingdom.length < 3 ||
+      containsBannedWord(kingdom) || containsProfanity(kingdom)) {
+    updateAvailabilityUI('kingdomName-msg', false);
+    if (signupButton) signupButton.disabled = true;
+    return;
+  }
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kingdom_name: kingdom, username: user })
-    });
-
+    const res = await fetch(
+      `${API_BASE_URL}/api/signup/check?kingdom=${encodeURIComponent(kingdom)}`
+    );
     if (!res.ok) return;
     const data = await res.json();
-    updateAvailabilityUI('kingdomName-msg', data.kingdom_available);
-    updateAvailabilityUI('username-msg', data.username_available);
+    updateAvailabilityUI('kingdomName-msg', data.available);
+    if (signupButton) signupButton.disabled = !data.available;
   } catch (err) {
-    console.error("Availability check failed", err);
+    console.error('Availability check failed', err);
+    if (signupButton) signupButton.disabled = true;
   }
 }
 
