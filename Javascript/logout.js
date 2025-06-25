@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 // Make sure supabase is available
 import { supabase } from '../supabaseClient.js';
+import { resetAuthCache } from './auth.js';
 
 // Logout function — clears session from Supabase, browser storage, and cookies
 async function logout() {
@@ -13,6 +14,9 @@ async function logout() {
   } catch (err) {
     console.warn('Supabase logout error:', err.message);
   }
+
+  // Clear cached auth so next page load fetches fresh session
+  resetAuthCache();
 
   // 🧹 Clear client-side storage
   sessionStorage.removeItem('authToken');
