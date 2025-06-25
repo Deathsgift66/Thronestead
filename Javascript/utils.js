@@ -1,9 +1,9 @@
 // Project Name: Thronestead©
 // File Name: utils.js
-// Version 6.16.2025.21.03
+// Version 6.18.2025.22.00
 // Developer: Codex
 // Shared frontend utilities for DOM helpers and validation.
-import { supabase } from '../supabaseClient.js';
+import { authHeaders } from './auth.js';
 
 /**
  * Escape HTML special characters to prevent injection.
@@ -170,13 +170,9 @@ export async function jsonFetch(url, options = {}) {
  * @returns {Promise<Response>} Fetch response
  */
 export async function authFetch(url, options = {}) {
-  const { data: { session } } = await supabase.auth.getSession();
   const headers = {
     ...(options.headers || {}),
-    ...(session ? {
-      Authorization: `Bearer ${session.access_token}`,
-      'X-User-ID': session.user.id
-    } : {})
+    ...(await authHeaders())
   };
   return fetch(url, { ...options, headers });
 }
@@ -188,13 +184,9 @@ export async function authFetch(url, options = {}) {
  * @returns {Promise<any>} Parsed JSON data
  */
 export async function authJsonFetch(url, options = {}) {
-  const { data: { session } } = await supabase.auth.getSession();
   const headers = {
     ...(options.headers || {}),
-    ...(session ? {
-      Authorization: `Bearer ${session.access_token}`,
-      'X-User-ID': session.user.id
-    } : {})
+    ...(await authHeaders())
   };
   return jsonFetch(url, { ...options, headers });
 }
