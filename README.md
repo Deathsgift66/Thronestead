@@ -47,6 +47,7 @@ the records created during onboarding.
 
 ✅ Technology catalogue documented in [docs/tech_catalogue.md](docs/tech_catalogue.md)
 ✅ Research API documented in [docs/research_api.md](docs/research_api.md)
+✅ Me endpoint documented in [docs/me_api.md](docs/me_api.md)
 ✅ VIP status system documented in [docs/vip_status.md](docs/vip_status.md)
 
 ✅ Kingdom troops table documented in [docs/kingdom_troops.md](docs/kingdom_troops.md)
