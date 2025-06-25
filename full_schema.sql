@@ -1229,6 +1229,12 @@ CREATE TABLE public.system_event_hooks (
   payload_template_text text,
   CONSTRAINT system_event_hooks_pkey PRIMARY KEY (hook_id)
 );
+CREATE TABLE public.system_flags (
+  flag_key text NOT NULL,
+  flag_value text NOT NULL,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT system_flags_pkey PRIMARY KEY (flag_key)
+);
 CREATE TABLE public.tech_catalogue (
   tech_code text NOT NULL,
   name text NOT NULL,
