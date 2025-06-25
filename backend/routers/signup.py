@@ -22,6 +22,8 @@ from backend.models import Notification
 
 from ..database import get_db
 from ..supabase_client import get_supabase_client
+from ..rate_limiter import limiter
+from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +172,10 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/register")
-def register(payload: RegisterPayload, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(
+    request: Request, payload: RegisterPayload, db: Session = Depends(get_db)
+):
     """
     Create a Supabase auth user and register their kingdom profile.
     """

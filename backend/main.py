@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import routers as router_pkg
 from .auth_middleware import UserStateMiddleware
+from .rate_limiter import setup_rate_limiter
 from .database import engine
 from .models import Base
 
@@ -44,6 +45,8 @@ app = FastAPI(
     version="6.13.2025.19.49",
     description="Backend for the Thronestead strategy MMO.",
 )
+
+setup_rate_limiter(app)
 
 # -----------------------
 # 🔐 CORS Middleware

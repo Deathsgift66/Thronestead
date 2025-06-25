@@ -12,7 +12,7 @@ Version: 2025-06-21
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -23,6 +23,7 @@ from services.audit_service import log_action
 from ..database import get_db
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
+from ..rate_limiter import limiter
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
@@ -66,7 +67,9 @@ class EventPayload(BaseModel):
 
 
 @router.post("/event")
+@limiter.limit("5/minute")
 def log_login_event(
+    request: Request,
     payload: EventPayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),

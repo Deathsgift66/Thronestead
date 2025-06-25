@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from backend.db_base import Base
 from backend.models import Kingdom, KingdomVipStatus, User
 from backend.routers import signup
+from fastapi import Request
 
 
 def setup_db():
@@ -37,6 +38,10 @@ class DummyClient:
         self.auth = DummyAuth(user_id, error, error_resp)
 
 
+def make_request():
+    return Request({"type": "http", "method": "POST", "path": "/", "client": ("test", 0), "headers": []})
+
+
 def test_register_creates_user_row():
     Session = setup_db()
     db = Session()
@@ -48,7 +53,7 @@ def test_register_creates_user_row():
         kingdom_name="Realm",
         display_name="user",
     )
-    res = signup.register(payload, db=db)
+    res = signup.register(make_request(), payload, db=db)
     assert res["user_id"] == "newid"
     assert res["kingdom_id"] == 1
     user = db.query(User).get("newid")
@@ -71,7 +76,7 @@ def test_register_handles_error():
         display_name="u",
     )
     try:
-        signup.register(payload, db=db)
+        signup.register(make_request(), payload, db=db)
     except HTTPException as e:
         assert e.status_code == 500
     else:
@@ -90,7 +95,7 @@ def test_register_returns_supabase_error():
         display_name="u",
     )
     try:
-        signup.register(payload, db=db)
+        signup.register(make_request(), payload, db=db)
     except HTTPException as e:
         assert e.status_code == 400
     else:
