@@ -269,10 +269,21 @@ def decrement_morale_cooldowns(db: Session, seconds: int = 60) -> int:
         {"sec": seconds},
     )
     db.commit()
+
+    updated = getattr(result, "rowcount", 0)
+    if updated > 0:
+        _log_unified(
+            db,
+            "morale_cooldowns_decremented",
+            f"{updated} cooldowns decremented",
+        )
+    return updated
+
     count = getattr(result, "rowcount", 0)
     if count:
         _log_unified(db, "morale_cooldown_reduced", f"{count} morale cooldowns decremented")
     return count
+
 
 
 # ------------------------------------------------------------
