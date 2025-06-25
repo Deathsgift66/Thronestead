@@ -123,14 +123,21 @@ The key variables are:
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_JWT_SECRET
+API_SECRET
 API_BASE_URL
 MASTER_ROLLBACK_PASSWORD
 ALLOWED_ORIGINS
 ```
 
+`SUPABASE_JWT_SECRET` verifies Supabase tokens and must match the JWT secret in
+your project settings. `API_SECRET` protects internal admin routes, while
+`API_BASE_URL` and `VITE_API_BASE_URL` should point to your backend URL.
+
 Update these values with your project credentials to enable API access. Frontend
 environment variables must be prefixed with `VITE_` so Vite exposes them during
-build.
+build. The main one used by the scripts is `VITE_API_BASE_URL`, which should
+point to your deployed backend URL.
 
 The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
 separated list of allowed domains or `*` to disable origin checks (credentials
