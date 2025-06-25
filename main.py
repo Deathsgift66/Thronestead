@@ -9,6 +9,15 @@ full FastAPI application with all routers registered and the static frontend
 mounted.
 """
 
+try:
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover - allow running without dependency
+    def load_dotenv(*_args, **_kwargs):
+        """Fallback no-op if python-dotenv isn't installed."""
+        pass
+
+load_dotenv()
+
 from backend.main import app
 
 if __name__ == "__main__":  # pragma: no cover - manual execution
