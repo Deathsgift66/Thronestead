@@ -72,3 +72,17 @@ def test_validate_session_via_auth(monkeypatch):
     result = asyncio.run(auth.validate_session(req))
     assert result == {"id": "u1"}
 
+
+def test_resend_confirmation_via_auth(monkeypatch):
+    called = {}
+
+    def dummy(payload):
+        called["email"] = payload.email
+        return {"status": "sent"}
+
+    monkeypatch.setattr(auth, "_resend_confirmation", dummy)
+    payload = auth.ResendPayload(email="e@example.com")
+    res = auth.resend_confirmation(payload)
+    assert res["status"] == "sent"
+    assert called["email"] == "e@example.com"
+

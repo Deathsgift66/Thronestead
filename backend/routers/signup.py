@@ -230,9 +230,14 @@ def register(
         )
 
     # Require email confirmation before proceeding
+    user_obj = getattr(res, "user", None)
+    if user_obj is None and isinstance(res, dict):
+        user_obj = res.get("user")
     confirmed_at = None
-    if getattr(res, "user", None):
-        confirmed_at = getattr(res.user, "confirmed_at", None)
+    if user_obj:
+        confirmed_at = getattr(user_obj, "confirmed_at", None) or user_obj.get(
+            "confirmed_at"
+        )
     if not confirmed_at:
         raise HTTPException(
             status_code=202,
@@ -240,14 +245,16 @@ def register(
         )
 
     # Extract the newly created user ID
-    uid = (getattr(res, "user", None) and getattr(res.user, "id", None)) or getattr(
-        res, "id", None
-    )
+    uid = None
+    if user_obj:
+        uid = getattr(user_obj, "id", None) or user_obj.get("id")
+    if uid is None:
+        uid = getattr(res, "id", None) or (isinstance(res, dict) and res.get("id"))
 
-    user_obj = getattr(res, "user", None) or {}
     confirmed = bool(
         getattr(user_obj, "confirmed_at", None)
         or getattr(user_obj, "email_confirmed_at", None)
+        or (isinstance(user_obj, dict) and user_obj.get("email_confirmed_at"))
     )
 
     if not uid:
