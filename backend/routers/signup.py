@@ -52,6 +52,11 @@ class RegisterPayload(BaseModel):
     username: constr(min_length=3, max_length=20)
     kingdom_name: str
     display_name: str
+    captcha_token: Optional[str] = None
+
+
+class ResendPayload(BaseModel):
+    email: EmailStr
 
 
 # ------------- Route Endpoints -------------------
@@ -211,6 +216,12 @@ def register(
         res, "id", None
     )
 
+    user_obj = getattr(res, "user", None) or {}
+    confirmed = bool(
+        getattr(user_obj, "confirmed_at", None)
+        or getattr(user_obj, "email_confirmed_at", None)
+    )
+
     if not uid:
         raise HTTPException(status_code=500, detail="Signup failed - user ID missing")
 
@@ -280,5 +291,32 @@ def register(
         raise HTTPException(
             status_code=500, detail="Failed to save user profile"
         ) from exc
+    if not confirmed:
+        try:
+            sb.auth.resend({"type": "signup", "email": payload.email})
+        except Exception:
+            logger.warning("Failed to trigger confirmation email for %s", payload.email)
 
-    return {"user_id": uid, "kingdom_id": kid}
+    return {
+        "user_id": uid,
+        "kingdom_id": kid,
+        "email_confirmation_required": not confirmed,
+    }
+
+
+@router.post("/resend-confirmation")
+def resend_confirmation(payload: ResendPayload):
+    """Resend the signup confirmation email."""
+    sb = get_supabase_client()
+    try:
+        res = sb.auth.resend({"type": "signup", "email": payload.email})
+    except Exception as exc:
+        logger.exception("Failed to resend confirmation email")
+        raise HTTPException(status_code=500, detail="Failed to resend email") from exc
+
+    if isinstance(res, dict) and res.get("error"):
+        raise HTTPException(
+            status_code=400, detail=res["error"].get("message", "Resend failed")
+        )
+
+    return {"status": "sent"}
