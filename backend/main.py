@@ -92,6 +92,8 @@ except Exception as e:
 # 📦 Auto-load Routers Safely
 # -----------------------
 for name in router_pkg.__all__:
+    if name == "auth":
+        continue
     try:
         module = getattr(router_pkg, name)
         router_obj = getattr(module, "router", None)
@@ -106,6 +108,9 @@ for name in router_pkg.__all__:
     except Exception as e:
         logger.exception(f"❌ Failed to import or include router '{name}': {e}")
         raise
+
+from backend.routers import auth
+app.include_router(auth.router, prefix="/api/auth")
 
 # -----------------------
 # 🖼️ Static File Serving (Frontend SPA)
