@@ -87,3 +87,38 @@ def test_login_status_missing():
     db = DummyDB(None)
     result = login_routes.login_status(user_id="u1", db=db)
     assert result["setup_complete"] is False
+
+# New login endpoint tests
+from backend.routers import login
+
+
+class DummyAuth:
+    def __init__(self, mode="ok"):
+        self.mode = mode
+
+    def sign_in_with_password(self, *_args, **_kwargs):
+        if self.mode == "error":
+            return {"error": {"message": "bad"}}
+        if self.mode == "fail":
+            raise Exception("fail")
+        return {"session": "token"}
+
+
+class DummyClientLogin:
+    def __init__(self, mode="ok"):
+        self.auth = DummyAuth(mode)
+
+
+def test_login_user_success():
+    login.get_supabase_client = lambda: DummyClientLogin()
+    payload = login.LoginRequest(email="e@example.com", password="p")
+    result = login.login_user(payload)
+    assert result["session"] == "token"
+
+
+def test_login_user_invalid_credentials():
+    login.get_supabase_client = lambda: DummyClientLogin("error")
+    payload = login.LoginRequest(email="e@example.com", password="p")
+    with pytest.raises(HTTPException) as exc:
+        login.login_user(payload)
+    assert exc.value.status_code == 401
