@@ -16,6 +16,9 @@ const confirmPasswordInput = document.getElementById('confirm-password');
 const strengthMeter = document.getElementById('strength-meter');
 const tipsPanel = document.getElementById('tips-panel');
 const tipsList = document.getElementById('tips-list');
+const requestSubmitBtn = requestForm.querySelector('button[type="submit"]');
+const verifyCodeBtn = document.getElementById('verify-code-btn');
+const setPasswordBtn = document.getElementById('set-password-btn');
 
 let accessToken = null;
 
@@ -41,8 +44,8 @@ requestForm.addEventListener('submit', e => {
   e.preventDefault();
   submitForgotRequest();
 });
-document.getElementById('verify-code-btn').addEventListener('click', submitResetCode);
-document.getElementById('set-password-btn').addEventListener('click', submitNewPassword);
+verifyCodeBtn.addEventListener('click', submitResetCode);
+setPasswordBtn.addEventListener('click', submitNewPassword);
 newPasswordInput.addEventListener('input', updateStrengthMeter);
 
 // ==========================
@@ -52,6 +55,7 @@ async function submitForgotRequest() {
   const email = emailInput.value.trim();
   if (!email) return renderStatusMessage('Please enter a valid email.', true);
 
+  requestSubmitBtn.disabled = true;
   try {
     const res = await fetch('/api/auth/request-password-reset', {
       method: 'POST',
@@ -69,6 +73,8 @@ async function submitForgotRequest() {
     }
   } catch (err) {
     renderStatusMessage(err.message, true);
+  } finally {
+    requestSubmitBtn.disabled = false;
   }
 }
 
@@ -79,6 +85,7 @@ async function submitResetCode() {
   const code = resetCodeInput.value.trim();
   if (!code) return renderStatusMessage('Enter the reset code.', true);
 
+  verifyCodeBtn.disabled = true;
   try {
     const res = await fetch('/api/auth/verify-reset-code', {
       method: 'POST',
@@ -98,6 +105,8 @@ async function submitResetCode() {
     }
   } catch (err) {
     renderStatusMessage(err.message, true);
+  } finally {
+    verifyCodeBtn.disabled = false;
   }
 }
 
@@ -112,6 +121,7 @@ async function submitNewPassword() {
     return renderStatusMessage('Passwords do not match.', true);
   }
 
+  setPasswordBtn.disabled = true;
   try {
     if (accessToken) {
       const { error } = await supabase.auth.updateUser(
@@ -142,6 +152,8 @@ async function submitNewPassword() {
     }
   } catch (err) {
     renderStatusMessage(err.message, true);
+  } finally {
+    setPasswordBtn.disabled = false;
   }
 }
 

@@ -24,6 +24,7 @@ from ..database import get_db
 from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
 from fastapi import Request
+from services.audit_service import log_action
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,11 @@ class RegisterPayload(BaseModel):
     username: constr(min_length=3, max_length=20)
     kingdom_name: str
     display_name: str
+    captcha_token: Optional[str] = None
+
+
+class ResendPayload(BaseModel):
+    email: EmailStr
 
 
 # ------------- Route Endpoints -------------------
@@ -181,6 +187,23 @@ def register(
     """
     sb = get_supabase_client()
 
+    # --- Uniqueness Checks ---
+    existing = db.execute(
+        text(
+            "SELECT 1 FROM users WHERE username = :username OR email = :email"
+        ),
+        {"username": payload.username, "email": payload.email},
+    ).fetchone()
+    if existing:
+        raise HTTPException(status_code=409, detail="Username or email already exists")
+
+    existing_kingdom = db.execute(
+        text("SELECT 1 FROM kingdoms WHERE kingdom_name = :name"),
+        {"name": payload.kingdom_name},
+    ).fetchone()
+    if existing_kingdom:
+        raise HTTPException(status_code=409, detail="Kingdom name already exists")
+
     try:
         res = sb.auth.sign_up(
             {
@@ -206,9 +229,25 @@ def register(
             status_code=400, detail=res["error"].get("message", "Signup failed")
         )
 
+    # Require email confirmation before proceeding
+    confirmed_at = None
+    if getattr(res, "user", None):
+        confirmed_at = getattr(res.user, "confirmed_at", None)
+    if not confirmed_at:
+        raise HTTPException(
+            status_code=202,
+            detail="Please confirm your email address before logging in.",
+        )
+
     # Extract the newly created user ID
     uid = (getattr(res, "user", None) and getattr(res.user, "id", None)) or getattr(
         res, "id", None
+    )
+
+    user_obj = getattr(res, "user", None) or {}
+    confirmed = bool(
+        getattr(user_obj, "confirmed_at", None)
+        or getattr(user_obj, "email_confirmed_at", None)
     )
 
     if not uid:
@@ -276,9 +315,37 @@ def register(
         )
 
         db.commit()
+        log_action(db, uid, "signup", f"User {uid} registered")
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail="Failed to save user profile"
         ) from exc
+    if not confirmed:
+        try:
+            sb.auth.resend({"type": "signup", "email": payload.email})
+        except Exception:
+            logger.warning("Failed to trigger confirmation email for %s", payload.email)
 
-    return {"user_id": uid, "kingdom_id": kid}
+    return {
+        "user_id": uid,
+        "kingdom_id": kid,
+        "email_confirmation_required": not confirmed,
+    }
+
+
+@router.post("/resend-confirmation")
+def resend_confirmation(payload: ResendPayload):
+    """Resend the signup confirmation email."""
+    sb = get_supabase_client()
+    try:
+        res = sb.auth.resend({"type": "signup", "email": payload.email})
+    except Exception as exc:
+        logger.exception("Failed to resend confirmation email")
+        raise HTTPException(status_code=500, detail="Failed to resend email") from exc
+
+    if isinstance(res, dict) and res.get("error"):
+        raise HTTPException(
+            status_code=400, detail=res["error"].get("message", "Resend failed")
+        )
+
+    return {"status": "sent"}

@@ -9,10 +9,12 @@ import {
   debounce
 } from './utils.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+let signupButton;
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
   const usernameEl = document.getElementById('username');
+  signupButton = form.querySelector('button[type="submit"]');
 
   // ✅ Debounced availability checker
   const check = debounce(checkAvailability, 400);
@@ -51,12 +53,23 @@ async function handleSignup() {
   if (values.password !== values.confirmPassword) return showToast("Passwords do not match.");
   if (!values.agreed) return showToast("You must agree to the legal terms.");
 
+  if (!signupButton) return;
+  signupButton.disabled = true;
+  signupButton.textContent = 'Creating...';
+
   // ✅ Submit registration
   let captchaToken;
   try {
     captchaToken = await hcaptcha.execute();
   } catch (err) {
+    signupButton.disabled = false;
+    signupButton.textContent = 'Seal Your Fate';
     return showToast("Captcha failed. Please try again.");
+  }
+  if (!captchaToken) {
+    signupButton.disabled = false;
+    signupButton.textContent = 'Seal Your Fate';
+    return showToast('Captcha failed. Please try again.');
   }
 
   const payload = {
@@ -85,6 +98,9 @@ async function handleSignup() {
   } catch (err) {
     console.error("❌ Sign-Up error:", err);
     showToast("Sign-Up failed. Please try again.");
+  } finally {
+    signupButton.disabled = false;
+    signupButton.textContent = 'Seal Your Fate';
   }
 }
 
