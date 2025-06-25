@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // DOM Elements
 const requestForm = document.getElementById('request-form');
@@ -57,7 +58,7 @@ async function submitForgotRequest() {
 
   requestSubmitBtn.disabled = true;
   try {
-    const res = await fetch('/api/auth/request-password-reset', {
+    const res = await fetch(`${API_BASE_URL}/api/auth/request-password-reset`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
@@ -87,7 +88,7 @@ async function submitResetCode() {
 
   verifyCodeBtn.disabled = true;
   try {
-    const res = await fetch('/api/auth/verify-reset-code', {
+    const res = await fetch(`${API_BASE_URL}/api/auth/verify-reset-code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
@@ -136,7 +137,7 @@ async function submitNewPassword() {
       setTimeout(() => (window.location.href = 'login.html'), 5000);
     } else {
       const code = resetCodeInput.value.trim();
-      const res = await fetch('/api/auth/set-new-password', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/set-new-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, new_password, confirm_password })

@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // DOM Elements
 let loginForm, emailInput, passwordInput, loginButton, messageContainer;
@@ -156,7 +157,7 @@ async function handleLogin(e) {
       try {
         await fetchAndStorePlayerProgression(data.user.id);
         const token = data.session?.access_token;
-        const statusRes = await fetch('/api/login/status', {
+        const statusRes = await fetch(`${API_BASE_URL}/api/login/status`, {
           headers: {
             'X-User-ID': data.user.id,
             Authorization: `Bearer ${token}`
