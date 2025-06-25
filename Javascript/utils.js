@@ -1,8 +1,9 @@
 // Project Name: Thronestead©
 // File Name: utils.js
-// Version 6.14.2025.20.12
+// Version 6.16.2025.21.03
 // Developer: Codex
 // Shared frontend utilities for DOM helpers and validation.
+import { supabase } from '../supabaseClient.js';
 
 /**
  * Escape HTML special characters to prevent injection.
@@ -34,6 +35,15 @@ export function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/**
+ * Toggle the global loading spinner visibility.
+ * @param {boolean} show When true show the spinner, otherwise hide it
+ */
+export function toggleLoading(show) {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.classList.toggle('visible', show);
 }
 
 /**
@@ -151,6 +161,42 @@ export async function jsonFetch(url, options = {}) {
   }
 
   return res.json();
+}
+
+/**
+ * Perform a fetch request with Supabase auth headers automatically applied.
+ * @param {string} url Request URL
+ * @param {object} [options] Fetch options
+ * @returns {Promise<Response>} Fetch response
+ */
+export async function authFetch(url, options = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers = {
+    ...(options.headers || {}),
+    ...(session ? {
+      Authorization: `Bearer ${session.access_token}`,
+      'X-User-ID': session.user.id
+    } : {})
+  };
+  return fetch(url, { ...options, headers });
+}
+
+/**
+ * Convenience wrapper around {@link jsonFetch} that also includes auth headers.
+ * @param {string} url Request URL
+ * @param {object} [options] Fetch options
+ * @returns {Promise<any>} Parsed JSON data
+ */
+export async function authJsonFetch(url, options = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers = {
+    ...(options.headers || {}),
+    ...(session ? {
+      Authorization: `Bearer ${session.access_token}`,
+      'X-User-ID': session.user.id
+    } : {})
+  };
+  return jsonFetch(url, { ...options, headers });
 }
 
 /**

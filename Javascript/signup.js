@@ -6,7 +6,8 @@ import {
   showToast,
   validateEmail,
   validatePasswordComplexity,
-  debounce
+  debounce,
+  toggleLoading
 } from './utils.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 let signupButton;
@@ -56,6 +57,7 @@ async function handleSignup() {
   if (!signupButton) return;
   signupButton.disabled = true;
   signupButton.textContent = 'Creating...';
+  toggleLoading(true);
 
   // ✅ Submit registration
   let captchaToken;
@@ -64,11 +66,13 @@ async function handleSignup() {
   } catch (err) {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
+    toggleLoading(false);
     return showToast("Captcha failed. Please try again.");
   }
   if (!captchaToken) {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
+    toggleLoading(false);
     return showToast('Captcha failed. Please try again.');
   }
 
@@ -101,6 +105,7 @@ async function handleSignup() {
   } finally {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
+    toggleLoading(false);
   }
 }
 
