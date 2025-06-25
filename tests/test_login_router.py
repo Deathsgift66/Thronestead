@@ -60,3 +60,30 @@ def test_supabase_unavailable_returns_503():
     with pytest.raises(HTTPException) as exc:
         login_routes.get_announcements()
     assert exc.value.status_code == 503
+
+
+class DummyDB:
+    def __init__(self, row=None):
+        self.row = row
+
+    def execute(self, *_args, **_kwargs):
+        class R:
+            def __init__(self, row):
+                self._row = row
+
+            def fetchone(self):
+                return self._row
+
+        return R(self.row)
+
+
+def test_login_status_true():
+    db = DummyDB((True,))
+    result = login_routes.login_status(user_id="u1", db=db)
+    assert result["setup_complete"] is True
+
+
+def test_login_status_missing():
+    db = DummyDB(None)
+    result = login_routes.login_status(user_id="u1", db=db)
+    assert result["setup_complete"] is False
