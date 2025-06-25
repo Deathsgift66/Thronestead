@@ -24,6 +24,7 @@ from ..database import get_db
 from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
 from fastapi import Request
+from services.audit_service import log_action
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +182,23 @@ def register(
     """
     sb = get_supabase_client()
 
+    # --- Uniqueness Checks ---
+    existing = db.execute(
+        text(
+            "SELECT 1 FROM users WHERE username = :username OR email = :email"
+        ),
+        {"username": payload.username, "email": payload.email},
+    ).fetchone()
+    if existing:
+        raise HTTPException(status_code=409, detail="Username or email already exists")
+
+    existing_kingdom = db.execute(
+        text("SELECT 1 FROM kingdoms WHERE kingdom_name = :name"),
+        {"name": payload.kingdom_name},
+    ).fetchone()
+    if existing_kingdom:
+        raise HTTPException(status_code=409, detail="Kingdom name already exists")
+
     try:
         res = sb.auth.sign_up(
             {
@@ -204,6 +222,16 @@ def register(
         logger.error("Supabase signup error: %s", res["error"])
         raise HTTPException(
             status_code=400, detail=res["error"].get("message", "Signup failed")
+        )
+
+    # Require email confirmation before proceeding
+    confirmed_at = None
+    if getattr(res, "user", None):
+        confirmed_at = getattr(res.user, "confirmed_at", None)
+    if not confirmed_at:
+        raise HTTPException(
+            status_code=202,
+            detail="Please confirm your email address before logging in.",
         )
 
     # Extract the newly created user ID
@@ -276,6 +304,7 @@ def register(
         )
 
         db.commit()
+        log_action(db, uid, "signup", f"User {uid} registered")
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail="Failed to save user profile"
