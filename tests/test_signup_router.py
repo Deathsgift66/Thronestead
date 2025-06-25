@@ -185,3 +185,11 @@ def test_check_availability():
     assert not res["kingdom_available"]
     assert not res["username_available"]
     assert not res["email_available"]
+
+
+def test_check_kingdom_name():
+    signup.get_supabase_client = AvailClient
+    res = signup.check_kingdom_name("taken")
+    assert not res["available"]
+    res = signup.check_kingdom_name("open")
+    assert res["available"]
