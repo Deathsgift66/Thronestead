@@ -13,6 +13,8 @@ import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const bannedWords = ['admin', 'moderator', 'support'];
+// Basic profanity filter -- extend as needed
+const profanityList = ['fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn'];
 
 function validateUsername(name) {
   return /^[A-Za-z0-9]{3,20}$/.test(name);
@@ -21,6 +23,11 @@ function validateUsername(name) {
 function containsBannedWord(name) {
   const lower = name.toLowerCase();
   return bannedWords.some(w => lower.includes(w));
+}
+
+function containsProfanity(name) {
+  const lower = name.toLowerCase();
+  return profanityList.some(w => lower.includes(w));
 }
 let signupButton;
 let messageEl;
@@ -62,8 +69,11 @@ async function handleSignup() {
   }
 
   // ✅ Input validations
+  if (!values.kingdomName) return showMessage('Kingdom Name is required.');
   if (values.kingdomName.length < 3) return showMessage('Kingdom Name must be at least 3 characters.');
-  if (containsBannedWord(values.kingdomName)) return showMessage('Chosen Kingdom Name is not allowed.');
+  if (containsBannedWord(values.kingdomName) || containsProfanity(values.kingdomName)) {
+    return showMessage('Chosen Kingdom Name is not allowed.');
+  }
   if (!validateUsername(values.username)) {
     return showMessage('Ruler Name must be 3-20 alphanumeric characters.');
   }
