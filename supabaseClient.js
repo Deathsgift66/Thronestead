@@ -4,12 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 const runtime = typeof window !== 'undefined' ? window.env || {} : {};
 
 const SUPABASE_URL =
-  runtime.SUPABASE_URL ||
-  import.meta.env.SUPABASE_URL ||
+  runtime.VITE_PUBLIC_SUPABASE_URL ||
   import.meta.env.VITE_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY =
-  runtime.SUPABASE_ANON_KEY ||
-  import.meta.env.SUPABASE_ANON_KEY ||
+  runtime.VITE_PUBLIC_SUPABASE_ANON_KEY ||
   import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
