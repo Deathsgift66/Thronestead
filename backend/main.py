@@ -27,6 +27,14 @@ from .rate_limiter import setup_rate_limiter
 from .database import engine
 from .models import Base
 
+# Optional environment configuration using python-dotenv
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:  # pragma: no cover - optional dependency
+    print("python-dotenv not installed. Skipping .env loading.")
+
 API_SECRET = os.getenv("API_SECRET")
 
 # Load Supabase credentials for downstream modules
