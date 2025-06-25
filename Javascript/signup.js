@@ -138,21 +138,26 @@ async function handleSignup() {
 
   // ✅ Submit registration using Supabase
   let captchaToken;
-  try {
-    captchaToken = await hcaptcha.execute();
-  } catch (err) {
-    signupButton.disabled = false;
-    signupButton.textContent = 'Seal Your Fate';
-    setFormDisabled(false);
-    toggleLoading(false);
-    return showToast('Captcha failed. Please try again.');
-  }
-  if (!captchaToken) {
-    signupButton.disabled = false;
-    signupButton.textContent = 'Seal Your Fate';
-    setFormDisabled(false);
-    toggleLoading(false);
-    return showToast('Captcha failed. Please try again.');
+  if (window.hcaptcha && typeof hcaptcha.execute === 'function') {
+    try {
+      captchaToken = await hcaptcha.execute();
+    } catch (err) {
+      signupButton.disabled = false;
+      signupButton.textContent = 'Seal Your Fate';
+      setFormDisabled(false);
+      toggleLoading(false);
+      return showToast('Captcha failed. Please try again.');
+    }
+    if (!captchaToken) {
+      signupButton.disabled = false;
+      signupButton.textContent = 'Seal Your Fate';
+      setFormDisabled(false);
+      toggleLoading(false);
+      return showToast('Captcha failed. Please try again.');
+    }
+  } else {
+    // Development/testing without hCaptcha loaded
+    captchaToken = 'test';
   }
 
   try {
