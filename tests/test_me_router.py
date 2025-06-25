@@ -55,7 +55,17 @@ def test_get_current_user_invalid(db_session, monkeypatch):
 
 
 def test_me_route_returns_user():
-    result = asyncio.run(me.get_me(user={"user_id": "u1"}))
-    assert result["user_id"] == "u1"
+    input_user = {
+        "user_id": "u1",
+        "kingdom_id": 1,
+        "username": "name",
+        "setup_complete": True,
+    }
+    result = asyncio.run(me.get_me(user=input_user))
+    assert result == {
+        "kingdom_id": 1,
+        "username": "name",
+        "setup_complete": True,
+    }
 
 
