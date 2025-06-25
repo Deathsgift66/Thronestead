@@ -214,6 +214,70 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to create user") from e
 
 
+class FinalizePayload(BaseModel):
+    """Payload for :func:`finalize_signup`."""
+
+    user_id: str
+    username: str
+    display_name: str
+    kingdom_name: str
+    email: EmailStr
+
+
+@router.post("/finalize")
+def finalize_signup(payload: FinalizePayload, db: Session = Depends(get_db)):
+    """Finalize signup after Supabase user creation."""
+
+    if not payload.user_id or len(payload.user_id) < 6:
+        raise HTTPException(status_code=400, detail="Invalid user id")
+
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id)
+                VALUES (:uid, :username, :display, :kingdom, :email, :uid)
+                ON CONFLICT (user_id) DO NOTHING
+                """
+            ),
+            {
+                "uid": payload.user_id,
+                "username": payload.username,
+                "display": payload.display_name,
+                "kingdom": payload.kingdom_name,
+                "email": payload.email,
+            },
+        )
+
+        row = db.execute(
+            text(
+                """
+                INSERT INTO kingdoms (user_id, kingdom_name, ruler_name)
+                VALUES (:uid, :kingdom, :display)
+                RETURNING kingdom_id
+                """
+            ),
+            {
+                "uid": payload.user_id,
+                "kingdom": payload.kingdom_name,
+                "display": payload.display_name,
+            },
+        ).fetchone()
+        kid = int(row[0]) if row else None
+
+        ensure_kingdom_resource_row(db, kid)
+        db.execute(
+            text("INSERT INTO kingdom_titles (kingdom_id, title) VALUES (:kid, 'Founder')"),
+            {"kid": kid},
+        )
+
+        db.commit()
+        return {"status": "created", "user_id": payload.user_id, "kingdom_id": kid}
+    except Exception as exc:
+        logger.exception("Failed to finalize signup")
+        raise HTTPException(status_code=500, detail="Failed to finalize signup") from exc
+
+
 @router.post("/register")
 @limiter.limit("5/minute")
 def register(
