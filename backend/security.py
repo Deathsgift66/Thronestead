@@ -16,10 +16,12 @@ import logging
 import os
 from uuid import UUID
 
-from fastapi import Header, HTTPException, Request
+from fastapi import Depends, Header, HTTPException, Request
 from jose import JWTError, jwt
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-from .supabase_client import get_supabase_client
+from .database import get_db
 
 logger = logging.getLogger("Thronestead.Security")
 
@@ -127,26 +129,44 @@ def verify_api_key(x_api_key: str = Header(...)):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
-async def get_current_user(request: Request):
-    """Return the current Supabase user from the Authorization token."""
+async def get_current_user(request: Request, db: Session = Depends(get_db)):
+    """Return the current user's profile based on the Authorization token."""
     auth = request.headers.get("Authorization")
     if not auth or not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Token required")
 
     token = auth.split()[1]
-    supabase = get_supabase_client()
+    secret = os.getenv("SUPABASE_JWT_SECRET")
     try:
-        user = supabase.auth.get_user(token)
-    except Exception as exc:  # pragma: no cover - network failure
-        logger.warning("Failed to validate token: %s", exc)
+        if secret:
+            claims = jwt.decode(token, secret, algorithms=["HS256"])
+        else:
+            claims = jwt.decode(token, options={"verify_signature": False})
+    except JWTError:
+        logger.warning("JWT signature verification failed.")
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as exc:  # pragma: no cover - generic decode failures
+        logger.exception("Failed to decode JWT token")
+        raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+    user_id = claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    row = db.execute(
+        text(
+            "SELECT user_id, username, kingdom_id, alliance_id, setup_complete "
+            "FROM users WHERE user_id = :uid"
+        ),
+        {"uid": user_id},
+    ).fetchone()
+    if not row:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    if isinstance(user, dict):
-        if user.get("error"):
-            raise HTTPException(status_code=401, detail="Invalid or expired token")
-        user = user.get("user") or user.get("data") or user
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-    return user
+    return {
+        "user_id": str(row[0]),
+        "username": row[1],
+        "kingdom_id": row[2],
+        "alliance_id": row[3],
+        "setup_complete": bool(row[4]),
+    }
