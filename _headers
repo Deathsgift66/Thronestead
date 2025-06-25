@@ -1,7 +1,5 @@
 /*
-  Access-Control-Allow-Origin: *
-
-/
+  Access-Control-Allow-Origin: https://thronestead.com
   Content-Security-Policy: default-src 'self'; script-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'none';
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
