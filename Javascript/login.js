@@ -11,6 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // DOM Elements
 let loginForm, emailInput, passwordInput, loginButton, messageContainer;
+let rememberCheckbox;
 let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage;
 let authLink, authModal, closeAuthBtn, sendAuthBtn, authMessage;
 let announcementList;
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
   emailInput = document.getElementById('login-email');
   passwordInput = document.getElementById('password');
+  rememberCheckbox = document.getElementById('remember-me');
   loginButton = document.querySelector('#login-form .royal-button');
   messageContainer = document.getElementById('message');
 
@@ -183,11 +185,19 @@ async function handleLogin(e) {
         console.error('Setup check failed:', err);
       }
 
-      const userInfo = data.user || {};
-      sessionStorage.setItem('authToken', token);
-      localStorage.setItem('authToken', token);
-      sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
-      localStorage.setItem('currentUser', JSON.stringify(userInfo));
+      let userInfo = data.user || {};
+      try {
+        userInfo = await authJsonFetch(`${API_BASE_URL}/api/me`);
+      } catch (err) {
+        console.warn('Failed to load user context:', err);
+      }
+
+      const storage = rememberCheckbox?.checked ? localStorage : sessionStorage;
+      const altStorage = storage === localStorage ? sessionStorage : localStorage;
+      storage.setItem('authToken', token);
+      storage.setItem('currentUser', JSON.stringify(userInfo));
+      altStorage.removeItem('authToken');
+      altStorage.removeItem('currentUser');
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
