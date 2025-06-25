@@ -62,6 +62,7 @@ Developer: Deathsgift66
   <div class="account-links">
     <a href="signup.html">Create Account</a> |
     <a href="#" id="forgot-password-link">Forgot Password?</a>
+    <a href="#" id="request-auth-link">Request Authentication Link</a>
   </div>
 
   <div id="message" class="message" aria-live="polite"></div>
@@ -84,6 +85,18 @@ Developer: Deathsgift66
     <button id="send-reset-btn" class="royal-button">Send Reset Link</button>
     <div id="forgot-message" class="message"></div>
     <button id="close-forgot-btn" class="royal-button">Close</button>
+  </div>
+</div>
+
+<!-- Request Auth Link Modal -->
+<div id="auth-link-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="auth-link-title">
+  <div class="modal-content">
+    <h2 id="auth-link-title">Email Verification</h2>
+    <p>Enter your account email to resend the verification link.</p>
+    <input type="email" id="auth-email" placeholder="Your Royal Email" aria-label="Email Address" required />
+    <button id="send-auth-btn" class="royal-button">Send Verification Link</button>
+    <div id="auth-message" class="message"></div>
+    <button id="close-auth-btn" class="royal-button">Close</button>
   </div>
 </div>
 

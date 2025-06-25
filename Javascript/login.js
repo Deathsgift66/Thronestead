@@ -7,7 +7,9 @@ import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 
 // DOM Elements
 let loginForm, emailInput, passwordInput, loginButton, messageContainer;
-let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage, announcementList;
+let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage;
+let authLink, authModal, closeAuthBtn, sendAuthBtn, authMessage;
+let announcementList;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
@@ -22,6 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   closeBtn = document.getElementById('close-forgot-btn');
   sendResetBtn = document.getElementById('send-reset-btn');
   forgotMessage = document.getElementById('forgot-message');
+  authLink = document.getElementById("request-auth-link");
+  authModal = document.getElementById("auth-link-modal");
+  closeAuthBtn = document.getElementById("close-auth-btn");
+  sendAuthBtn = document.getElementById("send-auth-btn");
+  authMessage = document.getElementById("auth-message");
 
   if (forgotLink) {
     forgotLink.addEventListener('click', e => {
@@ -37,6 +44,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (sendResetBtn) {
     sendResetBtn.addEventListener('click', handleReset);
+  }
+  if (authLink) {
+    authLink.addEventListener("click", e => {
+      e.preventDefault();
+      authModal.classList.remove("hidden");
+      authMessage.textContent = "";
+    });
+  }
+
+  if (closeAuthBtn) {
+    closeAuthBtn.addEventListener("click", () => authModal.classList.add("hidden"));
+  }
+
+  if (sendAuthBtn) {
+    sendAuthBtn.addEventListener("click", handleResendVerification);
   }
 
   if (loginForm) {
@@ -60,7 +82,13 @@ async function handleLogin(e) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      showMessage('error', '❌ Invalid credentials. Try again.');
+      const msg = error.message || '';
+      if (msg.toLowerCase().includes('confirm')) {
+        showMessage('error', '❌ Please verify your email before logging in.');
+        if (authModal) authModal.classList.remove('hidden');
+      } else {
+        showMessage('error', '❌ Invalid credentials. Try again.');
+      }
     } else if (data?.user) {
       await fetchAndStorePlayerProgression(data.user.id);
 
@@ -121,6 +149,30 @@ async function handleReset() {
     sendResetBtn.textContent = 'Send Reset Link';
   }
 }
+// 📨 Handle resend verification email
+async function handleResendVerification() {
+  const email = document.getElementById("auth-email").value.trim();
+  if (!email) {
+    authMessage.textContent = "Please enter a valid email.";
+    return;
+  }
+  sendAuthBtn.disabled = true;
+  sendAuthBtn.textContent = "Sending...";
+  try {
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) {
+      authMessage.textContent = "Error: " + error.message;
+    } else {
+      authMessage.textContent = "Verification email sent!";
+    }
+  } catch (err) {
+    authMessage.textContent = `Unexpected error: ${err.message}`;
+  } finally {
+    sendAuthBtn.disabled = false;
+    sendAuthBtn.textContent = "Send Verification Link";
+  }
+}
+
 
 // 📣 Show banner messages
 function showMessage(type, text) {
