@@ -10,6 +10,7 @@ import logging
 from typing import Optional
 
 from .unit_xp_service import award_unit_xp
+from services.constants import XP_PER_LEVEL
 
 try:
     from sqlalchemy import text
