@@ -32,6 +32,26 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/signup", tags=["signup"])
 
 
+def _check_username_free(db: Session, username: str) -> None:
+    """Raise 409 if the username already exists."""
+    count = db.execute(
+        text("SELECT COUNT(*) FROM users WHERE username = :u"),
+        {"u": username},
+    ).scalar()
+    if count:
+        raise HTTPException(status_code=409, detail="Username already exists")
+
+
+def _check_kingdom_free(db: Session, name: str) -> None:
+    """Raise 409 if the kingdom name already exists."""
+    count = db.execute(
+        text("SELECT COUNT(*) FROM kingdoms WHERE kingdom_name = :n"),
+        {"n": name},
+    ).scalar()
+    if count:
+        raise HTTPException(status_code=409, detail="Kingdom name already exists")
+
+
 # ------------- Payload Models -------------------
 
 
@@ -170,6 +190,8 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
     """
     Create the user's basic profile record after authentication setup.
     """
+    _check_username_free(db, payload.username)
+    _check_kingdom_free(db, payload.kingdom_name)
     try:
         db.execute(
             text(
@@ -231,6 +253,9 @@ def finalize_signup(payload: FinalizePayload, db: Session = Depends(get_db)):
     if not payload.user_id or len(payload.user_id) < 6:
         raise HTTPException(status_code=400, detail="Invalid user id")
 
+    _check_username_free(db, payload.username)
+    _check_kingdom_free(db, payload.kingdom_name)
+
     try:
         db.execute(
             text(
@@ -289,21 +314,15 @@ def register(
     sb = get_supabase_client()
 
     # --- Uniqueness Checks ---
-    existing = db.execute(
-        text(
-            "SELECT 1 FROM users WHERE username = :username OR email = :email"
-        ),
-        {"username": payload.username, "email": payload.email},
-    ).fetchone()
-    if existing:
+    _check_username_free(db, payload.username)
+    count_email = db.execute(
+        text("SELECT COUNT(*) FROM users WHERE email = :e"),
+        {"e": payload.email},
+    ).scalar()
+    if count_email:
         raise HTTPException(status_code=409, detail="Username or email already exists")
 
-    existing_kingdom = db.execute(
-        text("SELECT 1 FROM kingdoms WHERE kingdom_name = :name"),
-        {"name": payload.kingdom_name},
-    ).fetchone()
-    if existing_kingdom:
-        raise HTTPException(status_code=409, detail="Kingdom name already exists")
+    _check_kingdom_free(db, payload.kingdom_name)
 
     if not payload.username.isalnum():
         raise HTTPException(status_code=400, detail="Username must be alphanumeric")

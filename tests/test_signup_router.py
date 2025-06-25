@@ -190,6 +190,50 @@ def test_finalize_signup_creates_rows(db_session):
     assert title_row is not None
 
 
+def test_finalize_signup_conflict_username(db_session):
+    payload = signup.FinalizePayload(
+        user_id="dup1",
+        username="dupuser",
+        display_name="dup",
+        kingdom_name="KingA",
+        email="d1@example.com",
+    )
+    signup.finalize_signup(payload, db=db_session)
+
+    payload2 = signup.FinalizePayload(
+        user_id="dup2",
+        username="dupuser",
+        display_name="dup2",
+        kingdom_name="KingB",
+        email="d2@example.com",
+    )
+    with pytest.raises(HTTPException) as exc:
+        signup.finalize_signup(payload2, db=db_session)
+    assert exc.value.status_code == 409
+
+
+def test_finalize_signup_conflict_kingdom(db_session):
+    payload = signup.FinalizePayload(
+        user_id="dup3",
+        username="user3",
+        display_name="u3",
+        kingdom_name="SameKing",
+        email="e3@example.com",
+    )
+    signup.finalize_signup(payload, db=db_session)
+
+    payload2 = signup.FinalizePayload(
+        user_id="dup4",
+        username="user4",
+        display_name="u4",
+        kingdom_name="SameKing",
+        email="e4@example.com",
+    )
+    with pytest.raises(HTTPException) as exc:
+        signup.finalize_signup(payload2, db=db_session)
+    assert exc.value.status_code == 409
+
+
 class TableStub:
     def __init__(self, table):
         self.table = table
