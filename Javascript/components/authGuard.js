@@ -16,6 +16,23 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
 (async () => {
   try {
+    const token =
+      localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (!token) {
+      return (window.location.href = 'login.html');
+    }
+
+    try {
+      const res = await fetch('/api/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('unauthorized');
+      const currentUser = await res.json();
+      window.currentUser = currentUser;
+    } catch {
+      return (window.location.href = 'login.html');
+    }
+
     let sessionUser;
     const {
       data: { user },
