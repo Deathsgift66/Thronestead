@@ -73,11 +73,11 @@ war_participant_role	attacker, defender
 
 public
 
-war_phase	alert, planning, battle, completed	
+war_phase	alert, planning, battle, completed, live, resolved	
 
 public
 
-war_status	active, completed	
+war_status	active, completed, surrendered	
 
 public
 
