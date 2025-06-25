@@ -1882,6 +1882,15 @@ View definition
 
 public
 
+system_flags
+
+system_flags_pkey
+
+
+View definition
+
+public
+
 tech_catalogue
 
 tech_catalogue_pkey
