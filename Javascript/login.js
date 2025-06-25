@@ -72,6 +72,27 @@ function validateLoginInputs(email, password) {
   return '';
 }
 
+// LOGIN_EXECUTE
+// Sign user in and persist the session
+export async function loginExecute(email, password, remember = false) {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error || !data?.session) {
+      showMessage('error', error?.message || '❌ Invalid credentials.');
+      return null;
+    }
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('authToken', data.session.access_token);
+    return data;
+  } catch (err) {
+    showMessage('error', err.message || '❌ Login failed.');
+    return null;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) {
@@ -161,30 +182,25 @@ async function handleLogin(e) {
   if (authLink) authLink.classList.add('hidden');
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      const msg = error.message || '';
-      if (msg.toLowerCase().includes('confirm')) {
-        showMessage('error', '❌ Please verify your email before logging in.');
-        if (authLink) authLink.classList.remove('hidden');
-      } else {
-        showMessage('error', '❌ Invalid credentials. Try again.');
+    const result = await loginExecute(email, password, rememberCheckbox?.checked);
+    if (!result) {
+      if (authLink && messageContainer.textContent.includes('verify')) {
+        authLink.classList.remove('hidden');
       }
       recordAttempt();
-    } else if (data?.user) {
+    } else if (result.user) {
       clearAttempts();
       let setupComplete = true;
-      let token = data.session?.access_token || '';
+      let token = result.session?.access_token || '';
       try {
-        await fetchAndStorePlayerProgression(data.user.id);
+        await fetchAndStorePlayerProgression(result.user.id);
 
         const statusData = await authJsonFetch(`${API_BASE_URL}/api/login/status`);
         setupComplete = statusData?.setup_complete === true;
 
         const statusRes = await fetch(`${API_BASE_URL}/api/login/status`, {
           headers: {
-            'X-User-ID': data.user.id,
+            'X-User-ID': result.user.id,
             Authorization: `Bearer ${token}`
           }
         });
@@ -197,7 +213,7 @@ async function handleLogin(e) {
         console.error('Setup check failed:', err);
       }
 
-      let userInfo = data.user || {};
+      let userInfo = result.user || {};
       try {
         userInfo = await authJsonFetch(`${API_BASE_URL}/api/me`);
       } catch (err) {
