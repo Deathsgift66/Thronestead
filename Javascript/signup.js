@@ -172,32 +172,39 @@ async function handleSignup() {
     showToast('Sign-Up successful!');
     const session = signUpData.session;
     const userInfo = signUpData.user || {};
-    if (session) {
-      const token = session.access_token;
-      sessionStorage.setItem('authToken', token);
-      localStorage.setItem('authToken', token);
-    }
-    if (userInfo.id) {
-      sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
-      localStorage.setItem('currentUser', JSON.stringify(userInfo));
-      try {
-        await fetch(`${API_BASE_URL}/api/signup/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userInfo.id,
-            email: values.email,
-            username: values.username,
-            kingdom_name: values.kingdomName,
-            display_name: values.kingdomName
-          })
-        });
-      } catch (err) {
-        console.error('Finalize signup failed:', err);
+    const confirmed =
+      userInfo.email_confirmed_at || userInfo.confirmed_at || false;
+
+    if (confirmed) {
+      if (session) {
+        const token = session.access_token;
+        sessionStorage.setItem('authToken', token);
+        localStorage.setItem('authToken', token);
       }
-      await fetchAndStorePlayerProgression(userInfo.id);
+      if (userInfo.id) {
+        sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
+        localStorage.setItem('currentUser', JSON.stringify(userInfo));
+        try {
+          await fetch(`${API_BASE_URL}/api/signup/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: userInfo.id,
+              email: values.email,
+              username: values.username,
+              kingdom_name: values.kingdomName,
+              display_name: values.kingdomName
+            })
+          });
+        } catch (err) {
+          console.error('Finalize signup failed:', err);
+        }
+        await fetchAndStorePlayerProgression(userInfo.id);
+      }
+      setTimeout(() => (window.location.href = 'play.html'), 1200);
+    } else {
+      showToast('Check your email to verify your account.');
     }
-    setTimeout(() => (window.location.href = 'play.html'), 1200);
   } catch (err) {
     console.error('❌ Sign-Up error:', err);
     showMessage(err.message || 'Sign-Up failed.');
