@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: signup.py
-# Version 6.13.2025.19.49
+# Version 6.15.2025.21.00
 # Developer: Deathsgift66
 
 """
@@ -37,6 +37,7 @@ router = APIRouter(prefix="/api/signup", tags=["signup"])
 class CheckPayload(BaseModel):
     kingdom_name: Optional[str] = None
     username: Optional[constr(min_length=3, max_length=20)] = None
+    email: Optional[EmailStr] = None
 
 
 class CreateUserPayload(BaseModel):
@@ -71,6 +72,7 @@ def check_availability(payload: CheckPayload):
     sb = get_supabase_client()
     available_kingdom = True
     available_username = True
+    available_email = True
 
     try:
         if payload.kingdom_name:
@@ -95,6 +97,17 @@ def check_availability(payload: CheckPayload):
             rows = getattr(res, "data", res) or []
             available_username = len(rows) == 0
 
+        if payload.email:
+            res = (
+                sb.table("users")
+                .select("id")
+                .eq("email", payload.email)
+                .limit(1)
+                .execute()
+            )
+            rows = getattr(res, "data", res) or []
+            available_email = len(rows) == 0
+
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail="Failed to query availability"
@@ -103,6 +116,7 @@ def check_availability(payload: CheckPayload):
     return {
         "kingdom_available": available_kingdom,
         "username_available": available_username,
+        "email_available": available_email,
     }
 
 

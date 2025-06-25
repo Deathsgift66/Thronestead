@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: signup.js
-// Version 6.14.2025.20.12
+// Version 6.15.2025.21.00
 // Developer: Deathsgift66
 import {
   showToast,
@@ -10,11 +10,13 @@ import {
 } from './utils.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 let signupButton;
+let messageEl;
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
   const usernameEl = document.getElementById('username');
   signupButton = form.querySelector('button[type="submit"]');
+  messageEl = document.getElementById('signup-message');
 
   // ✅ Debounced availability checker
   const check = debounce(checkAvailability, 400);
@@ -43,19 +45,55 @@ async function handleSignup() {
   };
 
   // ✅ Input validations
-  if (values.kingdomName.length < 3) return showToast("Kingdom Name must be at least 3 characters.");
-  if (values.username.length < 3) return showToast("Ruler Name must be at least 3 characters.");
-  if (!validateEmail(values.email)) return showToast("Invalid email address.");
-  if (values.password.length < 8) return showToast("Password must be at least 8 characters.");
+  if (values.kingdomName.length < 3) return showMessage('Kingdom Name must be at least 3 characters.');
+  if (values.username.length < 3) return showMessage('Ruler Name must be at least 3 characters.');
+  if (!validateEmail(values.email)) return showMessage('Invalid email address.');
+  if (values.password.length < 8) return showMessage('Password must be at least 8 characters.');
   if (!validatePasswordComplexity(values.password)) {
-    return showToast("Password must include lowercase, uppercase, number, and symbol.");
+    return showMessage('Password must include lowercase, uppercase, number, and symbol.');
   }
-  if (values.password !== values.confirmPassword) return showToast("Passwords do not match.");
-  if (!values.agreed) return showToast("You must agree to the legal terms.");
+  if (values.password !== values.confirmPassword) return showMessage('Passwords do not match.');
+  if (!values.agreed) return showMessage('You must agree to the legal terms.');
 
   if (!signupButton) return;
   signupButton.disabled = true;
   signupButton.textContent = 'Creating...';
+
+  // Check for duplicate email or username
+  try {
+    const availRes = await fetch(`${API_BASE_URL}/api/signup/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kingdom_name: values.kingdomName,
+        username: values.username,
+        email: values.email
+      })
+    });
+    if (availRes.ok) {
+      const data = await availRes.json();
+      if (!data.email_available) {
+        signupButton.disabled = false;
+        signupButton.textContent = 'Seal Your Fate';
+        return showMessage('Email already exists.');
+      }
+      if (!data.username_available) {
+        signupButton.disabled = false;
+        signupButton.textContent = 'Seal Your Fate';
+        return showMessage('Username already taken.');
+      }
+      if (!data.kingdom_available) {
+        signupButton.disabled = false;
+        signupButton.textContent = 'Seal Your Fate';
+        return showMessage('Kingdom name already taken.');
+      }
+    }
+  } catch (err) {
+    console.error('Availability check failed', err);
+    signupButton.disabled = false;
+    signupButton.textContent = 'Seal Your Fate';
+    return showMessage('Server error. Please try again.');
+  }
 
   // ✅ Submit registration
   let captchaToken;
@@ -97,7 +135,7 @@ async function handleSignup() {
     setTimeout(() => (window.location.href = 'login.html'), 1500);
   } catch (err) {
     console.error("❌ Sign-Up error:", err);
-    showToast("Sign-Up failed. Please try again.");
+    showMessage('Sign-Up failed. Please try again.');
   } finally {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
@@ -131,6 +169,16 @@ function updateAvailabilityUI(id, available) {
   if (!el) return;
   el.textContent = available ? "Available" : "Taken";
   el.className = 'availability ' + (available ? 'available' : 'taken');
+}
+
+function showMessage(text, type = 'error') {
+  if (!messageEl) return;
+  messageEl.textContent = text;
+  messageEl.className = `message show ${type}-message`;
+  setTimeout(() => {
+    messageEl.classList.remove('show');
+    messageEl.textContent = '';
+  }, 5000);
 }
 
 // ✅ Load top kingdom list (social proof)
