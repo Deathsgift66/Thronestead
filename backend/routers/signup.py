@@ -282,8 +282,8 @@ def register(
         db.execute(
             text(
                 """
-                INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id)
-                VALUES (:uid, :username, :display, :kingdom, :email, :uid)
+                INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id, sign_up_ip)
+                VALUES (:uid, :username, :display, :kingdom, :email, :uid, :ip)
                 ON CONFLICT (user_id) DO NOTHING
                 """
             ),
@@ -293,6 +293,7 @@ def register(
                 "display": payload.display_name,
                 "kingdom": payload.kingdom_name,
                 "email": payload.email,
+                "ip": request.client.host if request.client else None,
             },
         )
 

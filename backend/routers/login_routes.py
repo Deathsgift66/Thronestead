@@ -90,6 +90,10 @@ def log_login_event(
 @router.get("/status")
 def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Return the user's onboarding completion flag."""
+    db.execute(
+        text("UPDATE users SET last_login_at = now() WHERE user_id = :uid"),
+        {"uid": user_id},
+    )
     row = db.execute(
         text("SELECT setup_complete FROM users WHERE user_id = :uid"),
         {"uid": user_id},
@@ -143,6 +147,10 @@ def authenticate(
         raise HTTPException(status_code=401, detail="Email not confirmed")
 
     uid = getattr(user, "id", None) or (isinstance(user, dict) and user.get("id"))
+    db.execute(
+        text("UPDATE users SET last_login_at = now() WHERE user_id = :uid"),
+        {"uid": uid},
+    )
     row = db.execute(
         text(
             "SELECT username, kingdom_id, alliance_id, setup_complete FROM users WHERE user_id = :uid"

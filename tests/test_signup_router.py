@@ -72,6 +72,7 @@ def test_register_creates_user_row(db_session):
     assert user.email == "e@example.com"
     assert kingdom.kingdom_name == "Realm"
     assert vip.vip_level == 0
+    assert user.sign_up_ip == "test"
     assert res_row is not None
     assert title_row is not None
 
