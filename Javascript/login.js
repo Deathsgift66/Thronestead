@@ -96,16 +96,18 @@ async function handleLogin(e) {
         .from('users')
         .select('setup_complete')
         .eq('user_id', data.user.id)
-        .single();
+        .maybeSingle();
 
-      if (setupErr || !details) {
+      if (setupErr) {
         showMessage('error', 'Failed to check setup status.');
         return;
       }
 
+      const setupComplete = details?.setup_complete === true;
+
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
-        window.location.href = details.setup_complete ? 'overview.html' : 'play.html';
+        window.location.href = setupComplete ? 'overview.html' : 'play.html';
       }, 1200);
     }
   } catch (err) {
