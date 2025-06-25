@@ -6,4 +6,5 @@ httpx
 pytest
 pytest-asyncio
 coverage
-python-dotenv
+python-dotenv==1.0.1
+

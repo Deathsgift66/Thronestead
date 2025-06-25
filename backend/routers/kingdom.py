@@ -12,6 +12,8 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from services.resource_service import get_kingdom_resources
+
 from services.audit_service import log_action
 from services.kingdom_quest_service import start_quest as db_start_quest
 from services.kingdom_setup_service import create_kingdom_transaction
@@ -146,17 +148,8 @@ def overview(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get
     )
     if not kingdom:
         raise HTTPException(status_code=404, detail="Kingdom not found")
-    resources = (
-        db.execute(
-            text(
-                "SELECT gold, food, wood FROM kingdom_resources WHERE kingdom_id = :kid"
-            ),
-            {"kid": kid},
-        )
-        .mappings()
-        .fetchone()
-        or {}
-    )
+    resources_row = get_kingdom_resources(db, kid)
+    resources = {k: resources_row.get(k, 0) for k in ("gold", "food", "wood")}
     state = get_troop_state(db, kid)
     return {
         "kingdom": dict(kingdom),

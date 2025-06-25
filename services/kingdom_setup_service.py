@@ -6,6 +6,7 @@ import json
 from typing import Optional
 
 from services import notification_service
+from services.resource_service import initialize_kingdom_resources
 
 try:
     from sqlalchemy import text
@@ -110,15 +111,7 @@ def create_kingdom_transaction(
             {"village_id": village_id},
         )
 
-        db.execute(
-            text(
-                """
-                INSERT INTO kingdom_resources (kingdom_id, wood, stone, food, gold)
-                VALUES (:kid, :wood, :stone, :food, :gold)
-                """
-            ),
-            {"kid": kingdom_id, **START_RESOURCES},
-        )
+        initialize_kingdom_resources(db, kingdom_id, START_RESOURCES)
 
         db.execute(
             text(
