@@ -30,7 +30,7 @@ The `training_catalog` table defines the base cost and time to train every unit.
 | `cost_swords` | Swords required |
 | `cost_axes` | Axes required |
 | `cost_shields` | Shields required |
-| `cost_armour` | Armour pieces required |
+| `cost_armor` | Armor pieces required |
 | `cost_wagon` | Wagons required |
 | `cost_siege_weapons` | Siege weapons required |
 | `cost_jewelry` | Jewelry required |

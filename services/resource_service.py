@@ -43,7 +43,7 @@ RESOURCE_TYPES = {
     "swords",
     "axes",
     "shields",
-    "armour",
+    "armor",
     "wagon",
     "siege_weapons",
     "jewelry",

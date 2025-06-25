@@ -32,7 +32,7 @@ const RESOURCES = [
   { key: 'flax', icon: '🌾' }, { key: 'tools', icon: '🛠' }, { key: 'wood_planks', icon: '🪵' },
   { key: 'refined_stone', icon: '🧱' }, { key: 'iron_ingots', icon: '🔩' }, { key: 'charcoal', icon: '🔥' },
   { key: 'leather', icon: '👞' }, { key: 'arrows', icon: '🏹' }, { key: 'swords', icon: '🗡' },
-  { key: 'axes', icon: '🪓' }, { key: 'shields', icon: '🛡' }, { key: 'armour', icon: '🥋' },
+  { key: 'axes', icon: '🪓' }, { key: 'shields', icon: '🛡' }, { key: 'armor', icon: '🥋' },
   { key: 'wagon', icon: '🚚' }, { key: 'siege_weapons', icon: '🏰' }, { key: 'jewelry', icon: '💍' },
   { key: 'spear', icon: '🔱' }, { key: 'horses', icon: '🐎' }, { key: 'pitchforks', icon: '🍴' }
 ];

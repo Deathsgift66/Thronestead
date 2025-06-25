@@ -48,7 +48,7 @@ VAULT_RESOURCES = [
     "swords",
     "axes",
     "shields",
-    "armour",
+    "armor",
     "wagon",
     "siege_weapons",
     "jewelry",

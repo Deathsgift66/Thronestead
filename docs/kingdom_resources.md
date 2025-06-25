@@ -27,7 +27,7 @@ The `kingdom_resources` table stores the on-hand stockpile for a player's kingdo
 | `swords` | Swords. |
 | `axes` | Axes. |
 | `shields` | Shields. |
-| `armour` | Armour. |
+| `armor` | Armor. |
 | `wagon` | Wagons. |
 | `siege_weapons` | Siege weapons. |
 | `jewelry` | Jewelry. |
