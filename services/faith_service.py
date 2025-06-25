@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
     Session = object  # type: ignore
     SQLAlchemyError = Exception  # type: ignore
 
-from .progression_service import _merge_modifiers, invalidate_cache
+from services.modifiers_utils import _merge_modifiers, invalidate_cache
 
 logger = logging.getLogger(__name__)
 
