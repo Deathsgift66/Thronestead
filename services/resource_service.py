@@ -177,6 +177,41 @@ def _apply_resource_changes(
 # ------------------------------------------------------------------------------
 
 
+def initialize_kingdom_resources(
+    db: Session, kingdom_id: int, initial: Optional[dict[str, int]] | None = None
+) -> None:
+    """Create the ``kingdom_resources`` row for ``kingdom_id`` if missing.
+
+    Parameters
+    ----------
+    db : Session
+        Active database session.
+    kingdom_id : int
+        Target kingdom.
+    initial : dict[str, int], optional
+        Starting resource amounts to insert. Unspecified columns default to ``0``.
+    """
+
+    columns = ["kingdom_id"]
+    values = [":kid"]
+    params: dict[str, int] = {"kid": kingdom_id}
+
+    for res, amt in (initial or {}).items():
+        validate_resource(res)
+        if amt < 0:
+            raise ValueError("Initial resources must be non-negative")
+        columns.append(res)
+        values.append(f":{res}")
+        params[res] = amt
+
+    sql = (
+        f"INSERT INTO kingdom_resources ({', '.join(columns)}) "
+        f"VALUES ({', '.join(values)}) ON CONFLICT DO NOTHING"
+    )
+    db.execute(text(sql), params)
+    db.commit()
+
+
 def get_kingdom_resources(db: Session, kingdom_id: int, *, lock: bool = False) -> dict:
     """Return current resource values for a kingdom.
 

@@ -21,10 +21,12 @@ from backend.progression_service import (
     promote_knight,
     remove_noble,
 )
+from services import progression_service
 from services.progression_service import (
     _kingdom_project_modifiers,
     calculate_troop_slots,
     get_total_modifiers,
+    check_progression_requirements,
 )
 
 
@@ -144,3 +146,52 @@ def test_calculate_troop_slots_includes_region_bonus():
 
     total = calculate_troop_slots(DummyDB(), 1)
     assert total == 17
+
+
+def test_get_total_modifiers_accumulates_duplicates(monkeypatch):
+    def src1(db, kid):
+        return {"resource_bonus": {"wood": 2}}
+
+    def src2(db, kid):
+        return {"resource_bonus": {"wood": 3}}
+
+    monkeypatch.setattr(progression_service, "_region_modifiers", src1)
+    monkeypatch.setattr(progression_service, "_tech_modifiers", src2)
+    for name in [
+        "_temple_modifiers",
+        "_kingdom_project_modifiers",
+        "_alliance_project_modifiers",
+        "_vip_modifiers",
+        "_get_faith_modifiers",
+        "_prestige_modifiers",
+        "_village_modifiers",
+        "_village_modifier_rows",
+        "_treaty_modifiers",
+        "_spy_modifiers",
+        "_global_event_modifiers",
+    ]:
+        monkeypatch.setattr(progression_service, name, lambda *a, **k: {})
+
+    mods = get_total_modifiers(object(), 1, use_cache=False)
+    assert mods["resource_bonus"]["wood"] == 5
+
+
+def test_check_progression_requirements_uses_cache(monkeypatch):
+    progression_service.castle_progression_state[1] = {
+        "castle_level": 3,
+        "nobles": 2,
+        "knights": 1,
+    }
+
+    class DummyDB:
+        def execute(self, *a, **k):
+            raise AssertionError("db accessed")
+
+    check_progression_requirements(
+        DummyDB(),
+        1,
+        required_castle_level=3,
+        required_nobles=2,
+        required_knights=1,
+    )
+
