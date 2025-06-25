@@ -2,7 +2,7 @@
 // File Name: admin_dashboard.js
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
-import { escapeHTML } from './utils.js';
+import { escapeHTML, authJsonFetch, authFetch } from './utils.js';
 
 const REFRESH_MS = 30000;
 
@@ -10,9 +10,7 @@ const REFRESH_MS = 30000;
 // 📊 Dashboard Stats
 async function loadDashboardStats() {
   try {
-    const res = await fetch('/api/admin/stats');
-    if (!res.ok) throw new Error('Failed to fetch stats');
-    const data = await res.json();
+    const data = await authJsonFetch('/api/admin/stats');
     document.getElementById('total-users').textContent = data.active_users;
     document.getElementById('flagged-users').textContent = data.flagged_users;
     document.getElementById('suspicious-activity').textContent = data.suspicious_count;
@@ -36,9 +34,7 @@ async function loadPlayerList() {
     const url = new URL('/api/admin/search_user', window.location.origin);
     url.searchParams.set('q', search);
     if (status) url.searchParams.set('status', status);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch players');
-    const players = await res.json();
+    const players = await authJsonFetch(url);
 
     container.innerHTML = players.length ? '' : '<p>No players found.</p>';
 
@@ -68,9 +64,7 @@ async function loadAuditLogs() {
   container.innerHTML = '<p>Loading logs...</p>';
 
   try {
-    const res = await fetch('/api/admin/logs');
-    if (!res.ok) throw new Error('Failed to fetch audit logs');
-    const logs = await res.json();
+    const logs = await authJsonFetch('/api/admin/logs');
 
     container.innerHTML = logs.length
       ? ''
@@ -97,9 +91,7 @@ async function loadFlaggedUsers() {
   container.innerHTML = '<p>Loading flagged players...</p>';
 
   try {
-    const res = await fetch('/api/admin/flagged_users');
-    if (!res.ok) throw new Error('Failed to fetch flagged users');
-    const rows = await res.json();
+    const rows = await authJsonFetch('/api/admin/flagged_users');
 
     container.innerHTML = rows.length
       ? ''
@@ -152,7 +144,7 @@ async function handleAdminAction(endpoint, payload, successMsg) {
 }
 
 async function postAdminAction(endpoint, payload) {
-  const res = await fetch(endpoint, {
+  const res = await authFetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)

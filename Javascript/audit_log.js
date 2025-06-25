@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 // Hardened Admin Audit Log Page — with Supabase auth, loading, error handling, and formatting
-import { escapeHTML } from './utils.js';
+import { escapeHTML, authJsonFetch } from './utils.js';
 
 import { supabase } from '../supabaseClient.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -67,8 +67,7 @@ async function loadAuditLog() {
     if (to) params.append("date_to", to);
     if (limit) params.append("limit", limit);
 
-    const res = await fetch(`/api/admin/audit-log?${params.toString()}`);
-    const data = await res.json();
+    const data = await authJsonFetch(`/api/admin/audit-log?${params.toString()}`);
 
     tbody.innerHTML = "";
 

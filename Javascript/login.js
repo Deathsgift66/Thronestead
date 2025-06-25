@@ -4,7 +4,9 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
+import { toggleLoading, authJsonFetch } from './utils.js';
 import { validateEmail } from './utils.js';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // DOM Elements
@@ -141,6 +143,7 @@ async function handleLogin(e) {
   messageContainer.textContent = '🔐 Authenticating...';
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
+  toggleLoading(true);
   if (authLink) authLink.classList.add('hidden');
 
   try {
@@ -161,6 +164,10 @@ async function handleLogin(e) {
       let token = data.session?.access_token || '';
       try {
         await fetchAndStorePlayerProgression(data.user.id);
+
+        const statusData = await authJsonFetch(`${API_BASE_URL}/api/login/status`);
+        setupComplete = statusData?.setup_complete === true;
+
         const statusRes = await fetch(`${API_BASE_URL}/api/login/status`, {
           headers: {
             'X-User-ID': data.user.id,
@@ -171,6 +178,7 @@ async function handleLogin(e) {
           const statusData = await statusRes.json();
           setupComplete = statusData?.setup_complete === true;
         }
+
       } catch (err) {
         console.error('Setup check failed:', err);
       }
@@ -191,6 +199,7 @@ async function handleLogin(e) {
     recordAttempt();
   } finally {
     resetLoginButton();
+    toggleLoading(false);
   }
 }
 

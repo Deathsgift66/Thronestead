@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, fragmentFrom } from './utils.js';
+import { escapeHTML, fragmentFrom, authJsonFetch, authFetch } from './utils.js';
 
 let playerChannel;
 
@@ -54,8 +54,7 @@ async function loadPlayerTable() {
   tableBody.innerHTML = "<tr><td colspan='8'>Loading players...</td></tr>";
 
   try {
-    const res = await fetch(`/api/admin/players?search=${encodeURIComponent(query)}`);
-    const { players } = await res.json();
+    const { players } = await authJsonFetch(`/api/admin/players?search=${encodeURIComponent(query)}`);
 
     tableBody.innerHTML = players?.length
       ? ''
@@ -110,13 +109,11 @@ async function handleBulkAction(action) {
   if (!confirm(`Perform "${action}" on ${selected.length} players?`)) return;
 
   try {
-    const res = await fetch("/api/admin/bulk_action", {
+    const result = await authJsonFetch("/api/admin/bulk_action", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, player_ids: selected })
     });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Bulk action failed.");
 
     alert(result.message || `Bulk "${action}" completed.`);
     await loadPlayerTable();
@@ -143,14 +140,11 @@ async function showModalConfirm(title, userId, action) {
 
   newConfirmBtn.addEventListener("click", async () => {
     try {
-      const res = await fetch("/api/admin/player_action", {
+      const result = await authJsonFetch("/api/admin/player_action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, player_id: userId })
       });
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Action failed.");
 
       alert(result.message || `Action "${action}" completed.`);
       modal.classList.add("hidden");

@@ -3,6 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
+import { authFetch, authJsonFetch } from './utils.js';
 
 const REFRESH_MS = 30000;
 let realtimeSub;
@@ -33,12 +34,11 @@ async function loadAlerts() {
   container.innerHTML = '<p>Loading alerts...</p>';
 
   try {
-    const res = await fetch('/api/admin/alerts', {
+    const data = await authJsonFetch('/api/admin/alerts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(getFilters())
     });
-    const data = await res.json();
 
     container.innerHTML = '';
     if (Array.isArray(data.alerts)) {
@@ -103,7 +103,7 @@ async function dismissAlert(alertId) {
 
 // ✅ Utility to send admin actions to API
 async function postAdminAction(endpoint, payload) {
-  const res = await fetch(endpoint, {
+  const res = await authFetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
