@@ -5,7 +5,7 @@ audit_trigger
 
 trigger
 
-Invoker	
+Definer	
 
 
 init_spy_defense
@@ -13,7 +13,7 @@ init_spy_defense
 
 trigger
 
-Invoker	
+Definer	
 
 
 log_audit_alliance_members
