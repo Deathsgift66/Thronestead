@@ -1,7 +1,7 @@
 /*
 Project Name: Thronestead©
 File Name: signup.css
-Version 6.15.2025.21.00
+Version 6.16.2025.21.02
 Developer: Deathsgift66
 */
 @import url("./root_theme.css");
@@ -142,6 +142,12 @@ body {
   margin-top: 1rem;
   font-size: 1rem;
   color: #ff6b6b;
+}
+
+#signup-form input:disabled,
+#signup-form button:disabled {
+  background: #999;
+  cursor: not-allowed;
 }
 
 @media (max-width: 600px) {
