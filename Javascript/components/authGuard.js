@@ -16,18 +16,26 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
 (async () => {
   try {
+    let sessionUser;
     const {
       data: { user },
       error: userErr
     } = await supabase.auth.getUser();
     if (userErr) console.error('auth error:', userErr);
+    sessionUser = user;
 
-    if (!user) return (window.location.href = "login.html");
+    if (!sessionUser || userErr) {
+      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+      if (!refreshed?.user || refreshErr) {
+        return (window.location.href = "login.html");
+      }
+      sessionUser = refreshed.user;
+    }
 
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("is_admin, setup_complete")
-      .eq("user_id", user.id)
+      .eq("user_id", sessionUser.id)
       .single();
 
     if (!userData || userError || userData.setup_complete !== true) {
@@ -45,7 +53,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
     let vipLevel = 0;
     try {
       const vipRes = await fetch('/api/kingdom/vip_status', {
-        headers: { 'X-User-ID': user.id }
+        headers: { 'X-User-ID': sessionUser.id }
       });
       const vipData = await vipRes.json();
       vipLevel = vipData.vip_level || 0;
@@ -62,7 +70,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
     const { data: alliance, error: allianceErr } = await supabase
       .from("alliance_members")
       .select("alliance_id, alliance_role, permissions")
-      .eq("user_id", user.id)
+      .eq("user_id", sessionUser.id)
       .single();
 
     // If alliance is required and not found
@@ -85,7 +93,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
     // Store for page use
     window.user = {
-      id: user.id,
+      id: sessionUser.id,
       is_admin: userData.is_admin,
       vip_level: vipLevel,
       alliance_id: alliance?.alliance_id || null,
@@ -114,7 +122,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
     loadPlayerProgressionFromStorage();
     if (!window.playerProgression) {
-      await fetchAndStorePlayerProgression(user.id);
+      await fetchAndStorePlayerProgression(sessionUser.id);
     }
 
 
