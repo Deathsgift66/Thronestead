@@ -1,24 +1,13 @@
 import asyncio
-import pytest
-from fastapi import HTTPException
+import os
 
+import pytest
+from jose import jwt
+from sqlalchemy import text
+
+from fastapi import HTTPException
 from backend.security import get_current_user
 from backend.routers import me
-
-
-class DummyAuth:
-    def __init__(self, user):
-        self.user = user
-        self.called = None
-
-    def get_user(self, token):
-        self.called = token
-        return self.user
-
-
-class DummySupabase:
-    def __init__(self, user):
-        self.auth = DummyAuth(user)
 
 
 def make_request(token=None):
@@ -28,29 +17,45 @@ def make_request(token=None):
     return type("Req", (), {"headers": headers})()
 
 
-def test_get_current_user_success(monkeypatch):
-    dummy = DummySupabase({"user": {"id": "u1"}})
-    monkeypatch.setattr("backend.security.get_supabase_client", lambda: dummy)
-    req = make_request("tok")
-    user = asyncio.run(get_current_user(req))
-    assert user["id"] == "u1"
-    assert dummy.auth.called == "tok"
+def create_user_row(db):
+    db.execute(
+        text(
+            "INSERT INTO users (user_id, username, kingdom_id, alliance_id, setup_complete)"
+            " VALUES ('u1', 'name', 1, 2, 1)"
+        )
+    )
+    db.commit()
 
 
-def test_get_current_user_missing():
+def test_get_current_user_success(db_session, monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    token = jwt.encode({"sub": "u1"}, "secret", algorithm="HS256")
+    create_user_row(db_session)
+    req = make_request(token)
+    user = asyncio.run(get_current_user(req, db=db_session))
+    assert user["user_id"] == "u1"
+    assert user["username"] == "name"
+    assert user["kingdom_id"] == 1
+    assert user["alliance_id"] == 2
+    assert user["setup_complete"] is True
+
+
+def test_get_current_user_missing(db_session):
     req = make_request()
     with pytest.raises(HTTPException):
-        asyncio.run(get_current_user(req))
+        asyncio.run(get_current_user(req, db=db_session))
 
 
-def test_get_current_user_invalid(monkeypatch):
-    dummy = DummySupabase({"error": {"message": "bad"}})
-    monkeypatch.setattr("backend.security.get_supabase_client", lambda: dummy)
-    req = make_request("tok")
+def test_get_current_user_invalid(db_session, monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    token = "invalid"
+    req = make_request(token)
     with pytest.raises(HTTPException):
-        asyncio.run(get_current_user(req))
+        asyncio.run(get_current_user(req, db=db_session))
 
 
 def test_me_route_returns_user():
-    result = asyncio.run(me.get_me(user={"id": "u1"}))
-    assert result["id"] == "u1"
+    result = asyncio.run(me.get_me(user={"user_id": "u1"}))
+    assert result["user_id"] == "u1"
+
+
