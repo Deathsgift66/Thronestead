@@ -38,11 +38,10 @@ except ImportError:
     global_game_settings = {}
 
 from .faith_service import _get_faith_modifiers
+from services.modifiers_utils import _merge_modifiers, invalidate_cache, _modifier_cache
 
 logger = logging.getLogger(__name__)
 
-# Cached modifier data to reduce expensive aggregation queries.
-_modifier_cache: dict[int, tuple[float, dict]] = {}
 # Number of seconds before cached modifiers expire.
 _CACHE_TTL = 60
 
@@ -170,20 +169,6 @@ def check_progression_requirements(
 # --------------------------------------------------------
 # Modifier Aggregation
 # --------------------------------------------------------
-
-
-def _merge_modifiers(target: dict, mods: dict) -> None:
-    """
-    Deep-merges modifier dictionaries into the target dict.
-    """
-    if not isinstance(mods, dict):
-        return
-    for cat, inner in mods.items():
-        if not isinstance(inner, dict):
-            continue
-        bucket = target.setdefault(cat, {})
-        for key, val in inner.items():
-            bucket[key] = bucket.get(key, 0) + val
 
 
 def _merge_modifiers_with_rules(target: dict, mods: dict, rules: dict) -> None:
@@ -474,7 +459,3 @@ def get_total_modifiers(
 
     return total
 
-
-def invalidate_cache(kingdom_id: int) -> None:
-    """Clear cached modifiers for the given kingdom."""
-    _modifier_cache.pop(kingdom_id, None)
