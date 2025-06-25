@@ -127,6 +127,29 @@ def test_register_invalid_username(db_session):
         signup.register(make_request(), payload, db=db_session)
 
 
+def test_register_with_existing_user(db_session):
+    called = {"flag": False}
+
+    class StubAuth(DummyAuth):
+        def sign_up(self, *_args, **_kwargs):
+            called["flag"] = True
+            return {"user": {"id": "should-not"}}
+
+    signup.get_supabase_client = lambda: type("C", (), {"auth": StubAuth()})()
+    payload = signup.RegisterPayload(
+        user_id="provided",
+        email="e2@example.com",
+        password="pass",
+        username="user2",
+        kingdom_name="Realm2",
+        display_name="user2",
+        captcha_token="t",
+    )
+    res = signup.register(make_request(), payload, db=db_session)
+    assert res["user_id"] == "provided"
+    assert called["flag"] is False
+
+
 def test_resend_confirmation_success():
     signup.get_supabase_client = lambda: DummyClient()
     payload = signup.ResendPayload(email="e@example.com")
