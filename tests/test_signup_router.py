@@ -164,6 +164,32 @@ def test_resend_confirmation_error():
         signup.resend_confirmation(payload)
 
 
+def test_finalize_signup_creates_rows(db_session):
+    payload = signup.FinalizePayload(
+        user_id="fin1",
+        username="finuser",
+        display_name="finuser",
+        kingdom_name="FinRealm",
+        email="fin@example.com",
+    )
+    res = signup.finalize_signup(payload, db=db_session)
+    assert res["status"] == "created"
+    assert res["user_id"] == "fin1"
+    assert res["kingdom_id"] == 1
+    user = db_session.query(User).get("fin1")
+    kingdom = db_session.query(Kingdom).get(1)
+    res_row = db_session.execute(
+        text("SELECT 1 FROM kingdom_resources WHERE kingdom_id = 1")
+    ).fetchone()
+    title_row = db_session.execute(
+        text("SELECT title FROM kingdom_titles WHERE kingdom_id = 1")
+    ).fetchone()
+    assert user is not None
+    assert kingdom.kingdom_name == "FinRealm"
+    assert res_row is not None
+    assert title_row is not None
+
+
 class TableStub:
     def __init__(self, table):
         self.table = table
