@@ -63,7 +63,7 @@ export function validateEmail(email) {
  * @returns {boolean} True if password is complex
  */
 export function validatePasswordComplexity(password) {
-  const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
+  const pattern = /^(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
   return pattern.test(password);
 }
 
