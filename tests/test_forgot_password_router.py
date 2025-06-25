@@ -5,25 +5,10 @@
 import hashlib
 import time
 import uuid
-
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-
-from backend.db_base import Base
 from backend.models import Notification, User
 from backend.routers import forgot_password as fp
 
 
-def setup_db():
-    engine = create_engine("sqlite:///:memory:")
-    Session = sessionmaker(bind=engine)
-    Base.metadata.create_all(engine)
-    engine.execute(
-        text(
-            "CREATE TABLE audit_log (log_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, action TEXT, details TEXT, created_at TEXT)"
-        )
-    )
-    return Session
 
 
 def create_user(db):
@@ -39,22 +24,18 @@ class DummyRequest:
         self.client = type("c", (), {"host": host})
 
 
-def test_request_stores_token():
-    Session = setup_db()
-    db = Session()
-    uid = create_user(db)
+def test_request_stores_token(db_session):
+    uid = create_user(db_session)
     fp.RESET_STORE.clear()
     req = DummyRequest()
-    fp.request_password_reset(fp.EmailPayload(email="e@example.com"), req, db)
+    fp.request_password_reset(fp.EmailPayload(email="e@example.com"), req, db_session)
     assert len(fp.RESET_STORE) == 1
     stored_uid = next(iter(fp.RESET_STORE.values()))[0]
     assert stored_uid == uid
 
 
-def test_full_reset_flow():
-    Session = setup_db()
-    db = Session()
-    uid = create_user(db)
+def test_full_reset_flow(db_session):
+    uid = create_user(db_session)
     fp.RESET_STORE.clear()
     fp.VERIFIED_SESSIONS.clear()
     token = "TESTTOKEN1234"
@@ -68,9 +49,9 @@ def test_full_reset_flow():
             new_password="StrongPass1234",
             confirm_password="StrongPass1234",
         ),
-        db,
+        db_session,
     )
     assert uid not in fp.VERIFIED_SESSIONS
     assert token_hash not in fp.RESET_STORE
-    notif = db.query(Notification).filter(Notification.user_id == uid).first()
+    notif = db_session.query(Notification).filter(Notification.user_id == uid).first()
     assert notif is not None

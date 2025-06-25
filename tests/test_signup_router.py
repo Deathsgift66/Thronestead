@@ -4,8 +4,10 @@
 # Developer: Deathsgift66
 from fastapi import HTTPException
 import pytest
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 
 from backend.db_base import Base
 from backend.models import Kingdom, KingdomVipStatus, User
@@ -13,11 +15,6 @@ from backend.routers import signup
 from fastapi import Request
 
 
-def setup_db():
-    engine = create_engine("sqlite:///:memory:")
-    Session = sessionmaker(bind=engine)
-    Base.metadata.create_all(engine)
-    return Session
 
 
 class DummyAuth:
@@ -49,9 +46,7 @@ def make_request():
     return Request({"type": "http", "method": "POST", "path": "/", "client": ("test", 0), "headers": []})
 
 
-def test_register_creates_user_row():
-    Session = setup_db()
-    db = Session()
+def test_register_creates_user_row(db_session):
     signup.get_supabase_client = lambda: DummyClient("newid")
     payload = signup.RegisterPayload(
         email="e@example.com",
@@ -61,20 +56,18 @@ def test_register_creates_user_row():
         display_name="user",
         captcha_token="t",
     )
-    res = signup.register(make_request(), payload, db=db)
+    res = signup.register(make_request(), payload, db=db_session)
     assert res["user_id"] == "newid"
     assert res["kingdom_id"] == 1
-    user = db.query(User).get("newid")
-    kingdom = db.query(Kingdom).get(1)
-    vip = db.query(KingdomVipStatus).get("newid")
+    user = db_session.query(User).get("newid")
+    kingdom = db_session.query(Kingdom).get(1)
+    vip = db_session.query(KingdomVipStatus).get("newid")
     assert user.email == "e@example.com"
     assert kingdom.kingdom_name == "Realm"
     assert vip.vip_level == 0
 
 
-def test_register_handles_error():
-    Session = setup_db()
-    db = Session()
+def test_register_handles_error(db_session):
     signup.get_supabase_client = lambda: DummyClient(error=True)
     payload = signup.RegisterPayload(
         email="x@x.com",
@@ -85,16 +78,14 @@ def test_register_handles_error():
         captcha_token="t",
     )
     try:
-        signup.register(make_request(), payload, db=db)
+        signup.register(make_request(), payload, db=db_session)
     except HTTPException as e:
         assert e.status_code == 500
     else:
         assert False
 
 
-def test_register_returns_supabase_error():
-    Session = setup_db()
-    db = Session()
+def test_register_returns_supabase_error(db_session):
     signup.get_supabase_client = lambda: DummyClient(error_resp=True)
     payload = signup.RegisterPayload(
         email="x@x.com",
@@ -105,7 +96,7 @@ def test_register_returns_supabase_error():
         captcha_token="t",
     )
     try:
-        signup.register(make_request(), payload, db=db)
+        signup.register(make_request(), payload, db=db_session)
     except HTTPException as e:
         assert e.status_code == 400
     else:
