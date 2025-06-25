@@ -14,9 +14,12 @@ try:
 except Exception:  # pragma: no cover - allow running without dependency
     def load_dotenv(*_args, **_kwargs):
         """Fallback no-op if python-dotenv isn't installed."""
-        pass
+        print("\N{WARNING SIGN} python-dotenv not installed. Skipping .env loading.")
+        return False
 
-load_dotenv()
+loaded = load_dotenv()
+if not loaded:
+    print("\N{WARNING SIGN} .env file not found. Continuing with system environment.")
 
 from backend.main import app
 
