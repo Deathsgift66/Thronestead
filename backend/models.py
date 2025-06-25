@@ -91,6 +91,8 @@ class User(Base):
     setup_complete = Column(Boolean, default=False)
     sign_up_date = Column(Date, server_default=func.current_date())
     sign_up_time = Column(Time(timezone=False), server_default=func.now())
+    sign_up_ip = Column(String)
+    last_login_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

@@ -65,8 +65,11 @@ def test_supabase_unavailable_returns_503():
 class DummyDB:
     def __init__(self, row=None):
         self.row = row
+        self.updated = False
 
-    def execute(self, *_args, **_kwargs):
+    def execute(self, query, *args, **kwargs):
+        if "UPDATE users SET last_login_at" in str(query):
+            self.updated = True
         class R:
             def __init__(self, row):
                 self._row = row
@@ -81,12 +84,14 @@ def test_login_status_true():
     db = DummyDB((True,))
     result = login_routes.login_status(user_id="u1", db=db)
     assert result["setup_complete"] is True
+    assert db.updated is True
 
 
 def test_login_status_missing():
     db = DummyDB(None)
     result = login_routes.login_status(user_id="u1", db=db)
     assert result["setup_complete"] is False
+    assert db.updated is True
 
 # New login endpoint tests
 from backend.routers import login
@@ -140,7 +145,12 @@ class DummyClientAuth:
 
 
 class DummyDBAuth:
-    def execute(self, *_args, **_kwargs):
+    def __init__(self):
+        self.updated = False
+
+    def execute(self, query, *args, **_kwargs):
+        if "UPDATE users SET last_login_at" in str(query):
+            self.updated = True
         class R:
             def fetchone(self):
                 return ("name", 1, 2, True)
@@ -158,6 +168,7 @@ def test_authenticate_success():
     assert res["kingdom_id"] == 1
     assert res["alliance_id"] == 2
     assert res["setup_complete"] is True
+    assert db.updated is True
 
 
 def test_authenticate_invalid():

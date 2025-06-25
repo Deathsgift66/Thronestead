@@ -1603,6 +1603,8 @@ CREATE TABLE public.users (
   setup_complete boolean DEFAULT false,
   sign_up_date date DEFAULT CURRENT_DATE,
   sign_up_time time without time zone DEFAULT CURRENT_TIME,
+  sign_up_ip text,
+  last_login_at timestamp with time zone,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   auth_user_id uuid,
