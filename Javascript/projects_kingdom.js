@@ -26,7 +26,7 @@ const RESOURCE_KEYS = [
   'swords',
   'axes',
   'shields',
-  'armour',
+  'armor',
   'wagon',
   'siege_weapons',
   'jewelry',
