@@ -8,6 +8,14 @@ trigger
 Definer	
 
 
+ensure_kingdom_resource_row
+p_kingdom_id integer
+
+void
+
+Invoker	
+
+
 init_spy_defense
 -
 
@@ -33,6 +41,14 @@ Invoker
 
 
 log_audit_alliances
+-
+
+trigger
+
+Invoker	
+
+
+log_audit_kingdom_resources
 -
 
 trigger
@@ -113,6 +129,54 @@ Invoker
 
 
 log_audit_wars
+-
+
+trigger
+
+Invoker	
+
+
+notify_new_war
+-
+
+trigger
+
+Invoker	
+
+
+webhook_admin_alert
+-
+
+trigger
+
+Invoker	
+
+
+webhook_kingdom_deleted
+-
+
+trigger
+
+Invoker	
+
+
+webhook_training_completed
+-
+
+trigger
+
+Invoker	
+
+
+webhook_treaty_approved
+-
+
+trigger
+
+Invoker	
+
+
+webhook_war_declared
 -
 
 trigger
