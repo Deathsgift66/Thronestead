@@ -49,7 +49,7 @@ def list_alliance_projects(db: Session, alliance_id: int) -> dict:
                    pa.build_state
               FROM projects_alliance pa
               JOIN project_alliance_catalogue pc ON pa.project_key = pc.project_key
-             WHERE pa.alliance_id = :aid AND pa.build_state = 'in_progress'
+             WHERE pa.alliance_id = :aid AND pa.build_state = 'building'
              ORDER BY pa.started_at DESC
 
             """,
@@ -127,7 +127,7 @@ def start_alliance_project(
                 build_state, initiated_by
             ) VALUES (
                 :aid, :key, now(), :end, 0,
-                :req, 'in_progress', :uid
+                :req, 'building', :uid
 
             )
         """
@@ -160,7 +160,7 @@ def contribute_to_project(
             SELECT project_id, contributed, total_required
             FROM projects_alliance
             WHERE alliance_id = :aid AND project_key = :key
-              AND build_state = 'in_progress'
+              AND build_state = 'building'
 
             """
         ),
@@ -210,7 +210,7 @@ def complete_project_if_ready(db: Session, alliance_id: int, project_key: str) -
             SELECT project_id, contributed, total_required
             FROM projects_alliance
             WHERE alliance_id = :aid AND project_key = :key
-              AND build_state = 'in_progress'
+              AND build_state = 'building'
 
             """
         ),
