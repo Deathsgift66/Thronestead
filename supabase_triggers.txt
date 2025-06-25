@@ -59,9 +59,9 @@ kingdom_resources
 
 log_audit_kingdom_resources
 
-AFTER UPDATE
 AFTER DELETE
 AFTER INSERT
+AFTER UPDATE
 ROW
 
 
@@ -187,7 +187,7 @@ ROW
 trg_webhook_admin_alert	
 admin_alerts
 
-webhook_admin_alert
+webhook_admin_alert (Disabled)
 
 AFTER INSERT
 ROW
