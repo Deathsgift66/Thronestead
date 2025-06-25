@@ -1,0 +1,2502 @@
+admin_alerts
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Admins only
+Applied to: public role
+
+alliance_achievement_catalogue
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_achievement_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_achievement_catalogue_write_own
+Applied to: authenticated role
+
+alliance_achievements
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_achievements_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_achievements_write_own
+Applied to: authenticated role
+
+alliance_activity_log
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_activity_log_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_activity_log_write_own
+Applied to: authenticated role
+
+alliance_blacklist
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Alliance members can view their blacklist
+Applied to: authenticated role
+
+alliance_grants
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_grants_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_grants_write_own
+Applied to: authenticated role
+
+alliance_loans
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_loans_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_loans_write_own
+Applied to: authenticated role
+
+alliance_members
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_membership
+Applied to: public role
+
+SELECT
+
+
+alliance_member_view
+Applied to: public role
+
+SELECT
+
+
+alliance_members_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_members_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+alliance_visibility
+Applied to: public role
+
+SELECT
+
+
+Allow alliance member to read their alliance membership
+Applied to: authenticated role
+
+SELECT
+
+
+Members view own alliance
+Applied to: authenticated role
+
+alliance_notices
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+alliance_policies
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_policies_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_policies_write_own
+Applied to: authenticated role
+
+alliance_roles
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_roles_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_roles_write_own
+Applied to: authenticated role
+
+alliance_surrenders
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View alliance surrender if participant
+Applied to: authenticated role
+
+alliance_tax_collections
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_tax_collections_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_tax_collections_write_own
+Applied to: authenticated role
+
+alliance_tax_policies
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_tax_policies_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_tax_policies_write_own
+Applied to: authenticated role
+
+alliance_treaties
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_treaties_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_treaties_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+select_own_alliance_treaties
+Applied to: public role
+
+alliance_vault
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_alliance_vault
+Applied to: public role
+
+SELECT
+
+
+alliance_vault_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_vault_write_own
+Applied to: authenticated role
+
+alliance_vault_transaction_log
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_vault_transaction_log_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_vault_transaction_log_write_own
+Applied to: authenticated role
+
+alliance_vote_participants
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View own vote
+Applied to: authenticated role
+
+alliance_votes
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Alliance members view votes
+Applied to: authenticated role
+
+SELECT
+
+
+alliance_vote_visibility
+Applied to: public role
+
+SELECT
+
+
+View alliance votes
+Applied to: authenticated role
+
+alliance_war_combat_logs
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_war_combat_logs_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_war_combat_logs_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+Allow members to view alliance_war_combat_logs
+Applied to: authenticated role
+
+alliance_war_participants
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_war_participants_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_war_participants_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+Allow members to view alliance_war_participants if their allian
+Applied to: authenticated role
+
+alliance_war_preplans
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_war_preplans_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_war_preplans_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+Allow members to view own alliance_war_preplans
+Applied to: authenticated role
+
+alliance_war_scores
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_war_scores_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_war_scores_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+Allow members to view alliance_war_scores
+Applied to: authenticated role
+
+alliance_wars
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliance_wars_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliance_wars_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+Allow alliance members to view relevant alliance_wars
+Applied to: authenticated role
+
+alliances
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+alliances_read_own
+Applied to: authenticated role
+
+ALL
+
+
+alliances_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+Public read alliances
+Applied to: public role
+
+announcements
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_announcements
+Applied to: public role
+
+archived_audit_log
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_archived_log
+Applied to: public role
+
+audit_log
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+access_own_audit_log
+Applied to: public role
+
+SELECT
+
+
+audit_log_read_own
+Applied to: authenticated role
+
+ALL
+
+
+audit_log_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+View own logs
+Applied to: authenticated role
+
+battle_resolution_logs
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow participants to view battle_resolution_logs
+Applied to: authenticated role
+
+SELECT
+
+
+battle_resolution_logs_read_own
+Applied to: authenticated role
+
+ALL
+
+
+battle_resolution_logs_write_own
+Applied to: authenticated role
+
+black_market_listings
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_black_market_listings
+Applied to: public role
+
+SELECT
+
+
+black_market_listings_read_own
+Applied to: authenticated role
+
+ALL
+
+
+black_market_listings_write_own
+Applied to: authenticated role
+
+building_catalogue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+all_access_buildings
+Applied to: public role
+
+SELECT
+
+
+building_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+building_catalogue_write_own
+Applied to: authenticated role
+
+building_costs
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow read access
+Applied to: public role
+
+combat_logs
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+access_war_participants_combat
+Applied to: public role
+
+SELECT
+
+
+combat_logs_read_own
+Applied to: authenticated role
+
+ALL
+
+
+combat_logs_write_own
+Applied to: authenticated role
+
+custom_troop_profiles
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+game_setting_values
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_game_settings
+Applied to: public role
+
+game_settings
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+game_settings_read_own
+Applied to: authenticated role
+
+ALL
+
+
+game_settings_write_own
+Applied to: authenticated role
+
+global_event_conditions
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_conditions
+Applied to: public role
+
+global_event_effects
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_effects
+Applied to: public role
+
+global_event_rewards
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_rewards
+Applied to: public role
+
+global_events
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+global_events_read_own
+Applied to: authenticated role
+
+ALL
+
+
+global_events_write_own
+Applied to: authenticated role
+
+kingdom_achievement_catalogue
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_achievement_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_achievement_catalogue_write_own
+Applied to: authenticated role
+
+kingdom_achievements
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_achievements_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_achievements_write_own
+Applied to: authenticated role
+
+kingdom_castle_progression
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+kingdom_history_log
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_history_log_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_history_log_write_own
+Applied to: authenticated role
+
+kingdom_knights
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+kingdom_nobles
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+kingdom_religion
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_religion_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_religion_write_own
+Applied to: authenticated role
+
+kingdom_research_tracking
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_research
+Applied to: public role
+
+ALL
+
+
+Allow user to manage own kingdom_research_tracking
+Applied to: authenticated role
+
+SELECT
+
+
+kingdom_research_tracking_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_research_tracking_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+View own research
+Applied to: authenticated role
+
+kingdom_resource_transfers
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+kingdom_resources
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_resources
+Applied to: public role
+
+ALL
+
+
+Allow user to manage own kingdom_resources
+Applied to: authenticated role
+
+ALL
+
+
+allow_resource_modification
+Applied to: public role
+
+SELECT
+
+
+kingdom_resources_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_resources_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+View own resources
+Applied to: authenticated role
+
+kingdom_spies
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_spies_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_spies_write_own
+Applied to: authenticated role
+
+kingdom_temples
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View kingdom temples
+Applied to: authenticated role
+
+kingdom_titles
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_titles_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_titles_write_own
+Applied to: authenticated role
+
+kingdom_treaties
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_treaties_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_treaties_write_own
+Applied to: authenticated role
+
+kingdom_troop_slots
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_troop_slots
+Applied to: public role
+
+ALL
+
+
+Allow user to manage own kingdom_troop_slots
+Applied to: authenticated role
+
+SELECT
+
+
+kingdom_troop_slots_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_troop_slots_write_own
+Applied to: authenticated role
+
+kingdom_troops
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow user to manage own kingdom_troops
+Applied to: authenticated role
+
+SELECT
+
+
+kingdom_troops_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_troops_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+View own kingdom troops
+Applied to: authenticated role
+
+kingdom_villages
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_villages_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_villages_write_own
+Applied to: authenticated role
+
+kingdom_vip_status
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+kingdom_vip_status_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdom_vip_status_write_own
+Applied to: authenticated role
+
+kingdoms
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow user to select own kingdom
+Applied to: authenticated role
+
+UPDATE
+
+
+Allow user to update own kingdom
+Applied to: authenticated role
+
+DELETE
+
+
+delete_own_kingdom
+Applied to: public role
+
+INSERT
+
+
+insert_own_kingdom
+Applied to: public role
+
+SELECT
+
+
+kingdoms_read_own
+Applied to: authenticated role
+
+ALL
+
+
+kingdoms_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+owner_kingdom_access
+Applied to: public role
+
+SELECT
+
+
+select_own_kingdom
+Applied to: public role
+
+ALL
+
+
+self_kingdom_access
+Applied to: public role
+
+UPDATE
+
+
+update_own_kingdom
+Applied to: public role
+
+market_listings
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+message_metadata
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_message_metadata
+Applied to: public role
+
+news_articles
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Authors can read their own drafts
+Applied to: authenticated role
+
+SELECT
+
+
+Public read access to published articles
+Applied to: public role
+
+noble_houses
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View noble houses
+Applied to: authenticated role
+
+notification_metadata
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_notification_meta
+Applied to: public role
+
+notifications
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+access_own_notifications
+Applied to: public role
+
+ALL
+
+
+Allow user to manage own notifications
+Applied to: authenticated role
+
+ALL
+
+
+modify_own_notifications
+Applied to: public role
+
+SELECT
+
+
+notifications_read_own
+Applied to: authenticated role
+
+ALL
+
+
+notifications_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+user_notifications_view
+Applied to: public role
+
+SELECT
+
+
+View own notifications
+Applied to: authenticated role
+
+player_messages
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+access_own_messages
+Applied to: public role
+
+SELECT
+
+
+Allow user to read their messages
+Applied to: authenticated role
+
+ALL
+
+
+modify_own_messages
+Applied to: public role
+
+SELECT
+
+
+player_messages_read_own
+Applied to: authenticated role
+
+ALL
+
+
+player_messages_write_own
+Applied to: authenticated role
+
+SELECT
+
+
+View own messages
+Applied to: authenticated role
+
+policies_laws_catalogue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+all_access_policies_laws_catalogue
+Applied to: public role
+
+SELECT
+
+
+policies_laws_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+policies_laws_catalogue_write_own
+Applied to: authenticated role
+
+policy_change_log
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View policy logs
+Applied to: authenticated role
+
+project_alliance_catalogue
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View alliance project catalogue
+Applied to: authenticated role
+
+project_alliance_contributions
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View own contributions
+Applied to: authenticated role
+
+project_modifiers
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_project_mods
+Applied to: public role
+
+project_player_catalogue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+all_access_project_player_catalogue
+Applied to: public role
+
+SELECT
+
+
+project_player_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+project_player_catalogue_write_own
+Applied to: authenticated role
+
+projects_alliance
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_projects_alliance
+Applied to: public role
+
+SELECT
+
+
+projects_alliance_read_own
+Applied to: authenticated role
+
+ALL
+
+
+projects_alliance_write_own
+Applied to: authenticated role
+
+projects_alliance_in_progress
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+projects_alliance_in_progress_read_own
+Applied to: authenticated role
+
+ALL
+
+
+projects_alliance_in_progress_write_own
+Applied to: authenticated role
+
+projects_player
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_projects
+Applied to: public role
+
+ALL
+
+
+Allow user to manage own projects_player
+Applied to: authenticated role
+
+SELECT
+
+
+projects_player_read_own
+Applied to: authenticated role
+
+ALL
+
+
+projects_player_write_own
+Applied to: authenticated role
+
+quest_alliance_catalogue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+all_access_quest_alliance_catalogue
+Applied to: public role
+
+SELECT
+
+
+quest_alliance_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+quest_alliance_catalogue_write_own
+Applied to: authenticated role
+
+quest_alliance_contributions
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_alliance_contribs
+Applied to: public role
+
+SELECT
+
+
+quest_alliance_contributions_read_own
+Applied to: authenticated role
+
+ALL
+
+
+quest_alliance_contributions_write_own
+Applied to: authenticated role
+
+quest_alliance_tracking
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_alliance_quest
+Applied to: public role
+
+SELECT
+
+
+alliance_quest_tracking_view
+Applied to: public role
+
+SELECT
+
+
+quest_alliance_tracking_read_own
+Applied to: authenticated role
+
+ALL
+
+
+quest_alliance_tracking_write_own
+Applied to: authenticated role
+
+quest_kingdom_catalogue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+all_access_quest_kingdom_catalogue
+Applied to: public role
+
+SELECT
+
+
+quest_kingdom_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+quest_kingdom_catalogue_write_own
+Applied to: authenticated role
+
+quest_kingdom_tracking
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_kingdom_quests
+Applied to: public role
+
+ALL
+
+
+Allow user to manage own quest_kingdom_tracking
+Applied to: authenticated role
+
+SELECT
+
+
+quest_kingdom_tracking_read_own
+Applied to: authenticated role
+
+ALL
+
+
+quest_kingdom_tracking_write_own
+Applied to: authenticated role
+
+region_bonuses
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow read access
+Applied to: public role
+
+region_catalogue
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Public read region_catalogue
+Applied to: public role
+
+SELECT
+
+
+region_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+region_catalogue_write_own
+Applied to: authenticated role
+
+region_structures
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_region_structures
+Applied to: public role
+
+security_tips
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow read access
+Applied to: public role
+
+spy_defense
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow kingdom owner read/write
+Applied to: public role
+
+spy_missions
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+spy_missions_read_own
+Applied to: authenticated role
+
+ALL
+
+
+spy_missions_write_own
+Applied to: authenticated role
+
+system_event_hooks
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Read system hooks
+Applied to: authenticated role
+
+system_flags
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow read access
+Applied to: public role
+
+tech_catalogue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+all_access_tech_catalogue
+Applied to: public role
+
+SELECT
+
+
+tech_catalogue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+tech_catalogue_write_own
+Applied to: authenticated role
+
+terrain_map
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_war_participants_terrain
+Applied to: public role
+
+SELECT
+
+
+terrain_map_read_own
+Applied to: authenticated role
+
+ALL
+
+
+terrain_map_write_own
+Applied to: authenticated role
+
+town_crier_scrolls
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow read access
+Applied to: public role
+
+trade_logs
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+access_own_trade_logs
+Applied to: public role
+
+SELECT
+
+
+trade_logs_read_own
+Applied to: authenticated role
+
+ALL
+
+
+trade_logs_write_own
+Applied to: authenticated role
+
+training_catalog
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+all_access_training_catalog
+Applied to: public role
+
+SELECT
+
+
+training_catalog_read_own
+Applied to: authenticated role
+
+ALL
+
+
+training_catalog_write_own
+Applied to: authenticated role
+
+training_costs
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_training_costs
+Applied to: public role
+
+training_history
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+access_own_training_history
+Applied to: public role
+
+SELECT
+
+
+self_kingdom_training_history_access
+Applied to: public role
+
+SELECT
+
+
+training_history_read_own
+Applied to: authenticated role
+
+ALL
+
+
+training_history_write_own
+Applied to: authenticated role
+
+training_queue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_training_queue
+Applied to: public role
+
+SELECT
+
+
+training_queue_read_own
+Applied to: authenticated role
+
+ALL
+
+
+training_queue_write_own
+Applied to: authenticated role
+
+treaty_modifiers
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_treaty_modifiers
+Applied to: public role
+
+treaty_negotiation_log
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View treaty logs if part of involved alliance
+Applied to: authenticated role
+
+treaty_terms
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_treaty_terms
+Applied to: public role
+
+treaty_type_catalogue
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+View treaty types
+Applied to: authenticated role
+
+tutorial_steps
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow read access
+Applied to: public role
+
+unit_counters
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Public read unit_counters
+Applied to: public role
+
+SELECT
+
+
+unit_counters_read_own
+Applied to: authenticated role
+
+ALL
+
+
+unit_counters_write_own
+Applied to: authenticated role
+
+unit_meta_groups
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_unit_meta
+Applied to: public role
+
+unit_movements
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_unit_movements
+Applied to: public role
+
+SELECT
+
+
+unit_movements_read_own
+Applied to: authenticated role
+
+ALL
+
+
+unit_movements_write_own
+Applied to: authenticated role
+
+unit_stats
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Public read unit_stats
+Applied to: public role
+
+SELECT
+
+
+unit_stats_read_own
+Applied to: authenticated role
+
+ALL
+
+
+unit_stats_write_own
+Applied to: authenticated role
+
+unit_upgrade_paths
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+unit_upgrade_paths_read_own
+Applied to: authenticated role
+
+ALL
+
+
+unit_upgrade_paths_write_own
+Applied to: authenticated role
+
+user_active_sessions
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+user_setting_entries
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_user_settings
+Applied to: public role
+
+user_tokens
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+users
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Allow users to insert own row
+Applied to: public role
+
+SELECT
+
+
+Allow users to select own row
+Applied to: public role
+
+UPDATE
+
+
+Allow users to update own row
+Applied to: public role
+
+SELECT
+
+
+select_usernames_for_alliance_members
+Applied to: public role
+
+ALL
+
+
+self_user_access
+Applied to: public role
+
+SELECT
+
+
+user_self_access
+Applied to: public role
+
+SELECT
+
+
+users_read_own
+Applied to: authenticated role
+
+ALL
+
+
+users_write_own
+Applied to: authenticated role
+
+village_buildings
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+village_buildings_read_own
+Applied to: authenticated role
+
+ALL
+
+
+village_buildings_write_own
+Applied to: authenticated role
+
+village_events
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+village_military
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+village_modifiers
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+village_modifiers_read_own
+Applied to: authenticated role
+
+ALL
+
+
+village_modifiers_write_own
+Applied to: authenticated role
+
+village_production
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+village_production_read_own
+Applied to: authenticated role
+
+ALL
+
+
+village_production_write_own
+Applied to: authenticated role
+
+village_queue
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+village_resources
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+villages
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+Allow modify own rows
+Applied to: public role
+
+SELECT
+
+
+Allow read own rows
+Applied to: public role
+
+vip_perk_entries
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+deny_all_vip_perks
+Applied to: public role
+
+war_preplans
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_war_preplans
+Applied to: public role
+
+SELECT
+
+
+war_preplans_read_own
+Applied to: authenticated role
+
+ALL
+
+
+war_preplans_write_own
+Applied to: authenticated role
+
+war_scores
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Allow war participants to view war_scores
+Applied to: authenticated role
+
+SELECT
+
+
+war_scores_read_own
+Applied to: authenticated role
+
+ALL
+
+
+war_scores_write_own
+Applied to: authenticated role
+
+wars
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+access_own_wars
+Applied to: public role
+
+SELECT
+
+
+Allow user to select own wars
+Applied to: authenticated role
+
+SELECT
+
+
+wars_read_own
+Applied to: authenticated role
+
+ALL
+
+
+wars_write_own
+Applied to: authenticated role
+
+wars_tactical
+
+Disable RLS
+
+Create policy
+
+ALL
+
+
+access_own_wars_tactical
+Applied to: public role
+
+SELECT
+
+
+Allow user to select wars_tactical if their kingdom involved
+Applied to: authenticated role
+
+SELECT
+
+
+wars_tactical_read_own
+Applied to: authenticated role
+
+ALL
+
+
+wars_tactical_write_own
+Applied to: authenticated role
+
