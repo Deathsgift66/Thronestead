@@ -16,6 +16,7 @@ from .forgot_password import (
     set_new_password as _set_new_password,
 )
 from .session import validate_session as _validate_session
+from .signup import ResendPayload, resend_confirmation as _resend_confirmation
 from ..database import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -48,6 +49,6 @@ async def validate_session(request: Request):
 
 
 @router.post("/resend-confirmation")
-def resend_confirmation():
-    """Placeholder for future email confirmation resend."""
-    raise HTTPException(status_code=501, detail="Not implemented")
+def resend_confirmation(payload: ResendPayload):
+    """Resend the signup confirmation email."""
+    return _resend_confirmation(payload)
