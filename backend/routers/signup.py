@@ -131,6 +131,7 @@ def check_availability(payload: CheckPayload):
             available_email = len(rows) == 0
 
     except Exception as exc:
+        logger.exception("Failed to query availability")
         raise HTTPException(
             status_code=500, detail="Failed to query availability"
         ) from exc
@@ -157,6 +158,7 @@ def check_kingdom_name(kingdom: str):
         rows = getattr(res, "data", res) or []
         available = len(rows) == 0
     except Exception as exc:
+        logger.exception("Failed to query availability")
         raise HTTPException(
             status_code=500, detail="Failed to query availability"
         ) from exc
@@ -180,6 +182,7 @@ def signup_stats():
         data = getattr(res, "data", res) or []
         return {"top_kingdoms": data}
     except Exception as exc:
+        logger.exception("Failed to fetch kingdom stats")
         raise HTTPException(
             status_code=500, detail="Failed to fetch kingdom stats"
         ) from exc
@@ -233,6 +236,7 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
         db.commit()
         return {"status": "created"}
     except Exception as e:
+        logger.exception("Failed to create user")
         raise HTTPException(status_code=500, detail="Failed to create user") from e
 
 
