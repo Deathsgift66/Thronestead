@@ -4,8 +4,8 @@ alliance_treaties
 
 audit_trigger
 
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
 AFTER INSERT
 ROW
 
@@ -26,8 +26,8 @@ alliance_members
 
 log_audit_alliance_members
 
-AFTER INSERT
 AFTER DELETE
+AFTER INSERT
 AFTER UPDATE
 ROW
 
@@ -48,9 +48,20 @@ alliances
 
 log_audit_alliances
 
-AFTER INSERT
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
+
+
+audit_trigger_kingdom_resources	
+kingdom_resources
+
+log_audit_kingdom_resources
+
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -59,9 +70,9 @@ kingdom_troops
 
 log_audit_kingdom_troops
 
+AFTER UPDATE
 AFTER INSERT
 AFTER DELETE
-AFTER UPDATE
 ROW
 
 
@@ -70,8 +81,8 @@ kingdoms
 
 log_audit_kingdoms
 
-AFTER UPDATE
 AFTER INSERT
+AFTER UPDATE
 AFTER DELETE
 ROW
 
@@ -81,9 +92,9 @@ projects_alliance
 
 log_audit_projects_alliance
 
-AFTER INSERT
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -92,9 +103,9 @@ projects_player
 
 log_audit_projects_player
 
-AFTER INSERT
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -103,9 +114,9 @@ training_history
 
 log_audit_training_history
 
-AFTER INSERT
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -114,9 +125,9 @@ training_queue
 
 log_audit_training_queue
 
-AFTER INSERT
 AFTER DELETE
 AFTER UPDATE
+AFTER INSERT
 ROW
 
 
@@ -125,9 +136,9 @@ users
 
 log_audit_users
 
-AFTER INSERT
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -136,9 +147,9 @@ village_buildings
 
 log_audit_village_buildings
 
-AFTER INSERT
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -147,9 +158,9 @@ wars
 
 log_audit_wars
 
-AFTER INSERT
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -158,9 +169,9 @@ village_resources
 
 audit_trigger
 
+AFTER UPDATE
 AFTER INSERT
 AFTER DELETE
-AFTER UPDATE
 ROW
 
 
@@ -170,6 +181,51 @@ kingdoms
 init_spy_defense
 
 BEFORE INSERT
+ROW
+
+
+trg_webhook_admin_alert	
+admin_alerts
+
+webhook_admin_alert
+
+AFTER INSERT
+ROW
+
+
+trg_webhook_kingdom_deleted	
+kingdoms
+
+webhook_kingdom_deleted
+
+AFTER DELETE
+ROW
+
+
+trg_webhook_training_completed	
+training_history
+
+webhook_training_completed
+
+AFTER INSERT
+ROW
+
+
+trg_webhook_treaty_approved	
+alliance_treaties
+
+webhook_treaty_approved
+
+AFTER UPDATE
+ROW
+
+
+trg_webhook_war_declared	
+wars
+
+webhook_war_declared
+
+AFTER INSERT
 ROW
 
 
