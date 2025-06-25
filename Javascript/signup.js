@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: signup.js
-// Version 6.15.2025.21.00
+// Version 6.16.2025.21.02
 // Developer: Deathsgift66
 import {
   showToast,
@@ -29,12 +29,20 @@ function containsProfanity(name) {
   const lower = name.toLowerCase();
   return profanityList.some(w => lower.includes(w));
 }
+
+function setFormDisabled(disabled) {
+  if (!signupForm) return;
+  signupForm.querySelectorAll('input, button').forEach(el => {
+    el.disabled = disabled;
+  });
+}
 let signupButton;
 let messageEl;
+let signupForm;
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById('signup-form');
+  signupForm = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
-  signupButton = form.querySelector('button[type="submit"]');
+  signupButton = signupForm.querySelector('button[type="submit"]');
   messageEl = document.getElementById('signup-message');
 
   // ✅ Debounced availability checker
@@ -42,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
   kingdomNameEl.addEventListener('input', check);
 
   // ✅ Bind form submit
-  form.addEventListener('submit', async (e) => {
+  signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleSignup();
   });
@@ -85,6 +93,7 @@ async function handleSignup() {
   if (!signupButton) return;
   signupButton.disabled = true;
   signupButton.textContent = 'Creating...';
+  setFormDisabled(true);
   toggleLoading(true);
 
   // Check for duplicate email or username
@@ -103,16 +112,19 @@ async function handleSignup() {
       if (!data.email_available) {
         signupButton.disabled = false;
         signupButton.textContent = 'Seal Your Fate';
+        setFormDisabled(false);
         return showMessage('Email already exists.');
       }
       if (!data.username_available) {
         signupButton.disabled = false;
         signupButton.textContent = 'Seal Your Fate';
+        setFormDisabled(false);
         return showMessage('Username already taken.');
       }
       if (!data.kingdom_available) {
         signupButton.disabled = false;
         signupButton.textContent = 'Seal Your Fate';
+        setFormDisabled(false);
         return showMessage('Kingdom name already taken.');
       }
     }
@@ -120,6 +132,7 @@ async function handleSignup() {
     console.error('Availability check failed', err);
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
+    setFormDisabled(false);
     return showMessage('Server error. Please try again.');
   }
 
@@ -130,12 +143,14 @@ async function handleSignup() {
   } catch (err) {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
+    setFormDisabled(false);
     toggleLoading(false);
     return showToast('Captcha failed. Please try again.');
   }
   if (!captchaToken) {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
+    setFormDisabled(false);
     toggleLoading(false);
     return showToast('Captcha failed. Please try again.');
   }
@@ -189,6 +204,7 @@ async function handleSignup() {
   } finally {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
+    setFormDisabled(false);
     toggleLoading(false);
   }
 }
@@ -225,13 +241,15 @@ function updateAvailabilityUI(id, available) {
 }
 
 function showMessage(text, type = 'error') {
-  if (!messageEl) return;
-  messageEl.textContent = text;
-  messageEl.className = `message show ${type}-message`;
-  setTimeout(() => {
-    messageEl.classList.remove('show');
-    messageEl.textContent = '';
-  }, 5000);
+  if (messageEl) {
+    messageEl.textContent = text;
+    messageEl.className = `message show ${type}-message`;
+    setTimeout(() => {
+      messageEl.classList.remove('show');
+      messageEl.textContent = '';
+    }, 5000);
+  }
+  showToast(text);
 }
 
 // ✅ Load top kingdom list (social proof)
