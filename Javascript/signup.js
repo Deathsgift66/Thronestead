@@ -123,7 +123,7 @@ async function handleSignup() {
     return showMessage('Server error. Please try again.');
   }
 
-  // ✅ Submit registration
+  // ✅ Submit registration using Supabase
   let captchaToken;
   try {
     captchaToken = await hcaptcha.execute();
@@ -131,7 +131,7 @@ async function handleSignup() {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
     toggleLoading(false);
-    return showToast("Captcha failed. Please try again.");
+    return showToast('Captcha failed. Please try again.');
   }
   if (!captchaToken) {
     signupButton.disabled = false;
@@ -140,51 +140,37 @@ async function handleSignup() {
     return showToast('Captcha failed. Please try again.');
   }
 
-  const payload = {
-    display_name: values.kingdomName,
-    kingdom_name: values.kingdomName,
-    username: values.username,
-    email: values.email,
-    password: values.password,
-    captcha_token: captchaToken
-  };
-
   try {
-    const res = await fetch(`${API_BASE_URL}/api/signup/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        data: {
+          username: values.username,
+          display_name: values.kingdomName
+        }
+      }
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Registration failed');
-    }
-
-    const data = await res.json();
+    if (error) throw error;
 
     showToast('Sign-Up successful!');
-    try {
-      const { data: loginData, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password
-      });
-      if (!error && loginData?.session) {
-        const token = loginData.session.access_token;
-        const userInfo = loginData.user || {};
-        sessionStorage.setItem('authToken', token);
-        localStorage.setItem('authToken', token);
-        sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
-        localStorage.setItem('currentUser', JSON.stringify(userInfo));
-        await fetchAndStorePlayerProgression(userInfo.id);
-      }
-    } catch (loginErr) {
-      console.error('Auto-login failed', loginErr);
+    const session = signUpData.session;
+    const userInfo = signUpData.user || {};
+    if (session) {
+      const token = session.access_token;
+      sessionStorage.setItem('authToken', token);
+      localStorage.setItem('authToken', token);
+    }
+    if (userInfo.id) {
+      sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
+      localStorage.setItem('currentUser', JSON.stringify(userInfo));
+      await fetchAndStorePlayerProgression(userInfo.id);
     }
     setTimeout(() => (window.location.href = 'play.html'), 1200);
   } catch (err) {
-    console.error("❌ Sign-Up error:", err);
-    showMessage('Sign-Up failed. Please try again.');
+    console.error('❌ Sign-Up error:', err);
+    showMessage(err.message || 'Sign-Up failed.');
   } finally {
     signupButton.disabled = false;
     signupButton.textContent = 'Seal Your Fate';
