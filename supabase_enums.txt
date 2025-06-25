@@ -1,7 +1,7 @@
 Schema	Name	Values	
 public
 
-resource_type	Wood, Stone, Iron Ore, Gold, Gems, Food, Coal, Livestock, Clay, Flax, Tools, Wood Planks, Refined Stone, Iron Ingots, Charcoal, Leather, Arrows, Swords, Axes, Shields, Armour, Wagon, Siege Weapons, Jewelry, Spear, Horses, Pitchforks	
+resource_type	Wood, Stone, Iron Ore, Gold, Gems, Food, Coal, Livestock, Clay, Flax, Tools, Wood Planks, Refined Stone, Iron Ingots, Charcoal, Leather, Arrows, Swords, Axes, Shields, Armor, Wagon, Siege Weapons, Jewelry, Spear, Horses, Pitchforks	
 
 public
 
