@@ -9,7 +9,7 @@ import datetime
 from typing import Optional
 
 from services import resource_service
-from services.training_history_service import XP_PER_LEVEL
+from services.constants import XP_PER_LEVEL
 
 try:
     from sqlalchemy import text
