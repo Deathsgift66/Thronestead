@@ -34,6 +34,27 @@ def login_user(payload: LoginRequest):
         raise HTTPException(
             status_code=500, detail="Authentication service error"
         ) from exc
-    if isinstance(result, dict) and result.get("error"):
+
+    if isinstance(result, dict):
+        error = result.get("error")
+        user = result.get("user")
+    else:  # Supabase object
+        error = getattr(result, "error", None)
+        user = getattr(result, "user", None)
+
+    if error:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    confirmed = bool(
+        user
+        and (
+            getattr(user, "confirmed_at", None)
+            or getattr(user, "email_confirmed_at", None)
+            or (isinstance(user, dict) and user.get("confirmed_at"))
+            or (isinstance(user, dict) and user.get("email_confirmed_at"))
+        )
+    )
+    if not confirmed:
+        raise HTTPException(status_code=401, detail="Email not confirmed")
+
     return result
