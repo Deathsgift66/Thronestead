@@ -52,12 +52,20 @@ async function handleSignup() {
   if (!values.agreed) return showToast("You must agree to the legal terms.");
 
   // ✅ Submit registration
+  let captchaToken;
+  try {
+    captchaToken = await hcaptcha.execute();
+  } catch (err) {
+    return showToast("Captcha failed. Please try again.");
+  }
+
   const payload = {
     display_name: values.kingdomName,
     kingdom_name: values.kingdomName,
     username: values.username,
     email: values.email,
-    password: values.password
+    password: values.password,
+    captcha_token: captchaToken
   };
 
   try {
