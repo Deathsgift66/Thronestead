@@ -28,6 +28,7 @@ try:
         kingdom_spies,
         kingdom_treaties,
         prestige_scores,
+        castle_progression_state,
         vip_levels,
     )
 except ImportError:
@@ -36,6 +37,7 @@ except ImportError:
     kingdom_treaties = {}
     kingdom_spies = {}
     global_game_settings = {}
+    castle_progression_state = {}
 
 from .faith_service import _get_faith_modifiers
 from services.modifiers_utils import _merge_modifiers, invalidate_cache, _modifier_cache
@@ -120,6 +122,8 @@ def check_progression_requirements(
     required_castle_level: int = 0,
     required_nobles: int = 0,
     required_knights: int = 0,
+    *,
+    use_cache: bool = True,
 ) -> None:
     """
     Verifies that a kingdom meets progression thresholds.
@@ -127,22 +131,28 @@ def check_progression_requirements(
     Raises:
         HTTPException(403) if any requirement is not satisfied.
     """
-    # Castle level
-    level = (
-        db.execute(
-            text(
-                "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
-            ),
-            {"kid": kingdom_id},
-        ).scalar()
-        or 1
-    )
+    level = None
+    nobles = None
+    knights = None
 
-    if level < required_castle_level:
-        raise HTTPException(status_code=403, detail="Castle level too low")
+    if use_cache:
+        prog = castle_progression_state.get(kingdom_id)
+        if prog:
+            level = prog.get("castle_level")
+            nobles = prog.get("nobles")
+            knights = prog.get("knights")
 
-    # Noble count
-    if required_nobles > 0:
+    if level is None:
+        level = (
+            db.execute(
+                text(
+                    "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
+                ),
+                {"kid": kingdom_id},
+            ).scalar()
+            or 1
+        )
+    if required_nobles > 0 and nobles is None:
         nobles = (
             db.execute(
                 text("SELECT COUNT(*) FROM kingdom_nobles WHERE kingdom_id = :kid"),
@@ -150,11 +160,7 @@ def check_progression_requirements(
             ).scalar()
             or 0
         )
-        if nobles < required_nobles:
-            raise HTTPException(status_code=403, detail="Not enough nobles")
-
-    # Knight count
-    if required_knights > 0:
+    if required_knights > 0 and knights is None:
         knights = (
             db.execute(
                 text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),
@@ -162,8 +168,15 @@ def check_progression_requirements(
             ).scalar()
             or 0
         )
-        if knights < required_knights:
-            raise HTTPException(status_code=403, detail="Not enough knights")
+
+    if level < required_castle_level:
+        raise HTTPException(status_code=403, detail="Castle level too low")
+
+    if required_nobles > 0 and nobles is not None and nobles < required_nobles:
+        raise HTTPException(status_code=403, detail="Not enough nobles")
+
+    if required_knights > 0 and knights is not None and knights < required_knights:
+        raise HTTPException(status_code=403, detail="Not enough knights")
 
 
 # --------------------------------------------------------
@@ -172,7 +185,7 @@ def check_progression_requirements(
 
 
 def _merge_modifiers_with_rules(target: dict, mods: dict, rules: dict) -> None:
-    """Merge modifiers applying simple stacking rules."""
+    """Merge modifiers applying simple stacking rules with validation."""
     if not isinstance(mods, dict):
         return
     for cat, inner in mods.items():
@@ -181,15 +194,19 @@ def _merge_modifiers_with_rules(target: dict, mods: dict, rules: dict) -> None:
         bucket = target.setdefault(cat, {})
         rule_cat = rules.get(cat, {}) if isinstance(rules, dict) else {}
         for key, val in inner.items():
+            try:
+                num = float(val)
+            except (TypeError, ValueError):
+                continue
             rule = (
                 rule_cat.get(key)
                 if isinstance(rule_cat, dict)
                 else rule_cat
             )
             if rule == "max":
-                bucket[key] = max(bucket.get(key, 0), val)
+                bucket[key] = max(bucket.get(key, 0), num)
             else:
-                bucket[key] = bucket.get(key, 0) + val
+                bucket[key] = bucket.get(key, 0) + num
 
 
 def _region_modifiers(db: Session, kingdom_id: int) -> dict:
@@ -212,7 +229,11 @@ def _region_modifiers(db: Session, kingdom_id: int) -> dict:
     mods: dict = {}
     for btype, val in rows:
         bucket = mods.setdefault(btype, {})
-        bucket["value"] = val
+        try:
+            val_num = float(val)
+        except (TypeError, ValueError):
+            continue
+        bucket["value"] = bucket.get("value", 0) + val_num
     return mods
 
 
