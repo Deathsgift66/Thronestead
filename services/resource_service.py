@@ -212,6 +212,19 @@ def initialize_kingdom_resources(
     db.commit()
 
 
+def ensure_kingdom_resource_row(db: Session, kingdom_id: int) -> None:
+    """Create an empty ``kingdom_resources`` row if none exists."""
+    exists = db.execute(
+        text("SELECT 1 FROM kingdom_resources WHERE kingdom_id = :kid"),
+        {"kid": kingdom_id},
+    ).fetchone()
+    if not exists:
+        db.execute(
+            text("INSERT INTO kingdom_resources (kingdom_id) VALUES (:kid)"),
+            {"kid": kingdom_id},
+        )
+
+
 def get_kingdom_resources(db: Session, kingdom_id: int, *, lock: bool = False) -> dict:
     """Return current resource values for a kingdom.
 
