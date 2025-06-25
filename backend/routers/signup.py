@@ -50,12 +50,13 @@ class CreateUserPayload(BaseModel):
 
 
 class RegisterPayload(BaseModel):
-    email: EmailStr
-    password: constr(min_length=6)
+    email: Optional[EmailStr] = None
+    password: Optional[constr(min_length=6)] = None
     username: constr(min_length=3, max_length=20)
     kingdom_name: str
     display_name: str
     captcha_token: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 class ResendPayload(BaseModel):
@@ -243,61 +244,65 @@ def register(
     if not payload.username.isalnum():
         raise HTTPException(status_code=400, detail="Username must be alphanumeric")
 
-    try:
-        res = sb.auth.sign_up(
-            {
-                "email": payload.email,
-                "password": payload.password,
-                "options": {
-                    "data": {
-                        "display_name": payload.display_name,
-                        "username": payload.username,
-                    }
-                },
-            }
-        )
-    except Exception as exc:
-        logger.exception("❌ Failed to create auth user")
-        raise HTTPException(
-            status_code=500, detail="Internal server error during signup."
-        ) from exc
+    uid = payload.user_id
+    confirmed = True
+    user_obj = None
 
-    if isinstance(res, dict) and res.get("error"):
-        logger.error("Supabase signup error: %s", res["error"])
-        raise HTTPException(
-            status_code=400, detail=res["error"].get("message", "Signup failed")
-        )
-
-    # Require email confirmation before proceeding
-    user_obj = getattr(res, "user", None)
-    if user_obj is None and isinstance(res, dict):
-        user_obj = res.get("user")
-    confirmed_at = None
-    if user_obj:
-        confirmed_at = getattr(user_obj, "confirmed_at", None) or user_obj.get(
-            "confirmed_at"
-        )
-    if not confirmed_at:
-        raise HTTPException(
-            status_code=202,
-            detail="Please confirm your email address before logging in.",
-        )
-
-    # Extract the newly created user ID
-    uid = None
-    if user_obj:
-        uid = getattr(user_obj, "id", None) or user_obj.get("id")
     if uid is None:
-        uid = getattr(res, "id", None) or (isinstance(res, dict) and res.get("id"))
+        try:
+            res = sb.auth.sign_up(
+                {
+                    "email": payload.email,
+                    "password": payload.password,
+                    "options": {
+                        "data": {
+                            "display_name": payload.display_name,
+                            "username": payload.username,
+                        }
+                    },
+                }
+            )
+        except Exception as exc:
+            logger.exception("❌ Failed to create auth user")
+            raise HTTPException(
+                status_code=500, detail="Internal server error during signup."
+            ) from exc
 
-    confirmed = bool(
-        getattr(user_obj, "confirmed_at", None)
-        or getattr(user_obj, "email_confirmed_at", None)
-        or (isinstance(user_obj, dict) and user_obj.get("email_confirmed_at"))
-    )
+        if isinstance(res, dict) and res.get("error"):
+            logger.error("Supabase signup error: %s", res["error"])
+            raise HTTPException(
+                status_code=400, detail=res["error"].get("message", "Signup failed")
+            )
 
-    if not uid:
-        raise HTTPException(status_code=500, detail="Signup failed - user ID missing")
+        # Require email confirmation before proceeding
+        user_obj = getattr(res, "user", None)
+        if user_obj is None and isinstance(res, dict):
+            user_obj = res.get("user")
+        confirmed_at = None
+        if user_obj:
+            confirmed_at = getattr(user_obj, "confirmed_at", None) or user_obj.get(
+                "confirmed_at"
+            )
+        if not confirmed_at:
+            raise HTTPException(
+                status_code=202,
+                detail="Please confirm your email address before logging in.",
+            )
+
+        # Extract the newly created user ID
+        if user_obj:
+            uid = getattr(user_obj, "id", None) or user_obj.get("id")
+        if uid is None:
+            uid = getattr(res, "id", None) or (isinstance(res, dict) and res.get("id"))
+
+        confirmed = bool(
+            getattr(user_obj, "confirmed_at", None)
+            or getattr(user_obj, "email_confirmed_at", None)
+            or (isinstance(user_obj, dict) and user_obj.get("email_confirmed_at"))
+        )
+
+        if not uid:
+            raise HTTPException(status_code=500, detail="Signup failed - user ID missing")
 
     try:
         db.execute(

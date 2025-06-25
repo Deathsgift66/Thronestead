@@ -165,6 +165,21 @@ async function handleSignup() {
     if (userInfo.id) {
       sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
       localStorage.setItem('currentUser', JSON.stringify(userInfo));
+      try {
+        await fetch(`${API_BASE_URL}/api/signup/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userInfo.id,
+            email: values.email,
+            username: values.username,
+            kingdom_name: values.kingdomName,
+            display_name: values.kingdomName
+          })
+        });
+      } catch (err) {
+        console.error('Finalize signup failed:', err);
+      }
       await fetchAndStorePlayerProgression(userInfo.id);
     }
     setTimeout(() => (window.location.href = 'play.html'), 1200);
