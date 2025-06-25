@@ -83,3 +83,39 @@ export function resetAuthCache() {
   cachedAuth = null;
 }
 
+/**
+ * Remove stored auth token and user information.
+ */
+export function clearStoredAuth() {
+  sessionStorage.removeItem('authToken');
+  sessionStorage.removeItem('currentUser');
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('currentUser');
+  resetAuthCache();
+}
+
+/**
+ * Refresh the Supabase session and update stored credentials.
+ * @returns {Promise<boolean>} True if refresh succeeded
+ */
+export async function refreshSessionAndStore() {
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data?.session) return false;
+
+    const token = data.session.access_token;
+    const user = data.user;
+    const storage = localStorage.getItem('authToken') ? localStorage : sessionStorage;
+    const alt = storage === localStorage ? sessionStorage : localStorage;
+    storage.setItem('authToken', token);
+    storage.setItem('currentUser', JSON.stringify(user));
+    alt.removeItem('authToken');
+    alt.removeItem('currentUser');
+
+    setAuthCache(user, data.session);
+    return true;
+  } catch {
+    return false;
+  }
+}
+

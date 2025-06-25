@@ -3,7 +3,7 @@
 // Version 6.18.2025.22.00
 // Developer: Codex
 // Shared frontend utilities for DOM helpers and validation.
-import { authHeaders } from './auth.js';
+import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js';
 
 /**
  * Escape HTML special characters to prevent injection.
@@ -170,11 +170,26 @@ export async function jsonFetch(url, options = {}) {
  * @returns {Promise<Response>} Fetch response
  */
 export async function authFetch(url, options = {}) {
-  const headers = {
+  let headers = {
     ...(options.headers || {}),
     ...(await authHeaders())
   };
-  return fetch(url, { ...options, headers });
+  let res = await fetch(url, { ...options, headers });
+
+  if (res.status === 401) {
+    const refreshed = await refreshSessionAndStore();
+    if (refreshed) {
+      headers = { ...(options.headers || {}), ...(await authHeaders()) };
+      res = await fetch(url, { ...options, headers });
+    }
+    if (res.status === 401) {
+      clearStoredAuth();
+      window.location.href = 'login.html';
+      throw new Error('Unauthorized');
+    }
+  }
+
+  return res;
 }
 
 /**
@@ -184,11 +199,19 @@ export async function authFetch(url, options = {}) {
  * @returns {Promise<any>} Parsed JSON data
  */
 export async function authJsonFetch(url, options = {}) {
-  const headers = {
-    ...(options.headers || {}),
-    ...(await authHeaders())
-  };
-  return jsonFetch(url, { ...options, headers });
+  const res = await authFetch(url, options);
+  const type = res.headers.get('content-type') || '';
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Request failed ${res.status}: ${text}`);
+  }
+
+  if (!type.includes('application/json')) {
+    throw new Error('Invalid JSON response');
+  }
+
+  return res.json();
 }
 
 /**
