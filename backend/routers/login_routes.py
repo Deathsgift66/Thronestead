@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 
 from services.audit_service import log_action
 
@@ -81,3 +82,14 @@ def log_login_event(
     """
     log_action(db, user_id, "login_event", payload.event)
     return {"message": "event logged"}
+
+
+@router.get("/status")
+def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    """Return the user's onboarding completion flag."""
+    row = db.execute(
+        text("SELECT setup_complete FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    complete = bool(row[0]) if row else False
+    return {"setup_complete": complete}

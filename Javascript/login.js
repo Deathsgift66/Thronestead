@@ -93,18 +93,19 @@ async function handleLogin(e) {
     } else if (data?.user) {
       await fetchAndStorePlayerProgression(data.user.id);
 
-      const { data: details, error: setupErr } = await supabase
-        .from('users')
-        .select('setup_complete')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-
-      if (setupErr) {
+      const token = data.session?.access_token;
+      const statusRes = await fetch('/api/login/status', {
+        headers: {
+          'X-User-ID': data.user.id,
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!statusRes.ok) {
         showMessage('error', 'Failed to check setup status.');
         return;
       }
-
-      const setupComplete = details?.setup_complete === true;
+      const statusData = await statusRes.json();
+      const setupComplete = statusData?.setup_complete === true;
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
