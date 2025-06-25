@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: signup.py
-# Version 6.13.2025.19.49
+# Version 6.15.2025.21.00
 # Developer: Deathsgift66
 
 """
@@ -19,6 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import Notification
+from services.resource_service import ensure_kingdom_resource_row
 
 from ..database import get_db
 from ..supabase_client import get_supabase_client
@@ -37,6 +38,7 @@ router = APIRouter(prefix="/api/signup", tags=["signup"])
 class CheckPayload(BaseModel):
     kingdom_name: Optional[str] = None
     username: Optional[constr(min_length=3, max_length=20)] = None
+    email: Optional[EmailStr] = None
 
 
 class CreateUserPayload(BaseModel):
@@ -71,6 +73,7 @@ def check_availability(payload: CheckPayload):
     sb = get_supabase_client()
     available_kingdom = True
     available_username = True
+    available_email = True
 
     try:
         if payload.kingdom_name:
@@ -95,6 +98,17 @@ def check_availability(payload: CheckPayload):
             rows = getattr(res, "data", res) or []
             available_username = len(rows) == 0
 
+        if payload.email:
+            res = (
+                sb.table("users")
+                .select("id")
+                .eq("email", payload.email)
+                .limit(1)
+                .execute()
+            )
+            rows = getattr(res, "data", res) or []
+            available_email = len(rows) == 0
+
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail="Failed to query availability"
@@ -103,6 +117,7 @@ def check_availability(payload: CheckPayload):
     return {
         "kingdom_available": available_kingdom,
         "username_available": available_username,
+        "email_available": available_email,
     }
 
 
@@ -204,6 +219,9 @@ def register(
     if existing_kingdom:
         raise HTTPException(status_code=409, detail="Kingdom name already exists")
 
+    if not payload.username.isalnum():
+        raise HTTPException(status_code=400, detail="Username must be alphanumeric")
+
     try:
         res = sb.auth.sign_up(
             {
@@ -294,6 +312,12 @@ def register(
         ).fetchone()
         kid = int(row[0]) if row else None
 
+        ensure_kingdom_resource_row(db, kid)
+        db.execute(
+            text("INSERT INTO kingdom_titles (kingdom_id, title) VALUES (:kid, 'Founder')"),
+            {"kid": kid},
+        )
+
         db.execute(
             text(
                 "INSERT INTO kingdom_vip_status (user_id, vip_level) VALUES (:uid, 0) ON CONFLICT (user_id) DO NOTHING"
@@ -324,6 +348,7 @@ def register(
         db.commit()
         log_action(db, uid, "signup", f"User {uid} registered")
     except Exception as exc:
+        logger.exception("Failed to save user profile")
         raise HTTPException(
             status_code=500, detail="Failed to save user profile"
         ) from exc

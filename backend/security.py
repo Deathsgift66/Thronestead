@@ -16,12 +16,19 @@ import logging
 import os
 from uuid import UUID
 
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, Request
 from jose import JWTError, jwt
+
+from .supabase_client import get_supabase_client
 
 logger = logging.getLogger("Thronestead.Security")
 
-__all__ = ["verify_jwt_token", "require_user_id", "verify_api_key"]
+__all__ = [
+    "verify_jwt_token",
+    "require_user_id",
+    "verify_api_key",
+    "get_current_user",
+]
 
 
 def verify_jwt_token(
@@ -118,3 +125,28 @@ def verify_api_key(x_api_key: str = Header(...)):
     """Simple API key verification against the `API_SECRET` env variable."""
     if x_api_key != os.getenv("API_SECRET"):
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+async def get_current_user(request: Request):
+    """Return the current Supabase user from the Authorization token."""
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token required")
+
+    token = auth.split()[1]
+    supabase = get_supabase_client()
+    try:
+        user = supabase.auth.get_user(token)
+    except Exception as exc:  # pragma: no cover - network failure
+        logger.warning("Failed to validate token: %s", exc)
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    if isinstance(user, dict):
+        if user.get("error"):
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+        user = user.get("user") or user.get("data") or user
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    return user

@@ -5,6 +5,8 @@
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { toggleLoading, authJsonFetch } from './utils.js';
+import { validateEmail } from './utils.js';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // DOM Elements
@@ -59,6 +61,10 @@ function getCooldownMinutes() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) {
+    return (window.location.href = 'overview.html');
+  }
   loginForm = document.getElementById('login-form');
   emailInput = document.getElementById('login-email');
   passwordInput = document.getElementById('password');
@@ -129,8 +135,7 @@ async function handleLogin(e) {
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  if (!email || !password || !emailValid) {
+  if (!email || !password || !validateEmail(email)) {
     showMessage('error', 'Please provide a valid email and password.');
     return;
   }
@@ -156,13 +161,33 @@ async function handleLogin(e) {
     } else if (data?.user) {
       clearAttempts();
       let setupComplete = true;
+      let token = data.session?.access_token || '';
       try {
         await fetchAndStorePlayerProgression(data.user.id);
+
         const statusData = await authJsonFetch(`${API_BASE_URL}/api/login/status`);
         setupComplete = statusData?.setup_complete === true;
+
+        const statusRes = await fetch(`${API_BASE_URL}/api/login/status`, {
+          headers: {
+            'X-User-ID': data.user.id,
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          setupComplete = statusData?.setup_complete === true;
+        }
+
       } catch (err) {
         console.error('Setup check failed:', err);
       }
+
+      const userInfo = data.user || {};
+      sessionStorage.setItem('authToken', token);
+      localStorage.setItem('authToken', token);
+      sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
+      localStorage.setItem('currentUser', JSON.stringify(userInfo));
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {

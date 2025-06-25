@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: test_signup_router.py
-# Version 6.13.2025.19.49
+# Version 6.15.2025.21.00
 # Developer: Deathsgift66
 from fastapi import HTTPException
 import pytest
@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
 from backend.models import Kingdom, KingdomVipStatus, User
+from sqlalchemy import text
 from backend.routers import signup
 from fastapi import Request
 
@@ -62,9 +63,17 @@ def test_register_creates_user_row(db_session):
     user = db_session.query(User).get("newid")
     kingdom = db_session.query(Kingdom).get(1)
     vip = db_session.query(KingdomVipStatus).get("newid")
+    res_row = db_session.execute(
+        text("SELECT 1 FROM kingdom_resources WHERE kingdom_id = 1")
+    ).fetchone()
+    title_row = db_session.execute(
+        text("SELECT title FROM kingdom_titles WHERE kingdom_id = 1")
+    ).fetchone()
     assert user.email == "e@example.com"
     assert kingdom.kingdom_name == "Realm"
     assert vip.vip_level == 0
+    assert res_row is not None
+    assert title_row is not None
 
 
 def test_register_handles_error(db_session):
@@ -103,6 +112,20 @@ def test_register_returns_supabase_error(db_session):
         assert False
 
 
+def test_register_invalid_username(db_session):
+    signup.get_supabase_client = lambda: DummyClient("id")
+    payload = signup.RegisterPayload(
+        email="x@x.com",
+        password="p",
+        username="bad!name",
+        kingdom_name="k",
+        display_name="u",
+        captcha_token="t",
+    )
+    with pytest.raises(HTTPException):
+        signup.register(make_request(), payload, db=db_session)
+
+
 def test_resend_confirmation_success():
     signup.get_supabase_client = lambda: DummyClient()
     payload = signup.ResendPayload(email="e@example.com")
@@ -115,3 +138,49 @@ def test_resend_confirmation_error():
     payload = signup.ResendPayload(email="x@example.com")
     with pytest.raises(HTTPException):
         signup.resend_confirmation(payload)
+
+
+class TableStub:
+    def __init__(self, table):
+        self.table = table
+        self.eq_col = None
+        self.value = None
+
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def eq(self, col, value):
+        self.eq_col = col
+        self.value = value
+        return self
+
+    def limit(self, *_args, **_kwargs):
+        return self
+
+    def execute(self):
+        if self.table == "kingdoms" and self.value == "taken":
+            return {"data": [{"id": 1}]}
+        if self.table == "users":
+            if self.eq_col == "username" and self.value == "taken":
+                return {"data": [{"id": 1}]}
+            if self.eq_col == "email" and self.value == "taken@example.com":
+                return {"data": [{"id": 1}]}
+        return {"data": []}
+
+
+class AvailClient:
+    def table(self, name):
+        return TableStub(name)
+
+
+def test_check_availability():
+    signup.get_supabase_client = AvailClient
+    payload = signup.CheckPayload(
+        kingdom_name="taken",
+        username="taken",
+        email="taken@example.com",
+    )
+    res = signup.check_availability(payload)
+    assert not res["kingdom_available"]
+    assert not res["username_available"]
+    assert not res["email_available"]

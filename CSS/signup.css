@@ -1,7 +1,7 @@
 /*
 Project Name: Thronestead©
 File Name: signup.css
-Version 6.13.2025.19.49
+Version 6.15.2025.21.00
 Developer: Deathsgift66
 */
 @import url("./root_theme.css");
@@ -136,6 +136,12 @@ body {
 
 .stats-panel li {
   padding: 0.25rem 0;
+}
+
+.message {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #ff6b6b;
 }
 
 @media (max-width: 600px) {

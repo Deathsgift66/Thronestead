@@ -47,6 +47,13 @@ def get_state():
     )
 
 
+def get_current_user_id(user_id: str | None):
+    """Return the provided user_id or raise 401 if missing."""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID required")
+    return user_id
+
+
 # --------------------------
 # 📊 API Endpoints
 # --------------------------

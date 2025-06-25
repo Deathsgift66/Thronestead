@@ -14,7 +14,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
@@ -96,3 +96,69 @@ def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends
     ).fetchone()
     complete = bool(row[0]) if row else False
     return {"setup_complete": complete}
+
+
+class AuthPayload(BaseModel):
+    email: EmailStr
+    password: str
+
+
+@router.post("/authenticate")
+def authenticate(
+    payload: AuthPayload, db: Session = Depends(get_db)
+) -> dict:
+    """Validate credentials with Supabase and return session plus profile info."""
+    sb = get_supabase_client()
+    try:
+        res = sb.auth.sign_in_with_password(
+            {"email": payload.email, "password": payload.password}
+        )
+    except Exception as exc:  # pragma: no cover - network/dependency issues
+        raise HTTPException(
+            status_code=500, detail="Authentication service error"
+        ) from exc
+
+    if isinstance(res, dict):
+        error = res.get("error")
+        session = res.get("session")
+        user = res.get("user")
+    else:
+        error = getattr(res, "error", None)
+        session = getattr(res, "session", None)
+        user = getattr(res, "user", None)
+
+    if error or not session:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    confirmed = bool(
+        user
+        and (
+            getattr(user, "confirmed_at", None)
+            or getattr(user, "email_confirmed_at", None)
+            or (isinstance(user, dict) and user.get("confirmed_at"))
+            or (isinstance(user, dict) and user.get("email_confirmed_at"))
+        )
+    )
+    if not confirmed:
+        raise HTTPException(status_code=401, detail="Email not confirmed")
+
+    uid = getattr(user, "id", None) or (isinstance(user, dict) and user.get("id"))
+    row = db.execute(
+        text(
+            "SELECT username, kingdom_id, alliance_id, setup_complete FROM users WHERE user_id = :uid"
+        ),
+        {"uid": uid},
+    ).fetchone()
+
+    username = row[0] if row else None
+    kingdom_id = row[1] if row else None
+    alliance_id = row[2] if row else None
+    setup_complete = bool(row[3]) if row else False
+
+    return {
+        "session": session,
+        "username": username,
+        "kingdom_id": kingdom_id,
+        "alliance_id": alliance_id,
+        "setup_complete": setup_complete,
+    }
