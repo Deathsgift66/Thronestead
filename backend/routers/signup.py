@@ -167,11 +167,9 @@ def check_kingdom_name(kingdom: str):
 
 @router.get("/stats")
 def signup_stats():
-    """
-    Return top kingdoms for display on the signup screen.
-    """
-    sb = get_supabase_client()
+    """Return top kingdoms for display on the signup screen."""
     try:
+        sb = get_supabase_client()
         res = (
             sb.table("leaderboard_kingdoms")
             .select("kingdom_name,score")
@@ -181,11 +179,12 @@ def signup_stats():
         )
         data = getattr(res, "data", res) or []
         return {"top_kingdoms": data}
-    except Exception as exc:
-        logger.exception("Failed to fetch kingdom stats")
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch kingdom stats"
-        ) from exc
+    except Exception:
+        import traceback
+
+        logger.error("Error in /api/signup/stats:\n%s", traceback.format_exc())
+        # Provide a safe fallback response so the signup page can still render
+        return {"top_kingdoms": []}
 
 
 @router.post("/create_user")
