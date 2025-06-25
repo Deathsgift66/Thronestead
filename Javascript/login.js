@@ -77,6 +77,7 @@ async function handleLogin(e) {
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  if (authLink) authLink.classList.add('hidden');
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -85,7 +86,7 @@ async function handleLogin(e) {
       const msg = error.message || '';
       if (msg.toLowerCase().includes('confirm')) {
         showMessage('error', '❌ Please verify your email before logging in.');
-        if (authModal) authModal.classList.remove('hidden');
+        if (authLink) authLink.classList.remove('hidden');
       } else {
         showMessage('error', '❌ Invalid credentials. Try again.');
       }
