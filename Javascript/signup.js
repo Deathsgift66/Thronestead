@@ -9,7 +9,19 @@ import {
   debounce,
   toggleLoading
 } from './utils.js';
+import { supabase } from '../supabaseClient.js';
+import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const bannedWords = ['admin', 'moderator', 'support'];
+
+function validateUsername(name) {
+  return /^[A-Za-z0-9]{3,20}$/.test(name);
+}
+
+function containsBannedWord(name) {
+  const lower = name.toLowerCase();
+  return bannedWords.some(w => lower.includes(w));
+}
 let signupButton;
 let messageEl;
 document.addEventListener("DOMContentLoaded", () => {
@@ -44,14 +56,20 @@ async function handleSignup() {
     confirmPassword: document.getElementById('confirmPassword').value,
     agreed: document.getElementById('agreeLegal').checked
   };
+  if (messageEl) {
+    messageEl.textContent = '';
+    messageEl.className = 'message';
+  }
 
   // ✅ Input validations
   if (values.kingdomName.length < 3) return showMessage('Kingdom Name must be at least 3 characters.');
-  if (values.username.length < 3) return showMessage('Ruler Name must be at least 3 characters.');
+  if (containsBannedWord(values.kingdomName)) return showMessage('Chosen Kingdom Name is not allowed.');
+  if (!validateUsername(values.username)) {
+    return showMessage('Ruler Name must be 3-20 alphanumeric characters.');
+  }
   if (!validateEmail(values.email)) return showMessage('Invalid email address.');
-  if (values.password.length < 8) return showMessage('Password must be at least 8 characters.');
   if (!validatePasswordComplexity(values.password)) {
-    return showMessage('Password must include lowercase, uppercase, number, and symbol.');
+    return showMessage('Password must include a number and symbol.');
   }
   if (values.password !== values.confirmPassword) return showMessage('Passwords do not match.');
   if (!values.agreed) return showMessage('You must agree to the legal terms.');
@@ -135,8 +153,27 @@ async function handleSignup() {
       throw new Error(err.detail || 'Registration failed');
     }
 
-    showToast("Sign-Up successful! Redirecting to login...");
-    setTimeout(() => (window.location.href = 'login.html'), 1500);
+    const data = await res.json();
+
+    showToast('Sign-Up successful!');
+    try {
+      const { data: loginData, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password
+      });
+      if (!error && loginData?.session) {
+        const token = loginData.session.access_token;
+        const userInfo = loginData.user || {};
+        sessionStorage.setItem('authToken', token);
+        localStorage.setItem('authToken', token);
+        sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
+        localStorage.setItem('currentUser', JSON.stringify(userInfo));
+        await fetchAndStorePlayerProgression(userInfo.id);
+      }
+    } catch (loginErr) {
+      console.error('Auto-login failed', loginErr);
+    }
+    setTimeout(() => (window.location.href = 'play.html'), 1200);
   } catch (err) {
     console.error("❌ Sign-Up error:", err);
     showMessage('Sign-Up failed. Please try again.');
