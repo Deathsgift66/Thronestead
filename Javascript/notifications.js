@@ -5,6 +5,7 @@
 
 import { supabase } from '../supabaseClient.js';
 import { showToast } from './utils.js';
+import { applyKingdomLinks } from './kingdom_name_linkify.js';
 
 const feed = document.getElementById('notification-feed');
 const filterInput = document.getElementById('notification-filter');
@@ -12,6 +13,10 @@ const markAllBtn = document.getElementById('mark-all-btn');
 const clearAllBtn = document.getElementById('clear-all-btn');
 
 let currentNotifications = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyKingdomLinks();
+});
 
 async function fetchNotifications() {
   const user = await supabase.auth.getUser();
@@ -31,6 +36,7 @@ async function fetchNotifications() {
 
   currentNotifications = data;
   renderNotifications(currentNotifications);
+  applyKingdomLinks();
 }
 
 function renderNotifications(data) {
@@ -62,6 +68,7 @@ function renderNotifications(data) {
     card.addEventListener('click', () => markAsRead(n.notification_id));
     feed.appendChild(card);
   }
+  applyKingdomLinks();
 }
 
 async function markAsRead(notificationId) {

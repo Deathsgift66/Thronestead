@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 // Unified War Command Center — Page Controller
 import { escapeHTML } from './utils.js';
+import { applyKingdomLinks } from './kingdom_name_linkify.js';
 
 import { supabase } from '../supabaseClient.js';
 
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   subscribeToWarUpdates();
   await loadWars();
   showToast("Unified War Command Center loaded!");
+  applyKingdomLinks();
 });
 
 // ✅ Setup Page Controls
@@ -99,6 +101,7 @@ async function loadWars() {
     warListEl.innerHTML = "<p>Failed to load active wars.</p>";
     showToast("Failed to load wars.");
   }
+  applyKingdomLinks();
 }
 
 // ✅ Open Declare War Modal
@@ -209,6 +212,7 @@ async function openWarDetailModal(warId) {
     `;
 
     content.querySelector('#war-detail-close-btn').addEventListener('click', closeWarDetailModal);
+    applyKingdomLinks();
 
   } catch (err) {
     console.error("❌ Error loading war details:", err);
