@@ -36,6 +36,11 @@ class DummyClient:
         return DummyTable(self.tables.get(name, []))
 
 
+class DummyRequest:
+    def __init__(self, host="1.1.1.1"):
+        self.client = type("c", (), {"host": host})
+
+
 def test_announcements_returned():
     rows = [
         {
@@ -216,7 +221,8 @@ def test_record_login_attempt_success():
     login_routes.log_action = fake_log_action
     db = DummyDBAttempt(uid="u1")
     payload = login_routes.AttemptPayload(email="Test@Ex.com", success=True)
-    res = login_routes.record_login_attempt(payload, db=db)
+    req = DummyRequest()
+    res = login_routes.record_login_attempt(req, payload, db=db)
     assert res["logged"] is True
     assert captured["uid"] == "u1"
     assert captured["action"] == "login_success"
@@ -232,7 +238,8 @@ def test_record_login_attempt_fail_no_user():
     login_routes.log_action = fake_log_action
     db = DummyDBAttempt(uid=None)
     payload = login_routes.AttemptPayload(email="none@example.com", success=False)
-    res = login_routes.record_login_attempt(payload, db=db)
+    req = DummyRequest()
+    res = login_routes.record_login_attempt(req, payload, db=db)
     assert res["logged"] is True
     assert captured["uid"] is None
     assert captured["action"] == "login_fail"

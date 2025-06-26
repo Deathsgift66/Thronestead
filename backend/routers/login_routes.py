@@ -94,7 +94,7 @@ def log_login_event(
 
 @router.post("/attempt")
 @limiter.limit("20/minute")
-def record_login_attempt(payload: AttemptPayload, db: Session = Depends(get_db)):
+def record_login_attempt(request: Request, payload: AttemptPayload, db: Session = Depends(get_db)):
     """Record a login attempt success or failure."""
     row = db.execute(
         text("SELECT user_id FROM users WHERE lower(email)=:email"),
