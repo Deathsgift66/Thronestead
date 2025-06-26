@@ -3,7 +3,12 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
-from services.moderation import classify_text, has_reserved_username, is_clean
+from services.moderation import (
+    classify_text,
+    has_reserved_username,
+    is_clean,
+    contains_malicious_link,
+)
 
 
 def test_classify_hate_speech():
@@ -20,4 +25,13 @@ def test_reserved_username_detection():
 
 def test_is_clean_passes():
     assert is_clean("Greetings, traveler")
+
+
+def test_personal_info_detection():
+    res = classify_text("contact me at test@example.com")
+    assert res["personal_info"]
+
+
+def test_malicious_link_detection():
+    assert contains_malicious_link("visit http://example.com now")
 

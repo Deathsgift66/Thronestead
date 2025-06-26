@@ -26,6 +26,7 @@ the records created during onboarding.
 ✅ Quests + Projects System  
 ✅ Admin Dashboard → full logs + actions
 ✅ Comprehensive audit log of player and admin activity
+✅ Content moderation utilities documented in [docs/content_moderation.md](docs/content_moderation.md)
 ✅ Seasonal Effects → dynamic
 ✅ GDPR / Legal Ready → legal.html + linked PDFs  
 ✅ Lighthouse / SEO optimized
