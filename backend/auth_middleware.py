@@ -34,7 +34,6 @@ class UserStateMiddleware(BaseHTTPMiddleware):
                     claims = jwt.decode(
                         token,
                         secret,
-                        algorithms=["HS256"],
                         options=opts,
                     )
                 else:

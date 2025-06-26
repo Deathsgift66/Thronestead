@@ -65,7 +65,10 @@ def verify_jwt_token(
     jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
     try:
         if jwt_secret:
-            payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+            # Allow tokens signed with any algorithm compatible with the provided
+            # secret to avoid hard-coding HS256. This enables using different
+            # algorithms such as RS256 if configured in Supabase.
+            payload = jwt.decode(token, jwt_secret)
         else:
             payload_part = token.split(".")[1]
             payload_part += "=" * ((4 - len(payload_part) % 4) % 4)
@@ -139,7 +142,9 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
     secret = os.getenv("SUPABASE_JWT_SECRET")
     try:
         if secret:
-            claims = jwt.decode(token, secret, algorithms=["HS256"])
+            # Decode using the provided secret without forcing a specific
+            # algorithm so deployments can switch algorithms if needed.
+            claims = jwt.decode(token, secret)
         else:
             claims = jwt.decode(token, options={"verify_signature": False})
     except JWTError:
