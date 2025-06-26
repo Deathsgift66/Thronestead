@@ -2,6 +2,7 @@
 // File Name: signup.js
 // Version 6.16.2025.21.02
 // Developer: Deathsgift66
+/* global hcaptcha */
 import {
   showToast,
   validateEmail,
