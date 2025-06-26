@@ -28,7 +28,8 @@ the records created during onboarding.
 ✅ Comprehensive audit log of player and admin activity
 ✅ Content moderation utilities documented in [docs/content_moderation.md](docs/content_moderation.md)
 ✅ Seasonal Effects → dynamic
-✅ GDPR / Legal Ready → legal.html + linked PDFs  
+✅ GDPR / Legal Ready → legal.html + linked PDFs
+✅ COPPA/GDPR-K personal info filters
 ✅ Lighthouse / SEO optimized
 ✅ Progression stages documented in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md)
 ✅ Progression gating documented in [docs/page_access_gating.md](docs/page_access_gating.md)

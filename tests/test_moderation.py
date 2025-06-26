@@ -35,6 +35,11 @@ def test_personal_info_detection():
     assert res["personal_info"]
 
 
+def test_phone_number_detection():
+    res = classify_text("call me at 123-456-7890")
+    assert res["personal_info"]
+
+
 def test_malicious_link_detection():
     assert contains_malicious_link("visit http://example.com now")
 
