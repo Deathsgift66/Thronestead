@@ -12,10 +12,9 @@ import {
 } from './utils.js';
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
+import { containsBannedContent } from './content_filter.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const bannedWords = ['admin', 'moderator', 'support'];
-// Basic profanity filter -- extend as needed
-const profanityList = ['fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn'];
+const reservedWords = ['admin', 'moderator', 'support'];
 
 function validateUsername(name) {
   return /^[A-Za-z0-9]{3,20}$/.test(name);
@@ -23,12 +22,8 @@ function validateUsername(name) {
 
 function containsBannedWord(name) {
   const lower = name.toLowerCase();
-  return bannedWords.some(w => lower.includes(w));
-}
-
-function containsProfanity(name) {
-  const lower = name.toLowerCase();
-  return profanityList.some(w => lower.includes(w));
+  return reservedWords.some(w => lower.includes(w)) ||
+    containsBannedContent(name);
 }
 
 function setFormDisabled(disabled) {
@@ -80,11 +75,14 @@ async function handleSignup() {
   // ✅ Input validations
   if (!values.kingdomName) return showMessage('Kingdom Name is required.');
   if (values.kingdomName.length < 3) return showMessage('Kingdom Name must be at least 3 characters.');
-  if (containsBannedWord(values.kingdomName) || containsProfanity(values.kingdomName)) {
+  if (containsBannedWord(values.kingdomName)) {
     return showMessage('Chosen Kingdom Name is not allowed.');
   }
   if (!validateUsername(values.username)) {
     return showMessage('Ruler Name must be 3-20 alphanumeric characters.');
+  }
+  if (containsBannedWord(values.username)) {
+    return showMessage('Ruler Name contains banned words.');
   }
   if (!validateEmail(values.email)) return showMessage('Invalid email address.');
   if (!validatePasswordComplexity(values.password)) {
@@ -233,12 +231,12 @@ async function checkAvailability() {
   const username = document.getElementById('username').value.trim();
 
   if (kingdom && (kingdom.length < 3 ||
-      containsBannedWord(kingdom) || containsProfanity(kingdom))) {
+      containsBannedWord(kingdom))) {
     updateAvailabilityUI('kingdomName-msg', false);
     if (signupButton) signupButton.disabled = true;
     return;
   }
-  if (username && !validateUsername(username)) {
+  if (username && (!validateUsername(username) || containsBannedWord(username))) {
     updateAvailabilityUI('username-msg', false);
     if (signupButton) signupButton.disabled = true;
     return;

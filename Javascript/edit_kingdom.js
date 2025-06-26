@@ -3,6 +3,7 @@
 // Updated for simplified API usage
 import { showToast } from './utils.js';
 import { authHeaders } from './auth.js';
+import { containsBannedContent } from './content_filter.js';
 
 async function loadRegions() {
   const regionEl = document.getElementById('region');
@@ -81,6 +82,18 @@ document.getElementById('kingdom-form').addEventListener('submit', async (e) => 
     banner_url: document.getElementById('banner_url').value,
     emblem_url: document.getElementById('emblem_url').value
   };
+
+  if ([
+    payload.kingdom_name,
+    payload.ruler_name,
+    payload.ruler_title,
+    payload.motto,
+    payload.description,
+    payload.religion
+  ].some(containsBannedContent)) {
+    showToast('❌ Input contains banned words.');
+    return;
+  }
 
   try {
     const headers = { ...(await authHeaders()), 'Content-Type': 'application/json' };
