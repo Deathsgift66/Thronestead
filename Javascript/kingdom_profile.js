@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadProfile();
   setupSpyControls();
+  setupMessageButton();
 });
 
 async function loadProfile() {
@@ -53,6 +54,7 @@ async function loadProfile() {
 
     if (currentSession) {
       document.getElementById('spy-btn').classList.remove('hidden');
+      document.getElementById('message-btn').classList.remove('hidden');
     }
   } catch (err) {
     console.error('profile load failed', err);
@@ -86,6 +88,15 @@ function setupSpyControls() {
   if (attackBtn) attackBtn.addEventListener('click', confirmAttack);
 }
 
+function setupMessageButton() {
+  const msgBtn = document.getElementById('message-btn');
+  if (msgBtn) {
+    msgBtn.addEventListener('click', () => {
+      window.location.href = `compose.html?recipient=${targetKingdomId}`;
+    });
+  }
+}
+
 async function launchMission(missionType) {
   if (!currentSession) return alert('Login required');
   const now = Date.now();
@@ -114,7 +125,7 @@ async function launchMission(missionType) {
 
 async function confirmAttack() {
   if (!currentSession) return alert('Login required');
-  if (!window.confirm('⚔️ Are you sure you want to attack this kingdom?')) return;
+  if (!window.confirm('⚔️ Are you sure you want to declare war on this kingdom?')) return;
 
   try {
     const result = await authFetchJson('/api/wars/declare', currentSession, {

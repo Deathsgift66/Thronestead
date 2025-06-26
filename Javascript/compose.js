@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   session = s;
   setupTabs();
   setupForms();
+  prefillRecipient();
 });
 
 function setupTabs() {
@@ -125,5 +126,14 @@ function setupForms() {
         showToast(err.message);
       }
     });
+  }
+}
+
+function prefillRecipient() {
+  const params = new URLSearchParams(window.location.search);
+  const val = params.get('recipient') || params.get('recipient_id');
+  if (val) {
+    const input = document.getElementById('msg-recipient');
+    if (input) input.value = val;
   }
 }
