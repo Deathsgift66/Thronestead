@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Dict
 
-from .text_utils import sanitize_plain_text
+from .text_utils import sanitize_plain_text, contains_banned_words
 
 # Simplistic keyword sets for various categories
 HATE_TERMS = {
@@ -100,3 +100,27 @@ def has_reserved_username(username: str) -> bool:
     """Return True if ``username`` impersonates staff."""
     name = username.lower().replace("0", "o")
     return any(r in name for r in RESERVED_USERNAMES)
+
+
+def flag_violations(text: str) -> list[str]:
+    """Return a list of moderation categories triggered by ``text``."""
+    if contains_banned_words(text):
+        return ["banned_words"]
+    flags = classify_text(text)
+    return [key for key, value in flags.items() if value]
+
+
+def validate_clean_text(text: str) -> None:
+    """Raise ``ValueError`` if ``text`` violates any moderation rule."""
+    violations = flag_violations(text)
+    if violations:
+        raise ValueError(
+            "Input violates policy: " + ", ".join(sorted(violations))
+        )
+
+
+def validate_username(username: str) -> None:
+    """Validate a username against banned words and reserved terms."""
+    validate_clean_text(username)
+    if has_reserved_username(username):
+        raise ValueError("Username contains reserved term")

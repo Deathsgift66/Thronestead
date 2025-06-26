@@ -127,6 +127,19 @@ def test_register_invalid_username(db_session):
         signup.register(make_request(), payload, db=db_session)
 
 
+def test_register_reserved_username(db_session):
+    signup.get_supabase_client = lambda: DummyClient("id")
+    with pytest.raises(ValueError):
+        signup.RegisterPayload(
+            email="x@x.com",
+            password="p",
+            username="Admin",
+            kingdom_name="k",
+            display_name="u",
+            captcha_token="t",
+        )
+
+
 def test_register_captcha_failure(db_session):
     signup.get_supabase_client = lambda: DummyClient("id")
 

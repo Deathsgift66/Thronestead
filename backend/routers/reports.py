@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, validator
 from sqlalchemy.orm import Session
 
-from services.text_utils import contains_banned_words
+from services.moderation import validate_clean_text
 
 from ..database import get_db
 from ..models import UserReport
@@ -32,8 +32,7 @@ class ReportPayload(BaseModel):
     @validator("description")
     def clean_description(cls, v: str) -> str:  # noqa: D401
         """Validate report description for length and banned words."""
-        if contains_banned_words(v):
-            raise ValueError("Input contains banned words")
+        validate_clean_text(v)
         if len(v) > 1000:
             raise ValueError("Description too long")
         return v.strip()
