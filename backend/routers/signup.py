@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 import logging
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -26,6 +27,31 @@ from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
 from fastapi import Request
 from services.audit_service import log_action
+import httpx
+
+HCAPTCHA_SECRET = os.getenv("HCAPTCHA_SECRET")
+
+
+def verify_hcaptcha(token: str | None, remote_ip: str | None = None) -> bool:
+    """Validate the hCaptcha token if configured."""
+    if not HCAPTCHA_SECRET:
+        # Captcha not configured; treat as always valid
+        return True
+    if not token:
+        return False
+    try:
+        data = {"secret": HCAPTCHA_SECRET, "response": token}
+        if remote_ip:
+            data["remoteip"] = remote_ip
+        resp = httpx.post(
+            "https://hcaptcha.com/siteverify", data=data, timeout=5
+        )
+        resp.raise_for_status()
+        result = resp.json()
+        return bool(result.get("success"))
+    except Exception:  # pragma: no cover - external call
+        logger.exception("hCaptcha verification failed")
+        return False
 
 logger = logging.getLogger(__name__)
 
@@ -329,6 +355,10 @@ def register(
 
     if not payload.username.isalnum():
         raise HTTPException(status_code=400, detail="Username must be alphanumeric")
+
+    # --- hCaptcha Verification ---
+    if not verify_hcaptcha(payload.captcha_token, request.client.host if request.client else None):
+        raise HTTPException(status_code=400, detail="Captcha verification failed")
 
     uid = payload.user_id
     confirmed = True

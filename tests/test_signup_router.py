@@ -127,6 +127,27 @@ def test_register_invalid_username(db_session):
         signup.register(make_request(), payload, db=db_session)
 
 
+def test_register_captcha_failure(db_session):
+    signup.get_supabase_client = lambda: DummyClient("id")
+
+    def fail_captcha(*_args, **_kwargs):
+        return False
+
+    signup.verify_hcaptcha = fail_captcha
+
+    payload = signup.RegisterPayload(
+        email="x@x.com",
+        password="p",
+        username="usera",
+        kingdom_name="k",
+        display_name="u",
+        captcha_token="bad",
+    )
+    with pytest.raises(HTTPException) as exc:
+        signup.register(make_request(), payload, db=db_session)
+    assert exc.value.status_code == 400
+
+
 def test_register_with_existing_user(db_session):
     called = {"flag": False}
 
