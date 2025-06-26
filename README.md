@@ -17,6 +17,7 @@ the records created during onboarding.
 ✅ Dynamic Navbar (auth-aware)  
 ✅ authGuard.js protection on restricted pages
 ✅ Global public page policy for index/login/signup/legal
+✅ Public pages exclude authGuard, navbar, and resource bar (index/login/signup/legal/update-password)
 ✅ Alliance System → full suite
 ✅ Alliance Treaties diplomacy
 ✅ Military → full recruitment + war system
