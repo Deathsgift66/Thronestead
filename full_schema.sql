@@ -60,6 +60,9 @@ CREATE TABLE public.alliance_grants (
   amount bigint NOT NULL DEFAULT 0,
   granted_at timestamp with time zone DEFAULT now(),
   reason text,
+  due_date timestamp with time zone,
+  amount_repaid bigint DEFAULT 0,
+  status text DEFAULT 'active',
   CONSTRAINT alliance_grants_pkey PRIMARY KEY (grant_id),
   CONSTRAINT alliance_grants_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_grants_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES public.users(user_id)
