@@ -8,7 +8,8 @@ Version: 2025-06-21
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+from services.text_utils import contains_banned_words
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,12 @@ from services.research_service import (
     research_overview,
     start_research as db_start_research,
 )
+
+
+def _validate_text(value: str | None) -> str | None:
+    if value and contains_banned_words(value):
+        raise ValueError("Input contains banned words")
+    return value
 
 from ..data import DEFAULT_REGIONS, recruitable_units
 from ..database import get_db
@@ -41,6 +48,14 @@ class KingdomCreatePayload(BaseModel):
     emblem_image: Optional[str]
     motto: Optional[str] = "From Ashes, Kingdoms Rise"
 
+    _check_fields = validator(
+        "kingdom_name",
+        "ruler_title",
+        "village_name",
+        "motto",
+        allow_reuse=True,
+    )(lambda v: _validate_text(v))
+
 
 class ResearchPayload(BaseModel):
     tech_code: str
@@ -54,6 +69,8 @@ class TemplePayload(BaseModel):
     temple_type: str
     temple_name: Optional[str] = None
     is_major: bool = False
+
+    _check_fields = validator("temple_name", allow_reuse=True)(lambda v: _validate_text(v))
 
 
 class TrainPayload(BaseModel):
@@ -71,6 +88,16 @@ class KingdomUpdatePayload(BaseModel):
     region: Optional[str] = None
     banner_url: Optional[str] = None
     emblem_url: Optional[str] = None
+
+    _check_fields = validator(
+        "ruler_name",
+        "ruler_title",
+        "kingdom_name",
+        "motto",
+        "description",
+        "religion",
+        allow_reuse=True,
+    )(lambda v: _validate_text(v))
 
 
 # --- Utility ---

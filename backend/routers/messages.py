@@ -16,6 +16,7 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, validator
+from services.text_utils import contains_banned_words
 
 from ..security import verify_jwt_token
 from ..supabase_client import get_supabase_client
@@ -37,6 +38,8 @@ class MessagePayload(BaseModel):
         cleaned = cls._TAG_RE.sub("", v)
         if len(cleaned) > 5000:
             raise ValueError("Message too long")
+        if contains_banned_words(cleaned):
+            raise ValueError("Input contains banned words")
         return cleaned.strip()
 
     @validator("subject")
@@ -44,6 +47,8 @@ class MessagePayload(BaseModel):
         if v is None:
             return None
         cleaned = cls._TAG_RE.sub("", v)
+        if contains_banned_words(cleaned):
+            raise ValueError("Input contains banned words")
         return cleaned.strip()[:200] if cleaned else None
 
 

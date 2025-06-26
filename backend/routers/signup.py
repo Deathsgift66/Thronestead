@@ -15,7 +15,8 @@ import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, EmailStr, constr
+from pydantic import BaseModel, EmailStr, constr, validator
+from services.text_utils import contains_banned_words
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -86,6 +87,10 @@ class CheckPayload(BaseModel):
     username: Optional[constr(min_length=3, max_length=20)] = None
     email: Optional[EmailStr] = None
 
+    _check_names = validator("kingdom_name", "username", allow_reuse=True)(
+        lambda v: _validate_text(v)
+    )
+
 
 class CreateUserPayload(BaseModel):
     user_id: str
@@ -93,6 +98,10 @@ class CreateUserPayload(BaseModel):
     display_name: str
     kingdom_name: str
     email: EmailStr
+
+    _check_fields = validator(
+        "username", "display_name", "kingdom_name", allow_reuse=True
+    )(lambda v: _validate_text(v))
 
 
 class RegisterPayload(BaseModel):
@@ -104,9 +113,19 @@ class RegisterPayload(BaseModel):
     captcha_token: Optional[str] = None
     user_id: Optional[str] = None
 
+    _check_fields = validator(
+        "username", "display_name", "kingdom_name", allow_reuse=True
+    )(lambda v: _validate_text(v))
+
 
 class ResendPayload(BaseModel):
     email: EmailStr
+
+
+def _validate_text(value: str | None) -> str | None:
+    if value and contains_banned_words(value):
+        raise ValueError("Input contains banned words")
+    return value
 
 
 # ------------- Route Endpoints -------------------
