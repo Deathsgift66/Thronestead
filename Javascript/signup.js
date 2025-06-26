@@ -184,7 +184,7 @@ async function handleSignup() {
         sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
         localStorage.setItem('currentUser', JSON.stringify(userInfo));
         try {
-          await fetch(`${API_BASE_URL}/api/signup/register`, {
+          const regRes = await fetch(`${API_BASE_URL}/api/signup/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -196,8 +196,18 @@ async function handleSignup() {
               captcha_token: captchaToken
             })
           });
+          if (!regRes.ok) {
+            const data = await regRes.json().catch(() => ({}));
+            throw new Error(data.detail || 'Registration failed');
+          }
         } catch (err) {
           console.error('Finalize signup failed:', err);
+          showMessage(err.message || 'Registration failed.');
+          return;
+        } finally {
+          if (window.hcaptcha && typeof hcaptcha.reset === 'function') {
+            hcaptcha.reset();
+          }
         }
         await fetchAndStorePlayerProgression(userInfo.id);
       }
