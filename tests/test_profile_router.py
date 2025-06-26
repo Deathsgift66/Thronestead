@@ -45,6 +45,7 @@ def test_profile_overview_returns_data():
                 "kingdom_name": "Realm",
                 "profile_bio": "bio",
                 "profile_picture_url": "pic.png",
+                "last_login_at": "2025-01-01T00:00:00Z",
             }
         ],
         "player_messages": [
@@ -56,6 +57,7 @@ def test_profile_overview_returns_data():
     result = profile_view.profile_overview(user_id="u1")
     assert result["user"]["username"] == "Hero"
     assert result["unread_messages"] == 2
+    assert result["user"]["last_login_at"] == "2025-01-01T00:00:00Z"
 
 
 def test_profile_overview_missing_user():

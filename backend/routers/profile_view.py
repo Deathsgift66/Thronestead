@@ -31,7 +31,9 @@ def profile_overview(user_id: str = Depends(verify_jwt_token)):
         # Fetch user profile info (username, kingdom, bio, avatar)
         user_response = (
             supabase.table("users")
-            .select("username,kingdom_name,profile_bio,profile_picture_url")
+            .select(
+                "username,kingdom_name,profile_bio,profile_picture_url,last_login_at"
+            )
             .eq("user_id", user_id)
             .single()
             .execute()
@@ -52,6 +54,7 @@ def profile_overview(user_id: str = Depends(verify_jwt_token)):
             "kingdom_name": user_data.get("kingdom_name"),
             "profile_bio": user_data.get("profile_bio"),
             "profile_picture_url": user_data.get("profile_picture_url"),
+            "last_login_at": user_data.get("last_login_at"),
         },
         "unread_messages": unread_count,
     }

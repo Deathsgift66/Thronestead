@@ -187,3 +187,52 @@ def test_authenticate_failure():
     with pytest.raises(HTTPException) as exc:
         login_routes.authenticate(payload, db=db)
     assert exc.value.status_code == 500
+
+
+class DummyDBAttempt:
+    def __init__(self, uid=None):
+        self.uid = uid
+        self.logged = None
+
+    def execute(self, query, params):
+        if "SELECT user_id" in str(query):
+            class R:
+                def fetchone(self_inner):
+                    return (self.uid,) if self.uid else None
+
+            return R()
+
+    def commit(self):
+        pass
+
+
+def test_record_login_attempt_success():
+    captured = {}
+
+    def fake_log_action(_db, user_id, action, details):
+        captured["uid"] = user_id
+        captured["action"] = action
+
+    login_routes.log_action = fake_log_action
+    db = DummyDBAttempt(uid="u1")
+    payload = login_routes.AttemptPayload(email="Test@Ex.com", success=True)
+    res = login_routes.record_login_attempt(payload, db=db)
+    assert res["logged"] is True
+    assert captured["uid"] == "u1"
+    assert captured["action"] == "login_success"
+
+
+def test_record_login_attempt_fail_no_user():
+    captured = {}
+
+    def fake_log_action(_db, user_id, action, details):
+        captured["uid"] = user_id
+        captured["action"] = action
+
+    login_routes.log_action = fake_log_action
+    db = DummyDBAttempt(uid=None)
+    payload = login_routes.AttemptPayload(email="none@example.com", success=False)
+    res = login_routes.record_login_attempt(payload, db=db)
+    assert res["logged"] is True
+    assert captured["uid"] is None
+    assert captured["action"] == "login_fail"
