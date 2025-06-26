@@ -45,7 +45,7 @@ Developer: Deathsgift66
 
 <!-- Page Banner -->
 <header class="kr-top-banner" aria-label="Signup Banner">
-  Thronestead — Sign Up
+  <h1>Thronestead — Sign Up</h1>
 </header>
 
 <!-- Main Signup Form -->
@@ -65,7 +65,7 @@ Developer: Deathsgift66
 
         <div class="form-group">
           <label for="username">Ruler Name (Login)</label>
-          <input type="text" id="username" name="username" required />
+          <input type="text" id="username" name="username" required autocomplete="username" />
           <div id="username-msg" class="availability" aria-live="polite"></div>
         </div>
 
@@ -81,14 +81,14 @@ Developer: Deathsgift66
 
         <div class="form-group">
           <label for="confirmPassword">Confirm Password</label>
-          <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" />
+          <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" autocomplete="new-password" />
         </div>
 
         <!-- Legal Agreement -->
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" id="agreeLegal" name="agreeLegal" required />
-            I agree to the <a href="legal.html" target="_blank">Legal Documents</a>.
+            I agree to the <a href="legal.html" target="_blank" rel="noopener noreferrer">Legal Documents</a>.
           </label>
         </div>
 
@@ -124,7 +124,7 @@ Developer: Deathsgift66
   <!-- Footer -->
   <footer class="site-footer" role="contentinfo">
     <div>© 2025 Thronestead</div>
-    <div><a href="legal.html" target="_blank">View Legal Documents</a></div>
+    <div><a href="legal.html" target="_blank" rel="noopener noreferrer">View Legal Documents</a></div>
   </footer>
 
 </body>
