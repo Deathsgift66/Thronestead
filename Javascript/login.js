@@ -8,6 +8,7 @@ import { toggleLoading, authJsonFetch } from './utils.js';
 import { validateEmail } from './utils.js';
 import { setAuthCache, clearStoredAuth } from './auth.js';
 import { containsBannedContent } from './content_filter.js';
+import { initThemeToggle } from './themeToggle.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -61,6 +62,18 @@ function getCooldownMinutes() {
     return Math.ceil((data.blocked - Date.now()) / 60000);
   }
   return 0;
+}
+
+async function logAttempt(email, success) {
+  try {
+    await fetch(`${API_BASE_URL}/api/login/attempt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.toLowerCase(), success })
+    });
+  } catch (err) {
+    console.warn('Failed to log login attempt:', err);
+  }
 }
 
 // ✅ Validate login form inputs
@@ -130,6 +143,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   closeAuthBtn = document.getElementById("close-auth-btn");
   sendAuthBtn = document.getElementById("send-auth-btn");
   authMessage = document.getElementById("auth-message");
+
+  initThemeToggle();
 
   if (forgotLink) {
     forgotLink.addEventListener('click', e => {
@@ -201,6 +216,7 @@ async function handleLogin(e) {
 
   try {
     const result = await loginExecute(email, password, rememberCheckbox?.checked);
+    await logAttempt(email, !!(result && result.user));
     if (!result) {
       if (authLink && messageContainer.textContent.includes('verify')) {
         authLink.classList.remove('hidden');
@@ -244,6 +260,7 @@ async function handleLogin(e) {
     }
   } catch (err) {
     showMessage('error', `Unexpected error: ${err.message}`);
+    await logAttempt(email, false);
     recordAttempt();
   } finally {
     resetLoginButton();

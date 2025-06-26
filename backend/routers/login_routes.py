@@ -66,6 +66,11 @@ class EventPayload(BaseModel):
     event: str
 
 
+class AttemptPayload(BaseModel):
+    email: EmailStr
+    success: bool
+
+
 @router.post("/event")
 @limiter.limit("5/minute")
 def log_login_event(
@@ -85,6 +90,20 @@ def log_login_event(
     """
     log_action(db, user_id, "login_event", payload.event)
     return {"message": "event logged"}
+
+
+@router.post("/attempt")
+@limiter.limit("20/minute")
+def record_login_attempt(payload: AttemptPayload, db: Session = Depends(get_db)):
+    """Record a login attempt success or failure."""
+    row = db.execute(
+        text("SELECT user_id FROM users WHERE lower(email)=:email"),
+        {"email": payload.email.lower()},
+    ).fetchone()
+    user_id = row[0] if row else None
+    action = "login_success" if payload.success else "login_fail"
+    log_action(db, user_id, action, payload.email.lower())
+    return {"logged": True}
 
 
 @router.get("/status")

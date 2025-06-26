@@ -19,6 +19,7 @@ async function loadPlayerProfile() {
   const prestigeEl = document.getElementById("prestige-score");
   const titlesListEl = document.getElementById("titles-list");
   const customizationContainer = document.getElementById("profile-customization-content");
+  const lastLoginEl = document.getElementById("last-login");
 
   playerNameEl.textContent = "Loading...";
   kingdomNameEl.textContent = "Loading...";
@@ -46,6 +47,10 @@ async function loadPlayerProfile() {
     playerNameEl.textContent = data.username || "Unnamed Player";
     kingdomNameEl.textContent = data.kingdom_name || "Unnamed Kingdom";
     mottoEl.textContent = data.profile_bio || "No motto set.";
+    if (lastLoginEl) {
+      const ts = data.last_login_at ? new Date(data.last_login_at) : null;
+      lastLoginEl.textContent = ts ? `Last Login: ${ts.toLocaleString()}` : '';
+    }
 
     // ✅ VIP badge
     try {
