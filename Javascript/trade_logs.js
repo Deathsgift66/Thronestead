@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
+import { applyKingdomLinks } from './kingdom_name_linkify.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 import { setupTabs } from './components/tabControl.js';
 
@@ -16,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadTradeLogs();
   startAutoRefresh();
   subscribeRealtime();
+  applyKingdomLinks();
 });
 
 // ✅ Initialize tab switching logic
@@ -71,6 +73,7 @@ async function loadTradeLogs() {
     renderTradeTable(trades);
     updateSummary(trades);
     updateLastUpdated();
+    applyKingdomLinks();
 
   } catch (err) {
     console.error("❌ Trade Load Error:", err);
@@ -136,6 +139,7 @@ function renderTradeTable(trades) {
 
     body.appendChild(row);
   });
+  applyKingdomLinks();
 }
 
 // ✅ Update trade volume/summary

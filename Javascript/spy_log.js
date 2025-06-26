@@ -4,6 +4,7 @@
 // Developer: Codex
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, showToast } from './utils.js';
+import { applyKingdomLinks } from './kingdom_name_linkify.js';
 
 let realtimeChannel = null;
 
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadSpyLog();
   subscribeRealtime();
+  applyKingdomLinks();
 });
 
 async function loadSpyLog() {
@@ -45,6 +47,7 @@ async function loadSpyLog() {
       `;
       body.appendChild(row);
     });
+    applyKingdomLinks();
   } catch (err) {
     console.error('spy log load error:', err);
     body.innerHTML = `<tr><td colspan="7">Failed to load log.</td></tr>`;

@@ -5,6 +5,7 @@
 // Inbox Viewer + Controls
 
 import { supabase } from '../supabaseClient.js';
+import { applyKingdomLinks } from './kingdom_name_linkify.js';
 
 const list = document.getElementById('message-list');
 const countLabel = document.getElementById('message-count');
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (list) {
     await loadInbox();
     subscribeToNewMessages(session.user.id);
+    await applyKingdomLinks();
   }
 
   const container = document.getElementById('message-container');
@@ -41,10 +43,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const id = params.get('id') || params.get('message_id');
     if (id) {
       await loadMessageView(id);
+      await applyKingdomLinks();
     } else {
       container.innerHTML = '<p>Invalid message.</p>';
     }
   }
+  await applyKingdomLinks();
 });
 
 async function loadInbox() {
@@ -84,7 +88,7 @@ function renderMessages() {
   if (!pageMessages.length) {
     list.innerHTML = '<p>No messages found.</p>';
   } else {
-    for (const msg of pageMessages) {
+  for (const msg of pageMessages) {
       const article = document.createElement('article');
       article.className = `message-item ${msg.is_read ? '' : 'unread'}`;
       article.innerHTML = `
@@ -103,6 +107,7 @@ function renderMessages() {
   countLabel.textContent = `Total Messages: ${messages.length}`;
   prevBtn.disabled = currentPage === 1;
   nextBtn.disabled = end >= messages.length;
+  applyKingdomLinks();
 }
 
 async function loadMessageView(id) {
@@ -129,6 +134,7 @@ async function loadMessageView(id) {
     </div>
     <div class="message-body">${data.message}</div>
   `;
+  applyKingdomLinks();
 }
 
 async function markAllAsRead() {

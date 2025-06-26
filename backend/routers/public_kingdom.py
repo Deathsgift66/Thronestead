@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 router = APIRouter(prefix="/api/kingdoms", tags=["kingdoms"])
+alt_router = APIRouter(prefix="/api/kingdom", tags=["kingdoms"])
 
 
 @router.get("/public/{kingdom_id}")
@@ -58,3 +59,12 @@ def public_profile(kingdom_id: int, db: Session = Depends(get_db)):
         "is_on_vacation": row[8],
         "village_count": village_count,
     }
+
+
+@alt_router.get("/lookup")
+def kingdom_lookup(db: Session = Depends(get_db)):
+    """Return a list of all kingdoms for name linking."""
+    rows = db.execute(
+        text("SELECT kingdom_id, kingdom_name FROM kingdoms")
+    ).fetchall()
+    return [{"kingdom_id": r[0], "kingdom_name": r[1]} for r in rows]

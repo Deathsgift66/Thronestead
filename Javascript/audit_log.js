@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 // Hardened Admin Audit Log Page — with Supabase auth, loading, error handling, and formatting
 import { escapeHTML, authJsonFetch } from './utils.js';
+import { applyKingdomLinks } from './kingdom_name_linkify.js';
 
 import { supabase } from '../supabaseClient.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener('beforeunload', () => {
     if (eventSource) eventSource.close();
   });
+  applyKingdomLinks();
 });
 
 // ✅ Load Audit Log
@@ -97,6 +99,7 @@ async function loadAuditLog() {
       <tr><td colspan="4">Failed to load audit log.</td></tr>
     `;
   }
+  applyKingdomLinks();
 }
 
 function prependLogRow(log) {
