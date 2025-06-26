@@ -6,7 +6,7 @@ Role: API routes for player statistics.
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -38,6 +38,7 @@ def _require_vip2(db: Session, user_id: str) -> None:
 @router.get("/scores/{kingdom_id}")
 @limiter.limit("60/minute")
 def kingdom_scores(
+    request: Request,
     kingdom_id: int,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -68,6 +69,7 @@ def kingdom_scores(
 @router.get("/army/{kingdom_id}")
 @limiter.limit("60/minute")
 def army_composition(
+    request: Request,
     kingdom_id: int,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
