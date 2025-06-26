@@ -1738,3 +1738,16 @@ class KingdomResearchTracking(Base):
     status = Column(String)
     progress = Column(Integer, default=0)
     ends_at = Column(DateTime(timezone=True))
+
+
+class UserReport(Base):
+    """Player-submitted reports for moderation review."""
+
+    __tablename__ = "user_reports"
+
+    report_id = Column(Integer, primary_key=True)
+    reporter_id = Column(UUID(as_uuid=True))
+    target_id = Column(UUID(as_uuid=True))
+    category = Column(Text)
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
