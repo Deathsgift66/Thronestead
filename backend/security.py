@@ -10,8 +10,6 @@ Lightweight decoding for in-request matching.
 Signature validation is expected to be handled by Supabase middleware/gateway.
 """
 
-import base64
-import json
 import logging
 import os
 from uuid import UUID
@@ -37,12 +35,11 @@ def verify_jwt_token(
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
 ) -> str:
-    """
-    Lightweight JWT payload decoder for Supabase-issued tokens.
+    """Validate a Supabase-issued JWT token and return the matching user ID.
 
-    - Extracts `sub` field from payload (base64-encoded).
-    - Compares it to the X-User-ID header value.
-    - Does NOT verify signature (handled by Supabase edge or proxy).
+    - Extracts the ``sub`` claim from the payload.
+    - Compares it to the ``X-User-ID`` header value.
+    - Raises ``HTTPException`` if the token or header are invalid.
 
     Args:
         authorization: Bearer token from `Authorization` header
@@ -54,33 +51,22 @@ def verify_jwt_token(
     Raises:
         HTTPException 401: If the token is missing, malformed, or mismatched
     """
-    if not authorization or not authorization.startswith("Bearer "):
+    auth_header = authorization
+    if not auth_header or not auth_header.startswith("Bearer "):
         logger.warning("Missing or malformed Authorization header.")
         raise HTTPException(
-            status_code=401, detail="Authorization header missing or invalid"
+            status_code=401,
+            detail="Missing or invalid Authorization header",
         )
 
-    token = authorization.split()[1]
+    token = auth_header.split(" ")[1]
 
     jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
     try:
-        if jwt_secret:
-            # Allow tokens signed with any algorithm compatible with the provided
-            # secret to avoid hard-coding HS256. This enables using different
-            # algorithms such as RS256 if configured in Supabase.
-            payload = jwt.decode(token, jwt_secret)
-        else:
-            payload_part = token.split(".")[1]
-            payload_part += "=" * ((4 - len(payload_part) % 4) % 4)
-            payload_bytes = base64.urlsafe_b64decode(payload_part.encode("utf-8"))
-            payload = json.loads(payload_bytes)
+        payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
     except JWTError:
         logger.warning("JWT signature verification failed.")
         raise HTTPException(status_code=401, detail="Invalid token")
-    except Exception as exc:
-        logger.error("Failed to decode JWT payload.")
-        logger.exception(exc)
-        raise HTTPException(status_code=401, detail="Invalid token payload")
 
     uid = payload.get("sub")
     if not uid or uid != x_user_id:
@@ -134,19 +120,17 @@ def verify_api_key(x_api_key: str = Header(...)):
 
 async def get_current_user(request: Request, db: Session = Depends(get_db)):
     """Return the current user's profile based on the Authorization token."""
-    auth = request.headers.get("Authorization")
-    if not auth or not auth.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token required")
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Missing or invalid Authorization header",
+        )
 
-    token = auth.split()[1]
+    token = auth_header.split(" ")[1]
     secret = os.getenv("SUPABASE_JWT_SECRET")
     try:
-        if secret:
-            # Decode using the provided secret without forcing a specific
-            # algorithm so deployments can switch algorithms if needed.
-            claims = jwt.decode(token, secret)
-        else:
-            claims = jwt.decode(token, options={"verify_signature": False})
+        claims = jwt.decode(token, secret, algorithms=["HS256"])
     except JWTError:
         logger.warning("JWT signature verification failed.")
         raise HTTPException(status_code=401, detail="Invalid token")
