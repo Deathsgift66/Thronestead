@@ -16,7 +16,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, User
+from backend.models import (
+    Alliance,
+    AllianceVault,
+    AllianceVaultTransactionLog,
+    User,
+    AllianceTaxPolicy,
+    AllianceRole,
+)
 from services.audit_service import log_action
 
 from ..database import get_db
@@ -69,6 +76,18 @@ class VaultTransaction(BaseModel):
 class TaxPolicy(BaseModel):
     resource: str
     rate: float  # 0.0 to 1.0
+
+
+def _has_tax_permission(db: Session, alliance_id: int, role: str) -> bool:
+    """Return True if the role can manage taxes."""
+    if role in {"Leader", "Co-Leader"}:
+        return True
+    row = (
+        db.query(AllianceRole)
+        .filter_by(alliance_id=alliance_id, role_name=role)
+        .first()
+    )
+    return bool(row and (row.can_manage_taxes or row.can_manage_resources))
 
 
 def get_alliance_info(user_id: str, db: Session) -> tuple[int, str]:
@@ -220,8 +239,22 @@ def calculate_interest(
 
 
 @router.get("/tax-policy")
-def view_tax_policy():
-    return {"policy": [{"resource": "gold", "rate": 0.05}]}  # Static placeholder
+def view_tax_policy(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
+    alliance_id, _ = get_alliance_info(user_id, db)
+    rows = (
+        db.query(AllianceTaxPolicy)
+        .filter_by(alliance_id=alliance_id, is_active=True)
+        .order_by(AllianceTaxPolicy.resource_type)
+        .all()
+    )
+    return {
+        "policy": [
+            {"resource": r.resource_type, "rate": float(r.tax_rate_percent)}
+            for r in rows
+        ]
+    }
 
 
 @router.post("/tax-policy")
@@ -230,10 +263,31 @@ def update_tax_policy(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    _, role = get_alliance_info(user_id, db)
-    if role not in {"Leader", "Co-Leader"}:
+    alliance_id, role = get_alliance_info(user_id, db)
+    if not _has_tax_permission(db, alliance_id, role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
-    # Placeholder: simulate saving
+
+    for p in policies:
+        row = (
+            db.query(AllianceTaxPolicy)
+            .filter_by(alliance_id=alliance_id, resource_type=p.resource)
+            .first()
+        )
+        if row:
+            row.tax_rate_percent = p.rate
+            row.updated_by = user_id
+            row.is_active = True
+        else:
+            db.add(
+                AllianceTaxPolicy(
+                    alliance_id=alliance_id,
+                    resource_type=p.resource,
+                    tax_rate_percent=p.rate,
+                    updated_by=user_id,
+                    is_active=True,
+                )
+            )
+    db.commit()
     return {"message": "Updated", "policies": [p.dict() for p in policies]}
 
 
@@ -257,6 +311,7 @@ alt_router.post("/withdraw")(withdraw_resource)
 alt_router.get("/transactions")(get_transaction_history)
 alt_router.get("/interest")(calculate_interest)
 alt_router.get("/tax-policy")(view_tax_policy)
+alt_router.post("/tax-policy")(update_tax_policy)
 
 custom_router.get("/vault")(custom_board)
 
@@ -268,4 +323,5 @@ custom_router.post("/withdraw")(withdraw_resource)
 custom_router.get("/history")(get_transaction_history)
 custom_router.get("/interest")(calculate_interest)
 custom_router.get("/tax-policy")(view_tax_policy)
+custom_router.post("/tax-policy")(update_tax_policy)
 

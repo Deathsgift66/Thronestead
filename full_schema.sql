@@ -133,6 +133,7 @@ CREATE TABLE public.alliance_roles (
   can_invite boolean DEFAULT false,
   can_kick boolean DEFAULT false,
   can_manage_resources boolean DEFAULT false,
+  can_manage_taxes boolean DEFAULT false,
   CONSTRAINT alliance_roles_pkey PRIMARY KEY (role_id),
   CONSTRAINT alliance_roles_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id)
 );
