@@ -57,18 +57,9 @@ def test_rename_noble_executes_update():
             super().__init__()
             self.result = type("R", (), {"rowcount": 1})()
 
-
-def test_rename_knight_updates_name(monkeypatch):
-    class RenameDB(DummyDB):
-        def __init__(self):
-            super().__init__()
-            self.rows = {"select": DummyResult((1,))}
-
-
         def execute(self, query, params=None):
             q = str(query)
             self.calls.append((q, params))
-
             if "FROM kingdoms" in q:
                 return DummyResult((1,))
             if q.strip().startswith("UPDATE kingdom_nobles"):
@@ -82,6 +73,33 @@ def test_rename_knight_updates_name(monkeypatch):
         db=db,
     )
     assert any("UPDATE kingdom_nobles" in q for q, _ in db.calls)
+
+
+def test_rename_knight_updates_name(monkeypatch):
+    class RenameDB(DummyDB):
+        def __init__(self):
+            super().__init__()
+            self.rows = {"select": DummyResult((1,))}
+            self.result = type("R", (), {"rowcount": 1})()
+
+        def execute(self, query, params=None):
+            q = str(query)
+            self.calls.append((q, params))
+
+            if "FROM kingdoms" in q:
+                return DummyResult((1,))
+            if "SELECT knight_id" in q:
+                return self.rows["select"]
+            if q.strip().startswith("UPDATE kingdom_knights"):
+                return self.result
+            return DummyResult()
+
+    db = RenameDB()
+    monkeypatch.setattr(pr, "get_kingdom_id", lambda d, u: 1)
+    payload = pr.KnightRenamePayload(current_name="Old", new_name="New")
+    pr.rename_knight(payload, user_id="u1", db=db)
+    executed = " ".join(db.calls[-1][0].split()).lower()
+    assert "update kingdom_knights" in executed
 
 
 def test_rename_noble_not_found():
@@ -109,18 +127,6 @@ def test_rename_noble_not_found():
         assert e.status_code == 404
     else:
         assert False, "Expected HTTPException"
-
-            if "SELECT knight_id" in q:
-                return self.rows["select"]
-            return DummyResult()
-
-    db = RenameDB()
-
-    monkeypatch.setattr(pr, "get_kingdom_id", lambda d, u: 1)
-    payload = pr.KnightRenamePayload(current_name="Old", new_name="New")
-    pr.rename_knight(payload, user_id="u1", db=db)
-    executed = " ".join(db.calls[-1][0].split()).lower()
-    assert "update kingdom_knights" in executed
 
 
 def test_upgrade_castle_explicit_calls_base(monkeypatch):
