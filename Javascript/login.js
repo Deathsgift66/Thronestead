@@ -1,12 +1,17 @@
 // Project Name: Thronestead©
 // File Name: login.js
-// Version 6.17.2025.21.04
+// Version 6.19.2025.22.05
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { toggleLoading, authJsonFetch } from './utils.js';
 import { validateEmail } from './utils.js';
-import { setAuthCache, clearStoredAuth, refreshSessionAndStore } from './auth.js';
+import {
+  setAuthCache,
+  clearStoredAuth,
+  refreshSessionAndStore,
+  authHeaders,
+} from './auth.js';
 import { containsBannedContent } from './content_filter.js';
 import { initThemeToggle } from './themeToggle.js';
 
@@ -138,18 +143,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) {
     try {
-      let res = await fetch(`${API_BASE_URL}/api/me`, {
-        headers: { Authorization: `Bearer ${session.access_token}` }
-      });
+      let headers = await authHeaders();
+      let res = await fetch(`${API_BASE_URL}/api/me`, { headers });
+
       if (!res.ok && res.status === 401) {
         const refreshed = await refreshSessionAndStore();
         if (refreshed) {
-          const { data: { session: newSession } } = await supabase.auth.getSession();
-          res = await fetch(`${API_BASE_URL}/api/me`, {
-            headers: { Authorization: `Bearer ${newSession.access_token}` }
-          });
+          headers = await authHeaders();
+          res = await fetch(`${API_BASE_URL}/api/me`, { headers });
         }
       }
+
       if (res.ok) {
         return (window.location.href = 'overview.html');
       }
