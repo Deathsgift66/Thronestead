@@ -401,6 +401,9 @@ class AllianceGrant(Base):
     amount = Column(BigInteger, default=0)
     granted_at = Column(DateTime(timezone=True), server_default=func.now())
     reason = Column(Text)
+    due_date = Column(DateTime(timezone=True))
+    amount_repaid = Column(BigInteger, default=0)
+    status = Column(String, default="active")
 
 
 class AllianceLoan(Base):
