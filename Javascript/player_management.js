@@ -3,7 +3,7 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, fragmentFrom, authJsonFetch, authFetch } from './utils.js';
+import { escapeHTML, fragmentFrom, authJsonFetch } from './utils.js';
 
 let playerChannel;
 
