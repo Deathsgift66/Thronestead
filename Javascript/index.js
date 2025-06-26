@@ -5,6 +5,8 @@
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 document.addEventListener("DOMContentLoaded", async () => {
   enableSmoothScroll();        // ✅ Smooth scrolling behavior
   await updateHeroCTA();       // ✅ Dynamic CTA buttons
@@ -72,7 +74,7 @@ async function loadNews() {
   list.innerHTML = "<li>Loading news...</li>";
 
   try {
-    const res = await fetch("/api/homepage/featured");
+    const res = await fetch(`${API_BASE_URL}/api/homepage/featured`);
     const data = await res.json();
     list.innerHTML = "";
 
