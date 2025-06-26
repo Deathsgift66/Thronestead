@@ -211,17 +211,6 @@ async function handleLogin(e) {
         const statusData = await authJsonFetch(`${API_BASE_URL}/api/login/status`);
         setupComplete = statusData?.setup_complete === true;
 
-        const statusRes = await fetch(`${API_BASE_URL}/api/login/status`, {
-          headers: {
-            'X-User-ID': result.user.id,
-            Authorization: `Bearer ${token}`
-          }
-        });
-        if (statusRes.ok) {
-          const statusData = await statusRes.json();
-          setupComplete = statusData?.setup_complete === true;
-        }
-
       } catch (err) {
         console.error('Setup check failed:', err);
       }
