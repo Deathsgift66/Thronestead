@@ -137,6 +137,9 @@ async function submitNewPassword() {
   if (!validatePasswordMatch()) {
     return renderStatusMessage('Passwords do not match.', true);
   }
+  if (calculateStrength(new_password) < 3) {
+    return renderStatusMessage('Password too weak.', true);
+  }
 
   setPasswordBtn.disabled = true;
   try {
