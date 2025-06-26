@@ -370,6 +370,15 @@ View definition
 
 public
 
+alliance_loan_repayments
+
+idx_alliance_loan_repayments_loan_id
+
+
+View definition
+
+public
+
 alliance_members
 
 idx_alliance_members_alliance_id

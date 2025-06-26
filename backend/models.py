@@ -428,6 +428,18 @@ class AllianceLoan(Base):
     tax_started_at = Column(DateTime(timezone=True))
 
 
+class AllianceLoanRepayment(Base):
+    __tablename__ = "alliance_loan_repayments"
+
+    schedule_id = Column(Integer, primary_key=True)
+    loan_id = Column(Integer, ForeignKey("alliance_loans.loan_id"))
+    due_date = Column(DateTime(timezone=True))
+    amount_due = Column(BigInteger, default=0)
+    amount_paid = Column(BigInteger, default=0)
+    paid_at = Column(DateTime(timezone=True))
+    status = Column(String, default="pending")
+
+
 class AllianceVote(Base):
     __tablename__ = "alliance_votes"
 

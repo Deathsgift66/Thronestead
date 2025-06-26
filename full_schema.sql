@@ -86,6 +86,17 @@ CREATE TABLE public.alliance_loans (
   CONSTRAINT alliance_loans_alliance_id_fkey FOREIGN KEY (alliance_id) REFERENCES public.alliances(alliance_id),
   CONSTRAINT alliance_loans_borrower_user_id_fkey FOREIGN KEY (borrower_user_id) REFERENCES public.users(user_id)
 );
+CREATE TABLE public.alliance_loan_repayments (
+  schedule_id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+  loan_id integer NOT NULL,
+  due_date timestamp with time zone,
+  amount_due bigint NOT NULL DEFAULT 0,
+  amount_paid bigint NOT NULL DEFAULT 0,
+  paid_at timestamp with time zone,
+  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'paid'::text, 'missed'::text])),
+  CONSTRAINT alliance_loan_repayments_pkey PRIMARY KEY (schedule_id),
+  CONSTRAINT alliance_loan_repayments_loan_id_fkey FOREIGN KEY (loan_id) REFERENCES public.alliance_loans(loan_id)
+);
 CREATE TABLE public.alliance_members (
   alliance_id integer NOT NULL,
   user_id uuid NOT NULL,
