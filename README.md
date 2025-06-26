@@ -91,6 +91,9 @@ Install Python dependencies with:
 pip install -r dev_requirements.txt
 ```
 
+The frontend tooling requires **Node.js 20**. Use `nvm` or your system package
+manager to install a compatible version.
+
 ### Running the Local API
 
 The frontend expects the FastAPI backend to be available at
