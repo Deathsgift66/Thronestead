@@ -5,26 +5,41 @@
 import { supabase } from '../supabaseClient.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-// DOM Elements
-const requestForm = document.getElementById('request-form');
-const emailInput = document.getElementById('email');
-const codePanel = document.getElementById('code-panel');
-const newPassPanel = document.getElementById('new-pass-panel');
-const statusBanner = document.getElementById('status');
-const resetCodeInput = document.getElementById('reset-code');
-const newPasswordInput = document.getElementById('new-password');
-const confirmPasswordInput = document.getElementById('confirm-password');
-const strengthMeter = document.getElementById('strength-meter');
-const tipsPanel = document.getElementById('tips-panel');
-const tipsList = document.getElementById('tips-list');
-const requestSubmitBtn = requestForm.querySelector('button[type="submit"]');
-const verifyCodeBtn = document.getElementById('verify-code-btn');
-const setPasswordBtn = document.getElementById('set-password-btn');
+// DOM Elements (assigned after DOMContentLoaded)
+let requestForm;
+let emailInput;
+let codePanel;
+let newPassPanel;
+let statusBanner;
+let resetCodeInput;
+let newPasswordInput;
+let confirmPasswordInput;
+let strengthMeter;
+let tipsPanel;
+let tipsList;
+let requestSubmitBtn;
+let verifyCodeBtn;
+let setPasswordBtn;
 
 let accessToken = null;
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', async () => {
+  requestForm = document.getElementById('request-form');
+  emailInput = document.getElementById('email');
+  codePanel = document.getElementById('code-panel');
+  newPassPanel = document.getElementById('new-pass-panel');
+  statusBanner = document.getElementById('status');
+  resetCodeInput = document.getElementById('reset-code');
+  newPasswordInput = document.getElementById('new-password');
+  confirmPasswordInput = document.getElementById('confirm-password');
+  strengthMeter = document.getElementById('strength-meter');
+  tipsPanel = document.getElementById('tips-panel');
+  tipsList = document.getElementById('tips-list');
+  requestSubmitBtn = requestForm?.querySelector('button[type="submit"]');
+  verifyCodeBtn = document.getElementById('verify-code-btn');
+  setPasswordBtn = document.getElementById('set-password-btn');
+
   loadSecurityTips();
   const params = new URLSearchParams(window.location.hash.substring(1));
   accessToken = params.get('access_token');
@@ -40,14 +55,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderStatusMessage('Enter your new password.', false);
     }
   }
+
+  requestForm.addEventListener('submit', e => {
+    e.preventDefault();
+    submitForgotRequest();
+  });
+  verifyCodeBtn.addEventListener('click', submitResetCode);
+  setPasswordBtn.addEventListener('click', submitNewPassword);
+  newPasswordInput.addEventListener('input', updateStrengthMeter);
 });
-requestForm.addEventListener('submit', e => {
-  e.preventDefault();
-  submitForgotRequest();
-});
-verifyCodeBtn.addEventListener('click', submitResetCode);
-setPasswordBtn.addEventListener('click', submitNewPassword);
-newPasswordInput.addEventListener('input', updateStrengthMeter);
 
 // ==========================
 // Step 1: Request Reset Code
