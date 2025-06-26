@@ -3,11 +3,14 @@
 # Version 6.13.2025.19.49
 # Developer: Deathsgift66
 
+import pytest
 from services.moderation import (
     classify_text,
     has_reserved_username,
     is_clean,
     contains_malicious_link,
+    validate_clean_text,
+    validate_username,
 )
 
 
@@ -34,4 +37,14 @@ def test_personal_info_detection():
 
 def test_malicious_link_detection():
     assert contains_malicious_link("visit http://example.com now")
+
+
+def test_validate_clean_text_raises():
+    with pytest.raises(ValueError):
+        validate_clean_text("watch porn here")
+
+
+def test_validate_username_checks_reserved():
+    with pytest.raises(ValueError):
+        validate_username("Admin")
 

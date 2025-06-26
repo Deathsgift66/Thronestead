@@ -11,7 +11,7 @@ Version: 2025-06-21
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, validator
-from services.text_utils import contains_banned_words
+from services.moderation import validate_clean_text
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -34,8 +34,8 @@ class AccountUpdatePayload(BaseModel):
 
 
 def _validate_text(value: str | None) -> str | None:
-    if value and contains_banned_words(value):
-        raise ValueError("Input contains banned words")
+    if value is not None:
+        validate_clean_text(value)
     return value
 
 

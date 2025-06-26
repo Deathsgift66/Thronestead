@@ -16,7 +16,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, constr, validator
-from services.text_utils import contains_banned_words
+from services.moderation import validate_clean_text, validate_username
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -87,8 +87,11 @@ class CheckPayload(BaseModel):
     username: Optional[constr(min_length=3, max_length=20)] = None
     email: Optional[EmailStr] = None
 
-    _check_names = validator("kingdom_name", "username", allow_reuse=True)(
+    _check_kingdom = validator("kingdom_name", allow_reuse=True)(
         lambda v: _validate_text(v)
+    )
+    _check_username = validator("username", allow_reuse=True)(
+        lambda v: _validate_username(v)
     )
 
 
@@ -99,9 +102,12 @@ class CreateUserPayload(BaseModel):
     kingdom_name: str
     email: EmailStr
 
-    _check_fields = validator(
-        "username", "display_name", "kingdom_name", allow_reuse=True
-    )(lambda v: _validate_text(v))
+    _check_display = validator("display_name", "kingdom_name", allow_reuse=True)(
+        lambda v: _validate_text(v)
+    )
+    _check_username = validator("username", allow_reuse=True)(
+        lambda v: _validate_username(v)
+    )
 
 
 class RegisterPayload(BaseModel):
@@ -113,9 +119,12 @@ class RegisterPayload(BaseModel):
     captcha_token: Optional[str] = None
     user_id: Optional[str] = None
 
-    _check_fields = validator(
-        "username", "display_name", "kingdom_name", allow_reuse=True
-    )(lambda v: _validate_text(v))
+    _check_display = validator("display_name", "kingdom_name", allow_reuse=True)(
+        lambda v: _validate_text(v)
+    )
+    _check_username = validator("username", allow_reuse=True)(
+        lambda v: _validate_username(v)
+    )
 
 
 class ResendPayload(BaseModel):
@@ -123,8 +132,14 @@ class ResendPayload(BaseModel):
 
 
 def _validate_text(value: str | None) -> str | None:
-    if value and contains_banned_words(value):
-        raise ValueError("Input contains banned words")
+    if value is not None:
+        validate_clean_text(value)
+    return value
+
+
+def _validate_username(value: str | None) -> str | None:
+    if value is not None:
+        validate_username(value)
     return value
 
 
