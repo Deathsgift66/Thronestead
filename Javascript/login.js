@@ -6,7 +6,7 @@ import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { toggleLoading, authJsonFetch } from './utils.js';
 import { validateEmail } from './utils.js';
-import { setAuthCache, clearStoredAuth } from './auth.js';
+import { setAuthCache, clearStoredAuth, refreshSessionAndStore } from './auth.js';
 import { containsBannedContent } from './content_filter.js';
 import { initThemeToggle } from './themeToggle.js';
 
@@ -136,13 +136,24 @@ export async function loginExecute(email, password, remember = false) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  const storedToken =
+  let storedToken =
     localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   if (session?.user && storedToken) {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/me`, {
+      let res = await fetch(`${API_BASE_URL}/api/me`, {
         headers: { Authorization: `Bearer ${storedToken}` }
       });
+      if (!res.ok && res.status === 401) {
+        const refreshed = await refreshSessionAndStore();
+        if (refreshed) {
+          storedToken =
+            localStorage.getItem('authToken') ||
+            sessionStorage.getItem('authToken');
+          res = await fetch(`${API_BASE_URL}/api/me`, {
+            headers: { Authorization: `Bearer ${storedToken}` }
+          });
+        }
+      }
       if (res.ok) {
         return (window.location.href = 'overview.html');
       }
