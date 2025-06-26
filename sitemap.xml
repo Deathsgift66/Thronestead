@@ -2,9 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.thronestead.com/404.html</loc></url>
   <url><loc>https://www.thronestead.com/about.html</loc></url>
-  <url><loc>https://www.thronestead.com/admin_alerts.html</loc></url>
-  <url><loc>https://www.thronestead.com/admin_dashboard.html</loc></url>
-  <url><loc>https://www.thronestead.com/alliance_changelog.html</loc></url>
   <url><loc>https://www.thronestead.com/alliance_home.html</loc></url>
   <url><loc>https://www.thronestead.com/alliance_members.html</loc></url>
   <url><loc>https://www.thronestead.com/alliance_projects.html</loc></url>
@@ -12,20 +9,16 @@
   <url><loc>https://www.thronestead.com/alliance_treaties.html</loc></url>
   <url><loc>https://www.thronestead.com/alliance_vault.html</loc></url>
   <url><loc>https://www.thronestead.com/alliance_wars.html</loc></url>
-  <url><loc>https://www.thronestead.com/audit_log.html</loc></url>
   <url><loc>https://www.thronestead.com/battle_live.html</loc></url>
   <url><loc>https://www.thronestead.com/battle_replay.html</loc></url>
   <url><loc>https://www.thronestead.com/battle_resolution.html</loc></url>
   <url><loc>https://www.thronestead.com/black_market.html</loc></url>
   <url><loc>https://www.thronestead.com/buildings.html</loc></url>
-  <url><loc>https://www.thronestead.com/changelog.html</loc></url>
   <url><loc>https://www.thronestead.com/compose.html</loc></url>
   <url><loc>https://www.thronestead.com/conflicts.html</loc></url>
   <url><loc>https://www.thronestead.com/diplomacy_center.html</loc></url>
   <url><loc>https://www.thronestead.com/donate_vip.html</loc></url>
   <url><loc>https://www.thronestead.com/edit_kingdom.html</loc></url>
-  <url><loc>https://www.thronestead.com/forgot_password.html</loc></url>
-  <url><loc>https://www.thronestead.com/forgot.html</loc></url>
   <url><loc>https://www.thronestead.com/index.html</loc></url>
   <url><loc>https://www.thronestead.com/kingdom_achievements.html</loc></url>
   <url><loc>https://www.thronestead.com/kingdom_history.html</loc></url>
@@ -48,20 +41,16 @@
   <url><loc>https://www.thronestead.com/projects.html</loc></url>
   <url><loc>https://www.thronestead.com/quests.html</loc></url>
   <url><loc>https://www.thronestead.com/research.html</loc></url>
-  <url><loc>https://www.thronestead.com/reset-password.html</loc></url>
   <url><loc>https://www.thronestead.com/resources.html</loc></url>
   <url><loc>https://www.thronestead.com/seasonal_effects.html</loc></url>
   <url><loc>https://www.thronestead.com/signup.html</loc></url>
   <url><loc>https://www.thronestead.com/spies.html</loc></url>
-  <url><loc>https://www.thronestead.com/spy_log.html</loc></url>
   <url><loc>https://www.thronestead.com/spy_mission.html</loc></url>
   <url><loc>https://www.thronestead.com/temples.html</loc></url>
   <url><loc>https://www.thronestead.com/town_criers.html</loc></url>
-  <url><loc>https://www.thronestead.com/trade_logs.html</loc></url>
   <url><loc>https://www.thronestead.com/train_troops.html</loc></url>
   <url><loc>https://www.thronestead.com/treaty_web.html</loc></url>
   <url><loc>https://www.thronestead.com/tutorial.html</loc></url>
-  <url><loc>https://www.thronestead.com/update-password.html</loc></url>
   <url><loc>https://www.thronestead.com/village.html</loc></url>
   <url><loc>https://www.thronestead.com/village_master.html</loc></url>
   <url><loc>https://www.thronestead.com/villages.html</loc></url>
