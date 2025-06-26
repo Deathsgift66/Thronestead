@@ -15,7 +15,7 @@ function normalizeInput(str) {
 }
 
 // Check input against banned words (exact match or embedded match)
-function containsBannedContent(input) {
+export function containsBannedContent(input) {
   const normalized = normalizeInput(input);
   for (const banned of bannedSet) {
     if (normalized.includes(banned)) {

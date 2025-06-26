@@ -7,6 +7,7 @@ import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { toggleLoading, authJsonFetch } from './utils.js';
 import { validateEmail } from './utils.js';
 import { setAuthCache, clearStoredAuth } from './auth.js';
+import { containsBannedContent } from './content_filter.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -185,6 +186,10 @@ async function handleLogin(e) {
   const validationError = validateLoginInputs(email, password);
   if (validationError) {
     showMessage('error', validationError);
+    return;
+  }
+  if (containsBannedContent(email) || containsBannedContent(password)) {
+    showMessage('error', 'Input contains banned words.');
     return;
   }
 

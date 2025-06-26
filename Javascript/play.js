@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, showToast, fragmentFrom, jsonFetch } from './utils.js';
+import { containsBannedContent } from './content_filter.js';
 
 let currentUser = null;
 let authToken = '';
@@ -121,6 +122,9 @@ function bindUIEvents() {
 
 function validateInputs(name, village, region) {
   if (!name || name.length < 3) return showToast('Kingdom name must be at least 3 characters.');
+  if (containsBannedContent(name) || containsBannedContent(village)) {
+    return showToast('Inappropriate names are not allowed.');
+  }
   if (!region) return showToast('Please select a region.');
   if (!village || village.length < 3) return showToast('Village name must be at least 3 characters.');
   return true;
