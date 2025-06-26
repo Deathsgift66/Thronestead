@@ -5,9 +5,10 @@
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 import { setupTabs } from './components/tabControl.js';
-import { authHeaders } from './auth.js';
+import { authHeaders, getStoredAuth } from './auth.js';
 
 let currentTab = "kingdoms";
+let loggedIn = false;
 
 const headers = {
   kingdoms: ["Rank", "Kingdom", "Ruler", "Power", "Economy"],
@@ -18,12 +19,11 @@ const headers = {
 
 // 🔐 User session + leaderboard loader
 document.addEventListener("DOMContentLoaded", async () => {
-
-
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
+  const stored = getStoredAuth();
+  loggedIn = !!session || !!stored.token;
+  if (!loggedIn) {
+    headers.alliances = headers.alliances.filter(h => h !== 'Apply');
   }
 
   setupTabs({ onShow: id => { currentTab = id; loadLeaderboard(id); } });
@@ -56,9 +56,8 @@ async function loadLeaderboard(type) {
   tbody.innerHTML = `<tr><td colspan="${cols}">Loading ${type} leaderboard...</td></tr>`;
 
   try {
-    const res = await fetch(`/api/leaderboard/${type}?limit=100`, {
-      headers: await authHeaders()
-    });
+    const fetchOptions = loggedIn ? { headers: await authHeaders() } : {};
+    const res = await fetch(`/api/leaderboard/${type}?limit=100`, fetchOptions);
     const data = await res.json();
 
     headerRow.innerHTML = headers[type].map(h => `<th scope="col">${h}</th>`).join("");
@@ -94,8 +93,10 @@ async function loadLeaderboard(type) {
             <td>${entry.war_wins}</td>
             <td>${entry.war_losses}</td>
             <td>${entry.prestige_score ?? "—"}</td>
-            <td><button class="action-btn apply-btn" data-alliance-id="${entry.alliance_id}" data-alliance-name="${escapeHTML(entry.alliance_name)}">Apply</button></td>
           `;
+          if (loggedIn) {
+            row.innerHTML += `<td><button class="action-btn apply-btn" data-alliance-id="${entry.alliance_id}" data-alliance-name="${escapeHTML(entry.alliance_name)}">Apply</button></td>`;
+          }
           break;
 
         case "wars":
@@ -122,15 +123,15 @@ async function loadLeaderboard(type) {
         row.addEventListener('click', () => {
           window.location.href = `kingdom_profile.html?kingdom_id=${entry.kingdom_id}`;
         });
-      } else {
+      } else if (loggedIn) {
         row.addEventListener('click', () => openPreviewModal(entry));
       }
 
       tbody.appendChild(row);
     });
 
-    // Bind Apply Buttons if Alliance tab
-    if (type === 'alliances') {
+    // Bind Apply Buttons if Alliance tab and logged in
+    if (type === 'alliances' && loggedIn) {
       document.querySelectorAll('.apply-btn').forEach(btn => {
         btn.addEventListener('click', e => {
           e.stopPropagation();
