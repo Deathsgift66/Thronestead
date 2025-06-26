@@ -136,21 +136,17 @@ export async function loginExecute(email, password, remember = false) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  let storedToken =
-    localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-  if (session?.user && storedToken) {
+  if (session?.user) {
     try {
       let res = await fetch(`${API_BASE_URL}/api/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
+        headers: { Authorization: `Bearer ${session.access_token}` }
       });
       if (!res.ok && res.status === 401) {
         const refreshed = await refreshSessionAndStore();
         if (refreshed) {
-          storedToken =
-            localStorage.getItem('authToken') ||
-            sessionStorage.getItem('authToken');
+          const { data: { session: newSession } } = await supabase.auth.getSession();
           res = await fetch(`${API_BASE_URL}/api/me`, {
-            headers: { Authorization: `Bearer ${storedToken}` }
+            headers: { Authorization: `Bearer ${newSession.access_token}` }
           });
         }
       }
