@@ -56,9 +56,17 @@ _SPAM_PATTERNS = [
 MALICIOUS_DOMAINS = {"example.com", "malware.test"}
 
 # Basic patterns for personal information (emails, phone numbers)
+# These patterns intentionally cover common formats to help prevent
+# younger users from sharing contact details in violation of
+# COPPA/GDPR-K guidelines.
 _PERSONAL_INFO_PATTERNS = [
-    re.compile(r"\b\d{10}\b"),  # 10 digit numbers
+    # Standard email addresses
     re.compile(r"[\w.-]+@[\w.-]+\.[a-z]{2,}", re.IGNORECASE),
+    # 10+ digit sequences with optional separators or country code
+    re.compile(
+        r"(?:\+?\d{1,3}[ -]?)?(?:\(?\d{3}\)?[ -]?\d{3}[ -]?\d{4})",
+        re.IGNORECASE,
+    ),
 ]
 
 _WORD_RE = re.compile(r"[a-z0-9]+")
