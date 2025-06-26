@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: kingdom_profile.js
-// Version 6.15.2025.22.00
+// Version 6.16.2025.22.01
 // Developer: Codex
 import { supabase } from '../supabaseClient.js';
 import { authFetchJson } from './fetchJson.js';
@@ -8,6 +8,8 @@ import { authFetchJson } from './fetchJson.js';
 let targetKingdomId = null;
 let currentSession = null;
 let lastAction = 0;
+let reportTextarea;
+let reportModal;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
@@ -23,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadProfile();
   setupSpyControls();
   setupMessageButton();
+  setupReportControls();
 });
 
 async function loadProfile() {
@@ -55,6 +58,7 @@ async function loadProfile() {
     if (currentSession) {
       document.getElementById('spy-btn').classList.remove('hidden');
       document.getElementById('message-btn').classList.remove('hidden');
+      document.getElementById('report-btn').classList.remove('hidden');
     }
   } catch (err) {
     console.error('profile load failed', err);
@@ -94,6 +98,32 @@ function setupMessageButton() {
     msgBtn.addEventListener('click', () => {
       window.location.href = `compose.html?recipient=${targetKingdomId}`;
     });
+  }
+}
+
+function setupReportControls() {
+  reportModal = document.getElementById('report-modal');
+  reportTextarea = document.getElementById('report-text');
+  const btn = document.getElementById('report-btn');
+  const submitBtn = document.getElementById('submit-report-btn');
+  const closeBtn = document.getElementById('close-report-btn');
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      if (!currentSession) return alert('Login required');
+      reportModal.classList.remove('hidden');
+      reportModal.setAttribute('aria-hidden', 'false');
+      if (reportTextarea) reportTextarea.value = '';
+    });
+  }
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      reportModal.classList.add('hidden');
+      reportModal.setAttribute('aria-hidden', 'true');
+    });
+  }
+  if (submitBtn) {
+    submitBtn.addEventListener('click', submitReport);
   }
 }
 
@@ -139,5 +169,31 @@ async function confirmAttack() {
     }
   } catch (err) {
     alert(`❌ Attack failed: ${err.message}`);
+  }
+}
+
+async function submitReport() {
+  if (!currentSession) return alert('Login required');
+  const desc = reportTextarea?.value.trim();
+  if (!desc) {
+    alert('Please provide a reason for your report.');
+    return;
+  }
+
+  try {
+    await authFetchJson('/api/reports/submit', currentSession, {
+      method: 'POST',
+      body: JSON.stringify({
+        category: 'player',
+        description: desc,
+        target_id: String(targetKingdomId)
+      })
+    });
+    alert('Report submitted. False claims may lead to penalties.');
+  } catch (err) {
+    alert(`❌ Report failed: ${err.message}`);
+  } finally {
+    reportModal.classList.add('hidden');
+    reportModal.setAttribute('aria-hidden', 'true');
   }
 }

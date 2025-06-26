@@ -1,7 +1,7 @@
 <!--
 Project Name: Thronestead©
 File Name: kingdom_profile.html
-Version: 6.14.2025.21.12
+Version: 6.16.2025.22.01
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -76,6 +76,7 @@ Developer: Deathsgift66
         <p id="village-count"></p>
         <button id="spy-btn" class="action-btn hidden">🕵️ Spy or Attack</button>
         <button id="message-btn" class="action-btn hidden">✉️ Message</button>
+        <button id="report-btn" class="action-btn hidden">🚩 Report Player</button>
       </div>
     </section>
 
@@ -91,6 +92,19 @@ Developer: Deathsgift66
           <button class="action-btn spy-option" data-mission="assassinate_knight">Assassinate Knight</button>
           <button class="action-btn" id="attack-modal-btn">⚔️ Declare War</button>
           <button class="action-btn" id="close-spy-modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Player Modal -->
+    <div id="report-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="report-title" aria-hidden="true">
+      <div class="modal-content">
+        <h3 id="report-title">Report Player</h3>
+        <p>Provide a reason for reporting this player. False claims may result in penalties.</p>
+        <textarea id="report-text" rows="4" placeholder="Describe the issue..." aria-label="Report Reason" required></textarea>
+        <div class="modal-actions">
+          <button id="submit-report-btn" class="action-btn">Submit Report</button>
+          <button id="close-report-btn" class="action-btn">Cancel</button>
         </div>
       </div>
     </div>
