@@ -48,7 +48,7 @@ class UserStateMiddleware(BaseHTTPMiddleware):
                     row = db.execute(
                         text(
                             "SELECT user_id, auth_user_id, setup_complete "
-                            "FROM users WHERE user_id = :uid"
+                            "FROM users WHERE user_id = :uid OR auth_user_id = :uid"
                         ),
                         {"uid": auth_user_id},
                     ).fetchone()

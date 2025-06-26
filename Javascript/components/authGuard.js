@@ -3,7 +3,11 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from '../../supabaseClient.js';
-import { fetchAndStorePlayerProgression, loadPlayerProgressionFromStorage } from '../progressionGlobal.js';
+import {
+  fetchAndStorePlayerProgression,
+  loadPlayerProgressionFromStorage,
+} from '../progressionGlobal.js';
+import { authJsonFetch } from '../utils.js';
 
 // These values can be overridden by setting them on the global window object
 // before this script is loaded. This allows pages to enforce additional access
@@ -14,12 +18,19 @@ const requireAlliance = window.requireAlliance || false;
 const requireRole = window.requireRole || null; // e.g. "officer", "leader"
 const requirePermission = window.requirePermission || null; // e.g. "manage_projects"
 
+
 (async () => {
   try {
-    const token =
+    let token =
       localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     if (!token) {
-      return (window.location.href = 'login.html');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        token = session.access_token;
+        localStorage.setItem('authToken', token);
+      } else {
+        return (window.location.href = 'login.html');
+      }
     }
 
     try {
@@ -29,6 +40,10 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       if (!res.ok) throw new Error('unauthorized');
       const currentUser = await res.json();
       window.currentUser = currentUser;
+      const storage =
+        localStorage.getItem('authToken') === token ? localStorage : sessionStorage;
+      storage.setItem('currentUser', JSON.stringify(currentUser));
+      await authJsonFetch('/api/login/status');
     } catch {
       return (window.location.href = 'login.html');
     }
