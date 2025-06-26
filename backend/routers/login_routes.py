@@ -94,6 +94,7 @@ def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends
         text("UPDATE users SET last_login_at = now() WHERE user_id = :uid"),
         {"uid": user_id},
     )
+    db.commit()
     row = db.execute(
         text("SELECT setup_complete FROM users WHERE user_id = :uid"),
         {"uid": user_id},
@@ -151,6 +152,7 @@ def authenticate(
         text("UPDATE users SET last_login_at = now() WHERE user_id = :uid"),
         {"uid": uid},
     )
+    db.commit()
     row = db.execute(
         text(
             "SELECT username, kingdom_id, alliance_id, setup_complete FROM users WHERE user_id = :uid"

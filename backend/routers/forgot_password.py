@@ -76,8 +76,14 @@ class PasswordPayload(BaseModel):
 def _prune_expired() -> None:
     """Remove expired tokens, sessions, and prune old IP rate entries."""
     now = time.time()
-    RESET_STORE.update({k: v for k, v in RESET_STORE.items() if v[1] > now})
-    VERIFIED_SESSIONS.update({k: v for k, v in VERIFIED_SESSIONS.items() if v[1] > now})
+    for key, (_, expiry) in list(RESET_STORE.items()):
+        if expiry <= now:
+            RESET_STORE.pop(key, None)
+
+    for uid, (_, expiry) in list(VERIFIED_SESSIONS.items()):
+        if expiry <= now:
+            VERIFIED_SESSIONS.pop(uid, None)
+
     for ip in list(RATE_LIMIT.keys()):
         RATE_LIMIT[ip] = [t for t in RATE_LIMIT[ip] if now - t < 3600]
         if not RATE_LIMIT[ip]:
