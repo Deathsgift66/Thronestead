@@ -187,27 +187,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     forgotLink.addEventListener('click', e => {
       e.preventDefault();
       modal.classList.remove('hidden');
+      modal.removeAttribute('inert');
+      modal.setAttribute('aria-hidden', 'false');
+      document.getElementById('forgot-email')?.focus();
       forgotMessage.textContent = '';
     });
   }
 
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.setAttribute('inert', '');
+      forgotLink?.focus();
+    });
   }
 
   if (sendResetBtn) {
     sendResetBtn.addEventListener('click', handleReset);
   }
   if (authLink) {
-    authLink.addEventListener("click", e => {
+    authLink.addEventListener('click', e => {
       e.preventDefault();
-      authModal.classList.remove("hidden");
-      authMessage.textContent = "";
+      authModal.classList.remove('hidden');
+      authModal.removeAttribute('inert');
+      authModal.setAttribute('aria-hidden', 'false');
+      document.getElementById('auth-email')?.focus();
+      authMessage.textContent = '';
     });
   }
 
   if (closeAuthBtn) {
-    closeAuthBtn.addEventListener("click", () => authModal.classList.add("hidden"));
+    closeAuthBtn.addEventListener('click', () => {
+      authModal.classList.add('hidden');
+      authModal.setAttribute('aria-hidden', 'true');
+      authModal.setAttribute('inert', '');
+      authLink?.focus();
+    });
   }
 
   if (sendAuthBtn) {
