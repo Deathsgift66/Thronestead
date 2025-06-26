@@ -42,12 +42,14 @@ let signupForm;
 document.addEventListener("DOMContentLoaded", () => {
   signupForm = document.getElementById('signup-form');
   const kingdomNameEl = document.getElementById('kingdomName');
+  const usernameEl = document.getElementById('username');
   signupButton = signupForm.querySelector('button[type="submit"]');
   messageEl = document.getElementById('signup-message');
 
   // ✅ Debounced availability checker
   const check = debounce(checkAvailability, 400);
   kingdomNameEl.addEventListener('input', check);
+  usernameEl.addEventListener('input', check);
 
   // ✅ Bind form submit
   signupForm.addEventListener('submit', async (e) => {
@@ -217,21 +219,43 @@ async function handleSignup() {
 // ✅ Realtime check kingdom availability
 async function checkAvailability() {
   const kingdom = document.getElementById('kingdomName').value.trim();
-  if (!kingdom || kingdom.length < 3 ||
-      containsBannedWord(kingdom) || containsProfanity(kingdom)) {
+  const username = document.getElementById('username').value.trim();
+
+  if (kingdom && (kingdom.length < 3 ||
+      containsBannedWord(kingdom) || containsProfanity(kingdom))) {
     updateAvailabilityUI('kingdomName-msg', false);
+    if (signupButton) signupButton.disabled = true;
+    return;
+  }
+  if (username && !validateUsername(username)) {
+    updateAvailabilityUI('username-msg', false);
     if (signupButton) signupButton.disabled = true;
     return;
   }
 
   try {
-    const res = await fetch(
-      `${API_BASE_URL}/api/signup/check?kingdom=${encodeURIComponent(kingdom)}`
-    );
-    if (!res.ok) return;
+    const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kingdom_name: kingdom,
+        username
+      })
+    });
+    if (!res.ok) throw new Error('check failed');
     const data = await res.json();
-    updateAvailabilityUI('kingdomName-msg', data.available);
-    if (signupButton) signupButton.disabled = !data.available;
+
+    if (kingdom) {
+      updateAvailabilityUI('kingdomName-msg', data.kingdom_available);
+    }
+    if (username) {
+      updateAvailabilityUI('username-msg', data.username_available);
+    }
+
+    if (signupButton) {
+      signupButton.disabled =
+        !data.kingdom_available || !data.username_available;
+    }
   } catch (err) {
     console.error('Availability check failed', err);
     if (signupButton) signupButton.disabled = true;
