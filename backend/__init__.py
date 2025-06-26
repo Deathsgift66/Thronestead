@@ -12,11 +12,14 @@ This file assumes FastAPI app structure, Supabase SDK, and environment-based con
 import logging
 import os
 
+
+# The backend has a dedicated ``supabase_client`` module that creates and
+# exposes the connection instance.  Importing it here ensures a single
+# initialization point and avoids duplicate log messages during startup.
 try:
-    from supabase import Client, create_client
-except Exception:  # pragma: no cover - optional in tests
-    create_client = None  # type: ignore
-    Client = None  # type: ignore
+    from .supabase_client import get_supabase_client
+except Exception:  # pragma: no cover - optional dependency
+    get_supabase_client = None  # type: ignore[misc]
 
 # Environment variables are expected to be provided by the host system
 
@@ -28,20 +31,14 @@ logger = logging.getLogger("Thronestead")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
 
+# Initialise the Supabase client via ``backend.supabase_client`` if available.
 supabase = None
-if create_client and SUPABASE_URL and SUPABASE_KEY:
+if get_supabase_client:
     try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception:  # pragma: no cover - network/dependency issues
+        supabase = get_supabase_client()
+    except Exception:  # pragma: no cover - let caller handle missing client
         logger.exception("Failed to initialize Supabase client")
         supabase = None
-else:
-    logger.warning(
-        "Supabase credentials missing or client library unavailable; continuing without Supabase"
-    )
-
-if supabase:
-    logger.info("Supabase client initialized")
 
 # Exported objects from module
 __all__ = ["supabase", "logger"]
