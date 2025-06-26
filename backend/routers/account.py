@@ -10,7 +10,8 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+from services.text_utils import contains_banned_words
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -26,6 +27,16 @@ class AccountUpdatePayload(BaseModel):
     display_name: str | None = None
     profile_picture_url: str | None = None
     profile_bio: str | None = None
+
+    _check_display = validator("display_name", "profile_bio", allow_reuse=True)(
+        lambda v: _validate_text(v)
+    )
+
+
+def _validate_text(value: str | None) -> str | None:
+    if value and contains_banned_words(value):
+        raise ValueError("Input contains banned words")
+    return value
 
 
 @router.post("/update")
