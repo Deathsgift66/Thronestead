@@ -2,7 +2,7 @@
 
 This document summarizes the progression restrictions enforced across key pages and APIs of **Thronestead**. Use it as a quick reference when testing progression-related features.
 
-**Public Pages**: `index.html`, `signup.html`, `login.html`/`signin.html`, `legal.html`, `update-password.html` and its policy subpages. These do **not** require authentication. All other pages are protected by `authGuard.js`. These pages also intentionally omit the dynamic navbar and resource bar modules.
+**Public Pages**: `index.html`, `signup.html`, `login.html`/`signin.html`, `legal.html`, `update-password.html`, `kingdom_profile.html` and its policy subpages. These do **not** require authentication. All other pages are protected by `authGuard.js`. These pages also intentionally omit the dynamic navbar and resource bar modules.
 
 | System / Page / API | Castle Level Required? | Nobles Required? | Knights Required? | Troop Slots Enforced? | Notes |
 | ----------------- | ---------------------- | ----------------- | ----------------- | -------------------- | ---------------------------- |
