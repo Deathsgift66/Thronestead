@@ -29,10 +29,19 @@ class UserStateMiddleware(BaseHTTPMiddleware):
         if token:
             try:
                 secret = os.getenv("SUPABASE_JWT_SECRET")
+                opts = {"verify_aud": False}
                 if secret:
-                    claims = jwt.decode(token, secret, algorithms=["HS256"])
+                    claims = jwt.decode(
+                        token,
+                        secret,
+                        algorithms=["HS256"],
+                        options=opts,
+                    )
                 else:
-                    claims = jwt.decode(token, options={"verify_signature": False})
+                    claims = jwt.decode(
+                        token,
+                        options={"verify_signature": False, **opts},
+                    )
                 auth_user_id = claims.get("sub")
             except Exception:  # pragma: no cover - invalid tokens shouldn't crash
                 logger.exception("Failed to decode JWT token")
