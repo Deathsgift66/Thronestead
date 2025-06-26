@@ -23,6 +23,7 @@ class RolePayload(BaseModel):
     can_invite: bool = False
     can_kick: bool = False
     can_manage_resources: bool = False
+    can_manage_taxes: bool = False
 
 
 class RoleUpdatePayload(RolePayload):
@@ -61,6 +62,7 @@ def list_roles(user_id: str = Depends(require_user_id), db: Session = Depends(ge
                 "can_invite": r.can_invite,
                 "can_kick": r.can_kick,
                 "can_manage_resources": r.can_manage_resources,
+                "can_manage_taxes": r.can_manage_taxes,
             }
             for r in roles
         ]
@@ -80,6 +82,7 @@ def create_role(
         can_invite=payload.can_invite,
         can_kick=payload.can_kick,
         can_manage_resources=payload.can_manage_resources,
+        can_manage_taxes=payload.can_manage_taxes,
     )
     db.add(role)
     db.commit()
@@ -105,6 +108,7 @@ def update_role(
     role.can_invite = payload.can_invite
     role.can_kick = payload.can_kick
     role.can_manage_resources = payload.can_manage_resources
+    role.can_manage_taxes = payload.can_manage_taxes
     db.commit()
     return {"status": "updated"}
 

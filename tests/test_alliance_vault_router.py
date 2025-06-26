@@ -10,13 +10,23 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.db_base import Base
-from backend.models import Alliance, AllianceVault, AllianceVaultTransactionLog, User
+from backend.models import (
+    Alliance,
+    AllianceVault,
+    AllianceVaultTransactionLog,
+    User,
+    AllianceTaxPolicy,
+    AllianceRole,
+)
 from backend.routers.alliance_vault import (
     VaultTransaction,
     deposit,
     summary,
     withdraw,
     custom_board,
+    view_tax_policy,
+    update_tax_policy,
+    TaxPolicy,
 )
 
 
@@ -108,3 +118,49 @@ def test_custom_board_returns_alliance_banner_and_text():
 
     res = custom_board(user_id=user_id, db=db)
     assert res == {"image_url": "img.png", "custom_text": "Hello"}
+
+
+def test_view_tax_policy_returns_rows():
+    Session = setup_db()
+    db = Session()
+    user_id = create_user(db)
+    db.add(
+        AllianceTaxPolicy(
+            alliance_id=1, resource_type="gold", tax_rate_percent=5, is_active=True
+        )
+    )
+    db.commit()
+
+    res = view_tax_policy(user_id=user_id, db=db)
+    assert res["policy"][0]["rate"] == 5
+
+
+def test_update_tax_policy_checks_permissions():
+    Session = setup_db()
+    db = Session()
+    user_id = create_user(db, role="Member")
+    with pytest.raises(HTTPException):
+        update_tax_policy([TaxPolicy(resource="gold", rate=10)], user_id=user_id, db=db)
+
+
+def test_update_tax_policy_with_role_permission():
+    Session = setup_db()
+    db = Session()
+    user_id = create_user(db, role="Treasurer")
+    db.add(
+        AllianceRole(
+            role_id=1,
+            alliance_id=1,
+            role_name="Treasurer",
+            can_manage_taxes=True,
+        )
+    )
+    db.commit()
+
+    update_tax_policy([TaxPolicy(resource="gold", rate=12)], user_id=user_id, db=db)
+    row = (
+        db.query(AllianceTaxPolicy)
+        .filter_by(alliance_id=1, resource_type="gold")
+        .first()
+    )
+    assert row and row.tax_rate_percent == 12

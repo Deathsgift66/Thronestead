@@ -55,6 +55,7 @@ def test_list_roles_returns_rows():
             alliance_id=1,
             role_name="Officer",
             can_invite=True,
+            can_manage_taxes=True,
         )
     )
     db.commit()
@@ -62,6 +63,7 @@ def test_list_roles_returns_rows():
     result = list_roles(user_id=uid, db=db)
     assert len(result["roles"]) == 1
     assert result["roles"][0]["role_name"] == "Officer"
+    assert result["roles"][0]["can_manage_taxes"] is True
 
 
 def test_create_role_adds_entry():
@@ -69,9 +71,9 @@ def test_create_role_adds_entry():
     db = Session()
     uid = seed_leader(db)
 
-    create_role(RolePayload(role_name="New"), user_id=uid, db=db)
+    create_role(RolePayload(role_name="New", can_manage_taxes=True), user_id=uid, db=db)
     row = db.query(AllianceRole).filter_by(alliance_id=1).first()
-    assert row and row.role_name == "New"
+    assert row and row.role_name == "New" and row.can_manage_taxes is True
 
 
 def test_update_role_modifies_record():
@@ -82,12 +84,24 @@ def test_update_role_modifies_record():
     db.commit()
 
     update_role(
-        RoleUpdatePayload(role_id=1, role_name="Updated", can_invite=True, can_kick=True, can_manage_resources=False),
+        RoleUpdatePayload(
+            role_id=1,
+            role_name="Updated",
+            can_invite=True,
+            can_kick=True,
+            can_manage_resources=False,
+            can_manage_taxes=True,
+        ),
         user_id=uid,
         db=db,
     )
     role = db.query(AllianceRole).filter_by(role_id=1).first()
-    assert role.role_name == "Updated" and role.can_invite is True and role.can_kick is True
+    assert (
+        role.role_name == "Updated"
+        and role.can_invite is True
+        and role.can_kick is True
+        and role.can_manage_taxes is True
+    )
 
 
 def test_delete_role_removes_record():

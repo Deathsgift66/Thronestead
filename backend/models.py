@@ -291,6 +291,7 @@ class AllianceRole(Base):
     can_invite = Column(Boolean, default=False)
     can_kick = Column(Boolean, default=False)
     can_manage_resources = Column(Boolean, default=False)
+    can_manage_taxes = Column(Boolean, default=False)
 
 
 class AlliancePolicy(Base):
