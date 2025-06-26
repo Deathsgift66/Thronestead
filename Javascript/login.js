@@ -76,6 +76,32 @@ async function logAttempt(email, success) {
   }
 }
 
+// Wrapper to expose attempt logging under clearer name
+function recordLoginAttempt(email, success) {
+  logAttempt(email, success);
+}
+
+// Increase failed attempt count and block if threshold hit
+function blockAfterFailedAttempts() {
+  recordAttempt();
+  const cooldown = getCooldownMinutes();
+  if (cooldown) {
+    showLoginError(`Too many attempts. Wait ${cooldown}m.`);
+    return true;
+  }
+  return false;
+}
+
+// Redirect user after successful login
+function redirectOnLogin(setupComplete) {
+  window.location.href = setupComplete ? 'overview.html' : 'play.html';
+}
+
+// Display login error message
+function showLoginError(message) {
+  showMessage('error', message);
+}
+
 // ✅ Validate login form inputs
 function validateLoginInputs(email, password) {
   if (!email || !password) {
@@ -192,7 +218,7 @@ async function handleLogin(e) {
   e.preventDefault();
   const cooldown = getCooldownMinutes();
   if (cooldown) {
-    showMessage('error', `Too many attempts. Wait ${cooldown}m.`);
+    showLoginError(`Too many attempts. Wait ${cooldown}m.`);
     return;
   }
 
@@ -200,11 +226,11 @@ async function handleLogin(e) {
   const password = passwordInput.value;
   const validationError = validateLoginInputs(email, password);
   if (validationError) {
-    showMessage('error', validationError);
+    showLoginError(validationError);
     return;
   }
   if (containsBannedContent(email) || containsBannedContent(password)) {
-    showMessage('error', 'Input contains banned words.');
+    showLoginError('Input contains banned words.');
     return;
   }
 
@@ -216,12 +242,12 @@ async function handleLogin(e) {
 
   try {
     const result = await loginExecute(email, password, rememberCheckbox?.checked);
-    await logAttempt(email, !!(result && result.user));
+    recordLoginAttempt(email, !!(result && result.user));
     if (!result) {
       if (authLink && messageContainer.textContent.includes('verify')) {
         authLink.classList.remove('hidden');
       }
-      recordAttempt();
+      blockAfterFailedAttempts();
     } else if (result.user) {
       clearAttempts();
       let setupComplete = true;
@@ -255,13 +281,13 @@ async function handleLogin(e) {
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
-        window.location.href = setupComplete ? 'overview.html' : 'play.html';
+        redirectOnLogin(setupComplete);
       }, 1200);
     }
   } catch (err) {
-    showMessage('error', `Unexpected error: ${err.message}`);
-    await logAttempt(email, false);
-    recordAttempt();
+    showLoginError(`Unexpected error: ${err.message}`);
+    recordLoginAttempt(email, false);
+    blockAfterFailedAttempts();
   } finally {
     resetLoginButton();
     toggleLoading(false);
