@@ -40,3 +40,13 @@ def test_require_active_user_blocks_banned(db_session, monkeypatch):
             authorization=f"Bearer {token}", x_user_id="u2", db=db_session
         )
     assert exc.value.status_code == 403
+
+
+def test_require_active_user_allows_token_with_aud(db_session, monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    setup_user(db_session, "u3", False)
+    token = jwt.encode({"sub": "u3", "aud": "authenticated"}, "secret", algorithm="HS256")
+    uid = require_active_user_id(
+        authorization=f"Bearer {token}", x_user_id="u3", db=db_session
+    )
+    assert uid == "u3"
