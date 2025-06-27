@@ -22,7 +22,9 @@ body {
   box-shadow: 0 6px 14px var(--shadow);
   padding: 2rem;
   width: 100%;
+  max-width: 600px;
   margin-bottom: 2rem;
+
 }
 
 .signup-panel {
