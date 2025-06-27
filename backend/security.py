@@ -154,7 +154,7 @@ def require_user_id(
 
 
 def require_active_user_id(
-    request: Request | None = None,
+    request: Request = None,
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
     db: Session = Depends(get_db),

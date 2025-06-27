@@ -141,7 +141,7 @@ def request_password_reset(
 # Route: Verify Reset Code
 # ---------------------------------------------
 @router.post("/verify-reset-code")
-def verify_reset_code(payload: CodePayload, request: Request | None = None):
+def verify_reset_code(payload: CodePayload, request: Request = None):
     _prune_expired()
     token_hash = _hash_token(payload.code)
     record = RESET_STORE.get(token_hash)
@@ -170,7 +170,7 @@ def verify_reset_code(payload: CodePayload, request: Request | None = None):
 def set_new_password(
     payload: PasswordPayload,
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    request: Request = None,
 ):
     _prune_expired()
 
