@@ -6,6 +6,19 @@ from fastapi import HTTPException
 from backend.routers import session
 
 
+class DummyResponse:
+    def __init__(self):
+        self.cookies = {}
+
+    def set_cookie(self, name, value, httponly=False, secure=False, samesite=None):
+        self.cookies[name] = {
+            "value": value,
+            "httponly": httponly,
+            "secure": secure,
+            "samesite": samesite,
+        }
+
+
 class DummyAuth:
     def __init__(self, user):
         self._user = user
@@ -23,9 +36,10 @@ class DummySupabase:
 
 def make_request(token=None):
     headers = {}
+    cookies = {}
     if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return type("Req", (), {"headers": headers})()
+        cookies["session_token"] = token
+    return type("Req", (), {"headers": headers, "cookies": cookies})()
 
 
 def test_validate_success(monkeypatch):
@@ -52,4 +66,15 @@ def test_invalid_token(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         asyncio.run(session.validate_session(req))
     assert exc.value.status_code == 401
+
+
+def test_store_cookie():
+    resp = DummyResponse()
+    result = session.store_session_cookie(session.TokenPayload(token="abc"), resp)
+    assert result["stored"] is True
+    c = resp.cookies.get("session_token")
+    assert c and c["value"] == "abc"
+    assert c["httponly"]
+    assert c["secure"]
+    assert c["samesite"] == "strict"
 
