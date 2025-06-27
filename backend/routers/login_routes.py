@@ -89,7 +89,13 @@ def log_login_event(
     Returns:
         - Success message after recording the event
     """
-    log_action(db, user_id, "login_event", payload.event)
+    ip = request.headers.get("x-forwarded-for")
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    if not ip:
+        ip = request.client.host if request.client else ""
+    agent = request.headers.get("user-agent", "")
+    log_action(db, user_id, "login_event", payload.event, ip, agent)
     return {"message": "event logged"}
 
 
@@ -103,7 +109,13 @@ def record_login_attempt(request: Request, payload: AttemptPayload, db: Session 
     ).fetchone()
     user_id = row[0] if row else None
     action = "login_success" if payload.success else "login_fail"
-    log_action(db, user_id, action, payload.email.lower())
+    ip = request.headers.get("x-forwarded-for")
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    if not ip:
+        ip = request.client.host if request.client else ""
+    agent = request.headers.get("user-agent", "")
+    log_action(db, user_id, action, payload.email.lower(), ip, agent)
     return {"logged": True}
 
 

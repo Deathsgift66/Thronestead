@@ -21,17 +21,30 @@ DELETED_PLACEHOLDER = "[deleted_user]"
 # ------------------------
 
 
-def log_action(db: Session, user_id: Optional[str], action: str, details: str) -> None:
+def log_action(
+    db: Session,
+    user_id: Optional[str],
+    action: str,
+    details: str,
+    ip_address: str | None = None,
+    device_info: str | None = None,
+) -> None:
     """Insert a global user action into the audit_log table."""
     try:
         db.execute(
             text(
                 """
-                INSERT INTO audit_log (user_id, action, details)
-                VALUES (:uid, :act, :det)
+                INSERT INTO audit_log (user_id, action, details, ip_address, device_info)
+                VALUES (:uid, :act, :det, :ip, :dev)
             """
             ),
-            {"uid": user_id, "act": action, "det": details},
+            {
+                "uid": user_id,
+                "act": action,
+                "det": details,
+                "ip": ip_address,
+                "dev": device_info,
+            },
         )
         db.commit()
     except SQLAlchemyError as e:
