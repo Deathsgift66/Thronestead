@@ -37,9 +37,11 @@ def verify_reset_code(payload: CodePayload, request: Request):
 
 
 @router.post("/set-new-password")
-def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
+def set_new_password(
+    payload: PasswordPayload, request: Request, db: Session = Depends(get_db)
+):
     """Wrapper for forgot_password.set_new_password."""
-    return _set_new_password(payload, db)
+    return _set_new_password(payload, db, request)
 
 
 @router.get("/validate-session")
