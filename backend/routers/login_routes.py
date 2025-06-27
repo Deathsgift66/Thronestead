@@ -11,19 +11,27 @@ Version: 2025-06-21
 """
 
 import logging
+import time
+from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
+import pyotp
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
 from services.audit_service import log_action
+from services.email_service import send_email
 
 from ..database import get_db
 from ..security import verify_jwt_token, has_active_ban
 from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
+
+# In-memory tracking for failed authentication attempts
+FAILED_LOGINS: defaultdict[str, int] = defaultdict(int)
+LOCKOUT_UNTIL: defaultdict[str, float] = defaultdict(float)
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
@@ -125,9 +133,11 @@ def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends
 class AuthPayload(BaseModel):
     email: EmailStr
     password: str
+    otp: str | None = None
 
 
 @router.post("/authenticate")
+@limiter.limit("10/minute")
 def authenticate(
     request: Request,
     payload: AuthPayload,
@@ -140,6 +150,11 @@ def authenticate(
     if not ip:
         ip = request.client.host if request.client else ""
     device_hash = request.headers.get("X-Device-Hash")
+
+    key = f"{payload.email.lower()}_{ip}"
+    now = time.time()
+    if now < LOCKOUT_UNTIL.get(key, 0):
+        raise HTTPException(status_code=429, detail="Too many attempts. Try later.")
 
     if has_active_ban(db, ip=ip, device_hash=device_hash):
         raise HTTPException(status_code=403, detail="Access banned")
@@ -164,7 +179,15 @@ def authenticate(
         user = getattr(res, "user", None)
 
     if error or not session:
+        FAILED_LOGINS[key] += 1
+        delays = [0, 10, 30, 60, 120]
+        count = FAILED_LOGINS[key]
+        delay = delays[count - 1] if count <= len(delays) else delays[-1] * (count - len(delays) + 1)
+        LOCKOUT_UNTIL[key] = now + delay
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    else:
+        FAILED_LOGINS.pop(key, None)
+        LOCKOUT_UNTIL.pop(key, None)
 
     confirmed = bool(
         user
@@ -195,7 +218,8 @@ def authenticate(
         pass
     row = db.execute(
         text(
-            "SELECT username, kingdom_id, alliance_id, setup_complete FROM users WHERE user_id = :uid"
+            "SELECT username, kingdom_id, alliance_id, setup_complete, is_deleted, two_factor_secret, email"
+            " FROM users WHERE user_id = :uid"
         ),
         {"uid": uid},
     ).fetchone()
@@ -204,6 +228,34 @@ def authenticate(
     kingdom_id = row[1] if row else None
     alliance_id = row[2] if row else None
     setup_complete = bool(row[3]) if row else False
+    is_deleted = bool(row[4]) if row else False
+    otp_secret = row[5] if row else None
+    email = row[6] if row else None
+
+    if is_deleted:
+        raise HTTPException(status_code=403, detail="Account is deleted.")
+
+    if otp_secret:
+        if not payload.otp:
+            raise HTTPException(status_code=401, detail="Two-factor code required")
+        totp = pyotp.TOTP(otp_secret)
+        if not totp.verify(payload.otp, valid_window=1):
+            raise HTTPException(status_code=401, detail="Invalid two-factor code")
+
+    try:
+        existing = (
+            sb.table("user_active_sessions")
+            .select("id")
+            .eq("user_id", uid)
+            .eq("ip_address", ip)
+            .eq("device_info", agent)
+            .limit(1)
+            .execute()
+        )
+        if not getattr(existing, "data", existing):
+            send_email(email, "New Login", f"New login from {agent} at {ip}")
+    except Exception:
+        pass
 
     return {
         "session": session,

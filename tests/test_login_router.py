@@ -176,7 +176,7 @@ class DummyDBAuth:
             self.updated = True
         class R:
             def fetchone(self):
-                return ("name", 1, 2, True)
+                return ("name", 1, 2, True, False, None, "e@example.com")
 
         return R()
 
@@ -216,6 +216,28 @@ def test_authenticate_failure():
     with pytest.raises(HTTPException) as exc:
         login_routes.authenticate(req, payload, db=db)
     assert exc.value.status_code == 500
+
+
+class DummyDBDeleted(DummyDBAuth):
+    def execute(self, query, *args, **kwargs):
+        if "UPDATE users SET last_login_at" in str(query):
+            self.updated = True
+        class R:
+            def fetchone(self):
+                return ("name", 1, 2, True, True, None, "e@example.com")
+
+        return R()
+
+
+def test_authenticate_deleted_account():
+    client = DummyClientAuth()
+    login_routes.get_supabase_client = lambda: client
+    db = DummyDBDeleted()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(req, payload, db=db)
+    assert exc.value.status_code == 403
 
 
 class DummyDBAttempt:
