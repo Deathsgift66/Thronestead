@@ -105,19 +105,20 @@ def test_device_ban_blocks_request(db_session, monkeypatch):
         )
 
 
-def test_verify_reauth_token_valid(monkeypatch):
+def test_verify_reauth_token_valid(monkeypatch, db_session):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
     token = token_for("u6", "secret")
-    rtok = security.create_reauth_token("u6", ttl=60)
+    rtok = security.create_reauth_token(db_session, "u6", ttl=60)
     uid = security.verify_reauth_token(
         x_reauth_token=rtok,
         authorization=f"Bearer {token}",
         x_user_id="u6",
+        db=db_session,
     )
     assert uid == "u6"
 
 
-def test_verify_reauth_token_invalid(monkeypatch):
+def test_verify_reauth_token_invalid(monkeypatch, db_session):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
     token = token_for("u7", "secret")
     with pytest.raises(HTTPException):
@@ -125,4 +126,5 @@ def test_verify_reauth_token_invalid(monkeypatch):
             x_reauth_token="bad",
             authorization=f"Bearer {token}",
             x_user_id="u7",
+            db=db_session,
         )

@@ -14,6 +14,7 @@ import logging
 import os
 import time
 import uuid
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request
@@ -33,6 +34,7 @@ __all__ = [
     "get_current_user",
     "verify_reauth_token",
     "create_reauth_token",
+    "validate_reauth_token",
 ]
 
 
@@ -230,29 +232,46 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
 # Re-authentication Token Handling
 # ------------------------------------------------------------
 
-REAUTH_TOKENS: dict[str, tuple[str, float]] = {}
 
-
-def create_reauth_token(user_id: str, ttl: int = 300) -> str:
-    """Generate a short-lived token for sensitive actions."""
+def create_reauth_token(db: Session, user_id: str, ttl: int = 300) -> str:
+    """Generate and persist a short-lived token for sensitive actions."""
     token = uuid.uuid4().hex
-    REAUTH_TOKENS[user_id] = (token, time.time() + ttl)
+    expires = datetime.utcnow() + timedelta(seconds=ttl)
+    db.execute(
+        text(
+            """
+            INSERT INTO reauth_tokens (user_id, token, expires_at)
+            VALUES (:uid, :tok, :exp)
+            ON CONFLICT (user_id)
+            DO UPDATE SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at,
+                          created_at = now()
+            """
+        ),
+        {"uid": user_id, "tok": token, "exp": expires},
+    )
+    db.commit()
     return token
+
+
+def validate_reauth_token(db: Session, user_id: str, token: str) -> bool:
+    """Return True if the token matches and has not expired."""
+    row = db.execute(
+        text(
+            "SELECT expires_at FROM reauth_tokens WHERE user_id = :uid AND token = :tok"
+        ),
+        {"uid": user_id, "tok": token},
+    ).fetchone()
+    return bool(row and row[0] > datetime.utcnow())
 
 
 def verify_reauth_token(
     x_reauth_token: str | None = Header(None, alias="X-Reauth-Token"),
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
+    db: Session = Depends(get_db),
 ) -> str:
     """Validate a short-lived re-authentication token for the user."""
     user_id = verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
-    record = REAUTH_TOKENS.get(user_id)
-    if (
-        not x_reauth_token
-        or not record
-        or record[0] != x_reauth_token
-        or record[1] < time.time()
-    ):
+    if not x_reauth_token or not validate_reauth_token(db, user_id, x_reauth_token):
         raise HTTPException(status_code=401, detail="Invalid re-auth token")
     return user_id
