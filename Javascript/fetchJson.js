@@ -25,6 +25,10 @@ export async function fetchJson(url, options = {}, timeoutMs = 8000) {
     const contentType = res.headers.get('content-type') || '';
     if (!res.ok) {
       const message = await res.text();
+      if (res.status === 403 && message.toLowerCase().includes('banned')) {
+        window.location.href = 'you_are_banned.html';
+        throw new Error('Account banned');
+      }
       throw new Error(`Request failed (${res.status}): ${message || res.statusText}`);
     }
     if (!contentType.includes('application/json')) {

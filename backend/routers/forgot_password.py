@@ -27,13 +27,7 @@ from services.audit_service import log_action
 
 from ..database import get_db
 from ..supabase_client import get_supabase_client
-
-
-def send_email(to_email: str, subject: str, body: str) -> None:
-    """Minimal email sending stub logging the intended message."""
-    logging.getLogger("Thronestead.Email").info(
-        "Sending email to %s with subject %s: %s", to_email, subject, body
-    )
+from services.email_service import send_email
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
