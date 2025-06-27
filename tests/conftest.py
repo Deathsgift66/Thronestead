@@ -12,7 +12,7 @@ def db_session():
     Base.metadata.create_all(engine)
     engine.execute(
         text(
-            "CREATE TABLE IF NOT EXISTS audit_log (log_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, action TEXT, details TEXT, created_at TEXT)"
+            "CREATE TABLE IF NOT EXISTS audit_log (log_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, action TEXT, details TEXT, ip_address TEXT, device_info TEXT, created_at TEXT)"
         )
     )
     Session = sessionmaker(bind=engine)

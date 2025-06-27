@@ -209,7 +209,7 @@ def test_authenticate_invalid():
     login_routes.get_supabase_client = lambda: DummyClientAuth("error")
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
-    req = DummyRequest()
+    req = DummyRequest(headers={"User-Agent": "UA"})
     with pytest.raises(HTTPException) as exc:
         login_routes.authenticate(req, payload, db=db)
     assert exc.value.status_code == 401
@@ -219,7 +219,7 @@ def test_authenticate_failure():
     login_routes.get_supabase_client = lambda: DummyClientAuth("fail")
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
-    req = DummyRequest()
+    req = DummyRequest(headers={"User-Agent": "UA"})
     with pytest.raises(HTTPException) as exc:
         login_routes.authenticate(req, payload, db=db)
     assert exc.value.status_code == 500
@@ -245,31 +245,35 @@ class DummyDBAttempt:
 def test_record_login_attempt_success():
     captured = {}
 
-    def fake_log_action(_db, user_id, action, details):
+    def fake_log_action(_db, user_id, action, details, ip=None, dev=None):
         captured["uid"] = user_id
         captured["action"] = action
+        captured["ip"] = ip
+        captured["dev"] = dev
 
     login_routes.log_action = fake_log_action
     db = DummyDBAttempt(uid="u1")
     payload = login_routes.AttemptPayload(email="Test@Ex.com", success=True)
-    req = DummyRequest()
+    req = DummyRequest(headers={"User-Agent": "UA"})
     res = login_routes.record_login_attempt(req, payload, db=db)
     assert res["logged"] is True
     assert captured["uid"] == "u1"
     assert captured["action"] == "login_success"
+    assert captured["ip"] == "1.1.1.1"
+    assert captured["dev"] == "UA"
 
 
 def test_record_login_attempt_fail_no_user():
     captured = {}
 
-    def fake_log_action(_db, user_id, action, details):
+    def fake_log_action(_db, user_id, action, details, ip=None, dev=None):
         captured["uid"] = user_id
         captured["action"] = action
 
     login_routes.log_action = fake_log_action
     db = DummyDBAttempt(uid=None)
     payload = login_routes.AttemptPayload(email="none@example.com", success=False)
-    req = DummyRequest()
+    req = DummyRequest(headers={"User-Agent": "UA"})
     res = login_routes.record_login_attempt(req, payload, db=db)
     assert res["logged"] is True
     assert captured["uid"] is None

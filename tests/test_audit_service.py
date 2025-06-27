@@ -44,15 +44,17 @@ class DummyDB:
 
 def test_log_action_inserts():
     db = DummyDB()
-    log_action(db, "u1", "create_kingdom", "Created kingdom")
+    log_action(db, "u1", "create_kingdom", "Created kingdom", "1.1.1.1", "UA")
     assert len(db.inserts) == 1
     assert db.inserts[0]["uid"] == "u1"
     assert db.inserts[0]["act"] == "create_kingdom"
+    assert db.inserts[0]["ip"] == "1.1.1.1"
+    assert db.inserts[0]["dev"] == "UA"
 
 
 def test_fetch_logs_returns_rows():
     db = DummyDB()
-    db.select_rows = [(1, "u1", "start_war", "vs 2", "2025-01-01")]
+    db.select_rows = [(1, "u1", "start_war", "vs 2", "ip", "dev", "2025-01-01")]
     logs = fetch_logs(db, "u1", 10)
     assert len(logs) == 1
     assert logs[0]["action"] == "start_war"
@@ -66,7 +68,7 @@ def test_log_alliance_activity_inserts():
 
 def test_fetch_filtered_logs_params():
     db = DummyDB()
-    db.select_rows = [(1, "u1", "login", "success", "2025-01-01")]
+    db.select_rows = [(1, "u1", "login", "success", "ip", "dev", "2025-01-01")]
     logs = fetch_filtered_logs(db, user_id="u1", action="log", limit=5)
     assert len(logs) == 1
     q, params = db.queries[-1]
