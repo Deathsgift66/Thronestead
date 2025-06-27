@@ -31,6 +31,7 @@ from services.email_service import send_email
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+logger = logging.getLogger("Thronestead.PasswordReset")
 
 # ---------------------------------------------
 # Configuration + In-memory Stores
@@ -89,6 +90,14 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+def mask_email(email: str) -> str:
+    """Return masked representation of an email."""
+    local, _, domain = email.partition("@")
+    if not local:
+        return f"***@{domain}"
+    return f"{local[0]}***@{domain}"
+
+
 # ---------------------------------------------
 # Route: Request Password Reset
 # ---------------------------------------------
@@ -110,9 +119,7 @@ def request_password_reset(
         RESET_STORE[token_hash] = (str(user.user_id), time.time() + TOKEN_TTL)
 
         send_email(user.email, subject="Reset Code", body=token)
-        logging.getLogger("Thronestead.PasswordReset").info(
-            "Password reset token generated for %s", user.email
-        )
+        logger.info("Reset requested for %s", mask_email(user.email))
 
     return {"message": "If the email exists, a reset link has been sent."}
 
@@ -164,9 +171,7 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
         sb = get_supabase_client()
         sb.auth.admin.update_user_by_id(uid, {"password": payload.new_password})
     except Exception as exc:  # pragma: no cover - runtime dependency
-        logging.getLogger("Thronestead.PasswordReset").exception(
-            "Failed to update password for user %s", uid
-        )
+        logger.exception("Failed to update password for user %s", uid)
         raise HTTPException(status_code=500, detail="Password update failed") from exc
 
     db.execute(
