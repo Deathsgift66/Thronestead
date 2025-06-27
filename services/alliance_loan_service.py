@@ -66,9 +66,11 @@ def list_loans(db: Session, alliance_id: int) -> list[dict]:
     loans = db.execute(
         text(
             """
-            SELECT * FROM alliance_loans
-            WHERE alliance_id = :aid
-            ORDER BY loan_id
+            SELECT al.*
+              FROM alliance_loans al
+              JOIN users u ON u.user_id = al.borrower_user_id
+             WHERE al.alliance_id = :aid AND NOT u.is_banned
+             ORDER BY al.loan_id
             """
         ),
         {"aid": alliance_id},

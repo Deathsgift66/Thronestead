@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, require_active_user_id
 from ..enums import WarPhase
 
 router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
@@ -72,7 +72,7 @@ class SurrenderPayload(BaseModel):
 @router.post("/declare")
 def declare_war(
     payload: DeclarePayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     aid = validate_alliance_permission(db, user_id, "can_manage_wars")
@@ -103,7 +103,7 @@ def declare_war(
 @router.post("/respond")
 def respond_war(
     payload: RespondPayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     status = "active" if payload.action == "accept" else "cancelled"
@@ -142,7 +142,7 @@ def respond_war(
 @router.post("/surrender")
 def surrender_war(
     payload: SurrenderPayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     victor = "defender" if payload.side == "attacker" else "attacker"
@@ -268,7 +268,7 @@ def get_scoreboard(alliance_war_id: int, db: Session = Depends(get_db)):
 @router.post("/join")
 def join_war(
     payload: JoinPayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     from .progression_router import get_kingdom_id
@@ -371,7 +371,7 @@ def get_preplan(
 @router.post("/preplan/submit")
 def submit_preplan(
     payload: PreplanPayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     from .progression_router import get_kingdom_id

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend.models import AllianceLoan, AllianceLoanRepayment, User
 from services.alliance_loan_service import create_loan, list_loans, repay_schedule
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, require_active_user_id
 
 router = APIRouter(prefix="/api/alliance-loans", tags=["alliance_loans"])
 
@@ -52,7 +52,7 @@ def list_alliance_loans(
 @router.post("/create")
 def create_alliance_loan(
     payload: LoanCreatePayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     aid, role = get_alliance_info(db, user_id)
@@ -79,7 +79,7 @@ def create_alliance_loan(
 @router.post("/repay")
 def repay_loan(
     payload: RepayPayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     # Ensure the repayment entry exists and belongs to user's alliance

@@ -13,14 +13,14 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
-from backend.models import War
+from backend.models import War, User
 from services.audit_service import log_action
 from services.vacation_mode_service import check_vacation_mode
 
 from ..database import get_db
-from ..security import verify_jwt_token
+from ..security import verify_jwt_token, require_active_user_id
 from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/wars", tags=["wars"])
@@ -35,7 +35,7 @@ class DeclarePayload(BaseModel):
 @router.post("/declare")
 def declare_war(
     payload: DeclarePayload,
-    user_id: str = Depends(verify_jwt_token),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     """
@@ -113,7 +113,17 @@ def list_wars(
     List the most recent wars, sorted by start date.
     Limited to 25 entries.
     """
-    rows = db.query(War).order_by(War.start_date.desc()).limit(25).all()
+    Attacker = aliased(User)
+    Defender = aliased(User)
+    rows = (
+        db.query(War)
+        .join(Attacker, Attacker.user_id == War.attacker_id)
+        .join(Defender, Defender.user_id == War.defender_id)
+        .filter(~Attacker.is_banned, ~Defender.is_banned)
+        .order_by(War.start_date.desc())
+        .limit(25)
+        .all()
+    )
     return {"wars": [_serialize_war(w) for w in rows]}
 
 
@@ -126,7 +136,15 @@ def view_war(
     """
     View full details for a single war by ID.
     """
-    war = db.query(War).filter(War.war_id == war_id).first()
+    Attacker = aliased(User)
+    Defender = aliased(User)
+    war = (
+        db.query(War)
+        .join(Attacker, Attacker.user_id == War.attacker_id)
+        .join(Defender, Defender.user_id == War.defender_id)
+        .filter(War.war_id == war_id, ~Attacker.is_banned, ~Defender.is_banned)
+        .first()
+    )
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
     return {"war": _serialize_war(war)}

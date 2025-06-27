@@ -16,8 +16,8 @@ from services.resource_service import gain_resources, spend_resources
 from services.trade_log_service import record_trade
 
 from ..database import get_db
-from ..models import MarketListing, TradeLog
-from ..security import verify_jwt_token
+from ..models import MarketListing, TradeLog, User
+from ..security import verify_jwt_token, require_active_user_id
 from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/market", tags=["market"])
@@ -46,7 +46,11 @@ def get_listings(
     page_size: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    query = db.query(MarketListing)
+    query = (
+        db.query(MarketListing)
+        .outerjoin(User, User.user_id == MarketListing.seller_id)
+        .filter(or_(User.is_banned.is_(False), MarketListing.seller_id.is_(None)))
+    )
     if item:
         query = query.filter(MarketListing.item == item)
     if min_price is not None:
@@ -85,7 +89,7 @@ def get_listings(
 @router.post("/list")
 def list_item(
     payload: ListingPayload,
-    user_id: str = Depends(verify_jwt_token),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     if payload.item_type not in {"resource", "equipment"}:
@@ -145,7 +149,7 @@ def list_item(
 @router.delete("/listing/{listing_id}")
 def cancel_listing(
     listing_id: int,
-    user_id: str = Depends(verify_jwt_token),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     listing = (
@@ -186,7 +190,7 @@ def cancel_listing(
 @router.post("/buy")
 def buy_item(
     payload: BuyPayload,
-    user_id: str = Depends(verify_jwt_token),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     listing = db.query(MarketListing).filter_by(listing_id=payload.listing_id).first()

@@ -19,7 +19,7 @@ from services.audit_service import log_action, log_alliance_activity
 from services.alliance_service import get_alliance_id
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, require_active_user_id
 
 router = APIRouter(prefix="/api/alliance-treaties", tags=["alliance_treaties"])
 alt_router = APIRouter(prefix="/api/alliance/treaties", tags=["alliance_treaties"])
@@ -111,7 +111,7 @@ def get_my_treaties(
 @router.post("/propose")
 def propose_treaty(
     payload: ProposePayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     aid = validate_alliance_permission(db, user_id, "can_manage_treaties")
@@ -149,7 +149,7 @@ def propose_treaty(
 @alt_router.post("/propose")
 def alt_propose_treaty(
     payload: ProposePayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     """Alias for :func:`propose_treaty` using REST-style path."""
@@ -159,7 +159,7 @@ def alt_propose_treaty(
 @router.post("/respond")
 def respond_to_treaty(
     payload: RespondPayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     treaty = db.execute(
@@ -202,7 +202,7 @@ def respond_to_treaty(
 @router.post("/renew")
 def renew_treaty(
     treaty_id: int,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ):
     row = db.execute(
