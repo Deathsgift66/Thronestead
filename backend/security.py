@@ -64,7 +64,12 @@ def verify_jwt_token(
 
     jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
     try:
-        payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+        payload = jwt.decode(
+            token,
+            jwt_secret,
+            algorithms=["HS256"],
+            options={"verify_aud": False},
+        )
     except JWTError:
         logger.warning("JWT signature verification failed.")
         raise HTTPException(status_code=401, detail="Invalid token")
