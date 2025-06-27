@@ -19,6 +19,30 @@ document.addEventListener("DOMContentLoaded", () => {
     if (menu) {
       menu.setAttribute("role", "menu");
       menu.id = `dropdown-menu-${index}`;
+
+      // Make menu items focusable
+      const items = menu.querySelectorAll('[role="menuitem"]');
+      items.forEach((item) => item.setAttribute('tabindex', '0'));
+
+      // Trap focus within the menu
+      menu.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab' && items.length > 0) {
+          const first = items[0];
+          const last = items[items.length - 1];
+
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          } else if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else if (e.key === 'Escape') {
+          dropdown.classList.remove('show');
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.focus();
+        }
+      });
     }
 
     toggle.addEventListener("click", (e) => {
@@ -38,6 +62,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!isOpen) {
         dropdown.classList.add("show");
         toggle.setAttribute("aria-expanded", "true");
+        const firstItem = dropdown
+          .querySelector('.dropdown-menu [role="menuitem"]');
+        if (firstItem) firstItem.focus();
       }
     });
   });
