@@ -28,6 +28,7 @@ from services.audit_service import log_action
 from ..database import get_db
 from ..supabase_client import get_supabase_client
 from services.email_service import send_email
+from services.password_security import is_pwned_password
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -178,6 +179,9 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
         and re.search(r"[0-9]", payload.new_password)
     ):
         raise HTTPException(status_code=400, detail="Password too weak")
+
+    if is_pwned_password(payload.new_password):
+        raise HTTPException(status_code=400, detail="Password found in breach")
 
     try:
         sb = get_supabase_client()
