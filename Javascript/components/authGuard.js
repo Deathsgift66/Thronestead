@@ -8,6 +8,7 @@ import {
   loadPlayerProgressionFromStorage,
 } from '../progressionGlobal.js';
 import { authJsonFetch } from '../utils.js';
+import { startSessionRefresh } from '../auth.js';
 
 // These values can be overridden by setting them on the global window object
 // before this script is loaded. This allows pages to enforce additional access
@@ -63,6 +64,8 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       }
       sessionUser = refreshed.user;
     }
+
+    startSessionRefresh();
 
     const { data: userData, error: userError } = await supabase
       .from("users")

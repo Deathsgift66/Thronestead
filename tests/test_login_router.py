@@ -37,8 +37,9 @@ class DummyClient:
 
 
 class DummyRequest:
-    def __init__(self, host="1.1.1.1"):
+    def __init__(self, host="1.1.1.1", headers=None):
         self.client = type("c", (), {"host": host})
+        self.headers = headers or {}
 
 
 def test_announcements_returned():
@@ -140,6 +141,7 @@ class DummyClientAuth:
     def __init__(self, mode="ok"):
         self.mode = mode
         self.auth = self
+        self.inserted = None
 
     def sign_in_with_password(self, *_args, **_kwargs):
         if self.mode == "error":
@@ -147,6 +149,22 @@ class DummyClientAuth:
         if self.mode == "fail":
             raise Exception("fail")
         return {"session": "token", "user": {"id": "u1", "confirmed_at": "now"}}
+
+    def table(self, name):
+        assert name == "user_active_sessions"
+
+        class T:
+            def __init__(self, parent):
+                self.parent = parent
+
+            def insert(self, data):
+                self.parent.inserted = data
+                return self
+
+            def execute(self):
+                return {}
+
+        return T(self)
 
 
 class DummyDBAuth:
@@ -164,24 +182,29 @@ class DummyDBAuth:
 
 
 def test_authenticate_success():
-    login_routes.get_supabase_client = lambda: DummyClientAuth()
+    client = DummyClientAuth()
+    login_routes.get_supabase_client = lambda: client
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
-    res = login_routes.authenticate(payload, db=db)
+    req = DummyRequest(headers={"User-Agent": "UA"})
+    res = login_routes.authenticate(req, payload, db=db)
     assert res["session"] == "token"
     assert res["username"] == "name"
     assert res["kingdom_id"] == 1
     assert res["alliance_id"] == 2
     assert res["setup_complete"] is True
     assert db.updated is True
+    assert client.inserted["ip_address"] == "1.1.1.1"
+    assert client.inserted["device_info"] == "UA"
 
 
 def test_authenticate_invalid():
     login_routes.get_supabase_client = lambda: DummyClientAuth("error")
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
     with pytest.raises(HTTPException) as exc:
-        login_routes.authenticate(payload, db=db)
+        login_routes.authenticate(req, payload, db=db)
     assert exc.value.status_code == 401
 
 
@@ -189,8 +212,9 @@ def test_authenticate_failure():
     login_routes.get_supabase_client = lambda: DummyClientAuth("fail")
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
     with pytest.raises(HTTPException) as exc:
-        login_routes.authenticate(payload, db=db)
+        login_routes.authenticate(req, payload, db=db)
     assert exc.value.status_code == 500
 
 

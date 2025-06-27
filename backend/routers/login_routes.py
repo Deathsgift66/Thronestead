@@ -129,7 +129,9 @@ class AuthPayload(BaseModel):
 
 @router.post("/authenticate")
 def authenticate(
-    payload: AuthPayload, db: Session = Depends(get_db)
+    request: Request,
+    payload: AuthPayload,
+    db: Session = Depends(get_db),
 ) -> dict:
     """Validate credentials with Supabase and return session plus profile info."""
     sb = get_supabase_client()
@@ -167,11 +169,23 @@ def authenticate(
         raise HTTPException(status_code=401, detail="Email not confirmed")
 
     uid = getattr(user, "id", None) or (isinstance(user, dict) and user.get("id"))
+    ip = request.headers.get("x-forwarded-for")
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    if not ip:
+        ip = request.client.host if request.client else ""
+    agent = request.headers.get("user-agent", "")
     db.execute(
         text("UPDATE users SET last_login_at = now() WHERE user_id = :uid"),
         {"uid": uid},
     )
     db.commit()
+    try:  # pragma: no cover - ignore failures
+        sb.table("user_active_sessions").insert(
+            {"user_id": uid, "ip_address": ip, "device_info": agent}
+        ).execute()
+    except Exception:
+        pass
     row = db.execute(
         text(
             "SELECT username, kingdom_id, alliance_id, setup_complete FROM users WHERE user_id = :uid"

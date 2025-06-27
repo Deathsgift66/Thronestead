@@ -11,6 +11,7 @@ import {
   clearStoredAuth,
   refreshSessionAndStore,
   authHeaders,
+  startSessionRefresh,
 } from './auth.js';
 import { containsBannedContent } from './content_filter.js';
 import { initThemeToggle } from './themeToggle.js';
@@ -128,6 +129,11 @@ export async function loginExecute(email, password, remember = false) {
     });
     if (error || !data?.session) {
       showMessage('error', error?.message || '❌ Invalid credentials.');
+      return null;
+    }
+    if (!data.user?.email_confirmed_at && !data.user?.confirmed_at) {
+      showMessage('error', 'Please verify your email before logging in.');
+      await supabase.auth.signOut();
       return null;
     }
     const storage = remember ? localStorage : sessionStorage;
@@ -305,6 +311,7 @@ async function handleLogin(e) {
 
       // Update in-memory auth cache for current page
       setAuthCache(userInfo, result.session);
+      startSessionRefresh();
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
