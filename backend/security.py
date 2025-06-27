@@ -26,6 +26,7 @@ logger = logging.getLogger("Thronestead.Security")
 __all__ = [
     "verify_jwt_token",
     "require_user_id",
+    "require_active_user_id",
     "verify_api_key",
     "get_current_user",
 ]
@@ -110,6 +111,22 @@ def require_user_id(
         verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
 
     return x_user_id
+
+
+def require_active_user_id(
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+    db: Session = Depends(get_db),
+) -> str:
+    """Return the verified user ID if the account is not banned."""
+    user_id = verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+    banned = db.execute(
+        text("SELECT is_banned FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).scalar()
+    if banned:
+        raise HTTPException(403, "You are banned from this feature.")
+    return user_id
 
 
 def verify_api_key(x_api_key: str = Header(...)):

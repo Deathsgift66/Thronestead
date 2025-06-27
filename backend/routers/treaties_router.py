@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from ..data import alliance_treaties, kingdom_treaties
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, require_active_user_id
 from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api", tags=["treaties"])
@@ -42,7 +42,9 @@ def list_alliance_treaties() -> dict:
 
 
 @router.post("/alliance/treaties", summary="Propose an alliance treaty")
-def propose_alliance_treaty(payload: TreatyPayload) -> dict:
+def propose_alliance_treaty(
+    payload: TreatyPayload, user_id: str = Depends(require_active_user_id)
+) -> dict:
     """
     Submit a new treaty proposal to the alliance (stubbed as alliance_id=1).
     """
@@ -65,7 +67,7 @@ async def list_kingdom_treaties(
 @router.post("/kingdom/treaties", summary="Propose a kingdom treaty")
 def propose_kingdom_treaty(
     payload: TreatyPayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(require_active_user_id),
     db: Session = Depends(get_db),
 ) -> dict:
     """
