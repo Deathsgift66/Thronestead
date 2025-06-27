@@ -1,6 +1,10 @@
 
 Auth is handled via **Supabase Client** → included in `supabaseClient.js`.
 
+Password resets performed through the API update the account in Supabase and
+immediately revoke all other refresh tokens via `sign_out_user`. If the reset
+code was verified using a bearer token, that session token is preserved.
+
 New sign-ups automatically create the associated profile and starter kingdom
 records using Supabase row level security.
 
