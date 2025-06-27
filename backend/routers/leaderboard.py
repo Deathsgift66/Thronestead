@@ -154,6 +154,11 @@ def get_leaderboard(
             .execute()
         )
         entries = getattr(result, "data", result) or []
+        entries = [
+            e
+            for e in entries
+            if not (e.get("is_banned") or e.get("status") == "banned")
+        ]
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail="Failed to fetch leaderboard"

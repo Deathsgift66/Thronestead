@@ -89,3 +89,16 @@ def test_kingdom_leaderboard_marks_self_and_limit():
     result = leaderboard.get_leaderboard("kingdoms", limit=1, user_id="u1", db=None)
     assert len(result["entries"]) == 1
     assert result["entries"][0]["is_self"] is True
+
+
+def test_leaderboard_excludes_banned():
+    data = [
+        {"user_id": "u1", "kingdom_name": "A", "rank": 1, "is_banned": True},
+        {"user_id": "u2", "kingdom_name": "B", "rank": 2},
+    ]
+    leaderboard.get_supabase_client = lambda: DummyClient(
+        {"leaderboard_kingdoms": data}
+    )
+    result = leaderboard.get_leaderboard("kingdoms", limit=10, user_id=None, db=None)
+    assert len(result["entries"]) == 1
+    assert result["entries"][0]["user_id"] == "u2"

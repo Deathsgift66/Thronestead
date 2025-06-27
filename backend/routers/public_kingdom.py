@@ -32,7 +32,7 @@ def public_profile(kingdom_id: int, db: Session = Depends(get_db)):
                    economy_score, diplomacy_score,
                    is_on_vacation
             FROM kingdoms
-            WHERE kingdom_id = :kid
+            WHERE kingdom_id = :kid AND status <> 'banned'
             """
         ),
         {"kid": kingdom_id},
@@ -65,6 +65,6 @@ def public_profile(kingdom_id: int, db: Session = Depends(get_db)):
 def kingdom_lookup(db: Session = Depends(get_db)):
     """Return a list of all kingdoms for name linking."""
     rows = db.execute(
-        text("SELECT kingdom_id, kingdom_name FROM kingdoms")
+        text("SELECT kingdom_id, kingdom_name FROM kingdoms WHERE status <> 'banned'")
     ).fetchall()
     return [{"kingdom_id": r[0], "kingdom_name": r[1]} for r in rows]
