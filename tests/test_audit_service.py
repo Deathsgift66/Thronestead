@@ -52,7 +52,7 @@ def test_log_action_inserts():
 
 def test_fetch_logs_returns_rows():
     db = DummyDB()
-    db.select_rows = [(1, "u1", "start_war", "vs 2", "2025-01-01")]
+    db.select_rows = [(1, "u1", False, "start_war", "vs 2", "2025-01-01")]
     logs = fetch_logs(db, "u1", 10)
     assert len(logs) == 1
     assert logs[0]["action"] == "start_war"
@@ -66,13 +66,20 @@ def test_log_alliance_activity_inserts():
 
 def test_fetch_filtered_logs_params():
     db = DummyDB()
-    db.select_rows = [(1, "u1", "login", "success", "2025-01-01")]
+    db.select_rows = [(1, "u1", False, "login", "success", "2025-01-01")]
     logs = fetch_filtered_logs(db, user_id="u1", action="log", limit=5)
     assert len(logs) == 1
     q, params = db.queries[-1]
     assert params["uid"] == "u1"
     assert params["act"] == "%log%"
     assert params["limit"] == 5
+
+
+def test_fetch_logs_masks_deleted_user():
+    db = DummyDB()
+    db.select_rows = [(1, "u1", True, "ban", "Removed", "2025-01-01")]
+    logs = fetch_logs(db, None, 10)
+    assert logs[0]["user_id"] == "[deleted_user]"
 
 
 def test_fetch_user_related_logs_keys():
