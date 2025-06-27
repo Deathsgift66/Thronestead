@@ -38,6 +38,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 RESET_STORE: dict[str, tuple[str, float]] = {}  # token_hash: (user_id, expiry)
 VERIFIED_SESSIONS: dict[str, tuple[str, float]] = {}  # user_id: (token_hash, expiry)
 RATE_LIMIT: dict[str, list[float]] = {}  # IP: [timestamps]
+USER_RATE_LIMIT: dict[str, list[float]] = {}  # user_id: [timestamps]
 
 _token_ttl = os.getenv("PASSWORD_RESET_TOKEN_TTL")
 TOKEN_TTL = int(_token_ttl) if _token_ttl else 900  # 15 minutes
@@ -45,6 +46,8 @@ _session_ttl = os.getenv("PASSWORD_RESET_SESSION_TTL")
 SESSION_TTL = int(_session_ttl) if _session_ttl else 600  # 10 minutes
 _rate_limit = os.getenv("PASSWORD_RESET_RATE_LIMIT")
 RATE_LIMIT_MAX = int(_rate_limit) if _rate_limit else 3  # 3 per hour
+_user_limit = os.getenv("PASSWORD_RESET_USER_LIMIT")
+USER_RATE_LIMIT_MAX = int(_user_limit) if _user_limit else 5  # 5 per hour
 
 
 # ---------------------------------------------
@@ -82,6 +85,11 @@ def _prune_expired() -> None:
         RATE_LIMIT[ip] = [t for t in RATE_LIMIT[ip] if now - t < 3600]
         if not RATE_LIMIT[ip]:
             RATE_LIMIT.pop(ip)
+
+    for uid in list(USER_RATE_LIMIT.keys()):
+        USER_RATE_LIMIT[uid] = [t for t in USER_RATE_LIMIT[uid] if now - t < 3600]
+        if not USER_RATE_LIMIT[uid]:
+            USER_RATE_LIMIT.pop(uid)
 
 
 def _hash_token(token: str) -> str:
@@ -137,7 +145,9 @@ def verify_reset_code(payload: CodePayload):
 # Route: Set New Password
 # ---------------------------------------------
 @router.post("/set-new-password")
-def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
+def set_new_password(
+    payload: PasswordPayload, request: Request, db: Session = Depends(get_db)
+):
     _prune_expired()
 
     token_hash = _hash_token(payload.code)
@@ -149,6 +159,14 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
     session = VERIFIED_SESSIONS.get(uid)
     if not session or session[0] != token_hash or session[1] < time.time():
         raise HTTPException(status_code=400, detail="Reset session expired")
+
+    ip = request.client.host if request.client else ""
+    ip_history = RATE_LIMIT.setdefault(ip, [])
+    user_history = USER_RATE_LIMIT.setdefault(uid, [])
+    if len(ip_history) >= RATE_LIMIT_MAX or len(user_history) >= USER_RATE_LIMIT_MAX:
+        raise HTTPException(status_code=429, detail="Too many requests")
+    ip_history.append(time.time())
+    user_history.append(time.time())
 
     if payload.new_password != payload.confirm_password:
         raise HTTPException(status_code=400, detail="Password mismatch")
