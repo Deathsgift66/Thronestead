@@ -495,6 +495,25 @@ def register(
             {"kid": kid},
         )
 
+        village = db.execute(
+            text(
+                """
+                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type)
+                VALUES (:kid, :name, 'capital')
+                RETURNING village_id
+                """
+            ),
+            {"kid": kid, "name": payload.kingdom_name},
+        ).fetchone()
+        if village:
+            db.execute(
+                text(
+                    "INSERT INTO village_buildings (village_id, building_id, level) "
+                    "VALUES (:vid, 1, 1) ON CONFLICT DO NOTHING"
+                ),
+                {"vid": int(village[0])},
+            )
+
         db.execute(
             text(
                 "INSERT INTO kingdom_vip_status (user_id, vip_level) VALUES (:uid, 0) ON CONFLICT (user_id) DO NOTHING"
