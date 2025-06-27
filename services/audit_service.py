@@ -13,6 +13,9 @@ from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
+# Placeholder returned when a user's profile has been deleted
+DELETED_PLACEHOLDER = "[deleted_user]"
+
 # ------------------------
 # Core Audit Log Functions
 # ------------------------
@@ -46,23 +49,26 @@ def fetch_logs(
     """
     try:
         query = """
-            SELECT log_id, user_id, action, details, created_at
-              FROM audit_log
-             WHERE (:uid IS NULL OR user_id = :uid)
-             ORDER BY created_at DESC
+            SELECT l.log_id, l.user_id, u.is_deleted, l.action, l.details, l.created_at
+              FROM audit_log l
+              LEFT JOIN users u ON u.user_id = l.user_id
+             WHERE (:uid IS NULL OR l.user_id = :uid)
+             ORDER BY l.created_at DESC
              LIMIT :limit
         """
         rows = db.execute(text(query), {"uid": user_id, "limit": limit}).fetchall()
-        return [
-            {
-                "log_id": r[0],
-                "user_id": r[1],
-                "action": r[2],
-                "details": r[3],
-                "created_at": r[4],
-            }
-            for r in rows
-        ]
+        result = []
+        for r in rows:
+            result.append(
+                {
+                    "log_id": r[0],
+                    "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
+                    "action": r[3],
+                    "details": r[4],
+                    "created_at": r[5],
+                }
+            )
+        return result
     except SQLAlchemyError as e:
         logger.exception("Failed to fetch audit logs")
         raise RuntimeError("Audit fetch failed") from e
@@ -111,7 +117,8 @@ def fetch_filtered_logs(
     Filter audit logs by optional user ID, action keyword, and date range.
     """
     query = (
-        "SELECT log_id, user_id, action, details, created_at FROM audit_log WHERE 1=1"
+        "SELECT l.log_id, l.user_id, u.is_deleted, l.action, l.details, l.created_at "
+        "FROM audit_log l LEFT JOIN users u ON l.user_id = u.user_id WHERE 1=1"
     )
     params = {"limit": limit}
     if user_id:
@@ -130,16 +137,18 @@ def fetch_filtered_logs(
 
     try:
         rows = db.execute(text(query), params).fetchall()
-        return [
-            {
-                "log_id": r[0],
-                "user_id": r[1],
-                "action": r[2],
-                "details": r[3],
-                "created_at": r[4],
-            }
-            for r in rows
-        ]
+        result = []
+        for r in rows:
+            result.append(
+                {
+                    "log_id": r[0],
+                    "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
+                    "action": r[3],
+                    "details": r[4],
+                    "created_at": r[5],
+                }
+            )
+        return result
     except SQLAlchemyError as e:
         logger.exception("Filtered audit query failed")
         raise RuntimeError("Filtered audit fetch failed") from e
