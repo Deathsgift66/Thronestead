@@ -370,6 +370,15 @@ View definition
 
 public
 
+alliance_loan_repayments
+
+idx_alliance_loan_repayments_loan_id
+
+
+View definition
+
+public
+
 alliance_loans
 
 idx_alliance_loans_alliance_id
@@ -1831,6 +1840,15 @@ public
 quest_kingdom_tracking
 
 quest_kingdom_tracking_pkey
+
+
+View definition
+
+public
+
+reauth_tokens
+
+reauth_tokens_pkey
 
 
 View definition
