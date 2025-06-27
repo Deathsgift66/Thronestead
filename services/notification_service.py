@@ -11,6 +11,7 @@ import logging
 from datetime import datetime
 
 from backend.models import Notification
+from services.email_service import send_email
 
 try:
     from sqlalchemy import text
@@ -183,6 +184,17 @@ def notify_new_login(
         )
     )
     db.commit()
+
+    email_row = db.execute(
+        text("SELECT email FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    if email_row:
+        send_email(
+            email_row[0],
+            subject="New Device Login",
+            body=f"IP: {ip_address}\nUser-Agent: {device_info}",
+        )
 
 
 # ------------------------------------------------------------------------------
