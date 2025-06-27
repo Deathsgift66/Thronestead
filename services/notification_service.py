@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
+from backend.models import Notification
+
 try:
     from sqlalchemy import text
     from sqlalchemy.orm import Session
@@ -133,6 +135,46 @@ def notify_system_event(
     )
     db.commit()
     logger.info(f"[System Notification] {tag.upper()}: {message}")
+
+
+def notify_new_login(
+    db: Session,
+    user_id: str,
+    ip_address: str,
+    device_info: str,
+) -> None:
+    """Alert the user when a login occurs from a new IP or device."""
+    row = db.execute(
+        text(
+            """
+            SELECT ip_address, device_info
+            FROM user_active_sessions
+            WHERE user_id = :uid
+            ORDER BY created_at DESC
+            LIMIT 1
+        """
+        ),
+        {"uid": user_id},
+    ).fetchone()
+
+    if not row:
+        return
+
+    last_ip, last_device = row
+    if last_ip == ip_address and last_device == device_info:
+        return
+
+    db.add(
+        Notification(
+            user_id=user_id,
+            title="New Login Detected",
+            message="Your account was accessed from a new location.",
+            category="security",
+            priority="high",
+            link_action="/account/recover.html",
+        )
+    )
+    db.commit()
 
 
 # ------------------------------------------------------------------------------
