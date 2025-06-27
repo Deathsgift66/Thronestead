@@ -1,9 +1,9 @@
 // Simple cookie consent banner
 // Displays a banner until the user accepts cookie usage
-// Uses cookies to remember consent for one year
+// Uses localStorage to remember consent
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.cookie.includes('cookieConsent=true')) return;
+  if (localStorage.getItem('cookieConsent') === 'accepted') return;
 
   const banner = document.createElement('div');
   banner.id = 'cookie-consent';
@@ -20,9 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.body.appendChild(banner);
   document.getElementById('accept-cookies').addEventListener('click', () => {
-    const d = new Date();
-    d.setTime(d.getTime() + 365 * 86400000);
-    document.cookie = `cookieConsent=true; expires=${d.toUTCString()}; path=/`;
+    localStorage.setItem('cookieConsent', 'accepted');
     banner.remove();
   });
 });
