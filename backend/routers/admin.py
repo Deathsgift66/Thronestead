@@ -81,6 +81,16 @@ def ban_player(
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "ban_user", f"Banned user {payload.player_id}")
+    db.execute(
+        text(
+            """
+            INSERT INTO bans (user_id, ban_type, issued_by, is_active)
+            VALUES (:uid, 'account', :aid, true)
+            """
+        ),
+        {"uid": payload.player_id, "aid": admin_id},
+    )
+    db.commit()
     return {"message": "Banned", "player_id": payload.player_id}
 
 
@@ -120,6 +130,17 @@ def flag_ip(
 ):
     ip = payload.get("ip", "")
     log_action(db, admin_id, "flag_ip", f"Flagged IP {ip}")
+    if ip:
+        db.execute(
+            text(
+                """
+                INSERT INTO bans (ip_address, ban_type, issued_by, is_active)
+                VALUES (:ip, 'ip', :aid, true)
+                """
+            ),
+            {"ip": ip, "aid": admin_id},
+        )
+        db.commit()
     return {"message": "IP flagged", "ip": ip}
 
 

@@ -32,6 +32,35 @@ __all__ = [
 ]
 
 
+def has_active_ban(
+    db: Session,
+    user_id: str | None = None,
+    ip: str | None = None,
+    device_hash: str | None = None,
+) -> bool:
+    """Return True if an active ban matches the given identifiers."""
+    conditions = []
+    params: dict[str, str] = {}
+    if user_id:
+        conditions.append("user_id = :uid")
+        params["uid"] = user_id
+    if ip:
+        conditions.append("ip_address = :ip")
+        params["ip"] = ip
+    if device_hash:
+        conditions.append("device_hash = :dev")
+        params["dev"] = device_hash
+    if not conditions:
+        return False
+    query = (
+        "SELECT 1 FROM bans "
+        "WHERE is_active AND (expires_at IS NULL OR expires_at > now()) AND ("
+        + " OR ".join(conditions)
+        + ") LIMIT 1"
+    )
+    return db.execute(text(query), params).fetchone() is not None
+
+
 def verify_jwt_token(
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
@@ -119,6 +148,7 @@ def require_user_id(
 
 
 def require_active_user_id(
+    request: Request | None = None,
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
     db: Session = Depends(get_db),
@@ -129,7 +159,16 @@ def require_active_user_id(
         text("SELECT is_banned FROM users WHERE user_id = :uid"),
         {"uid": user_id},
     ).scalar()
-    if banned:
+    ip = None
+    device_hash = None
+    if request is not None:
+        ip = request.headers.get("x-forwarded-for")
+        if ip and "," in ip:
+            ip = ip.split(",")[0].strip()
+        if not ip and request.client:
+            ip = request.client.host
+        device_hash = request.headers.get("X-Device-Hash")
+    if banned or has_active_ban(db, user_id=user_id, ip=ip, device_hash=device_hash):
         raise HTTPException(403, "You are banned from this feature.")
     return user_id
 
