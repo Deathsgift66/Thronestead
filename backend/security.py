@@ -220,3 +220,24 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
         "alliance_id": row[3],
         "setup_complete": bool(row[4]),
     }
+
+from datetime import datetime
+
+
+def validate_reauth_token(db: Session, user_id: str, token: str) -> bool:
+    """Return True if the re-authentication token is valid."""
+    row = db.execute(
+        text(
+            "SELECT expires_at FROM reauth_tokens WHERE token = :tok AND user_id = :uid"
+        ),
+        {"tok": token, "uid": user_id},
+    ).fetchone()
+    if not row:
+        return False
+    expires = row[0]
+    if isinstance(expires, str):
+        try:
+            expires = datetime.fromisoformat(expires)
+        except ValueError:
+            return False
+    return expires > datetime.utcnow()
