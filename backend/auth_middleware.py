@@ -10,6 +10,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from .database import SessionLocal
 from jose import jwt
 from sqlalchemy import text
+from .security import has_active_ban
+from fastapi.responses import JSONResponse
 
 
 logger = logging.getLogger("Thronestead.AuthMiddleware")
@@ -82,6 +84,24 @@ class UserStateMiddleware(BaseHTTPMiddleware):
             )()
             request.state.user = user_obj
             request.app.current_user = user_obj
+
+        # Block banned users from API routes
+        if request.url.path.startswith("/api") and (user_id or auth_user_id):
+            if SessionLocal is not None:
+                try:
+                    with SessionLocal() as db:
+                        banned = db.execute(
+                            text("SELECT is_banned FROM users WHERE user_id = :uid"),
+                            {"uid": user_id or auth_user_id},
+                        ).scalar()
+                        ip = request.headers.get("x-forwarded-for")
+                        if ip and "," in ip:
+                            ip = ip.split(",")[0].strip()
+                        device_hash = request.headers.get("X-Device-Hash")
+                        if banned or has_active_ban(db, user_id=user_id or auth_user_id, ip=ip, device_hash=device_hash):
+                            return JSONResponse({"detail": "Account banned"}, status_code=403)
+                except Exception:  # pragma: no cover - don't block on DB errors
+                    logger.exception("Failed ban check")
 
         response = await call_next(request)
         return response
