@@ -14,7 +14,7 @@ import {
   startSessionRefresh,
 } from './auth.js';
 import { containsBannedContent } from './content_filter.js';
-import { initThemeToggle } from './themeToggle.js';
+// import { initThemeToggle } from './themeToggle.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   sendAuthBtn = document.getElementById("send-auth-btn");
   authMessage = document.getElementById("auth-message");
 
-  initThemeToggle();
+  // initThemeToggle();
 
   if (forgotLink) {
     forgotLink.addEventListener('click', e => {

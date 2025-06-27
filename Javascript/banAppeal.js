@@ -3,10 +3,10 @@
 // Developer: Codex
 
 import { fetchJson } from './fetchJson.js';
-import { initThemeToggle } from './themeToggle.js';
+// import { initThemeToggle } from './themeToggle.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  initThemeToggle();
+  // initThemeToggle();
   const form = document.getElementById('appeal-form');
   const emailInput = document.getElementById('appeal-email');
   const msgInput = document.getElementById('appeal-message');

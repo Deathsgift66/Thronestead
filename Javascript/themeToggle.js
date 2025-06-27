@@ -1,3 +1,4 @@
+/*
 export function initThemeToggle() {
   const btn = document.getElementById('theme-toggle');
   const saved = localStorage.getItem('theme') || 'parchment';
@@ -23,3 +24,4 @@ if (document.readyState !== 'loading') {
 } else {
   document.addEventListener('DOMContentLoaded', initThemeToggle);
 }
+*/
