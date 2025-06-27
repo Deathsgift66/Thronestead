@@ -35,6 +35,14 @@ except ImportError:  # pragma: no cover - fallback when realtime is unavailable
 
 logger = logging.getLogger(__name__)
 
+# Message shown to users after successfully resetting their password.
+# The appended note directs them to account recovery if the action was
+# unauthorized.
+PASSWORD_RESET_CONFIRMATION_MESSAGE = (
+    "Your password has been securely changed. If this wasn't you, "
+    "please visit [Recover Account](/account/recover.html) immediately."
+)
+
 
 # ------------------------------------------------------------------------------
 # 🔔 Notification Insertion
