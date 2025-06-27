@@ -86,7 +86,4 @@ training_queue_status	queued, training, paused, completed, cancelled
 public
 
 unit_movement_status	active, retreating, defeated, waiting, engaged, completed	
-public
-
-loan_payment_status	pending, paid, missed
 
