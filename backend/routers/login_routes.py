@@ -212,3 +212,60 @@ def authenticate(
         "alliance_id": alliance_id,
         "setup_complete": setup_complete,
     }
+
+
+class ReauthPayload(BaseModel):
+    password: str
+    otp: str | None = None
+
+
+@router.post("/reauth")
+def reauthenticate(
+    request: Request,
+    payload: ReauthPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Re-authenticate a logged-in user by password (and optional OTP)."""
+    ip = request.headers.get("x-forwarded-for")
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    if not ip:
+        ip = request.client.host if request.client else ""
+    device_hash = request.headers.get("X-Device-Hash")
+
+    if has_active_ban(db, user_id=user_id, ip=ip, device_hash=device_hash):
+        raise HTTPException(status_code=403, detail="Account banned")
+
+    row = db.execute(
+        text("SELECT email, status FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="User not found")
+    email, status = row
+
+    if status and status.lower() == "suspicious" and not payload.otp:
+        raise HTTPException(status_code=401, detail="2FA required")
+
+    sb = get_supabase_client()
+    data = {"email": email, "password": payload.password}
+    if payload.otp:
+        data["otp_token"] = payload.otp
+    try:
+        res = sb.auth.sign_in_with_password(data)
+    except Exception as exc:  # pragma: no cover - network/dependency issues
+        raise HTTPException(
+            status_code=500, detail="Authentication service error"
+        ) from exc
+
+    if isinstance(res, dict):
+        error = res.get("error")
+        session = res.get("session")
+    else:
+        error = getattr(res, "error", None)
+        session = getattr(res, "session", None)
+    if error or not session:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return {"reauthenticated": True}

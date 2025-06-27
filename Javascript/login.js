@@ -20,7 +20,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // DOM Elements
 let loginForm, emailInput, passwordInput, loginButton, messageContainer;
-let rememberCheckbox;
+let rememberCheckbox, togglePasswordBtn;
 let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage;
 let authLink, authModal, closeAuthBtn, sendAuthBtn, authMessage;
 let announcementList;
@@ -172,6 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   emailInput = document.getElementById('login-email');
   passwordInput = document.getElementById('password');
   rememberCheckbox = document.getElementById('remember-me');
+  togglePasswordBtn = document.getElementById('toggle-password');
   loginButton = document.querySelector('#login-form .royal-button');
   messageContainer = document.getElementById('message');
 
@@ -188,6 +189,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   authMessage = document.getElementById("auth-message");
 
   // initThemeToggle();
+  const allowPaste = window.env?.ALLOW_PASSWORD_PASTE === true;
+  if (allowPaste) passwordInput.removeAttribute('onpaste');
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const hidden = passwordInput.type === 'password';
+      passwordInput.type = hidden ? 'text' : 'password';
+      togglePasswordBtn.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+      togglePasswordBtn.setAttribute('aria-pressed', String(!hidden));
+    });
+  }
 
   if (forgotLink) {
     forgotLink.addEventListener('click', e => {
