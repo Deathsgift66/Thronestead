@@ -18,6 +18,7 @@ from fastapi import Depends, Header, HTTPException, Request
 from jose import JWTError, jwt
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from .database import get_db
 
@@ -29,6 +30,7 @@ __all__ = [
     "require_active_user_id",
     "verify_api_key",
     "get_current_user",
+    "validate_reauth_token",
 ]
 
 
@@ -220,3 +222,26 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
         "alliance_id": row[3],
         "setup_complete": bool(row[4]),
     }
+
+
+def validate_reauth_token(token: str, db: Session) -> str:
+    """Return the user ID for a valid re-auth token."""
+    db.execute(
+        text("DELETE FROM reauth_tokens WHERE expires_at < :now"),
+        {"now": datetime.utcnow()},
+    )
+    row = db.execute(
+        text("SELECT user_id, expires_at FROM reauth_tokens WHERE token = :tok"),
+        {"tok": token},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=401, detail="Re-authentication required")
+    user_id, expires_at = row
+    exp = expires_at
+    if isinstance(exp, str):
+        exp = datetime.fromisoformat(exp)
+    if exp <= datetime.utcnow():
+        db.execute(text("DELETE FROM reauth_tokens WHERE token = :tok"), {"tok": token})
+        db.commit()
+        raise HTTPException(status_code=401, detail="Re-authentication required")
+    return str(user_id)

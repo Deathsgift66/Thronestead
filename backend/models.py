@@ -1792,3 +1792,14 @@ class Ban(Base):
             name="ban_type_check",
         ),
     )
+
+
+class ReauthToken(Base):
+    """Short-lived tokens granted after password re-authentication."""
+
+    __tablename__ = "reauth_tokens"
+
+    token = Column(String, primary_key=True)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

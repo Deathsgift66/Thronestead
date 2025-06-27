@@ -15,6 +15,11 @@ def db_session():
             "CREATE TABLE IF NOT EXISTS audit_log (log_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, action TEXT, details TEXT, created_at TEXT)"
         )
     )
+    engine.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS reauth_tokens (token TEXT PRIMARY KEY, user_id TEXT, expires_at TEXT, created_at TEXT)"
+        )
+    )
     Session = sessionmaker(bind=engine)
     session = Session()
     try:

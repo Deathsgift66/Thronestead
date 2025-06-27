@@ -1849,3 +1849,10 @@ CREATE TABLE public.wars_tactical (
   CONSTRAINT wars_tactical_terrain_id_fkey FOREIGN KEY (terrain_id) REFERENCES public.terrain_map(terrain_id),
   CONSTRAINT wars_tactical_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id)
 );
+
+CREATE TABLE public.reauth_tokens (
+  token text PRIMARY KEY,
+  user_id uuid NOT NULL,
+  expires_at timestamp with time zone NOT NULL,
+  created_at timestamp with time zone DEFAULT now()
+);
