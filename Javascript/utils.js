@@ -4,6 +4,7 @@
 // Developer: Codex
 // Shared frontend utilities for DOM helpers and validation.
 import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js';
+import { getReauthHeaders } from './reauth.js';
 
 /**
  * Escape HTML special characters to prevent injection.
@@ -172,14 +173,15 @@ export async function jsonFetch(url, options = {}) {
 export async function authFetch(url, options = {}) {
   let headers = {
     ...(options.headers || {}),
-    ...(await authHeaders())
+    ...(await authHeaders()),
+    ...getReauthHeaders()
   };
   let res = await fetch(url, { ...options, headers });
 
   if (res.status === 401) {
     const refreshed = await refreshSessionAndStore();
     if (refreshed) {
-      headers = { ...(options.headers || {}), ...(await authHeaders()) };
+      headers = { ...(options.headers || {}), ...(await authHeaders()), ...getReauthHeaders() };
       res = await fetch(url, { ...options, headers });
     }
     if (res.status === 401) {
