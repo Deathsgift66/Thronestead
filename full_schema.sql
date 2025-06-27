@@ -369,6 +369,8 @@ CREATE TABLE public.archived_audit_log (
   user_id uuid,
   action text,
   details text,
+  ip_address text,
+  device_info text,
   created_at timestamp with time zone
 );
 CREATE TABLE public.audit_log (
@@ -376,6 +378,8 @@ CREATE TABLE public.audit_log (
   user_id uuid,
   action text,
   details text,
+  ip_address text,
+  device_info text,
   created_at timestamp with time zone DEFAULT now(),
   kingdom_id integer,
   CONSTRAINT audit_log_pkey PRIMARY KEY (log_id)

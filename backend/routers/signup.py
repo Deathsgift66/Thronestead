@@ -542,7 +542,9 @@ def register(
         )
 
         db.commit()
-        log_action(db, uid, "signup", f"User {uid} registered")
+        agent = request.headers.get("user-agent", "")
+        ip = request.client.host if request.client else None
+        log_action(db, uid, "signup", f"User {uid} registered", ip, agent)
     except Exception as exc:
         logger.exception("Failed to save user profile")
         raise HTTPException(

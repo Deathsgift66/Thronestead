@@ -16,7 +16,7 @@ def setup_db():
     Base.metadata.create_all(engine)
     engine.execute(
         text(
-            "CREATE TABLE audit_log (log_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, action TEXT, details TEXT, created_at TEXT)"
+            "CREATE TABLE audit_log (log_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, action TEXT, details TEXT, ip_address TEXT, device_info TEXT, created_at TEXT)"
         )
     )
     return Session

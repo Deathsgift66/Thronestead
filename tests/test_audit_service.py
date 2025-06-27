@@ -44,10 +44,12 @@ class DummyDB:
 
 def test_log_action_inserts():
     db = DummyDB()
-    log_action(db, "u1", "create_kingdom", "Created kingdom")
+    log_action(db, "u1", "create_kingdom", "Created kingdom", "1.1.1.1", "UA")
     assert len(db.inserts) == 1
     assert db.inserts[0]["uid"] == "u1"
     assert db.inserts[0]["act"] == "create_kingdom"
+    assert db.inserts[0]["ip"] == "1.1.1.1"
+    assert db.inserts[0]["dev"] == "UA"
 
 
 def test_fetch_logs_returns_rows():

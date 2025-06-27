@@ -162,6 +162,8 @@ class AuditLog(Base):
     user_id = Column(UUID(as_uuid=True))
     action = Column(Text)
     details = Column(Text)
+    ip_address = Column(Text)
+    device_info = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     kingdom_id = Column(Integer)
 
@@ -174,6 +176,8 @@ class ArchivedAuditLog(Base):
     user_id = Column(UUID(as_uuid=True))
     action = Column(Text)
     details = Column(Text)
+    ip_address = Column(Text)
+    device_info = Column(Text)
     created_at = Column(DateTime(timezone=True))
 
 
