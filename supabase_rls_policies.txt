@@ -94,6 +94,16 @@ ALL
 alliance_grants_write_own
 Applied to: authenticated role
 
+alliance_loan_repayments
+
+Enable RLS
+
+Create policy
+
+Warning:
+Row Level Security is disabled. Your table is publicly readable and writable.
+No policies created yet
+
 alliance_loans
 
 Disable RLS
@@ -561,6 +571,16 @@ SELECT
 
 View own logs
 Applied to: authenticated role
+
+bans
+
+Enable RLS
+
+Create policy
+
+Warning:
+Row Level Security is disabled. Your table is publicly readable and writable.
+No policies created yet
 
 battle_resolution_logs
 
@@ -2151,6 +2171,16 @@ SELECT
 
 Allow read own rows
 Applied to: public role
+
+user_reports
+
+Enable RLS
+
+Create policy
+
+Warning:
+Row Level Security is disabled. Your table is publicly readable and writable.
+No policies created yet
 
 user_setting_entries
 
