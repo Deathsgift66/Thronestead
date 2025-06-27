@@ -31,9 +31,9 @@ def request_password_reset(
 
 
 @router.post("/verify-reset-code")
-def verify_reset_code(payload: CodePayload):
+def verify_reset_code(payload: CodePayload, request: Request):
     """Wrapper for forgot_password.verify_reset_code."""
-    return _verify_reset_code(payload)
+    return _verify_reset_code(payload, request)
 
 
 @router.post("/set-new-password")
