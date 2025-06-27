@@ -238,9 +238,11 @@ class DummyDBAttempt:
 def test_record_login_attempt_success():
     captured = {}
 
-    def fake_log_action(_db, user_id, action, details):
+    def fake_log_action(_db, user_id, action, details, ip=None, device=None):
         captured["uid"] = user_id
         captured["action"] = action
+        captured["ip"] = ip
+        captured["device"] = device
 
     login_routes.log_action = fake_log_action
     db = DummyDBAttempt(uid="u1")
@@ -250,14 +252,18 @@ def test_record_login_attempt_success():
     assert res["logged"] is True
     assert captured["uid"] == "u1"
     assert captured["action"] == "login_success"
+    assert captured["ip"] == "1.1.1.1"
+    assert captured["device"] == ""
 
 
 def test_record_login_attempt_fail_no_user():
     captured = {}
 
-    def fake_log_action(_db, user_id, action, details):
+    def fake_log_action(_db, user_id, action, details, ip=None, device=None):
         captured["uid"] = user_id
         captured["action"] = action
+        captured["ip"] = ip
+        captured["device"] = device
 
     login_routes.log_action = fake_log_action
     db = DummyDBAttempt(uid=None)
@@ -267,3 +273,5 @@ def test_record_login_attempt_fail_no_user():
     assert res["logged"] is True
     assert captured["uid"] is None
     assert captured["action"] == "login_fail"
+    assert captured["ip"] == "1.1.1.1"
+    assert captured["device"] == ""

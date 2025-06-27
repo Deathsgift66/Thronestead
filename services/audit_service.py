@@ -18,17 +18,30 @@ logger = logging.getLogger(__name__)
 # ------------------------
 
 
-def log_action(db: Session, user_id: Optional[str], action: str, details: str) -> None:
+def log_action(
+    db: Session,
+    user_id: Optional[str],
+    action: str,
+    details: str,
+    ip_address: Optional[str] = None,
+    device_info: Optional[str] = None,
+) -> None:
     """Insert a global user action into the audit_log table."""
     try:
         db.execute(
             text(
                 """
-                INSERT INTO audit_log (user_id, action, details)
-                VALUES (:uid, :act, :det)
+                INSERT INTO audit_log (user_id, action, details, ip_address, device_info)
+                VALUES (:uid, :act, :det, :ip, :device)
             """
             ),
-            {"uid": user_id, "act": action, "det": details},
+            {
+                "uid": user_id,
+                "act": action,
+                "det": details,
+                "ip": ip_address,
+                "device": device_info,
+            },
         )
         db.commit()
     except SQLAlchemyError as e:
@@ -46,7 +59,7 @@ def fetch_logs(
     """
     try:
         query = """
-            SELECT log_id, user_id, action, details, created_at
+            SELECT log_id, user_id, action, details, ip_address, device_info, created_at
               FROM audit_log
              WHERE (:uid IS NULL OR user_id = :uid)
              ORDER BY created_at DESC
@@ -59,7 +72,9 @@ def fetch_logs(
                 "user_id": r[1],
                 "action": r[2],
                 "details": r[3],
-                "created_at": r[4],
+                "ip_address": r[4],
+                "device_info": r[5],
+                "created_at": r[6],
             }
             for r in rows
         ]
@@ -111,7 +126,7 @@ def fetch_filtered_logs(
     Filter audit logs by optional user ID, action keyword, and date range.
     """
     query = (
-        "SELECT log_id, user_id, action, details, created_at FROM audit_log WHERE 1=1"
+        "SELECT log_id, user_id, action, details, ip_address, device_info, created_at FROM audit_log WHERE 1=1"
     )
     params = {"limit": limit}
     if user_id:
@@ -136,7 +151,9 @@ def fetch_filtered_logs(
                 "user_id": r[1],
                 "action": r[2],
                 "details": r[3],
-                "created_at": r[4],
+                "ip_address": r[4],
+                "device_info": r[5],
+                "created_at": r[6],
             }
             for r in rows
         ]
