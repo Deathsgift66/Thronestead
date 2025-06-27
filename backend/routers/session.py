@@ -1,18 +1,34 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response
+from pydantic import BaseModel
 
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/session", tags=["session"])
 
 
+class TokenPayload(BaseModel):
+    token: str
+
+
+@router.post("/store")
+def store_session_cookie(payload: TokenPayload, response: Response):
+    """Store the session token in an HttpOnly cookie."""
+    response.set_cookie(
+        "session_token",
+        payload.token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+    return {"stored": True}
+
+
 @router.get("/validate")
 async def validate_session(request: Request):
     """Validate and decode the current Supabase session token."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    token = request.cookies.get("session_token")
+    if not token:
         raise HTTPException(status_code=401, detail="Missing token")
-
-    token = auth_header.split()[1]
     supabase = get_supabase_client()
     try:
         user = supabase.auth.get_user(token)

@@ -136,8 +136,12 @@ export async function loginExecute(email, password, remember = false) {
       await supabase.auth.signOut();
       return null;
     }
-    const storage = remember ? localStorage : sessionStorage;
-    storage.setItem('authToken', data.session.access_token);
+    await fetch(`${API_BASE_URL}/api/session/store`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token: data.session.access_token })
+    });
     return data;
   } catch (err) {
     showMessage('error', err.message || '❌ Login failed.');
@@ -315,9 +319,7 @@ async function handleLogin(e) {
 
       const storage = rememberCheckbox?.checked ? localStorage : sessionStorage;
       const altStorage = storage === localStorage ? sessionStorage : localStorage;
-      storage.setItem('authToken', token);
       storage.setItem('currentUser', JSON.stringify(userInfo));
-      altStorage.removeItem('authToken');
       altStorage.removeItem('currentUser');
 
       // Update in-memory auth cache for current page
