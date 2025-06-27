@@ -136,6 +136,14 @@ trigger
 Invoker	
 
 
+log_table_change
+-
+
+trigger
+
+Invoker	
+
+
 notify_new_war
 -
 
