@@ -267,3 +267,65 @@ def test_record_login_attempt_fail_no_user():
     assert res["logged"] is True
     assert captured["uid"] is None
     assert captured["action"] == "login_fail"
+
+
+# ---- reauthenticate endpoint tests ----
+
+class DummyReauthClient:
+    def __init__(self, mode="ok"):
+        self.mode = mode
+        self.auth = self
+
+    def sign_in_with_password(self, *_args, **_kwargs):
+        if self.mode == "error":
+            return {"error": "bad"}
+        if self.mode == "fail":
+            raise Exception("fail")
+        return {"session": "token"}
+
+
+class DummyDBReauth:
+    def __init__(self, status="active"):
+        self.status = status
+
+    def execute(self, query, params):
+        q = str(query)
+        if "select email, status" in q.lower():
+            class R:
+                def fetchone(self_inner):
+                    return ("e@example.com", self.status)
+
+            return R()
+        raise AssertionError("unexpected query")
+
+
+def test_reauthenticate_success(monkeypatch):
+    login_routes.get_supabase_client = lambda: DummyReauthClient()
+    login_routes.has_active_ban = lambda *_a, **_kw: False
+    db = DummyDBReauth()
+    payload = login_routes.ReauthPayload(password="p")
+    req = DummyRequest()
+    res = login_routes.reauthenticate(req, payload, user_id="u1", db=db)
+    assert res["reauthenticated"] is True
+
+
+def test_reauthenticate_banned(monkeypatch):
+    login_routes.get_supabase_client = lambda: DummyReauthClient()
+    login_routes.has_active_ban = lambda *_a, **_kw: True
+    db = DummyDBReauth()
+    payload = login_routes.ReauthPayload(password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.reauthenticate(req, payload, user_id="u1", db=db)
+    assert exc.value.status_code == 403
+
+
+def test_reauthenticate_requires_2fa(monkeypatch):
+    login_routes.get_supabase_client = lambda: DummyReauthClient()
+    login_routes.has_active_ban = lambda *_a, **_kw: False
+    db = DummyDBReauth(status="suspicious")
+    payload = login_routes.ReauthPayload(password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.reauthenticate(req, payload, user_id="u1", db=db)
+    assert exc.value.status_code == 401

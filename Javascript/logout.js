@@ -5,6 +5,7 @@
 // Make sure supabase is available
 import { supabase } from '../supabaseClient.js';
 import { resetAuthCache } from './auth.js';
+import { clearReauthToken } from './reauth.js';
 
 // Logout function — clears session from Supabase, browser storage, and cookies
 async function logout() {
@@ -17,6 +18,7 @@ async function logout() {
 
   // Clear cached auth so next page load fetches fresh session
   resetAuthCache();
+  clearReauthToken();
 
   // 🧹 Clear client-side storage
   sessionStorage.removeItem('authToken');

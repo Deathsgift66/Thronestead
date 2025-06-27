@@ -36,7 +36,8 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 # Configuration + In-memory Stores
 # ---------------------------------------------
 RESET_STORE: dict[str, tuple[str, float]] = {}  # token_hash: (user_id, expiry)
-VERIFIED_SESSIONS: dict[str, tuple[str, float]] = {}  # user_id: (token_hash, expiry)
+VERIFIED_SESSIONS: dict[str, tuple[str, float, str | None]] = {}
+# user_id: (token_hash, expiry, session_token)
 RATE_LIMIT: dict[str, list[float]] = {}  # IP: [timestamps]
 
 _token_ttl = os.getenv("PASSWORD_RESET_TOKEN_TTL")
@@ -121,7 +122,7 @@ def request_password_reset(
 # Route: Verify Reset Code
 # ---------------------------------------------
 @router.post("/verify-reset-code")
-def verify_reset_code(payload: CodePayload):
+def verify_reset_code(payload: CodePayload, request: Request | None = None):
     _prune_expired()
     token_hash = _hash_token(payload.code)
     record = RESET_STORE.get(token_hash)
@@ -129,7 +130,17 @@ def verify_reset_code(payload: CodePayload):
         raise HTTPException(status_code=400, detail="Invalid or expired code")
 
     uid = record[0]
-    VERIFIED_SESSIONS[uid] = (token_hash, time.time() + SESSION_TTL)
+    session_token = None
+    if request:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header.split()[1]
+
+    VERIFIED_SESSIONS[uid] = (
+        token_hash,
+        time.time() + SESSION_TTL,
+        session_token,
+    )
     return {"message": "verified"}
 
 
@@ -149,6 +160,7 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
     session = VERIFIED_SESSIONS.get(uid)
     if not session or session[0] != token_hash or session[1] < time.time():
         raise HTTPException(status_code=400, detail="Reset session expired")
+    session_token = session[2] if len(session) > 2 else None
 
     if payload.new_password != payload.confirm_password:
         raise HTTPException(status_code=400, detail="Password mismatch")
@@ -163,6 +175,10 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
     try:
         sb = get_supabase_client()
         sb.auth.admin.update_user_by_id(uid, {"password": payload.new_password})
+        if session_token:
+            sb.auth.admin.sign_out_user(uid, session_token)
+        else:
+            sb.auth.admin.sign_out_user(uid)
     except Exception as exc:  # pragma: no cover - runtime dependency
         logging.getLogger("Thronestead.PasswordReset").exception(
             "Failed to update password for user %s", uid

@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { authFetch, authJsonFetch } from './utils.js';
+import { setupReauthButtons } from './reauth.js';
 
 const REFRESH_MS = 30000;
 let realtimeSub;
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('refresh-alerts')?.addEventListener('click', loadAlerts);
   document.getElementById('clear-filters')?.addEventListener('click', clearFilters);
+  setupReauthButtons('.action-btn');
 });
 
 // ✅ Cleanup on page unload

@@ -55,3 +55,70 @@ def test_full_reset_flow(db_session):
     assert token_hash not in fp.RESET_STORE
     notif = db_session.query(Notification).filter(Notification.user_id == uid).first()
     assert notif is not None
+
+
+def test_sign_out_called(db_session):
+    uid = create_user(db_session)
+    fp.RESET_STORE.clear()
+    fp.VERIFIED_SESSIONS.clear()
+    token = "tok"
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    fp.RESET_STORE[token_hash] = (uid, time.time() + 60)
+
+    called = {}
+
+    class DummyAdmin:
+        def update_user_by_id(self, uid_arg, data):
+            called["update"] = uid_arg
+
+        def sign_out_user(self, uid_arg, session_token=None):
+            called["signout"] = (uid_arg, session_token)
+
+    class DummySB:
+        def __init__(self):
+            self.auth = type("A", (), {"admin": DummyAdmin()})()
+
+    fp.get_supabase_client = lambda: DummySB()
+
+    fp.verify_reset_code(fp.CodePayload(code=token))
+    fp.set_new_password(
+        fp.PasswordPayload(code=token, new_password="StrongPass1234", confirm_password="StrongPass1234"),
+        db_session,
+    )
+
+    assert called.get("update") == uid
+    assert called.get("signout")[0] == uid
+
+
+def test_keep_session_token(db_session):
+    uid = create_user(db_session)
+    fp.RESET_STORE.clear()
+    fp.VERIFIED_SESSIONS.clear()
+    token = "tok"
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    fp.RESET_STORE[token_hash] = (uid, time.time() + 60)
+
+    called = {}
+
+    class DummyAdmin:
+        def update_user_by_id(self, uid_arg, data):
+            pass
+
+        def sign_out_user(self, uid_arg, session_token=None):
+            called["args"] = (uid_arg, session_token)
+
+    class DummySB:
+        def __init__(self):
+            self.auth = type("A", (), {"admin": DummyAdmin()})()
+
+    fp.get_supabase_client = lambda: DummySB()
+
+    # simulate verifying with Authorization header
+    req = type("Req", (), {"headers": {"Authorization": "Bearer sess"}})()
+    fp.verify_reset_code(fp.CodePayload(code=token), req)
+    fp.set_new_password(
+        fp.PasswordPayload(code=token, new_password="StrongPass1234", confirm_password="StrongPass1234"),
+        db_session,
+    )
+
+    assert called["args"] == (uid, "sess")
