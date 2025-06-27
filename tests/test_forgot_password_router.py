@@ -159,3 +159,30 @@ def test_reject_breached_password(db_session):
             db_session,
         )
     assert exc.value.status_code == 400
+
+
+def test_request_user_rate_limit(db_session):
+    uid = create_user(db_session)
+    fp.RATE_LIMIT.clear()
+    fp.USER_RATE_LIMIT[uid] = [time.time()] * fp.RATE_LIMIT_MAX
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        fp.request_password_reset(fp.EmailPayload(email="e@example.com"), req, db_session)
+    assert exc.value.status_code == 429
+
+
+def test_set_password_rate_limit(db_session):
+    uid = create_user(db_session)
+    token = "tok"
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    fp.RESET_STORE[token_hash] = (uid, time.time() + 60)
+    fp.VERIFIED_SESSIONS[uid] = (token_hash, time.time() + 60, None)
+    fp.RATE_LIMIT["1.1.1.1"] = [time.time()] * fp.RATE_LIMIT_MAX
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        fp.set_new_password(
+            fp.PasswordPayload(code=token, new_password="StrongPass1234", confirm_password="StrongPass1234"),
+            db_session,
+            req,
+        )
+    assert exc.value.status_code == 429

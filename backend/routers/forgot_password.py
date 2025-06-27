@@ -41,6 +41,7 @@ RESET_STORE: dict[str, tuple[str, float]] = {}  # token_hash: (user_id, expiry)
 VERIFIED_SESSIONS: dict[str, tuple[str, float, str | None]] = {}
 # user_id: (token_hash, expiry, session_token)
 RATE_LIMIT: dict[str, list[float]] = {}  # IP: [timestamps]
+USER_RATE_LIMIT: dict[str, list[float]] = {}  # user_id: [timestamps]
 
 _token_ttl = os.getenv("PASSWORD_RESET_TOKEN_TTL")
 TOKEN_TTL = int(_token_ttl) if _token_ttl else 900  # 15 minutes
@@ -86,6 +87,11 @@ def _prune_expired() -> None:
         if not RATE_LIMIT[ip]:
             RATE_LIMIT.pop(ip)
 
+    for uid in list(USER_RATE_LIMIT.keys()):
+        USER_RATE_LIMIT[uid] = [t for t in USER_RATE_LIMIT[uid] if now - t < 3600]
+        if not USER_RATE_LIMIT[uid]:
+            USER_RATE_LIMIT.pop(uid)
+
 
 def _hash_token(token: str) -> str:
     """Securely hash the token using SHA-256."""
@@ -116,6 +122,11 @@ def request_password_reset(
 
     user = db.query(User).filter(User.email == payload.email).first()
     if user:
+        uid = str(user.user_id)
+        user_hist = USER_RATE_LIMIT.setdefault(uid, [])
+        if len(user_hist) >= RATE_LIMIT_MAX:
+            raise HTTPException(status_code=429, detail="Too many requests")
+        user_hist.append(time.time())
         token = uuid.uuid4().hex
         token_hash = _hash_token(token)
         RESET_STORE[token_hash] = (str(user.user_id), time.time() + TOKEN_TTL)
@@ -156,8 +167,16 @@ def verify_reset_code(payload: CodePayload, request: Request | None = None):
 # Route: Set New Password
 # ---------------------------------------------
 @router.post("/set-new-password")
-def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
+def set_new_password(
+    payload: PasswordPayload,
+    db: Session = Depends(get_db),
+    request: Request | None = None,
+):
     _prune_expired()
+
+    ip = request.client.host if request and request.client else ""
+    if len(RATE_LIMIT.get(ip, [])) >= RATE_LIMIT_MAX:
+        raise HTTPException(status_code=429, detail="Too many requests")
 
     token_hash = _hash_token(payload.code)
     record = RESET_STORE.get(token_hash)
@@ -165,6 +184,8 @@ def set_new_password(payload: PasswordPayload, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid or expired code")
 
     uid = record[0]
+    if len(USER_RATE_LIMIT.get(uid, [])) >= RATE_LIMIT_MAX:
+        raise HTTPException(status_code=429, detail="Too many requests")
     session = VERIFIED_SESSIONS.get(uid)
     if not session or session[0] != token_hash or session[1] < time.time():
         raise HTTPException(status_code=400, detail="Reset session expired")
