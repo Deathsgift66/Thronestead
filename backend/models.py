@@ -1767,3 +1767,28 @@ class UserReport(Base):
     category = Column(Text)
     description = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Ban(Base):
+    """Represents active account, IP, or device bans."""
+
+    __tablename__ = "bans"
+
+    ban_id = Column(UUID(as_uuid=True), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    ip_address = Column(Text)
+    device_hash = Column(Text)
+    ban_type = Column(Text, nullable=False)
+    reason = Column(Text)
+    issued_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    issued_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True))
+    is_active = Column(Boolean, default=True)
+    notes = Column(Text)
+
+    __table_args__ = (
+        CheckConstraint(
+            "ban_type in ('ip','device','account','other')",
+            name="ban_type_check",
+        ),
+    )

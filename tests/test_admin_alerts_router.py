@@ -51,6 +51,7 @@ def test_flag_ip_logs():
     db = DummyDB()
     flag_ip({"ip": "1.2.3.4"}, admin_id="a1", db=db)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
+    assert any("insert into bans" in q[0].lower() for q in db.queries)
 
 
 def test_suspend_user_logs():

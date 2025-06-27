@@ -50,3 +50,55 @@ def test_require_active_user_allows_token_with_aud(db_session, monkeypatch):
         authorization=f"Bearer {token}", x_user_id="u3", db=db_session
     )
     assert uid == "u3"
+
+
+class DummyReq:
+    def __init__(self, ip=None, device_hash=None):
+        self.headers = {}
+        if ip:
+            self.headers["x-forwarded-for"] = ip
+        if device_hash:
+            self.headers["X-Device-Hash"] = device_hash
+        self.client = type("c", (), {"host": ip})
+
+
+def test_ip_ban_blocks_request(db_session, monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    setup_user(db_session, "u4", False)
+    db_session.execute(
+        text(
+            "INSERT INTO bans (ban_id, ip_address, ban_type, issued_by, is_active) "
+            "VALUES ('b1', '1.1.1.1', 'ip', 'a1', true)"
+        )
+    )
+    db_session.commit()
+    token = token_for("u4", "secret")
+    req = DummyReq(ip="1.1.1.1")
+    with pytest.raises(HTTPException):
+        require_active_user_id(
+            request=req,
+            authorization=f"Bearer {token}",
+            x_user_id="u4",
+            db=db_session,
+        )
+
+
+def test_device_ban_blocks_request(db_session, monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    setup_user(db_session, "u5", False)
+    db_session.execute(
+        text(
+            "INSERT INTO bans (ban_id, device_hash, ban_type, issued_by, is_active) "
+            "VALUES ('b2', 'abc', 'device', 'a1', true)"
+        )
+    )
+    db_session.commit()
+    token = token_for("u5", "secret")
+    req = DummyReq(ip="2.2.2.2", device_hash="abc")
+    with pytest.raises(HTTPException):
+        require_active_user_id(
+            request=req,
+            authorization=f"Bearer {token}",
+            x_user_id="u5",
+            db=db_session,
+        )

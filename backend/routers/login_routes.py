@@ -21,7 +21,7 @@ from sqlalchemy.sql import text
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import verify_jwt_token
+from ..security import verify_jwt_token, has_active_ban
 from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
 
@@ -134,6 +134,16 @@ def authenticate(
     db: Session = Depends(get_db),
 ) -> dict:
     """Validate credentials with Supabase and return session plus profile info."""
+    ip = request.headers.get("x-forwarded-for")
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    if not ip:
+        ip = request.client.host if request.client else ""
+    device_hash = request.headers.get("X-Device-Hash")
+
+    if has_active_ban(db, ip=ip, device_hash=device_hash):
+        raise HTTPException(status_code=403, detail="Access banned")
+
     sb = get_supabase_client()
     try:
         res = sb.auth.sign_in_with_password(
@@ -169,12 +179,9 @@ def authenticate(
         raise HTTPException(status_code=401, detail="Email not confirmed")
 
     uid = getattr(user, "id", None) or (isinstance(user, dict) and user.get("id"))
-    ip = request.headers.get("x-forwarded-for")
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
-    if not ip:
-        ip = request.client.host if request.client else ""
     agent = request.headers.get("user-agent", "")
+    if has_active_ban(db, user_id=uid, ip=ip, device_hash=device_hash):
+        raise HTTPException(status_code=403, detail="Account banned")
     db.execute(
         text("UPDATE users SET last_login_at = now() WHERE user_id = :uid"),
         {"uid": uid},
