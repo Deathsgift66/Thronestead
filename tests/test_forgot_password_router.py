@@ -5,6 +5,8 @@
 import hashlib
 import time
 import uuid
+import pytest
+from fastapi import HTTPException
 from backend.models import Notification, User
 from backend.routers import forgot_password as fp
 
@@ -55,3 +57,26 @@ def test_full_reset_flow(db_session):
     assert token_hash not in fp.RESET_STORE
     notif = db_session.query(Notification).filter(Notification.user_id == uid).first()
     assert notif is not None
+
+
+def test_breached_password_rejected(db_session, monkeypatch):
+    uid = create_user(db_session)
+    fp.RESET_STORE.clear()
+    fp.VERIFIED_SESSIONS.clear()
+    token = "BREACH123"
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    fp.RESET_STORE[token_hash] = (uid, time.time() + 60)
+    fp.verify_reset_code(fp.CodePayload(code=token))
+
+    monkeypatch.setattr(fp, "is_password_breached", lambda _p: True)
+
+    with pytest.raises(HTTPException) as exc:
+        fp.set_new_password(
+            fp.PasswordPayload(
+                code=token,
+                new_password="StrongPass1234",
+                confirm_password="StrongPass1234",
+            ),
+            db_session,
+        )
+    assert exc.value.status_code == 400
