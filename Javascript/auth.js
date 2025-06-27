@@ -119,3 +119,21 @@ export async function refreshSessionAndStore() {
   }
 }
 
+let refreshIntervalId = null;
+
+/**
+ * Periodically refresh the user's session token.
+ * @param {number} intervalMs Refresh interval in milliseconds
+ */
+export function startSessionRefresh(intervalMs = 50 * 60 * 1000) {
+  if (refreshIntervalId) return;
+  refreshIntervalId = setInterval(refreshSessionAndStore, intervalMs);
+}
+
+export function stopSessionRefresh() {
+  if (refreshIntervalId) {
+    clearInterval(refreshIntervalId);
+    refreshIntervalId = null;
+  }
+}
+
