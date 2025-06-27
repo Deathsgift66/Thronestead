@@ -29,7 +29,7 @@ class DummyDB:
     def execute(self, query, params=None):
         self.queries.append((str(query), params))
         q = str(query).lower()
-        if "select kingdom_id" in q and "from kingdoms" in q and "where" not in q:
+        if "select kingdom_id" in q and "from kingdoms" in q and "kingdom_name" in q:
             return DummyResult(rows=self.lookup_rows)
         if "from kingdoms" in q:
             return DummyResult(self.row)
@@ -57,6 +57,16 @@ def test_public_profile_returns_data():
 
 
 def test_public_profile_not_found():
+    db = DummyDB(row=None)
+    try:
+        public_kingdom.public_profile(1, db=db)
+    except HTTPException as e:
+        assert e.status_code == 404
+    else:
+        assert False
+
+
+def test_public_profile_banned_hidden():
     db = DummyDB(row=None)
     try:
         public_kingdom.public_profile(1, db=db)

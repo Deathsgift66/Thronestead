@@ -20,6 +20,8 @@ async function loadPlayerProfile() {
   const titlesListEl = document.getElementById("titles-list");
   const customizationContainer = document.getElementById("profile-customization-content");
   const lastLoginEl = document.getElementById("last-login");
+  const banWarningEl = document.getElementById("ban-warning");
+  const recentActionsEl = document.querySelector('.recent-actions');
 
   playerNameEl.textContent = "Loading...";
   kingdomNameEl.textContent = "Loading...";
@@ -50,6 +52,16 @@ async function loadPlayerProfile() {
     if (lastLoginEl) {
       const ts = data.last_login_at ? new Date(data.last_login_at) : null;
       lastLoginEl.textContent = ts ? `Last Login: ${ts.toLocaleString()}` : '';
+    }
+
+    if (data.is_banned) {
+      banWarningEl.classList.remove('hidden');
+      vipBadgeEl.style.display = 'none';
+      customizationContainer.innerHTML = '';
+      if (recentActionsEl) recentActionsEl.classList.add('hidden');
+    } else {
+      banWarningEl.classList.add('hidden');
+      if (recentActionsEl) recentActionsEl.classList.remove('hidden');
     }
 
     // ✅ VIP badge

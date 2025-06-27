@@ -46,6 +46,7 @@ def test_profile_overview_returns_data():
                 "profile_bio": "bio",
                 "profile_picture_url": "pic.png",
                 "last_login_at": "2025-01-01T00:00:00Z",
+                "is_banned": False,
             }
         ],
         "player_messages": [
@@ -58,6 +59,7 @@ def test_profile_overview_returns_data():
     assert result["user"]["username"] == "Hero"
     assert result["unread_messages"] == 2
     assert result["user"]["last_login_at"] == "2025-01-01T00:00:00Z"
+    assert result["user"]["is_banned"] is False
 
 
 def test_profile_overview_missing_user():
@@ -68,3 +70,23 @@ def test_profile_overview_missing_user():
         assert e.status_code == 404
     else:
         assert False
+
+
+def test_profile_overview_banned_flag():
+    tables = {
+        "users": [
+            {
+                "user_id": "u1",
+                "username": "Hero",
+                "kingdom_name": "Realm",
+                "profile_bio": "bio",
+                "profile_picture_url": "pic.png",
+                "last_login_at": "2025-01-01T00:00:00Z",
+                "is_banned": True,
+            }
+        ],
+        "player_messages": [],
+    }
+    profile_view.get_supabase_client = lambda: DummyClient(tables)
+    result = profile_view.profile_overview(user_id="u1")
+    assert result["user"]["is_banned"] is True

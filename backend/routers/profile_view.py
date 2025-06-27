@@ -32,7 +32,7 @@ def profile_overview(user_id: str = Depends(verify_jwt_token)):
         user_response = (
             supabase.table("users")
             .select(
-                "username,kingdom_name,profile_bio,profile_picture_url,last_login_at"
+                "username,kingdom_name,profile_bio,profile_picture_url,last_login_at,is_banned"
             )
             .eq("user_id", user_id)
             .single()
@@ -48,13 +48,14 @@ def profile_overview(user_id: str = Depends(verify_jwt_token)):
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to fetch profile") from exc
 
-    return {
+        return {
         "user": {
             "username": user_data.get("username"),
             "kingdom_name": user_data.get("kingdom_name"),
             "profile_bio": user_data.get("profile_bio"),
             "profile_picture_url": user_data.get("profile_picture_url"),
             "last_login_at": user_data.get("last_login_at"),
+            "is_banned": user_data.get("is_banned", False),
         },
         "unread_messages": unread_count,
     }
