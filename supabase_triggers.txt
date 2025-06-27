@@ -4,9 +4,9 @@ alliance_treaties
 
 audit_trigger
 
-AFTER UPDATE
 AFTER DELETE
 AFTER INSERT
+AFTER UPDATE
 ROW
 
 
@@ -15,8 +15,8 @@ kingdom_resources
 
 audit_trigger
 
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
 AFTER INSERT
 ROW
 
@@ -26,9 +26,9 @@ alliance_members
 
 log_audit_alliance_members
 
+AFTER UPDATE
 AFTER DELETE
 AFTER INSERT
-AFTER UPDATE
 ROW
 
 
@@ -37,8 +37,8 @@ alliance_vault_transaction_log
 
 log_audit_alliance_vault_transaction_log
 
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
 AFTER INSERT
 ROW
 
@@ -59,9 +59,9 @@ kingdom_resources
 
 log_audit_kingdom_resources
 
+AFTER UPDATE
 AFTER DELETE
 AFTER INSERT
-AFTER UPDATE
 ROW
 
 
@@ -71,8 +71,8 @@ kingdom_troops
 log_audit_kingdom_troops
 
 AFTER UPDATE
-AFTER INSERT
 AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -81,9 +81,9 @@ kingdoms
 
 log_audit_kingdoms
 
+AFTER DELETE
 AFTER INSERT
 AFTER UPDATE
-AFTER DELETE
 ROW
 
 
@@ -125,8 +125,8 @@ training_queue
 
 log_audit_training_queue
 
-AFTER DELETE
 AFTER UPDATE
+AFTER DELETE
 AFTER INSERT
 ROW
 
@@ -170,8 +170,19 @@ village_resources
 audit_trigger
 
 AFTER UPDATE
-AFTER INSERT
 AFTER DELETE
+AFTER INSERT
+ROW
+
+
+trg_combat_logs_audit	
+combat_logs
+
+log_table_change
+
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
@@ -181,6 +192,28 @@ kingdoms
 init_spy_defense
 
 BEFORE INSERT
+ROW
+
+
+trg_training_history_audit	
+training_history
+
+log_table_change
+
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
+
+
+trg_wars_audit	
+wars
+
+log_table_change
+
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
 ROW
 
 
