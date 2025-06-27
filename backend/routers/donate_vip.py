@@ -20,7 +20,7 @@ from services.audit_service import log_action
 from services.vip_status_service import get_vip_status, upsert_vip_status
 
 from ..database import get_db
-from ..security import verify_jwt_token
+from ..security import verify_jwt_token, verify_reauth_token
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/vip", tags=["vip"])
@@ -92,7 +92,7 @@ def vip_leaderboard(user_id: str = Depends(verify_jwt_token)):
 @router.post("/donate")
 def donate(
     payload: DonationPayload,
-    user_id: str = Depends(verify_jwt_token),
+    user_id: str = Depends(verify_reauth_token),
     db: Session = Depends(get_db),
 ):
     """Donate for VIP tier (30-day duration unless founder)."""

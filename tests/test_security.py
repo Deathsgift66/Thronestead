@@ -3,6 +3,7 @@ from jose import jwt
 from fastapi import HTTPException
 from sqlalchemy import text
 
+from backend import security
 from backend.security import require_active_user_id
 
 
@@ -101,4 +102,27 @@ def test_device_ban_blocks_request(db_session, monkeypatch):
             authorization=f"Bearer {token}",
             x_user_id="u5",
             db=db_session,
+        )
+
+
+def test_verify_reauth_token_valid(monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    token = token_for("u6", "secret")
+    rtok = security.create_reauth_token("u6", ttl=60)
+    uid = security.verify_reauth_token(
+        x_reauth_token=rtok,
+        authorization=f"Bearer {token}",
+        x_user_id="u6",
+    )
+    assert uid == "u6"
+
+
+def test_verify_reauth_token_invalid(monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    token = token_for("u7", "secret")
+    with pytest.raises(HTTPException):
+        security.verify_reauth_token(
+            x_reauth_token="bad",
+            authorization=f"Bearer {token}",
+            x_user_id="u7",
         )
