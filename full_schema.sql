@@ -1,3 +1,7 @@
+-- Enumerated types added from supabase_enums.txt
+CREATE TYPE resource_type AS ENUM ('Wood','Stone','Iron Ore','Gold','Gems','Food','Coal','Livestock','Clay','Flax','Tools','Wood Planks','Refined Stone','Iron Ingots','Charcoal','Leather','Arrows','Swords','Axes','Shields','Armor','Wagon','Siege Weapons','Jewelry','Spear','Horses','Pitchforks');
+CREATE TYPE war_phase AS ENUM ('alert','planning','battle','completed','live','resolved');
+CREATE TYPE war_status AS ENUM ('active','completed','surrendered');
 CREATE TABLE public.admin_alerts (
   alert_id integer NOT NULL DEFAULT nextval('admin_alerts_alert_id_seq'::regclass),
   type text,
@@ -1329,7 +1333,7 @@ CREATE TABLE public.town_crier_scrolls (
 CREATE TABLE public.trade_logs (
   trade_id integer NOT NULL DEFAULT nextval('trade_logs_trade_id_seq'::regclass),
   timestamp timestamp with time zone DEFAULT now(),
-  resource USER-DEFINED,
+  resource resource_type,
   quantity integer,
   unit_price numeric,
   buyer_id uuid,
