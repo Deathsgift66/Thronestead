@@ -12,6 +12,8 @@ Signature validation is expected to be handled by Supabase middleware/gateway.
 
 import logging
 import os
+import time
+import uuid
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request
@@ -29,6 +31,8 @@ __all__ = [
     "require_active_user_id",
     "verify_api_key",
     "get_current_user",
+    "verify_reauth_token",
+    "create_reauth_token",
 ]
 
 
@@ -220,3 +224,35 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
         "alliance_id": row[3],
         "setup_complete": bool(row[4]),
     }
+
+
+# ------------------------------------------------------------
+# Re-authentication Token Handling
+# ------------------------------------------------------------
+
+REAUTH_TOKENS: dict[str, tuple[str, float]] = {}
+
+
+def create_reauth_token(user_id: str, ttl: int = 300) -> str:
+    """Generate a short-lived token for sensitive actions."""
+    token = uuid.uuid4().hex
+    REAUTH_TOKENS[user_id] = (token, time.time() + ttl)
+    return token
+
+
+def verify_reauth_token(
+    x_reauth_token: str | None = Header(None, alias="X-Reauth-Token"),
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+) -> str:
+    """Validate a short-lived re-authentication token for the user."""
+    user_id = verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+    record = REAUTH_TOKENS.get(user_id)
+    if (
+        not x_reauth_token
+        or not record
+        or record[0] != x_reauth_token
+        or record[1] < time.time()
+    ):
+        raise HTTPException(status_code=401, detail="Invalid re-auth token")
+    return user_id
