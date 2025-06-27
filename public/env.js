@@ -1,4 +1,2 @@
-window.env = {
-  VITE_PUBLIC_SUPABASE_URL: "https://your-project.supabase.co",
-  VITE_PUBLIC_SUPABASE_ANON_KEY: "public-anon-key"
-};
+// Runtime environment configuration. Credentials are now retrieved server-side.
+window.env = {};
