@@ -1536,6 +1536,17 @@ class UserToken(Base):
     tokens = Column(Integer, default=0)
 
 
+class ReauthToken(Base):
+    __tablename__ = "reauth_tokens"
+
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True
+    )
+    token = Column(String, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class TreatyNegotiationLog(Base):
     __tablename__ = "treaty_negotiation_log"
 

@@ -1637,6 +1637,12 @@ CREATE TABLE public.user_tokens (
   tokens integer,
   CONSTRAINT user_tokens_pkey PRIMARY KEY (user_id)
 );
+CREATE TABLE public.reauth_tokens (
+  user_id uuid PRIMARY KEY REFERENCES public.users(user_id),
+  token text NOT NULL,
+  expires_at timestamp with time zone NOT NULL,
+  created_at timestamp with time zone DEFAULT now()
+);
 CREATE TABLE public.users (
   user_id uuid NOT NULL,
   username text NOT NULL UNIQUE,

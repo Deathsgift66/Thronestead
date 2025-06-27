@@ -18,7 +18,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
 from ..database import get_db
-from ..security import verify_jwt_token
+from services.audit_service import log_action
+from ..security import verify_jwt_token, create_reauth_token
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -31,7 +32,6 @@ TOKEN_TTL = int(_reauth_ttl) if _reauth_ttl else 300  # 5 minutes
 _lockout_env = os.getenv("REAUTH_LOCKOUT_THRESHOLD")
 LOCKOUT_THRESHOLD = int(_lockout_env) if _lockout_env else 5
 
-REAUTH_TOKENS: dict[str, float] = {}  # user_id: expiry
 FAILED_ATTEMPTS: dict[tuple[str, str], tuple[int, float]] = {}  # (uid, ip): (count, expiry)
 
 
@@ -39,14 +39,13 @@ class ReauthPayload(BaseModel):
     password: str
 
 
-def _prune_expired() -> None:
+def _prune_expired(db: Session) -> None:
     now = time.time()
-    for uid, exp in list(REAUTH_TOKENS.items()):
-        if exp <= now:
-            REAUTH_TOKENS.pop(uid, None)
+    db.execute(text("DELETE FROM reauth_tokens WHERE expires_at < now()"))
     for key, (count, exp) in list(FAILED_ATTEMPTS.items()):
         if exp <= now:
             FAILED_ATTEMPTS.pop(key, None)
+    db.commit()
 
 
 @router.post("/reauth")
@@ -57,11 +56,12 @@ def reauthenticate(
     db: Session = Depends(get_db),
 ):
     """Validate the user's password and issue a short-lived re-auth token."""
-    _prune_expired()
+    _prune_expired(db)
     ip = request.client.host if request.client else ""
     key = (user_id, ip)
     record = FAILED_ATTEMPTS.get(key)
     if record and record[0] >= LOCKOUT_THRESHOLD and record[1] > time.time():
+        log_action(db, user_id, "reauth_locked", ip)
         raise HTTPException(status_code=429, detail="Too many re-auth attempts")
 
     email = db.execute(
@@ -84,8 +84,10 @@ def reauthenticate(
     if error:
         count, _ = FAILED_ATTEMPTS.get(key, (0, 0))
         FAILED_ATTEMPTS[key] = (count + 1, time.time() + TOKEN_TTL)
+        log_action(db, user_id, "reauth_fail", ip)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    REAUTH_TOKENS[user_id] = time.time() + TOKEN_TTL
+    token = create_reauth_token(db, user_id, TOKEN_TTL)
     FAILED_ATTEMPTS.pop(key, None)
-    return {"reauthenticated": True}
+    log_action(db, user_id, "reauth_success", ip)
+    return {"token": token, "expires_in": TOKEN_TTL}
