@@ -184,6 +184,10 @@ class DummyDBAuth:
 def test_authenticate_success():
     client = DummyClientAuth()
     login_routes.get_supabase_client = lambda: client
+    captured = {}
+    login_routes.notify_new_login = lambda _db, uid, ip, dev: captured.update(
+        {"uid": uid, "ip": ip, "dev": dev}
+    )
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest(headers={"User-Agent": "UA"})
@@ -196,6 +200,9 @@ def test_authenticate_success():
     assert db.updated is True
     assert client.inserted["ip_address"] == "1.1.1.1"
     assert client.inserted["device_info"] == "UA"
+    assert captured["uid"] == "u1"
+    assert captured["ip"] == "1.1.1.1"
+    assert captured["dev"] == "UA"
 
 
 def test_authenticate_invalid():

@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
 from services.audit_service import log_action
+from services.notification_service import notify_new_login
 
 from ..database import get_db
 from ..security import verify_jwt_token, has_active_ban
@@ -187,6 +188,10 @@ def authenticate(
         {"uid": uid},
     )
     db.commit()
+    try:
+        notify_new_login(db, uid, ip, agent)
+    except Exception:
+        pass
     try:  # pragma: no cover - ignore failures
         sb.table("user_active_sessions").insert(
             {"user_id": uid, "ip_address": ip, "device_info": agent}
