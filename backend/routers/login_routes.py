@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 import logging
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -123,9 +124,20 @@ def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends
     return {"setup_complete": complete}
 
 
+FAILED_LOGINS: dict[tuple[str, str], tuple[int, float]] = {}
+
+
+def _prune_attempts() -> None:
+    now = time.time()
+    for key, (_, exp) in list(FAILED_LOGINS.items()):
+        if exp <= now:
+            FAILED_LOGINS.pop(key, None)
+
+
 class AuthPayload(BaseModel):
     email: EmailStr
     password: str
+    otp: str | None = None
 
 
 @router.post("/authenticate")
@@ -142,14 +154,21 @@ def authenticate(
         ip = request.client.host if request.client else ""
     device_hash = request.headers.get("X-Device-Hash")
 
+    _prune_attempts()
+    key = (payload.email.lower(), ip)
+    record = FAILED_LOGINS.get(key)
+    if record and record[1] > time.time():
+        raise HTTPException(status_code=429, detail="Too many failed attempts")
+
     if has_active_ban(db, ip=ip, device_hash=device_hash):
         raise HTTPException(status_code=403, detail="Access banned")
 
     sb = get_supabase_client()
+    data = {"email": payload.email, "password": payload.password}
+    if payload.otp:
+        data["otp_token"] = payload.otp
     try:
-        res = sb.auth.sign_in_with_password(
-            {"email": payload.email, "password": payload.password}
-        )
+        res = sb.auth.sign_in_with_password(data)
     except Exception as exc:  # pragma: no cover - network/dependency issues
         raise HTTPException(
             status_code=500, detail="Authentication service error"
@@ -165,6 +184,9 @@ def authenticate(
         user = getattr(res, "user", None)
 
     if error or not session:
+        count, _ = FAILED_LOGINS.get(key, (0, 0))
+        delay = min(2 ** count, 300)
+        FAILED_LOGINS[key] = (count + 1, time.time() + delay)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     confirmed = bool(
@@ -183,11 +205,32 @@ def authenticate(
     agent = request.headers.get("user-agent", "")
     if has_active_ban(db, user_id=uid, ip=ip, device_hash=device_hash):
         raise HTTPException(status_code=403, detail="Account banned")
+    row = db.execute(
+        text(
+            "SELECT username, kingdom_id, alliance_id, setup_complete, is_deleted, status "
+            "FROM users WHERE user_id = :uid"
+        ),
+        {"uid": uid},
+    ).fetchone()
+
+    username = row[0] if row else None
+    kingdom_id = row[1] if row else None
+    alliance_id = row[2] if row else None
+    setup_complete = bool(row[3]) if row else False
+    is_deleted = bool(row[4]) if row else False
+    status = row[5] if row else None
+
+    if is_deleted:
+        raise HTTPException(status_code=403, detail="Account deleted")
+    if status and status.lower() == "suspicious" and not payload.otp:
+        raise HTTPException(status_code=401, detail="2FA required")
+
     db.execute(
         text("UPDATE users SET last_login_at = now() WHERE user_id = :uid"),
         {"uid": uid},
     )
     db.commit()
+    FAILED_LOGINS.pop(key, None)
     try:
         notify_new_login(db, uid, ip, agent)
     except Exception:
@@ -198,17 +241,18 @@ def authenticate(
         ).execute()
     except Exception:
         pass
-    row = db.execute(
-        text(
-            "SELECT username, kingdom_id, alliance_id, setup_complete FROM users WHERE user_id = :uid"
-        ),
-        {"uid": uid},
-    ).fetchone()
 
     username = row[0] if row else None
     kingdom_id = row[1] if row else None
     alliance_id = row[2] if row else None
     setup_complete = bool(row[3]) if row else False
+    is_deleted = bool(row[4]) if row else False
+    status = row[5] if row else None
+
+    if is_deleted:
+        raise HTTPException(status_code=403, detail="Account deleted")
+    if status and status.lower() == "suspicious" and not payload.otp:
+        raise HTTPException(status_code=401, detail="2FA required")
 
     return {
         "session": session,

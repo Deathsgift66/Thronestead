@@ -5,6 +5,7 @@
 import json
 
 import pytest
+import time
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
@@ -168,15 +169,27 @@ class DummyClientAuth:
 
 
 class DummyDBAuth:
-    def __init__(self):
+    def __init__(self, deleted=False, status="active"):
         self.updated = False
+        self.deleted = deleted
+        self.status = status
 
     def execute(self, query, *args, **_kwargs):
-        if "UPDATE users SET last_login_at" in str(query):
+        q = str(query).lower()
+        if "update users set last_login_at" in q:
             self.updated = True
         class R:
-            def fetchone(self):
-                return ("name", 1, 2, True)
+            def fetchone(self_inner):
+                if "from users" in q:
+                    return (
+                        "name",
+                        1,
+                        2,
+                        True,
+                        self.deleted,
+                        self.status,
+                    )
+                return None
 
         return R()
 
@@ -223,6 +236,34 @@ def test_authenticate_failure():
     with pytest.raises(HTTPException) as exc:
         login_routes.authenticate(req, payload, db=db)
     assert exc.value.status_code == 500
+
+
+def test_authenticate_deleted_account():
+    login_routes.get_supabase_client = lambda: DummyClientAuth()
+    db = DummyDBAuth(deleted=True)
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(req, payload, db=db)
+    assert exc.value.status_code == 403
+
+
+def test_authenticate_backoff(monkeypatch):
+    login_routes.get_supabase_client = lambda: DummyClientAuth("error")
+    login_routes.FAILED_LOGINS.clear()
+    db = DummyDBAuth()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException):
+        login_routes.authenticate(req, payload, db=db)
+    assert ("e@example.com", "1.1.1.1") in login_routes.FAILED_LOGINS
+    login_routes.FAILED_LOGINS[("e@example.com", "1.1.1.1")] = (
+        3,
+        time.time() + 10,
+    )
+    with pytest.raises(HTTPException) as exc2:
+        login_routes.authenticate(req, payload, db=db)
+    assert exc2.value.status_code == 429
 
 
 class DummyDBAttempt:
