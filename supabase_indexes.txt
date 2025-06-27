@@ -46,6 +46,15 @@ View definition
 
 public
 
+alliance_loan_repayments
+
+alliance_loan_repayments_pkey
+
+
+View definition
+
+public
+
 alliance_loans
 
 alliance_loans_pkey
@@ -226,6 +235,15 @@ View definition
 
 public
 
+bans
+
+bans_pkey
+
+
+View definition
+
+public
+
 battle_resolution_logs
 
 battle_resolution_logs_pkey
@@ -364,15 +382,6 @@ public
 alliance_loans
 
 idx_alliance_loans_borrower_user_id
-
-
-View definition
-
-public
-
-alliance_loan_repayments
-
-idx_alliance_loan_repayments_loan_id
 
 
 View definition
@@ -2074,6 +2083,15 @@ public
 user_active_sessions
 
 user_active_sessions_pkey
+
+
+View definition
+
+public
+
+user_reports
+
+user_reports_pkey
 
 
 View definition
