@@ -1,185 +1,231 @@
-Name	Arguments	Return type	Security	
+Name	Table	Function	Events	Orientation	Enabled	
+audit_alliance_treaties	
+alliance_treaties
 
 audit_trigger
--
 
-trigger
-
-Definer	
-
-
-ensure_kingdom_resource_row
-p_kingdom_id integer
-
-void
-
-Invoker	
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
 
-init_spy_defense
--
+audit_kingdom_resources	
+kingdom_resources
 
-trigger
+audit_trigger
 
-Definer	
+AFTER DELETE
+AFTER UPDATE
+AFTER INSERT
+ROW
 
+
+audit_trigger_alliance_members	
+alliance_members
 
 log_audit_alliance_members
--
 
-trigger
+AFTER DELETE
+AFTER INSERT
+AFTER UPDATE
+ROW
 
-Invoker	
 
+audit_trigger_alliance_vault_transaction_log	
+alliance_vault_transaction_log
 
 log_audit_alliance_vault_transaction_log
--
 
-trigger
+AFTER DELETE
+AFTER UPDATE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_alliances	
+alliances
 
 log_audit_alliances
--
 
-trigger
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_kingdom_resources	
+kingdom_resources
 
 log_audit_kingdom_resources
--
 
-trigger
+AFTER DELETE
+AFTER INSERT
+AFTER UPDATE
+ROW
 
-Invoker	
 
-
-log_audit_kingdom_troops
--
-
-trigger
-
-Definer	
-
+audit_trigger_kingdom_troops	
+kingdom_troops
 
 log_audit_kingdom_troops
-p_kingdom_id integer, p_user_id uuid, p_action text, p_details text
 
-void
+AFTER UPDATE
+AFTER INSERT
+AFTER DELETE
+ROW
 
-Definer	
 
+audit_trigger_kingdoms	
+kingdoms
 
 log_audit_kingdoms
--
 
-trigger
+AFTER INSERT
+AFTER UPDATE
+AFTER DELETE
+ROW
 
-Invoker	
 
+audit_trigger_projects_alliance	
+projects_alliance
 
 log_audit_projects_alliance
--
 
-trigger
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_projects_player	
+projects_player
 
 log_audit_projects_player
--
 
-trigger
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_training_history	
+training_history
 
 log_audit_training_history
--
 
-trigger
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_training_queue	
+training_queue
 
 log_audit_training_queue
--
 
-trigger
+AFTER DELETE
+AFTER UPDATE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_users	
+users
 
 log_audit_users
--
 
-trigger
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_village_buildings	
+village_buildings
 
 log_audit_village_buildings
--
 
-trigger
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
-Invoker	
 
+audit_trigger_wars	
+wars
 
 log_audit_wars
--
 
-trigger
+AFTER UPDATE
+AFTER DELETE
+AFTER INSERT
+ROW
 
-Invoker	
+
+audit_village_resources	
+village_resources
+
+audit_trigger
+
+AFTER UPDATE
+AFTER INSERT
+AFTER DELETE
+ROW
 
 
-notify_new_war
--
+trg_init_spy_defense	
+kingdoms
 
-trigger
+init_spy_defense
 
-Invoker	
+BEFORE INSERT
+ROW
 
+
+trg_webhook_admin_alert	
+admin_alerts
 
 webhook_admin_alert
--
 
-trigger
+AFTER INSERT
+ROW
 
-Invoker	
 
+trg_webhook_kingdom_deleted	
+kingdoms
 
 webhook_kingdom_deleted
--
 
-trigger
+AFTER DELETE
+ROW
 
-Invoker	
 
+trg_webhook_training_completed	
+training_history
 
 webhook_training_completed
--
 
-trigger
+AFTER INSERT
+ROW
 
-Invoker	
 
+trg_webhook_treaty_approved	
+alliance_treaties
 
 webhook_treaty_approved
--
 
-trigger
+AFTER UPDATE
+ROW
 
-Invoker	
 
+trg_webhook_war_declared	
+wars
 
 webhook_war_declared
--
 
-trigger
+AFTER INSERT
+ROW
 
-Invoker	
 
