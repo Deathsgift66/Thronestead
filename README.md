@@ -36,6 +36,7 @@ the records created during onboarding.
 ✅ GDPR / Legal Ready → legal.html + linked PDFs
 ✅ COPPA/GDPR-K personal info filters
 ✅ Lighthouse / SEO optimized
+✅ Password fields include accessible show/hide toggle with optional paste lock
 ✅ Progression stages documented in [docs/kingdom_progression_stages.md](docs/kingdom_progression_stages.md)
 ✅ Progression gating documented in [docs/page_access_gating.md](docs/page_access_gating.md)
 ✅ Alliance war pre-plan storage documented in [docs/alliance_war_preplans.md](docs/alliance_war_preplans.md)
@@ -139,8 +140,11 @@ API_SECRET
 API_BASE_URL
 MASTER_ROLLBACK_PASSWORD
 ALLOWED_ORIGINS
+ALLOW_PASSWORD_PASTE
+
 REAUTH_TOKEN_TTL
 REAUTH_LOCKOUT_THRESHOLD
+
 ```
 
 `SUPABASE_JWT_SECRET` verifies Supabase tokens and must match the JWT secret in
@@ -160,9 +164,13 @@ Example:
 ALLOWED_ORIGINS=https://thronestead.com,https://www.thronestead.com
 ```
 
+
+`ALLOW_PASSWORD_PASTE` toggles whether users can paste into password fields. Set
+to `true` to permit pasting.
 `REAUTH_TOKEN_TTL` controls how long re-authentication tokens remain valid. Set
 `REAUTH_LOCKOUT_THRESHOLD` to define how many failed attempts a user/IP may make
 before re-auth requests are temporarily blocked.
+
 
 This will create all tables referenced by the frontend.
 If your deployment requires additional data seeding or custom tables, load any project-specific SQL migrations after `full_schema.sql`. Example documentation references a `2025_06_08_add_regions.sql` script used to populate the `region_catalogue` table. Another example is the `migrations/2025_06_17_populate_tech_catalogue.sql` script which seeds the `tech_catalogue` table.
