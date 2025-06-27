@@ -1,18 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Attempt to load from env.js runtime config first
-const runtime = typeof window !== 'undefined' ? window.env || {} : {};
+// Fetch Supabase credentials from the backend at runtime so they are not
+// embedded in the built frontend assets.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-const SUPABASE_URL =
-  runtime.VITE_PUBLIC_SUPABASE_URL ||
-  import.meta.env.VITE_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY =
-  runtime.VITE_PUBLIC_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+function loadConfig() {
+  try {
+    const req = new XMLHttpRequest();
+    req.open('GET', `${API_BASE_URL}/api/public-config`, false); // synchronous
+    req.send(null);
+    if (req.status === 200) {
+      return JSON.parse(req.responseText);
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+const { SUPABASE_URL = '', SUPABASE_ANON_KEY = '' } = loadConfig();
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.warn('⚠️ Supabase credentials missing.');
 }
 
-export const supabase = createClient(SUPABASE_URL || '', SUPABASE_ANON_KEY || '');
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
