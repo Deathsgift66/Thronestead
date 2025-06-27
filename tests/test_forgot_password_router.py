@@ -5,6 +5,8 @@
 import hashlib
 import time
 import uuid
+import pytest
+from fastapi import HTTPException
 from backend.models import Notification, User
 from backend.routers import forgot_password as fp
 
@@ -122,3 +124,38 @@ def test_keep_session_token(db_session):
     )
 
     assert called["args"] == (uid, "sess")
+
+
+def test_reject_breached_password(db_session):
+    uid = create_user(db_session)
+    fp.RESET_STORE.clear()
+    fp.VERIFIED_SESSIONS.clear()
+    token = "breach"
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    fp.RESET_STORE[token_hash] = (uid, time.time() + 60)
+    fp.VERIFIED_SESSIONS[uid] = (token_hash, time.time() + 60, None)
+
+    class DummyAdmin:
+        def update_user_by_id(self, *_args, **_kwargs):
+            raise AssertionError("should not call update")
+
+        def sign_out_user(self, *_args, **_kwargs):
+            raise AssertionError("should not call signout")
+
+    class DummySB:
+        def __init__(self):
+            self.auth = type("A", (), {"admin": DummyAdmin()})()
+
+    fp.get_supabase_client = lambda: DummySB()
+    fp.is_pwned_password = lambda _pw: True
+
+    with pytest.raises(HTTPException) as exc:
+        fp.set_new_password(
+            fp.PasswordPayload(
+                code=token,
+                new_password="StrongPass1234",
+                confirm_password="StrongPass1234",
+            ),
+            db_session,
+        )
+    assert exc.value.status_code == 400
