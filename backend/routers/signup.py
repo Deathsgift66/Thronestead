@@ -20,7 +20,7 @@ from services.moderation import validate_clean_text, validate_username
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.models import Notification
+from backend.models import Kingdom, Notification
 from services.resource_service import ensure_kingdom_resource_row
 
 from ..database import get_db
@@ -226,25 +226,35 @@ def check_kingdom_name(kingdom: str):
 
 
 @router.get("/stats")
-def signup_stats():
+def signup_stats(db: Session = Depends(get_db)):
     """Return top kingdoms for display on the signup screen."""
+    supabase = get_supabase_client()
     try:
-        sb = get_supabase_client()
         res = (
-            sb.table("leaderboard_kingdoms")
+            supabase.table("leaderboard_kingdoms")
             .select("kingdom_name,score")
             .order("score", desc=True)
             .limit(3)
             .execute()
         )
         data = getattr(res, "data", res) or []
-        return {"top_kingdoms": data}
-    except Exception:
+        if data:
+            return {"top_kingdoms": data}
+    except Exception:  # pragma: no cover - fall back to DB query
         import traceback
 
         logger.error("Error in /api/signup/stats:\n%s", traceback.format_exc())
-        # Provide a safe fallback response so the signup page can still render
-        return {"top_kingdoms": []}
+
+    rows = (
+        db.query(Kingdom.kingdom_name, Kingdom.prestige_score.label("score"))
+        .order_by(Kingdom.prestige_score.desc())
+        .limit(3)
+        .all()
+    )
+    data = [
+        {"kingdom_name": r.kingdom_name, "score": r.score or 0} for r in rows
+    ]
+    return {"top_kingdoms": data}
 
 
 @router.post("/create_user")
