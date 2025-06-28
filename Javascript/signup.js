@@ -230,6 +230,10 @@ async function checkAvailability() {
   const kingdom = document.getElementById('kingdomName').value.trim();
   const username = document.getElementById('username').value.trim();
 
+  if (!kingdom && !username) {
+    return;
+  }
+
   if (kingdom && (kingdom.length < 3 ||
       containsBannedWord(kingdom))) {
     updateAvailabilityUI('kingdomName-msg', false);
@@ -243,13 +247,13 @@ async function checkAvailability() {
   }
 
   try {
+    const body = {};
+    if (kingdom) body.kingdom_name = kingdom;
+    if (username) body.username = username;
     const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        kingdom_name: kingdom,
-        username
-      })
+      body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error('check failed');
     const data = await res.json();
