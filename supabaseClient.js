@@ -1,28 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Fetch Supabase credentials from the backend at runtime so they are not
-// embedded in the built frontend assets.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-
-function loadConfig() {
-  try {
-    const req = new XMLHttpRequest();
-    req.open('GET', `${API_BASE_URL}/api/public-config/`, false); // synchronous
-    req.send(null);
-    if (req.status === 200) {
-      return JSON.parse(req.responseText);
-    }
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-const { SUPABASE_URL = '', SUPABASE_ANON_KEY = '' } = loadConfig();
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('⚠️ Supabase credentials missing.');
-}
+// Hard-coded Supabase credentials supplied by the user.
+// NOTE: Do not expose sensitive keys in production builds.
+const SUPABASE_URL = 'https://zzqoxgytfrbptojcwrjm.supabase.co';
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
