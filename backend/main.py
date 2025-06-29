@@ -62,6 +62,8 @@ setup_rate_limiter(app)
 origins = [
     "https://thronestead.com",
     "https://www.thronestead.com",
+    "https://thronestead.onrender.com",
+    "http://localhost:3000",
 ]
 
 extra_origins = os.getenv("ALLOWED_ORIGINS")
