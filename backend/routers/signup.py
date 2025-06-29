@@ -162,8 +162,31 @@ def check_availability(
     available_username = True
     available_email = True
 
-    try:
-        if sb:
+    def _query_db() -> None:
+        nonlocal available_kingdom, available_username, available_email
+        if payload.kingdom_name:
+            row = db.execute(
+                text("SELECT 1 FROM kingdoms WHERE kingdom_name = :n LIMIT 1"),
+                {"n": payload.kingdom_name},
+            ).fetchone()
+            available_kingdom = row is None
+
+        if payload.username:
+            row = db.execute(
+                text("SELECT 1 FROM users WHERE username = :u LIMIT 1"),
+                {"u": payload.username},
+            ).fetchone()
+            available_username = row is None
+
+        if payload.email:
+            row = db.execute(
+                text("SELECT 1 FROM users WHERE email = :e LIMIT 1"),
+                {"e": payload.email},
+            ).fetchone()
+            available_email = row is None
+
+    if sb:
+        try:
             if payload.kingdom_name:
                 res = (
                     sb.table("kingdoms")
@@ -196,37 +219,18 @@ def check_availability(
                 )
                 rows = getattr(res, "data", res) or []
                 available_email = len(rows) == 0
-        else:
-            if payload.kingdom_name:
-                row = db.execute(
-                    text(
-                        "SELECT 1 FROM kingdoms WHERE kingdom_name = :n LIMIT 1"
-                    ),
-                    {"n": payload.kingdom_name},
-                ).fetchone()
-                available_kingdom = row is None
+        except Exception:  # pragma: no cover - supabase failure
+            logger.warning("Supabase query failed; falling back to DB")
+            sb = None
 
-            if payload.username:
-                row = db.execute(
-                    text(
-                        "SELECT 1 FROM users WHERE username = :u LIMIT 1"
-                    ),
-                    {"u": payload.username},
-                ).fetchone()
-                available_username = row is None
-
-            if payload.email:
-                row = db.execute(
-                    text("SELECT 1 FROM users WHERE email = :e LIMIT 1"),
-                    {"e": payload.email},
-                ).fetchone()
-                available_email = row is None
-
-    except Exception as exc:
-        logger.exception("Failed to query availability")
-        raise HTTPException(
-            status_code=500, detail="Failed to query availability"
-        ) from exc
+    if not sb:
+        try:
+            _query_db()
+        except Exception as exc:  # pragma: no cover - unexpected DB failure
+            logger.exception("Failed to query availability")
+            raise HTTPException(
+                status_code=500, detail="Failed to query availability"
+            ) from exc
 
     return {
         "kingdom_available": available_kingdom,
