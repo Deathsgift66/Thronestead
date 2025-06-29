@@ -4,11 +4,14 @@
 // Developer: Deathsgift66
 // ✅ Fetch progression summary from backend API and store globally + in sessionStorage
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+import { authHeaders } from './auth.js';
 
 export async function fetchAndStorePlayerProgression(userId) {
   try {
+    const headers = await authHeaders();
+    headers['X-User-ID'] = userId;
     const res = await fetch(`${API_BASE_URL}/api/progression/summary`, {
-      headers: { 'X-User-ID': userId }
+      headers
     });
 
     const data = await res.json();
