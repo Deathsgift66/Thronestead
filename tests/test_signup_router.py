@@ -314,6 +314,51 @@ def test_check_availability(db_session):
     assert not res["email_available"]
 
 
+def test_check_availability_supabase_error(db_session):
+    class ErrorTable:
+        def select(self, *_args, **_kwargs):
+            return self
+
+        def eq(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, *_args, **_kwargs):
+            return self
+
+        def execute(self):
+            raise Exception("fail")
+
+    class ErrorClient:
+        def table(self, _name):
+            return ErrorTable()
+
+    signup.get_supabase_client = ErrorClient
+
+    db_session.execute(
+        text(
+            "INSERT INTO users (user_id, username, display_name, kingdom_name, email)"
+            " VALUES ('u1', 'dup', 'dup', 'Dup', 'dup@example.com')"
+        )
+    )
+    db_session.execute(
+        text(
+            "INSERT INTO kingdoms (kingdom_id, user_id, kingdom_name, ruler_name)"
+            " VALUES (1, 'u1', 'Dup', 'dup')"
+        )
+    )
+    db_session.commit()
+
+    payload = signup.CheckPayload(
+        kingdom_name="Dup",
+        username="dup",
+        email="dup@example.com",
+    )
+    res = signup.check_availability(payload, db=db_session)
+    assert not res["kingdom_available"]
+    assert not res["username_available"]
+    assert not res["email_available"]
+
+
 def test_check_kingdom_name():
     signup.get_supabase_client = AvailClient
     res = signup.check_kingdom_name("taken")
