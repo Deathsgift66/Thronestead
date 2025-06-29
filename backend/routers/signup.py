@@ -147,48 +147,80 @@ def _validate_username(value: str | None) -> str | None:
 
 
 @router.post("/check")
-def check_availability(payload: CheckPayload):
+def check_availability(
+    payload: CheckPayload, db: Session = Depends(get_db)
+):
     """
     Check if a kingdom name or username is available.
     """
-    sb = get_supabase_client()
+    try:
+        sb = get_supabase_client()
+    except Exception:  # pragma: no cover - service might be down
+        logger.warning("Supabase client unavailable; falling back to DB")
+        sb = None
     available_kingdom = True
     available_username = True
     available_email = True
 
     try:
-        if payload.kingdom_name:
-            res = (
-                sb.table("kingdoms")
-                .select("kingdom_id")
-                .eq("kingdom_name", payload.kingdom_name)
-                .limit(1)
-                .execute()
-            )
-            rows = getattr(res, "data", res) or []
-            available_kingdom = len(rows) == 0
+        if sb:
+            if payload.kingdom_name:
+                res = (
+                    sb.table("kingdoms")
+                    .select("kingdom_id")
+                    .eq("kingdom_name", payload.kingdom_name)
+                    .limit(1)
+                    .execute()
+                )
+                rows = getattr(res, "data", res) or []
+                available_kingdom = len(rows) == 0
 
-        if payload.username:
-            res = (
-                sb.table("users")
-                .select("id")
-                .eq("username", payload.username)
-                .limit(1)
-                .execute()
-            )
-            rows = getattr(res, "data", res) or []
-            available_username = len(rows) == 0
+            if payload.username:
+                res = (
+                    sb.table("users")
+                    .select("id")
+                    .eq("username", payload.username)
+                    .limit(1)
+                    .execute()
+                )
+                rows = getattr(res, "data", res) or []
+                available_username = len(rows) == 0
 
-        if payload.email:
-            res = (
-                sb.table("users")
-                .select("id")
-                .eq("email", payload.email)
-                .limit(1)
-                .execute()
-            )
-            rows = getattr(res, "data", res) or []
-            available_email = len(rows) == 0
+            if payload.email:
+                res = (
+                    sb.table("users")
+                    .select("id")
+                    .eq("email", payload.email)
+                    .limit(1)
+                    .execute()
+                )
+                rows = getattr(res, "data", res) or []
+                available_email = len(rows) == 0
+        else:
+            if payload.kingdom_name:
+                row = db.execute(
+                    text(
+                        "SELECT 1 FROM kingdoms WHERE kingdom_name = :n LIMIT 1"
+                    ),
+                    {"n": payload.kingdom_name},
+                ).fetchone()
+                available_kingdom = row is None
+
+            if payload.username:
+                row = db.execute(
+                    text(
+                        "SELECT 1 FROM users WHERE username = :u LIMIT 1"
+                    ),
+                    {"u": payload.username},
+                ).fetchone()
+                available_username = row is None
+
+            if payload.email:
+                row = db.execute(
+                    text("SELECT 1 FROM users WHERE email = :e LIMIT 1"),
+                    {"e": payload.email},
+                ).fetchone()
+                available_email = row is None
 
     except Exception as exc:
         logger.exception("Failed to query availability")

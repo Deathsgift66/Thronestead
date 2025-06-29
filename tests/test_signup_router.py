@@ -301,14 +301,14 @@ class AvailClient:
         return TableStub(name)
 
 
-def test_check_availability():
+def test_check_availability(db_session):
     signup.get_supabase_client = AvailClient
     payload = signup.CheckPayload(
         kingdom_name="taken",
         username="taken",
         email="taken@example.com",
     )
-    res = signup.check_availability(payload)
+    res = signup.check_availability(payload, db=db_session)
     assert not res["kingdom_available"]
     assert not res["username_available"]
     assert not res["email_available"]
