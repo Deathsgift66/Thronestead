@@ -104,20 +104,24 @@ def log_login_event(
 @limiter.limit("20/minute")
 def record_login_attempt(request: Request, payload: AttemptPayload, db: Session = Depends(get_db)):
     """Record a login attempt success or failure."""
-    row = db.execute(
-        text("SELECT user_id FROM users WHERE lower(email)=:email"),
-        {"email": payload.email.lower()},
-    ).fetchone()
-    user_id = row[0] if row else None
-    action = "login_success" if payload.success else "login_fail"
-    ip = request.headers.get("x-forwarded-for")
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
-    if not ip:
-        ip = request.client.host if request.client else ""
-    agent = request.headers.get("user-agent", "")
-    log_action(db, user_id, action, payload.email.lower(), ip, agent)
-    return {"logged": True}
+    try:
+        row = db.execute(
+            text("SELECT user_id FROM users WHERE lower(email)=:email"),
+            {"email": payload.email.lower()},
+        ).fetchone()
+        user_id = row[0] if row else None
+        action = "login_success" if payload.success else "login_fail"
+        ip = request.headers.get("x-forwarded-for")
+        if ip and "," in ip:
+            ip = ip.split(",")[0].strip()
+        if not ip:
+            ip = request.client.host if request.client else ""
+        agent = request.headers.get("user-agent", "")
+        log_action(db, user_id, action, payload.email.lower(), ip, agent)
+        return {"logged": True}
+    except Exception:
+        logging.exception("Failed to record login attempt")
+        return {"logged": False}
 
 
 @router.get("/status")
