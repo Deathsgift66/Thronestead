@@ -277,7 +277,10 @@ async function handleLogin(e) {
     showLoginError(validationError);
     return;
   }
-  if (containsBannedContent(email) || containsBannedContent(password)) {
+  // Only check the email for banned words. Passwords are user‑controlled and
+  // may legitimately contain arbitrary character sequences that match entries
+  // in the banned word list, so we avoid filtering them here.
+  if (containsBannedContent(email)) {
     showLoginError('Input contains banned words.');
     return;
   }
