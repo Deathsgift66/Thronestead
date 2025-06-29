@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: progressionGlobal.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 6.19.2025.22.06
+// Developer: Codex
 // ✅ Fetch progression summary from backend API and store globally + in sessionStorage
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 import { authHeaders } from './auth.js';
@@ -13,6 +13,21 @@ export async function fetchAndStorePlayerProgression(userId) {
     const res = await fetch(`${API_BASE_URL}/api/progression/summary`, {
       headers
     });
+
+    if (res.status === 404) {
+      const defaults = {
+        castleLevel: 1,
+        maxVillages: 1,
+        availableNobles: 0,
+        totalNobles: 0,
+        availableKnights: 0,
+        totalKnights: 0,
+        troopSlots: { used: 0, available: 0 }
+      };
+      window.playerProgression = defaults;
+      sessionStorage.setItem('playerProgression', JSON.stringify(defaults));
+      return;
+    }
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch progression');
