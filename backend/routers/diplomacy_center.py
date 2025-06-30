@@ -88,6 +88,12 @@ def alliance_metrics(alliance_id: int, db: Session = Depends(get_db)):
     }
 
 
+# Compatibility wrapper for older tests
+def metrics(alliance_id: int, db: Session = Depends(get_db)):
+    """Backward compatible alias for ``alliance_metrics``."""
+    return alliance_metrics(alliance_id, db)
+
+
 @router.get("/treaties/{alliance_id}")
 def list_treaties(
     alliance_id: int,
@@ -132,6 +138,16 @@ def list_treaties(
     ]
 
 
+# Compatibility wrapper for older tests
+def treaties(
+    alliance_id: int,
+    status: str | None = Query(None, description="Filter by treaty status"),
+    db: Session = Depends(get_db),
+):
+    """Backward compatible alias for ``list_treaties``."""
+    return list_treaties(alliance_id, status, db)
+
+
 @router.post("/treaty/propose")
 def propose_treaty(
     payload: TreatyProposal,
@@ -154,6 +170,16 @@ def propose_treaty(
         raise HTTPException(status_code=400, detail=str(exc))
 
     return {"status": "proposed"}
+
+
+# Compatibility wrapper for older tests
+def propose_treaty_api(
+    payload: TreatyProposal,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Backward compatible alias for ``propose_treaty``."""
+    return propose_treaty(payload, user_id, db)
 
 
 @router.patch("/treaty/respond")
@@ -189,6 +215,16 @@ def respond_treaty(
         db, aid, user_id, f"Treaty {payload.response}", str(payload.treaty_id)
     )
     return {"status": payload.response}
+
+
+# Compatibility wrapper for older tests
+def respond_treaty_api(
+    payload: TreatyResponse,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Backward compatible alias for ``respond_treaty``."""
+    return respond_treaty(payload, user_id, db)
 
 
 @router.post("/renew_treaty")
