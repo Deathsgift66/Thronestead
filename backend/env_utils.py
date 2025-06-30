@@ -17,3 +17,14 @@ def get_env_var(key: str, default: str | None = None) -> str | None:
         if val:
             return val
     return default
+
+
+def strtobool(val: str) -> bool:
+    """Return ``True`` for truthy strings and ``False`` for falsey ones."""
+    v = val.strip().lower()
+    if v in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if v in ("n", "no", "f", "false", "off", "0"):
+        return False
+    raise ValueError(f"invalid truth value {val!r}")
+
