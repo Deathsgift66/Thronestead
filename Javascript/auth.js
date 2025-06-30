@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: auth.js
-// Version 6.18.2025.22.00
+// Version 6.20.2025.23.00
 // Developer: Codex
 // Shared helper for retrieving authenticated user and headers
 
@@ -91,6 +91,10 @@ export function clearStoredAuth() {
   localStorage.removeItem('currentUser');
   document.cookie = 'authToken=; Max-Age=0; path=/; secure; samesite=strict;';
   resetAuthCache();
+  // Notify other tabs to logout
+  try {
+    localStorage.setItem('thronesteadLogout', Date.now().toString());
+  } catch {}
 }
 
 /**
@@ -166,4 +170,17 @@ export async function validateSessionOrLogout() {
     return false;
   }
 }
+
+// Listen for logout events from other tabs
+window.addEventListener('storage', e => {
+  if (e.key === 'thronesteadLogout') {
+    resetAuthCache();
+    sessionStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser');
+    document.cookie = 'authToken=; Max-Age=0; path=/; secure; samesite=strict;';
+    if (!location.pathname.endsWith('login.html')) {
+      window.location.href = 'login.html';
+    }
+  }
+});
 
