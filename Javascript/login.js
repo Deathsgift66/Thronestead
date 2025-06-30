@@ -257,9 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (loginForm) {
     loginForm.addEventListener('submit', handleLogin);
   }
-  if (loginButton) {
-    loginButton.addEventListener('click', handleLogin);
-  }
+
 
   await loadAnnouncements();
 });
