@@ -77,6 +77,7 @@ class DummyDB:
     def execute(self, query, *args, **kwargs):
         if "UPDATE users SET last_login_at" in str(query):
             self.updated = True
+
         class R:
             def __init__(self, row):
                 self._row = row
@@ -88,7 +89,7 @@ class DummyDB:
 
 
 def test_login_status_true():
-    db = DummyDB((True,))
+    db = DummyDB((True, False, False))
     result = login_routes.login_status(user_id="u1", db=db)
     assert result["setup_complete"] is True
     assert db.updated is True
@@ -99,6 +100,20 @@ def test_login_status_missing():
     result = login_routes.login_status(user_id="u1", db=db)
     assert result["setup_complete"] is False
     assert db.updated is True
+
+
+def test_login_status_deleted():
+    db = DummyDB((True, True, False))
+    with pytest.raises(HTTPException) as exc:
+        login_routes.login_status(user_id="u1", db=db)
+    assert exc.value.status_code == 403
+
+
+def test_login_status_flagged():
+    db = DummyDB((True, False, True))
+    with pytest.raises(HTTPException) as exc:
+        login_routes.login_status(user_id="u1", db=db)
+    assert exc.value.status_code == 403
 
 # New login endpoint tests
 from backend.routers import login

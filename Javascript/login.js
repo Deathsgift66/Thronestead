@@ -379,6 +379,14 @@ async function handleLogin(e) {
         userInfo = { ...context, id: result.user.id };
         storage.setItem('currentUser', JSON.stringify(userInfo));
       } catch (err) {
+        if (err.message.includes('Account deleted') || err.message.includes('Account flagged')) {
+          showLoginError(err.message.split(':').pop().trim());
+          await supabase.auth.signOut();
+          clearStoredAuth();
+          resetLoginButton();
+          toggleLoading(false);
+          return;
+        }
         console.error('Setup check failed:', err);
       }
 

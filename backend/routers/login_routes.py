@@ -136,10 +136,23 @@ def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends
     )
     db.commit()
     row = db.execute(
-        text("SELECT setup_complete FROM users WHERE user_id = :uid"),
+        text(
+            "SELECT setup_complete, is_deleted, flagged FROM users WHERE user_id = :uid"
+        ),
         {"uid": user_id},
     ).fetchone()
-    complete = bool(row[0]) if row else False
+    if not row:
+        return {"setup_complete": False}
+
+    complete = bool(row[0])
+    is_deleted = bool(row[1])
+    flagged = bool(row[2])
+
+    if is_deleted:
+        raise HTTPException(status_code=403, detail="Account deleted")
+    if flagged:
+        raise HTTPException(status_code=403, detail="Account flagged")
+
     return {"setup_complete": complete}
 
 
