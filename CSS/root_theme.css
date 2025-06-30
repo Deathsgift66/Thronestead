@@ -342,6 +342,17 @@ header.kr-top-banner {
   border-bottom: 2px solid var(--gold);
 }
 
+.fallback-banner {
+  background: var(--banner-dark);
+  color: var(--gold);
+  text-align: center;
+  padding: 0.4rem 0;
+  font-weight: bold;
+}
+.fallback-banner[hidden] {
+  display: none;
+}
+
 /* -----------------------------------------------
    Footer Styling (Universal)
 ------------------------------------------------ */

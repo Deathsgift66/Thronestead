@@ -5,6 +5,11 @@
 // Kingdom Overview — Summary + Resources + Military + Quests + Modifiers
 import { escapeHTML } from './utils.js';
 import { fetchJson, authFetchJson } from './fetchJson.js';
+import {
+  saveKingdomCache,
+  loadKingdomCache,
+  activateFallbackMode
+} from './offlineFallback.js';
 
 import { supabase } from '../supabaseClient.js';
 import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from './progressionGlobal.js';
@@ -22,8 +27,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadPlayerProgressionFromStorage();
   if (!window.playerProgression) await fetchAndStorePlayerProgression(currentUser.id);
 
-  await loadOverview();
-  subscribeToResourceUpdates();
+  const fallback = await loadOverview();
+  if (!fallback) subscribeToResourceUpdates();
 });
 
 async function loadOverview() {
@@ -39,20 +44,41 @@ async function loadOverview() {
   questsContainer.innerHTML = "<p>Loading quests...</p>";
   if (modifiersContainer) modifiersContainer.innerHTML = "<p>Loading modifiers...</p>";
 
+  const prog = window.playerProgression;
+  let data;
+  let fallback = false;
   try {
-    const prog = window.playerProgression;
-    const data = await authFetchJson('/api/overview', currentSession);
+    data = await authFetchJson('/api/overview', currentSession);
+    saveKingdomCache(data);
+  } catch (err) {
+    console.error("❌ Overview load error:", err);
+    data = loadKingdomCache();
+    if (!data) {
+      summaryContainer.innerHTML = "<p>Failed to load summary.</p>";
+      resourcesContainer.innerHTML = "<p>Failed to load resources.</p>";
+      militaryContainer.innerHTML = "<p>Failed to load military.</p>";
+      questsContainer.innerHTML = "<p>Failed to load quests.</p>";
+      return true;
+    }
+    fallback = true;
+    activateFallbackMode();
+  }
 
-    summaryContainer.innerHTML = `
-      <p id="summary-region"></p>
-      <p><strong>Castle Level:</strong> ${prog.castleLevel}</p>
-      <p id="vip-level"></p>
-      <p><strong>Max Villages:</strong> ${prog.maxVillages}</p>
-      <p><strong>Nobles:</strong> ${prog.availableNobles} / ${prog.totalNobles}</p>
-      <p><strong>Knights:</strong> ${prog.availableKnights} / ${prog.totalKnights}</p>
-      <p><strong>Troop Slots:</strong> ${prog.troopSlots.used} / ${prog.troopSlots.total}</p>
-    `;
+  summaryContainer.innerHTML = `
+    <p id="summary-region"></p>
+    <p><strong>Castle Level:</strong> ${prog.castleLevel}</p>
+    <p id="vip-level"></p>
+    <p><strong>Max Villages:</strong> ${prog.maxVillages}</p>
+    <p><strong>Nobles:</strong> ${prog.availableNobles} / ${prog.totalNobles}</p>
+    <p><strong>Knights:</strong> ${prog.availableKnights} / ${prog.totalKnights}</p>
+    <p><strong>Troop Slots:</strong> ${prog.troopSlots.used} / ${prog.troopSlots.total}</p>
+  `;
 
+  if (fallback) {
+    const regionCode = data.kingdom?.region || 'Unspecified';
+    document.getElementById('summary-region').innerHTML = `<strong>Region:</strong> ${escapeHTML(regionCode)}`;
+    document.getElementById('vip-level').textContent = 'VIP: --';
+  } else {
     try {
       const { data: krec } = await supabase
         .from('kingdoms')
@@ -80,23 +106,27 @@ async function loadOverview() {
     } catch {
       document.getElementById('vip-level').textContent = 'VIP: --';
     }
+  }
 
-    // Resources
-    renderResourceList(data.resources, resourcesContainer);
+  // Resources
+  renderResourceList(data.resources, resourcesContainer);
 
-    // Military
-    militaryContainer.innerHTML = "";
-    if (data.troops) {
-      militaryContainer.innerHTML = `
-        <p><strong>Total Troops:</strong> ${data.troops.total}</p>
-        <p><strong>Slots Used:</strong> ${data.troops.slots.used} / ${data.troops.slots.base}</p>
-      `;
+  // Military
+  militaryContainer.innerHTML = "";
+  if (data.troops) {
+    militaryContainer.innerHTML = `
+      <p><strong>Total Troops:</strong> ${data.troops.total}</p>
+      <p><strong>Slots Used:</strong> ${data.troops.slots.used} / ${data.troops.slots.base}</p>
+    `;
+  } else {
+    militaryContainer.innerHTML = "<p>No military data found.</p>";
+  }
+
+  // Modifiers
+  if (modifiersContainer) {
+    if (fallback) {
+      modifiersContainer.innerHTML = '<p>--</p>';
     } else {
-      militaryContainer.innerHTML = "<p>No military data found.</p>";
-    }
-
-    // Modifiers
-    if (modifiersContainer) {
       try {
         const mods = await fetchJson('/api/progression/modifiers');
         modifiersContainer.innerHTML = '';
@@ -116,15 +146,10 @@ async function loadOverview() {
         modifiersContainer.innerHTML = '<p>Failed to load modifiers.</p>';
       }
     }
-
-    questsContainer.innerHTML = "<p>No active quests.</p>";
-  } catch (err) {
-    console.error("❌ Overview load error:", err);
-    summaryContainer.innerHTML = "<p>Failed to load summary.</p>";
-    resourcesContainer.innerHTML = "<p>Failed to load resources.</p>";
-    militaryContainer.innerHTML = "<p>Failed to load military.</p>";
-    questsContainer.innerHTML = "<p>Failed to load quests.</p>";
   }
+
+  questsContainer.innerHTML = "<p>No active quests.</p>";
+  return fallback;
 }
 
 // Live update for kingdom resources
