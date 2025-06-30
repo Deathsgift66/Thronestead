@@ -1,16 +1,15 @@
 """Middleware for decoding JWTs and injecting user context."""
 
 import logging
-import os
 from typing import Any, Optional
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .database import SessionLocal
-from jose import jwt
+from jose import JWTError
 from sqlalchemy import text
-from .security import has_active_ban
+from .security import has_active_ban, decode_supabase_jwt
 from fastapi.responses import JSONResponse
 
 
@@ -30,22 +29,9 @@ class UserStateMiddleware(BaseHTTPMiddleware):
         auth_user_id: Optional[str] = None
         if token:
             try:
-                secret = os.getenv("SUPABASE_JWT_SECRET")
-                opts = {"verify_aud": False}
-                if secret:
-                    claims = jwt.decode(
-                        token,
-                        secret,
-                        algorithms=["HS256"],
-                        options=opts,
-                    )
-                else:
-                    claims = jwt.decode(
-                        token,
-                        options={"verify_signature": False, **opts},
-                    )
+                claims = decode_supabase_jwt(token)
                 auth_user_id = claims.get("sub")
-            except Exception:  # pragma: no cover - invalid tokens shouldn't crash
+            except JWTError:  # pragma: no cover - invalid tokens shouldn't crash
                 logger.exception("Failed to decode JWT token")
 
         if not auth_user_id:

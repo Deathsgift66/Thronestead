@@ -23,7 +23,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .database import get_db
-from .supabase_client import get_supabase_client
 
 logger = logging.getLogger("Thronestead.Security")
 
@@ -36,6 +35,7 @@ __all__ = [
     "verify_reauth_token",
     "create_reauth_token",
     "validate_reauth_token",
+    "decode_supabase_jwt",
 ]
 
 
@@ -68,6 +68,22 @@ def has_active_ban(
     return db.execute(text(query), params).fetchone() is not None
 
 
+def decode_supabase_jwt(token: str) -> dict:
+    """Decode a Supabase JWT with strict validation."""
+    secret = os.getenv("SUPABASE_JWT_SECRET")
+    if not secret:
+        raise JWTError("SUPABASE_JWT_SECRET not configured")
+    audience = os.getenv("SUPABASE_JWT_AUD")
+    if audience:
+        return jwt.decode(token, secret, algorithms=["HS256"], audience=audience)
+    return jwt.decode(
+        token,
+        secret,
+        algorithms=["HS256"],
+        options={"verify_aud": False},
+    )
+
+
 def verify_jwt_token(
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
@@ -98,36 +114,11 @@ def verify_jwt_token(
 
     token = auth_header.split(" ")[1]
 
-    jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
-    payload = None
-    if jwt_secret:
-        try:
-            payload = jwt.decode(
-                token,
-                jwt_secret,
-                algorithms=["HS256"],
-                options={"verify_aud": False},
-            )
-        except JWTError:  # pragma: no cover - fallback to Supabase
-            logger.warning("JWT signature verification failed; falling back to Supabase validation.")
-            payload = None
-    if payload is None:
-        try:
-            sb = get_supabase_client()
-            result = sb.auth.get_user(token)
-            if isinstance(result, dict):
-                uid = (
-                    result.get("user", {}).get("id")
-                    or result.get("data", {}).get("user", {}).get("id")
-                )
-            else:  # pragma: no cover - supabase-py object
-                uid = getattr(getattr(result, "user", None), "id", None)
-            if not uid:
-                raise ValueError("User ID missing")
-            payload = {"sub": uid}
-        except Exception:  # pragma: no cover - network or client failure
-            logger.warning("Supabase token validation failed.")
-            raise HTTPException(status_code=401, detail="Invalid token")
+    try:
+        payload = decode_supabase_jwt(token)
+    except JWTError as exc:
+        logger.warning("JWT validation failed: %s", exc)
+        raise HTTPException(status_code=401, detail="Invalid token") from exc
 
     uid = payload.get("sub")
     if not uid or uid != x_user_id:
@@ -211,37 +202,11 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
         )
 
     token = auth_header.split(" ")[1]
-    secret = os.getenv("SUPABASE_JWT_SECRET")
-    claims = None
-    if secret:
-        try:
-            claims = jwt.decode(token, secret, algorithms=["HS256"])
-        except JWTError:
-            logger.warning(
-                "JWT signature verification failed; falling back to Supabase validation."
-            )
-            claims = None
-        except Exception as exc:  # pragma: no cover - generic decode failures
-            logger.exception("Failed to decode JWT token")
-            raise HTTPException(status_code=401, detail="Invalid token") from exc
-
-    if claims is None:
-        try:
-            sb = get_supabase_client()
-            result = sb.auth.get_user(token)
-            if isinstance(result, dict):
-                uid = (
-                    result.get("user", {}).get("id")
-                    or result.get("data", {}).get("user", {}).get("id")
-                )
-            else:  # pragma: no cover - supabase-py object
-                uid = getattr(getattr(result, "user", None), "id", None)
-            if not uid:
-                raise ValueError("User ID missing")
-            claims = {"sub": uid}
-        except Exception:
-            logger.warning("Supabase token validation failed.")
-            raise HTTPException(status_code=401, detail="Invalid token")
+    try:
+        claims = decode_supabase_jwt(token)
+    except JWTError as exc:
+        logger.warning("JWT validation failed: %s", exc)
+        raise HTTPException(status_code=401, detail="Invalid token") from exc
 
     user_id = claims.get("sub")
     if not user_id:

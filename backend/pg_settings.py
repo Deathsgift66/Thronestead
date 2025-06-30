@@ -9,11 +9,9 @@ import json
 import logging
 
 from fastapi import Request
+from jose import JWTError
 
-try:
-    import jwt  # PyJWT
-except Exception:  # pragma: no cover - fallback to python-jose
-    from jose import jwt  # type: ignore
+from .security import decode_supabase_jwt
 
 logger = logging.getLogger("Thronestead.PGSettings")
 
@@ -27,8 +25,8 @@ def inject_claims_as_pg_settings(request: Request) -> dict[str, str]:
         if not token:
             return {}
         try:
-            claims = jwt.decode(token, options={"verify_signature": False})
-        except Exception:  # pragma: no cover - decode issues shouldn't crash request
+            claims = decode_supabase_jwt(token)
+        except JWTError:  # pragma: no cover - decode issues shouldn't crash request
             logger.exception("Failed to decode JWT for pg settings")
             return {}
     return {"request.jwt.claims": json.dumps(claims)}
