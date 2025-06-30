@@ -10,12 +10,21 @@ class DummyResponse:
     def __init__(self):
         self.cookies = {}
 
-    def set_cookie(self, name, value, httponly=False, secure=False, samesite=None):
+    def set_cookie(
+        self,
+        name,
+        value,
+        httponly=False,
+        secure=False,
+        samesite=None,
+        path="/",
+    ):
         self.cookies[name] = {
             "value": value,
             "httponly": httponly,
             "secure": secure,
             "samesite": samesite,
+            "path": path,
         }
 
 
@@ -77,4 +86,5 @@ def test_store_cookie():
     assert c["httponly"]
     assert c["secure"]
     assert c["samesite"] == "strict"
+    assert c["path"] == "/api"
 
