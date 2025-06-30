@@ -20,12 +20,14 @@ function readToken() {
 function saveToken(t, expSec) {
   token = t;
   const expiry = new Date(Date.now() + expSec * 1000).toUTCString();
-  document.cookie = `reauthToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
+  document.cookie =
+    `reauthToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; domain=${location.hostname}; expires=${expiry}`;
 }
 
 export function clearReauthToken() {
   token = null;
-  document.cookie = 'reauthToken=; Max-Age=0; path=/; secure; samesite=strict;';
+  document.cookie =
+    `reauthToken=; Max-Age=0; path=/; secure; samesite=strict; domain=${location.hostname};`;
 }
 
 export function getReauthHeaders() {

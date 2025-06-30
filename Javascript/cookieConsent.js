@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('reject-cookies').addEventListener('click', () => {
       localStorage.setItem('cookieConsent', 'rejected');
+      document.cookie =
+        `authToken=; Max-Age=0; path=/; secure; samesite=strict; domain=${location.hostname};`;
       applyConsent('rejected');
       banner.remove();
       updateToggle(false);
