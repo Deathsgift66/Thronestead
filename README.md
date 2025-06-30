@@ -154,6 +154,7 @@ API_SECRET
 API_BASE_URL
 MASTER_ROLLBACK_PASSWORD
 ALLOWED_ORIGINS
+ALLOWED_ORIGIN_REGEX
 ALLOW_PASSWORD_PASTE
 ALLOW_UNVERIFIED_LOGIN
 
@@ -185,7 +186,9 @@ or `DEFAULT_SUPABASE_URL` can provide alternate values without code changes.
 
 The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
 separated list of allowed domains or `*` to disable origin checks (credentials
-will be ignored when using `*`).
+will be ignored when using `*`). If you need wildcard subdomain support, use
+`ALLOWED_ORIGIN_REGEX` with a regular expression. When the regex is supplied,
+the static origin list is ignored.
 Example:
 ```
 ALLOWED_ORIGINS=https://thronestead.com,https://www.thronestead.com

@@ -85,9 +85,12 @@ extra_origins = get_env_var("ALLOWED_ORIGINS")
 if extra_origins:
     origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
 
+origin_regex = get_env_var("ALLOWED_ORIGIN_REGEX")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[] if origin_regex else origins,
+    allow_origin_regex=origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
