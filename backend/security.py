@@ -98,16 +98,35 @@ def verify_jwt_token(
     token = auth_header.split(" ")[1]
 
     jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
-    try:
-        payload = jwt.decode(
-            token,
-            jwt_secret,
-            algorithms=["HS256"],
-            options={"verify_aud": False},
-        )
-    except JWTError:
-        logger.warning("JWT signature verification failed.")
-        raise HTTPException(status_code=401, detail="Invalid token")
+    payload = None
+    if jwt_secret:
+        try:
+            payload = jwt.decode(
+                token,
+                jwt_secret,
+                algorithms=["HS256"],
+                options={"verify_aud": False},
+            )
+        except JWTError:  # pragma: no cover - fallback to Supabase
+            logger.warning("JWT signature verification failed; falling back to Supabase validation.")
+            payload = None
+    if payload is None:
+        try:
+            sb = get_supabase_client()
+            result = sb.auth.get_user(token)
+            if isinstance(result, dict):
+                uid = (
+                    result.get("user", {}).get("id")
+                    or result.get("data", {}).get("user", {}).get("id")
+                )
+            else:  # pragma: no cover - supabase-py object
+                uid = getattr(getattr(result, "user", None), "id", None)
+            if not uid:
+                raise ValueError("User ID missing")
+            payload = {"sub": uid}
+        except Exception:  # pragma: no cover - network or client failure
+            logger.warning("Supabase token validation failed.")
+            raise HTTPException(status_code=401, detail="Invalid token")
 
     uid = payload.get("sub")
     if not uid or uid != x_user_id:
