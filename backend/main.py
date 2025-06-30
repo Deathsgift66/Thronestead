@@ -87,11 +87,16 @@ if extra_origins:
 
 origin_regex = get_env_var("ALLOWED_ORIGIN_REGEX")
 
+allow_credentials = True
+if "*" in origins:
+    origins = ["*"]
+    allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[] if origin_regex else origins,
     allow_origin_regex=origin_regex,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
