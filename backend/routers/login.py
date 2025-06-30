@@ -3,10 +3,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
-from distutils.util import strtobool
 from sqlalchemy.orm import Session
 
-from ..env_utils import get_env_var
+from ..env_utils import get_env_var, strtobool
 from ..supabase_client import get_supabase_client
 from ..database import get_db
 from services.system_flag_service import get_flag

@@ -13,8 +13,7 @@ Version: 2025-06-21
 import logging
 import time
 import os
-from ..env_utils import get_env_var
-from distutils.util import strtobool
+from ..env_utils import get_env_var, strtobool
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
