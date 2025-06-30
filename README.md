@@ -72,12 +72,18 @@ the records created during onboarding.
 ✅ Resource helpers `spend_resources` and `gain_resources` in [services/resource_service.py](services/resource_service.py)
 ✅ Strategic tick automation in [services/strategic_tick_service.py](services/strategic_tick_service.py)
 ✅ Daily spy attack counter reset in [scripts/reset_spy_attacks.py](scripts/reset_spy_attacks.py)
+
 ✅ Audit log archiving in [scripts/archive_audit_logs.py](scripts/archive_audit_logs.py)
 ✅ Admin heartbeat pings in [scripts/admin_heartbeat.py](scripts/admin_heartbeat.py)
 ✅ Webhook retry worker in [scripts/retry_webhooks.py](scripts/retry_webhooks.py)
+
+✅ Real-time recovery helpers in [scripts/realtime_recovery.py](scripts/realtime_recovery.py)
+✅ Daily user table backup in [scripts/backup_users_s3.py](scripts/backup_users_s3.py)
+
 ✅ Spy training consumes gold, grants XP, and espionage missions check detection levels
 ✅ Morale restoration baked into the strategic tick
 ✅ Unified event notifications logged when wars activate
+✅ Database backup strategy documented in [docs/database_backup.md](docs/database_backup.md)
 
 
 
@@ -135,6 +141,8 @@ Environment variables for the Supabase connection are loaded from the `.env` fil
 The key variables are:
 
 ```
+DATABASE_URL
+READ_REPLICA_URL
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
@@ -150,6 +158,9 @@ REAUTH_TOKEN_TTL
 REAUTH_LOCKOUT_THRESHOLD
 
 ```
+
+`READ_REPLICA_URL` optionally points to a read-only Supabase replica used when
+the primary `DATABASE_URL` is unavailable.
 
 `SUPABASE_JWT_SECRET` verifies Supabase tokens and must match the JWT secret in
 your project settings. `API_SECRET` protects internal admin routes, while
