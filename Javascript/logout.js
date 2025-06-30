@@ -20,10 +20,6 @@ async function logout() {
   resetAuthCache();
   clearReauthToken();
 
-  // 🧹 Clear client-side storage
-  sessionStorage.removeItem('authToken');
-  localStorage.removeItem('authToken');
-
   // 🍪 Expire auth token cookie (if used)
   document.cookie = `authToken=; Max-Age=0; path=/; Secure; HttpOnly; SameSite=Strict;`;
 
