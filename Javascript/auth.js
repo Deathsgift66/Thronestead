@@ -123,13 +123,47 @@ let refreshIntervalId = null;
  */
 export function startSessionRefresh(intervalMs = 50 * 60 * 1000) {
   if (refreshIntervalId) return;
-  refreshIntervalId = setInterval(refreshSessionAndStore, intervalMs);
+  refreshIntervalId = setInterval(refreshIfExpiring, intervalMs);
+  refreshIfExpiring();
 }
 
 export function stopSessionRefresh() {
   if (refreshIntervalId) {
     clearInterval(refreshIntervalId);
     refreshIntervalId = null;
+  }
+}
+
+/**
+ * Check session expiration and refresh if it is close to expiring.
+ * @param {number} thresholdSec Number of seconds before expiry to trigger refresh
+ */
+export async function refreshIfExpiring(thresholdSec = 300) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.expires_at * 1000 - Date.now() < thresholdSec * 1000) {
+      await refreshSessionAndStore();
+    }
+    await validateSessionOrLogout();
+  } catch (err) {
+    console.warn('Session refresh check failed:', err);
+  }
+}
+
+/**
+ * Validate the current session using the backend and logout if invalid.
+ * @returns {Promise<boolean>} True if session is valid
+ */
+export async function validateSessionOrLogout() {
+  try {
+    const headers = await authHeaders();
+    const res = await fetch('/api/auth/validate-session', { headers });
+    if (res.status === 401) throw new Error('invalid');
+    return true;
+  } catch {
+    clearStoredAuth();
+    window.location.href = 'login.html';
+    return false;
   }
 }
 
