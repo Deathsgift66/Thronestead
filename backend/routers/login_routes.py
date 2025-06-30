@@ -13,6 +13,7 @@ Version: 2025-06-21
 import logging
 import time
 import os
+from distutils.util import strtobool
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -30,7 +31,10 @@ from ..rate_limiter import limiter
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
-ALLOW_UNVERIFIED_LOGIN = os.getenv("ALLOW_UNVERIFIED_LOGIN", "false").lower() == "true"
+# Interpret common truthy values for allowing unverified emails during login
+ALLOW_UNVERIFIED_LOGIN = bool(
+    strtobool(os.getenv("ALLOW_UNVERIFIED_LOGIN", "false"))
+)
 
 
 @router.get("/announcements", response_class=JSONResponse)
