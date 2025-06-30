@@ -11,13 +11,12 @@ import logging
 from fastapi import Request
 from jose import JWTError
 
-from .security import decode_supabase_jwt
-
 logger = logging.getLogger("Thronestead.PGSettings")
 
 
 def inject_claims_as_pg_settings(request: Request) -> dict[str, str]:
     """Return session-level PostgreSQL settings derived from the user's JWT."""
+    from .security import decode_supabase_jwt
     user = getattr(request.state, "user", None)
     claims = getattr(user, "claims", None)
     if claims is None:
