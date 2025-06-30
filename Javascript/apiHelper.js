@@ -3,12 +3,15 @@ import { refreshSessionAndStore, clearStoredAuth } from './auth.js';
 import { getEnvVar } from './env.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');
-const BACKUP_API_BASE_URL = getEnvVar('BACKUP_API_BASE_URL');
+let BACKUP_API_BASE_URL = getEnvVar('BACKUP_API_BASE_URL');
+if (!BACKUP_API_BASE_URL && API_BASE_URL) {
+  BACKUP_API_BASE_URL = API_BASE_URL;
+}
 if (!API_BASE_URL) {
   console.warn('⚠️ API_BASE_URL not set. API calls may fail.');
 }
-if (!BACKUP_API_BASE_URL) {
-  console.warn('ℹ️ BACKUP_API_BASE_URL not set. Fallback POSTs disabled.');
+if (!BACKUP_API_BASE_URL || BACKUP_API_BASE_URL === API_BASE_URL) {
+  console.info('ℹ️ BACKUP_API_BASE_URL not set. Using API_BASE_URL for fallback.');
 }
 
 async function getAuthToken() {
