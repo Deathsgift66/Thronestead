@@ -16,7 +16,8 @@ import {
 import { containsBannedContent } from './content_filter.js';
 // import { initThemeToggle } from './themeToggle.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
 
 // DOM Elements
 let loginForm, emailInput, passwordInput, loginButton, messageContainer,
