@@ -3,8 +3,12 @@ import { refreshSessionAndStore, clearStoredAuth } from './auth.js';
 import { getEnvVar } from './env.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');
+const BACKUP_API_BASE_URL = getEnvVar('BACKUP_API_BASE_URL');
 if (!API_BASE_URL) {
   console.warn('⚠️ API_BASE_URL not set. API calls may fail.');
+}
+if (!BACKUP_API_BASE_URL) {
+  console.warn('ℹ️ BACKUP_API_BASE_URL not set. Fallback POSTs disabled.');
 }
 
 async function getAuthToken() {
@@ -41,6 +45,13 @@ async function requestWithRetry(endpoint, options = {}, isJson = true) {
     ...options,
     headers,
   });
+
+  if (response.status >= 500 && options.method === 'POST' && BACKUP_API_BASE_URL) {
+    response = await fetch(`${BACKUP_API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  }
 
   if (response.status === 401) {
     const refreshed = await refreshSessionAndStore();

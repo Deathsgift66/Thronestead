@@ -215,6 +215,10 @@ enabled for all routes via the `[[headers]]` section. Since the site is
 multi‑page, there is
 no catch‑all redirect to `index.html`.
 
+### Deployment Redundancy
+
+Additional details on the multi-host strategy and backend failover are available in [docs/deployment_redundancy.md](docs/deployment_redundancy.md).
+
 ---
 
 ## Testing
