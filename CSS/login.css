@@ -117,6 +117,12 @@ body {
   color: #ff6b6b;
 }
 
+.error-msg {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
 /* Forgot Password Modal */
 /* Base modal styles are defined in root_theme.css */
 
