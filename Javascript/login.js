@@ -132,10 +132,21 @@ function blockAfterFailedAttempts() {
 }
 
 // Redirect user after successful login
+function isValidRedirect(target) {
+  if (!target || target.length > 100) return false;
+  const lower = target.toLowerCase();
+  if (lower.startsWith('javascript:')) return false;
+  if (lower.includes('://') || lower.startsWith('//')) return false;
+  if (/\s/.test(target)) return false;
+  if (!/^[\w./-]+$/.test(target)) return false;
+  if (lower === 'login.html') return false;
+  return true;
+}
+
 function redirectOnLogin(setupComplete) {
   const params = new URLSearchParams(window.location.search);
   let target = params.get('redirect');
-  if (!target || target.includes('://') || target.startsWith('javascript:')) {
+  if (!isValidRedirect(target)) {
     target = setupComplete ? 'overview.html' : 'play.html';
   }
   window.location.href = target;
