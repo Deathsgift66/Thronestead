@@ -5,19 +5,12 @@
 import { supabase } from '../supabaseClient.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 import { loadCustomBoard } from './customBoard.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, authFetch } from './utils.js';
 import { setupTabs } from './components/tabControl.js';
 
 let currentUser = null;
 
-// ✅ Wrapper for authenticated fetch requests
-function authFetch(url, options = {}) {
-  options.headers = {
-    ...(options.headers || {}),
-    'X-User-ID': currentUser?.id || ''
-  };
-  return fetch(url, options);
-}
+// No local authFetch needed; use shared version from utils.js
 
 // ✅ Subscribe to real-time vault updates
 function subscribeToVault(allianceId) {
