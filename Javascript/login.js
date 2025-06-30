@@ -318,9 +318,11 @@ async function handleLogin(e) {
 
       let userInfo = result.user || {};
       try {
-        userInfo = await authJsonFetch(`${API_BASE_URL}/api/me`);
+        const context = await authJsonFetch(`${API_BASE_URL}/api/me`);
+        userInfo = { ...context, id: result.user.id };
       } catch (err) {
         console.warn('Failed to load user context:', err);
+        userInfo.id = result.user.id;
       }
 
       const storage = rememberCheckbox?.checked ? localStorage : sessionStorage;
