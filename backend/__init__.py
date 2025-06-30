@@ -12,6 +12,8 @@ This file assumes FastAPI app structure, Supabase SDK, and environment-based con
 import logging
 import os
 
+from .env_utils import get_env
+
 
 # The backend has a dedicated ``supabase_client`` module that creates and
 # exposes the connection instance.  Importing it here ensures a single
@@ -28,8 +30,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Thronestead")
 
 # Supabase configuration from environment variables
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_URL = get_env("SUPABASE_URL", "VITE_PUBLIC_SUPABASE_URL")
+SUPABASE_KEY = get_env(
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_ANON_KEY",
+    "VITE_PUBLIC_SUPABASE_ANON_KEY",
+)
 
 # Initialise the Supabase client via ``backend.supabase_client`` if available.
 supabase = None

@@ -17,6 +17,8 @@ import os
 import traceback
 from pathlib import Path
 
+from .env_utils import get_env
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -35,16 +37,20 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     print("python-dotenv not installed. Skipping .env loading.")
 
-API_SECRET = os.getenv("API_SECRET")
+API_SECRET = get_env("API_SECRET")
 
 # Load Supabase credentials for downstream modules
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_URL = get_env("SUPABASE_URL", "VITE_PUBLIC_SUPABASE_URL")
+SUPABASE_KEY = get_env(
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "VITE_PUBLIC_SUPABASE_ANON_KEY",
+)
 
 # -----------------------
 # ⚙️ FastAPI Initialization
 # -----------------------
-log_level = os.getenv("LOG_LEVEL")
+log_level = get_env("LOG_LEVEL")
 logging.basicConfig(level=log_level if log_level else logging.INFO)
 logger = logging.getLogger("Thronestead.BackendMain")
 
@@ -66,7 +72,7 @@ origins = [
     "http://localhost:3000",
 ]
 
-extra_origins = os.getenv("ALLOWED_ORIGINS")
+extra_origins = get_env("ALLOWED_ORIGINS")
 if extra_origins:
     origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
 
@@ -125,7 +131,7 @@ app.include_router(auth.router, prefix="/api/auth")
 # -----------------------
 # 🖼️ Static File Serving (Frontend SPA)
 # -----------------------
-_frontend = os.getenv("FRONTEND_DIR")
+_frontend = get_env("FRONTEND_DIR")
 BASE_DIR = Path(_frontend) if _frontend else Path(__file__).resolve().parent.parent
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 

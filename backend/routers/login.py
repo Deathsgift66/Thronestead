@@ -13,11 +13,15 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 import os
 
+from ..env_utils import get_env
+
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(tags=["login"])
 
-ALLOW_UNVERIFIED_LOGIN = os.getenv("ALLOW_UNVERIFIED_LOGIN", "false").lower() == "true"
+ALLOW_UNVERIFIED_LOGIN = (
+    get_env("ALLOW_UNVERIFIED_LOGIN", default="false").lower() == "true"
+)
 
 
 class LoginRequest(BaseModel):

@@ -37,17 +37,20 @@ logger = logging.getLogger("Thronestead.PasswordReset")
 # ---------------------------------------------
 # Configuration + In-memory Stores
 # ---------------------------------------------
+# Utility imports
+from ..env_utils import get_env
+
 RESET_STORE: dict[str, tuple[str, float]] = {}  # token_hash: (user_id, expiry)
 VERIFIED_SESSIONS: dict[str, tuple[str, float, str | None]] = {}
 # user_id: (token_hash, expiry, session_token)
 RATE_LIMIT: dict[str, list[float]] = {}  # IP: [timestamps]
 USER_RATE_LIMIT: dict[str, list[float]] = {}  # user_id: [timestamps]
 
-_token_ttl = os.getenv("PASSWORD_RESET_TOKEN_TTL")
+_token_ttl = get_env("PASSWORD_RESET_TOKEN_TTL")
 TOKEN_TTL = int(_token_ttl) if _token_ttl else 900  # 15 minutes
-_session_ttl = os.getenv("PASSWORD_RESET_SESSION_TTL")
+_session_ttl = get_env("PASSWORD_RESET_SESSION_TTL")
 SESSION_TTL = int(_session_ttl) if _session_ttl else 600  # 10 minutes
-_rate_limit = os.getenv("PASSWORD_RESET_RATE_LIMIT")
+_rate_limit = get_env("PASSWORD_RESET_RATE_LIMIT")
 RATE_LIMIT_MAX = int(_rate_limit) if _rate_limit else 3  # 3 per hour
 
 

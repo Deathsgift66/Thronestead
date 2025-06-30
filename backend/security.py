@@ -12,6 +12,8 @@ Signature validation is expected to be handled by Supabase middleware/gateway.
 
 import logging
 import os
+
+from .env_utils import get_env
 import time
 import uuid
 from datetime import datetime, timedelta
@@ -70,10 +72,10 @@ def has_active_ban(
 
 def decode_supabase_jwt(token: str) -> dict:
     """Decode a Supabase JWT with strict validation."""
-    secret = os.getenv("SUPABASE_JWT_SECRET")
+    secret = get_env("SUPABASE_JWT_SECRET")
     if not secret:
         raise JWTError("SUPABASE_JWT_SECRET not configured")
-    audience = os.getenv("SUPABASE_JWT_AUD")
+    audience = get_env("SUPABASE_JWT_AUD")
     if audience:
         return jwt.decode(token, secret, algorithms=["HS256"], audience=audience)
     return jwt.decode(
@@ -188,7 +190,7 @@ def require_active_user_id(
 
 def verify_api_key(x_api_key: str = Header(...)):
     """Simple API key verification against the `API_SECRET` env variable."""
-    if x_api_key != os.getenv("API_SECRET"):
+    if x_api_key != get_env("API_SECRET"):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 

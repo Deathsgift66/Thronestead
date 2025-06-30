@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import logging
 import os
+
+from .env_utils import get_env
 from typing import Any, Sequence
 
 import psycopg2
@@ -15,7 +17,10 @@ from psycopg2.extras import RealDictCursor
 
 logger = logging.getLogger("Thronestead.LegacyDB")
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/postgres")
+DATABASE_URL = get_env(
+    "DATABASE_URL",
+    default="postgresql://postgres:postgres@localhost/postgres",
+)
 
 
 def _connect():

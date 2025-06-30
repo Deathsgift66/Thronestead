@@ -10,6 +10,8 @@ Used for server-side operations including authentication, data writes, and RLS-s
 
 import logging
 import os
+
+from .env_utils import get_env
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - type check only
@@ -25,8 +27,12 @@ except ImportError as e:  # pragma: no cover
 # -------------------------------
 # 🔐 Load Supabase Credentials
 # -------------------------------
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_URL = get_env("SUPABASE_URL", "VITE_PUBLIC_SUPABASE_URL")
+SUPABASE_KEY = get_env(
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_ANON_KEY",
+    "VITE_PUBLIC_SUPABASE_ANON_KEY",
+)
 
 # -------------------------------
 # ⚙️ Create Supabase Client

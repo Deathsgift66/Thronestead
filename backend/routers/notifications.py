@@ -28,9 +28,11 @@ from ..security import require_user_id
 
 # Streaming configuration constants
 # Allow tuning via environment variables for easier production scaling
-_interval = os.getenv("NOTIFICATION_STREAM_INTERVAL")
+from ..env_utils import get_env
+
+_interval = get_env("NOTIFICATION_STREAM_INTERVAL")
 STREAM_INTERVAL = int(_interval) if _interval else 5
-_cycles = os.getenv("NOTIFICATION_MAX_CYCLES")
+_cycles = get_env("NOTIFICATION_MAX_CYCLES")
 MAX_STREAM_CYCLES = int(_cycles) if _cycles else 30
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])

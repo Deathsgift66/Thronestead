@@ -30,7 +30,9 @@ from fastapi import Request
 from services.audit_service import log_action
 import httpx
 
-HCAPTCHA_SECRET = os.getenv("HCAPTCHA_SECRET")
+from ..env_utils import get_env
+
+HCAPTCHA_SECRET = get_env("HCAPTCHA_SECRET")
 
 
 def verify_hcaptcha(token: str | None, remote_ip: str | None = None) -> bool:

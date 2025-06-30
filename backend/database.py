@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import logging
 import os
+
+from .env_utils import get_env
 from typing import Generator, Optional
 
 from fastapi import Request
@@ -24,7 +26,10 @@ from .pg_settings import inject_claims_as_pg_settings
 
 logger = logging.getLogger("Thronestead.Database")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = get_env(
+    "DATABASE_URL",
+    default="postgresql://postgres:postgres@localhost/postgres",
+)
 
 engine = None
 SessionLocal: Optional[sessionmaker] = None

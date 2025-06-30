@@ -30,7 +30,11 @@ from ..rate_limiter import limiter
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
-ALLOW_UNVERIFIED_LOGIN = os.getenv("ALLOW_UNVERIFIED_LOGIN", "false").lower() == "true"
+from ..env_utils import get_env
+
+ALLOW_UNVERIFIED_LOGIN = (
+    get_env("ALLOW_UNVERIFIED_LOGIN", default="false").lower() == "true"
+)
 
 
 @router.get("/announcements", response_class=JSONResponse)

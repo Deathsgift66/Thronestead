@@ -26,6 +26,8 @@ from backend.main import app
 if __name__ == "__main__":  # pragma: no cover - manual execution
     import os
 
+    from backend.env_utils import get_env
+
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    uvicorn.run(app, host="0.0.0.0", port=int(get_env("PORT", default="8000")))
