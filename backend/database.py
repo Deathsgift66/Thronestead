@@ -30,6 +30,7 @@ DATABASE_URL = get_env_var(
     "DATABASE_URL",
     default="postgresql://postgres:postgres@localhost/postgres",
 )
+READ_REPLICA_URL = get_env_var("READ_REPLICA_URL")
 
 engine = None
 SessionLocal: Optional[sessionmaker] = None
@@ -54,6 +55,21 @@ def init_engine(db_url: Optional[str] = None) -> None:
     except OperationalError as err:
         logger.error("\u274c Failed to initialize SQLAlchemy engine.")
         logger.exception(err)
+        if READ_REPLICA_URL and db_url is None:
+            logger.info("\u27f3 Attempting read replica failover.")
+            try:
+                engine = create_engine(
+                    READ_REPLICA_URL, pool_pre_ping=True, pool_recycle=280
+                )
+                SessionLocal = sessionmaker(
+                    bind=engine, autoflush=False, autocommit=False
+                )
+                Session = SessionLocal
+                logger.info("\u2705 Read replica connection established.")
+                return
+            except OperationalError as replica_err:
+                logger.error("\u274c Failed to connect to read replica.")
+                logger.exception(replica_err)
         engine = None
         SessionLocal = None
         Session = None
