@@ -1807,3 +1807,29 @@ class Ban(Base):
             name="ban_type_check",
         ),
     )
+
+
+class CombatTickQueueBackup(Base):
+    """Mirror table for incoming combat tick data."""
+
+    __tablename__ = "combat_tick_queue_backup"
+
+    entry_id = Column(Integer, primary_key=True)
+    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
+    tick_number = Column(Integer)
+    payload = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class TickExecutionLog(Base):
+    """Records executed ticks to prevent duplicates."""
+
+    __tablename__ = "tick_execution_log"
+    __table_args__ = (
+        Index("idx_tick_execution_unique", "war_id", "tick_number", unique=True),
+    )
+
+    log_id = Column(Integer, primary_key=True)
+    war_id = Column(Integer, ForeignKey("wars_tactical.war_id"), index=True)
+    tick_number = Column(Integer)
+    executed_at = Column(DateTime(timezone=True), server_default=func.now())
