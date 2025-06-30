@@ -11,6 +11,8 @@ toggling game-wide flags, and safely managing war resolutions.
 import os
 from typing import Any, Optional
 
+from ..env_utils import get_env_var
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text, update
@@ -282,7 +284,7 @@ def rollback_database(
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_user_id, db)
-    master = os.getenv("MASTER_ROLLBACK_PASSWORD")
+    master = get_env_var("MASTER_ROLLBACK_PASSWORD")
     if not master or payload.password != master:
         raise HTTPException(status_code=403, detail="Invalid master password")
     log_action(db, admin_user_id, "Rollback Database", "Admin triggered rollback")

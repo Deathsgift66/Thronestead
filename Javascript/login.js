@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 import { supabase, supabaseReady } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
+import { getEnvVar } from './env.js';
 import { toggleLoading, authJsonFetch, showToast, validateEmail } from './utils.js';
 import { fetchJson } from './fetchJson.js';
 import {
@@ -16,8 +17,7 @@ import {
 import { containsBannedContent } from './content_filter.js';
 // import { initThemeToggle } from './themeToggle.js';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
+const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 // DOM Elements
 let loginForm,

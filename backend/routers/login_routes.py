@@ -13,6 +13,7 @@ Version: 2025-06-21
 import logging
 import time
 import os
+from ..env_utils import get_env_var
 from distutils.util import strtobool
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -33,7 +34,7 @@ router = APIRouter(prefix="/api/login", tags=["login"])
 
 # Interpret common truthy values for allowing unverified emails during login
 ALLOW_UNVERIFIED_LOGIN = bool(
-    strtobool(os.getenv("ALLOW_UNVERIFIED_LOGIN", "false"))
+    strtobool(get_env_var("ALLOW_UNVERIFIED_LOGIN", default="false"))
 )
 
 

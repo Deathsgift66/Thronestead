@@ -26,6 +26,7 @@ from .auth_middleware import UserStateMiddleware
 from .rate_limiter import setup_rate_limiter
 from .database import engine
 from .models import Base
+from .env_utils import get_env_var
 
 # Optional environment configuration using python-dotenv
 try:
@@ -35,16 +36,16 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     print("python-dotenv not installed. Skipping .env loading.")
 
-API_SECRET = os.getenv("API_SECRET")
+API_SECRET = get_env_var("API_SECRET")
 
 # Load Supabase credentials for downstream modules
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_URL = get_env_var("SUPABASE_URL")
+SUPABASE_KEY = get_env_var("SUPABASE_ANON_KEY") or get_env_var("SUPABASE_SERVICE_ROLE_KEY")
 
 # -----------------------
 # ⚙️ FastAPI Initialization
 # -----------------------
-log_level = os.getenv("LOG_LEVEL")
+log_level = get_env_var("LOG_LEVEL")
 logging.basicConfig(level=log_level if log_level else logging.INFO)
 logger = logging.getLogger("Thronestead.BackendMain")
 
@@ -66,7 +67,7 @@ origins = [
     "http://localhost:3000",
 ]
 
-extra_origins = os.getenv("ALLOWED_ORIGINS")
+extra_origins = get_env_var("ALLOWED_ORIGINS")
 if extra_origins:
     origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
 
@@ -125,7 +126,7 @@ app.include_router(auth.router, prefix="/api/auth")
 # -----------------------
 # 🖼️ Static File Serving (Frontend SPA)
 # -----------------------
-_frontend = os.getenv("FRONTEND_DIR")
+_frontend = get_env_var("FRONTEND_DIR")
 BASE_DIR = Path(_frontend) if _frontend else Path(__file__).resolve().parent.parent
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 

@@ -1,16 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
+import { getEnvVar } from './Javascript/env.js';
 
 // Supabase credentials are supplied via environment variables at build time.
 // When absent the values may be provided on `window.env` or fetched from the
 // backend's `/api/public-config` endpoint at runtime.
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
+const API_BASE_URL = getEnvVar('API_BASE_URL');
 
-let SUPABASE_URL =
-  import.meta.env.VITE_PUBLIC_SUPABASE_URL || window.env?.SUPABASE_URL;
-let SUPABASE_ANON_KEY =
-  import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || window.env?.SUPABASE_ANON_KEY;
+let SUPABASE_URL = getEnvVar('SUPABASE_URL');
+let SUPABASE_ANON_KEY = getEnvVar('SUPABASE_ANON_KEY');
 
 if ((!SUPABASE_URL || !SUPABASE_ANON_KEY) && API_BASE_URL) {
   try {

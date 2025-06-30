@@ -21,15 +21,16 @@ from ..database import get_db
 from services.audit_service import log_action
 from ..security import verify_jwt_token, create_reauth_token
 from ..supabase_client import get_supabase_client
+from ..env_utils import get_env_var
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ---------------------------------------------
 # Configuration + In-memory Stores
 # ---------------------------------------------
-_reauth_ttl = os.getenv("REAUTH_TOKEN_TTL")
+_reauth_ttl = get_env_var("REAUTH_TOKEN_TTL")
 TOKEN_TTL = int(_reauth_ttl) if _reauth_ttl else 300  # 5 minutes
-_lockout_env = os.getenv("REAUTH_LOCKOUT_THRESHOLD")
+_lockout_env = get_env_var("REAUTH_LOCKOUT_THRESHOLD")
 LOCKOUT_THRESHOLD = int(_lockout_env) if _lockout_env else 5
 
 FAILED_ATTEMPTS: dict[tuple[str, str], tuple[int, float]] = {}  # (uid, ip): (count, expiry)
