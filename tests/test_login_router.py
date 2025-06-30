@@ -121,10 +121,24 @@ class DummyClientLogin:
         self.auth = DummyAuth(mode)
 
 
+class DummyFlagDB:
+    def __init__(self, maintenance=False, fallback=False):
+        self.maintenance = maintenance
+        self.fallback = fallback
+
+    def execute(self, _q, params=None):
+        key = params.get("k") if params else None
+        if key == "maintenance_mode":
+            return type("R", (), {"fetchone": lambda _s: (str(self.maintenance).lower(),)})()
+        if key == "fallback_override":
+            return type("R", (), {"fetchone": lambda _s: (str(self.fallback).lower(),)})()
+        return type("R", (), {"fetchone": lambda _s: None})()
+
+
 def test_login_user_success():
     login.get_supabase_client = lambda: DummyClientLogin()
     payload = login.LoginRequest(email="e@example.com", password="p")
-    result = login.login_user(payload)
+    result = login.login_user(payload, db=DummyFlagDB())
     assert result["session"] == "token"
 
 
@@ -132,8 +146,16 @@ def test_login_user_invalid_credentials():
     login.get_supabase_client = lambda: DummyClientLogin("error")
     payload = login.LoginRequest(email="e@example.com", password="p")
     with pytest.raises(HTTPException) as exc:
-        login.login_user(payload)
+        login.login_user(payload, db=DummyFlagDB())
     assert exc.value.status_code == 401
+
+
+def test_login_user_disabled_by_flag():
+    login.get_supabase_client = lambda: DummyClientLogin()
+    payload = login.LoginRequest(email="e@example.com", password="p")
+    with pytest.raises(HTTPException) as exc:
+        login.login_user(payload, db=DummyFlagDB(maintenance=True))
+    assert exc.value.status_code == 503
 
 
 # ---- authenticate endpoint tests ----
@@ -174,10 +196,12 @@ class DummyDBAuth:
         self.deleted = deleted
         self.status = status
 
-    def execute(self, query, *args, **_kwargs):
+    def execute(self, query, params=None):
         q = str(query).lower()
         if "update users set last_login_at" in q:
             self.updated = True
+        if "from system_flags" in q:
+            return type("R", (), {"fetchone": lambda _s: ("false",)})()
         class R:
             def fetchone(self_inner):
                 if "from users" in q:
@@ -236,6 +260,23 @@ def test_authenticate_failure():
     with pytest.raises(HTTPException) as exc:
         login_routes.authenticate(req, payload, db=db)
     assert exc.value.status_code == 500
+
+
+def test_authenticate_disabled_by_flag():
+    login_routes.get_supabase_client = lambda: DummyClientAuth()
+
+    class FlagDB(DummyDBAuth):
+        def execute(self, query, params=None):
+            if "from system_flags" in str(query).lower():
+                return type("R", (), {"fetchone": lambda _s: ("true",)})()
+            return super().execute(query, params)
+
+    db = FlagDB()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(req, payload, db=db)
+    assert exc.value.status_code == 503
 
 
 def test_authenticate_deleted_account():

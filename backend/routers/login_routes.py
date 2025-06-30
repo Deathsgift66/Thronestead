@@ -24,6 +24,7 @@ from sqlalchemy.sql import text
 
 from services.audit_service import log_action
 from services.notification_service import notify_new_login
+from services.system_flag_service import get_flag
 
 from ..database import get_db
 from ..security import verify_jwt_token, has_active_ban
@@ -207,6 +208,8 @@ def authenticate(
     db: Session = Depends(get_db),
 ) -> dict:
     """Validate credentials with Supabase and return session plus profile info."""
+    if get_flag(db, "maintenance_mode") or get_flag(db, "fallback_override"):
+        raise HTTPException(status_code=503, detail="Login disabled")
     ip = request.headers.get("x-forwarded-for")
     if ip and "," in ip:
         ip = ip.split(",")[0].strip()

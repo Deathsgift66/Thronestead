@@ -131,7 +131,10 @@ def toggle_flag(
 ):
     verify_admin(admin_user_id, db)
     db.execute(
-        text("UPDATE system_flags SET is_active = :val WHERE flag_key = :key"),
+        text(
+            "UPDATE system_flags SET flag_value = :val, updated_at = now() "
+            "WHERE flag_key = :key"
+        ),
         {"val": value, "key": flag_key},
     )
     db.commit()
