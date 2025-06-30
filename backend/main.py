@@ -77,18 +77,28 @@ async def _unhandled_exception_handler(request: Request, exc: Exception):
 # -----------------------
 # 🔐 CORS Middleware
 # -----------------------
+# Default allowed origins including local development and production URLs.
 origins = [
     "https://thronestead.com",
     "https://www.thronestead.com",
-    "https://thronestead.onrender.com",
+    "https://thronestead.com/",
+    "https://www.thronestead.com/",
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",  # for Vite if used
+    "http://127.0.0.1:5173",
+    "http://localhost",
+    "http://127.0.0.1",
 ]
 
 extra_origins = get_env_var("ALLOWED_ORIGINS")
 if extra_origins:
     origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
 
-origin_regex = get_env_var("ALLOWED_ORIGIN_REGEX")
+origin_regex = r"https:\/\/.*thronestead\.com"
+env_regex = get_env_var("ALLOWED_ORIGIN_REGEX")
+if env_regex:
+    origin_regex = env_regex
 
 allow_credentials = True
 if "*" in origins:
@@ -100,12 +110,19 @@ if "*" in origins:
 app.add_middleware(UserStateMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[] if origin_regex else origins,
+    allow_origins=origins,
     allow_origin_regex=origin_regex,
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Print configured origins during startup for debugging purposes.
+@app.on_event("startup")
+async def _cors_startup_log() -> None:
+    logger.info("\u2705 CORS configured for:")
+    for origin in origins:
+        logger.info(" - %s", origin)
 
 # -----------------------
 # 🗃️ Ensure Database Tables Exist
