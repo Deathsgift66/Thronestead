@@ -146,6 +146,7 @@ export function formatDate(ts) {
 export async function jsonFetch(url, options = {}) {
   const opts = {
     headers: { Accept: 'application/json', ...(options.headers || {}) },
+    credentials: options.credentials || 'include',
     ...options
   };
 
@@ -176,13 +177,21 @@ export async function authFetch(url, options = {}) {
     ...(await authHeaders()),
     ...getReauthHeaders()
   };
-  let res = await fetch(url, { ...options, headers });
+  let res = await fetch(url, {
+    credentials: options.credentials || 'include',
+    ...options,
+    headers
+  });
 
   if (res.status === 401) {
     const refreshed = await refreshSessionAndStore();
     if (refreshed) {
       headers = { ...(options.headers || {}), ...(await authHeaders()), ...getReauthHeaders() };
-      res = await fetch(url, { ...options, headers });
+      res = await fetch(url, {
+        credentials: options.credentials || 'include',
+        ...options,
+        headers
+      });
     }
     if (res.status === 401) {
       clearStoredAuth();

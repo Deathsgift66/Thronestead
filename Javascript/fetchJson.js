@@ -19,6 +19,7 @@ export async function fetchJson(url, options = {}, timeoutMs = 8000) {
 
   try {
     const res = await fetch(url, {
+      credentials: options.credentials || 'include',
       ...options,
       signal: controller.signal
     });

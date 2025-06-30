@@ -189,11 +189,16 @@ export async function loginExecute(email, password, remember = false) {
   try {
     // Attempt server-side authentication first to catch banned/deleted users
     try {
+      const { data: { session: curr } } = await supabase.auth.getSession();
+      const token = curr?.access_token;
       const resp = await fetchJson(
         `${API_BASE_URL}/api/login/authenticate`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ email, password })
         },
         8000
