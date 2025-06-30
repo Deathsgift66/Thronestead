@@ -136,6 +136,14 @@ export async function loginExecute(email, password, remember = false) {
       showMessage('error', error?.message || '❌ Invalid credentials.');
       return null;
     }
+    try {
+      const refreshed = await supabase.auth.refreshSession();
+      if (!refreshed.error && refreshed.data?.session) {
+        data.session = refreshed.data.session;
+      }
+    } catch {
+      // ignore refresh failure
+    }
     if (!data.user?.email_confirmed_at && !data.user?.confirmed_at) {
       showMessage('error', 'Please verify your email before logging in.');
       await supabase.auth.signOut();
@@ -267,6 +275,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (loginForm) {
     loginForm.addEventListener('submit', handleLogin);
+    loginForm.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const err = validateLoginInputs(email, password);
+        if (err) {
+          e.preventDefault();
+          showLoginError(err);
+        }
+      }
+    });
   }
 
 
