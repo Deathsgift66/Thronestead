@@ -75,6 +75,7 @@ the records created during onboarding.
 ✅ Spy training consumes gold, grants XP, and espionage missions check detection levels
 ✅ Morale restoration baked into the strategic tick
 ✅ Unified event notifications logged when wars activate
+✅ Database backup strategy documented in [docs/database_backup.md](docs/database_backup.md)
 
 
 
@@ -132,6 +133,8 @@ Environment variables for the Supabase connection are loaded from the `.env` fil
 The key variables are:
 
 ```
+DATABASE_URL
+READ_REPLICA_URL
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
@@ -147,6 +150,9 @@ REAUTH_TOKEN_TTL
 REAUTH_LOCKOUT_THRESHOLD
 
 ```
+
+`READ_REPLICA_URL` optionally points to a read-only Supabase replica used when
+the primary `DATABASE_URL` is unavailable.
 
 `SUPABASE_JWT_SECRET` verifies Supabase tokens and must match the JWT secret in
 your project settings. `API_SECRET` protects internal admin routes, while
