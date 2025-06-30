@@ -218,10 +218,10 @@ repository.
 The `netlify.toml` file builds and deploys the frontend using `npm run build`.
 The resulting `dist/` directory is published and `[build.processing.html]`
 enables *pretty URLs*, letting routes like `/login` resolve to `login.html`.
-CORS headers are enabled for all paths via the `[[headers]]` section. The build
-environment is pinned to **Node.js 20** to match local tooling. A catch‑all
-redirect to `/index.html` keeps client‑side routing working across the
-multi‑page site.
+CORS headers are supplied through the `_headers` file which is copied into the
+build output. The build environment is pinned to **Node.js 20** to match local
+tooling. A catch‑all redirect to `/index.html` keeps client‑side routing working
+across the multi‑page site.
 
 ### Deployment Redundancy
 
