@@ -87,10 +87,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
     // Retrieve VIP level from API
     let vipLevel = 0;
     try {
-      const vipRes = await fetch('/api/kingdom/vip_status', {
-        headers: { 'X-User-ID': sessionUser.id }
-      });
-      const vipData = await vipRes.json();
+      const vipData = await authJsonFetch('/api/kingdom/vip_status');
       vipLevel = vipData.vip_level || 0;
     } catch {
       vipLevel = 0;
