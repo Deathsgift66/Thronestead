@@ -4,8 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
-import { toggleLoading, authJsonFetch } from './utils.js';
-import { validateEmail } from './utils.js';
+import { toggleLoading, authJsonFetch, showToast, validateEmail } from './utils.js';
 import {
   setAuthCache,
   clearStoredAuth,
@@ -101,12 +100,20 @@ function blockAfterFailedAttempts() {
 
 // Redirect user after successful login
 function redirectOnLogin(setupComplete) {
-  window.location.href = setupComplete ? 'overview.html' : 'play.html';
+  const params = new URLSearchParams(window.location.search);
+  let target = params.get('redirect');
+  if (!target || target.includes('://') || target.startsWith('javascript:')) {
+    target = setupComplete ? 'overview.html' : 'play.html';
+  }
+  window.location.href = target;
 }
 
 // Display login error message
 function showLoginError(message) {
-  if (errorContainer) errorContainer.textContent = message;
+  if (errorContainer) {
+    errorContainer.textContent = '';
+    errorContainer.textContent = message;
+  }
   showMessage('error', message);
 }
 
@@ -193,6 +200,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   loginButton = document.querySelector('#login-form .royal-button');
   messageContainer = document.getElementById('message');
   errorContainer = document.getElementById('login-error');
+
+  emailInput?.focus();
 
   announcementList = document.getElementById('announcement-list');
   forgotLink = document.getElementById('forgot-password-link');
@@ -300,6 +309,7 @@ async function handleLogin(e) {
   messageContainer.textContent = '🔐 Authenticating...';
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
+  loginButton.classList.add('loading');
   toggleLoading(true);
   if (authLink) authLink.classList.add('hidden');
 
@@ -311,6 +321,8 @@ async function handleLogin(e) {
         authLink.classList.remove('hidden');
       }
       blockAfterFailedAttempts();
+      emailInput.value = '';
+      passwordInput.value = '';
     } else if (result.user) {
       clearAttempts();
 
@@ -352,6 +364,8 @@ async function handleLogin(e) {
     showLoginError(`Unexpected error: ${err.message}`);
     recordLoginAttempt(email, false);
     blockAfterFailedAttempts();
+    emailInput.value = '';
+    passwordInput.value = '';
   } finally {
     resetLoginButton();
     toggleLoading(false);
@@ -362,6 +376,7 @@ async function handleLogin(e) {
 function resetLoginButton() {
   loginButton.disabled = false;
   loginButton.textContent = 'Enter the Realm';
+  loginButton.classList.remove('loading');
   if (errorContainer) errorContainer.textContent = '';
 }
 
@@ -420,12 +435,15 @@ async function handleResendVerification() {
 
 // 📣 Show banner messages
 function showMessage(type, text) {
-  messageContainer.textContent = text;
-  messageContainer.className = `message show ${type}-message`;
-  setTimeout(() => {
-    messageContainer.classList.remove('show');
-    messageContainer.textContent = '';
-  }, 5000);
+  if (messageContainer) {
+    messageContainer.textContent = text;
+    messageContainer.className = `message show ${type}-message`;
+    setTimeout(() => {
+      messageContainer.classList.remove('show');
+      messageContainer.textContent = '';
+    }, 5000);
+  }
+  showToast(text);
 }
 
 // 🗞 Load login page announcements

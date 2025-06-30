@@ -228,3 +228,23 @@ body {
   cursor: pointer;
   color: var(--ink);
 }
+
+.royal-button.loading {
+  position: relative;
+  pointer-events: none;
+  color: transparent;
+}
+
+.royal-button.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid var(--parchment);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
