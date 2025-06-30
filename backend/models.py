@@ -458,6 +458,7 @@ class AllianceVote(Base):
     vote_type = Column(Text)
     target_id = Column(Integer)
     vote_metadata = Column(Text)
+    fallback_recovered = Column(Boolean, default=False)
 
 
 class AllianceVoteParticipant(Base):
@@ -644,6 +645,7 @@ class ProjectsAlliance(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     active_bonus = Column(Text)
+    fallback_recovered = Column(Boolean, default=False)
 
 
 class ProjectsAllianceInProgress(Base):
@@ -1338,6 +1340,7 @@ class QuestAllianceTracking(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     attempt_count = Column(Integer, default=1)
+    fallback_recovered = Column(Boolean, default=False)
     started_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
 
