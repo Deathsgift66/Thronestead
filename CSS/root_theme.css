@@ -548,3 +548,15 @@ body[data-theme="parchment"] {
   font-size: 1.1rem;
   color: var(--parchment-light);
 }
+
+/* Cookie consent toggle */
+.consent-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.consent-toggle input {
+  width: 1rem;
+  height: 1rem;
+}
+
