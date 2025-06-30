@@ -18,6 +18,7 @@ class DummyResponse:
         secure=False,
         samesite=None,
         path="/",
+        domain=None,
     ):
         self.cookies[name] = {
             "value": value,
@@ -25,6 +26,7 @@ class DummyResponse:
             "secure": secure,
             "samesite": samesite,
             "path": path,
+            "domain": domain,
         }
 
 
@@ -48,7 +50,12 @@ def make_request(token=None):
     cookies = {}
     if token:
         cookies["session_token"] = token
-    return type("Req", (), {"headers": headers, "cookies": cookies})()
+    url = type("Url", (), {"hostname": "testhost"})()
+    return type(
+        "Req",
+        (),
+        {"headers": headers, "cookies": cookies, "url": url},
+    )()
 
 
 def test_validate_success(monkeypatch):
@@ -79,7 +86,10 @@ def test_invalid_token(monkeypatch):
 
 def test_store_cookie():
     resp = DummyResponse()
-    result = session.store_session_cookie(session.TokenPayload(token="abc"), resp)
+    req = make_request()
+    result = session.store_session_cookie(
+        session.TokenPayload(token="abc"), req, resp
+    )
     assert result["stored"] is True
     c = resp.cookies.get("session_token")
     assert c and c["value"] == "abc"
@@ -87,4 +97,5 @@ def test_store_cookie():
     assert c["secure"]
     assert c["samesite"] == "strict"
     assert c["path"] == "/api"
+    assert c["domain"] == "testhost"
 

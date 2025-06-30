@@ -11,7 +11,9 @@ class TokenPayload(BaseModel):
 
 
 @router.post("/store")
-def store_session_cookie(payload: TokenPayload, response: Response):
+def store_session_cookie(
+    payload: TokenPayload, request: Request, response: Response
+):
     """Store the session token in an HttpOnly cookie."""
     response.set_cookie(
         "session_token",
@@ -20,6 +22,7 @@ def store_session_cookie(payload: TokenPayload, response: Response):
         secure=True,
         samesite="strict",
         path="/api",
+        domain=request.url.hostname,
     )
     return {"stored": True}
 

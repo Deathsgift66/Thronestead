@@ -447,7 +447,8 @@ async function handleLogin(e) {
       // Persist credentials immediately so subsequent API calls succeed
         if (token) {
           const expiry = new Date(result.session.expires_at * 1000).toUTCString();
-          document.cookie = `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
+          document.cookie =
+            `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; domain=${location.hostname}; expires=${expiry}`;
         }
       storage.setItem('currentUser', JSON.stringify(userInfo));
       altStorage.removeItem('currentUser');
