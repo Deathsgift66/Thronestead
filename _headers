@@ -1,5 +1,5 @@
 /*
-  Access-Control-Allow-Origin: https://www.thronestead.com
+  Access-Control-Allow-Origin: https://www.thronestead.com https://thronestead.com
   Content-Security-Policy: default-src 'self'; script-src 'self' https://*.supabase.co; connect-src 'self' https://thronestead.onrender.com https://*.supabase.co; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none';
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
