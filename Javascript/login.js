@@ -339,7 +339,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // initThemeToggle();
-  const allowPaste = window.env?.ALLOW_PASSWORD_PASTE === true;
+  const allowPaste =
+    getEnvVar('ALLOW_PASSWORD_PASTE', 'false').toLowerCase() === 'true';
   if (allowPaste) passwordInput.removeAttribute('onpaste');
   if (togglePasswordBtn) {
     togglePasswordBtn.addEventListener('click', () => {

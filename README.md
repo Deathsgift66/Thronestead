@@ -161,6 +161,11 @@ credentials are additionally fetched from `/api/public-config` when not
 supplied during the build. This allows hosting platforms to inject the
 credentials at deploy time rather than storing them in the repository.
 
+Both the backend and frontend support layered fallbacks for environment
+variables. Names with the prefixes `BACKUP_`, `FALLBACK_`, and `DEFAULT_` are
+checked when the primary variable is absent. For example `BACKUP_API_BASE_URL`
+or `DEFAULT_SUPABASE_URL` can provide alternate values without code changes.
+
 The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
 separated list of allowed domains or `*` to disable origin checks (credentials
 will be ignored when using `*`).
