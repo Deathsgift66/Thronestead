@@ -258,18 +258,6 @@ def authenticate(
     except Exception:
         pass
 
-    username = row[0] if row else None
-    kingdom_id = row[1] if row else None
-    alliance_id = row[2] if row else None
-    setup_complete = bool(row[3]) if row else False
-    is_deleted = bool(row[4]) if row else False
-    status = row[5] if row else None
-
-    if is_deleted:
-        raise HTTPException(status_code=403, detail="Account deleted")
-    if status and status.lower() == "suspicious" and not payload.otp:
-        raise HTTPException(status_code=401, detail="2FA required")
-
     return {
         "session": session,
         "username": username,
