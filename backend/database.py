@@ -25,7 +25,11 @@ from .env_utils import get_env_var
 
 logger = logging.getLogger("Thronestead.Database")
 
-DATABASE_URL = get_env_var("DATABASE_URL")
+# Default to local Postgres when DATABASE_URL isn't provided
+DATABASE_URL = get_env_var(
+    "DATABASE_URL",
+    default="postgresql://postgres:postgres@localhost/postgres",
+)
 
 engine = None
 SessionLocal: Optional[sessionmaker] = None
