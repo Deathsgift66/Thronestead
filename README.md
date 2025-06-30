@@ -155,7 +155,8 @@ your project settings. `API_SECRET` protects internal admin routes, while
 Update these values with your project credentials to enable API access. Frontend
 environment variables must be prefixed with `VITE_` so Vite exposes them during
 build. The main one used by the scripts is `VITE_API_BASE_URL`, which should
-point to your deployed backend URL.
+point to your deployed backend URL. If a variable is missing at build time, the
+scripts will also look for a value on `window.env` at runtime.
 
 The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
 separated list of allowed domains or `*` to disable origin checks (credentials

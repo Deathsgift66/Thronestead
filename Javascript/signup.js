@@ -14,9 +14,10 @@ import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { containsBannedContent } from './content_filter.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
 if (!API_BASE_URL) {
-  console.warn('⚠️ VITE_API_BASE_URL not set. API calls may fail.');
+  console.warn('⚠️ API_BASE_URL not set. API calls may fail.');
 }
 const reservedWords = ['admin', 'moderator', 'support'];
 

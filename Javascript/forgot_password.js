@@ -3,7 +3,8 @@
 // Version 6.13.2025.19.49
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
 
 // DOM Elements (assigned after DOMContentLoaded)
 let requestForm;

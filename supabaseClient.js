@@ -2,8 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 
 // Supabase credentials are supplied via Vite environment variables.
 // The variables are injected at build time. See `.env.example` for details.
-const SUPABASE_URL = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL =
+  import.meta.env.VITE_PUBLIC_SUPABASE_URL || window.env?.SUPABASE_URL;
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || window.env?.SUPABASE_ANON_KEY;
 
 export const supabaseReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
