@@ -23,6 +23,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .database import get_db
+from .supabase_client import get_supabase_client
 
 logger = logging.getLogger("Thronestead.Security")
 
@@ -215,14 +216,36 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
 
     token = auth_header.split(" ")[1]
     secret = os.getenv("SUPABASE_JWT_SECRET")
-    try:
-        claims = jwt.decode(token, secret, algorithms=["HS256"])
-    except JWTError:
-        logger.warning("JWT signature verification failed.")
-        raise HTTPException(status_code=401, detail="Invalid token")
-    except Exception as exc:  # pragma: no cover - generic decode failures
-        logger.exception("Failed to decode JWT token")
-        raise HTTPException(status_code=401, detail="Invalid token") from exc
+    claims = None
+    if secret:
+        try:
+            claims = jwt.decode(token, secret, algorithms=["HS256"])
+        except JWTError:
+            logger.warning(
+                "JWT signature verification failed; falling back to Supabase validation."
+            )
+            claims = None
+        except Exception as exc:  # pragma: no cover - generic decode failures
+            logger.exception("Failed to decode JWT token")
+            raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+    if claims is None:
+        try:
+            sb = get_supabase_client()
+            result = sb.auth.get_user(token)
+            if isinstance(result, dict):
+                uid = (
+                    result.get("user", {}).get("id")
+                    or result.get("data", {}).get("user", {}).get("id")
+                )
+            else:  # pragma: no cover - supabase-py object
+                uid = getattr(getattr(result, "user", None), "id", None)
+            if not uid:
+                raise ValueError("User ID missing")
+            claims = {"sub": uid}
+        except Exception:
+            logger.warning("Supabase token validation failed.")
+            raise HTTPException(status_code=401, detail="Invalid token")
 
     user_id = claims.get("sub")
     if not user_id:
