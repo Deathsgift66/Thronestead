@@ -19,6 +19,7 @@ def store_session_cookie(payload: TokenPayload, response: Response):
         httponly=True,
         secure=True,
         samesite="strict",
+        path="/api",
     )
     return {"stored": True}
 
