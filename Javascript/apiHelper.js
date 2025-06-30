@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient.js';
+import { refreshSessionAndStore, clearStoredAuth } from './auth.js';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
@@ -34,36 +35,50 @@ async function handleResponse(response) {
   return data;
 }
 
-export async function apiGet(endpoint) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: "GET",
-    headers: await getHeaders(),
+async function requestWithRetry(endpoint, options = {}, isJson = true) {
+  let headers = await getHeaders(isJson);
+  let response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
   });
+
+  if (response.status === 401) {
+    const refreshed = await refreshSessionAndStore();
+    if (refreshed) {
+      headers = await getHeaders(isJson);
+      response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    }
+    if (response.status === 401) {
+      clearStoredAuth();
+      window.location.href = 'login.html';
+      throw new Error('Unauthorized');
+    }
+  }
+
   return handleResponse(response);
+}
+
+export async function apiGet(endpoint) {
+  return requestWithRetry(endpoint, { method: 'GET' });
 }
 
 export async function apiPost(endpoint, body = {}) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: "POST",
-    headers: await getHeaders(),
+  return requestWithRetry(endpoint, {
+    method: 'POST',
     body: JSON.stringify(body),
   });
-  return handleResponse(response);
 }
 
 export async function apiPut(endpoint, body = {}) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: "PUT",
-    headers: await getHeaders(),
+  return requestWithRetry(endpoint, {
+    method: 'PUT',
     body: JSON.stringify(body),
   });
-  return handleResponse(response);
 }
 
 export async function apiDelete(endpoint) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: "DELETE",
-    headers: await getHeaders(),
-  });
-  return handleResponse(response);
+  return requestWithRetry(endpoint, { method: 'DELETE' });
 }
