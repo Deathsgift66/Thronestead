@@ -17,7 +17,8 @@ import os
 import traceback
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -56,6 +57,16 @@ app = FastAPI(
 )
 
 setup_rate_limiter(app)
+
+
+# -----------------------
+# 🌐 Global Error Handling
+# -----------------------
+
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception: %s", exc)
+    return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
 # -----------------------
 # 🔐 CORS Middleware
@@ -97,11 +108,13 @@ try:
 except Exception as e:
     logger.exception("❌ Crash during startup loading game settings: %s", e)
     traceback.print_exc()
-    raise
+    # Continue with partially initialized settings
 
 # -----------------------
 # 📦 Auto-load Routers Safely
 # -----------------------
+FAILED_ROUTERS: list[str] = []
+
 for name in router_pkg.__all__:
     if name == "auth":
         continue
@@ -117,8 +130,8 @@ for name in router_pkg.__all__:
         if custom_obj:
             app.include_router(custom_obj)
     except Exception as e:
-        logger.exception(f"❌ Failed to import or include router '{name}': {e}")
-        raise
+        logger.exception("❌ Failed to import or include router '%s': %s", name, e)
+        FAILED_ROUTERS.append(name)
 
 from backend.routers import auth
 app.include_router(auth.router, prefix="/api/auth")
@@ -136,7 +149,11 @@ app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 # -----------------------
 @app.get("/health-check")
 def health_check():
-    return {"status": "online", "service": "Thronestead API"}
+    return {
+        "status": "online",
+        "service": "Thronestead API",
+        "failedRouters": FAILED_ROUTERS,
+    }
 
 
 # -----------------------
