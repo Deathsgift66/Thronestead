@@ -20,6 +20,15 @@ async function logout() {
   resetAuthCache();
   clearReauthToken();
 
+  try {
+    localStorage.setItem('logout', Date.now().toString());
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('auth');
+      bc.postMessage('logout');
+      bc.close();
+    }
+  } catch {}
+
   // 🍪 Expire auth token cookie (if used)
   document.cookie = `authToken=; Max-Age=0; path=/; Secure; HttpOnly; SameSite=Strict;`;
 

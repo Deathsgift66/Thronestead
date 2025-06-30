@@ -143,6 +143,18 @@ def login_status(user_id: str = Depends(verify_jwt_token), db: Session = Depends
     return {"setup_complete": complete}
 
 
+@router.get("/maintenance")
+def maintenance_mode(db: Session = Depends(get_db)):
+    """Return True if the site is currently in maintenance mode."""
+    row = db.execute(
+        text("SELECT flag_value FROM system_flags WHERE flag_key = 'maintenance_mode'"),
+    ).fetchone()
+    if row is None:
+        return {"maintenance": False}
+    value = str(row[0]).lower()
+    return {"maintenance": value in {"1", "true", "yes"}}
+
+
 FAILED_LOGINS: dict[tuple[str, str], tuple[int, float]] = {}
 
 
@@ -226,7 +238,7 @@ def authenticate(
         raise HTTPException(status_code=403, detail="Account banned")
     row = db.execute(
         text(
-            "SELECT username, kingdom_id, alliance_id, setup_complete, is_deleted, status "
+            "SELECT username, kingdom_id, alliance_id, setup_complete, is_deleted, status, flagged "
             "FROM users WHERE user_id = :uid"
         ),
         {"uid": uid},
@@ -238,9 +250,12 @@ def authenticate(
     setup_complete = bool(row[3]) if row else False
     is_deleted = bool(row[4]) if row else False
     status = row[5] if row else None
+    flagged = bool(row[6]) if row and len(row) > 6 else False
 
     if is_deleted:
         raise HTTPException(status_code=403, detail="Account deleted")
+    if flagged:
+        raise HTTPException(status_code=403, detail="Account flagged")
     if status and status.lower() == "suspicious" and not payload.otp:
         raise HTTPException(status_code=401, detail="2FA required")
 

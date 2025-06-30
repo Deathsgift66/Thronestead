@@ -169,10 +169,11 @@ class DummyClientAuth:
 
 
 class DummyDBAuth:
-    def __init__(self, deleted=False, status="active"):
+    def __init__(self, deleted=False, status="active", flagged=False):
         self.updated = False
         self.deleted = deleted
         self.status = status
+        self.flagged = flagged
 
     def execute(self, query, *args, **_kwargs):
         q = str(query).lower()
@@ -188,6 +189,7 @@ class DummyDBAuth:
                         True,
                         self.deleted,
                         self.status,
+                        self.flagged,
                     )
                 return None
 
@@ -241,6 +243,16 @@ def test_authenticate_failure():
 def test_authenticate_deleted_account():
     login_routes.get_supabase_client = lambda: DummyClientAuth()
     db = DummyDBAuth(deleted=True)
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(req, payload, db=db)
+    assert exc.value.status_code == 403
+
+
+def test_authenticate_flagged_account():
+    login_routes.get_supabase_client = lambda: DummyClientAuth()
+    db = DummyDBAuth(flagged=True)
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
     with pytest.raises(HTTPException) as exc:
@@ -385,3 +397,27 @@ def test_reauthenticate_requires_2fa(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         login_routes.reauthenticate(req, payload, user_id="u1", db=db)
     assert exc.value.status_code == 401
+
+
+class DummyDBMaint:
+    def __init__(self, value="false"):
+        self.value = value
+
+    def execute(self, query, params=None):
+        class R:
+            def fetchone(self_inner):
+                return (self.value,)
+
+        return R()
+
+
+def test_maintenance_mode_on():
+    db = DummyDBMaint("true")
+    result = login_routes.maintenance_mode(db=db)
+    assert result["maintenance"] is True
+
+
+def test_maintenance_mode_off():
+    db = DummyDBMaint("false")
+    result = login_routes.maintenance_mode(db=db)
+    assert result["maintenance"] is False

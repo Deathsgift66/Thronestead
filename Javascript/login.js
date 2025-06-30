@@ -128,16 +128,36 @@ function validateLoginInputs(email, password) {
 // Sign user in and persist the session
 export async function loginExecute(email, password, remember = false) {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    let { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     if (error || !data?.session) {
-      showMessage('error', error?.message || '❌ Invalid credentials.');
-      return null;
+      if (error && /timeout|network/i.test(error.message)) {
+        const res = await fetch(`${API_BASE_URL}/api/login/authenticate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        if (res.ok) {
+          const json = await res.json();
+          await supabase.auth.setSession({
+            access_token: json.session.access_token,
+            refresh_token: json.session.refresh_token
+          });
+          data = { session: json.session, user: json.session.user };
+        } else {
+          showMessage('error', '❌ Login failed.');
+          return null;
+        }
+      } else {
+        showMessage('error', error?.message || '❌ Invalid credentials.');
+        return null;
+      }
     }
     if (!data.user?.email_confirmed_at && !data.user?.confirmed_at) {
       showMessage('error', 'Please verify your email before logging in.');
+      if (authLink) authLink.classList.remove('hidden');
       await supabase.auth.signOut();
       return null;
     }
@@ -160,6 +180,21 @@ export async function loginExecute(email, password, remember = false) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  async function checkMaintenance() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/login/maintenance`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.maintenance) {
+          showMessage('error', '⛔ Thronestead is under maintenance.');
+          loginForm?.classList.add('hidden');
+          return true;
+        }
+      }
+    } catch {}
+    return false;
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) {
     try {
@@ -205,6 +240,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   closeAuthBtn = document.getElementById("close-auth-btn");
   sendAuthBtn = document.getElementById("send-auth-btn");
   authMessage = document.getElementById("auth-message");
+
+  if (await checkMaintenance()) {
+    return;
+  }
 
   // initThemeToggle();
   const allowPaste = window.env?.ALLOW_PASSWORD_PASTE === true;

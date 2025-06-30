@@ -133,3 +133,22 @@ export function stopSessionRefresh() {
   }
 }
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', e => {
+    if (e.key === 'logout') {
+      clearStoredAuth();
+      window.location.href = 'login.html';
+    }
+  });
+
+  if (window.BroadcastChannel) {
+    const bc = new BroadcastChannel('auth');
+    bc.onmessage = e => {
+      if (e.data === 'logout') {
+        clearStoredAuth();
+        window.location.href = 'login.html';
+      }
+    };
+  }
+}
+
