@@ -8,6 +8,7 @@ from services.system_flag_service import get_flag
 router = APIRouter(prefix="/api/public-config", tags=["config"])
 
 
+@router.get("")
 @router.get("/")
 def public_config(db: Session = Depends(get_db)):
     """Expose public Supabase configuration for the frontend."""
