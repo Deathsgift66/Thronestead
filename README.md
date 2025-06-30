@@ -211,9 +211,9 @@ repository.
 The `netlify.toml` file deploys the repository as a static site with no build
 step. The `[build.processing.html]` setting enables *pretty URLs*, allowing
 requests like `/login` to resolve to `login.html` automatically. CORS headers are
-enabled for all routes via the `[[headers]]` section. Since the site is
-multi‑page, there is
-no catch‑all redirect to `index.html`.
+enabled for all routes via the `[[headers]]` section. The build environment is
+pinned to **Node.js 20** to match local tooling. Since the site is
+multi‑page, there is no catch‑all redirect to `index.html`.
 
 ### Deployment Redundancy
 
