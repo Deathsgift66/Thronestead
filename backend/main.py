@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from . import routers as router_pkg
 from .auth_middleware import UserStateMiddleware
 from .rate_limiter import setup_rate_limiter
-from .database import engine
+from . import database
 from .models import Base
 from .env_utils import get_env_var
 
@@ -36,6 +36,9 @@ try:
     load_dotenv()
 except ImportError:  # pragma: no cover - optional dependency
     print("python-dotenv not installed. Skipping .env loading.")
+
+# Ensure the database uses values from the loaded .env file
+database.init_engine()
 
 API_SECRET = get_env_var("API_SECRET")
 
@@ -105,8 +108,8 @@ app.add_middleware(UserStateMiddleware)
 # -----------------------
 # 🗃️ Ensure Database Tables Exist
 # -----------------------
-if engine:
-    Base.metadata.create_all(bind=engine)
+if database.engine:
+    Base.metadata.create_all(bind=database.engine)
 
 # -----------------------
 # ⚙️ Load Global Game Settings

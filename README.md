@@ -125,6 +125,8 @@ python main.py
 When the backend is not running the static server used by `npm run serve` will
 return `index.html` for requests under `/api`, leading to browser console errors
 like `Invalid JSON from /api/resources`.
+The development server listens on `http://localhost:3000`, so ensure your
+CORS configuration allows that origin.
 
 ---
 
