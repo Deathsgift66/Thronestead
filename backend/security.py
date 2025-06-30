@@ -134,11 +134,7 @@ def verify_jwt_token(
         logger.warning(f"Token subject mismatch: token.sub={uid}, header={x_user_id}")
         raise HTTPException(status_code=401, detail="Token mismatch")
 
-    try:
-        return str(UUID(uid))
-    except ValueError:
-        logger.warning("Invalid user ID format in token.")
-        raise HTTPException(status_code=401, detail="Invalid user ID")
+    return uid
 
 
 def require_user_id(
