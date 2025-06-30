@@ -1,7 +1,8 @@
 // Project Name: Thronestead©
 // File Name: fetchJson.js
-// Version 6.15.2025.20.12
+// Version 6.21.2025.01.00
 // Developer: Codex
+import { authFetch } from './utils.js';
 
 /**
  * Perform a fetch request expecting a JSON response.
@@ -56,13 +57,31 @@ export async function fetchJson(url, options = {}, timeoutMs = 8000) {
  * @param {number} [timeoutMs]    Optional timeout override
  * @returns {Promise<any>}        Parsed JSON data
  */
-export async function authFetchJson(url, session, options = {}, timeoutMs = 8000) {
-  const headers = {
-    ...(options.headers || {}),
-    'Authorization': `Bearer ${session.access_token}`,
-    'X-User-ID': session.user.id,
-    'Content-Type': 'application/json'
+export async function authFetchJson(url, _session, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  const opts = {
+    ...options,
+    signal: controller.signal,
+    headers: { ...(options.headers || {}), 'Content-Type': 'application/json' }
   };
 
-  return fetchJson(url, { ...options, headers }, timeoutMs);
+  try {
+    const res = await authFetch(url, opts);
+    const type = res.headers.get('content-type') || '';
+    if (!res.ok) {
+      const message = await res.text();
+      throw new Error(`Request failed (${res.status}): ${message}`);
+    }
+    if (!type.includes('application/json')) {
+      throw new Error('Expected JSON response but got: ' + type);
+    }
+    return await res.json();
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Request timed out');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
