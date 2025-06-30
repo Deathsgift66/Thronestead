@@ -1,0 +1,30 @@
+@import url("./root_theme.css");
+@import url("./base_styles.css");
+
+body {
+  color: var(--ink);
+  background: url('../Assets/admin_dashboard.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.main-container {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.container {
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(6px);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px var(--shadow-strong);
+}
+
+section {
+  margin-bottom: 1.5rem;
+}
+
+button {
+  margin-top: 0.5rem;
+}
