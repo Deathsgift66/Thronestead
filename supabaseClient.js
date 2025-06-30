@@ -15,10 +15,12 @@ if (!supabaseReady) {
   );
 }
 
-export const supabase = supabaseReady
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false }
-    })
-  : null;
+if (supabaseReady && !window.__supabaseClient) {
+  window.__supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false }
+  });
+}
+
+export const supabase = supabaseReady ? window.__supabaseClient : null;
 
 
