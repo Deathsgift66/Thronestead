@@ -13,10 +13,10 @@ let cachedAuth = null;
  * @returns {{token: string|null, user: object|null}}
  */
 export function getStoredAuth() {
-  const match = document.cookie.match(/(?:^|; )authToken=([^;]+)/);
-  const token = match ? decodeURIComponent(match[1]) : null;
-  const userStr = sessionStorage.getItem('currentUser') ||
-    localStorage.getItem('currentUser');
+  const token =
+    sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+  const userStr =
+    sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser');
   let user = null;
   if (userStr) {
     try {
@@ -89,7 +89,8 @@ export function resetAuthCache() {
 export function clearStoredAuth() {
   sessionStorage.removeItem('currentUser');
   localStorage.removeItem('currentUser');
-  document.cookie = 'authToken=; Max-Age=0; path=/; secure; samesite=strict;';
+  sessionStorage.removeItem('authToken');
+  localStorage.removeItem('authToken');
   resetAuthCache();
   // Notify other tabs to logout
   try {
@@ -108,8 +109,10 @@ export async function refreshSessionAndStore() {
 
     const token = data.session.access_token;
     const user = data.user;
-    const expiry = new Date(data.session.expires_at * 1000).toUTCString();
-    document.cookie = `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
+    sessionStorage.setItem('authToken', token);
+    if (localStorage.getItem('currentUser')) {
+      localStorage.setItem('authToken', token);
+    }
     sessionStorage.setItem('currentUser', JSON.stringify(user));
 
     setAuthCache(user, data.session);
@@ -177,7 +180,8 @@ window.addEventListener('storage', e => {
     resetAuthCache();
     sessionStorage.removeItem('currentUser');
     localStorage.removeItem('currentUser');
-    document.cookie = 'authToken=; Max-Age=0; path=/; secure; samesite=strict;';
+    sessionStorage.removeItem('authToken');
+    localStorage.removeItem('authToken');
     if (!location.pathname.endsWith('login.html')) {
       window.location.href = 'login.html';
     }

@@ -27,8 +27,8 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
         token = session.access_token;
-        const expiry = new Date(session.expires_at * 1000).toUTCString();
-        document.cookie = `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
+        sessionStorage.setItem('authToken', token);
+        localStorage.setItem('authToken', token);
       } else {
         return (window.location.href = 'login.html');
       }

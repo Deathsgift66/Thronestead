@@ -181,8 +181,8 @@ async function handleSignup() {
     if (confirmed) {
       if (session) {
         const token = session.access_token;
-          const expiry = new Date(session.expires_at * 1000).toUTCString();
-          document.cookie = `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
+        sessionStorage.setItem('authToken', token);
+        localStorage.setItem('authToken', token);
         try {
           await fetch(`${API_BASE_URL}/api/session/store`, {
             method: 'POST',

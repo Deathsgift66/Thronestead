@@ -13,23 +13,29 @@ const API_BASE_URL =
 let token = null;
 
 function readToken() {
-  const match = document.cookie.match(/(?:^|; )reauthToken=([^;]+)/);
-  token = match ? decodeURIComponent(match[1]) : null;
+  token = sessionStorage.getItem('reauthToken') || null;
 }
 
 function saveToken(t, expSec) {
   token = t;
-  const expiry = new Date(Date.now() + expSec * 1000).toUTCString();
-  document.cookie = `reauthToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
+  const expiry = Date.now() + expSec * 1000;
+  sessionStorage.setItem('reauthToken', token);
+  sessionStorage.setItem('reauthExpires', String(expiry));
 }
 
 export function clearReauthToken() {
   token = null;
-  document.cookie = 'reauthToken=; Max-Age=0; path=/; secure; samesite=strict;';
+  sessionStorage.removeItem('reauthToken');
+  sessionStorage.removeItem('reauthExpires');
 }
 
 export function getReauthHeaders() {
   if (!token) readToken();
+  const expiry = parseInt(sessionStorage.getItem('reauthExpires') || '0', 10);
+  if (expiry && Date.now() > expiry) {
+    clearReauthToken();
+    return {};
+  }
   return token ? { 'X-Reauth-Token': token } : {};
 }
 
