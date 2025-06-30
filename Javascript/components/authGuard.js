@@ -28,7 +28,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       if (session?.access_token) {
         token = session.access_token;
         const expiry = new Date(session.expires_at * 1000).toUTCString();
-        document.cookie = `authToken=${token}; path=/; secure; samesite=strict; expires=${expiry}`;
+        document.cookie = `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
       } else {
         return (window.location.href = 'login.html');
       }

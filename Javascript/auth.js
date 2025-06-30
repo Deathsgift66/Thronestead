@@ -109,7 +109,7 @@ export async function refreshSessionAndStore() {
     const token = data.session.access_token;
     const user = data.user;
     const expiry = new Date(data.session.expires_at * 1000).toUTCString();
-    document.cookie = `authToken=${token}; path=/; secure; samesite=strict; expires=${expiry}`;
+    document.cookie = `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
     sessionStorage.setItem('currentUser', JSON.stringify(user));
 
     setAuthCache(user, data.session);

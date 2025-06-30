@@ -444,10 +444,10 @@ async function handleLogin(e) {
       let userInfo = result.user || {};
 
       // Persist credentials immediately so subsequent API calls succeed
-      if (token) {
-        const expiry = new Date(result.session.expires_at * 1000).toUTCString();
-        document.cookie = `authToken=${token}; path=/; secure; samesite=strict; expires=${expiry}`;
-      }
+        if (token) {
+          const expiry = new Date(result.session.expires_at * 1000).toUTCString();
+          document.cookie = `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
+        }
       storage.setItem('currentUser', JSON.stringify(userInfo));
       altStorage.removeItem('currentUser');
       setAuthCache(userInfo, result.session);
