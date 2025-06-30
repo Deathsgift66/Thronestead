@@ -153,6 +153,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) {
     try {
+      // Refresh the session token first in case it is stale
+      await refreshSessionAndStore();
+
       let headers = await authHeaders();
       let res = await fetch(`${API_BASE_URL}/api/me`, { headers });
 
