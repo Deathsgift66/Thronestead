@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emergency Tools | Thronestead</title>
+  <meta name="description" content="Developer emergency tools for rapid fixes." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/admin_emergency_tools.css" rel="stylesheet" />
+  <script type="module" src="/Javascript/requireAdmin.js"></script>
+  <script src="/Javascript/admin_emergency_tools.js" type="module"></script>
+  <script src="/Javascript/components/authGuard.js" type="module"></script>
+  <script src="/Javascript/apiHelper.js" type="module"></script>
+  <script src="/Javascript/navLoader.js" type="module"></script>
+</head>
+<body data-theme="parchment">
+  <div id="navbar-container"></div>
+  <header class="kr-top-banner" aria-label="Emergency Tools Banner">Thronestead – Emergency Tools</header>
+  <main class="main-container" aria-label="Emergency Tools Interface">
+    <div class="container">
+      <section aria-label="Reprocess War Tick">
+        <h2>Reprocess War Tick</h2>
+        <input id="tick-war-id" type="number" placeholder="War ID" aria-label="War ID" />
+        <button id="reprocess-tick-btn">Reprocess Tick</button>
+      </section>
+      <section aria-label="Recalculate Resources">
+        <h2>Recalculate Resources</h2>
+        <input id="recalc-kingdom-id" type="number" placeholder="Kingdom ID" aria-label="Kingdom ID" />
+        <button id="recalc-res-btn">Recalculate</button>
+      </section>
+      <section aria-label="Rollback Alliance Quest">
+        <h2>Rollback Quest</h2>
+        <input id="quest-alliance-id" type="number" placeholder="Alliance ID" aria-label="Alliance ID" />
+        <input id="quest-code" type="text" placeholder="Quest Code" aria-label="Quest Code" />
+        <button id="rollback-quest-btn">Rollback</button>
+      </section>
+      <section aria-label="Backup Queues">
+        <h2>Backup Queues</h2>
+        <button id="load-backups-btn">Load Queues</button>
+        <ul id="backup-list"></ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
