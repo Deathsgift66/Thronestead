@@ -304,41 +304,35 @@ async function handleLogin(e) {
       blockAfterFailedAttempts();
     } else if (result.user) {
       clearAttempts();
-      let setupComplete = true;
-      let token = result.session?.access_token || '';
-      try {
-        await fetchAndStorePlayerProgression(result.user.id);
-
-        const statusData = await authJsonFetch(`${API_BASE_URL}/api/login/status`);
-        setupComplete = statusData?.setup_complete === true;
-
-      } catch (err) {
-        console.error('Setup check failed:', err);
-      }
-
-      let userInfo = result.user || {};
-      try {
-        const context = await authJsonFetch(`${API_BASE_URL}/api/me`);
-        userInfo = { ...context, id: result.user.id };
-      } catch (err) {
-        console.warn('Failed to load user context:', err);
-        userInfo.id = result.user.id;
-      }
 
       const storage = rememberCheckbox?.checked ? localStorage : sessionStorage;
       const altStorage = storage === localStorage ? sessionStorage : localStorage;
-      storage.setItem('currentUser', JSON.stringify(userInfo));
-      altStorage.removeItem('currentUser');
 
-      // Persist the auth token for subsequent API calls
+      const token = result.session?.access_token || '';
+      let userInfo = result.user || {};
+
+      // Persist credentials immediately so subsequent API calls succeed
       if (token) {
         storage.setItem('authToken', token);
         altStorage.removeItem('authToken');
       }
-
-      // Update in-memory auth cache for current page
+      storage.setItem('currentUser', JSON.stringify(userInfo));
+      altStorage.removeItem('currentUser');
       setAuthCache(userInfo, result.session);
       startSessionRefresh();
+
+      let setupComplete = true;
+      try {
+        await fetchAndStorePlayerProgression(result.user.id);
+        const statusData = await authJsonFetch(`${API_BASE_URL}/api/login/status`);
+        setupComplete = statusData?.setup_complete === true;
+
+        const context = await authJsonFetch(`${API_BASE_URL}/api/me`);
+        userInfo = { ...context, id: result.user.id };
+        storage.setItem('currentUser', JSON.stringify(userInfo));
+      } catch (err) {
+        console.error('Setup check failed:', err);
+      }
 
       showMessage('success', '✅ Login successful. Redirecting...');
       setTimeout(() => {
