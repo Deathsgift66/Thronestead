@@ -9,34 +9,33 @@ import { authHeaders } from './auth.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-let token = sessionStorage.getItem('reauthToken') || null;
-let expires = parseInt(sessionStorage.getItem('reauthExpires'), 10) || 0;
+let token = null;
+
+function readToken() {
+  const match = document.cookie.match(/(?:^|; )reauthToken=([^;]+)/);
+  token = match ? decodeURIComponent(match[1]) : null;
+}
 
 function saveToken(t, expSec) {
   token = t;
-  expires = Date.now() + expSec * 1000;
-  sessionStorage.setItem('reauthToken', token);
-  sessionStorage.setItem('reauthExpires', String(expires));
+  const expiry = new Date(Date.now() + expSec * 1000).toUTCString();
+  document.cookie = `reauthToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; expires=${expiry}`;
 }
 
 export function clearReauthToken() {
   token = null;
-  expires = 0;
-  sessionStorage.removeItem('reauthToken');
-  sessionStorage.removeItem('reauthExpires');
+  document.cookie = 'reauthToken=; Max-Age=0; path=/; secure; samesite=strict;';
 }
 
 export function getReauthHeaders() {
-  if (token && Date.now() < expires) {
-    return { 'X-Reauth-Token': token };
-  }
-  clearReauthToken();
-  return {};
+  if (!token) readToken();
+  return token ? { 'X-Reauth-Token': token } : {};
 }
 
 export async function ensureReauth() {
-  if (token && Date.now() < expires) return token;
-  clearReauthToken();
+  if (token) return token;
+  readToken();
+  if (token) return token;
   return await showReauthModal();
 }
 
