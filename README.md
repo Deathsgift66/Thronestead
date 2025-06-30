@@ -72,6 +72,9 @@ the records created during onboarding.
 ✅ Resource helpers `spend_resources` and `gain_resources` in [services/resource_service.py](services/resource_service.py)
 ✅ Strategic tick automation in [services/strategic_tick_service.py](services/strategic_tick_service.py)
 ✅ Daily spy attack counter reset in [scripts/reset_spy_attacks.py](scripts/reset_spy_attacks.py)
+✅ Audit log archiving in [scripts/archive_audit_logs.py](scripts/archive_audit_logs.py)
+✅ Admin heartbeat pings in [scripts/admin_heartbeat.py](scripts/admin_heartbeat.py)
+✅ Webhook retry worker in [scripts/retry_webhooks.py](scripts/retry_webhooks.py)
 ✅ Spy training consumes gold, grants XP, and espionage missions check detection levels
 ✅ Morale restoration baked into the strategic tick
 ✅ Unified event notifications logged when wars activate
