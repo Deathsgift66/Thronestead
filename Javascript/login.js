@@ -20,8 +20,15 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
 
 // DOM Elements
-let loginForm, emailInput, passwordInput, loginButton, messageContainer,
-  errorContainer;
+let loginForm,
+  emailInput,
+  passwordInput,
+  loginButton,
+  messageContainer,
+  errorContainer,
+  errorModal,
+  errorMessage,
+  closeErrorBtn;
 let rememberCheckbox, togglePasswordBtn;
 let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage;
 let authLink, authModal, closeAuthBtn, sendAuthBtn, authMessage;
@@ -159,6 +166,7 @@ function showLoginError(message) {
     errorContainer.textContent = message;
   }
   showMessage('error', message);
+  showErrorModal(message);
 }
 
 // ✅ Validate login form inputs
@@ -322,6 +330,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   closeAuthBtn = document.getElementById("close-auth-btn");
   sendAuthBtn = document.getElementById("send-auth-btn");
   authMessage = document.getElementById("auth-message");
+  errorModal = document.getElementById('login-error-modal');
+  errorMessage = document.getElementById('login-error-message');
+  closeErrorBtn = document.getElementById('close-login-error-btn');
 
   if (await checkMaintenance()) {
     return;
@@ -384,6 +395,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (sendAuthBtn) {
     sendAuthBtn.addEventListener("click", handleResendVerification);
+  }
+
+  if (closeErrorBtn) {
+    closeErrorBtn.addEventListener('click', () => {
+      errorModal.classList.add('hidden');
+      errorModal.setAttribute('aria-hidden', 'true');
+      errorModal.setAttribute('inert', '');
+      loginButton?.focus();
+    });
   }
 
   if (loginForm) {
@@ -578,6 +598,15 @@ function showMessage(type, text) {
     }, 5000);
   }
   showToast(text);
+}
+
+function showErrorModal(message) {
+  if (!errorModal || !errorMessage) return;
+  errorMessage.textContent = message;
+  errorModal.classList.remove('hidden');
+  errorModal.removeAttribute('inert');
+  errorModal.setAttribute('aria-hidden', 'false');
+  closeErrorBtn?.focus();
 }
 
 // 🗞 Load login page announcements

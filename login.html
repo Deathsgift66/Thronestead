@@ -113,8 +113,17 @@ Developer: Deathsgift66
     <p>Enter your account email to resend the verification link.</p>
     <input type="email" id="auth-email" placeholder="Your Royal Email" aria-label="Email Address" autocomplete="email" required />
     <button id="send-auth-btn" class="royal-button">Send Verification Link</button>
-    <div id="auth-message" class="message"></div>
-    <button id="close-auth-btn" class="royal-button">Close</button>
+  <div id="auth-message" class="message"></div>
+  <button id="close-auth-btn" class="royal-button">Close</button>
+  </div>
+</div>
+
+<!-- Login Error Modal -->
+<div id="login-error-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="login-error-title" aria-hidden="true" inert>
+  <div class="modal-content">
+    <h2 id="login-error-title">Login Failed</h2>
+    <p id="login-error-message"></p>
+    <button id="close-login-error-btn" class="royal-button">Close</button>
   </div>
 </div>
 
