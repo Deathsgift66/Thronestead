@@ -12,6 +12,9 @@ import logging
 from threading import Lock
 from typing import Dict, List, Optional
 
+from ..database import SessionLocal
+from services.system_flag_service import get_flag
+
 from .engine import BattleTickHandler, WarState
 
 logger = logging.getLogger("Thronestead.BattleManager")
@@ -83,4 +86,11 @@ def run_combat_tick() -> None:
     """
     Public entry point for the tick engine (e.g., hourly cron task).
     """
-    war_manager.run_combat_tick()
+    if SessionLocal is not None:
+        with SessionLocal() as db:
+            if get_flag(db, "fallback_override"):
+                logger.info("Fallback mode active, action delayed.")
+                return
+            war_manager.run_combat_tick()
+    else:
+        war_manager.run_combat_tick()

@@ -1,25 +1,18 @@
-# Project Name: Thronestead©
-# File Name: login.py
-# Version 6.14.2025
-# Developer: Codex
-"""
-Project: Thronestead ©
-File: login.py
-Role: API route providing backend controlled Supabase authentication.
-Version: 2025-06-21
-"""
+"""Backend controlled Supabase authentication endpoints."""
+from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
-import os
-from ..env_utils import get_env_var
 from distutils.util import strtobool
+from sqlalchemy.orm import Session
 
+from ..env_utils import get_env_var
 from ..supabase_client import get_supabase_client
+from ..database import get_db
+from services.system_flag_service import get_flag
 
 router = APIRouter(tags=["login"])
 
-# Support truthy values like "1" or "yes" for local testing
 ALLOW_UNVERIFIED_LOGIN = bool(
     strtobool(get_env_var("ALLOW_UNVERIFIED_LOGIN", default="false"))
 )
@@ -31,8 +24,11 @@ class LoginRequest(BaseModel):
 
 
 @router.post("/api/login")
-def login_user(payload: LoginRequest):
+def login_user(payload: LoginRequest, db: Session = Depends(get_db)):
     """Authenticate a user via Supabase and return the response."""
+    if get_flag(db, "maintenance_mode") or get_flag(db, "fallback_override"):
+        raise HTTPException(status_code=503, detail="Login disabled")
+
     supabase = get_supabase_client()
     try:
         result = supabase.auth.sign_in_with_password(

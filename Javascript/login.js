@@ -40,7 +40,7 @@ const COOLDOWN_TIME = 10 * 60 * 1000;
 async function checkMaintenance() {
   try {
     const cfg = await fetchJson(`${API_BASE_URL}/api/public-config`);
-    if (cfg?.MAINTENANCE_MODE) {
+    if (cfg?.MAINTENANCE_MODE || cfg?.FALLBACK_OVERRIDE) {
       showMessage('error', 'The realm is undergoing maintenance. Please return later.');
       loginForm?.classList.add('hidden');
       return true;
