@@ -15,6 +15,13 @@ def store_session_cookie(
     payload: TokenPayload, request: Request, response: Response
 ):
     """Store the session token in an HttpOnly cookie."""
+    # Determine the domain from the Host header if available. Using the header
+    # avoids issues where request.url.hostname may not match the browser's
+    # perceived domain (e.g. when behind a proxy).  Fall back to the URL host
+    # to keep backwards compatibility with tests and existing deployments.
+    host = request.headers.get("host")
+    domain = host.split(":", 1)[0] if host else request.url.hostname
+
     response.set_cookie(
         "session_token",
         payload.token,
@@ -22,7 +29,7 @@ def store_session_cookie(
         secure=True,
         samesite="strict",
         path="/api",
-        domain=request.url.hostname,
+        domain=domain,
     )
     return {"stored": True}
 
