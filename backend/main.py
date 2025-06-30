@@ -95,6 +95,9 @@ if "*" in origins:
     origins = ["*"]
     allow_credentials = False
 
+# Insert user state middleware first so CORS headers are still applied even
+# when the middleware short-circuits the request (e.g. banned users).
+app.add_middleware(UserStateMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[] if origin_regex else origins,
@@ -103,7 +106,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(UserStateMiddleware)
 
 # -----------------------
 # 🗃️ Ensure Database Tables Exist
