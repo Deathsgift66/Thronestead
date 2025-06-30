@@ -1,10 +1,11 @@
 // Project Name: Thronestead©
 // File Name: login.js
-// Version 6.19.2025.22.05
+// Version 6.20.2025.23.00
 // Developer: Deathsgift66
 import { supabase, supabaseReady } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { toggleLoading, authJsonFetch, showToast, validateEmail } from './utils.js';
+import { fetchJson } from './fetchJson.js';
 import {
   setAuthCache,
   clearStoredAuth,
@@ -27,6 +28,20 @@ let announcementList;
 const ATTEMPT_LIMIT = 5;
 const ATTEMPT_WINDOW = 5 * 60 * 1000;
 const COOLDOWN_TIME = 10 * 60 * 1000;
+
+async function checkMaintenance() {
+  try {
+    const cfg = await fetchJson(`${API_BASE_URL}/api/public-config`);
+    if (cfg?.MAINTENANCE_MODE) {
+      showMessage('error', 'The realm is undergoing maintenance. Please return later.');
+      loginForm?.classList.add('hidden');
+      return true;
+    }
+  } catch (err) {
+    console.warn('Maintenance check failed:', err);
+  }
+  return false;
+}
 
 function getAttemptData() {
   try {
@@ -152,10 +167,44 @@ function validateLoginInputs(email, password) {
 // Sign user in and persist the session
 export async function loginExecute(email, password, remember = false) {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    // Attempt server-side authentication first to catch banned/deleted users
+    try {
+      const resp = await fetchJson(
+        `${API_BASE_URL}/api/login/authenticate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        },
+        8000
+      );
+      if (resp?.session) {
+        await supabase.auth.setSession({
+          access_token: resp.session.access_token,
+          refresh_token: resp.session.refresh_token
+        });
+        return { user: resp.session.user, session: resp.session };
+      }
+    } catch (err) {
+      console.warn('Backend auth failed:', err.message);
+    }
+
+    // Fallback to direct Supabase login with timeout
+    let result;
+    try {
+      result = await Promise.race([
+        supabase.auth.signInWithPassword({ email, password }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 8000)
+        )
+      ]);
+    } catch (err) {
+      showMessage('error', 'Authentication service unreachable.');
+      sendErrorContext(email, err.message);
+      return null;
+    }
+
+    const { data, error } = result || {};
     if (error || !data?.session) {
       if (import.meta.env.DEV && error) {
         console.error('Supabase signIn error:', error);
@@ -167,6 +216,7 @@ export async function loginExecute(email, password, remember = false) {
       sendErrorContext(email, error?.message || 'sign-in failed');
       return null;
     }
+
     try {
       const refreshed = await supabase.auth.refreshSession();
       if (!refreshed.error && refreshed.data?.session) {
@@ -175,11 +225,13 @@ export async function loginExecute(email, password, remember = false) {
     } catch {
       // ignore refresh failure
     }
+
     if (!data.user?.email_confirmed_at && !data.user?.confirmed_at) {
       showMessage('error', 'Please verify your email before logging in.');
       await supabase.auth.signOut();
       return null;
     }
+
     const res = await fetch(`${API_BASE_URL}/api/session/store`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -258,6 +310,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   closeAuthBtn = document.getElementById("close-auth-btn");
   sendAuthBtn = document.getElementById("send-auth-btn");
   authMessage = document.getElementById("auth-message");
+
+  if (await checkMaintenance()) {
+    return;
+  }
 
   // initThemeToggle();
   const allowPaste = window.env?.ALLOW_PASSWORD_PASTE === true;

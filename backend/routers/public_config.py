@@ -11,4 +11,5 @@ async def public_config():
     return {
         "SUPABASE_URL": os.getenv("SUPABASE_URL"),
         "SUPABASE_ANON_KEY": os.getenv("SUPABASE_ANON_KEY"),
+        "MAINTENANCE_MODE": os.getenv("MAINTENANCE_MODE", "false").lower() == "true",
     }

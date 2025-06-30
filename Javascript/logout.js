@@ -1,10 +1,10 @@
 // Project Name: Thronestead©
 // File Name: logout.js
-// Version 6.13.2025.19.49
+// Version 6.14.2025.23.00
 // Developer: Deathsgift66
 // Make sure supabase is available
 import { supabase } from '../supabaseClient.js';
-import { resetAuthCache } from './auth.js';
+import { resetAuthCache, clearStoredAuth } from './auth.js';
 import { clearReauthToken } from './reauth.js';
 
 // Logout function — clears session from Supabase, browser storage, and cookies
@@ -16,12 +16,10 @@ async function logout() {
     console.warn('Supabase logout error:', err.message);
   }
 
-  // Clear cached auth so next page load fetches fresh session
+  // Clear stored credentials across tabs
+  clearStoredAuth();
   resetAuthCache();
   clearReauthToken();
-
-  // 🍪 Expire auth token cookie (if used)
-  document.cookie = `authToken=; Max-Age=0; path=/; Secure; HttpOnly; SameSite=Strict;`;
 
   // 🚪 Redirect to home/login
   window.location.href = 'index.html';
