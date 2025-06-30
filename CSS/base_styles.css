@@ -38,5 +38,16 @@ body {
    These common alliance panel styles are defined in `root_theme.css` so that
    individual page styles don't need to repeat them.  They remain referenced
    here only for backward compatibility.  Removing the declarations avoids
-   duplicate CSS rules across bundles.
+  duplicate CSS rules across bundles.
 */
+
+/* Warning displayed when JavaScript is disabled */
+.noscript-warning {
+  background: var(--warning);
+  color: var(--ink);
+  padding: 0.75rem;
+  text-align: center;
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  margin: 1rem;
+}
