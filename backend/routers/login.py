@@ -11,10 +11,13 @@ Version: 2025-06-21
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
+import os
 
 from ..supabase_client import get_supabase_client
 
 router = APIRouter(tags=["login"])
+
+ALLOW_UNVERIFIED_LOGIN = os.getenv("ALLOW_UNVERIFIED_LOGIN", "false").lower() == "true"
 
 
 class LoginRequest(BaseModel):
@@ -54,7 +57,7 @@ def login_user(payload: LoginRequest):
             or (isinstance(user, dict) and user.get("email_confirmed_at"))
         )
     )
-    if not confirmed:
+    if not confirmed and not ALLOW_UNVERIFIED_LOGIN:
         raise HTTPException(status_code=401, detail="Email not confirmed")
 
     return result

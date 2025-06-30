@@ -141,6 +141,7 @@ API_BASE_URL
 MASTER_ROLLBACK_PASSWORD
 ALLOWED_ORIGINS
 ALLOW_PASSWORD_PASTE
+ALLOW_UNVERIFIED_LOGIN
 
 REAUTH_TOKEN_TTL
 REAUTH_LOCKOUT_THRESHOLD
@@ -167,6 +168,8 @@ ALLOWED_ORIGINS=https://thronestead.com,https://www.thronestead.com
 
 `ALLOW_PASSWORD_PASTE` toggles whether users can paste into password fields. Set
 to `true` to permit pasting.
+`ALLOW_UNVERIFIED_LOGIN` allows accounts with unconfirmed emails to sign in when
+set to `true`. Use this only for local testing.
 `REAUTH_TOKEN_TTL` controls how long re-authentication tokens remain valid. Set
 `REAUTH_LOCKOUT_THRESHOLD` to define how many failed attempts a user/IP may make
 before re-auth requests are temporarily blocked.

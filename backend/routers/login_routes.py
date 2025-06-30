@@ -12,6 +12,7 @@ Version: 2025-06-21
 
 import logging
 import time
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -28,6 +29,8 @@ from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
 
 router = APIRouter(prefix="/api/login", tags=["login"])
+
+ALLOW_UNVERIFIED_LOGIN = os.getenv("ALLOW_UNVERIFIED_LOGIN", "false").lower() == "true"
 
 
 @router.get("/announcements", response_class=JSONResponse)
@@ -214,7 +217,7 @@ def authenticate(
             or (isinstance(user, dict) and user.get("email_confirmed_at"))
         )
     )
-    if not confirmed:
+    if not confirmed and not ALLOW_UNVERIFIED_LOGIN:
         raise HTTPException(status_code=401, detail="Email not confirmed")
 
     uid = getattr(user, "id", None) or (isinstance(user, dict) and user.get("id"))
