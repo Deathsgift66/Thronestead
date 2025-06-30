@@ -2,7 +2,7 @@
 // File Name: login.js
 // Version 6.19.2025.22.05
 // Developer: Deathsgift66
-import { supabase } from '../supabaseClient.js';
+import { supabase, supabaseReady } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { toggleLoading, authJsonFetch, showToast, validateEmail } from './utils.js';
 import {
@@ -87,6 +87,23 @@ function recordLoginAttempt(email, success) {
   logAttempt(email, success);
 }
 
+function sendErrorContext(email, message) {
+  const payload = {
+    email: email || null,
+    message,
+    timestamp: Date.now(),
+    user_agent: navigator.userAgent,
+    platform: navigator.platform
+  };
+  fetch(`${API_BASE_URL}/api/login/error-context`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => {
+    console.warn('Failed to send error context:', err);
+  });
+}
+
 // Increase failed attempt count and block if threshold hit
 function blockAfterFailedAttempts() {
   recordAttempt();
@@ -140,7 +157,14 @@ export async function loginExecute(email, password, remember = false) {
       password
     });
     if (error || !data?.session) {
-      showMessage('error', error?.message || '❌ Invalid credentials.');
+      if (import.meta.env.DEV && error) {
+        console.error('Supabase signIn error:', error);
+      }
+      const safeMessage = error && /invalid/i.test(error.message)
+        ? error.message
+        : '❌ Login failed.';
+      showMessage('error', safeMessage);
+      sendErrorContext(email, error?.message || 'sign-in failed');
       return null;
     }
     try {
@@ -165,16 +189,28 @@ export async function loginExecute(email, password, remember = false) {
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       showMessage('error', text || '❌ Login failed.');
+      sendErrorContext(email, text || 'store session failed');
       return null;
     }
     return data;
   } catch (err) {
+    if (import.meta.env.DEV) {
+      console.error('Login execution error:', err);
+    }
     showMessage('error', err.message || '❌ Login failed.');
+    sendErrorContext(email, err.message);
     return null;
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (!supabaseReady || !supabase?.auth) {
+    document.getElementById('main-content').innerHTML =
+      '<p class="error-msg">Authentication service unavailable. Please try again later.</p>';
+    console.error('Supabase failed to initialize');
+    return;
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) {
     try {
@@ -380,7 +416,11 @@ async function handleLogin(e) {
       }, 1200);
     }
   } catch (err) {
+    if (import.meta.env.DEV) {
+      console.error('Login handler error:', err);
+    }
     showLoginError(`Unexpected error: ${err.message}`);
+    sendErrorContext(email, err.message);
     recordLoginAttempt(email, false);
     blockAfterFailedAttempts();
     emailInput.value = '';
@@ -416,12 +456,15 @@ async function handleReset() {
     });
 
     if (error) {
+      if (import.meta.env.DEV) console.error('Reset password error:', error);
       forgotMessage.textContent = 'Error: ' + error.message;
     } else {
       forgotMessage.textContent = 'Reset link sent! Check your email.';
     }
   } catch (err) {
+    if (import.meta.env.DEV) console.error('Reset link failed:', err);
     forgotMessage.textContent = `Unexpected error: ${err.message}`;
+    sendErrorContext(email, err.message);
   } finally {
     sendResetBtn.disabled = false;
     sendResetBtn.textContent = 'Send Reset Link';
@@ -439,12 +482,15 @@ async function handleResendVerification() {
   try {
     const { error } = await supabase.auth.resend({ type: "signup", email });
     if (error) {
+      if (import.meta.env.DEV) console.error('Resend verification error:', error);
       authMessage.textContent = "Error: " + error.message;
     } else {
       authMessage.textContent = "Verification email sent!";
     }
   } catch (err) {
+    if (import.meta.env.DEV) console.error('Resend verification failed:', err);
     authMessage.textContent = `Unexpected error: ${err.message}`;
+    sendErrorContext(email, err.message);
   } finally {
     sendAuthBtn.disabled = false;
     sendAuthBtn.textContent = "Send Verification Link";

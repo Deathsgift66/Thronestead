@@ -76,6 +76,14 @@ class AttemptPayload(BaseModel):
     success: bool
 
 
+class ErrorContextPayload(BaseModel):
+    email: EmailStr | None = None
+    message: str
+    timestamp: float
+    user_agent: str | None = None
+    platform: str | None = None
+
+
 @router.post("/event")
 @limiter.limit("5/minute")
 def log_login_event(
@@ -124,6 +132,34 @@ def record_login_attempt(request: Request, payload: AttemptPayload, db: Session 
         return {"logged": True}
     except Exception:
         logging.exception("Failed to record login attempt")
+        return {"logged": False}
+
+
+@router.post("/error-context")
+@limiter.limit("20/minute")
+def log_error_context(request: Request, payload: ErrorContextPayload, db: Session = Depends(get_db)) -> dict:
+    """Record client-side login error details."""
+    try:
+        user_id = None
+        if payload.email:
+            row = db.execute(
+                text("SELECT user_id FROM users WHERE lower(email)=:email"),
+                {"email": payload.email.lower()},
+            ).fetchone()
+            user_id = row[0] if row else None
+        ip = request.headers.get("x-forwarded-for")
+        if ip and "," in ip:
+            ip = ip.split(",")[0].strip()
+        if not ip:
+            ip = request.client.host if request.client else ""
+        agent = payload.user_agent or request.headers.get("user-agent", "")
+        details = (
+            f"{payload.message} | ts={payload.timestamp} | platform={payload.platform}"
+        )
+        log_action(db, user_id, "login_error", details, ip, agent)
+        return {"logged": True}
+    except Exception:
+        logging.exception("Failed to record login error context")
         return {"logged": False}
 
 

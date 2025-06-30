@@ -325,6 +325,63 @@ def test_record_login_attempt_fail_no_user():
     assert captured["dev"] == "UA"
 
 
+class DummyDBError:
+    def __init__(self, uid=None):
+        self.uid = uid
+
+    def execute(self, query, params):
+        if "SELECT user_id" in str(query):
+            class R:
+                def fetchone(self_inner):
+                    return (self.uid,) if self.uid else None
+
+            return R()
+
+
+def test_log_error_context_user():
+    captured = {}
+
+    def fake_log_action(_db, user_id, action, details, ip_address=None, device_info=None):
+        captured.update({"uid": user_id, "action": action, "ip": ip_address, "dev": device_info, "details": details})
+
+    login_routes.log_action = fake_log_action
+    db = DummyDBError(uid="u1")
+    payload = login_routes.ErrorContextPayload(
+        email="test@example.com",
+        message="failed",
+        timestamp=123.0,
+        user_agent="UA",
+        platform="Win",
+    )
+    req = DummyRequest(headers={"User-Agent": "UA"})
+    res = login_routes.log_error_context(req, payload, db=db)
+    assert res["logged"] is True
+    assert captured["uid"] == "u1"
+    assert captured["action"] == "login_error"
+    assert "failed" in captured["details"]
+
+
+def test_log_error_context_no_user():
+    captured = {}
+
+    def fake_log_action(_db, user_id, action, details, ip_address=None, device_info=None):
+        captured.update({"uid": user_id, "action": action})
+
+    login_routes.log_action = fake_log_action
+    db = DummyDBError(uid=None)
+    payload = login_routes.ErrorContextPayload(
+        email="none@example.com",
+        message="failed",
+        timestamp=123.0,
+        user_agent="UA",
+        platform="mac",
+    )
+    req = DummyRequest(headers={"User-Agent": "UA"})
+    res = login_routes.log_error_context(req, payload, db=db)
+    assert res["logged"] is True
+    assert captured["uid"] is None
+
+
 # ---- reauthenticate endpoint tests ----
 
 class DummyReauthClient:
