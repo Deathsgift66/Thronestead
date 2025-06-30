@@ -8,6 +8,7 @@ Version: 2025-06-22
 
 import asyncio
 import os
+from ..env_utils import get_env_var
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
@@ -21,7 +22,7 @@ connected_admins: list[WebSocket] = []
 async def live_admin_alerts(websocket: WebSocket):
     """Stream live admin alerts once API key verified."""
     api_key = websocket.headers.get("x-api-key")
-    if api_key != os.getenv("API_SECRET"):
+    if api_key != get_env_var("API_SECRET"):
         await websocket.close(code=1008)
         return
 

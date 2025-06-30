@@ -6,9 +6,9 @@
 
 import { fetchJson } from './fetchJson.js';
 import { authHeaders } from './auth.js';
+import { getEnvVar } from './env.js';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
+const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 let token = null;
 

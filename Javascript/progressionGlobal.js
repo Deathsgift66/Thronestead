@@ -3,8 +3,8 @@
 // Version 6.19.2025.22.06
 // Developer: Codex
 // ✅ Fetch progression summary from backend API and store globally + in sessionStorage
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
+import { getEnvVar } from './env.js';
+const API_BASE_URL = getEnvVar('API_BASE_URL');
 import { authHeaders } from './auth.js';
 
 export async function fetchAndStorePlayerProgression(userId) {

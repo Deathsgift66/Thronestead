@@ -25,8 +25,10 @@ except ImportError as e:  # pragma: no cover
 # -------------------------------
 # 🔐 Load Supabase Credentials
 # -------------------------------
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+from .env_utils import get_env_var
+
+SUPABASE_URL = get_env_var("SUPABASE_URL")
+SUPABASE_KEY = get_env_var("SUPABASE_SERVICE_ROLE_KEY") or get_env_var("SUPABASE_ANON_KEY")
 
 # -------------------------------
 # ⚙️ Create Supabase Client

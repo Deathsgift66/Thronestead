@@ -1,8 +1,8 @@
 import { supabase } from '../supabaseClient.js';
 import { refreshSessionAndStore, clearStoredAuth } from './auth.js';
+import { getEnvVar } from './env.js';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || window.env?.API_BASE_URL || '';
+const API_BASE_URL = getEnvVar('API_BASE_URL');
 if (!API_BASE_URL) {
   console.warn('⚠️ API_BASE_URL not set. API calls may fail.');
 }

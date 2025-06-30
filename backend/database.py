@@ -21,10 +21,11 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
 from .pg_settings import inject_claims_as_pg_settings
+from .env_utils import get_env_var
 
 logger = logging.getLogger("Thronestead.Database")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = get_env_var("DATABASE_URL")
 
 engine = None
 SessionLocal: Optional[sessionmaker] = None

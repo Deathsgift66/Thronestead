@@ -4,8 +4,8 @@
 # Developer: OpenAI Codex
 """Admin endpoints for critical system operations."""
 
-import os
 from fastapi import APIRouter, Depends, HTTPException
+from ..env_utils import get_env_var
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -31,7 +31,7 @@ def rollback_system(
     db: Session = Depends(get_db),
 ) -> dict:
     """Trigger a database rollback if the master password matches."""
-    master = os.getenv("MASTER_ROLLBACK_PASSWORD")
+    master = get_env_var("MASTER_ROLLBACK_PASSWORD")
     if not master or payload.password != master:
         raise HTTPException(status_code=403, detail="Invalid master password")
 

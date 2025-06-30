@@ -29,6 +29,7 @@ from ..database import get_db
 from ..supabase_client import get_supabase_client
 from services.email_service import send_email
 from services.password_security import is_pwned_password
+from ..env_utils import get_env_var
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -43,11 +44,11 @@ VERIFIED_SESSIONS: dict[str, tuple[str, float, str | None]] = {}
 RATE_LIMIT: dict[str, list[float]] = {}  # IP: [timestamps]
 USER_RATE_LIMIT: dict[str, list[float]] = {}  # user_id: [timestamps]
 
-_token_ttl = os.getenv("PASSWORD_RESET_TOKEN_TTL")
+_token_ttl = get_env_var("PASSWORD_RESET_TOKEN_TTL")
 TOKEN_TTL = int(_token_ttl) if _token_ttl else 900  # 15 minutes
-_session_ttl = os.getenv("PASSWORD_RESET_SESSION_TTL")
+_session_ttl = get_env_var("PASSWORD_RESET_SESSION_TTL")
 SESSION_TTL = int(_session_ttl) if _session_ttl else 600  # 10 minutes
-_rate_limit = os.getenv("PASSWORD_RESET_RATE_LIMIT")
+_rate_limit = get_env_var("PASSWORD_RESET_RATE_LIMIT")
 RATE_LIMIT_MAX = int(_rate_limit) if _rate_limit else 3  # 3 per hour
 
 
