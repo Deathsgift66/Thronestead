@@ -325,6 +325,12 @@ async function handleLogin(e) {
       storage.setItem('currentUser', JSON.stringify(userInfo));
       altStorage.removeItem('currentUser');
 
+      // Persist the auth token for subsequent API calls
+      if (token) {
+        storage.setItem('authToken', token);
+        altStorage.removeItem('authToken');
+      }
+
       // Update in-memory auth cache for current page
       setAuthCache(userInfo, result.session);
       startSessionRefresh();
