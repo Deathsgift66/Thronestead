@@ -13,8 +13,8 @@ let cachedAuth = null;
  * @returns {{token: string|null, user: object|null}}
  */
 export function getStoredAuth() {
-  const token = sessionStorage.getItem('authToken') ||
-    localStorage.getItem('authToken');
+  const match = document.cookie.match(/(?:^|; )authToken=([^;]+)/);
+  const token = match ? decodeURIComponent(match[1]) : null;
   const userStr = sessionStorage.getItem('currentUser') ||
     localStorage.getItem('currentUser');
   let user = null;
@@ -87,10 +87,9 @@ export function resetAuthCache() {
  * Remove stored auth token and user information.
  */
 export function clearStoredAuth() {
-  sessionStorage.removeItem('authToken');
   sessionStorage.removeItem('currentUser');
-  localStorage.removeItem('authToken');
   localStorage.removeItem('currentUser');
+  document.cookie = 'authToken=; Max-Age=0; path=/; secure; samesite=strict;';
   resetAuthCache();
 }
 
@@ -105,12 +104,9 @@ export async function refreshSessionAndStore() {
 
     const token = data.session.access_token;
     const user = data.user;
-    const storage = localStorage.getItem('authToken') ? localStorage : sessionStorage;
-    const alt = storage === localStorage ? sessionStorage : localStorage;
-    storage.setItem('authToken', token);
-    storage.setItem('currentUser', JSON.stringify(user));
-    alt.removeItem('authToken');
-    alt.removeItem('currentUser');
+    const expiry = new Date(data.session.expires_at * 1000).toUTCString();
+    document.cookie = `authToken=${token}; path=/; secure; samesite=strict; expires=${expiry}`;
+    sessionStorage.setItem('currentUser', JSON.stringify(user));
 
     setAuthCache(user, data.session);
     return true;

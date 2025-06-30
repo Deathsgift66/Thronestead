@@ -8,7 +8,7 @@ import {
   loadPlayerProgressionFromStorage,
 } from '../progressionGlobal.js';
 import { authJsonFetch } from '../utils.js';
-import { startSessionRefresh } from '../auth.js';
+import { startSessionRefresh, getStoredAuth } from '../auth.js';
 
 // These values can be overridden by setting them on the global window object
 // before this script is loaded. This allows pages to enforce additional access
@@ -22,13 +22,13 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
 (async () => {
   try {
-    let token =
-      localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    let { token } = getStoredAuth();
     if (!token) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
         token = session.access_token;
-        localStorage.setItem('authToken', token);
+        const expiry = new Date(session.expires_at * 1000).toUTCString();
+        document.cookie = `authToken=${token}; path=/; secure; samesite=strict; expires=${expiry}`;
       } else {
         return (window.location.href = 'login.html');
       }
@@ -41,9 +41,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       if (!res.ok) throw new Error('unauthorized');
       const currentUser = await res.json();
       window.currentUser = currentUser;
-      const storage =
-        localStorage.getItem('authToken') === token ? localStorage : sessionStorage;
-      storage.setItem('currentUser', JSON.stringify(currentUser));
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
       await authJsonFetch('/api/login/status');
     } catch {
       return (window.location.href = 'login.html');

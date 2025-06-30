@@ -19,7 +19,8 @@ import { containsBannedContent } from './content_filter.js';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // DOM Elements
-let loginForm, emailInput, passwordInput, loginButton, messageContainer;
+let loginForm, emailInput, passwordInput, loginButton, messageContainer,
+  errorContainer;
 let rememberCheckbox, togglePasswordBtn;
 let forgotLink, modal, closeBtn, sendResetBtn, forgotMessage;
 let authLink, authModal, closeAuthBtn, sendAuthBtn, authMessage;
@@ -105,6 +106,7 @@ function redirectOnLogin(setupComplete) {
 
 // Display login error message
 function showLoginError(message) {
+  if (errorContainer) errorContainer.textContent = message;
   showMessage('error', message);
 }
 
@@ -115,6 +117,9 @@ function validateLoginInputs(email, password) {
   }
   if (!validateEmail(email)) {
     return 'Please enter a valid email address.';
+  }
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters.';
   }
   return '';
 }
@@ -182,6 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   togglePasswordBtn = document.getElementById('toggle-password');
   loginButton = document.querySelector('#login-form .royal-button');
   messageContainer = document.getElementById('message');
+  errorContainer = document.getElementById('login-error');
 
   announcementList = document.getElementById('announcement-list');
   forgotLink = document.getElementById('forgot-password-link');
@@ -311,8 +317,8 @@ async function handleLogin(e) {
 
       // Persist credentials immediately so subsequent API calls succeed
       if (token) {
-        storage.setItem('authToken', token);
-        altStorage.removeItem('authToken');
+        const expiry = new Date(result.session.expires_at * 1000).toUTCString();
+        document.cookie = `authToken=${token}; path=/; secure; samesite=strict; expires=${expiry}`;
       }
       storage.setItem('currentUser', JSON.stringify(userInfo));
       altStorage.removeItem('currentUser');
@@ -351,6 +357,7 @@ async function handleLogin(e) {
 function resetLoginButton() {
   loginButton.disabled = false;
   loginButton.textContent = 'Enter the Realm';
+  if (errorContainer) errorContainer.textContent = '';
 }
 
 // 🧠 Handle password reset link
