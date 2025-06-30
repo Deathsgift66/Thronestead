@@ -141,12 +141,17 @@ export async function loginExecute(email, password, remember = false) {
       await supabase.auth.signOut();
       return null;
     }
-    await fetch(`${API_BASE_URL}/api/session/store`, {
+    const res = await fetch(`${API_BASE_URL}/api/session/store`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ token: data.session.access_token })
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      showMessage('error', text || '❌ Login failed.');
+      return null;
+    }
     return data;
   } catch (err) {
     showMessage('error', err.message || '❌ Login failed.');
