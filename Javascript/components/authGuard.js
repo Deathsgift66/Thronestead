@@ -22,19 +22,13 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 
 (async () => {
   try {
-    let { token } = getStoredAuth();
-    let { data: { session } } = await supabase.auth.getSession();
-
-    // If a token exists but Supabase has no session, restore it so
-    // subsequent auth calls succeed after a page reload.
-    if (token && !session) {
-      try {
-        await supabase.auth.setSession({ access_token: token, refresh_token: '' });
-        ({ data: { session } } = await supabase.auth.getSession());
-      } catch (err) {
-        console.warn('Failed to restore session:', err);
-      }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !session.access_token) {
+      console.warn('No session found – redirecting to login.');
+      window.location.href = '/login.html';
+      return;
     }
+
 
     if (!token) {
       if (session?.access_token) {
@@ -44,18 +38,26 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
         return (window.location.href = 'login.html');
       }
     }
+    const token = session.access_token;
+
 
     try {
       const res = await fetch('/api/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error('unauthorized');
+      if (!res.ok) {
+        console.warn('Invalid session token – redirecting to login.');
+        window.location.href = '/login.html';
+        return;
+      }
       const currentUser = await res.json();
       window.currentUser = currentUser;
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
       await authJsonFetch('/api/login/status');
     } catch {
-      return (window.location.href = 'login.html');
+      console.warn('Invalid session token – redirecting to login.');
+      window.location.href = '/login.html';
+      return;
     }
 
     let sessionUser;

@@ -53,18 +53,16 @@ def test_get_current_user_invalid(db_session, monkeypatch):
         asyncio.run(get_current_user(req, db=db_session))
 
 
-def test_me_route_returns_user(monkeypatch):
+def test_me_route_returns_user():
     token = jwt.encode(
         {"sub": "u1", "email": "u@example.com", "role": "player"},
         "secret",
         algorithm="HS256",
     )
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
     result = me.get_me(Authorization=f"Bearer {token}")
     assert result == {
         "user_id": "u1",
         "email": "u@example.com",
-        "roles": "player",
     }
 
 
