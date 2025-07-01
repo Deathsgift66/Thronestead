@@ -46,11 +46,6 @@ async function handleLogin(e) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data?.session || !data.user) throw new Error(error?.message || 'Login failed.');
 
-    if (!data.user.email_confirmed_at && !data.user.confirmed_at) {
-      await supabase.auth.signOut();
-      throw new Error('Email not confirmed.');
-    }
-
     // Session is persisted by Supabase client
     showMessage('success', 'Login successful. Redirecting...');
     setTimeout(() => redirectToApp(), 1200);

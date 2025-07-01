@@ -179,12 +179,6 @@ async function handleSignup() {
       userInfo.email_confirmed_at || userInfo.confirmed_at || false;
 
     if (confirmed) {
-      if (session) {
-        const token = session.access_token;
-        if (token) {
-          localStorage.setItem('authToken', token);
-        }
-      }
       if (userInfo.id) {
         sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
         localStorage.setItem('currentUser', JSON.stringify(userInfo));

@@ -8,23 +8,16 @@ def test_get_env_var_primary(monkeypatch):
     assert get_env_var("SOME_KEY") == "value"
 
 
-def test_get_env_var_backup(monkeypatch):
+def test_get_env_var_variant(monkeypatch):
     monkeypatch.delenv("SOME_KEY", raising=False)
-    monkeypatch.setenv("BACKUP_SOME_KEY", "bvalue")
-    assert get_env_var("SOME_KEY") == "bvalue"
-
-
-def test_get_env_var_fallback_order(monkeypatch):
-    monkeypatch.delenv("SOME_KEY", raising=False)
-    monkeypatch.setenv("FALLBACK_SOME_KEY", "fvalue")
-    monkeypatch.setenv("DEFAULT_SOME_KEY", "dvalue")
-    assert get_env_var("SOME_KEY") == "fvalue"
+    monkeypatch.setenv("VITE_SOME_KEY", "vvalue")
+    assert get_env_var("SOME_KEY") == "vvalue"
 
 
 def test_get_env_var_default(monkeypatch):
     monkeypatch.delenv("SOME_KEY", raising=False)
-    monkeypatch.delenv("BACKUP_SOME_KEY", raising=False)
-    monkeypatch.delenv("FALLBACK_SOME_KEY", raising=False)
-    monkeypatch.delenv("DEFAULT_SOME_KEY", raising=False)
+    monkeypatch.delenv("VITE_SOME_KEY", raising=False)
+    monkeypatch.delenv("PUBLIC_SOME_KEY", raising=False)
+    monkeypatch.delenv("PUBLIC_VITE_SOME_KEY", raising=False)
     assert get_env_var("SOME_KEY", default="x") == "x"
 
