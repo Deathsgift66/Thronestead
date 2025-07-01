@@ -29,7 +29,17 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
       return;
     }
 
+
+    if (!token) {
+      if (session?.access_token) {
+        token = session.access_token;
+        localStorage.setItem('authToken', token);
+      } else {
+        return (window.location.href = 'login.html');
+      }
+    }
     const token = session.access_token;
+
 
     try {
       const res = await fetch('/api/me', {

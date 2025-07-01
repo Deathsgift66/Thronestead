@@ -250,25 +250,9 @@ export async function loginExecute(email, password, remember = false) {
       return null;
     }
 
-    let res;
-    try {
-      res = await fetch(`${API_BASE_URL}/api/session/store`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ token: data.session.access_token })
-      });
-    } catch (err) {
-      showMessage('error', 'Network error.');
-      sendErrorContext(email, err.message);
-      return null;
-    }
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      showMessage('error', text || '❌ Login failed.');
-      sendErrorContext(email, text || 'store session failed');
-      return null;
-    }
+    // Session token is stored in localStorage only
+    // to avoid mixing cookie and storage based auth
+    // which can break session detection
     return data;
   } catch (err) {
     if (import.meta.env.DEV) {
@@ -484,9 +468,6 @@ async function handleLogin(e) {
       // Persist credentials immediately so subsequent API calls succeed
         if (token) {
           localStorage.setItem('authToken', token);
-          const expiry = new Date(result.session.expires_at * 1000).toUTCString();
-          document.cookie =
-            `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; domain=${location.hostname}; expires=${expiry}`;
         }
       storage.setItem('currentUser', JSON.stringify(userInfo));
       altStorage.removeItem('currentUser');

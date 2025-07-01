@@ -10,8 +10,6 @@ import { clearReauthToken } from './reauth.js';
 // Redirect helper used when clearing credentials
 function logoutUser() {
   localStorage.removeItem('authToken');
-  document.cookie =
-    'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; Secure; SameSite=Strict';
   window.location.href = '/login.html';
 }
 
