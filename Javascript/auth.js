@@ -1,128 +1,128 @@
 // Project Name: Thronestead©
 // File Name: auth.js
-// Version 6.20.2025.23.00
-// Developer: Codex
-// Shared helper for retrieving authenticated user and headers
+// Version 7.1.2025.00.00
+// Developer: Codex (Hardened Build)
 
 import { supabase } from '../supabaseClient.js';
 
 let cachedAuth = null;
 
 /**
- * Retrieve stored auth token and user info from browser storage.
- * @returns {{token: string|null, user: object|null}}
+ * Retrieve stored auth token and user from local/session storage.
  */
 export function getStoredAuth() {
   const token = localStorage.getItem('authToken');
-  const userStr = sessionStorage.getItem('currentUser') ||
-    localStorage.getItem('currentUser');
+  const userStr = sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser');
   let user = null;
+
   if (userStr) {
     try {
       user = JSON.parse(userStr);
-    } catch {
+    } catch (err) {
+      console.warn('⚠️ Failed to parse stored user:', err);
       user = null;
     }
   }
+
   return { token, user };
 }
 
 /**
- * Manually update the cached user/session.
- * Useful after login without a page reload.
- * @param {object} user Supabase user info
- * @param {object} session Supabase session data
+ * Cache auth for page lifetime (performance).
  */
 export function setAuthCache(user, session) {
   cachedAuth = { user, session };
 }
 
 /**
- * Retrieve the current user and session from Supabase.
- * The result is cached for the lifetime of the page to avoid
- * redundant API calls.
- * @returns {Promise<{user: object, session: object}>}
- * @throws {Error} if no authenticated session is available
+ * Supabase user/session fetch with defensive guards.
  */
 export async function getAuth() {
   if (cachedAuth) return cachedAuth;
-  const [{ data: { user } }, { data: { session } }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession()
-  ]);
-  if (!user || !session) throw new Error('Unauthorized');
-  cachedAuth = { user, session };
-  return cachedAuth;
+
+  try {
+    const [{ data: { user } }, { data: { session } }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.auth.getSession()
+    ]);
+    if (!user || !session) throw new Error('Unauthorized');
+    cachedAuth = { user, session };
+    return cachedAuth;
+  } catch (err) {
+    console.error('❌ Failed to retrieve auth:', err);
+    throw new Error('Unauthorized');
+  }
 }
 
 /**
- * Build standard headers for authenticated API requests.
- * @returns {Promise<Record<string, string>>}
+ * Build authenticated headers.
  */
 export async function authHeaders() {
   const { token, user } = getStoredAuth();
   if (token && user?.id) {
     return {
-      'X-User-ID': user.id,
-      Authorization: `Bearer ${token}`
+      'Authorization': `Bearer ${token}`,
+      'X-User-ID': user.id
     };
   }
 
   const { user: supaUser, session } = await getAuth();
   return {
-    'X-User-ID': supaUser.id,
-    Authorization: `Bearer ${session.access_token}`
+    'Authorization': `Bearer ${session.access_token}`,
+    'X-User-ID': supaUser.id
   };
 }
 
 /**
- * Clear the cached user/session data (e.g. on logout).
+ * Clear cache.
  */
 export function resetAuthCache() {
   cachedAuth = null;
 }
 
 /**
- * Remove stored auth token and user information.
+ * Clear session + cross-tab logout.
  */
 export function clearStoredAuth() {
-  sessionStorage.removeItem('currentUser');
-  localStorage.removeItem('currentUser');
-  localStorage.removeItem('authToken');
-  resetAuthCache();
-  // Notify other tabs to logout
   try {
-    localStorage.setItem('thronesteadLogout', Date.now().toString());
-  } catch {}
+    sessionStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('authToken');
+    localStorage.setItem('thronesteadLogout', Date.now().toString()); // broadcast logout
+  } catch (err) {
+    console.warn('⚠️ Failed to clear auth:', err);
+  }
+  resetAuthCache();
 }
 
 /**
- * Refresh the Supabase session and update stored credentials.
- * @returns {Promise<boolean>} True if refresh succeeded
+ * Refresh Supabase session and store result.
  */
 export async function refreshSessionAndStore() {
   try {
     const { data, error } = await supabase.auth.refreshSession();
-    if (error || !data?.session) return false;
+    if (error || !data?.session) {
+      console.warn('⚠️ Session refresh failed:', error);
+      return false;
+    }
 
     const token = data.session.access_token;
     const user = data.user;
+
     localStorage.setItem('authToken', token);
     sessionStorage.setItem('currentUser', JSON.stringify(user));
-
     setAuthCache(user, data.session);
+
     return true;
-  } catch {
+  } catch (err) {
+    console.error('❌ Session refresh threw error:', err);
     return false;
   }
 }
 
+// 🔁 Periodic Session Refresh
 let refreshIntervalId = null;
 
-/**
- * Periodically refresh the user's session token.
- * @param {number} intervalMs Refresh interval in milliseconds
- */
 export function startSessionRefresh(intervalMs = 50 * 60 * 1000) {
   if (refreshIntervalId) return;
   refreshIntervalId = setInterval(refreshIfExpiring, intervalMs);
@@ -137,48 +137,52 @@ export function stopSessionRefresh() {
 }
 
 /**
- * Check session expiration and refresh if it is close to expiring.
- * @param {number} thresholdSec Number of seconds before expiry to trigger refresh
+ * Check expiry, refresh if needed.
  */
 export async function refreshIfExpiring(thresholdSec = 300) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (session && session.expires_at * 1000 - Date.now() < thresholdSec * 1000) {
+    const expiresIn = session?.expires_at * 1000 - Date.now();
+
+    if (session && expiresIn < thresholdSec * 1000) {
+      console.info('🔁 Session near expiry, refreshing...');
       await refreshSessionAndStore();
     }
+
     await validateSessionOrLogout();
   } catch (err) {
-    console.warn('Session refresh check failed:', err);
+    console.warn('⚠️ Session refresh check failed:', err);
   }
 }
 
 /**
- * Validate the current session using the backend and logout if invalid.
- * @returns {Promise<boolean>} True if session is valid
+ * Validate session by pinging backend.
  */
 export async function validateSessionOrLogout() {
   try {
     const headers = await authHeaders();
     const res = await fetch('/api/auth/validate-session', { headers });
-    if (res.status === 401) throw new Error('invalid');
+    if (res.status === 401) throw new Error('Session invalid');
     return true;
   } catch {
     clearStoredAuth();
-    window.location.href = 'login.html';
+    if (!location.pathname.endsWith('login.html')) {
+      window.location.href = 'login.html';
+    }
     return false;
   }
 }
 
-// Listen for logout events from other tabs
+// 🔄 Multi-tab logout sync
 window.addEventListener('storage', e => {
   if (e.key === 'thronesteadLogout') {
     resetAuthCache();
     sessionStorage.removeItem('currentUser');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('authToken');
+
     if (!location.pathname.endsWith('login.html')) {
       window.location.href = 'login.html';
     }
   }
 });
-
