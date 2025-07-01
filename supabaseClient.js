@@ -1,45 +1,22 @@
+// File: supabaseClient.js
 import { createClient } from '@supabase/supabase-js';
 import { getEnvVar } from './Javascript/env.js';
 
-// Supabase credentials are supplied via environment variables at build time.
-// When absent the values may be provided on `window.env` or fetched from the
-// backend's `/api/public-config` endpoint at runtime.
+let SUPABASE_URL = getEnvVar('SUPABASE_URL') || 'https://zzqoxgytfrbptojcwrjm.supabase.co';
+let SUPABASE_ANON_KEY = getEnvVar('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE
+';
 
-const API_BASE_URL = getEnvVar('API_BASE_URL');
-
-let SUPABASE_URL = getEnvVar('SUPABASE_URL');
-let SUPABASE_ANON_KEY = getEnvVar('SUPABASE_ANON_KEY');
-
-if ((!SUPABASE_URL || !SUPABASE_ANON_KEY) && API_BASE_URL) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/public-config`);
-    if (res.ok) {
-      const cfg = await res.json();
-      SUPABASE_URL ||= cfg.SUPABASE_URL;
-      SUPABASE_ANON_KEY ||= cfg.SUPABASE_ANON_KEY;
-      window.env = window.env || {};
-      if (cfg.SUPABASE_URL) window.env.SUPABASE_URL = cfg.SUPABASE_URL;
-      if (cfg.SUPABASE_ANON_KEY) window.env.SUPABASE_ANON_KEY = cfg.SUPABASE_ANON_KEY;
-    }
-  } catch (err) {
-    console.warn('Failed to load Supabase config at runtime:', err);
-  }
+// Hard fallback if env is missing — only use these if needed
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn('⚠️ Missing Supabase credentials. Ensure they are in env.js or passed via VITE_ prefix.');
 }
 
-export const supabaseReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
-
-if (!supabaseReady) {
-  console.warn(
-    'Supabase credentials missing. Ensure VITE_PUBLIC_SUPABASE_URL and VITE_PUBLIC_SUPABASE_ANON_KEY are set or available via runtime config.'
-  );
-}
-
-if (supabaseReady && !window.__supabaseClient) {
+// Avoid creating multiple instances
+if (!window.__supabaseClient && SUPABASE_URL && SUPABASE_ANON_KEY) {
   window.__supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false }
+    auth: { persistSession: false },
   });
 }
 
-export const supabase = supabaseReady ? window.__supabaseClient : null;
-
-
+export const supabase = window.__supabaseClient || null;
+export const supabaseReady = !!supabase;
