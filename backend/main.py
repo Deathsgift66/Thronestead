@@ -96,7 +96,7 @@ extra_origins = get_env_var("ALLOWED_ORIGINS")
 if extra_origins:
     origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
 
-origin_regex = r"https:\/\/.*thronestead\.com"
+origin_regex = r"https:\/\/(?:.*thronestead\.com|thronestead\.onrender\.com)"
 env_regex = get_env_var("ALLOWED_ORIGIN_REGEX")
 if env_regex:
     origin_regex = env_regex
