@@ -14,7 +14,10 @@ let loginForm = null,
   emailInput = null,
   passwordInput = null,
   loginButton = null,
-  messageContainer = null;
+  messageContainer = null,
+  resetBtn = null,
+  forgotEmail = null,
+  forgotMessage = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
@@ -22,11 +25,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   passwordInput = document.getElementById('password');
   loginButton = document.querySelector('#login-form .royal-button');
   messageContainer = document.getElementById('message');
+  resetBtn = document.getElementById('send-reset-btn');
+  forgotEmail = document.getElementById('forgot-email');
+  forgotMessage = document.getElementById('forgot-message');
 
   const session = (await supabase.auth.getSession()).data.session;
   if (session?.user) return redirectToApp();
 
   loginForm?.addEventListener('submit', handleLogin);
+  resetBtn?.addEventListener('click', handleReset);
 });
 
 async function handleLogin(e) {
@@ -62,6 +69,29 @@ async function handleLogin(e) {
   }
 }
 
+async function handleReset() {
+  const email = forgotEmail.value.trim();
+  if (!email) {
+    forgotMessage.textContent = 'Enter a valid email.';
+    return;
+  }
+
+  resetBtn.disabled = true;
+  resetBtn.textContent = 'Sending...';
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://www.thronestead.com/update-password.html',
+    });
+    forgotMessage.textContent = error ? error.message : 'Check your email!';
+  } catch (err) {
+    forgotMessage.textContent = err.message;
+  } finally {
+    resetBtn.disabled = false;
+    resetBtn.textContent = 'Send Reset Link';
+  }
+}
+
 function redirectToApp() {
   const params = new URLSearchParams(window.location.search);
   let target = params.get('redirect') || 'overview.html';
@@ -78,4 +108,4 @@ function showMessage(type, text) {
     messageContainer.classList.remove('show');
   }, 5000);
   showToast(text);
-}
+} 
