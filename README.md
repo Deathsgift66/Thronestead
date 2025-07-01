@@ -154,6 +154,7 @@ SUPABASE_SERVICE_ROLE_KEY
 SUPABASE_JWT_SECRET
 API_SECRET
 API_BASE_URL
+BACKUP_API_BASE_URL
 MASTER_ROLLBACK_PASSWORD
 ALLOWED_ORIGINS
 ALLOWED_ORIGIN_REGEX
@@ -171,6 +172,8 @@ the primary `DATABASE_URL` is unavailable.
 `SUPABASE_JWT_SECRET` verifies Supabase tokens and must match the JWT secret in
 your project settings. `API_SECRET` protects internal admin routes, while
 `API_BASE_URL` and `VITE_API_BASE_URL` should point to your backend URL.
+`BACKUP_API_BASE_URL` and `VITE_BACKUP_API_BASE_URL` optionally provide a
+secondary backend that scripts will use when the primary becomes unavailable.
 
 Update these values with your project credentials to enable API access. Frontend
 environment variables must be prefixed with `VITE_` so Vite exposes them during
