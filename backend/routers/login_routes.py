@@ -251,6 +251,16 @@ def authenticate(
         FAILED_LOGINS[key] = (count + 1, time.time() + delay)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    token = session.get("access_token") if isinstance(session, dict) else getattr(session, "access_token", None)
+    if not token:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    try:
+        chk = sb.auth.get_user(token)
+        if isinstance(chk, dict) and chk.get("error"):
+            raise ValueError("invalid session")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
     confirmed = bool(
         user
         and (

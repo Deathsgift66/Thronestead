@@ -171,7 +171,15 @@ class DummyClientAuth:
             return {"error": {"message": "bad"}}
         if self.mode == "fail":
             raise Exception("fail")
-        return {"session": "token", "user": {"id": "u1", "confirmed_at": "now"}}
+        return {
+            "session": {"access_token": "token"},
+            "user": {"id": "u1", "confirmed_at": "now"},
+        }
+
+    def get_user(self, token):
+        if self.mode == "invalid_session":
+            return {"error": "bad"}
+        return {"id": "u1"}
 
     def table(self, name):
         assert name == "user_active_sessions"
@@ -229,7 +237,7 @@ def test_authenticate_success():
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest(headers={"User-Agent": "UA"})
     res = login_routes.authenticate(req, payload, db=db)
-    assert res["session"] == "token"
+    assert res["session"]["access_token"] == "token"
     assert res["username"] == "name"
     assert res["kingdom_id"] == 1
     assert res["alliance_id"] == 2
@@ -244,6 +252,16 @@ def test_authenticate_success():
 
 def test_authenticate_invalid():
     login_routes.get_supabase_client = lambda: DummyClientAuth("error")
+    db = DummyDBAuth()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(req, payload, db=db)
+    assert exc.value.status_code == 401
+
+
+def test_authenticate_invalid_session():
+    login_routes.get_supabase_client = lambda: DummyClientAuth("invalid_session")
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
