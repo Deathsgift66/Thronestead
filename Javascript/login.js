@@ -13,7 +13,8 @@ let loginForm = null,
   messageContainer = null,
   resetBtn = null,
   forgotEmail = null,
-  forgotMessage = null;
+  forgotMessage = null,
+  togglePasswordBtn = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   resetBtn = document.getElementById('send-reset-btn');
   forgotEmail = document.getElementById('forgot-email');
   forgotMessage = document.getElementById('forgot-message');
+  togglePasswordBtn = document.getElementById('toggle-password');
 
   const session = (await supabase.auth.getSession()).data.session;
   if (session?.user) {
@@ -33,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   loginForm?.addEventListener('submit', handleLogin);
   resetBtn?.addEventListener('click', handleReset);
+  togglePasswordBtn?.addEventListener('click', togglePassword);
 });
 
 async function handleLogin(e) {
@@ -79,8 +82,15 @@ async function handleReset() {
     forgotMessage.textContent = err.message;
   } finally {
     resetBtn.disabled = false;
-    resetBtn.textContent = 'Send Reset Link';
+  resetBtn.textContent = 'Send Reset Link';
   }
+}
+
+function togglePassword() {
+  if (!passwordInput) return;
+  const visible = passwordInput.getAttribute('type') === 'text';
+  passwordInput.setAttribute('type', visible ? 'password' : 'text');
+  togglePasswordBtn.setAttribute('aria-pressed', String(!visible));
 }
 
 async function redirectToApp() {
