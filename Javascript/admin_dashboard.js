@@ -1,58 +1,65 @@
 // Project Name: Thronestead©
 // File Name: admin_dashboard.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 7.01.2025.08.00
+// Developer: Codex (KISS Optimized)
+
 import { escapeHTML, authJsonFetch, authFetch } from './utils.js';
 
 const REFRESH_MS = 30000;
 
+// 🔁 Interval Loader
+function setupAutoRefresh() {
+  loadDashboardStats();
+  loadFlaggedUsers();
+  setInterval(() => {
+    loadDashboardStats();
+    loadFlaggedUsers();
+  }, REFRESH_MS);
+}
 
 // 📊 Dashboard Stats
 async function loadDashboardStats() {
   try {
     const data = await authJsonFetch('/api/admin/stats');
-    document.getElementById('total-users').textContent = data.active_users;
-    document.getElementById('flagged-users').textContent = data.flagged_users;
-    document.getElementById('suspicious-activity').textContent = data.suspicious_count;
-    document.getElementById('sum-users').textContent = data.active_users;
-    document.getElementById('sum-flags').textContent = data.flagged_users;
-    document.getElementById('sum-wars').textContent = data.active_wars;
-  } catch (error) {
-    console.error('⚠️ Failed to load dashboard stats:', error);
+    ['total-users', 'sum-users'].forEach(id => setText(id, data.active_users));
+    ['flagged-users', 'sum-flags'].forEach(id => setText(id, data.flagged_users));
+    setText('suspicious-activity', data.suspicious_count);
+    setText('sum-wars', data.active_wars);
+  } catch (e) {
+    console.error('⚠️ Dashboard stats error:', e);
   }
 }
 
 // 🧑‍💻 Player List
 async function loadPlayerList() {
-  const search = document.getElementById('search-player')?.value.toLowerCase() || '';
+  const q = document.getElementById('search-player')?.value.toLowerCase() || '';
   const status = document.getElementById('status-filter')?.value || '';
   const container = document.getElementById('player-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading players...</p>';
 
+  container.innerHTML = '<p>Loading players...</p>';
   try {
     const url = new URL('/api/admin/search_user', window.location.origin);
-    url.searchParams.set('q', search);
+    if (q) url.searchParams.set('q', q);
     if (status) url.searchParams.set('status', status);
     const players = await authJsonFetch(url);
-
     container.innerHTML = players.length ? '' : '<p>No players found.</p>';
 
-    players.forEach(player => {
+    players.forEach(p => {
       const card = document.createElement('div');
       card.className = 'player-card';
       card.innerHTML = `
-        <p><strong>${escapeHTML(player.username)}</strong> (${escapeHTML(player.id)})</p>
-        <p>Status: ${escapeHTML(player.status)}</p>
+        <p><strong>${escapeHTML(p.username)}</strong> (${escapeHTML(p.id)})</p>
+        <p>Status: ${escapeHTML(p.status)}</p>
         <div class="player-actions">
-          <button onclick="flagUser('${escapeHTML(player.id)}')">Flag</button>
-          <button onclick="freezeUser('${escapeHTML(player.id)}')">Freeze</button>
-          <button onclick="banUser('${escapeHTML(player.id)}')">Ban</button>
+          ${['flag', 'freeze', 'ban'].map(action =>
+            `<button class="admin-btn" data-action="${action}" data-id="${escapeHTML(p.id)}">${capitalize(action)}</button>`
+          ).join('')}
         </div>`;
       container.appendChild(card);
     });
-  } catch (err) {
-    console.error('⚠️ Failed to load player list:', err);
+  } catch (e) {
+    console.error('⚠️ Player list error:', e);
     container.innerHTML = '<p class="error-msg">Failed to fetch players.</p>';
   }
 }
@@ -65,10 +72,7 @@ async function loadAuditLogs() {
 
   try {
     const logs = await authJsonFetch('/api/admin/logs');
-
-    container.innerHTML = logs.length
-      ? ''
-      : '<p>No audit logs found.</p>';
+    container.innerHTML = logs.length ? '' : '<p>No audit logs found.</p>';
 
     logs.forEach(log => {
       const entry = document.createElement('div');
@@ -78,8 +82,8 @@ async function loadAuditLogs() {
         <p class="log-time">${new Date(log.created_at).toLocaleString()}</p>`;
       container.appendChild(entry);
     });
-  } catch (err) {
-    console.error('⚠️ Failed to load audit logs:', err);
+  } catch (e) {
+    console.error('⚠️ Logs error:', e);
     container.innerHTML = '<p class="error-msg">Failed to fetch audit logs.</p>';
   }
 }
@@ -92,10 +96,7 @@ async function loadFlaggedUsers() {
 
   try {
     const rows = await authJsonFetch('/api/admin/flagged_users');
-
-    container.innerHTML = rows.length
-      ? ''
-      : '<p>No flagged users.</p>';
+    container.innerHTML = rows.length ? '' : '<p>No flagged users.</p>';
 
     rows.forEach(row => {
       const card = document.createElement('div');
@@ -105,41 +106,38 @@ async function loadFlaggedUsers() {
         <p>${new Date(row.created_at).toLocaleString()}</p>`;
       container.appendChild(card);
     });
-  } catch (err) {
-    console.error('Failed to load flagged users:', err);
+  } catch (e) {
+    console.error('❌ Flagged load error:', e);
     container.innerHTML = '<p>Error loading flagged users.</p>';
   }
 }
 
-// ⚠️ Alerts
+// ⚠️ Realtime Alerts
 function initAlertSocket() {
   const container = document.getElementById('alerts');
   if (!container) return;
   container.innerHTML = '';
   const socket = new WebSocket('/api/admin/alerts/live');
-  socket.onmessage = event => {
-    const alert = JSON.parse(event.data);
+
+  socket.onmessage = ({ data }) => {
+    const alert = JSON.parse(data);
     const el = document.createElement('div');
-    el.classList.add('alert-item');
+    el.className = 'alert-item';
     el.innerHTML = `<b>${escapeHTML(alert.type)}</b>: ${escapeHTML(alert.message)} <small>${new Date(alert.timestamp).toLocaleString()}</small>`;
     container.prepend(el);
   };
-  socket.onerror = err => console.error('Alert socket error:', err);
+
+  socket.onerror = err => console.error('❌ Alert socket error:', err);
 }
 
 // ✅ Admin Actions
-window.flagUser = async userId => handleAdminAction('/api/admin/flag', { player_id: userId }, 'User flagged');
-window.freezeUser = async userId => handleAdminAction('/api/admin/freeze', { player_id: userId }, 'User frozen');
-window.banUser = async userId => handleAdminAction('/api/admin/ban', { player_id: userId }, 'User banned');
-window.showAlertDetails = alertId => alert(`📋 Detailed view for Alert ID: ${alertId} will load here.`);
-
-async function handleAdminAction(endpoint, payload, successMsg) {
+async function handleAdminAction(endpoint, payload, msg) {
   try {
     await postAdminAction(endpoint, payload);
-    alert(`✅ ${successMsg}`);
+    alert(`✅ ${msg}`);
   } catch (err) {
     console.error('❌ Action failed:', err);
-    alert('❌ Action failed: ' + err.message);
+    alert(`❌ Action failed: ${err.message}`);
   }
 }
 
@@ -153,80 +151,94 @@ async function postAdminAction(endpoint, payload) {
 }
 
 // 🛠 Admin Utilities
-async function toggleFlag() {
-  const key = document.getElementById('flag-key')?.value;
-  const val = document.getElementById('flag-value')?.value === 'true';
-  if (!key) return alert('Enter a flag key');
-  await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value: val }, 'Flag updated');
-}
+const actions = {
+  'toggle-flag-btn': async () => {
+    const key = getValue('flag-key');
+    const value = getValue('flag-value') === 'true';
+    if (!key) return alert('Enter a flag key');
+    await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value }, 'Flag updated');
+  },
+  'update-kingdom-btn': async () => {
+    const id = Number(getValue('kingdom-id'));
+    const field = getValue('kingdom-field');
+    const value = getValue('kingdom-value');
+    if (!id || !field) return alert('Missing field/kingdom');
+    await handleAdminAction('/api/admin/kingdom/update_field', { kingdom_id: id, field, value }, 'Kingdom updated');
+  },
+  'force-end-war-btn': async () => {
+    const id = Number(getValue('war-id'));
+    if (!id) return alert('Enter war ID');
+    await handleAdminAction('/api/admin/war/force_end', { war_id: id }, 'War ended');
+  },
+  'rollback-tick-btn': async () => {
+    const id = Number(getValue('war-id'));
+    if (!id) return alert('Enter war ID');
+    await handleAdminAction('/api/admin/war/rollback_tick', { war_id: id }, 'Tick rolled back');
+  },
+  'rollback-btn': async () => {
+    const pass = getValue('rollback-password');
+    if (!pass) return alert('Enter master password');
+    await handleAdminAction('/api/admin/system/rollback', { password: pass }, 'Rollback triggered');
+  },
+  'create-event': async () => {
+    const name = prompt('Event name?');
+    if (!name) return;
+    await handleAdminAction('/api/admin/events/create', { name }, 'Event created');
+  },
+  'publish-news-btn': async () => {
+    const payload = ['title', 'summary', 'content'].reduce((acc, id) => {
+      acc[id] = getValue(`news-${id}`).trim();
+      return acc;
+    }, {});
+    if (!payload.title || !payload.summary || !payload.content) return alert('Fill all news fields');
+    await handleAdminAction('/api/admin/news/post', payload, 'News published');
+    ['title', 'summary', 'content'].forEach(id => (document.getElementById(`news-${id}`).value = ''));
+  }
+};
 
-async function updateKingdom() {
-  const kid = document.getElementById('kingdom-id')?.value;
-  const field = document.getElementById('kingdom-field')?.value;
-  const value = document.getElementById('kingdom-value')?.value;
-  if (!kid || !field) return alert('Missing field/kingdom');
-  await handleAdminAction('/api/admin/kingdom/update_field', {
-    kingdom_id: Number(kid),
-    field,
-    value
-  }, 'Kingdom updated');
-}
-
-async function forceEndWar() {
-  const wid = document.getElementById('war-id')?.value;
-  if (!wid) return alert('Enter war ID');
-  await handleAdminAction('/api/admin/war/force_end', { war_id: Number(wid) }, 'War ended');
-}
-
-async function rollbackCombatTick() {
-  const wid = document.getElementById('war-id')?.value;
-  if (!wid) return alert('Enter war ID');
-  await handleAdminAction('/api/admin/war/rollback_tick', { war_id: Number(wid) }, 'Tick rolled back');
-}
-
-async function rollbackDatabase() {
-  const pass = document.getElementById('rollback-password')?.value;
-  if (!pass) return alert('Enter master password');
-  await handleAdminAction('/api/admin/system/rollback', { password: pass }, 'Rollback triggered');
-}
-
-async function createGlobalEvent() {
-  const name = prompt('Event name?');
-  if (!name) return;
-  await handleAdminAction('/api/admin/events/create', { name }, 'Event created');
-}
-
-async function publishNews() {
-  const title = document.getElementById('news-title')?.value.trim();
-  const summary = document.getElementById('news-summary')?.value.trim();
-  const content = document.getElementById('news-content')?.value.trim();
-  if (!title || !summary || !content) return alert('Fill all news fields');
-  await handleAdminAction('/api/admin/news/post', { title, summary, content }, 'News published');
-  document.getElementById('news-title').value = '';
-  document.getElementById('news-summary').value = '';
-  document.getElementById('news-content').value = '';
-}
-
-// 🧩 Initialize DOM Hooks
+// ✨ UI Bindings
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboardStats();
   loadPlayerList();
   initAlertSocket();
   loadFlaggedUsers();
-
-  setInterval(() => {
-    loadDashboardStats();
-    loadFlaggedUsers();
-  }, REFRESH_MS);
+  setupAutoRefresh();
 
   document.getElementById('search-btn')?.addEventListener('click', loadPlayerList);
   document.getElementById('status-filter')?.addEventListener('change', loadPlayerList);
   document.getElementById('load-logs-btn')?.addEventListener('click', loadAuditLogs);
-  document.getElementById('toggle-flag-btn')?.addEventListener('click', toggleFlag);
-  document.getElementById('update-kingdom-btn')?.addEventListener('click', updateKingdom);
-  document.getElementById('force-end-war-btn')?.addEventListener('click', forceEndWar);
-  document.getElementById('rollback-tick-btn')?.addEventListener('click', rollbackCombatTick);
-  document.getElementById('rollback-btn')?.addEventListener('click', rollbackDatabase);
-  document.getElementById('create-event')?.addEventListener('click', createGlobalEvent);
-  document.getElementById('publish-news-btn')?.addEventListener('click', publishNews);
+
+  Object.entries(actions).forEach(([id, fn]) => {
+    document.getElementById(id)?.addEventListener('click', fn);
+  });
 });
+
+// 🎯 Delegate admin button actions
+document.addEventListener('click', async e => {
+  if (!e.target.classList.contains('admin-btn')) return;
+  const id = e.target.dataset.id;
+  const action = e.target.dataset.action;
+  const map = {
+    flag: ['/api/admin/flag', 'User flagged'],
+    freeze: ['/api/admin/freeze', 'User frozen'],
+    ban: ['/api/admin/ban', 'User banned']
+  };
+  if (map[action]) {
+    const [url, msg] = map[action];
+    await handleAdminAction(url, { player_id: id }, msg);
+  }
+});
+
+// 🔧 Helpers
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function getValue(id) {
+  return document.getElementById(id)?.value || '';
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
