@@ -38,7 +38,6 @@ const requirePermission = window.requirePermission || null;
     }
 
     const token = session.access_token;
-    localStorage.setItem('authToken', token);
 
     // ✅ Validate token with backend
     try {
