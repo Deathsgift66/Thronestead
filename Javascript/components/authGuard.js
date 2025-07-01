@@ -23,8 +23,20 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
 (async () => {
   try {
     let { token } = getStoredAuth();
+    let { data: { session } } = await supabase.auth.getSession();
+
+    // If a token exists but Supabase has no session, restore it so
+    // subsequent auth calls succeed after a page reload.
+    if (token && !session) {
+      try {
+        await supabase.auth.setSession({ access_token: token, refresh_token: '' });
+        ({ data: { session } } = await supabase.auth.getSession());
+      } catch (err) {
+        console.warn('Failed to restore session:', err);
+      }
+    }
+
     if (!token) {
-      const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
         token = session.access_token;
         const expiry = new Date(session.expires_at * 1000).toUTCString();
