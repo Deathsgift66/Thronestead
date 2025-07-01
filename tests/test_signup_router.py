@@ -218,10 +218,20 @@ def test_finalize_signup_creates_rows(db_session):
     title_row = db_session.execute(
         text("SELECT title FROM kingdom_titles WHERE kingdom_id = 1")
     ).fetchone()
+    vip = db_session.query(KingdomVipStatus).get("fin1")
+    village_row = db_session.execute(
+        text("SELECT village_id FROM kingdom_villages WHERE kingdom_id = 1")
+    ).fetchone()
+    setting_row = db_session.execute(
+        text("SELECT 1 FROM user_setting_entries WHERE user_id = 'fin1'")
+    ).fetchone()
     assert user is not None
     assert kingdom.kingdom_name == "FinRealm"
     assert res_row is not None
     assert title_row is not None
+    assert vip.vip_level == 0
+    assert village_row is not None
+    assert setting_row is not None
 
 
 def test_finalize_signup_conflict_username(db_session):

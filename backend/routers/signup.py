@@ -406,6 +406,52 @@ def finalize_signup(payload: FinalizePayload, db: Session = Depends(get_db)):
             {"kid": kid},
         )
 
+        village = db.execute(
+            text(
+                """
+                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type)
+                VALUES (:kid, :name, 'capital')
+                RETURNING village_id
+                """
+            ),
+            {"kid": kid, "name": payload.kingdom_name},
+        ).fetchone()
+        if village:
+            db.execute(
+                text(
+                    "INSERT INTO village_buildings (village_id, building_id, level) "
+                    "VALUES (:vid, 1, 1) ON CONFLICT DO NOTHING"
+                ),
+                {"vid": int(village[0])},
+            )
+
+        db.execute(
+            text(
+                "INSERT INTO kingdom_vip_status (user_id, vip_level) VALUES (:uid, 0) ON CONFLICT (user_id) DO NOTHING"
+            ),
+            {"uid": payload.user_id},
+        )
+
+        db.execute(
+            text(
+                """
+                INSERT INTO user_setting_entries (user_id, setting_key, setting_value)
+                VALUES (:uid, 'theme', 'default')
+                ON CONFLICT DO NOTHING
+                """
+            ),
+            {"uid": payload.user_id},
+        )
+
+        db.add(
+            Notification(
+                user_id=payload.user_id,
+                title="Welcome to Thronestead!",
+                message="Your kingdom awaits.",
+                category="system",
+            )
+        )
+
         db.commit()
         return {"status": "created", "user_id": payload.user_id, "kingdom_id": kid}
     except Exception as exc:
