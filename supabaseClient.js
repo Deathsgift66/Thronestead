@@ -2,9 +2,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { getEnvVar } from './Javascript/env.js';
 
-let SUPABASE_URL = getEnvVar('SUPABASE_URL') || 'https://zzqoxgytfrbptojcwrjm.supabase.co';
-let SUPABASE_ANON_KEY = getEnvVar('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE
-';
+let SUPABASE_URL =
+  getEnvVar("SUPABASE_URL") || "https://zzqoxgytfrbptojcwrjm.supabase.co";
+let SUPABASE_ANON_KEY =
+  getEnvVar("SUPABASE_ANON_KEY") ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94Z3l0ZnJicHRvamN3cmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1Nzk3MzYsImV4cCI6MjA2NTE1NTczNn0.mbFcI9V0ajn51SM68De5ox36VxbPEXK2WK978HZgUaE";
 
 // Hard fallback if env is missing — only use these if needed
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
