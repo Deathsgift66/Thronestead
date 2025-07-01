@@ -1,17 +1,17 @@
 // Project Name: Thronestead©
 // File Name: tabControl.js
-// Version 6.15.2025.21.00
-// Developer: Codex
+// Version 6.15.2025.21.10
+// Developer: Codex (Refined by ChatGPT)
 
 /**
- * Simple tab controller. Adds click handlers for elements
- * matching `buttonSelector` and toggles `active` class on
- * both the button and the matching section by id.
+ * Tab controller for UI navigation.
+ * Automatically toggles 'active' class between tab buttons and content sections.
  *
  * @param {object} options
- * @param {string} [options.buttonSelector='.tab-button'] CSS selector for tab buttons
- * @param {string} [options.sectionSelector='.tab-section'] CSS selector for tab sections
- * @param {Function} [options.onShow] Callback fired after a tab is shown
+ * @param {string} [options.buttonSelector='.tab-button'] - Selector for tab buttons
+ * @param {string} [options.sectionSelector='.tab-section'] - Selector for tab content sections
+ * @param {Function} [options.onShow] - Optional callback fired after a tab is shown
+ * @returns {Function} show - A function to manually switch tabs by ID
  */
 export function setupTabs({
   buttonSelector = '.tab-button',
@@ -20,18 +20,37 @@ export function setupTabs({
 } = {}) {
   const buttons = Array.from(document.querySelectorAll(buttonSelector));
   const sections = Array.from(document.querySelectorAll(sectionSelector));
-  if (!buttons.length) return;
+  if (buttons.length === 0 || sections.length === 0) return;
 
   const show = id => {
-    buttons.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-    sections.forEach(s => s.classList.toggle('active', s.id === id));
-    if (onShow) onShow(id);
+    if (!id) return;
+    buttons.forEach(btn => {
+      const isActive = btn.dataset.tab === id;
+      btn.classList.toggle('active', isActive);
+    });
+
+    sections.forEach(section => {
+      const isVisible = section.id === id;
+      section.classList.toggle('active', isVisible);
+    });
+
+    if (typeof onShow === 'function') {
+      onShow(id);
+    }
   };
 
-  buttons.forEach(btn => btn.addEventListener('click', () => show(btn.dataset.tab)));
+  buttons.forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const tabId = btn.dataset.tab;
+      if (tabId) show(tabId);
+    });
+  });
 
-  // Activate first tab if none marked active
-  const initial = buttons.find(b => b.classList.contains('active'))?.dataset.tab || buttons[0].dataset.tab;
-  show(initial);
+  // Initial tab: use existing `.active` or default to first button
+  const activeBtn = buttons.find(b => b.classList.contains('active'));
+  const initialTab = activeBtn?.dataset.tab || buttons[0].dataset.tab;
+  show(initialTab);
+
   return show;
 }
