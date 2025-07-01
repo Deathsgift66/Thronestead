@@ -2,7 +2,7 @@
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
   Access-Control-Allow-Headers: *
-  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; script-src 'self' https://*.supabase.co; connect-src 'self' https://thronestead.onrender.com https://*.supabase.co; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none';
+  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; script-src 'self' https://*.supabase.co https://hcaptcha.com; connect-src 'self' https://thronestead.onrender.com https://*.supabase.co https://hcaptcha.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none';
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin
