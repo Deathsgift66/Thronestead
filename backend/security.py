@@ -85,33 +85,12 @@ def decode_supabase_jwt(token: str) -> dict:
     )
 
 
-def verify_jwt_token(
-    authorization: str | None = Header(None),
-    x_user_id: str | None = Header(None),
-) -> str:
-    """Validate a Supabase-issued JWT token and return the matching user ID.
-
-    - Extracts the ``sub`` claim from the payload.
-    - Compares it to the ``X-User-ID`` header value.
-    - Raises ``HTTPException`` if the token or header are invalid.
-
-    Args:
-        authorization: Bearer token from `Authorization` header
-        x_user_id: User ID expected from Supabase (passed in `X-User-ID`)
-
-    Returns:
-        str: Validated UUID user ID (sub)
-
-    Raises:
-        HTTPException 401: If the token is missing, malformed, or mismatched
-    """
+def verify_jwt_token(authorization: str | None = Header(None)) -> str:
+    """Validate the bearer token and return the user ID."""
     auth_header = authorization
     if not auth_header or not auth_header.startswith("Bearer "):
         logger.warning("Missing or malformed Authorization header.")
-        raise HTTPException(
-            status_code=401,
-            detail="Missing or invalid Authorization header",
-        )
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
     token = auth_header.split(" ")[1]
 
@@ -122,9 +101,8 @@ def verify_jwt_token(
         raise HTTPException(status_code=401, detail="Invalid token") from exc
 
     uid = payload.get("sub")
-    if not uid or uid != x_user_id:
-        logger.warning(f"Token subject mismatch: token.sub={uid}, header={x_user_id}")
-        raise HTTPException(status_code=401, detail="Token mismatch")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     return uid
 
@@ -133,19 +111,7 @@ def require_user_id(
     x_user_id: str | None = Header(None),
     authorization: str | None = Header(None),
 ) -> str:
-    """
-    Verifies `X-User-ID` is a valid UUID. Optionally cross-checks against the JWT `sub`.
-
-    Args:
-        x_user_id: Provided user ID header
-        authorization: Optional Bearer token for validation
-
-    Returns:
-        str: Validated user ID string
-
-    Raises:
-        HTTPException 401: If the ID is missing, invalid, or mismatched
-    """
+    """Validate ``X-User-ID`` and optionally ensure the token is valid."""
     if not x_user_id:
         logger.warning("Missing X-User-ID header.")
         raise HTTPException(status_code=401, detail="User ID header missing")
@@ -156,7 +122,7 @@ def require_user_id(
         raise HTTPException(status_code=401, detail="Invalid user ID")
 
     if authorization:
-        verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+        verify_jwt_token(authorization=authorization)
 
     return x_user_id
 
@@ -168,7 +134,7 @@ def require_active_user_id(
     db: Session = Depends(get_db),
 ) -> str:
     """Return the verified user ID if the account is not banned."""
-    user_id = verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+    user_id = verify_jwt_token(authorization=authorization)
     banned = db.execute(
         text("SELECT is_banned FROM users WHERE user_id = :uid"),
         {"uid": user_id},
@@ -275,7 +241,7 @@ def verify_reauth_token(
     db: Session = Depends(get_db),
 ) -> str:
     """Validate a short-lived re-authentication token for the user."""
-    user_id = verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+    user_id = verify_jwt_token(authorization=authorization)
     if not x_reauth_token or not validate_reauth_token(db, user_id, x_reauth_token):
         raise HTTPException(status_code=401, detail="Invalid re-auth token")
     return user_id
