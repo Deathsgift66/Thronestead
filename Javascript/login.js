@@ -5,6 +5,9 @@
 
 import { supabase } from '../supabaseClient.js';
 import { showToast } from './utils.js';
+import { getEnvVar } from './env.js';
+
+const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 let loginForm = null,
   emailInput = null,
@@ -49,10 +52,22 @@ async function handleLogin(e) {
   showMessage('info', 'Authenticating...');
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data?.session || !data.user) throw new Error(error?.message || 'Login failed.');
-
-    // Session is persisted by Supabase client
+    const res = await fetch(`${API_BASE_URL}/api/login/authenticate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || 'Login failed.');
+    }
+    const result = await res.json();
+    if (result.access_token && result.refresh_token) {
+      await supabase.auth.setSession({
+        access_token: result.access_token,
+        refresh_token: result.refresh_token
+      });
+    }
     showMessage('success', 'Login successful. Redirecting...');
     setTimeout(() => redirectToApp(), 1200);
   } catch (err) {
