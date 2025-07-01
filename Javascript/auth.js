@@ -5,8 +5,6 @@
 
 import { supabase } from '../supabaseClient.js';
 
-let cachedAuth = null;
-
 /**
  * Retrieve stored auth token and user from local/session storage.
  */
@@ -30,24 +28,18 @@ export function getStoredAuth() {
 /**
  * Cache auth for page lifetime (performance).
  */
-export function setAuthCache(user, session) {
-  cachedAuth = { user, session };
-}
 
 /**
  * Supabase user/session fetch with defensive guards.
  */
 export async function getAuth() {
-  if (cachedAuth) return cachedAuth;
-
   try {
     const [{ data: { user } }, { data: { session } }] = await Promise.all([
       supabase.auth.getUser(),
       supabase.auth.getSession()
     ]);
     if (!user || !session) throw new Error('Unauthorized');
-    cachedAuth = { user, session };
-    return cachedAuth;
+    return { user, session };
   } catch (err) {
     console.error('❌ Failed to retrieve auth:', err);
     throw new Error('Unauthorized');
@@ -58,27 +50,17 @@ export async function getAuth() {
  * Build authenticated headers.
  */
 export async function authHeaders() {
-  const { token, user } = getStoredAuth();
-  if (token && user?.id) {
-    return {
-      'Authorization': `Bearer ${token}`,
-      'X-User-ID': user.id
-    };
-  }
-
-  const { user: supaUser, session } = await getAuth();
+  const { user, session } = await getAuth();
   return {
     'Authorization': `Bearer ${session.access_token}`,
-    'X-User-ID': supaUser.id
+    'X-User-ID': user.id
   };
 }
 
 /**
  * Clear cache.
  */
-export function resetAuthCache() {
-  cachedAuth = null;
-}
+export function resetAuthCache() {}
 
 /**
  * Clear session + cross-tab logout.
@@ -105,14 +87,6 @@ export async function refreshSessionAndStore() {
       console.warn('⚠️ Session refresh failed:', error);
       return false;
     }
-
-    const token = data.session.access_token;
-    const user = data.user;
-
-    localStorage.setItem('authToken', token);
-    sessionStorage.setItem('currentUser', JSON.stringify(user));
-    setAuthCache(user, data.session);
-
     return true;
   } catch (err) {
     console.error('❌ Session refresh threw error:', err);
@@ -159,18 +133,13 @@ export async function refreshIfExpiring(thresholdSec = 300) {
  * Validate session by pinging backend.
  */
 export async function validateSessionOrLogout() {
-  try {
-    const headers = await authHeaders();
-    const res = await fetch('/api/auth/validate-session', { headers });
-    if (res.status === 401) throw new Error('Session invalid');
-    return true;
-  } catch {
-    clearStoredAuth();
-    if (!location.pathname.endsWith('login.html')) {
-      window.location.href = 'login.html';
-    }
-    return false;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) return true;
+  clearStoredAuth();
+  if (!location.pathname.endsWith('login.html')) {
+    window.location.href = 'login.html';
   }
+  return false;
 }
 
 // 🔄 Multi-tab logout sync
