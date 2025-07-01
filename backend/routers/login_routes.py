@@ -15,7 +15,7 @@ import time
 import os
 from ..env_utils import get_env_var, strtobool
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
@@ -29,6 +29,7 @@ from ..database import get_db
 from ..security import verify_jwt_token, has_active_ban
 from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
+from .session import store_session_cookie, TokenPayload
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
@@ -198,12 +199,14 @@ class AuthPayload(BaseModel):
     email: EmailStr
     password: str
     otp: str | None = None
+    remember: bool = False
 
 
 @router.post("/authenticate")
 def authenticate(
     request: Request,
     payload: AuthPayload,
+    response: Response,
     db: Session = Depends(get_db),
 ) -> dict:
     """Validate credentials with Supabase and return session plus profile info."""
@@ -314,8 +317,21 @@ def authenticate(
     except Exception:
         pass
 
+    if payload.remember:
+        store_session_cookie(TokenPayload(token=token), request, response)
+
+    refresh_token = (
+        session.get("refresh_token")
+        if isinstance(session, dict)
+        else getattr(session, "refresh_token", None)
+    )
+    email = (
+        user.get("email") if isinstance(user, dict) else getattr(user, "email", None)
+    )
     return {
-        "session": session,
+        "access_token": token,
+        "refresh_token": refresh_token,
+        "user": {"email": email},
         "username": username,
         "kingdom_id": kingdom_id,
         "alliance_id": alliance_id,

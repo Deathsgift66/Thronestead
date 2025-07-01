@@ -43,6 +43,30 @@ class DummyRequest:
         self.headers = headers or {}
 
 
+class DummyResponse:
+    def __init__(self):
+        self.cookies = {}
+
+    def set_cookie(
+        self,
+        name,
+        value,
+        httponly=False,
+        secure=False,
+        samesite=None,
+        path="/",
+        domain=None,
+    ):
+        self.cookies[name] = {
+            "value": value,
+            "httponly": httponly,
+            "secure": secure,
+            "samesite": samesite,
+            "path": path,
+            "domain": domain,
+        }
+
+
 def test_announcements_returned():
     rows = [
         {
@@ -234,10 +258,14 @@ def test_authenticate_success():
         {"uid": uid, "ip": ip, "dev": dev}
     )
     db = DummyDBAuth()
-    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    payload = login_routes.AuthPayload(
+        email="e@example.com", password="p", remember=True
+    )
     req = DummyRequest(headers={"User-Agent": "UA"})
-    res = login_routes.authenticate(req, payload, db=db)
-    assert res["session"]["access_token"] == "token"
+    resp = DummyResponse()
+    res = login_routes.authenticate(req, payload, response=resp, db=db)
+    assert res["access_token"] == "token"
+    assert resp.cookies.get("session_token") and resp.cookies["session_token"]["value"] == "token"
     assert res["username"] == "name"
     assert res["kingdom_id"] == 1
     assert res["alliance_id"] == 2
@@ -255,8 +283,9 @@ def test_authenticate_invalid():
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
+    resp = DummyResponse()
     with pytest.raises(HTTPException) as exc:
-        login_routes.authenticate(req, payload, db=db)
+        login_routes.authenticate(req, payload, response=resp, db=db)
     assert exc.value.status_code == 401
 
 
@@ -265,8 +294,9 @@ def test_authenticate_invalid_session():
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
+    resp = DummyResponse()
     with pytest.raises(HTTPException) as exc:
-        login_routes.authenticate(req, payload, db=db)
+        login_routes.authenticate(req, payload, response=resp, db=db)
     assert exc.value.status_code == 401
 
 
@@ -275,8 +305,9 @@ def test_authenticate_failure():
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
+    resp = DummyResponse()
     with pytest.raises(HTTPException) as exc:
-        login_routes.authenticate(req, payload, db=db)
+        login_routes.authenticate(req, payload, response=resp, db=db)
     assert exc.value.status_code == 500
 
 
@@ -292,8 +323,9 @@ def test_authenticate_disabled_by_flag():
     db = FlagDB()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
+    resp = DummyResponse()
     with pytest.raises(HTTPException) as exc:
-        login_routes.authenticate(req, payload, db=db)
+        login_routes.authenticate(req, payload, response=resp, db=db)
     assert exc.value.status_code == 503
 
 
@@ -302,8 +334,9 @@ def test_authenticate_deleted_account():
     db = DummyDBAuth(deleted=True)
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
+    resp = DummyResponse()
     with pytest.raises(HTTPException) as exc:
-        login_routes.authenticate(req, payload, db=db)
+        login_routes.authenticate(req, payload, response=resp, db=db)
     assert exc.value.status_code == 403
 
 
@@ -313,15 +346,16 @@ def test_authenticate_backoff(monkeypatch):
     db = DummyDBAuth()
     payload = login_routes.AuthPayload(email="e@example.com", password="p")
     req = DummyRequest()
+    resp = DummyResponse()
     with pytest.raises(HTTPException):
-        login_routes.authenticate(req, payload, db=db)
+        login_routes.authenticate(req, payload, response=resp, db=db)
     assert ("e@example.com", "1.1.1.1") in login_routes.FAILED_LOGINS
     login_routes.FAILED_LOGINS[("e@example.com", "1.1.1.1")] = (
         3,
         time.time() + 10,
     )
     with pytest.raises(HTTPException) as exc2:
-        login_routes.authenticate(req, payload, db=db)
+        login_routes.authenticate(req, payload, response=resp, db=db)
     assert exc2.value.status_code == 429
 
 
