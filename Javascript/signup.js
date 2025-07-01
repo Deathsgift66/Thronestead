@@ -181,18 +181,8 @@ async function handleSignup() {
     if (confirmed) {
       if (session) {
         const token = session.access_token;
-        const expiry = new Date(session.expires_at * 1000).toUTCString();
-        document.cookie =
-          `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; domain=${location.hostname}; expires=${expiry}`;
-        try {
-          await fetch(`${API_BASE_URL}/api/session/store`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ token })
-          });
-        } catch (err) {
-          console.warn('Failed to persist session cookie:', err);
+        if (token) {
+          localStorage.setItem('authToken', token);
         }
       }
       if (userInfo.id) {

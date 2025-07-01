@@ -39,9 +39,7 @@ const requirePermission = window.requirePermission || null; // e.g. "manage_proj
     if (!token) {
       if (session?.access_token) {
         token = session.access_token;
-        const expiry = new Date(session.expires_at * 1000).toUTCString();
-        document.cookie =
-          `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; domain=${location.hostname}; expires=${expiry}`;
+        localStorage.setItem('authToken', token);
       } else {
         return (window.location.href = 'login.html');
       }
