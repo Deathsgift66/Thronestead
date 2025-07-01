@@ -16,7 +16,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 // Avoid creating multiple instances
 if (!window.__supabaseClient && SUPABASE_URL && SUPABASE_ANON_KEY) {
   window.__supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true },
+    auth: {
+      persistSession: true,
+      // Disable built-in auto refresh to avoid duplicate refresh calls
+      // which can invalidate the token when our custom logic runs.
+      autoRefreshToken: false,
+    },
   });
 }
 
