@@ -200,6 +200,8 @@ def authenticate(
         _log_attempt(False)
         raise HTTPException(status_code=401, detail="Email not confirmed")
 
+    uid = getattr(user, "id", None) or (isinstance(user, dict) and user.get("id"))
+
     if has_active_ban(db, user_id=uid, ip=ip, device_hash=device_hash):
         raise HTTPException(status_code=403, detail="Account banned")
     row = db.execute(
