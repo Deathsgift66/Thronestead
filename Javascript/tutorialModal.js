@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const d = new Date();
       d.setTime(d.getTime() + days * 86400000);
       document.cookie =
-        `${name}=${value}; expires=${d.toUTCString()}; path=/; domain=${location.hostname}`;
+        `${name}=${value}; expires=${d.toUTCString()}; path=/; domain=${location.hostname}; secure; samesite=strict`;
     } catch (err) {
       console.warn("Cookies are disabled or blocked:", err);
     }
