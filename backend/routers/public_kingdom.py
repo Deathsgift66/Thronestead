@@ -1,7 +1,7 @@
 # Project Name: Thronestead©
 # File Name: public_kingdom.py
-# Version 6.14.2025
-# Developer: OpenAI Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 
 """
 Project: Thronestead ©

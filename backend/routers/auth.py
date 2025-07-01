@@ -1,7 +1,7 @@
 # Project Name: Thronestead©
 # File Name: auth.py
-# Version: 6.14.2025
-# Developer: Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 """Unified authentication routes."""
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status

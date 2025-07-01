@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: world_map.js
-// Version 6.13.2025.19.49
+// Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 // world_map.js — Tile-based world map engine for Thronestead
 import { supabase } from '../supabaseClient.js';

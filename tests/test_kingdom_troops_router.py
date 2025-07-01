@@ -1,7 +1,7 @@
 # Project Name: Thronestead©
 # File Name: test_kingdom_troops_router.py
-# Version 6.14.2025
-# Developer: Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 from fastapi import HTTPException
 
 from backend.routers.kingdom_troops import unlocked_troops, upgrade_troops, UpgradePayload

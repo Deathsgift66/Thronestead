@@ -1,10 +1,6 @@
-from __future__ import annotations
-
-"""Cron task that records a system heartbeat in admin_alerts."""
-
 # Project Name: Thronestead©
 # File Name: admin_heartbeat.py
-# Version: 6.14.2025.20.13
+# Version:  7/1/2025 10:38
 # Developer: Deathsgift66
 
 from datetime import datetime, timedelta

@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: news.js
-// Version 6.15.2025.00.00
-// Developer: Codex
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { formatDate } from './utils.js';
 

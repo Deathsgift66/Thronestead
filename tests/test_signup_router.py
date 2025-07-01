@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: test_signup_router.py
-# Version 6.15.2025.21.00
+# Version:  7/1/2025 10:38
 # Developer: Deathsgift66
 from fastapi import HTTPException
 import pytest

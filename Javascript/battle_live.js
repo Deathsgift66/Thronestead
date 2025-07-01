@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: battle_live.js
-// Version 6.14.2025.21.00
+// Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 // Live Battle Viewer — fetches terrain, units and combat logs
 

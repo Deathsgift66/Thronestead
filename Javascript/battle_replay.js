@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: battle_replay.js
-// Version 6.14.2025.20.30
+// Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 // Battle Replay module with timeline playback
 

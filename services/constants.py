@@ -1,6 +1,7 @@
 # Project Name: Thronestead©
 # File Name: constants.py
-# Developer: Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 """Shared constants used across service modules."""
 
 XP_PER_LEVEL = 100

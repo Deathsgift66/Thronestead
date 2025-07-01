@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: offlineFallback.js
-// Version 6.21.2025.02.00
-// Developer: Codex
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
 // Utilities for caching kingdom data and enabling fallback mode
 
 /**

@@ -1,7 +1,7 @@
 # Project Name: Thronestead©
 # File Name: unit_xp_service.py
-# Version: 6.14.2025
-# Developer: Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 """Centralized utilities for applying unit experience and handling level ups."""
 
 from __future__ import annotations
