@@ -26,9 +26,9 @@ def _optional_user(
     x_user_id: str | None = Header(None),
 ) -> str | None:
     """Return user ID if valid headers are provided."""
-    if authorization and x_user_id:
+    if authorization:
         try:
-            return verify_jwt_token(authorization=authorization, x_user_id=x_user_id)
+            return verify_jwt_token(authorization=authorization)
         except HTTPException:
             return None
     return None

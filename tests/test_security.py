@@ -27,7 +27,7 @@ def test_require_active_user_allows_unbanned(db_session, monkeypatch):
     setup_user(db_session, "u1", False)
     token = token_for("u1", "secret")
     uid = require_active_user_id(
-        authorization=f"Bearer {token}", x_user_id="u1", db=db_session
+        authorization=f"Bearer {token}", db=db_session
     )
     assert uid == "u1"
 
@@ -38,7 +38,7 @@ def test_require_active_user_blocks_banned(db_session, monkeypatch):
     token = token_for("u2", "secret")
     with pytest.raises(HTTPException) as exc:
         require_active_user_id(
-            authorization=f"Bearer {token}", x_user_id="u2", db=db_session
+            authorization=f"Bearer {token}", db=db_session
         )
     assert exc.value.status_code == 403
 
@@ -48,7 +48,7 @@ def test_require_active_user_allows_token_with_aud(db_session, monkeypatch):
     setup_user(db_session, "u3", False)
     token = jwt.encode({"sub": "u3", "aud": "authenticated"}, "secret", algorithm="HS256")
     uid = require_active_user_id(
-        authorization=f"Bearer {token}", x_user_id="u3", db=db_session
+        authorization=f"Bearer {token}", db=db_session
     )
     assert uid == "u3"
 
@@ -79,7 +79,6 @@ def test_ip_ban_blocks_request(db_session, monkeypatch):
         require_active_user_id(
             request=req,
             authorization=f"Bearer {token}",
-            x_user_id="u4",
             db=db_session,
         )
 
@@ -100,7 +99,6 @@ def test_device_ban_blocks_request(db_session, monkeypatch):
         require_active_user_id(
             request=req,
             authorization=f"Bearer {token}",
-            x_user_id="u5",
             db=db_session,
         )
 
@@ -112,7 +110,6 @@ def test_verify_reauth_token_valid(monkeypatch, db_session):
     uid = security.verify_reauth_token(
         x_reauth_token=rtok,
         authorization=f"Bearer {token}",
-        x_user_id="u6",
         db=db_session,
     )
     assert uid == "u6"
@@ -125,6 +122,5 @@ def test_verify_reauth_token_invalid(monkeypatch, db_session):
         security.verify_reauth_token(
             x_reauth_token="bad",
             authorization=f"Bearer {token}",
-            x_user_id="u7",
             db=db_session,
         )
