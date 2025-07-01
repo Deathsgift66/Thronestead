@@ -104,7 +104,7 @@ if env_regex:
 allow_credentials = True
 if "*" in origins:
     origins = ["*"]
-    allow_credentials = False
+    # Credentials are still allowed even when wildcard origins are permitted.
 
 # Apply the CORS middleware before other custom middleware so that CORS
 # headers are always included in the response.
