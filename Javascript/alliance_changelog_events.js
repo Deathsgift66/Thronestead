@@ -1,9 +1,15 @@
 // Project Name: Thronestead©
 // File Name: alliance_changelog_events.js
-// Version 6.17.2025.00.00
-// Developer: Codex
+// Version 7.01.2025.08.00
+// Developer: Codex (KISS Optimized)
+
 import { applyFilters, fetchChangelog } from './alliance_changelog.js';
 
-document.getElementById('apply-filters-btn')?.addEventListener('click', applyFilters);
+function bindEvent(id, handler) {
+  document.getElementById(id)?.addEventListener('click', handler);
+}
 
-document.getElementById('refresh-btn')?.addEventListener('click', fetchChangelog);
+document.addEventListener('DOMContentLoaded', () => {
+  bindEvent('apply-filters-btn', applyFilters);
+  bindEvent('refresh-btn', fetchChangelog);
+});
