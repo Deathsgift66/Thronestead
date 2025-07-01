@@ -1,16 +1,21 @@
+// Project Name: Thronestead©
+// File Name: admin_emergency.js
+// Version 7.01.2025.08.00
+// Developer: Codex (KISS Optimized)
+
 import { authFetch, authJsonFetch } from './utils.js';
 
+// 🔁 Unified POST helper
 async function postAction(url, payload) {
   const res = await authFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
+  if (!res.ok) throw new Error(await res.text());
 }
 
+// 📦 Load Backups
 async function loadBackups() {
   const list = document.getElementById('backup-list');
   if (!list) return;
@@ -18,51 +23,61 @@ async function loadBackups() {
   try {
     const data = await authJsonFetch('/api/admin/emergency/backups');
     list.innerHTML = '';
-    data.queues.forEach(q => {
+    (data.queues || []).forEach(queue => {
       const li = document.createElement('li');
-      li.textContent = q;
+      li.textContent = queue;
       list.appendChild(li);
     });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Failed to load backups:', err);
     list.innerHTML = '<li>Error loading queues</li>';
   }
 }
 
+// 🚨 Action Map
+const actions = {
+  'reprocess-tick-btn': {
+    inputs: ['tick-war-id'],
+    endpoint: '/api/admin/emergency/reprocess_tick',
+    payload: ([warId]) => ({ war_id: Number(warId) }),
+    success: 'Tick reprocessed'
+  },
+  'recalc-res-btn': {
+    inputs: ['recalc-kingdom-id'],
+    endpoint: '/api/admin/emergency/recalculate_resources',
+    payload: ([kingdomId]) => ({ kingdom_id: Number(kingdomId) }),
+    success: 'Resources recalculated'
+  },
+  'rollback-quest-btn': {
+    inputs: ['quest-alliance-id', 'quest-code'],
+    endpoint: '/api/admin/emergency/rollback_quest',
+    payload: ([aid, code]) => ({ alliance_id: Number(aid), quest_code: code }),
+    success: 'Quest rolled back'
+  },
+  'load-backups-btn': {
+    action: loadBackups
+  }
+};
+
+// 🧩 DOM Ready Handler
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('reprocess-tick-btn')?.addEventListener('click', async () => {
-    const id = document.getElementById('tick-war-id').value;
-    if (!id) return alert('Enter war ID');
-    try {
-      await postAction('/api/admin/emergency/reprocess_tick', { war_id: Number(id) });
-      alert('Tick reprocessed');
-    } catch (err) {
-      alert(err.message);
-    }
-  });
+  Object.entries(actions).forEach(([btnId, config]) => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
 
-  document.getElementById('recalc-res-btn')?.addEventListener('click', async () => {
-    const id = document.getElementById('recalc-kingdom-id').value;
-    if (!id) return alert('Enter kingdom ID');
-    try {
-      await postAction('/api/admin/emergency/recalculate_resources', { kingdom_id: Number(id) });
-      alert('Resources recalculated');
-    } catch (err) {
-      alert(err.message);
-    }
-  });
+    btn.addEventListener('click', async () => {
+      if (typeof config.action === 'function') return config.action();
 
-  document.getElementById('rollback-quest-btn')?.addEventListener('click', async () => {
-    const aid = document.getElementById('quest-alliance-id').value;
-    const code = document.getElementById('quest-code').value;
-    if (!aid || !code) return alert('Enter alliance ID and quest code');
-    try {
-      await postAction('/api/admin/emergency/rollback_quest', { alliance_id: Number(aid), quest_code: code });
-      alert('Quest rolled back');
-    } catch (err) {
-      alert(err.message);
-    }
-  });
+      const values = config.inputs.map(id => document.getElementById(id)?.value.trim());
+      if (values.some(v => !v)) return alert('⚠️ All fields required');
 
-  document.getElementById('load-backups-btn')?.addEventListener('click', loadBackups);
+      try {
+        await postAction(config.endpoint, config.payload(values));
+        alert(`✅ ${config.success}`);
+      } catch (err) {
+        console.error(`❌ ${config.endpoint} failed:`, err);
+        alert(`❌ ${err.message}`);
+      }
+    });
+  });
 });
