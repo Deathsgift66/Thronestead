@@ -7,6 +7,14 @@ import { supabase } from '../supabaseClient.js';
 import { resetAuthCache, clearStoredAuth } from './auth.js';
 import { clearReauthToken } from './reauth.js';
 
+// Redirect helper used when clearing credentials
+function logoutUser() {
+  localStorage.removeItem('authToken');
+  document.cookie =
+    'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; Secure; SameSite=Strict';
+  window.location.href = '/login.html';
+}
+
 // Logout function — clears session from Supabase, browser storage, and cookies
 async function logout() {
   try {
@@ -21,8 +29,8 @@ async function logout() {
   resetAuthCache();
   clearReauthToken();
 
-  // 🚪 Redirect to home/login
-  window.location.href = 'index.html';
+  // 🚪 Redirect to login
+  logoutUser();
 }
 
 // Bind logout button (if present on page)
