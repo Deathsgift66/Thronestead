@@ -1,7 +1,7 @@
 # Project Name: Thronestead©
 # File Name: test_account_delete_router.py
-# Version 6.15.2025
-# Developer: OpenAI Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 from fastapi import HTTPException
 
 from backend.routers import account_delete

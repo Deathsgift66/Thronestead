@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: utils.js
-// Version 6.18.2025.22.00
-// Developer: Codex
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
 // Shared frontend utilities for DOM helpers and validation.
 import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js';
 import { getReauthHeaders } from './reauth.js';

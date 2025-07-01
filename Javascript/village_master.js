@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: village_master.js
-// Version 6.13.2025.19.49
+// Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 // Sovereign’s Grand Overseer — Page Controller
 

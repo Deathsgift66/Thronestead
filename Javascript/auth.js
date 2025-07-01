@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: auth.js
-// Version 7.1.2025.00.00
-// Developer: Codex (Hardened Build)
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
 

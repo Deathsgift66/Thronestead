@@ -1,6 +1,7 @@
 # Project Name: Thronestead©
 # File Name: alliance_bank.py
-# Developer: OpenAI Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 """API routes for alliance bank grants."""
 
 from datetime import datetime

@@ -1,7 +1,7 @@
 # Project Name: Thronestead©
 # File Name: admin_news.py
-# Version: 6.14.2025.21.01 (Patched)
-# Developer: Codex
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
 
 """Admin endpoints for publishing news articles."""
 

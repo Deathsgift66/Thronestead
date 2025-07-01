@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: resolver_full.py
-# Version 6.13.2025.19.49
+# Version:  7/1/2025 10:38
 # Developer: Deathsgift66
 """Full combat resolver processing kingdom and alliance wars."""
 

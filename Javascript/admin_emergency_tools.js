@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
-// File Name: admin_emergency.js
-// Version 7.01.2025.08.00
-// Developer: Codex (KISS Optimized)
+// File Name: admin_emergency_tools.js
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
 
 import { authFetch, authJsonFetch } from './utils.js';
 

@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: overview.js
-// Version 6.13.2025.19.49
+// Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 // Kingdom Overview — Summary + Resources + Military + Quests + Modifiers
 import { escapeHTML } from './utils.js';

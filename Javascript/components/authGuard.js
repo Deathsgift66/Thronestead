@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: authGuard.js
-// Version: 6.13.2025.20.50 (Final Redirect Edition)
+// Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 
 import { supabase } from '../../supabaseClient.js';

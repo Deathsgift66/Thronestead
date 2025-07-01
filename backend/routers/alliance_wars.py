@@ -1,6 +1,6 @@
 # Project Name: Thronestead©
 # File Name: alliance_wars.py
-# Version: 6.20.2025.21.10
+# Version:  7/1/2025 10:38
 # Developer: Deathsgift66
 
 """

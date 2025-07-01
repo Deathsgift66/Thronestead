@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: account_previews.js
-// Version 6.17.2025.01.00
-// Developer: Codex
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
 
 function setupPreview(inputId, previewId, fallback = '') {
   const input = document.getElementById(inputId);

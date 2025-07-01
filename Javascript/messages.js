@@ -1,7 +1,7 @@
 // Project Name: Thronestead©
 // File Name: messages.js
-// Version 6.15.2025.20.12
-// Developer: Codex
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
 // Inbox Viewer + Controls
 
 import { supabase } from '../supabaseClient.js';
