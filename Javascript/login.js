@@ -17,7 +17,12 @@ let loginForm = null,
   resetBtn = null,
   forgotEmail = null,
   forgotMessage = null,
-  togglePasswordBtn = null;
+  togglePasswordBtn = null,
+  loginErrorModal = null,
+  loginErrorMessage = null,
+  resendBtn = null,
+  resendMsg = null,
+  closeLoginErrorBtn = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
@@ -29,6 +34,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   forgotEmail = document.getElementById('forgot-email');
   forgotMessage = document.getElementById('forgot-message');
   togglePasswordBtn = document.getElementById('toggle-password');
+  loginErrorModal = document.getElementById('login-error-modal');
+  loginErrorMessage = document.getElementById('login-error-message');
+  resendBtn = document.getElementById('resend-verification-btn');
+  resendMsg = document.getElementById('resend-message');
+  closeLoginErrorBtn = document.getElementById('close-login-error-btn');
+
+  const forgotLink = document.getElementById('forgot-password-link');
+  const forgotModal = document.getElementById('forgot-password-modal');
+  const closeForgotBtn = document.getElementById('close-forgot-btn');
+  const requestAuthLink = document.getElementById('request-auth-link');
+  const authModal = document.getElementById('auth-link-modal');
+  const authEmailInput = document.getElementById('auth-email');
+  const sendAuthBtn = document.getElementById('send-auth-btn');
+  const authMessage = document.getElementById('auth-message');
+  const closeAuthBtn = document.getElementById('close-auth-btn');
 
   const session = (await supabase.auth.getSession()).data.session;
   if (session?.user) {
@@ -39,6 +59,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   loginForm?.addEventListener('submit', handleLogin);
   resetBtn?.addEventListener('click', handleReset);
   togglePasswordBtn?.addEventListener('click', togglePassword);
+  forgotLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openModal(forgotModal);
+  });
+  closeForgotBtn?.addEventListener('click', () => closeModal(forgotModal));
+  requestAuthLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    authEmailInput.value = emailInput.value.trim();
+    openModal(authModal);
+  });
+  closeAuthBtn?.addEventListener('click', () => closeModal(authModal));
+  sendAuthBtn?.addEventListener('click', () => sendAuth(authEmailInput, authMessage, sendAuthBtn));
+  closeLoginErrorBtn?.addEventListener('click', () => closeModal(loginErrorModal));
+  resendBtn?.addEventListener('click', resendVerification);
 });
 
 async function handleLogin(e) {
@@ -71,7 +105,13 @@ async function handleLogin(e) {
     showMessage('success', 'Login successful. Redirecting...');
     setTimeout(() => redirectToApp(), 1200);
   } catch (err) {
-    showMessage('error', err.message);
+    if (err.message === 'Email not confirmed') {
+      if (loginErrorMessage) loginErrorMessage.textContent = err.message;
+      resendBtn?.classList.remove('hidden');
+      openModal(loginErrorModal);
+    } else {
+      showMessage('error', err.message);
+    }
   } finally {
     loginButton.disabled = false;
     loginButton.textContent = 'Enter the Realm';
@@ -141,4 +181,68 @@ function showMessage(type, text) {
     messageContainer.classList.remove('show');
   }, 5000);
   showToast(text);
-} 
+}
+
+function openModal(modal) {
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal(modal) {
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+  if (modal === loginErrorModal) {
+    resendBtn?.classList.add('hidden');
+    resendMsg.textContent = '';
+  }
+}
+
+async function sendAuth(input, msgEl, btn) {
+  const email = input.value.trim();
+  if (!email) {
+    msgEl.textContent = 'Enter a valid email.';
+    return;
+  }
+  btn.disabled = true;
+  msgEl.textContent = '';
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/resend-confirmation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Failed to send email.');
+    msgEl.textContent = 'Verification email sent!';
+  } catch (err) {
+    msgEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function resendVerification() {
+  const email = emailInput.value.trim();
+  if (!email) {
+    resendMsg.textContent = 'Enter your email above.';
+    return;
+  }
+  resendBtn.disabled = true;
+  resendMsg.textContent = '';
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/resend-confirmation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Failed to send email.');
+    resendMsg.textContent = 'Verification email sent!';
+  } catch (err) {
+    resendMsg.textContent = err.message;
+  } finally {
+    resendBtn.disabled = false;
+  }
+}
