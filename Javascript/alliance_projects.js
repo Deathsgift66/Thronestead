@@ -1,7 +1,8 @@
 // Project Name: Thronestead©
 // File Name: alliance_projects.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 7.01.2025.08.00
+// Developer: Codex (KISS Optimized)
+
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
@@ -13,12 +14,41 @@ const RESOURCE_KEYS = [
   'wood_cost', 'stone_cost', 'iron_cost', 'gold_cost', 'wood_plan_cost', 'iron_ingot_cost'
 ];
 
+let projectChannel = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
   await loadAllLists();
-  setInterval(loadAllLists, 30000);
+  await setupRealtimeProjects();
+  setInterval(loadAllLists, 30000); // Auto-refresh
+  window.addEventListener('beforeunload', () => {
+    if (projectChannel) supabase.removeChannel(projectChannel);
+  });
 });
 
+// ----------------------------
+// 🔁 Realtime Sync
+// ----------------------------
+async function setupRealtimeProjects() {
+  const { allianceId } = await getAllianceInfo();
+  if (!allianceId) return;
+
+  if (projectChannel) supabase.removeChannel(projectChannel);
+
+  projectChannel = supabase
+    .channel(`realtime:alliance_projects_${allianceId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'alliance_projects',
+      filter: `alliance_id=eq.${allianceId}`
+    }, () => loadAllLists())
+    .subscribe();
+}
+
+// ----------------------------
+// 🧭 Tab UI
+// ----------------------------
 function setupTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -30,6 +60,9 @@ function setupTabs() {
   });
 }
 
+// ----------------------------
+// 📥 Load All Tabs
+// ----------------------------
 async function loadAllLists() {
   await Promise.all([
     loadAvailable(),
@@ -59,6 +92,7 @@ async function loadAvailable() {
   const container = document.getElementById('available-projects-list');
   if (!container) return;
   container.innerHTML = '<p>Loading...</p>';
+
   try {
     const { allianceId } = await getAllianceInfo();
     const res = await fetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
@@ -75,6 +109,7 @@ function renderAvailable(list) {
   container.innerHTML = list.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
+
   const canStart = window.user?.permissions?.includes('can_manage_projects');
   list.forEach(p => {
     const card = document.createElement('article');
@@ -103,6 +138,7 @@ async function loadInProgress() {
   const container = document.getElementById('in-progress-projects-list');
   if (!container) return;
   container.innerHTML = '<p>Loading...</p>';
+
   try {
     const { allianceId } = await getAllianceInfo();
     const res = await fetch(`/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
@@ -119,6 +155,7 @@ function renderInProgress(list) {
   container.innerHTML = list.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
+
   list.forEach(p => {
     const percent = p.progress || 0;
     const card = document.createElement('article');
@@ -126,12 +163,14 @@ function renderInProgress(list) {
     card.setAttribute('role', 'region');
     card.setAttribute('aria-label', `Project: ${p.project_key}`);
     const eta = formatTime(Math.max(0, Math.floor((new Date(p.expected_end) - Date.now()) / 1000)));
+
     card.innerHTML = `
       <h3>${escapeHTML(p.project_key)}</h3>
       <progress value="${percent}" max="100"></progress>
       <span>${percent}% - ETA ${eta}</span>
       <div class="contrib-summary">Loading...</div>
     `;
+
     container.appendChild(card);
     loadContributions(p.project_key, card.querySelector('.contrib-summary'));
   });
@@ -142,12 +181,15 @@ async function loadContributions(key, element) {
     const res = await fetch(`/api/alliance/projects/contributions?project_key=${key}`);
     const data = await res.json();
     const list = data.contributions || [];
-    if (list.length === 0) {
+
+    if (!list.length) {
       element.innerHTML = '<p class="empty-state">No contributions yet.</p>';
       return;
     }
-    const total = list.reduce((t, r) => t + r.amount, 0) || 1;
+
+    const total = list.reduce((sum, r) => sum + r.amount, 0) || 1;
     element.innerHTML = '';
+
     list.slice(0, 3).forEach(r => {
       const div = document.createElement('div');
       div.className = 'contrib-entry';
@@ -170,6 +212,7 @@ async function loadCompleted() {
   const container = document.getElementById('completed-projects-list');
   if (!container) return;
   container.innerHTML = '<p>Loading...</p>';
+
   try {
     const { allianceId } = await getAllianceInfo();
     const res = await fetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
@@ -186,6 +229,7 @@ function renderCompleted(list) {
   container.innerHTML = list.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
+
   list.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card completed-project';
@@ -207,6 +251,7 @@ async function loadCatalogue() {
   const container = document.getElementById('catalogue-projects-list');
   if (!container) return;
   container.innerHTML = '<p>Loading...</p>';
+
   try {
     const res = await fetch('/api/alliance/projects/catalogue');
     const json = await res.json();
@@ -222,6 +267,7 @@ function renderCatalogue(list) {
   container.innerHTML = list.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
+
   list.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card';
@@ -229,11 +275,13 @@ function renderCatalogue(list) {
     card.setAttribute('aria-label', `Project: ${p.project_name}`);
     const status = p.status || 'Available';
     const statusIcon = status === 'Completed' ? '✅' : status === 'Available' ? '🔓' : '🔒';
+
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)} ${statusIcon}</h3>
       <p>${escapeHTML(p.description || '')}</p>
       <p>Category: ${escapeHTML(p.category || '')}</p>
     `;
+
     if (status === 'Locked') card.classList.add('locked');
     container.appendChild(card);
   });
@@ -250,8 +298,10 @@ async function startProject(projectKey) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ project_key: projectKey, user_id: userId })
     });
+
     const json = await res.json();
     if (!res.ok) throw new Error(json.detail || 'Unknown error');
+
     await loadAllLists();
     const live = document.getElementById('project-updates');
     if (live) live.textContent = 'Project started successfully.';
@@ -277,4 +327,3 @@ function formatCostFromColumns(obj) {
     .map(key => `${obj[key]} ${escapeHTML(key.replace(/_cost$/, ''))}`)
     .join(', ') || 'N/A';
 }
-
