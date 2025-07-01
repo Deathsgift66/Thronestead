@@ -171,15 +171,8 @@ function showLoginError(message) {
 
 // ✅ Validate login form inputs
 function validateLoginInputs(email, password) {
-  if (!email || !password) {
-    return 'Email and password are required.';
-  }
-  if (!validateEmail(email)) {
-    return 'Please enter a valid email address.';
-  }
-  if (password.length < 8) {
-    return 'Password must be at least 8 characters.';
-  }
+  if (!email || !password) return 'Email and password required.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email.';
   return '';
 }
 
@@ -257,12 +250,19 @@ export async function loginExecute(email, password, remember = false) {
       return null;
     }
 
-    const res = await fetch(`${API_BASE_URL}/api/session/store`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ token: data.session.access_token })
-    });
+    let res;
+    try {
+      res = await fetch(`${API_BASE_URL}/api/session/store`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token: data.session.access_token })
+      });
+    } catch (err) {
+      showMessage('error', 'Network error.');
+      sendErrorContext(email, err.message);
+      return null;
+    }
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       showMessage('error', text || '❌ Login failed.');
@@ -475,14 +475,15 @@ async function handleLogin(e) {
     } else if (result.user) {
       clearAttempts();
 
-      const storage = rememberCheckbox?.checked ? localStorage : sessionStorage;
-      const altStorage = storage === localStorage ? sessionStorage : localStorage;
+      const storage = localStorage;
+      const altStorage = sessionStorage;
 
       const token = result.session?.access_token || '';
       let userInfo = result.user || {};
 
       // Persist credentials immediately so subsequent API calls succeed
         if (token) {
+          localStorage.setItem('authToken', token);
           const expiry = new Date(result.session.expires_at * 1000).toUTCString();
           document.cookie =
             `authToken=${encodeURIComponent(token)}; path=/; secure; samesite=strict; domain=${location.hostname}; expires=${expiry}`;
