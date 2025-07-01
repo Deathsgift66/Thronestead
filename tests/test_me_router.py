@@ -1,5 +1,4 @@
 import asyncio
-import os
 
 import pytest
 from jose import jwt
@@ -54,18 +53,18 @@ def test_get_current_user_invalid(db_session, monkeypatch):
         asyncio.run(get_current_user(req, db=db_session))
 
 
-def test_me_route_returns_user():
-    input_user = {
-        "user_id": "u1",
-        "kingdom_id": 1,
-        "username": "name",
-        "setup_complete": True,
-    }
-    result = asyncio.run(me.get_me(user=input_user))
+def test_me_route_returns_user(monkeypatch):
+    token = jwt.encode(
+        {"sub": "u1", "email": "u@example.com", "role": "player"},
+        "secret",
+        algorithm="HS256",
+    )
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    result = me.get_me(Authorization=f"Bearer {token}")
     assert result == {
-        "kingdom_id": 1,
-        "username": "name",
-        "setup_complete": True,
+        "user_id": "u1",
+        "email": "u@example.com",
+        "roles": "player",
     }
 
 
