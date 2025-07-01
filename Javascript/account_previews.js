@@ -1,14 +1,28 @@
 // Project Name: Thronestead©
 // File Name: account_previews.js
-// Version 6.17.2025.00.00
+// Version 6.17.2025.01.00
 // Developer: Codex
 
-document.getElementById('avatar_url')?.addEventListener('input', e => {
-  const preview = document.getElementById('avatar-preview');
-  if (preview) preview.src = e.target.value;
-});
+function setupPreview(inputId, previewId, fallback = '') {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
 
-document.getElementById('profile_banner')?.addEventListener('input', e => {
-  const preview = document.getElementById('banner-preview');
-  if (preview) preview.src = e.target.value;
-});
+  if (!input || !preview) return;
+
+  input.addEventListener('input', e => {
+    const url = e.target.value.trim();
+    preview.src = isValidURL(url) ? url : fallback;
+  });
+}
+
+function isValidURL(str) {
+  try {
+    new URL(str);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+setupPreview('avatar_url', 'avatar-preview', '/images/default-avatar.png');
+setupPreview('profile_banner', 'banner-preview', '/images/default-banner.jpg');
