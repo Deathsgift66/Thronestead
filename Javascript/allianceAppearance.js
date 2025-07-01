@@ -1,17 +1,15 @@
 // Project Name: Thronestead©
 // File Name: allianceAppearance.js
-// Version 6.13.2025.19.49
-// Developer: Deathsgift66
+// Version 7.01.2025.08.00
+// Developer: Codex (KISS Optimized)
+
 import { supabase } from '../supabaseClient.js';
 
 const DEFAULT_BANNER = '/Assets/banner.png';
 
-/**
- * Applies the alliance's banner, emblem, and background to matching page elements.
- */
 async function applyAllianceAppearance() {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } = {} } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     if (!userId) return;
 
@@ -20,38 +18,37 @@ async function applyAllianceAppearance() {
     });
     if (!res.ok) return;
 
-    const data = await res.json();
-    const alliance = data.alliance;
+    const { alliance } = await res.json();
     if (!alliance) return;
 
-    // Set banner (or fallback)
-    const bannerURL = alliance.banner || DEFAULT_BANNER;
+    const banner = alliance.banner || DEFAULT_BANNER;
+    const emblem = alliance.emblem_url;
+
+    // Update banner images
     document.querySelectorAll('.alliance-banner').forEach(img => {
-      img.src = bannerURL;
+      img.src = banner;
     });
 
-    // Set emblem if available
-    if (alliance.emblem_url) {
+    // Update emblem images
+    if (emblem) {
       document.querySelectorAll('.alliance-emblem').forEach(img => {
-        img.src = alliance.emblem_url;
+        img.src = emblem;
       });
     }
 
-    // Set background image if banner is valid
-    if (alliance.banner) {
-      document.querySelectorAll('.alliance-bg').forEach(el => {
-        el.style.backgroundImage = `url(${bannerURL})`;
-        el.style.backgroundSize = 'cover';
-        el.style.backgroundAttachment = 'fixed';
-        el.style.backgroundRepeat = 'no-repeat';
-        el.style.backgroundPosition = 'center';
-      });
-    }
+    // Update background styles
+    document.querySelectorAll('.alliance-bg').forEach(el => {
+      el.style.backgroundImage = `url(${banner})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundAttachment = 'fixed';
+      el.style.backgroundRepeat = 'no-repeat';
+      el.style.backgroundPosition = 'center';
+    });
 
   } catch (err) {
-    console.error('❌ Alliance appearance load failed:', err);
+    console.error('❌ Failed to apply alliance appearance:', err);
   }
 }
 
-// Initialize on DOM ready
+// 🚀 Initialize on load
 document.addEventListener('DOMContentLoaded', applyAllianceAppearance);
