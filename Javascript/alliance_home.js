@@ -1,30 +1,27 @@
 // Project Name: Thronestead©
 // File Name: alliance_home.js
-// Version 6.14.2025.20.12
-// Developer: Deathsgift66
+// Version 7.01.2025.08.00
+// Developer: Codex (KISS Optimized)
+
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, setText, formatDate, fragmentFrom, jsonFetch } from './utils.js';
 
 let activityChannel = null;
 
-// Clean up realtime connections when leaving the page
 window.addEventListener('beforeunload', () => {
   if (activityChannel) supabase.removeChannel(activityChannel);
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user?.id) {
+  const { data: { session } = {} } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) {
     window.location.href = 'login.html';
     return;
   }
-  fetchAllianceDetails(session.user.id);
+  fetchAllianceDetails(userId);
 });
 
-/**
- * Fetch alliance details via REST then initialize realtime channel.
- * @param {string} userId Authenticated user identifier
- */
 async function fetchAllianceDetails(userId) {
   try {
     const data = await jsonFetch('/api/alliance-home/details', {
@@ -33,13 +30,15 @@ async function fetchAllianceDetails(userId) {
     populateAlliance(data);
     setupRealtime(data.alliance?.alliance_id);
   } catch (err) {
-    console.error('Failed to fetch alliance details:', err);
+    console.error('❌ Failed to fetch alliance details:', err);
   }
 }
 
 function populateAlliance(data) {
   const a = data.alliance;
   if (!a) return;
+
+  const safe = v => v ?? 0;
 
   setText('alliance-name', a.name);
   setText('alliance-leader', a.leader);
@@ -64,11 +63,11 @@ function populateAlliance(data) {
   if (emblem) emblem.alt = `Emblem of ${a.name}`;
 
   if (data.vault) {
-    setText('alliance-fortification', data.vault.fortification_level ?? 0);
-    setText('alliance-army', data.vault.army_count ?? 0);
-    setText('vault-gold', data.vault.gold ?? 0);
-    setText('vault-food', data.vault.food ?? 0);
-    setText('vault-ore', data.vault.iron_ore ?? 0);
+    setText('alliance-fortification', safe(data.vault.fortification_level));
+    setText('alliance-army', safe(data.vault.army_count));
+    setText('vault-gold', safe(data.vault.gold));
+    setText('vault-food', safe(data.vault.food));
+    setText('vault-ore', safe(data.vault.iron_ore));
   }
 
   renderProjects(data.projects);
@@ -82,47 +81,37 @@ function populateAlliance(data) {
   renderWarScore(data.wars);
 }
 
-// === Render Functions ===
+// === Render Utilities ===
 
-/**
- * Render active alliance projects with progress bars.
- * @param {Array} projects Project list
- */
+function setFallbackText(el, message, tag = 'p') {
+  el.innerHTML = `<${tag} class="empty">${message}</${tag}>`;
+}
+
 function renderProjects(projects = []) {
   const container = document.getElementById('project-progress-bars');
   if (!container) return;
-  if (!projects.length) {
-    container.innerHTML = '<p class="empty">No active projects.</p>';
-    return;
-  }
+  if (!projects.length) return setFallbackText(container, 'No active projects.');
   const frag = fragmentFrom(projects, p => {
     const div = document.createElement('div');
     div.className = 'progress-bar';
-    div.innerHTML = `\n    <label>${escapeHTML(p.name)}</label>\n    <progress value="${p.progress}" max="100"></progress>\n    <span>${p.progress}%</span>\n  `;
+    div.innerHTML = `<label>${escapeHTML(p.name)}</label><progress value="${p.progress}" max="100"></progress><span>${p.progress}%</span>`;
     return div;
   });
   container.replaceChildren(frag);
 }
 
-/**
- * Render alliance member table.
- * @param {Array} members Member list
- */
 function renderMembers(members = []) {
   const body = document.getElementById('members-list');
   if (!body) return;
-  if (!members.length) {
-    body.innerHTML = '<tr><td class="empty" colspan="5">No members.</td></tr>';
-    return;
-  }
-  const highest = Math.max(0, ...members.map(m => m.contribution || 0));
+  if (!members.length) return setFallbackText(body, 'No members.', 'tr');
+
+  const top = Math.max(0, ...members.map(m => m.contribution || 0));
   const frag = fragmentFrom(members, m => {
     const row = document.createElement('tr');
     let icons = '';
-    const rank = String(m.rank || '').toLowerCase();
-    if (rank === 'leader') icons += '👑 ';
-    else if (rank === 'officer') icons += '🛡️ ';
-    if ((m.contribution || 0) === highest && highest > 0) icons += '🔥 ';
+    if (m.rank === 'Leader') icons += '👑 ';
+    else if (m.rank === 'Officer') icons += '🛡️ ';
+    if ((m.contribution || 0) === top && top > 0) icons += '🔥 ';
     row.innerHTML = `
       <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${escapeHTML(m.username)}" class="crest"></td>
       <td>${escapeHTML(m.username)}</td>
@@ -138,79 +127,58 @@ function renderTopContributors(members = []) {
   const list = document.getElementById('top-contrib-list');
   if (!list) return;
   list.innerHTML = '';
-  if (!members.length) {
-    list.innerHTML = '<p class="empty">No contributors yet.</p>';
-    return;
-  }
 
-  const top = [...members]
+  if (!members.length) return setFallbackText(list, 'No contributors yet.');
+
+  members
     .sort((a, b) => (b.contribution || 0) - (a.contribution || 0))
-    .slice(0, 5);
-
-  top.forEach(m => {
-    const li = document.createElement('li');
-    li.className = 'top-contrib-entry';
-
-    const img = document.createElement('img');
-    img.className = 'contrib-avatar';
-    img.src = m.avatar || '/Assets/avatars/default_avatar_emperor.png';
-    img.alt = m.username;
-    li.appendChild(img);
-
-    const span = document.createElement('span');
-    span.textContent = ` ${m.username} - ${m.contribution}`;
-    li.appendChild(span);
-
-    list.appendChild(li);
-  });
+    .slice(0, 5)
+    .forEach(m => {
+      const li = document.createElement('li');
+      li.className = 'top-contrib-entry';
+      li.innerHTML = `
+        <img class="contrib-avatar" src="${m.avatar || '/Assets/avatars/default_avatar_emperor.png'}" alt="${escapeHTML(m.username)}">
+        <span> ${escapeHTML(m.username)} - ${m.contribution}</span>`;
+      list.appendChild(li);
+    });
 }
 
 function renderQuests(quests = []) {
   const container = document.getElementById('quest-list');
   if (!container) return;
-  container.innerHTML = '';
-  if (!quests.length) {
-    container.innerHTML = '<p class="empty">No active quests.</p>';
-    return;
-  }
-  quests.forEach(q => {
-    const card = document.createElement('div');
-    card.className = 'quest-card';
-    card.innerHTML = `<strong>${escapeHTML(q.name)}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" data-width="${q.progress}"></div></div>`;
-    container.appendChild(card);
+  if (!quests.length) return setFallbackText(container, 'No active quests.');
+
+  const frag = fragmentFrom(quests, q => {
+    const div = document.createElement('div');
+    div.className = 'quest-card';
+    div.innerHTML = `<strong>${escapeHTML(q.name)}</strong><div class="quest-progress-bar"><div class="quest-progress-fill" data-width="${q.progress}"></div></div>`;
+    return div;
   });
+  container.replaceChildren(frag);
 }
 
 function renderAchievements(achievements = []) {
   const list = document.getElementById('achievements-list');
   if (!list) return;
-  if (!achievements.length) {
-    list.innerHTML = '<p class="empty">No achievements earned yet.</p>';
-    return;
-  }
-  list.innerHTML = '';
-  achievements.forEach(a => {
+  if (!achievements.length) return setFallbackText(list, 'No achievements earned yet.');
+
+  const frag = fragmentFrom(achievements, a => {
     const li = document.createElement('li');
     const badge = document.createElement('span');
     badge.className = 'achievement-badge';
     if (a.badge_icon_url) badge.style.backgroundImage = `url(${a.badge_icon_url})`;
     li.appendChild(badge);
     li.insertAdjacentText('beforeend', ` ${a.name}`);
-    list.appendChild(li);
+    return li;
   });
+  list.replaceChildren(frag);
 }
 
-/**
- * Render recent alliance activity feed.
- * @param {Array} entries Activity log entries
- */
 function renderActivity(entries = []) {
   const list = document.getElementById('activity-log');
   if (!list) return;
-  if (!entries.length) {
-    list.innerHTML = '<p class="empty">No recent activity.</p>';
-    return;
-  }
+  if (!entries.length) return setFallbackText(list, 'No recent activity.');
+
   const frag = fragmentFrom(entries, e => {
     const li = document.createElement('li');
     li.className = 'activity-log-entry';
@@ -223,46 +191,37 @@ function renderActivity(entries = []) {
 function renderDiplomacy(treaties = []) {
   const container = document.getElementById('diplomacy-table');
   if (!container) return;
-  container.innerHTML = '';
-  if (!treaties.length) {
-    container.innerHTML = '<p class="empty">No treaties.</p>';
-    return;
-  }
-  treaties.forEach(t => {
-    const row = document.createElement('div');
-    row.className = 'diplomacy-row';
-    row.textContent = `${t.treaty_type} with Alliance ${t.partner_alliance_id} (${t.status})`;
-    container.appendChild(row);
+  if (!treaties.length) return setFallbackText(container, 'No treaties.');
+  const frag = fragmentFrom(treaties, t => {
+    const div = document.createElement('div');
+    div.className = 'diplomacy-row';
+    div.textContent = `${t.treaty_type} with Alliance ${t.partner_alliance_id} (${t.status})`;
+    return div;
   });
+  container.replaceChildren(frag);
 }
 
 function renderActiveBattles(wars = []) {
   const container = document.getElementById('active-battles-list');
   if (!container) return;
-  container.innerHTML = '';
 
   const active = wars.filter(w => w.war_status === 'active');
-  if (!active.length) {
-    container.innerHTML = '<p class="empty">No active battles.</p>';
-    return;
-  }
+  if (!active.length) return setFallbackText(container, 'No active battles.');
+
   const frag = fragmentFrom(active, w => {
     const div = document.createElement('div');
     div.className = 'battle-entry';
     div.textContent = `War ${w.alliance_war_id} — ${w.war_status}`;
     return div;
   });
-  container.appendChild(frag);
+  container.replaceChildren(frag);
 }
 
 function renderWarScore(wars = []) {
   const container = document.getElementById('war-score-summary');
   if (!container) return;
-  container.innerHTML = '';
-  if (!wars.length) {
-    container.innerHTML = '<p class="empty">No war scores.</p>';
-    return;
-  }
+  if (!wars.length) return setFallbackText(container, 'No war scores.');
+
   const frag = fragmentFrom(wars, w => {
     const div = document.createElement('div');
     const att = w.attacker_score ?? 0;
@@ -270,44 +229,34 @@ function renderWarScore(wars = []) {
     div.textContent = `War ${w.alliance_war_id}: Attacker ${att} vs Defender ${def}`;
     return div;
   });
-  container.appendChild(frag);
+  container.replaceChildren(frag);
 }
 
-// === Realtime Activity Logging ===
+// === Realtime Handling ===
 
-/**
- * Subscribe to alliance activity feed via Supabase realtime.
- * @param {number|string} allianceId Alliance identifier
- */
 function setupRealtime(allianceId) {
   if (!allianceId) return;
   if (activityChannel) supabase.removeChannel(activityChannel);
 
   activityChannel = supabase
     .channel(`alliance_home_${allianceId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'alliance_activity_log',
-        filter: `alliance_id=eq.${allianceId}`
-      },
-      payload => addActivityEntry(payload.new)
-    )
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'alliance_activity_log',
+      filter: `alliance_id=eq.${allianceId}`
+    }, payload => addActivityEntry(payload.new))
     .subscribe();
 }
 
-/**
- * Prepend an activity entry to the log, keeping the last 20 entries.
- * @param {object} entry Activity payload
- */
 function addActivityEntry(entry) {
   const list = document.getElementById('activity-log');
   if (!list) return;
+
   const li = document.createElement('li');
   li.className = 'activity-log-entry';
   li.textContent = `[${formatDate(entry.created_at)}] ${entry.user_id}: ${entry.description}`;
   list.prepend(li);
+
   if (list.children.length > 20) list.removeChild(list.lastChild);
 }
