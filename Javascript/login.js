@@ -26,7 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   forgotMessage = document.getElementById('forgot-message');
 
   const session = (await supabase.auth.getSession()).data.session;
-  if (session?.user) return redirectToApp();
+  if (session?.user) {
+    await redirectToApp();
+    return;
+  }
 
   loginForm?.addEventListener('submit', handleLogin);
   resetBtn?.addEventListener('click', handleReset);
@@ -80,11 +83,28 @@ async function handleReset() {
   }
 }
 
-function redirectToApp() {
-  const params = new URLSearchParams(window.location.search);
-  let target = params.get('redirect') || 'overview.html';
-  if (!/^\/?[\w.-]+\.html$/.test(target)) target = 'overview.html';
-  window.location.href = target;
+async function redirectToApp() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return (window.location.href = 'overview.html');
+    }
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('setup_complete')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (profile && profile.setup_complete === false) {
+      window.location.href = 'play.html';
+    } else {
+      window.location.href = 'overview.html';
+    }
+  } catch (err) {
+    console.error('Redirect failed:', err);
+    window.location.href = 'overview.html';
+  }
 }
 
 function showMessage(type, text) {
