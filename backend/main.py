@@ -85,12 +85,13 @@ origins = [
     "https://www.thronestead.com/",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:5173",  # for Vite if used
+    "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost",
     "http://127.0.0.1",
 ]
 
+# Allow additional origins via environment variable
 extra_origins = get_env_var("ALLOWED_ORIGINS")
 if extra_origins:
     origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
@@ -105,9 +106,8 @@ if "*" in origins:
     origins = ["*"]
     allow_credentials = False
 
-# Insert user state middleware first so CORS headers are still applied even
-# when the middleware short-circuits the request (e.g. banned users).
-app.add_middleware(UserStateMiddleware)
+# Apply the CORS middleware before other custom middleware so that CORS
+# headers are always included in the response.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -116,6 +116,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(UserStateMiddleware)
 
 # Print configured origins during startup for debugging purposes.
 @app.on_event("startup")
