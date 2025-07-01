@@ -23,7 +23,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from . import routers as router_pkg
-from .auth_middleware import UserStateMiddleware
 from .rate_limiter import setup_rate_limiter
 from . import database
 from .models import Base
@@ -117,7 +116,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(UserStateMiddleware)
 
 # Print configured origins during startup for debugging purposes.
 @app.on_event("startup")

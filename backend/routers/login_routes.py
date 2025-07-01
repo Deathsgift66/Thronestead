@@ -73,100 +73,6 @@ def get_announcements():
     return JSONResponse(content={"announcements": announcements}, status_code=200)
 
 
-class EventPayload(BaseModel):
-    event: str
-
-
-class AttemptPayload(BaseModel):
-    email: EmailStr
-    success: bool
-
-
-class ErrorContextPayload(BaseModel):
-    email: EmailStr | None = None
-    message: str
-    timestamp: float
-    user_agent: str | None = None
-    platform: str | None = None
-
-
-@router.post("/event")
-@limiter.limit("5/minute")
-def log_login_event(
-    request: Request,
-    payload: EventPayload,
-    user_id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db),
-):
-    """
-    📘 Log user login-related actions (e.g., successful login, login attempt).
-
-    Parameters:
-        - payload.event (str): Description of the login event
-
-    Returns:
-        - Success message after recording the event
-    """
-    ip = request.headers.get("x-forwarded-for")
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
-    if not ip:
-        ip = request.client.host if request.client else ""
-    agent = request.headers.get("user-agent", "")
-    log_action(db, user_id, "login_event", payload.event, ip, agent)
-    return {"message": "event logged"}
-
-
-@router.post("/attempt")
-@limiter.limit("20/minute")
-def record_login_attempt(request: Request, payload: AttemptPayload, db: Session = Depends(get_db)):
-    """Record a login attempt success or failure."""
-    try:
-        row = db.execute(
-            text("SELECT user_id FROM users WHERE lower(email)=:email"),
-            {"email": payload.email.lower()},
-        ).fetchone()
-        user_id = row[0] if row else None
-        action = "login_success" if payload.success else "login_fail"
-        ip = request.headers.get("x-forwarded-for")
-        if ip and "," in ip:
-            ip = ip.split(",")[0].strip()
-        if not ip:
-            ip = request.client.host if request.client else ""
-        agent = request.headers.get("user-agent", "")
-        log_action(db, user_id, action, payload.email.lower(), ip, agent)
-        return {"logged": True}
-    except Exception:
-        logging.exception("Failed to record login attempt")
-        return {"logged": False}
-
-
-@router.post("/error-context")
-@limiter.limit("20/minute")
-def log_error_context(request: Request, payload: ErrorContextPayload, db: Session = Depends(get_db)) -> dict:
-    """Record client-side login error details."""
-    try:
-        user_id = None
-        if payload.email:
-            row = db.execute(
-                text("SELECT user_id FROM users WHERE lower(email)=:email"),
-                {"email": payload.email.lower()},
-            ).fetchone()
-            user_id = row[0] if row else None
-        ip = request.headers.get("x-forwarded-for")
-        if ip and "," in ip:
-            ip = ip.split(",")[0].strip()
-        if not ip:
-            ip = request.client.host if request.client else ""
-        agent = payload.user_agent or request.headers.get("user-agent", "")
-        details = (
-            f"{payload.message} | ts={payload.timestamp} | platform={payload.platform}"
-        )
-        log_action(db, user_id, "login_error", details, ip, agent)
-        return {"logged": True}
-    except Exception:
-        logging.exception("Failed to record login error context")
-        return {"logged": False}
 
 
 @router.get("/status")
@@ -219,6 +125,20 @@ def authenticate(
         ip = request.client.host if request.client else ""
     device_hash = request.headers.get("X-Device-Hash")
 
+    agent = request.headers.get("user-agent", "")
+
+    def _log_attempt(success: bool, msg: str | None = None) -> None:
+        try:
+            row = db.execute(
+                text("SELECT user_id FROM users WHERE lower(email)=:email"),
+                {"email": payload.email.lower()},
+            ).fetchone()
+            uid_log = row[0] if row else None
+            action = "login_success" if success else "login_fail"
+            log_action(db, uid_log, action, msg or payload.email.lower(), ip, agent)
+        except Exception:
+            logging.exception("Failed to record login attempt")
+
     _prune_attempts()
     key = (payload.email.lower(), ip)
     record = FAILED_LOGINS.get(key)
@@ -252,16 +172,19 @@ def authenticate(
         count, _ = FAILED_LOGINS.get(key, (0, 0))
         delay = min(2 ** count, 300)
         FAILED_LOGINS[key] = (count + 1, time.time() + delay)
+        _log_attempt(False)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = session.get("access_token") if isinstance(session, dict) else getattr(session, "access_token", None)
     if not token:
+        _log_attempt(False)
         raise HTTPException(status_code=401, detail="Invalid credentials")
     try:
         chk = sb.auth.get_user(token)
         if isinstance(chk, dict) and chk.get("error"):
             raise ValueError("invalid session")
     except Exception:
+        _log_attempt(False)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     confirmed = bool(
@@ -274,10 +197,9 @@ def authenticate(
         )
     )
     if not confirmed and not ALLOW_UNVERIFIED_LOGIN:
+        _log_attempt(False)
         raise HTTPException(status_code=401, detail="Email not confirmed")
 
-    uid = getattr(user, "id", None) or (isinstance(user, dict) and user.get("id"))
-    agent = request.headers.get("user-agent", "")
     if has_active_ban(db, user_id=uid, ip=ip, device_hash=device_hash):
         raise HTTPException(status_code=403, detail="Account banned")
     row = db.execute(
@@ -305,6 +227,7 @@ def authenticate(
         {"uid": uid},
     )
     db.commit()
+    _log_attempt(True)
     FAILED_LOGINS.pop(key, None)
     try:
         notify_new_login(db, uid, ip, agent)

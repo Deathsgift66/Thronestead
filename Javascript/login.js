@@ -4,11 +4,7 @@
 // Developer: Codex
 
 import { supabase } from '../supabaseClient.js';
-import { getEnvVar } from './env.js';
-import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
 import { showToast } from './utils.js';
-
-const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 let loginForm = null,
   emailInput = null,
@@ -55,10 +51,7 @@ async function handleLogin(e) {
       throw new Error('Email not confirmed.');
     }
 
-    localStorage.setItem('authToken', data.session.access_token);
-    localStorage.setItem('currentUser', JSON.stringify(data.user));
-
-    await fetchAndStorePlayerProgression(data.user.id);
+    // Session is persisted by Supabase client
     showMessage('success', 'Login successful. Redirecting...');
     setTimeout(() => redirectToApp(), 1200);
   } catch (err) {

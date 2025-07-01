@@ -14,7 +14,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 // Avoid creating multiple instances
 if (!window.__supabaseClient && SUPABASE_URL && SUPABASE_ANON_KEY) {
   window.__supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false },
+    auth: { persistSession: true },
   });
 }
 
