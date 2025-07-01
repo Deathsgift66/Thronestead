@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: fetchJson.js
-// Version 6.21.2025.01.00
-// Developer: Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 import { authFetch } from './utils.js';
 
 /**

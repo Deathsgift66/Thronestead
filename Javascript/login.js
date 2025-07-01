@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
-// File Name: login.js (Simplified & Fixed)
-// Version 7.01.2025.12.00
-// Developer: Codex
+// File Name: login.js
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
 import { showToast } from './utils.js';

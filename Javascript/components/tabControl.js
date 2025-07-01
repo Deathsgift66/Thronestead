@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: tabControl.js
-// Version 6.15.2025.21.10
-// Developer: Codex (Refined by ChatGPT)
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 
 /**
  * Tab controller for UI navigation.

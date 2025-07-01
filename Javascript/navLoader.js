@@ -1,6 +1,7 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: navLoader.js
-// Version 6.13.2025.19.49
+// Version: 7/1/2025 10:31
 // Developer: Deathsgift66
 document.addEventListener("DOMContentLoaded", () => {
   // Fetch navbar relative to the current page so deployment under a subpath

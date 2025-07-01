@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: kingdom_profile.js
-// Version 6.16.2025.22.01
-// Developer: Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { authFetchJson } from './fetchJson.js';
 

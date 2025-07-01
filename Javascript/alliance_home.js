@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: alliance_home.js
-// Version 7.01.2025.08.00
-// Developer: Codex (KISS Optimized)
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, setText, formatDate, fragmentFrom, jsonFetch } from './utils.js';

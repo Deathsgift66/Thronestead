@@ -1,10 +1,7 @@
-from __future__ import annotations
-
-"""Archive old audit logs into the archived_audit_log table."""
-
+# Comment
 # Project Name: Thronestead©
 # File Name: archive_audit_logs.py
-# Version: 6.14.2025.20.13
+# Version: 7/1/2025 10:31
 # Developer: Deathsgift66
 
 from datetime import datetime, timedelta

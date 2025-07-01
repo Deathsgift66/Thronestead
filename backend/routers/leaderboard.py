@@ -1,7 +1,8 @@
+# Comment
 # Project Name: Thronestead©
 # File Name: leaderboard.py
-# Version 6.16.2025.21.20
-# Developer: Codex
+# Version: 7/1/2025 10:31
+# Developer: Deathsgift66
 
 """
 Project: Thronestead ©

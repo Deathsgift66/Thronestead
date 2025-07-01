@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: changelog.js
-// Version 6.14.2025
-// Developer: OpenAI Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 
 // JavaScript for changelog.html — fetches and renders changelog updates
 

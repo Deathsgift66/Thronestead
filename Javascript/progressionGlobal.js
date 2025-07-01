@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: progressionGlobal.js
-// Version 6.19.2025.22.06
-// Developer: Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 // ✅ Fetch progression summary from backend API and store globally + in sessionStorage
 import { getEnvVar } from './env.js';
 const API_BASE_URL = getEnvVar('API_BASE_URL');

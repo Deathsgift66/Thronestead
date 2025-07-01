@@ -1,7 +1,8 @@
+# Comment
 # Project Name: Thronestead©
 # File Name: test_account_router.py
-# Version 6.14.2025
-# Developer: OpenAI Codex
+# Version: 7/1/2025 10:31
+# Developer: Deathsgift66
 from fastapi import HTTPException
 
 from backend.routers import account

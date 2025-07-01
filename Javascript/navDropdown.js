@@ -1,6 +1,7 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: navDropdown.js
-// Version 6.13.2025.19.49
+// Version: 7/1/2025 10:31
 // Developer: Deathsgift66
 document.addEventListener("DOMContentLoaded", () => {
   const allDropdowns = document.querySelectorAll(".dropdown");

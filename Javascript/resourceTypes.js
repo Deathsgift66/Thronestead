@@ -1,6 +1,7 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: resourceTypes.js
-// Version 6.13.2025.19.49
+// Version: 7/1/2025 10:31
 // Developer: Deathsgift66
 // ✅ Exportable list of all normalized resource types used in Thronestead
 export const RESOURCE_TYPES = [

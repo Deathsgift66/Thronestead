@@ -1,6 +1,7 @@
+# Comment
 # Project Name: Thronestead©
 # File Name: modifiers_utils.py
-# Version: 6.13.2025.19.49 (Enhanced)
+# Version: 7/1/2025 10:31
 # Developer: Deathsgift66
 """Shared utilities for modifier handling."""
 

@@ -1,6 +1,7 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: logout.js
-// Version 6.14.2025.23.00
+// Version: 7/1/2025 10:31
 // Developer: Deathsgift66
 // Make sure supabase is available
 import { supabase } from '../supabaseClient.js';

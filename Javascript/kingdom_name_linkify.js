@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: kingdom_name_linkify.js
-// Version 6.20.2025
-// Developer: Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 // Utility to linkify kingdom names in text content.
 
 let kingdomMap = null;

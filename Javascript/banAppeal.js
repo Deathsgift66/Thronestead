@@ -1,6 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: banAppeal.js
-// Developer: Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 
 import { fetchJson } from './fetchJson.js';
 // import { initThemeToggle } from './themeToggle.js';

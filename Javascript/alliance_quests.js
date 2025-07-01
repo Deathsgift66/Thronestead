@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: alliance_quests.js
-// Version 6.14.2025.22.00
-// Developer: Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 // Frontend logic for the Alliance Quests board.
 
 import { escapeHTML } from './utils.js';

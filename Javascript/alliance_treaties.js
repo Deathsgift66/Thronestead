@@ -1,7 +1,8 @@
+// Comment
 // Project Name: Thronestead©
 // File Name: alliance_treaties.js
-// Version 6.30.2025
-// Developer: Codex
+// Version: 7/1/2025 10:31
+// Developer: Deathsgift66
 import { escapeHTML } from './utils.js';
 
 // -------------------- Initialization --------------------
