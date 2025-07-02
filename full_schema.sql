@@ -1653,6 +1653,7 @@ CREATE TABLE public.users (
   is_admin boolean DEFAULT false,
   is_banned boolean DEFAULT false,
   is_deleted boolean DEFAULT false,
+  status text DEFAULT 'active',
   setup_complete boolean DEFAULT false,
   sign_up_date date DEFAULT CURRENT_DATE,
   sign_up_time time without time zone DEFAULT CURRENT_TIME,

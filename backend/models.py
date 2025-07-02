@@ -88,6 +88,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     is_banned = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
+    status = Column(String, default="active")
     setup_complete = Column(Boolean, default=False)
     sign_up_date = Column(Date, server_default=func.current_date())
     sign_up_time = Column(Time(timezone=False), server_default=func.now())
