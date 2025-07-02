@@ -9,6 +9,7 @@ Used for server-side operations including authentication, data writes, and RLS-s
 """
 
 import logging
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - type check only
@@ -26,35 +27,20 @@ except ImportError as e:  # pragma: no cover
 # -------------------------------
 from .env_utils import get_env_var
 
-SUPABASE_URL = get_env_var("SUPABASE_URL")
-SUPABASE_KEY = get_env_var("SUPABASE_SERVICE_ROLE_KEY") or get_env_var("SUPABASE_ANON_KEY")
-
-# -------------------------------
-# ⚙️ Create Supabase Client
-# -------------------------------
-supabase: "Client | None" = None
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    logging.error(
-        "❌ Missing Supabase credentials. Set SUPABASE_URL and SUPABASE_ANON_KEY"
-        " or SUPABASE_SERVICE_ROLE_KEY."
-    )
-else:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        logging.info("✅ Supabase client initialized successfully.")
-    except Exception:
-        logging.exception("❌ Failed to initialize Supabase client.")
-        supabase = None
-
-
-# -------------------------------
-# 🧰 Exported Client Accessor
-# -------------------------------
+@lru_cache(maxsize=1)
 def get_supabase_client() -> "Client":
-    """Return the initialized Supabase client."""
-    if supabase is None:
+    """Return a lazily initialized Supabase client."""
+    url = get_env_var("SUPABASE_URL")
+    key = get_env_var("SUPABASE_SERVICE_ROLE_KEY") or get_env_var("SUPABASE_ANON_KEY")
+
+    if not url or not key:
         raise RuntimeError(
-            "Supabase client not initialized. Check SUPABASE_URL and credentials."
+            "Missing Supabase credentials. Set SUPABASE_URL and SUPABASE_ANON_KEY "
+            "or SUPABASE_SERVICE_ROLE_KEY."
         )
-    return supabase
+
+    try:
+        return create_client(url, key)
+    except Exception as exc:
+        logging.exception("❌ Failed to initialize Supabase client.")
+        raise RuntimeError("Supabase client initialization failed") from exc
