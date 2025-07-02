@@ -45,32 +45,27 @@ def _create_sessionmaker(url: str) -> tuple[Engine, sessionmaker]:
 def init_engine(db_url: Optional[str] = None) -> None:
     """Initialise the global SQLAlchemy engine and session factory."""
     global engine, SessionLocal
-    url = db_url or DATABASE_URL
-    if not url:
+    primary = db_url or DATABASE_URL
+    if not primary:
         logger.warning("\u26a0\ufe0f DATABASE_URL is not set. SQLAlchemy is disabled.")
-        engine = None
-        SessionLocal = None
+        engine = SessionLocal = None
         return
-    try:
-        engine, SessionLocal = _create_sessionmaker(url)
-        logger.info("\u2705 SQLAlchemy engine initialized successfully.")
-        return
-    except OperationalError as err:
-        logger.error("\u274c Failed to initialize SQLAlchemy engine.")
-        logger.exception(err)
 
+    candidates = [primary]
     if READ_REPLICA_URL and db_url is None:
         logger.info("\u27f3 Attempting read replica failover.")
-        try:
-            engine, SessionLocal = _create_sessionmaker(READ_REPLICA_URL)
-            logger.info("\u2705 Read replica connection established.")
-            return
-        except OperationalError as replica_err:
-            logger.error("\u274c Failed to connect to read replica.")
-            logger.exception(replica_err)
+        candidates.append(READ_REPLICA_URL)
 
-    engine = None
-    SessionLocal = None
+    for candidate in candidates:
+        try:
+            engine, SessionLocal = _create_sessionmaker(candidate)
+            logger.info("\u2705 SQLAlchemy engine initialized successfully.")
+            return
+        except OperationalError as err:
+            logger.error("\u274c Failed to connect to %s", candidate)
+            logger.exception(err)
+
+    engine = SessionLocal = None
 
 
 # Initialise on import

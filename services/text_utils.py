@@ -17,15 +17,10 @@ _TAG_RE = re.compile(r"<[^>]+>")
 
 def sanitize_plain_text(text: str, max_length: int = 255) -> str:
     """Strip HTML tags, truncate to ``max_length`` and return clean text."""
-    cleaned = _TAG_RE.sub("", text or "").strip()
-    if len(cleaned) > max_length:
-        cleaned = cleaned[:max_length]
-    return cleaned
+    return _TAG_RE.sub("", text or "").strip()[:max_length]
 
 
 def contains_banned_words(text: str | None) -> bool:
     """Return True if the normalized ``text`` includes a banned word."""
-    if not text:
-        return False
-    normalized = _WORD_RE.sub("", text.lower())
+    normalized = _WORD_RE.sub("", text.lower()) if text else ""
     return any(b in normalized for b in _BANNED)
