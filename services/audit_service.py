@@ -19,13 +19,16 @@ DELETED_PLACEHOLDER = "[deleted_user]"
 
 def _row_to_log_dict(row) -> dict:
     """Convert a DB row into a standard log dictionary."""
-    return {
+    log = {
         "log_id": row[0],
         "user_id": DELETED_PLACEHOLDER if row[2] else row[1],
         "action": row[3],
         "details": row[4],
         "created_at": row[5],
     }
+    if len(row) > 6:
+        log["kingdom_id"] = row[6]
+    return log
 
 # ------------------------
 # Core Audit Log Functions
@@ -39,14 +42,15 @@ def log_action(
     details: str,
     ip_address: str | None = None,
     device_info: str | None = None,
+    kingdom_id: int | None = None,
 ) -> None:
     """Insert a global user action into the audit_log table."""
     try:
         db.execute(
             text(
                 """
-                INSERT INTO audit_log (user_id, action, details, ip_address, device_info)
-                VALUES (:uid, :act, :det, :ip, :dev)
+                INSERT INTO audit_log (user_id, action, details, ip_address, device_info, kingdom_id)
+                VALUES (:uid, :act, :det, :ip, :dev, :kid)
             """
             ),
             {
@@ -55,6 +59,7 @@ def log_action(
                 "det": details,
                 "ip": ip_address,
                 "dev": device_info,
+                "kid": kingdom_id,
             },
         )
         db.commit()
@@ -65,7 +70,10 @@ def log_action(
 
 
 def fetch_logs(
-    db: Session, user_id: Optional[str] = None, limit: int = 100
+    db: Session,
+    user_id: Optional[str] = None,
+    kingdom_id: Optional[int] = None,
+    limit: int = 100,
 ) -> list[dict]:
     """
     Fetch global audit log entries. Can filter by user.
@@ -73,14 +81,16 @@ def fetch_logs(
     """
     try:
         query = """
-            SELECT l.log_id, l.user_id, u.is_deleted, l.action, l.details, l.created_at
+            SELECT l.log_id, l.user_id, u.is_deleted, l.action, l.details, l.created_at, l.kingdom_id
               FROM audit_log l
               LEFT JOIN users u ON u.user_id = l.user_id
              WHERE (:uid IS NULL OR l.user_id = :uid)
+               AND (:kid IS NULL OR l.kingdom_id = :kid)
              ORDER BY l.created_at DESC
              LIMIT :limit
         """
-        rows = db.execute(text(query), {"uid": user_id, "limit": limit}).fetchall()
+        params = {"uid": user_id, "kid": kingdom_id, "limit": limit}
+        rows = db.execute(text(query), params).fetchall()
         return [_row_to_log_dict(r) for r in rows]
     except SQLAlchemyError as e:
         logger.exception("Failed to fetch audit logs")
@@ -130,7 +140,7 @@ def fetch_filtered_logs(
     Filter audit logs by optional user ID, action keyword, and date range.
     """
     query = (
-        "SELECT l.log_id, l.user_id, u.is_deleted, l.action, l.details, l.created_at "
+        "SELECT l.log_id, l.user_id, u.is_deleted, l.action, l.details, l.created_at, l.kingdom_id "
         "FROM audit_log l LEFT JOIN users u ON l.user_id = u.user_id WHERE 1=1"
     )
     params = {"limit": limit}

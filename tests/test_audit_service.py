@@ -44,20 +44,22 @@ class DummyDB:
 
 def test_log_action_inserts():
     db = DummyDB()
-    log_action(db, "u1", "create_kingdom", "Created kingdom", "1.1.1.1", "UA")
+    log_action(db, "u1", "create_kingdom", "Created kingdom", "1.1.1.1", "UA", kingdom_id=5)
     assert len(db.inserts) == 1
     assert db.inserts[0]["uid"] == "u1"
     assert db.inserts[0]["act"] == "create_kingdom"
     assert db.inserts[0]["ip"] == "1.1.1.1"
     assert db.inserts[0]["dev"] == "UA"
+    assert db.inserts[0]["kid"] == 5
 
 
 def test_fetch_logs_returns_rows():
     db = DummyDB()
-    db.select_rows = [(1, "u1", False, "start_war", "vs 2", "2025-01-01")]
-    logs = fetch_logs(db, "u1", 10)
+    db.select_rows = [(1, "u1", False, "start_war", "vs 2", "2025-01-01", 3)]
+    logs = fetch_logs(db, "u1", 3, 10)
     assert len(logs) == 1
     assert logs[0]["action"] == "start_war"
+    assert logs[0]["kingdom_id"] == 3
 
 
 def test_log_alliance_activity_inserts():
@@ -80,7 +82,7 @@ def test_fetch_filtered_logs_params():
 def test_fetch_logs_masks_deleted_user():
     db = DummyDB()
     db.select_rows = [(1, "u1", True, "ban", "Removed", "2025-01-01")]
-    logs = fetch_logs(db, None, 10)
+    logs = fetch_logs(db, None, None, 10)
     assert logs[0]["user_id"] == "[deleted_user]"
 
 
