@@ -17,9 +17,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, conint
 
 from ..security import verify_jwt_token
+from ..router_utils import mirror_router
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market_v2"])
-alt_router = APIRouter(prefix="/api/black_market", tags=["black_market_v2"])
+alt_router = mirror_router(router, prefix="/api/black_market")
 
 # ---------------------------------------------
 # Pydantic Models
@@ -148,5 +149,4 @@ def history(kingdom_id: str):
     return {"trades": trades}
 
 
-# Mirror all routes under the underscore prefix
-alt_router.include_router(router)
+# Routes are mirrored under the underscore prefix via ``mirror_router``

@@ -18,9 +18,10 @@ from backend.models import BlackMarketListing
 
 from ..database import get_db
 from ..security import verify_jwt_token
+from ..router_utils import mirror_router
 
 router = APIRouter(prefix="/api/black-market", tags=["black_market"])
-alt_router = APIRouter(prefix="/api/black_market", tags=["black_market"])
+alt_router = mirror_router(router, prefix="/api/black_market")
 
 ALLOWED_ITEM_TYPES = {"token", "cosmetic", "permit", "contraband", "artifact"}
 
@@ -159,5 +160,4 @@ def cancel_listing(
     return {"message": "Listing cancelled"}
 
 
-# Register identical routes under the underscore prefix
-alt_router.include_router(router)
+# Routes are mirrored under the underscore prefix via ``mirror_router``
