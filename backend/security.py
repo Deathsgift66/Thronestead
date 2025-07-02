@@ -26,6 +26,11 @@ from .database import get_db
 
 logger = logging.getLogger("Thronestead.Security")
 
+# Cache environment values on import to avoid repeated lookups
+SUPABASE_JWT_SECRET = get_env_var("SUPABASE_JWT_SECRET")
+SUPABASE_JWT_AUD = get_env_var("SUPABASE_JWT_AUD")
+API_SECRET = get_env_var("API_SECRET")
+
 __all__ = [
     "verify_jwt_token",
     "require_user_id",
@@ -84,10 +89,10 @@ def has_active_ban(
 
 def decode_supabase_jwt(token: str) -> dict:
     """Decode a Supabase JWT with strict validation."""
-    secret = get_env_var("SUPABASE_JWT_SECRET")
+    secret = SUPABASE_JWT_SECRET
     if not secret:
         raise JWTError("SUPABASE_JWT_SECRET not configured")
-    audience = get_env_var("SUPABASE_JWT_AUD")
+    audience = SUPABASE_JWT_AUD
     kwargs = {"audience": audience} if audience else {"options": {"verify_aud": False}}
     return jwt.decode(token, secret, algorithms=["HS256"], **kwargs)
 
@@ -153,7 +158,7 @@ def require_active_user_id(
 
 def verify_api_key(x_api_key: str = Header(...)):
     """Simple API key verification against the `API_SECRET` env variable."""
-    if x_api_key != get_env_var("API_SECRET"):
+    if x_api_key != API_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
