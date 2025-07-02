@@ -12,7 +12,6 @@ Version: 2025-06-21
 
 import logging
 import time
-import os
 from ..env_utils import get_env_var, strtobool
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -26,16 +25,15 @@ from services.notification_service import notify_new_login
 from services.system_flag_service import get_flag
 
 from ..database import get_db
-from ..security import verify_jwt_token, has_active_ban
+from ..security import verify_jwt_token, has_active_ban, _extract_request_meta
 from ..supabase_client import get_supabase_client
-from ..rate_limiter import limiter
 from .session import store_session_cookie, TokenPayload
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
 # Interpret common truthy values for allowing unverified emails during login
-ALLOW_UNVERIFIED_LOGIN = bool(
-    strtobool(get_env_var("ALLOW_UNVERIFIED_LOGIN", default="false"))
+ALLOW_UNVERIFIED_LOGIN = strtobool(
+    get_env_var("ALLOW_UNVERIFIED_LOGIN", default="false")
 )
 
 
@@ -118,12 +116,7 @@ def authenticate(
     """Validate credentials with Supabase and return session plus profile info."""
     if get_flag(db, "maintenance_mode") or get_flag(db, "fallback_override"):
         raise HTTPException(status_code=503, detail="Login disabled")
-    ip = request.headers.get("x-forwarded-for")
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
-    if not ip:
-        ip = request.client.host if request.client else ""
-    device_hash = request.headers.get("X-Device-Hash")
+    ip, device_hash = _extract_request_meta(request)
 
     agent = request.headers.get("user-agent", "")
 
@@ -277,12 +270,7 @@ def reauthenticate(
     db: Session = Depends(get_db),
 ):
     """Re-authenticate a logged-in user by password (and optional OTP)."""
-    ip = request.headers.get("x-forwarded-for")
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
-    if not ip:
-        ip = request.client.host if request.client else ""
-    device_hash = request.headers.get("X-Device-Hash")
+    ip, device_hash = _extract_request_meta(request)
 
     if has_active_ban(db, user_id=user_id, ip=ip, device_hash=device_hash):
         raise HTTPException(status_code=403, detail="Account banned")
