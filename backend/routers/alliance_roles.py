@@ -13,9 +13,10 @@ from services.alliance_service import get_alliance_id
 
 from ..database import get_db
 from ..security import require_user_id
+from ..router_utils import mirror_router
 
 router = APIRouter(prefix="/api/alliance-roles", tags=["alliance_roles"])
-alt_router = APIRouter(prefix="/api/alliance/roles", tags=["alliance_roles"])
+alt_router = mirror_router(router, prefix="/api/alliance/roles")
 
 
 class RolePayload(BaseModel):
@@ -133,6 +134,4 @@ def delete_role(
     return {"status": "deleted"}
 
 
-# Alt route mappings
-# Expose the same endpoints using the alternate prefix
-alt_router.include_router(router)
+# Alt route mappings handled via ``mirror_router``

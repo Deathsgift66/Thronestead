@@ -23,9 +23,10 @@ from services.alliance_service import get_alliance_id
 
 from ..database import get_db
 from ..security import require_user_id
+from ..router_utils import mirror_router
 
 router = APIRouter(prefix="/api/alliance-votes", tags=["alliance_votes"])
-alt_router = APIRouter(prefix="/api/alliance/votes", tags=["alliance_votes"])
+alt_router = mirror_router(router, prefix="/api/alliance/votes")
 
 
 class VoteProposal(BaseModel):
@@ -134,5 +135,4 @@ def vote_results(
     }
 
 
-# Expose the same routes using the alternate prefix
-alt_router.include_router(router)
+# Expose the same routes using the alternate prefix via ``mirror_router``

@@ -28,9 +28,10 @@ from services.audit_service import log_action
 
 from ..database import get_db
 from ..security import require_user_id
+from ..router_utils import mirror_router
 
 router = APIRouter(prefix="/api/alliance-vault", tags=["alliance_vault"])
-alt_router = APIRouter(prefix="/api/vault", tags=["alliance_vault"])
+alt_router = mirror_router(router, prefix="/api/vault")
 custom_router = APIRouter(prefix="/api/alliance/custom", tags=["alliance_vault"])
 
 
@@ -304,8 +305,7 @@ def custom_board(
     return {"image_url": alliance.banner, "custom_text": alliance.motd}
 
 
-# Mirror all routes under the alternate prefixes
-alt_router.include_router(router)
+# Mirror all routes under the alternate prefixes via ``mirror_router``
 custom_router.include_router(router)
 
 # Additional custom endpoint
