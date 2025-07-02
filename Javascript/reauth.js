@@ -73,7 +73,7 @@ async function showReauthModal() {
   const submitBtn = modal.querySelector('#reauth-submit');
   const errorBox = modal.querySelector('#reauth-error');
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     const cleanup = () => {
       modal.classList.add('hidden');
       modal.setAttribute('aria-hidden', 'true');
