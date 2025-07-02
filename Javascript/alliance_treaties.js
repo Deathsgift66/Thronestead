@@ -2,7 +2,7 @@
 // File Name: alliance_treaties.js
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
-import { escapeHTML } from './utils.js';
+import { escapeHTML, openModal, closeModal } from './utils.js';
 
 // -------------------- Initialization --------------------
 
@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadTreaties();
   document.getElementById('create-new-treaty')?.addEventListener('click', proposeTreaty);
-  document.querySelector('.modal-close')?.addEventListener('click', closeModal);
+  document.querySelector('.modal-close')?.addEventListener('click', () => closeModal('treaty-modal'));
   document.getElementById('treaty-modal')?.addEventListener('click', e => {
-    if (e.target.id === 'treaty-modal') closeModal();
+    if (e.target.id === 'treaty-modal') closeModal('treaty-modal');
   });
 });
 
@@ -75,19 +75,11 @@ function openTreatyModal(id) {
           <button class="reject-btn" data-id="${t.id}">Reject</button>
         ` : ''}
       `;
-      const modal = document.getElementById('treaty-modal');
-      modal.classList.remove('hidden');
-      modal.setAttribute('aria-hidden', 'false');
+      openModal('treaty-modal');
       document.querySelector('.accept-btn')?.addEventListener('click', () => respondToTreaty(t.id, 'accept'));
       document.querySelector('.reject-btn')?.addEventListener('click', () => respondToTreaty(t.id, 'reject'));
     })
     .catch(err => console.error('Failed to load treaty:', err));
-}
-
-function closeModal() {
-  const modal = document.getElementById('treaty-modal');
-  modal.classList.add('hidden');
-  modal.setAttribute('aria-hidden', 'true');
 }
 
 // -------------------- Actions --------------------
@@ -99,7 +91,7 @@ async function respondToTreaty(id, response) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ treaty_id: parseInt(id, 10), response })
     });
-    closeModal();
+    closeModal('treaty-modal');
     loadTreaties();
   } catch (err) {
     console.error('Failed to respond:', err);

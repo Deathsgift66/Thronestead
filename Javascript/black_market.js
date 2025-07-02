@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { showToast, escapeHTML } from './utils.js';
+import { showToast, escapeHTML, openModal, closeModal } from './utils.js';
 import { authHeaders, getAuth } from './auth.js';
 
 let listings = [];
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('searchInput')?.addEventListener('input', renderListings);
   document.getElementById('sortSelect')?.addEventListener('change', renderListings);
-  document.getElementById('closeModal')?.addEventListener('click', closeModal);
+  document.getElementById('closeModal')?.addEventListener('click', closePurchaseModal);
   document.getElementById('confirmPurchase')?.addEventListener('click', confirmPurchase);
   document.getElementById('createListingBtn')?.addEventListener('click', openCreateModal);
 
@@ -122,11 +122,11 @@ function openPurchaseModal(listing) {
   const qtyInput = document.getElementById('purchaseQty');
   qtyInput.value = 1;
   qtyInput.max = listing.stock_remaining;
-  document.getElementById('purchaseModal').classList.remove('hidden');
+  openModal('purchaseModal');
 }
 
-function closeModal() {
-  document.getElementById('purchaseModal').classList.add('hidden');
+function closePurchaseModal() {
+  closeModal('purchaseModal');
   currentListing = null;
 }
 
@@ -148,7 +148,7 @@ async function confirmPurchase() {
       })
     });
     showToast(`✅ Purchased ${qty} ${currentListing.item_name}`);
-    closeModal();
+    closePurchaseModal();
     await loadListings();
     await loadHistory();
     await initUserSession();
