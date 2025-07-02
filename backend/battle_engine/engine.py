@@ -9,6 +9,7 @@ Handles terrain generation, fog of war, unit modeling, and combat resolution.
 """
 
 import random
+import itertools
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
@@ -157,50 +158,48 @@ class CombatResolver:
                                 }
                             )
 
-            to_remove: List[Unit] = []
-            for i, attacker in enumerate(units):
-                for defender in units[i + 1 :]:
-                    if attacker.kingdom_id == defender.kingdom_id:
-                        continue
+            to_remove: set[Unit] = set()
+            for attacker, defender in itertools.combinations(units, 2):
+                if attacker.kingdom_id == defender.kingdom_id:
+                    continue
 
-                    base_damage = attacker.quantity * 10
-                    crit_chance = 0.0
-                    if attacker.morale > 60:
-                        crit_chance = ((attacker.morale - 60) / 40) * 0.05
-                        crit_chance = min(0.05, crit_chance)
+                base_damage = attacker.quantity * 10
+                crit_chance = 0.0
+                if attacker.morale > 60:
+                    crit_chance = ((attacker.morale - 60) / 40) * 0.05
+                    crit_chance = min(0.05, crit_chance)
 
-                    critical = False
-                    if random.random() < crit_chance:
-                        base_damage = int(base_damage * 1.5)
-                        critical = True
+                critical = False
+                if random.random() < crit_chance:
+                    base_damage = int(base_damage * 1.5)
+                    critical = True
 
-                    damage = min(base_damage, defender.hp)
-                    defender.hp -= damage
+                damage = min(base_damage, defender.hp)
+                defender.hp -= damage
 
+                logs.append(
+                    {
+                        "event": "attack",
+                        "attacker_id": attacker.unit_id,
+                        "defender_id": defender.unit_id,
+                        "pos": pos,
+                        "damage": damage,
+                        "critical": critical,
+                    }
+                )
+
+                if defender.hp <= 0 and defender not in to_remove:
                     logs.append(
                         {
-                            "event": "attack",
-                            "attacker_id": attacker.unit_id,
-                            "defender_id": defender.unit_id,
+                            "event": "death",
+                            "unit_id": defender.unit_id,
                             "pos": pos,
-                            "damage": damage,
-                            "critical": critical,
                         }
                     )
+                    to_remove.add(defender)
 
-                    if defender.hp <= 0 and defender not in to_remove:
-                        logs.append(
-                            {
-                                "event": "death",
-                                "unit_id": defender.unit_id,
-                                "pos": pos,
-                            }
-                        )
-                        to_remove.append(defender)
-
-            for unit in to_remove:
-                if unit in war.units:
-                    war.units.remove(unit)
+            if to_remove:
+                war.units = [u for u in war.units if u not in to_remove]
 
 
 # --------------------------

@@ -11,11 +11,14 @@ VARIANT_PREFIXES = ["", "VITE_", "PUBLIC_", "PUBLIC_VITE_"]
 def get_env_var(key: str, default: str | None = None) -> str | None:
     """Return the first defined environment variable matching ``key`` variants."""
 
-    for name in (f"{pref}{key}" for pref in VARIANT_PREFIXES):
-        val = os.getenv(name)
-        if val:
-            return val
-    return default
+    return next(
+        (
+            val
+            for pref in VARIANT_PREFIXES
+            if (val := os.getenv(f"{pref}{key}"))
+        ),
+        default,
+    )
 
 
 def strtobool(val: str) -> bool:
