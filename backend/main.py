@@ -13,7 +13,6 @@ if __name__ == "__main__" and __package__ is None:  # dev-only import fix
     __package__ = "backend"
 
 import logging
-import os
 import traceback
 from pathlib import Path
 
@@ -39,11 +38,7 @@ except ImportError:  # pragma: no cover - optional dependency
 # Ensure the database uses values from the loaded .env file
 database.init_engine()
 
-API_SECRET = get_env_var("API_SECRET")
 
-# Load Supabase credentials for downstream modules
-SUPABASE_URL = get_env_var("SUPABASE_URL")
-SUPABASE_KEY = get_env_var("SUPABASE_ANON_KEY") or get_env_var("SUPABASE_SERVICE_ROLE_KEY")
 
 # -----------------------
 # ⚙️ FastAPI Initialization

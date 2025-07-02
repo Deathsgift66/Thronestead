@@ -10,9 +10,7 @@ This file assumes FastAPI app structure, Supabase SDK, and environment-based con
 """
 
 import logging
-import os
 
-from .env_utils import get_env_var
 
 
 # The backend has a dedicated ``supabase_client`` module that creates and
@@ -23,15 +21,9 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     get_supabase_client = None  # type: ignore[misc]
 
-# Environment variables are expected to be provided by the host system
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Thronestead")
-
-# Supabase configuration from environment variables
-SUPABASE_URL = get_env_var("SUPABASE_URL")
-SUPABASE_KEY = get_env_var("SUPABASE_SERVICE_ROLE_KEY") or get_env_var("SUPABASE_ANON_KEY")
 
 # Initialise the Supabase client via ``backend.supabase_client`` if available.
 supabase = None

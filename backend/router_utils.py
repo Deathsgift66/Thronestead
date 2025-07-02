@@ -1,6 +1,6 @@
 # Router utility functions for Thronestead
 from fastapi import APIRouter
-from typing import Sequence, Iterable
+from typing import Sequence
 
 
 def mirror_router(router: APIRouter, prefix: str, tags: Sequence[str] | None = None) -> APIRouter:
