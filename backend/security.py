@@ -164,11 +164,11 @@ def verify_api_key(x_api_key: str = Header(...)):
 
 def verify_admin(user_id: str, db: Session) -> None:
     """Raise 403 if the user is not an admin."""
-    res = db.execute(
+    is_admin = db.execute(
         text("SELECT is_admin FROM users WHERE user_id = :uid"),
         {"uid": user_id},
-    ).fetchone()
-    if not res or not res[0]:
+    ).scalar()
+    if not is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
 
 
@@ -238,13 +238,13 @@ def create_reauth_token(db: Session, user_id: str, ttl: int = 300) -> str:
 
 def validate_reauth_token(db: Session, user_id: str, token: str) -> bool:
     """Return True if the token matches and has not expired."""
-    row = db.execute(
+    expires = db.execute(
         text(
             "SELECT expires_at FROM reauth_tokens WHERE user_id = :uid AND token = :tok"
         ),
         {"uid": user_id, "tok": token},
-    ).fetchone()
-    return bool(row and row[0] > datetime.utcnow())
+    ).scalar()
+    return bool(expires and expires > datetime.utcnow())
 
 
 def verify_reauth_token(
