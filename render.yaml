@@ -29,7 +29,9 @@ services:
       - key: SUPABASE_JWT_SECRET
         sync: false
       - key: ALLOWED_ORIGINS
-        value: https://thronestead.com,https://www.thronestead.com,https://thronestead.onrender.com,http://localhost:3000
+        value: https://thronestead.com,https://www.thronestead.com,https://thronestead.netlify.app,https://thronestead.onrender.com,http://localhost:3000
+      - key: ALLOWED_ORIGIN_REGEX
+        value: https://.*(thronestead\.com|netlify\.app)
 
     autoDeploy: true
 

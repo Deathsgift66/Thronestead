@@ -79,6 +79,8 @@ TRUSTED_ORIGINS = [
     "https://www.thronestead.com",
     "https://thronestead.com/",
     "https://www.thronestead.com/",
+    "https://thronestead.netlify.app",
+    "https://thronestead.netlify.app/",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",
@@ -97,7 +99,7 @@ def _build_cors_origins() -> list[str]:
 origins = _build_cors_origins()
 
 origin_regex = get_env_var(
-    "ALLOWED_ORIGIN_REGEX", default=r"https:\/\/.*thronestead\.com"
+    "ALLOWED_ORIGIN_REGEX", default=r"https:\/\/.*(thronestead\.com|netlify\.app)"
 )
 
 # Apply the CORS middleware before other custom middleware so that CORS

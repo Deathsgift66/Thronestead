@@ -126,7 +126,8 @@ When the backend is not running the static server used by `npm run serve` will
 return `index.html` for requests under `/api`, leading to browser console errors
 like `Invalid JSON from /api/resources`.
 The development server listens on `http://localhost:3000`, so ensure your
-CORS configuration allows that origin.
+CORS configuration allows that origin. When deploying on Netlify you should
+also permit its domain or use a regex to handle preview URLs.
 
 ---
 
@@ -199,10 +200,12 @@ The optional `ALLOWED_ORIGINS` variable controls CORS. Set it to a comma
 separated list of allowed domains or `*` to disable origin checks (credentials
 will be ignored when using `*`). If you need wildcard subdomain support, use
 `ALLOWED_ORIGIN_REGEX` with a regular expression. When the regex is supplied,
-the static origin list is ignored.
+the static origin list is ignored. For deployments on Netlify the regex can be
+used to permit dynamic preview URLs.
 Example:
 ```
-ALLOWED_ORIGINS=https://thronestead.com,https://www.thronestead.com
+ALLOWED_ORIGINS=https://thronestead.com,https://www.thronestead.com,https://thronestead.netlify.app
+ALLOWED_ORIGIN_REGEX=https://.*(thronestead\.com|netlify\.app)
 ```
 
 
