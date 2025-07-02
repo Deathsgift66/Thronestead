@@ -7,7 +7,6 @@ Version: 2025-06-22
 """
 
 import asyncio
-import os
 from ..env_utils import get_env_var
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect

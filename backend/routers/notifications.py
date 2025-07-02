@@ -12,7 +12,6 @@ Version: 2025-06-21
 
 import asyncio
 import json
-import os
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
