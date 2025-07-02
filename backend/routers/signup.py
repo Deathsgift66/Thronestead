@@ -660,6 +660,27 @@ def resend_confirmation(payload: ResendPayload):
     """Resend the signup confirmation email."""
     sb = get_supabase_client()
     try:
+        user_info = sb.auth.admin.get_user_by_email(payload.email)
+    except Exception as exc:  # pragma: no cover - network/dependency issues
+        logger.exception("Failed to look up user before resend")
+        raise HTTPException(status_code=500, detail="Email lookup failed") from exc
+
+    user = (
+        user_info.get("user") if isinstance(user_info, dict) else getattr(user_info, "user", None)
+    ) or user_info
+    confirmed = bool(
+        user
+        and (
+            getattr(user, "confirmed_at", None)
+            or getattr(user, "email_confirmed_at", None)
+            or (isinstance(user, dict) and user.get("confirmed_at"))
+            or (isinstance(user, dict) and user.get("email_confirmed_at"))
+        )
+    )
+    if confirmed:
+        return {"status": "already_verified"}
+
+    try:
         res = sb.auth.resend({"type": "signup", "email": payload.email})
     except Exception as exc:
         logger.exception("Failed to resend confirmation email")

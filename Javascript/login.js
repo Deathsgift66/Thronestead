@@ -219,7 +219,11 @@ async function resendVerification() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.detail || 'Failed to send email.');
-    resendMsg.textContent = 'Verification email sent!';
+    if (data.status === 'already_verified') {
+      resendMsg.textContent = 'Email already verified.';
+    } else {
+      resendMsg.textContent = 'Verification email sent!';
+    }
   } catch (err) {
     resendMsg.textContent = err.message;
   } finally {
