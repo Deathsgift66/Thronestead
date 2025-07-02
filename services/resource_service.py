@@ -151,15 +151,13 @@ def _apply_resource_changes(
     if not changes:
         return
 
-    expr_template = (
-        "COALESCE({0}, 0) + :{0}" if op == "+" else "{0} - :{0}"
-    )
-    set_expr = []
     for res, amt in changes.items():
         validate_resource(res)
         if amt < 0:
             raise ValueError("Resource amounts must be positive")
-        set_expr.append(f"{res} = {expr_template.format(res)}")
+
+    expr_template = "COALESCE({0}, 0) + :{0}" if op == "+" else "{0} - :{0}"
+    set_expr = [f"{res} = {expr_template.format(res)}" for res in changes]
 
     sql = (
         "UPDATE kingdom_resources SET "
