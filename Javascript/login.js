@@ -188,12 +188,14 @@ function openModal(modal) {
   if (!modal) return;
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
+  modal.removeAttribute('inert');
 }
 
 function closeModal(modal) {
   if (!modal) return;
   modal.classList.add('hidden');
   modal.setAttribute('aria-hidden', 'true');
+  modal.setAttribute('inert', '');
   if (modal === loginErrorModal) {
     resendBtn?.classList.add('hidden');
     resendMsg.textContent = '';
