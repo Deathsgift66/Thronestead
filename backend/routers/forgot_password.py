@@ -74,21 +74,26 @@ class PasswordPayload(BaseModel):
 def _prune_expired() -> None:
     """Remove expired tokens, sessions, and prune old IP rate entries."""
     now = time.time()
-    for key, (_, expiry) in list(RESET_STORE.items()):
-        if expiry <= now:
-            RESET_STORE.pop(key, None)
 
-    for uid, (_, expiry) in list(VERIFIED_SESSIONS.items()):
-        if expiry <= now:
-            VERIFIED_SESSIONS.pop(uid, None)
+    # Drop expired token hashes
+    expired_tokens = [k for k, (_, exp) in RESET_STORE.items() if exp <= now]
+    for key in expired_tokens:
+        RESET_STORE.pop(key, None)
 
-    for ip in list(RATE_LIMIT.keys()):
-        RATE_LIMIT[ip] = [t for t in RATE_LIMIT[ip] if now - t < 3600]
+    # Drop expired verification sessions
+    expired_sessions = [u for u, (_, exp) in VERIFIED_SESSIONS.items() if exp <= now]
+    for uid in expired_sessions:
+        VERIFIED_SESSIONS.pop(uid, None)
+
+    # Prune IP based rate limits
+    for ip, times in list(RATE_LIMIT.items()):
+        RATE_LIMIT[ip] = [t for t in times if now - t < 3600]
         if not RATE_LIMIT[ip]:
             RATE_LIMIT.pop(ip)
 
-    for uid in list(USER_RATE_LIMIT.keys()):
-        USER_RATE_LIMIT[uid] = [t for t in USER_RATE_LIMIT[uid] if now - t < 3600]
+    # Prune user based rate limits
+    for uid, times in list(USER_RATE_LIMIT.items()):
+        USER_RATE_LIMIT[uid] = [t for t in times if now - t < 3600]
         if not USER_RATE_LIMIT[uid]:
             USER_RATE_LIMIT.pop(uid)
 
