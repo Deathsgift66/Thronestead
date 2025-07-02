@@ -145,18 +145,18 @@ def fetch_filtered_logs(
     )
     params = {"limit": limit}
     if user_id:
-        query += " AND user_id = :uid"
+        query += " AND l.user_id = :uid"
         params["uid"] = user_id
     if action:
         query += " AND action ILIKE :act"
         params["act"] = f"%{action}%"
     if date_from:
-        query += " AND created_at >= :date_from"
+        query += " AND l.created_at >= :date_from"
         params["date_from"] = date_from
     if date_to:
-        query += " AND created_at <= :date_to"
+        query += " AND l.created_at <= :date_to"
         params["date_to"] = date_to
-    query += " ORDER BY created_at DESC LIMIT :limit"
+    query += " ORDER BY l.created_at DESC LIMIT :limit"
 
     try:
         rows = db.execute(text(query), params).fetchall()
