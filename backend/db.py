@@ -12,9 +12,9 @@ from typing import Any, Sequence
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-logger = logging.getLogger("Thronestead.LegacyDB")
-
 from .env_utils import get_env_var
+
+logger = logging.getLogger("Thronestead.LegacyDB")
 
 DATABASE_URL = get_env_var(
     "DATABASE_URL",
@@ -43,10 +43,14 @@ def execute(sql: str, params: Sequence[Any] | None = None) -> list[dict[str, Any
 
 
 class _DB:
-    def query(self, sql: str, params: Sequence[Any] | None = None) -> list[dict[str, Any]]:
+    def query(
+        self, sql: str, params: Sequence[Any] | None = None
+    ) -> list[dict[str, Any]]:
         return query(sql, params)
 
-    def execute(self, sql: str, params: Sequence[Any] | None = None) -> list[dict[str, Any]]:
+    def execute(
+        self, sql: str, params: Sequence[Any] | None = None
+    ) -> list[dict[str, Any]]:
         return execute(sql, params)
 
 
