@@ -1,7 +1,9 @@
 """Utility functions for resilient environment variable access."""
 from __future__ import annotations
-from distutils.util import strtobool as _std_strtobool
 import os
+
+TRUTHY = {"1", "true", "t", "yes", "y", "on"}
+FALSEY = {"0", "false", "f", "no", "n", "off"}
 
 VARIANT_PREFIXES = ["", "VITE_", "PUBLIC_", "PUBLIC_VITE_"]
 
@@ -17,8 +19,13 @@ def get_env_var(key: str, default: str | None = None) -> str | None:
 
 
 def strtobool(val: str) -> bool:
-    """Return ``True`` for truthy strings and ``False`` for falsey ones."""
-    return bool(_std_strtobool(val))
+    """Return ``True`` for truthy strings and ``False`` for falsy ones."""
+    val_lc = val.strip().lower()
+    if val_lc in TRUTHY:
+        return True
+    if val_lc in FALSEY:
+        return False
+    raise ValueError(f"invalid truth value {val!r}")
 
 
 def get_env_bool(key: str, default: bool = False) -> bool:
