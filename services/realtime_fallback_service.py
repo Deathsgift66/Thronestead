@@ -22,8 +22,7 @@ _DEFAULT_MOVEMENT_STALE = 900  # 15 minutes
 
 def finalize_overdue_training(db: Session) -> int:
     """Auto-complete training orders past their end time."""
-    processed = training_queue_service.finalize_completed_orders(db)
-    return processed
+    return training_queue_service.finalize_completed_orders(db)
 
 
 def fallback_on_idle_training(db: Session, gap_seconds: int = _DEFAULT_TRAINING_GAP) -> int:
