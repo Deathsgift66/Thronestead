@@ -22,6 +22,9 @@ from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
 from services.audit_service import log_action
 from services.alliance_service import get_alliance_id
+from services.battle_history_service import (
+    fetch_history as fetch_battle_history,
+)
 
 router = APIRouter(prefix="/api/battle", tags=["battle"])
 
@@ -354,8 +357,6 @@ def get_live_battle(
         "defender_score": score.defender_score if score else 0,
     }
 
-from services.battle_history_service import fetch_history as fetch_battle_history
-
 
 @router.get("/history", summary="Get recent battle history")
 def get_battle_history(
@@ -367,7 +368,6 @@ def get_battle_history(
     """Return recent completed battles for ``kingdom_id``."""
     records = fetch_battle_history(db, kingdom_id, limit)
     return {"history": records}
-
 
 
 class DeclarePayload(BaseModel):
@@ -403,6 +403,7 @@ def declare_alliance_battle(
     )
 
     return {"success": True, "alliance_war_id": row[0]}
+
 
 class OrdersPayload(BaseModel):
     """Payload for issuing a simple movement order."""
@@ -444,6 +445,7 @@ def issue_orders(
     db.commit()
 
     return {"status": "updated"}
+
 
 @router.get("/wars")
 def list_alliance_wars(
@@ -501,5 +503,3 @@ def list_alliance_wars(
             }
         )
     return wars
-
-

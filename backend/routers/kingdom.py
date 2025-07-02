@@ -23,6 +23,10 @@ from services.research_service import (
     research_overview,
     start_research as db_start_research,
 )
+from ..data import DEFAULT_REGIONS, recruitable_units
+from ..database import get_db
+from ..security import verify_jwt_token
+from .progression_router import get_kingdom_id
 
 
 def _validate_text(value: str | None) -> str | None:
@@ -30,10 +34,6 @@ def _validate_text(value: str | None) -> str | None:
         validate_clean_text(value)
     return value
 
-from ..data import DEFAULT_REGIONS, recruitable_units
-from ..database import get_db
-from ..security import verify_jwt_token
-from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/kingdom", tags=["kingdom"])
 
@@ -70,7 +70,9 @@ class TemplePayload(BaseModel):
     temple_name: Optional[str] = None
     is_major: bool = False
 
-    _check_fields = validator("temple_name", allow_reuse=True)(lambda v: _validate_text(v))
+    _check_fields = validator("temple_name", allow_reuse=True)(
+        lambda v: _validate_text(v)
+    )
 
 
 class TrainPayload(BaseModel):
