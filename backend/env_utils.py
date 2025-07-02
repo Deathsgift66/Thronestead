@@ -7,14 +7,10 @@ VARIANT_PREFIXES = ["", "VITE_", "PUBLIC_", "PUBLIC_VITE_"]
 
 
 def get_env_var(key: str, default: str | None = None) -> str | None:
-    """Return the first available environment variable among fallbacks.
+    """Return the first defined environment variable matching ``key`` variants."""
 
-    The search order checks ``key`` itself as well as variants prefixed with
-    ``VITE_`` and ``PUBLIC_``. The first non-empty value is returned. If none
-    are found, ``default`` is returned.
-    """
-    for variant in VARIANT_PREFIXES:
-        val = os.getenv(f"{variant}{key}")
+    for name in (f"{pref}{key}" for pref in VARIANT_PREFIXES):
+        val = os.getenv(name)
         if val:
             return val
     return default

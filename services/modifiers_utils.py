@@ -26,8 +26,9 @@ def parse_json_field(value):
 
 def _merge_modifiers(target: dict, mods: dict) -> None:
     """Deep-merge modifier dictionaries into the target dict with validation."""
-    if not isinstance(mods, dict):
+    if not isinstance(mods, dict) or not mods:
         return
+
     for cat, inner in mods.items():
         if not isinstance(inner, dict):
             continue
@@ -36,10 +37,7 @@ def _merge_modifiers(target: dict, mods: dict) -> None:
             try:
                 num = float(val)
             except (TypeError, ValueError):
-                logger.debug("Ignoring non-numeric modifier %s.%s", cat, key)
                 continue
-            if key in bucket:
-                logger.debug("Accumulating duplicate modifier %s.%s", cat, key)
             bucket[key] = bucket.get(key, 0) + num
 
 

@@ -42,13 +42,14 @@ __all__ = [
 
 def _extract_request_meta(request: Request | None) -> tuple[str | None, str | None]:
     """Return client IP and device hash from a request."""
-    if request is None:
+    if not request:
         return None, None
-    ip = request.headers.get("x-forwarded-for", "")
-    if "," in ip:
-        ip = ip.split(",", 1)[0].strip()
+
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",", 1)[0].strip() if forwarded else None
     if not ip and request.client:
         ip = request.client.host
+
     return ip or None, request.headers.get("X-Device-Hash")
 
 
