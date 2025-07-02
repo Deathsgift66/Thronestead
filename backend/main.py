@@ -77,7 +77,7 @@ async def _unhandled_exception_handler(request: Request, exc: Exception):
 # 🔐 CORS Middleware
 # -----------------------
 # Default allowed origins including local development and production URLs.
-origins = [
+TRUSTED_ORIGINS = [
     "https://thronestead.com",
     "https://www.thronestead.com",
     "https://thronestead.com/",
@@ -86,16 +86,20 @@ origins = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+]
+
+origins = TRUSTED_ORIGINS.copy()
+origins.extend([
     "http://localhost",
     "http://127.0.0.1",
-]
+])
 
 # Allow additional origins via environment variable
 extra_origins = get_env_var("ALLOWED_ORIGINS")
 if extra_origins:
     origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
 
-origin_regex = r"https:\/\/(?:.*thronestead\.com|thronestead\.onrender\.com)"
+origin_regex = r"https:\/\/.*thronestead\.com"
 env_regex = get_env_var("ALLOWED_ORIGIN_REGEX")
 if env_regex:
     origin_regex = env_regex
