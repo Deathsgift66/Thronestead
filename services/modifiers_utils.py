@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 def parse_json_field(value):
-    """Return a parsed JSON object if ``value`` is a JSON string."""
+    """Return ``value`` parsed as JSON when it's a string."""
     if isinstance(value, str):
         try:
-            value = json.loads(value)
+            return json.loads(value) or {}
         except Exception:
             return {}
     return value or {}

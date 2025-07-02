@@ -101,14 +101,13 @@ def notify_alliance(
     expires_at: datetime | None = None,
 ) -> None:
     """Send a notification to all users in an alliance."""
-    user_ids = (
-        db.execute(
+    user_ids = [
+        r[0]
+        for r in db.execute(
             text("SELECT user_id FROM alliance_members WHERE alliance_id = :aid"),
             {"aid": alliance_id},
-        )
-        .scalars()
-        .all()
-    )
+        ).fetchall()
+    ]
 
     if not user_ids:
         return

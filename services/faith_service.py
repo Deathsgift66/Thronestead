@@ -79,43 +79,41 @@ def gain_faith(db: Session, kingdom_id: int, amount: int) -> None:
 
 
 def unlock_blessings(db: Session, kingdom_id: int, new_level: int) -> None:
-    """Unlock blessings up to the new level for a kingdom."""
+    """Unlock blessings up to ``new_level`` for ``kingdom_id``."""
     try:
         row = db.execute(
-            text(
-                "SELECT blessings FROM kingdom_religion WHERE kingdom_id = :kid"
-            ),
+            text("SELECT blessings FROM kingdom_religion WHERE kingdom_id = :kid"),
             {"kid": kingdom_id},
         ).fetchone()
-        blessings = row[0] if row and row[0] else {}
-        updated = False
-        for code, info in BLESSINGS.items():
-            if new_level >= info.get("level", 0) and code not in blessings:
-                blessings[code] = True
-                updated = True
-        if updated:
-            ordered = [b for b in BLESSINGS if b in blessings]
-            db.execute(
-                text(
-                    """
-                    UPDATE kingdom_religion
-                       SET blessings = :b,
-                           blessing_1 = :b1,
-                           blessing_2 = :b2,
-                           blessing_3 = :b3
-                     WHERE kingdom_id = :kid
-                    """
-                ),
-                {
-                    "b": blessings,
-                    "b1": ordered[0] if len(ordered) > 0 else None,
-                    "b2": ordered[1] if len(ordered) > 1 else None,
-                    "b3": ordered[2] if len(ordered) > 2 else None,
-                    "kid": kingdom_id,
-                },
-            )
-            db.commit()
-            invalidate_cache(kingdom_id)
+        blessings = dict(row[0]) if row and row[0] else {}
+
+        newly_unlocked = {
+            code
+            for code, info in BLESSINGS.items()
+            if new_level >= info.get("level", 0) and code not in blessings
+        }
+        if not newly_unlocked:
+            return
+
+        blessings.update({code: True for code in newly_unlocked})
+        ordered = [code for code in BLESSINGS if blessings.get(code)]
+        b1, b2, b3 = (ordered + [None, None, None])[:3]
+
+        db.execute(
+            text(
+                """
+                UPDATE kingdom_religion
+                   SET blessings = :b,
+                       blessing_1 = :b1,
+                       blessing_2 = :b2,
+                       blessing_3 = :b3
+                 WHERE kingdom_id = :kid
+                """
+            ),
+            {"b": blessings, "b1": b1, "b2": b2, "b3": b3, "kid": kingdom_id},
+        )
+        db.commit()
+        invalidate_cache(kingdom_id)
     except SQLAlchemyError:
         db.rollback()
         logger.exception("Failed to unlock blessings for kingdom %s", kingdom_id)
