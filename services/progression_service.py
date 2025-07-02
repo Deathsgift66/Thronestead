@@ -4,9 +4,9 @@
 # Developer: Deathsgift66
 # Description: Utility service for calculating troop slots, verifying progression gates, and merging live gameplay modifiers.
 
-import json
 import logging
 import time
+from services.modifiers_utils import parse_json_field
 
 from fastapi import HTTPException
 
@@ -314,11 +314,7 @@ def _alliance_project_modifiers(db: Session, kingdom_id: int) -> dict:
     mods: dict = {}
     for (m,) in rows:
         if m:
-            try:
-                data = json.loads(m)
-            except Exception:
-                data = {}
-            _merge_modifiers(mods, data)
+            _merge_modifiers(mods, parse_json_field(m))
     return mods
 
 
@@ -368,19 +364,9 @@ def _village_modifier_rows(db: Session, kingdom_id: int) -> dict:
     for rb, tb, csb, dbonus, tradeb, rules in rows:
         row_mod: dict = {}
         if rb:
-            if isinstance(rb, str):
-                try:
-                    rb = json.loads(rb)
-                except Exception:
-                    rb = {}
-            row_mod["resource_bonus"] = rb
+            row_mod["resource_bonus"] = parse_json_field(rb)
         if tb:
-            if isinstance(tb, str):
-                try:
-                    tb = json.loads(tb)
-                except Exception:
-                    tb = {}
-            row_mod["troop_bonus"] = tb
+            row_mod["troop_bonus"] = parse_json_field(tb)
         if csb:
             row_mod.setdefault("production_bonus", {})[
                 "construction_speed_bonus"
@@ -389,12 +375,7 @@ def _village_modifier_rows(db: Session, kingdom_id: int) -> dict:
             row_mod.setdefault("defense_bonus", {})["village"] = float(dbonus)
         if tradeb:
             row_mod.setdefault("economic_bonus", {})["trade_bonus"] = float(tradeb)
-        r_rules = rules or {}
-        if isinstance(r_rules, str):
-            try:
-                r_rules = json.loads(r_rules)
-            except Exception:
-                r_rules = {}
+        r_rules = parse_json_field(rules) or {}
         _merge_modifiers_with_rules(mods, row_mod, r_rules)
     return mods
 

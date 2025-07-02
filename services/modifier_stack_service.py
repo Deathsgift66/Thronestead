@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-import json
+from services.modifiers_utils import parse_json_field
 import logging
 
 try:
@@ -78,12 +78,7 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         try:
             rows = db.execute(text(sql), params).fetchall()
             for (mod,) in rows:
-                if isinstance(mod, str):
-                    try:
-                        mod = json.loads(mod)
-                    except Exception:
-                        mod = {}
-                _merge_stack(stack, mod or {}, source_label)
+                _merge_stack(stack, parse_json_field(mod), source_label)
         except Exception as e:
             logging.warning(f"Failed to load modifiers from {source_label}: {e}")
 
@@ -205,19 +200,9 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
         for rb, tb, csb, dbonus, tradeb, src, rules in v_rows:
             mod: dict = {}
             if rb:
-                if isinstance(rb, str):
-                    try:
-                        rb = json.loads(rb)
-                    except Exception:
-                        rb = {}
-                mod["resource_bonus"] = rb
+                mod["resource_bonus"] = parse_json_field(rb)
             if tb:
-                if isinstance(tb, str):
-                    try:
-                        tb = json.loads(tb)
-                    except Exception:
-                        tb = {}
-                mod["troop_bonus"] = tb
+                mod["troop_bonus"] = parse_json_field(tb)
             if csb:
                 mod.setdefault("production_bonus", {})[
                     "construction_speed_bonus"
@@ -226,12 +211,7 @@ def compute_modifier_stack(db: Session, kingdom_id: int) -> dict:
                 mod.setdefault("defense_bonus", {})["village"] = float(dbonus)
             if tradeb:
                 mod.setdefault("economic_bonus", {})["trade_bonus"] = float(tradeb)
-            r_rules = rules or {}
-            if isinstance(r_rules, str):
-                try:
-                    r_rules = json.loads(r_rules)
-                except Exception:
-                    r_rules = {}
+            r_rules = parse_json_field(rules) or {}
             _merge_stack_with_rules(
                 stack, mod, r_rules, src or "Village Modifier"
             )
