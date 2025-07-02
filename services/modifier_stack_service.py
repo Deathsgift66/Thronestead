@@ -10,15 +10,7 @@ from __future__ import annotations
 from services.modifiers_utils import parse_json_field
 import logging
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, text
 
 
 def _merge_stack(stack: dict, modifiers: dict, source: str) -> None:

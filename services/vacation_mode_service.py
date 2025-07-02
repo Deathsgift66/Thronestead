@@ -11,17 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.exc import SQLAlchemyError
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover - fallback for test environments
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object
-    SQLAlchemyError = Exception
+from services.sqlalchemy_support import Session, SQLAlchemyError, text
 
 logger = logging.getLogger(__name__)
 

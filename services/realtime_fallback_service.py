@@ -2,15 +2,7 @@ from __future__ import annotations
 
 import logging
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover - SQLAlchemy optional
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, text
 
 from services import training_queue_service
 

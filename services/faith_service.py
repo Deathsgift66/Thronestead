@@ -8,17 +8,7 @@ from __future__ import annotations
 
 import logging
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.exc import SQLAlchemyError
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
-    SQLAlchemyError = Exception  # type: ignore
+from services.sqlalchemy_support import Session, SQLAlchemyError, text
 
 from services.modifiers_utils import _merge_modifiers, invalidate_cache
 

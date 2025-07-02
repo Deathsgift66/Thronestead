@@ -13,15 +13,7 @@ from datetime import datetime
 from backend.models import Notification
 from services.email_service import send_email
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, text
 
 try:
     from backend.supabase_channels import (

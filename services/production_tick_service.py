@@ -9,15 +9,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, text
 
 from . import progression_service
 from .resource_service import gain_resources

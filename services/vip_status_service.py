@@ -14,16 +14,7 @@ try:
 except Exception:  # pragma: no cover - when backend.data not available
     vip_levels = {}
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.exc import SQLAlchemyError
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover - SQLAlchemy fallback
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, SQLAlchemyError, text
 
 logger = logging.getLogger(__name__)
 

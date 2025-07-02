@@ -10,16 +10,7 @@ from services.modifiers_utils import parse_json_field
 
 from fastapi import HTTPException
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.exc import SQLAlchemyError
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, SQLAlchemyError, text
 
 # Optional in-memory/game-state sources
 try:

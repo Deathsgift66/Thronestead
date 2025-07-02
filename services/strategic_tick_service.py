@@ -8,15 +8,7 @@ from __future__ import annotations
 
 import logging
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object
+from services.sqlalchemy_support import Session, text
 
 # External tick-participating modules
 from services.kingdom_quest_service import expire_quests
