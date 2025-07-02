@@ -28,7 +28,9 @@ logger = logging.getLogger("Thronestead.Database")
 # Default to local Postgres when DATABASE_URL isn't provided
 DATABASE_URL = get_env_var(
     "DATABASE_URL",
-    default="postgresql://postgres:postgres@localhost/postgres",
+    default=get_env_var(
+        "SUPABASE_DB_URL", "postgresql://postgres:postgres@localhost/postgres"
+    ),
 )
 READ_REPLICA_URL = get_env_var("READ_REPLICA_URL")
 

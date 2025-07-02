@@ -148,6 +148,7 @@ The key variables are:
 
 ```
 DATABASE_URL
+SUPABASE_DB_URL
 READ_REPLICA_URL
 SUPABASE_URL
 SUPABASE_ANON_KEY
@@ -170,6 +171,10 @@ REAUTH_LOCKOUT_THRESHOLD
 `SUPABASE_URL` and `SUPABASE_ANON_KEY` must be provided at runtime. The
 frontend no longer includes fallback credentials, so deployments should supply
 these values via environment variables or `window.env`.
+
+`SUPABASE_DB_URL` can point to the Postgres connection string for your
+Supabase project. When set it overrides `DATABASE_URL` so the backend uses
+the same schema as your hosted instance.
 
 `READ_REPLICA_URL` optionally points to a read-only Supabase replica used when
 the primary `DATABASE_URL` is unavailable.
