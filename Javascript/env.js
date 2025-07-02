@@ -1,26 +1,19 @@
 export function getEnvVar(key, defaultValue = '') {
-  const variants = [key, `PUBLIC_${key}`];
-
-  for (const variant of variants) {
+  for (const variant of [key, `PUBLIC_${key}`]) {
     const viteKey = `VITE_${variant}`;
-    try {
-      if (typeof import.meta !== 'undefined' &&
-          import.meta.env &&
-          typeof import.meta.env[viteKey] !== 'undefined') {
-        return import.meta.env[viteKey];
-      }
-    } catch {
-      // ignore
+
+    if (
+      typeof import.meta !== 'undefined' &&
+      import.meta.env?.[viteKey] !== undefined
+    ) {
+      return import.meta.env[viteKey];
     }
 
-    try {
-      if (typeof window !== 'undefined' &&
-          window.env &&
-          typeof window.env[variant] !== 'undefined') {
-        return window.env[variant];
-      }
-    } catch {
-      // ignore
+    if (
+      typeof window !== 'undefined' &&
+      window.env?.[variant] !== undefined
+    ) {
+      return window.env[variant];
     }
   }
 
