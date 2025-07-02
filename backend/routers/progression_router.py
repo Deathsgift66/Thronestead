@@ -206,12 +206,13 @@ def upgrade_castle(
     )
 
     # Get new level after upgrade
-    level = db.execute(
+    level_row = db.execute(
         text(
             "SELECT castle_level FROM kingdom_castle_progression WHERE kingdom_id = :kid"
         ),
         {"kid": kid},
-    ).fetchone()[0]
+    ).fetchone()
+    level = int(level_row[0]) if level_row else 1
 
     # 💠 Handle Noble Unlocks
     if level >= 2:
