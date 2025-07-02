@@ -48,6 +48,32 @@ export function toggleLoading(show) {
 }
 
 /**
+ * Display a modal element by id or reference.
+ * Removes the "hidden" class and updates ARIA attributes.
+ * @param {string|HTMLElement} modal Target modal or id
+ */
+export function openModal(modal) {
+  const el = typeof modal === 'string' ? document.getElementById(modal) : modal;
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.setAttribute('aria-hidden', 'false');
+  el.removeAttribute('inert');
+}
+
+/**
+ * Hide a modal element by id or reference.
+ * Adds the "hidden" class and updates ARIA attributes.
+ * @param {string|HTMLElement} modal Target modal or id
+ */
+export function closeModal(modal) {
+  const el = typeof modal === 'string' ? document.getElementById(modal) : modal;
+  if (!el) return;
+  el.classList.add('hidden');
+  el.setAttribute('aria-hidden', 'true');
+  el.setAttribute('inert', '');
+}
+
+/**
  * Simple email format validation.
  * @param {string} email Email address
  * @returns {boolean} True if valid

@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { showToast } from './utils.js';
+import { showToast, openModal, closeModal } from './utils.js';
 import { getEnvVar } from './env.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');
@@ -71,7 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   closeAuthBtn?.addEventListener('click', () => closeModal(authModal));
   sendAuthBtn?.addEventListener('click', () => sendAuth(authEmailInput, authMessage, sendAuthBtn));
-  closeLoginErrorBtn?.addEventListener('click', () => closeModal(loginErrorModal));
+  closeLoginErrorBtn?.addEventListener('click', () => {
+    closeModal(loginErrorModal);
+    resendBtn?.classList.add('hidden');
+    resendMsg.textContent = '';
+  });
   resendBtn?.addEventListener('click', resendVerification);
 });
 
@@ -184,23 +188,6 @@ function showMessage(type, text) {
   showToast(text);
 }
 
-function openModal(modal) {
-  if (!modal) return;
-  modal.classList.remove('hidden');
-  modal.setAttribute('aria-hidden', 'false');
-  modal.removeAttribute('inert');
-}
-
-function closeModal(modal) {
-  if (!modal) return;
-  modal.classList.add('hidden');
-  modal.setAttribute('aria-hidden', 'true');
-  modal.setAttribute('inert', '');
-  if (modal === loginErrorModal) {
-    resendBtn?.classList.add('hidden');
-    resendMsg.textContent = '';
-  }
-}
 
 async function sendAuth(input, msgEl, btn) {
   const email = input.value.trim();

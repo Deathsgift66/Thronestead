@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { formatDate } from './utils.js';
+import { formatDate, openModal, closeModal } from './utils.js';
 
 let newsChannel = null;
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (search) search.addEventListener('input', filterArticles);
 
   // Close button for modal
-  document.getElementById('close-article-btn')?.addEventListener('click', closeModal);
+  document.getElementById('close-article-btn')?.addEventListener('click', hideArticleModal);
 });
 
 // ✅ Load News Articles
@@ -69,7 +69,7 @@ function renderArticles(articles) {
     clone.querySelector('.article-title').textContent = article.title;
     clone.querySelector('.article-summary').textContent = `${article.content.slice(0, 140)}...`;
     clone.querySelector('.article-meta').textContent = formatDate(article.created_at);
-    clone.addEventListener('click', () => openModal(article));
+    clone.addEventListener('click', () => showArticleModal(article));
     container.appendChild(clone);
   });
 }
@@ -98,18 +98,18 @@ function setupRealtime() {
 }
 
 // ✅ Modal viewer for full article
-function openModal(article) {
+function showArticleModal(article) {
   const modal = document.getElementById('article-modal');
   if (!modal) return;
   modal.querySelector('#article-title').textContent = article.title || 'Untitled';
   modal.querySelector('#article-meta').textContent = formatDate(article.created_at);
   modal.querySelector('#article-body').innerHTML = article.content;
-  modal.classList.remove('hidden');
+  openModal('article-modal');
 }
 
-function closeModal() {
-  document.getElementById('article-modal')?.classList.add('hidden');
+function hideArticleModal() {
+  closeModal('article-modal');
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') hideArticleModal();
 });
