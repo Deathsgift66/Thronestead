@@ -19,8 +19,11 @@ from pydantic import BaseModel, conint
 from ..security import verify_jwt_token
 from ..router_utils import mirror_router
 
-router = APIRouter(prefix="/api/black-market", tags=["black_market_v2"])
-alt_router = mirror_router(router, prefix="/api/black_market")
+# Use a unique prefix so these demo routes don't clash with the main
+# black_market router.  The mirror_router helper exposes the same routes
+# under an underscore separated path for backward compatibility.
+router = APIRouter(prefix="/api/black-market-v2", tags=["black_market_v2"])
+alt_router = mirror_router(router, prefix="/api/black_market_v2")
 
 # ---------------------------------------------
 # Pydantic Models
