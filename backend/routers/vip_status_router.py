@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 from services.vip_status_service import get_vip_status
 
 from ..database import get_db
-from ..db import db
 from ..security import require_user_id
 
 # Define the API router with kingdom-scoped prefix
@@ -50,14 +49,11 @@ def vip_status(
     }
 
 
-@alt_router.get("/api/user/vip")
-async def get_vip_status_alt(user_id: str = Depends(require_user_id)):
-    """Return VIP status for the authenticated user."""
-    rows = db.query(
-        "SELECT * FROM kingdom_vip_status WHERE user_id = :uid",
-        {"uid": str(user_id)},
-    )
-    record = rows[0] if rows else None
-    if not record:
-        return {"vip_level": 0, "founder": False}
-    return record
+
+# Map legacy endpoint to ``vip_status`` to avoid duplicate logic
+alt_router.add_api_route(
+    "/api/user/vip",
+    vip_status,
+    methods=["GET"],
+    summary="Legacy VIP status endpoint",
+)
