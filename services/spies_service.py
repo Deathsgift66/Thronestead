@@ -34,17 +34,21 @@ def get_spy_record(db: Session, kingdom_id: int) -> dict:
         dict: spy stats row for the kingdom
     """
     try:
+        # Try to insert and return the row in one round trip. If the row
+        # already exists the insert will be ignored and ``row`` will be ``None``.
         row = db.execute(
-            text("SELECT * FROM kingdom_spies WHERE kingdom_id = :kid"),
+            text(
+                """
+                INSERT INTO kingdom_spies (kingdom_id)
+                VALUES (:kid)
+                ON CONFLICT (kingdom_id) DO NOTHING
+                RETURNING *
+                """
+            ),
             {"kid": kingdom_id},
         ).fetchone()
 
         if not row:
-            db.execute(
-                text("INSERT INTO kingdom_spies (kingdom_id) VALUES (:kid)"),
-                {"kid": kingdom_id},
-            )
-            db.commit()
             row = db.execute(
                 text("SELECT * FROM kingdom_spies WHERE kingdom_id = :kid"),
                 {"kid": kingdom_id},
@@ -75,9 +79,7 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
 
     total_cost = SPY_TRAIN_COST_GOLD * trainable
     # Deduct gold using centralized resource helper
-    resource_service.spend_resources(
-        db, kingdom_id, {"gold": total_cost}, commit=False
-    )
+    resource_service.spend_resources(db, kingdom_id, {"gold": total_cost}, commit=False)
 
     new_count = current + trainable
     xp_gain = trainable * 5
@@ -143,7 +145,9 @@ def can_launch_mission(db: Session, kingdom_id: int) -> bool:
         return last_time + datetime.timedelta(seconds=cooldown) <= now
 
     except SQLAlchemyError:
-        logger.exception("Failed to check spy mission cooldown for kingdom %d", kingdom_id)
+        logger.exception(
+            "Failed to check spy mission cooldown for kingdom %d", kingdom_id
+        )
         return False
 
 

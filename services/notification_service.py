@@ -103,20 +103,39 @@ def notify_alliance(
     """Send a notification to all users in an alliance."""
     user_ids = (
         db.execute(
-            text(
-                """
-            SELECT user_id FROM alliance_members
-            WHERE alliance_id = :aid
-        """
-            ),
+            text("SELECT user_id FROM alliance_members WHERE alliance_id = :aid"),
             {"aid": alliance_id},
         )
         .scalars()
         .all()
     )
 
+    if not user_ids:
+        return
+
+    db.execute(
+        text(
+            """
+            INSERT INTO user_notifications (
+                user_id, message, category, priority, created_at, expires_at
+            )
+            SELECT user_id, :msg, :cat, :pri, now(), :exp
+            FROM alliance_members
+            WHERE alliance_id = :aid
+            """
+        ),
+        {
+            "aid": alliance_id,
+            "msg": message,
+            "cat": category,
+            "pri": priority,
+            "exp": expires_at,
+        },
+    )
+    db.commit()
+
     for uid in user_ids:
-        notify_user(db, uid, message, category, priority, expires_at)
+        broadcast_notification("user", uid, message)
 
 
 def notify_system_event(
@@ -207,8 +226,10 @@ def fetch_user_notifications(
         query += " AND (expires_at IS NULL OR expires_at > now())"
     query += " ORDER BY created_at DESC LIMIT :limit"
 
-    rows = db.execute(text(query), {"uid": user_id, "limit": limit}).fetchall()
-    return [dict(r._mapping) for r in rows]
+    rows = (
+        db.execute(text(query), {"uid": user_id, "limit": limit}).mappings().fetchall()
+    )
+    return [dict(r) for r in rows]
 
 
 def clear_user_notifications(db: Session, user_id: str) -> None:
