@@ -19,21 +19,24 @@ def select_target(
     priority_list = unit.get("target_priority") or []
 
     for priority_type in priority_list:
-        for enemy in enemies_in_range:
-            if enemy.get("unit_type") == priority_type:
-                return enemy
+        target = next(
+            (e for e in enemies_in_range if e.get("unit_type") == priority_type),
+            None,
+        )
+        if target:
+            return target
 
     # Fallback to the nearest enemy if no priority match found
     position_x = unit.get("position_x")
     position_y = unit.get("position_y")
 
-    enemies_in_range.sort(
+    return min(
+        enemies_in_range,
         key=lambda e: max(
-            abs(position_x - e.get("position_x")), abs(position_y - e.get("position_y"))
-        )
+            abs(position_x - e.get("position_x")),
+            abs(position_y - e.get("position_y")),
+        ),
     )
-
-    return enemies_in_range[0]
 
 
 @lru_cache(maxsize=256)
