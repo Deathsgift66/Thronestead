@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
       messageEl.textContent = 'Appeal submitted successfully.';
       messageEl.className = 'message show success-message';
       form.reset();
-      if (window.hcaptcha && typeof hcaptcha.reset === 'function') {
-        hcaptcha.reset();
+      if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') {
+        window.hcaptcha.reset();
       }
     } catch (err) {
       messageEl.textContent = err.message || 'Submission failed.';
