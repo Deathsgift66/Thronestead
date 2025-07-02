@@ -7,15 +7,7 @@
 
 from __future__ import annotations
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover - fallback when SQLAlchemy isn't installed
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, text
 
 
 def log_combat_event(

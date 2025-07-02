@@ -12,15 +12,7 @@ from typing import Optional
 
 from .resource_service import validate_resource
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.orm import Session
-except ImportError:  # fallback for test environments
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, text
 
 logger = logging.getLogger(__name__)
 

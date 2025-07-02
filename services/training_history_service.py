@@ -12,16 +12,7 @@ from typing import Optional
 from .unit_xp_service import award_unit_xp
 from services.constants import XP_PER_LEVEL
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.exc import SQLAlchemyError
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object
+from services.sqlalchemy_support import Session, SQLAlchemyError, text
 
 logger = logging.getLogger(__name__)
 

@@ -16,16 +16,7 @@ from services.training_history_service import record_training
 from services import resource_service
 from services import kingdom_history_service
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.exc import SQLAlchemyError
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object
+from services.sqlalchemy_support import Session, SQLAlchemyError, text
 
 logger = logging.getLogger(__name__)
 

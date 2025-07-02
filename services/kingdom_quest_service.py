@@ -7,16 +7,7 @@
 import logging
 from datetime import datetime, timedelta
 
-try:
-    from sqlalchemy import text
-    from sqlalchemy.exc import SQLAlchemyError
-    from sqlalchemy.orm import Session
-except ImportError:  # pragma: no cover
-
-    def text(q):  # type: ignore
-        return q
-
-    Session = object  # type: ignore
+from services.sqlalchemy_support import Session, SQLAlchemyError, text
 
 logger = logging.getLogger(__name__)
 
