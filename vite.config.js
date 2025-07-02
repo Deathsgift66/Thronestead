@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { readdirSync } from 'fs';
 import { resolve } from 'path';
 
-// Build all HTML files in the project root
+// Dynamically collect all .html files from project root
 const htmlEntries = {};
 for (const file of readdirSync(__dirname)) {
   if (file.endsWith('.html')) {
@@ -15,10 +15,12 @@ export default defineConfig({
     target: 'es2022',
     outDir: 'dist',
     rollupOptions: {
-      input: htmlEntries,
+      input: htmlEntries, // Multiple HTML entry points
     },
   },
   server: {
-    historyApiFallback: true,
+    // Optional: expose port and enable CORS during local dev
+    port: 5173,
+    cors: true,
   },
 });
