@@ -16,35 +16,24 @@ HATE_TERMS = {
     "tranny",
 }
 
-SEXUAL_TERMS = {
-    "porn",
-    "sex",
-    "anal",
-    "dick",
-    "pussy",
-}
+SEXUAL_TERMS = {"porn", "sex", "anal", "dick", "pussy"}
 
-HARASSMENT_TERMS = {
-    "kys",
-    "kill",
-    "dox",
-}
+HARASSMENT_TERMS = {"kys", "kill", "dox"}
 
-PROFANITY_TERMS = {
-    "fuck",
-    "shit",
-    "bitch",
-}
+PROFANITY_TERMS = {"fuck", "shit", "bitch"}
 
-TERRORISM_TERMS = {
-    "isis",
-    "kkk",
-}
+TERRORISM_TERMS = {"isis", "kkk"}
 
-ILLEGAL_TERMS = {
-    "drug",
-    "hack",
-    "weapon",
+ILLEGAL_TERMS = {"drug", "hack", "weapon"}
+
+# Mapping of category name to its trigger word set
+CATEGORY_TERMS: dict[str, set[str]] = {
+    "hate_speech": HATE_TERMS,
+    "sexual_content": SEXUAL_TERMS,
+    "harassment": HARASSMENT_TERMS,
+    "profanity": PROFANITY_TERMS,
+    "terrorism": TERRORISM_TERMS,
+    "illegal_activity": ILLEGAL_TERMS,
 }
 
 _SPAM_PATTERNS = [
@@ -77,17 +66,15 @@ def classify_text(text: str) -> Dict[str, bool]:
     normalized = sanitize_plain_text(text).lower()
     tokens = set(_WORD_RE.findall(normalized))
 
-    return {
-        "hate_speech": bool(tokens & HATE_TERMS),
-        "sexual_content": bool(tokens & SEXUAL_TERMS),
-        "harassment": bool(tokens & HARASSMENT_TERMS),
-        "profanity": bool(tokens & PROFANITY_TERMS),
-        "terrorism": bool(tokens & TERRORISM_TERMS),
-        "illegal_activity": bool(tokens & ILLEGAL_TERMS),
-        "spam": any(p.search(text) for p in _SPAM_PATTERNS),
-        "personal_info": any(p.search(text) for p in _PERSONAL_INFO_PATTERNS),
-        "malicious_link": any(d in text.lower() for d in MALICIOUS_DOMAINS),
-    }
+    results = {name: bool(tokens & terms) for name, terms in CATEGORY_TERMS.items()}
+    results.update(
+        {
+            "spam": any(p.search(text) for p in _SPAM_PATTERNS),
+            "personal_info": any(p.search(text) for p in _PERSONAL_INFO_PATTERNS),
+            "malicious_link": any(d in normalized for d in MALICIOUS_DOMAINS),
+        }
+    )
+    return results
 
 
 def is_clean(text: str) -> bool:
@@ -97,8 +84,7 @@ def is_clean(text: str) -> bool:
 
 def contains_malicious_link(text: str) -> bool:
     """Return True if ``text`` contains links to blocked domains."""
-    lower = text.lower()
-    return any(d in lower for d in MALICIOUS_DOMAINS)
+    return any(domain in text.lower() for domain in MALICIOUS_DOMAINS)
 
 
 RESERVED_USERNAMES = {"admin", "moderator", "mod", "developer", "dev"}
