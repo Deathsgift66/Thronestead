@@ -304,24 +304,10 @@ def custom_board(
     return {"image_url": alliance.banner, "custom_text": alliance.motd}
 
 
-# ALT ROUTES
-alt_router.get("/resources")(get_vault_summary)
-alt_router.post("/deposit")(deposit_resource)
-alt_router.post("/withdraw")(withdraw_resource)
-alt_router.get("/transactions")(get_transaction_history)
-alt_router.get("/interest")(calculate_interest)
-alt_router.get("/tax-policy")(view_tax_policy)
-alt_router.post("/tax-policy")(update_tax_policy)
+# Mirror all routes under the alternate prefixes
+alt_router.include_router(router)
+custom_router.include_router(router)
 
+# Additional custom endpoint
 custom_router.get("/vault")(custom_board)
-
-
-# CUSTOM ROUTES
-custom_router.get("/summary")(get_vault_summary)
-custom_router.post("/deposit")(deposit_resource)
-custom_router.post("/withdraw")(withdraw_resource)
-custom_router.get("/history")(get_transaction_history)
-custom_router.get("/interest")(calculate_interest)
-custom_router.get("/tax-policy")(view_tax_policy)
-custom_router.post("/tax-policy")(update_tax_policy)
 
