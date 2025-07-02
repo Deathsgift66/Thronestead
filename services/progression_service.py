@@ -177,20 +177,23 @@ def check_progression_requirements(
 
 def _merge_modifiers_with_rules(target: dict, mods: dict, rules: dict) -> None:
     """Merge modifiers applying simple stacking rules with validation."""
-    if not isinstance(mods, dict) or not mods:
+    if not isinstance(mods, dict):
         return
+
     for cat, inner in mods.items():
         if not isinstance(inner, dict):
             continue
+
         bucket = target.setdefault(cat, {})
-        rule_cat = rules.get(cat, {}) if isinstance(rules, dict) else {}
+        rule_cat = rules.get(cat) if isinstance(rules, dict) else None
+
         for key, val in inner.items():
             try:
                 num = float(val)
             except (TypeError, ValueError):
                 continue
-            rule = rule_cat.get(key) if isinstance(rule_cat, dict) else rule_cat
-            if rule == "max":
+
+            if rule_cat and rule_cat.get(key) == "max":
                 bucket[key] = max(bucket.get(key, 0), num)
             else:
                 bucket[key] = bucket.get(key, 0) + num
