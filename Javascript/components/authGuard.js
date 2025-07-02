@@ -9,6 +9,7 @@ import {
   loadPlayerProgressionFromStorage,
 } from '../progressionGlobal.js';
 import { startSessionRefresh } from '../auth.js';
+import { getEnvVar } from '../env.js';
 
 // Configurable per page
 const requireAdmin = window.requireAdmin === true;
@@ -25,6 +26,17 @@ const requireAdmin = window.requireAdmin === true;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
+      return (window.location.href = '/login.html');
+    }
+
+    const API_BASE_URL = getEnvVar('API_BASE_URL');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/me`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Unauthorized');
+    } catch {
       return (window.location.href = '/login.html');
     }
 

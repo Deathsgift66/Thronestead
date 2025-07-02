@@ -101,6 +101,7 @@ async function handleLogin(e) {
         access_token: result.access_token,
         refresh_token: result.refresh_token
       });
+      localStorage.setItem('authToken', result.access_token);
     }
     showMessage('success', 'Login successful. Redirecting...');
     setTimeout(() => redirectToApp(), 1200);
