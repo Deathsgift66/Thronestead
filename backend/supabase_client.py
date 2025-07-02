@@ -9,7 +9,6 @@ Used for server-side operations including authentication, data writes, and RLS-s
 """
 
 import logging
-import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - type check only
