@@ -11,17 +11,16 @@ Signature validation is expected to be handled by Supabase middleware/gateway.
 """
 
 import logging
-import os
-import time
 import uuid
 from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request
-from .env_utils import get_env_var
 from jose import JWTError, jwt
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+from .env_utils import get_env_var
 
 from .database import get_db
 
@@ -39,6 +38,19 @@ __all__ = [
     "validate_reauth_token",
     "decode_supabase_jwt",
 ]
+
+
+def _extract_request_meta(request: Request | None) -> tuple[str | None, str | None]:
+    """Return client IP and device hash from a request."""
+    if request is None:
+        return None, None
+    ip = request.headers.get("x-forwarded-for")
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    if not ip and request.client:
+        ip = request.client.host
+    device_hash = request.headers.get("X-Device-Hash")
+    return ip, device_hash
 
 
 def has_active_ban(
@@ -88,12 +100,11 @@ def decode_supabase_jwt(token: str) -> dict:
 
 def verify_jwt_token(authorization: str | None = Header(None)) -> str:
     """Validate the bearer token and return the user ID."""
-    auth_header = authorization
-    if not auth_header or not auth_header.startswith("Bearer "):
+    if not authorization or not authorization.startswith("Bearer "):
         logger.warning("Missing or malformed Authorization header.")
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
-    token = auth_header.split(" ")[1]
+    token = authorization.split(" ", 1)[1]
 
     try:
         payload = decode_supabase_jwt(token)
@@ -140,15 +151,7 @@ def require_active_user_id(
         text("SELECT is_banned FROM users WHERE user_id = :uid"),
         {"uid": user_id},
     ).scalar()
-    ip = None
-    device_hash = None
-    if request is not None:
-        ip = request.headers.get("x-forwarded-for")
-        if ip and "," in ip:
-            ip = ip.split(",")[0].strip()
-        if not ip and request.client:
-            ip = request.client.host
-        device_hash = request.headers.get("X-Device-Hash")
+    ip, device_hash = _extract_request_meta(request)
     if banned or has_active_ban(db, user_id=user_id, ip=ip, device_hash=device_hash):
         raise HTTPException(403, "You are banned from this feature.")
     return user_id
