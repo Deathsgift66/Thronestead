@@ -173,7 +173,6 @@ async function handleSignup() {
     if (error) throw error;
 
     showToast('Sign-Up successful!');
-    const session = signUpData.session;
     const userInfo = signUpData.user || {};
     const confirmed =
       userInfo.email_confirmed_at || userInfo.confirmed_at || false;

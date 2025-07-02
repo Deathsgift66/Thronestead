@@ -115,7 +115,7 @@ async function renderMembers(data) {
 
   tbody.innerHTML = '';
 
-  const { isAdmin, userRank, userId } = await getUserPrivileges();
+  const { isAdmin, userRank } = await getUserPrivileges();
 
   if (!data.length) {
     tbody.innerHTML = `<tr><td colspan="11" class="empty-state">No matching members found.</td></tr>`;

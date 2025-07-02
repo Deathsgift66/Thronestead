@@ -19,7 +19,7 @@ function isValidURL(str) {
   try {
     new URL(str);
     return true;
-  } catch (_) {
+  } catch {
     return false;
   }
 }
