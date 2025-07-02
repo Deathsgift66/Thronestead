@@ -1,9 +1,9 @@
 """Utilities for retrieving details about the current user."""
 
 from fastapi import APIRouter, Header, HTTPException
-from jose import JWTError, jwt
+from jose import JWTError
 
-# TODO: Replace verify_signature=False with Supabase public key verification
+from ..security import decode_supabase_jwt
 
 router = APIRouter(prefix="/api", tags=["auth"])
 
@@ -16,7 +16,7 @@ def get_me(Authorization: str = Header(...)):
 
     token = Authorization.split(" ", 1)[1]
     try:
-        payload = jwt.decode(token, options={"verify_signature": False})
+        payload = decode_supabase_jwt(token)
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
