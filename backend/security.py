@@ -44,13 +44,12 @@ def _extract_request_meta(request: Request | None) -> tuple[str | None, str | No
     """Return client IP and device hash from a request."""
     if request is None:
         return None, None
-    ip = request.headers.get("x-forwarded-for")
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
+    ip = request.headers.get("x-forwarded-for", "")
+    if "," in ip:
+        ip = ip.split(",", 1)[0].strip()
     if not ip and request.client:
         ip = request.client.host
-    device_hash = request.headers.get("X-Device-Hash")
-    return ip, device_hash
+    return ip or None, request.headers.get("X-Device-Hash")
 
 
 def has_active_ban(
@@ -104,7 +103,7 @@ def verify_jwt_token(authorization: str | None = Header(None)) -> str:
         logger.warning("Missing or malformed Authorization header.")
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
-    token = authorization.split(" ", 1)[1]
+    token = authorization[7:].strip()
 
     try:
         payload = decode_supabase_jwt(token)

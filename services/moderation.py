@@ -74,8 +74,9 @@ _WORD_RE = re.compile(r"[a-z0-9]+")
 
 def classify_text(text: str) -> Dict[str, bool]:
     """Return category flags for the given ``text``."""
-    normalized = sanitize_plain_text(text).lower()
-    tokens = set(_WORD_RE.findall(normalized))
+    cleaned = sanitize_plain_text(text)
+    lowered = cleaned.lower()
+    tokens = set(_WORD_RE.findall(lowered))
 
     return {
         "hate_speech": bool(tokens & HATE_TERMS),
@@ -84,9 +85,9 @@ def classify_text(text: str) -> Dict[str, bool]:
         "profanity": bool(tokens & PROFANITY_TERMS),
         "terrorism": bool(tokens & TERRORISM_TERMS),
         "illegal_activity": bool(tokens & ILLEGAL_TERMS),
-        "spam": any(p.search(text) for p in _SPAM_PATTERNS),
-        "personal_info": any(p.search(text) for p in _PERSONAL_INFO_PATTERNS),
-        "malicious_link": any(d in text.lower() for d in MALICIOUS_DOMAINS),
+        "spam": any(p.search(cleaned) for p in _SPAM_PATTERNS),
+        "personal_info": any(p.search(cleaned) for p in _PERSONAL_INFO_PATTERNS),
+        "malicious_link": any(d in lowered for d in MALICIOUS_DOMAINS),
     }
 
 
@@ -97,8 +98,8 @@ def is_clean(text: str) -> bool:
 
 def contains_malicious_link(text: str) -> bool:
     """Return True if ``text`` contains links to blocked domains."""
-    lower = text.lower()
-    return any(d in lower for d in MALICIOUS_DOMAINS)
+    lowered = text.lower()
+    return any(d in lowered for d in MALICIOUS_DOMAINS)
 
 
 RESERVED_USERNAMES = {"admin", "moderator", "mod", "developer", "dev"}
