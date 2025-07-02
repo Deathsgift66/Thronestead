@@ -37,9 +37,10 @@ knights: Dict[str, Dict[str, int]] = {}
 def progress_castle() -> int:
     """Increase the castle level by one."""
     with _state_lock:
-        castle_state["level"] += 1
-        logger.info("🏰 Castle leveled up! New level: %s", castle_state["level"])
-    return castle_state["level"]
+        new_level = castle_state.get("level", 1) + 1
+        castle_state["level"] = new_level
+        logger.info("🏰 Castle leveled up! New level: %s", new_level)
+        return new_level
 
 
 # ---------------------------
@@ -48,8 +49,9 @@ def progress_castle() -> int:
 def add_noble(name: str) -> None:
     """Add a noble to the kingdom if not already present."""
     with _state_lock:
-        if name not in nobles:
-            nobles.add(name)
+        added = name not in nobles
+        nobles.add(name)
+        if added:
             logger.info("👑 Noble '%s' added.", name)
         else:
             logger.debug("Noble '%s' already exists.", name)
@@ -58,8 +60,9 @@ def add_noble(name: str) -> None:
 def remove_noble(name: str) -> None:
     """Remove a noble if they exist."""
     with _state_lock:
-        if name in nobles:
-            nobles.discard(name)
+        existed = name in nobles
+        nobles.discard(name)
+        if existed:
             logger.info("❌ Noble '%s' removed.", name)
         else:
             logger.debug("Noble '%s' not found.", name)
@@ -71,11 +74,11 @@ def remove_noble(name: str) -> None:
 def add_knight(knight_id: str, rank: int = 1) -> None:
     """Register a new knight."""
     with _state_lock:
-        if knight_id not in knights:
-            knights[knight_id] = {"rank": rank}
-            logger.info("🛡️ Knight '%s' added with rank %s.", knight_id, rank)
-        else:
+        if knight_id in knights:
             logger.debug("Knight '%s' already exists.", knight_id)
+            return
+        knights[knight_id] = {"rank": rank}
+        logger.info("🛡️ Knight '%s' added with rank %s.", knight_id, rank)
 
 
 def promote_knight(knight_id: str) -> int:
@@ -86,12 +89,13 @@ def promote_knight(knight_id: str) -> int:
         int: New rank after promotion
     """
     with _state_lock:
-        if knight_id not in knights:
+        knight = knights.get(knight_id)
+        if not knight:
             logger.error("⚠️ Cannot promote: Knight '%s' not found.", knight_id)
             raise ValueError("Knight not found")
 
-        knights[knight_id]["rank"] += 1
-        new_rank = knights[knight_id]["rank"]
+        knight["rank"] += 1
+        new_rank = knight["rank"]
         logger.info("⬆️ Knight '%s' promoted to rank %s.", knight_id, new_rank)
         return new_rank
 
