@@ -1,6 +1,7 @@
 """Utility functions for resilient environment variable access."""
 from __future__ import annotations
 import os
+from functools import lru_cache
 
 TRUTHY = {"1", "true", "t", "yes", "y", "on"}
 FALSEY = {"0", "false", "f", "no", "n", "off"}
@@ -8,8 +9,12 @@ FALSEY = {"0", "false", "f", "no", "n", "off"}
 VARIANT_PREFIXES = ["", "VITE_", "PUBLIC_", "PUBLIC_VITE_"]
 
 
+@lru_cache(maxsize=None)
 def get_env_var(key: str, default: str | None = None) -> str | None:
-    """Return the value of the first defined variant of ``key``."""
+    """Return the value of the first defined variant of ``key``.
+
+    The result is cached since environment variables rarely change at runtime.
+    """
 
     for pref in VARIANT_PREFIXES:
         val = os.getenv(f"{pref}{key}")
