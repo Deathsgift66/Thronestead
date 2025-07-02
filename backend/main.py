@@ -85,11 +85,12 @@ TRUSTED_ORIGINS = [
 
 
 def _build_cors_origins() -> list[str]:
-    origins = TRUSTED_ORIGINS + ["http://localhost", "http://127.0.0.1"]
+    origins = set(TRUSTED_ORIGINS)
+    origins.update({"http://localhost", "http://127.0.0.1"})
     extra = get_env_var("ALLOWED_ORIGINS")
     if extra:
-        origins.extend(o.strip() for o in extra.split(",") if o.strip())
-    return origins
+        origins.update(o.strip() for o in extra.split(",") if o.strip())
+    return list(origins)
 
 
 origins = _build_cors_origins()
