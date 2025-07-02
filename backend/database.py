@@ -16,6 +16,7 @@ from typing import Generator, Optional
 
 from fastapi import Request
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
@@ -35,6 +36,12 @@ engine = None
 SessionLocal: Optional[sessionmaker] = None
 
 
+def _create_sessionmaker(url: str) -> tuple[Engine, sessionmaker]:
+    """Return a new engine and bound sessionmaker for ``url``."""
+    eng = create_engine(url, pool_pre_ping=True, pool_recycle=280)
+    return eng, sessionmaker(bind=eng, autoflush=False, autocommit=False)
+
+
 def init_engine(db_url: Optional[str] = None) -> None:
     """Initialise the global SQLAlchemy engine and session factory."""
     global engine, SessionLocal
@@ -45,28 +52,25 @@ def init_engine(db_url: Optional[str] = None) -> None:
         SessionLocal = None
         return
     try:
-        engine = create_engine(url, pool_pre_ping=True, pool_recycle=280)
-        SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+        engine, SessionLocal = _create_sessionmaker(url)
         logger.info("\u2705 SQLAlchemy engine initialized successfully.")
+        return
     except OperationalError as err:
         logger.error("\u274c Failed to initialize SQLAlchemy engine.")
         logger.exception(err)
-        if READ_REPLICA_URL and db_url is None:
-            logger.info("\u27f3 Attempting read replica failover.")
-            try:
-                engine = create_engine(
-                    READ_REPLICA_URL, pool_pre_ping=True, pool_recycle=280
-                )
-                SessionLocal = sessionmaker(
-                    bind=engine, autoflush=False, autocommit=False
-                )
-                logger.info("\u2705 Read replica connection established.")
-                return
-            except OperationalError as replica_err:
-                logger.error("\u274c Failed to connect to read replica.")
-                logger.exception(replica_err)
-        engine = None
-        SessionLocal = None
+
+    if READ_REPLICA_URL and db_url is None:
+        logger.info("\u27f3 Attempting read replica failover.")
+        try:
+            engine, SessionLocal = _create_sessionmaker(READ_REPLICA_URL)
+            logger.info("\u2705 Read replica connection established.")
+            return
+        except OperationalError as replica_err:
+            logger.error("\u274c Failed to connect to read replica.")
+            logger.exception(replica_err)
+
+    engine = None
+    SessionLocal = None
 
 
 # Initialise on import
