@@ -134,7 +134,5 @@ def delete_role(
 
 
 # Alt route mappings
-alt_router.get("")(list_roles)
-alt_router.post("/create")(create_role)
-alt_router.post("/update")(update_role)
-alt_router.post("/delete")(delete_role)
+# Expose the same endpoints using the alternate prefix
+alt_router.include_router(router)

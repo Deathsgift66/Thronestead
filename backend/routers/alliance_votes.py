@@ -134,6 +134,5 @@ def vote_results(
     }
 
 
-alt_router.post("/propose")(propose_vote)
-alt_router.post("/vote")(cast_ballot)
-alt_router.get("/results/{vote_id}")(vote_results)
+# Expose the same routes using the alternate prefix
+alt_router.include_router(router)
