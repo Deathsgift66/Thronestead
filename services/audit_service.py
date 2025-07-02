@@ -5,7 +5,7 @@
 # Description: Audit and activity tracking services for players, alliances, and system actions.
 
 import logging
-from typing import Optional
+from typing import Iterable, Optional
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -15,6 +15,17 @@ logger = logging.getLogger(__name__)
 
 # Placeholder returned when a user's profile has been deleted
 DELETED_PLACEHOLDER = "[deleted_user]"
+
+
+def _row_to_log_dict(row) -> dict:
+    """Convert a DB row into a standard log dictionary."""
+    return {
+        "log_id": row[0],
+        "user_id": DELETED_PLACEHOLDER if row[2] else row[1],
+        "action": row[3],
+        "details": row[4],
+        "created_at": row[5],
+    }
 
 # ------------------------
 # Core Audit Log Functions
@@ -70,16 +81,7 @@ def fetch_logs(
              LIMIT :limit
         """
         rows = db.execute(text(query), {"uid": user_id, "limit": limit}).fetchall()
-        return [
-            {
-                "log_id": r[0],
-                "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
-                "action": r[3],
-                "details": r[4],
-                "created_at": r[5],
-            }
-            for r in rows
-        ]
+        return [_row_to_log_dict(r) for r in rows]
     except SQLAlchemyError as e:
         logger.exception("Failed to fetch audit logs")
         raise RuntimeError("Audit fetch failed") from e
@@ -148,16 +150,7 @@ def fetch_filtered_logs(
 
     try:
         rows = db.execute(text(query), params).fetchall()
-        return [
-            {
-                "log_id": r[0],
-                "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
-                "action": r[3],
-                "details": r[4],
-                "created_at": r[5],
-            }
-            for r in rows
-        ]
+        return [_row_to_log_dict(r) for r in rows]
     except SQLAlchemyError as e:
         logger.exception("Filtered audit query failed")
         raise RuntimeError("Filtered audit fetch failed") from e
