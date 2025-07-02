@@ -22,7 +22,7 @@ from services.kingdom_history_service import (
 
 from ..database import get_db
 from ..security import verify_jwt_token
-from .admin_dashboard import verify_admin
+from ..security import verify_admin
 from .progression_router import get_kingdom_id
 
 # API Router configuration

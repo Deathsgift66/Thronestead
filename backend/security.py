@@ -33,6 +33,7 @@ __all__ = [
     "require_active_user_id",
     "verify_api_key",
     "get_current_user",
+    "verify_admin",
     "verify_reauth_token",
     "create_reauth_token",
     "validate_reauth_token",
@@ -157,6 +158,16 @@ def verify_api_key(x_api_key: str = Header(...)):
     """Simple API key verification against the `API_SECRET` env variable."""
     if x_api_key != get_env_var("API_SECRET"):
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+def verify_admin(user_id: str, db: Session) -> None:
+    """Raise 403 if the user is not an admin."""
+    res = db.execute(
+        text("SELECT is_admin FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    if not res or not res[0]:
+        raise HTTPException(status_code=403, detail="Admin access required")
 
 
 async def get_current_user(request: Request, db: Session = Depends(get_db)):

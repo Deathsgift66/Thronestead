@@ -9,7 +9,7 @@ from services.audit_service import log_action
 
 from ..database import get_db
 from ..security import require_user_id, verify_api_key
-from .admin_dashboard import verify_admin
+from ..security import verify_admin
 
 router = APIRouter(prefix="/api/admin/emergency", tags=["admin_emergency"])
 
