@@ -147,20 +147,17 @@ except Exception as e:
 # -----------------------
 FAILED_ROUTERS: list[str] = []
 
+ROUTER_ATTRS = ("router", "alt_router", "custom_router")
+
 for name in router_pkg.__all__:
     if name == "auth":
         continue
     try:
         module = getattr(router_pkg, name)
-        router_obj = getattr(module, "router", None)
-        if router_obj:
-            app.include_router(router_obj)
-        alt_obj = getattr(module, "alt_router", None)
-        if alt_obj:
-            app.include_router(alt_obj)
-        custom_obj = getattr(module, "custom_router", None)
-        if custom_obj:
-            app.include_router(custom_obj)
+        for attr in ROUTER_ATTRS:
+            obj = getattr(module, attr, None)
+            if obj:
+                app.include_router(obj)
     except Exception as e:
         logger.exception("❌ Failed to import or include router '%s': %s", name, e)
         FAILED_ROUTERS.append(name)

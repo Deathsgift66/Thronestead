@@ -170,25 +170,12 @@ export function formatDate(ts) {
  * @returns {Promise<any>}   Parsed JSON data
  */
 export async function jsonFetch(url, options = {}) {
-  const opts = {
+  const res = await fetch(url, {
     headers: { Accept: 'application/json', ...(options.headers || {}) },
     credentials: options.credentials || 'include',
     ...options
-  };
-
-  const res = await fetch(url, opts);
-  const type = res.headers.get('content-type') || '';
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Request failed ${res.status}: ${text}`);
-  }
-
-  if (!type.includes('application/json')) {
-    throw new Error('Invalid JSON response');
-  }
-
-  return res.json();
+  });
+  return parseJsonResponse(res);
 }
 
 /**
@@ -229,6 +216,18 @@ export async function authFetch(url, options = {}) {
   return res;
 }
 
+async function parseJsonResponse(res) {
+  const type = res.headers.get('content-type') || '';
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Request failed ${res.status}: ${text}`);
+  }
+  if (!type.includes('application/json')) {
+    throw new Error('Invalid JSON response');
+  }
+  return res.json();
+}
+
 /**
  * Convenience wrapper around {@link jsonFetch} that also includes auth headers.
  * @param {string} url Request URL
@@ -237,18 +236,7 @@ export async function authFetch(url, options = {}) {
  */
 export async function authJsonFetch(url, options = {}) {
   const res = await authFetch(url, options);
-  const type = res.headers.get('content-type') || '';
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Request failed ${res.status}: ${text}`);
-  }
-
-  if (!type.includes('application/json')) {
-    throw new Error('Invalid JSON response');
-  }
-
-  return res.json();
+  return parseJsonResponse(res);
 }
 
 /**
