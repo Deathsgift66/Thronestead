@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from backend.router_utils import mirror_routes
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -134,6 +135,4 @@ def vote_results(
     }
 
 
-alt_router.post("/propose")(propose_vote)
-alt_router.post("/vote")(cast_ballot)
-alt_router.get("/results/{vote_id}")(vote_results)
+mirror_routes(router, alt_router)

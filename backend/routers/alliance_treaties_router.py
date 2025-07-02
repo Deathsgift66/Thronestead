@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from backend.router_utils import mirror_routes
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -146,14 +147,6 @@ def propose_treaty(
 # --------------------
 
 
-@alt_router.post("/propose")
-def alt_propose_treaty(
-    payload: ProposePayload,
-    user_id: str = Depends(require_active_user_id),
-    db: Session = Depends(get_db),
-):
-    """Alias for :func:`propose_treaty` using REST-style path."""
-    return propose_treaty(payload, user_id, db)
 
 
 @router.post("/respond")
@@ -280,3 +273,4 @@ def view_treaty(
         "status": row[4],
         "signed_at": row[5].isoformat() if row[5] else None,
     }
+mirror_routes(router, alt_router)

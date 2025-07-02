@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from backend.router_utils import mirror_routes
 from pydantic import BaseModel, conint
 
 from ..security import verify_jwt_token
@@ -103,14 +104,12 @@ _resources: dict[str, dict[str, int]] = {"demo-kingdom": {"gold": 100, "gems": 2
 
 
 @router.get("/listings")
-@alt_router.get("/listings")
 def get_listings():
     """Return available black market offers."""
     return {"listings": [listing.model_dump() for listing in _listings]}
 
 
 @router.post("/purchase")
-@alt_router.post("/purchase")
 def purchase(payload: PurchasePayload, user_id: str = Depends(verify_jwt_token)):
     """Purchase an item from the in-memory market."""
     for listing in list(_listings):
@@ -144,8 +143,8 @@ def purchase(payload: PurchasePayload, user_id: str = Depends(verify_jwt_token))
 
 
 @router.get("/history")
-@alt_router.get("/history")
 def history(kingdom_id: str):
     """Return purchase history for a kingdom."""
     trades = [t.model_dump() for t in _transactions if t.kingdom_id == kingdom_id]
     return {"trades": trades}
+mirror_routes(router, alt_router)

@@ -5,6 +5,7 @@ Role: API routes for alliance role management.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from backend.router_utils import mirror_routes
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -133,8 +134,4 @@ def delete_role(
     return {"status": "deleted"}
 
 
-# Alt route mappings
-alt_router.get("")(list_roles)
-alt_router.post("/create")(create_role)
-alt_router.post("/update")(update_role)
-alt_router.post("/delete")(delete_role)
+mirror_routes(router, alt_router)

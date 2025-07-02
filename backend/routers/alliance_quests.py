@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from backend.router_utils import mirror_routes
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -384,96 +385,4 @@ def claim_reward(
 # -------------------------------------------------
 
 
-@alt_router.get("")
-def alt_list_quests(
-    status: str = Query("active"),
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    if status == "active":
-        return get_active_quests(user_id, db)
-    if status == "completed":
-        return get_completed_quests(user_id, db)
-    if status == "expired":
-        aid, _ = get_alliance_info(user_id, db)
-        rows = (
-            db.query(QuestAllianceTracking)
-            .filter(QuestAllianceTracking.alliance_id == aid)
-            .filter(QuestAllianceTracking.status == "active")
-            .filter(QuestAllianceTracking.ends_at < datetime.utcnow())
-            .all()
-        )
-        return [
-            {
-                "quest_code": r.quest_code,
-                "status": "expired",
-                "progress": r.progress,
-                "ends_at": r.ends_at,
-                "started_at": r.started_at,
-            }
-            for r in rows
-        ]
-    return get_available_quests(user_id=user_id, db=db)
-
-
-@alt_router.post("/start")
-def alt_start(
-    payload: QuestStartPayload,
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    return start_quest(payload, user_id, db)
-
-
-@alt_router.post("/accept")
-def alt_accept(
-    payload: QuestStartPayload,
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    # For now, accept mirrors start until individual acceptance logic exists
-    return start_quest(payload, user_id, db)
-
-
-@alt_router.post("/contribute")
-def alt_contribute(
-    payload: ProgressPayload,
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    return update_progress(payload, user_id, db)
-
-
-@alt_router.post("/claim")
-def alt_claim(
-    payload: ClaimPayload,
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    return claim_reward(payload, user_id, db)
-
-
-@alt_router.get("/heroes")
-def alt_heroes(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
-    aid, _ = get_alliance_info(user_id, db)
-    rows = (
-        db.query(
-            QuestAllianceContribution.player_name,
-            func.sum(QuestAllianceContribution.amount).label("total"),
-        )
-        .filter(QuestAllianceContribution.alliance_id == aid)
-        .group_by(QuestAllianceContribution.player_name)
-        .order_by(func.sum(QuestAllianceContribution.amount).desc())
-        .limit(10)
-        .all()
-    )
-    return [{"name": r.player_name, "contributions": r.total} for r in rows]
-
-
-@alt_router.get("/{quest_code}")
-def alt_detail(
-    quest_code: str,
-    user_id: str = Depends(require_user_id),
-    db: Session = Depends(get_db),
-):
-    return quest_detail(quest_code, user_id, db)
+mirror_routes(router, alt_router)

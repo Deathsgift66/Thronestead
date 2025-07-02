@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from backend.router_utils import mirror_routes
 from pydantic import BaseModel, PositiveFloat, conint
 from sqlalchemy.orm import Session
 
@@ -86,7 +87,6 @@ def get_market(
 # Create Listing
 # ---------------------
 @router.post("/list")
-@alt_router.post("/list")
 def place_item(
     payload: ListingPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -113,7 +113,6 @@ def place_item(
 # Purchase Item
 # ---------------------
 @router.post("/purchase")
-@alt_router.post("/purchase")
 def buy_item(
     payload: BuyPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -143,7 +142,6 @@ def buy_item(
 # Cancel Listing
 # ---------------------
 @router.post("/cancel")
-@alt_router.post("/cancel")
 def cancel_listing(
     payload: CancelPayload,
     user_id: str = Depends(verify_jwt_token),
@@ -160,3 +158,4 @@ def cancel_listing(
     db.delete(listing)
     db.commit()
     return {"message": "Listing cancelled"}
+mirror_routes(router, alt_router)

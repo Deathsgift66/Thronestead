@@ -13,6 +13,7 @@ Version: 2025-06-21
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
+from backend.router_utils import mirror_routes
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -305,13 +306,7 @@ def custom_board(
 
 
 # ALT ROUTES
-alt_router.get("/resources")(get_vault_summary)
-alt_router.post("/deposit")(deposit_resource)
-alt_router.post("/withdraw")(withdraw_resource)
-alt_router.get("/transactions")(get_transaction_history)
-alt_router.get("/interest")(calculate_interest)
-alt_router.get("/tax-policy")(view_tax_policy)
-alt_router.post("/tax-policy")(update_tax_policy)
+mirror_routes(router, alt_router)
 
 custom_router.get("/vault")(custom_board)
 
