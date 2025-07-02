@@ -1,5 +1,10 @@
+# Project Name: Thronestead©
+# File Name: netlify.toml
+# Version: 7/1/2025 10:38
+# Developer: Deathsgift66
+
 [build]
-  publish = "dist" 
+  publish = "dist"  # Output directory (Vite default)
   command = "npm run build"
 
 [build.environment]
@@ -8,7 +13,8 @@
 [build.processing.html]
   pretty_urls = true
 
-  [[redirects]]
+# === SPA Fallback for Client-Side Routing (Vite/React/Vue/etc)
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
