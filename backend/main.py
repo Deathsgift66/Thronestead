@@ -85,19 +85,16 @@ TRUSTED_ORIGINS = [
 
 
 def _build_cors_origins() -> list[str]:
-    origins = set(TRUSTED_ORIGINS)
-    origins.update({"http://localhost", "http://127.0.0.1"})
     extra = get_env_var("ALLOWED_ORIGINS")
+    origins = set(TRUSTED_ORIGINS) | {"http://localhost", "http://127.0.0.1"}
     if extra:
         origins.update(o.strip() for o in extra.split(",") if o.strip())
-    return list(origins)
+    return ["*"] if "*" in origins else list(origins)
 
 
 origins = _build_cors_origins()
 
 origin_regex = get_env_var("ALLOWED_ORIGIN_REGEX", default=r"https:\/\/.*thronestead\.com")
-if "*" in origins:
-    origins = ["*"]
 
 # Apply the CORS middleware before other custom middleware so that CORS
 # headers are always included in the response.
@@ -114,9 +111,7 @@ app.add_middleware(
 # Print configured origins during startup for debugging purposes.
 @app.on_event("startup")
 async def _cors_startup_log() -> None:
-    logger.info("\u2705 CORS configured for:")
-    for origin in origins:
-        logger.info(" - %s", origin)
+    logger.info("\u2705 CORS configured for: %s", ", ".join(origins))
 
 # -----------------------
 # 🗃️ Ensure Database Tables Exist
@@ -144,18 +139,25 @@ FAILED_ROUTERS: list[str] = []
 
 ROUTER_ATTRS = ("router", "alt_router", "custom_router")
 
-for name in router_pkg.__all__:
-    if name == "auth":
-        continue
-    try:
-        module = getattr(router_pkg, name)
-        for attr in ROUTER_ATTRS:
-            obj = getattr(module, attr, None)
-            if obj:
-                app.include_router(obj)
-    except Exception as e:
-        logger.exception("❌ Failed to import or include router '%s': %s", name, e)
-        FAILED_ROUTERS.append(name)
+
+def _include_routers() -> None:
+    for name in router_pkg.__all__:
+        if name == "auth":
+            continue
+        try:
+            module = getattr(router_pkg, name)
+            router = next(
+                (getattr(module, attr) for attr in ROUTER_ATTRS if getattr(module, attr, None)),
+                None,
+            )
+            if router:
+                app.include_router(router)
+        except Exception as exc:
+            logger.exception("❌ Failed to import or include router '%s': %s", name, exc)
+            FAILED_ROUTERS.append(name)
+
+
+_include_routers()
 
 from backend.routers import auth
 app.include_router(auth.router, prefix="/api/auth")
