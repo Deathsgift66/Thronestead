@@ -22,7 +22,7 @@ from ..data import prestige_scores
 from ..database import get_db
 from ..security import require_user_id, verify_api_key
 from .progression_router import get_kingdom_id
-from .admin_dashboard import verify_admin
+from ..security import verify_admin
 
 router = APIRouter(prefix="/api/kingdom", tags=["titles"])
 

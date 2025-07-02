@@ -22,7 +22,7 @@ from services.audit_service import fetch_filtered_logs, fetch_user_related_logs
 
 from ..database import get_db
 from ..security import require_user_id, verify_api_key
-from .admin_dashboard import verify_admin
+from ..security import verify_admin
 
 router = APIRouter(prefix="/api/admin/audit-log", tags=["admin_audit"])
 logger = logging.getLogger("Thronestead.AdminAudit")

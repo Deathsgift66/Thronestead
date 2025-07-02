@@ -22,22 +22,9 @@ from backend.models import Kingdom
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key
+from ..security import require_user_id, verify_api_key, verify_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin_dashboard"])
-
-
-# ---------------------
-# 🛡️ Admin Verifier
-# ---------------------
-def verify_admin(user_id: str, db: Session) -> None:
-    """Raise 403 if the user is not an admin."""
-    res = db.execute(
-        text("SELECT is_admin FROM users WHERE user_id = :uid"),
-        {"uid": user_id},
-    ).fetchone()
-    if not res or not res[0]:
-        raise HTTPException(status_code=403, detail="Admin access required")
 
 
 # ---------------------
