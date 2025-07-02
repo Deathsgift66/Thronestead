@@ -24,3 +24,10 @@ def strtobool(val: str) -> bool:
     """Return ``True`` for truthy strings and ``False`` for falsey ones."""
     return bool(_std_strtobool(val))
 
+
+def get_env_bool(key: str, default: bool = False) -> bool:
+    """Return an environment variable as a bool with sensible defaults."""
+    val = get_env_var(key)
+    return strtobool(val) if val is not None else default
+
+
