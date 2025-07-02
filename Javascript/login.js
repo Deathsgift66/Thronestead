@@ -9,6 +9,14 @@ import { getEnvVar } from './env.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');
 
+function showModal(modalId) {
+  openModal(modalId);
+}
+
+function hideModal(modalId) {
+  closeModal(modalId);
+}
+
 let loginForm = null,
   emailInput = null,
   passwordInput = null,
@@ -22,7 +30,12 @@ let loginForm = null,
   loginErrorMessage = null,
   resendBtn = null,
   resendMsg = null,
-  closeLoginErrorBtn = null;
+  closeLoginErrorBtn = null,
+  resendVerificationModal = null,
+  resendEmailInput = null,
+  resendVerificationMsg = null,
+  sendVerificationBtn = null,
+  closeVerificationBtn = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loginForm = document.getElementById('login-form');
@@ -40,15 +53,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   resendMsg = document.getElementById('resend-message');
   closeLoginErrorBtn = document.getElementById('close-login-error-btn');
 
+  resendVerificationModal = document.getElementById('resend-verification-modal');
+  resendEmailInput = document.getElementById('resend-email');
+  resendVerificationMsg = document.getElementById('resend-verification-message');
+  sendVerificationBtn = document.getElementById('send-verification-btn');
+  closeVerificationBtn = document.getElementById('close-verification-btn');
+
   const forgotLink = document.getElementById('forgot-password-link');
   const forgotModal = document.getElementById('forgot-password-modal');
   const closeForgotBtn = document.getElementById('close-forgot-btn');
   const requestAuthLink = document.getElementById('request-auth-link');
-  const authModal = document.getElementById('auth-link-modal');
-  const authEmailInput = document.getElementById('auth-email');
-  const sendAuthBtn = document.getElementById('send-auth-btn');
-  const authMessage = document.getElementById('auth-message');
-  const closeAuthBtn = document.getElementById('close-auth-btn');
 
   const session = (await supabase.auth.getSession()).data.session;
   if (session?.user) {
@@ -66,11 +80,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   closeForgotBtn?.addEventListener('click', () => closeModal(forgotModal));
   requestAuthLink?.addEventListener('click', (e) => {
     e.preventDefault();
-    authEmailInput.value = emailInput.value.trim();
-    openModal(authModal);
+    resendEmailInput.value = emailInput.value.trim();
+    showModal('resend-verification-modal');
   });
-  closeAuthBtn?.addEventListener('click', () => closeModal(authModal));
-  sendAuthBtn?.addEventListener('click', () => sendAuth(authEmailInput, authMessage, sendAuthBtn));
+  closeVerificationBtn?.addEventListener('click', () => hideModal('resend-verification-modal'));
+  sendVerificationBtn?.addEventListener('click', handleVerificationResend);
   closeLoginErrorBtn?.addEventListener('click', () => {
     closeModal(loginErrorModal);
     resendBtn?.classList.add('hidden');
@@ -189,30 +203,6 @@ function showMessage(type, text) {
 }
 
 
-async function sendAuth(input, msgEl, btn) {
-  const email = input.value.trim();
-  if (!email) {
-    msgEl.textContent = 'Enter a valid email.';
-    return;
-  }
-  btn.disabled = true;
-  msgEl.textContent = '';
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/resend-confirmation`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || 'Failed to send email.');
-    msgEl.textContent = 'Verification email sent!';
-  } catch (err) {
-    msgEl.textContent = err.message;
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 async function resendVerification() {
   const email = emailInput.value.trim();
   if (!email) {
@@ -234,5 +224,27 @@ async function resendVerification() {
     resendMsg.textContent = err.message;
   } finally {
     resendBtn.disabled = false;
+  }
+}
+
+async function handleVerificationResend() {
+  const email = resendEmailInput.value.trim();
+  resendVerificationMsg.textContent = '';
+  if (!email) {
+    resendVerificationMsg.textContent = 'Please enter your email address.';
+    return;
+  }
+  const { error } = await supabase.auth.signUp(
+    { email, password: 'temporary' },
+    { redirectTo: window.location.origin }
+  );
+  if (error) {
+    if (error.message.includes('already registered')) {
+      resendVerificationMsg.textContent = '✅ If unverified, the email was resent.';
+    } else {
+      resendVerificationMsg.textContent = `Error: ${error.message}`;
+    }
+  } else {
+    resendVerificationMsg.textContent = '✅ Verification email sent!';
   }
 }
