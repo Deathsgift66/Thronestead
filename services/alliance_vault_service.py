@@ -11,8 +11,13 @@ import logging
 from typing import Optional
 
 from .resource_service import validate_resource
+from contextlib import nullcontext
 
 from services.sqlalchemy_support import Session, text
+
+def _transaction(db: Session):
+    """Return a context manager for a DB transaction if supported."""
+    return db.begin() if hasattr(db, "begin") else nullcontext()
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +29,16 @@ logger = logging.getLogger(__name__)
 
 def get_vault_balance(db: Session, alliance_id: int) -> dict:
     """Return the current resource holdings of the alliance vault."""
-    row = db.execute(
-        text("SELECT * FROM alliance_vault WHERE alliance_id = :aid"),
-        {"aid": alliance_id},
-    ).fetchone()
+    row = (
+        db.execute(
+            text("SELECT * FROM alliance_vault WHERE alliance_id = :aid"),
+            {"aid": alliance_id},
+        )
+        .mappings()
+        .fetchone()
+    )
 
-    return dict(row._mapping) if row else {}
+    return dict(row) if row else {}
 
 
 def deposit_to_vault(
@@ -45,51 +54,56 @@ def deposit_to_vault(
     if amount <= 0:
         raise ValueError("Deposit amount must be positive")
 
-    # Ensure vault row exists
-    db.execute(
-        text(
+    def _ops():
+        # Ensure vault row exists
+        db.execute(
+            text(
+                """
+                INSERT INTO alliance_vault (alliance_id)
+                VALUES (:aid)
+                ON CONFLICT (alliance_id) DO NOTHING
             """
-            INSERT INTO alliance_vault (alliance_id)
-            VALUES (:aid)
-            ON CONFLICT (alliance_id) DO NOTHING
-        """
-        ),
-        {"aid": alliance_id},
-    )
+            ),
+            {"aid": alliance_id},
+        )
 
-    # Apply the deposit
-    db.execute(
-        text(
-            f"""
-            UPDATE alliance_vault
-            SET {resource_type} = COALESCE({resource_type}, 0) + :amt
-            WHERE alliance_id = :aid
-        """
-        ),
-        {"aid": alliance_id, "amt": amount},
-    )
-
-    # Log it
-    db.execute(
-        text(
+        # Apply the deposit
+        db.execute(
+            text(
+                f"""
+                UPDATE alliance_vault
+                SET {resource_type} = COALESCE({resource_type}, 0) + :amt
+                WHERE alliance_id = :aid
             """
-            INSERT INTO alliance_vault_transaction_log (
-                alliance_id, user_id, action, resource_type, amount, notes
-            ) VALUES (
-                :aid, :uid, 'deposit', :res, :amt, :note
-            )
-        """
-        ),
-        {
-            "aid": alliance_id,
-            "uid": user_id,
-            "res": resource_type,
-            "amt": amount,
-            "note": notes,
-        },
-    )
+            ),
+            {"aid": alliance_id, "amt": amount},
+        )
 
-    db.commit()
+        # Log it
+        db.execute(
+            text(
+                """
+                INSERT INTO alliance_vault_transaction_log (
+                    alliance_id, user_id, action, resource_type, amount, notes
+                ) VALUES (
+                    :aid, :uid, 'deposit', :res, :amt, :note
+                )
+            """
+            ),
+            {
+                "aid": alliance_id,
+                "uid": user_id,
+                "res": resource_type,
+                "amt": amount,
+                "note": notes,
+            },
+        )
+
+    tx_ctx = _transaction(db)
+    with tx_ctx:
+        _ops()
+    if isinstance(tx_ctx, nullcontext):
+        db.commit()
 
 
 def withdraw_from_vault(
@@ -120,39 +134,44 @@ def withdraw_from_vault(
     if current is None or current < amount:
         raise ValueError("Insufficient resources in vault")
 
-    # Apply the withdrawal
-    db.execute(
-        text(
-            f"""
-            UPDATE alliance_vault
-            SET {resource_type} = GREATEST(COALESCE({resource_type}, 0) - :amt, 0)
-            WHERE alliance_id = :aid
-        """
-        ),
-        {"aid": alliance_id, "amt": amount},
-    )
-
-    # Log the withdrawal
-    db.execute(
-        text(
+    def _ops():
+        # Apply the withdrawal
+        db.execute(
+            text(
+                f"""
+                UPDATE alliance_vault
+                SET {resource_type} = GREATEST(COALESCE({resource_type}, 0) - :amt, 0)
+                WHERE alliance_id = :aid
             """
-            INSERT INTO alliance_vault_transaction_log (
-                alliance_id, user_id, action, resource_type, amount, notes
-            ) VALUES (
-                :aid, :uid, 'withdraw', :res, :amt, :note
-            )
-        """
-        ),
-        {
-            "aid": alliance_id,
-            "uid": user_id,
-            "res": resource_type,
-            "amt": amount,
-            "note": notes,
-        },
-    )
+            ),
+            {"aid": alliance_id, "amt": amount},
+        )
 
-    db.commit()
+        # Log the withdrawal
+        db.execute(
+            text(
+                """
+                INSERT INTO alliance_vault_transaction_log (
+                    alliance_id, user_id, action, resource_type, amount, notes
+                ) VALUES (
+                    :aid, :uid, 'withdraw', :res, :amt, :note
+                )
+                """
+            ),
+            {
+                "aid": alliance_id,
+                "uid": user_id,
+                "res": resource_type,
+                "amt": amount,
+                "note": notes,
+            },
+        )
+
+    tx_ctx = _transaction(db)
+    with tx_ctx:
+        _ops()
+    if isinstance(tx_ctx, nullcontext):
+        db.commit()
 
 
 def get_transaction_log(
@@ -161,21 +180,25 @@ def get_transaction_log(
     limit: int = 100,
 ) -> list[dict]:
     """Return recent vault transactions for the alliance."""
-    rows = db.execute(
-        text(
-            """
-            SELECT transaction_id, user_id, action, resource_type,
-                   amount, notes, created_at
-            FROM alliance_vault_transaction_log
-            WHERE alliance_id = :aid
-            ORDER BY created_at DESC
-            LIMIT :lim
-        """
-        ),
-        {"aid": alliance_id, "lim": limit},
-    ).fetchall()
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT transaction_id, user_id, action, resource_type,
+                       amount, notes, created_at
+                FROM alliance_vault_transaction_log
+                WHERE alliance_id = :aid
+                ORDER BY created_at DESC
+                LIMIT :lim
+                """
+            ),
+            {"aid": alliance_id, "lim": limit},
+        )
+        .mappings()
+        .fetchall()
+    )
 
-    return [dict(r._mapping) for r in rows]
+    return [dict(r) for r in rows]
 
 
 def audit_vault(db: Session, alliance_id: int) -> dict:
