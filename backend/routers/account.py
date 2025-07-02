@@ -52,27 +52,15 @@ def update_account(
     if not exists:
         raise HTTPException(status_code=404, detail="User not found")
 
-    updates: list[str] = []
-    params = {"uid": user_id}
-    field_map = {
-        "display_name": "display_name",
-        "profile_picture_url": "profile_picture_url",
-        "profile_bio": "profile_bio",
-    }
+    changes = payload.dict(exclude_none=True)
+    if not changes:
+        return {"message": "no changes"}
 
-    for attr, column in field_map.items():
-        value = getattr(payload, attr)
-        if value is not None:
-            updates.append(f"{column} = :{attr}")
-            params[attr] = value
-
-    if updates:
-        db.execute(
-            text(f"UPDATE users SET {', '.join(updates)} WHERE user_id = :uid"),
-            params,
-        )
-        db.commit()
-        log_action(db, user_id, "update_account", ",".join(field_map[k] for k in payload.model_fields_set))
-        return {"message": "updated"}
-
-    return {"message": "no changes"}
+    assignments = ", ".join(f"{f} = :{f}" for f in changes)
+    db.execute(
+        text(f"UPDATE users SET {assignments} WHERE user_id = :uid"),
+        {"uid": user_id, **changes},
+    )
+    db.commit()
+    log_action(db, user_id, "update_account", ",".join(changes))
+    return {"message": "updated"}
