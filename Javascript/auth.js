@@ -32,15 +32,26 @@ export function getStoredAuth() {
 /**
  * Supabase user/session fetch with defensive guards.
  */
-export async function getAuth() {
+let cachedAuth = null;
+
+export async function getAuth(forceRefresh = false) {
+  if (!forceRefresh && cachedAuth) {
+    const { session } = cachedAuth;
+    if (session && session.expires_at * 1000 > Date.now()) {
+      return cachedAuth;
+    }
+  }
+
   try {
     const [{ data: { user } }, { data: { session } }] = await Promise.all([
       supabase.auth.getUser(),
       supabase.auth.getSession()
     ]);
     if (!user || !session) throw new Error('Unauthorized');
-    return { user, session };
+    cachedAuth = { user, session };
+    return cachedAuth;
   } catch (err) {
+    cachedAuth = null;
     console.error('❌ Failed to retrieve auth:', err);
     throw new Error('Unauthorized');
   }
@@ -60,7 +71,9 @@ export async function authHeaders() {
 /**
  * Clear cache.
  */
-export function resetAuthCache() {}
+export function resetAuthCache() {
+  cachedAuth = null;
+}
 
 /**
  * Clear session + cross-tab logout.
@@ -87,6 +100,7 @@ export async function refreshSessionAndStore() {
       console.warn('⚠️ Session refresh failed:', error);
       return false;
     }
+    resetAuthCache();
     return true;
   } catch (err) {
     console.error('❌ Session refresh threw error:', err);
