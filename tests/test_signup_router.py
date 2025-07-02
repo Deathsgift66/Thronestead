@@ -198,6 +198,32 @@ def test_resend_confirmation_error():
         signup.resend_confirmation(payload)
 
 
+def test_resend_confirmation_already_verified():
+    called = {"resend": False}
+
+    class Admin:
+        def get_user_by_email(self, _email):
+            return {"id": "u1", "confirmed_at": "now"}
+
+    class Auth:
+        def __init__(self):
+            self.admin = Admin()
+
+        def resend(self, *_a, **_k):
+            called["resend"] = True
+            return {"status": "sent"}
+
+    class Client:
+        def __init__(self):
+            self.auth = Auth()
+
+    signup.get_supabase_client = Client
+    payload = signup.ResendPayload(email="e@example.com")
+    res = signup.resend_confirmation(payload)
+    assert res["status"] == "already_verified"
+    assert called["resend"] is False
+
+
 def test_finalize_signup_creates_rows(db_session):
     payload = signup.FinalizePayload(
         user_id="fin1",
