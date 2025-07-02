@@ -70,18 +70,16 @@ def fetch_logs(
              LIMIT :limit
         """
         rows = db.execute(text(query), {"uid": user_id, "limit": limit}).fetchall()
-        result = []
-        for r in rows:
-            result.append(
-                {
-                    "log_id": r[0],
-                    "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
-                    "action": r[3],
-                    "details": r[4],
-                    "created_at": r[5],
-                }
-            )
-        return result
+        return [
+            {
+                "log_id": r[0],
+                "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
+                "action": r[3],
+                "details": r[4],
+                "created_at": r[5],
+            }
+            for r in rows
+        ]
     except SQLAlchemyError as e:
         logger.exception("Failed to fetch audit logs")
         raise RuntimeError("Audit fetch failed") from e
@@ -150,18 +148,16 @@ def fetch_filtered_logs(
 
     try:
         rows = db.execute(text(query), params).fetchall()
-        result = []
-        for r in rows:
-            result.append(
-                {
-                    "log_id": r[0],
-                    "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
-                    "action": r[3],
-                    "details": r[4],
-                    "created_at": r[5],
-                }
-            )
-        return result
+        return [
+            {
+                "log_id": r[0],
+                "user_id": DELETED_PLACEHOLDER if r[2] else r[1],
+                "action": r[3],
+                "details": r[4],
+                "created_at": r[5],
+            }
+            for r in rows
+        ]
     except SQLAlchemyError as e:
         logger.exception("Filtered audit query failed")
         raise RuntimeError("Filtered audit fetch failed") from e
