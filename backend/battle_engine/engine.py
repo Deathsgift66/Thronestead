@@ -137,6 +137,8 @@ class CombatResolver:
         for unit in war.units:
             units_by_pos[(unit.x, unit.y)].append(unit)
 
+        global_remove: set[Unit] = set()
+
         for pos, units in units_by_pos.items():
             if len(units) < 2:
                 continue
@@ -158,21 +160,24 @@ class CombatResolver:
                                 }
                             )
 
+            # Pre-compute damage stats once per unit
+            dmg_stats: Dict[Unit, tuple[int, float]] = {}
+            for u in units:
+                base = u.quantity * 10
+                crit = 0.0
+                if u.morale > 60:
+                    crit = min((u.morale - 60) * 0.00125, 0.05)
+                dmg_stats[u] = (base, crit)
+
             to_remove: set[Unit] = set()
             for attacker, defender in itertools.combinations(units, 2):
                 if attacker.kingdom_id == defender.kingdom_id:
                     continue
 
-                base_damage = attacker.quantity * 10
-                crit_chance = 0.0
-                if attacker.morale > 60:
-                    crit_chance = ((attacker.morale - 60) / 40) * 0.05
-                    crit_chance = min(0.05, crit_chance)
-
-                critical = False
-                if random.random() < crit_chance:
+                base_damage, crit_chance = dmg_stats[attacker]
+                critical = random.random() < crit_chance
+                if critical:
                     base_damage = int(base_damage * 1.5)
-                    critical = True
 
                 damage = min(base_damage, defender.hp)
                 defender.hp -= damage
@@ -198,8 +203,10 @@ class CombatResolver:
                     )
                     to_remove.add(defender)
 
-            if to_remove:
-                war.units = [u for u in war.units if u not in to_remove]
+            global_remove.update(to_remove)
+
+        if global_remove:
+            war.units = [u for u in war.units if u not in global_remove]
 
 
 # --------------------------
