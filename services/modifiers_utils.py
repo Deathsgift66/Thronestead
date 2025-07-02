@@ -5,12 +5,23 @@
 """Shared utilities for modifier handling."""
 
 import logging
+import json
 
 # Cached modifier data to reduce expensive aggregation queries.
 _modifier_cache: dict[int, tuple[float, dict]] = {}
 
 
 logger = logging.getLogger(__name__)
+
+
+def parse_json_field(value):
+    """Return a parsed JSON object if ``value`` is a JSON string."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except Exception:
+            return {}
+    return value or {}
 
 
 def _merge_modifiers(target: dict, mods: dict) -> None:
