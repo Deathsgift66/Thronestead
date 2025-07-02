@@ -11,14 +11,11 @@ VARIANT_PREFIXES = ["", "VITE_", "PUBLIC_", "PUBLIC_VITE_"]
 def get_env_var(key: str, default: str | None = None) -> str | None:
     """Return the value of the first defined variant of ``key``."""
 
-    return next(
-        (
-            val
-            for pref in VARIANT_PREFIXES
-            if (val := os.getenv(f"{pref}{key}")) is not None
-        ),
-        default,
-    )
+    for pref in VARIANT_PREFIXES:
+        val = os.getenv(f"{pref}{key}")
+        if val is not None:
+            return val
+    return default
 
 
 def strtobool(val: str) -> bool:

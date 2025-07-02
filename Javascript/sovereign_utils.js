@@ -5,6 +5,8 @@
 // Sovereign’s Grand Overseer — Shared Utility Module
 // Central module to manage village cards, sorting, and ambience audio.
 
+import { escapeHTML } from './utils.js';
+
 /**
  * @namespace SovereignUtils
  * @description Utility functions for the Sovereign’s Grand Overseer page.
@@ -29,11 +31,11 @@ export const SovereignUtils = {
     card.setAttribute('tabindex', '0'); // Accessibility
 
     card.innerHTML = `
-      <h3>${this.escapeHTML(village.village_name)}</h3>
+      <h3>${escapeHTML(village.village_name)}</h3>
       <p><strong>Population:</strong> ${village.population.toLocaleString()}</p>
       <p><strong>Buildings:</strong> ${village.building_count}</p>
       <p><strong>Military:</strong> ${village.troop_count}</p>
-      <button class="action-btn" data-village-id="${village.village_id}" aria-label="Manage ${this.escapeHTML(village.village_name)}">Manage Village</button>
+      <button class="action-btn" data-village-id="${village.village_id}" aria-label="Manage ${escapeHTML(village.village_name)}">Manage Village</button>
     `;
 
     // Attach click event to button
@@ -115,19 +117,4 @@ export const SovereignUtils = {
       audio.pause();
     }
   },
-
-  /**
-   * Utility: Sanitize any text for HTML injection.
-   * @param {string} str - Unsafe string.
-   * @returns {string} - Safe, escaped string.
-   */
-  escapeHTML(str) {
-    if (!str) return '';
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
 };
