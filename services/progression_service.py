@@ -73,8 +73,7 @@ def calculate_troop_slots(db: Session, kingdom_id: int) -> int:
         if not result:
             return 0
 
-        base, buildings, tech, projects, events, region_bonus = result
-        return base + buildings + tech + projects + events + region_bonus
+        return sum(result)
 
     except SQLAlchemyError as exc:
         logger.warning("Failed to calculate troop slots: %s", exc)
@@ -404,6 +403,24 @@ def _global_event_modifiers(_: Session, __: int) -> dict:
     return global_game_settings.get("event_modifiers", {})
 
 
+# Ordered list of all modifier source functions used by ``get_total_modifiers``.
+_MODIFIER_SOURCES = [
+    _region_modifiers,
+    _tech_modifiers,
+    _temple_modifiers,
+    _kingdom_project_modifiers,
+    _alliance_project_modifiers,
+    _vip_modifiers,
+    _get_faith_modifiers,
+    _prestige_modifiers,
+    _village_modifiers,
+    _village_modifier_rows,
+    _treaty_modifiers,
+    _spy_modifiers,
+    _global_event_modifiers,
+]
+
+
 def get_total_modifiers(
     db: Session, kingdom_id: int, *, use_cache: bool = True
 ) -> dict:
@@ -423,23 +440,7 @@ def get_total_modifiers(
         "production_bonus": {},
     }
 
-    sources = [
-        _region_modifiers,
-        _tech_modifiers,
-        _temple_modifiers,
-        _kingdom_project_modifiers,
-        _alliance_project_modifiers,
-        _vip_modifiers,
-        _get_faith_modifiers,
-        _prestige_modifiers,
-        _village_modifiers,
-        _village_modifier_rows,
-        _treaty_modifiers,
-        _spy_modifiers,
-        _global_event_modifiers,
-    ]
-
-    for func in sources:
+    for func in _MODIFIER_SOURCES:
         try:
             mods = func(db, kingdom_id)
             _merge_modifiers(total, mods)
