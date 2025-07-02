@@ -102,15 +102,15 @@ Developer: Deathsgift66
   </div>
 </div>
 
-<!-- Request Auth Link Modal -->
-<div id="auth-link-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="auth-link-title" aria-hidden="true" inert>
+<!-- Resend Verification Modal -->
+<div id="resend-verification-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="resend-verification-title" aria-hidden="true" inert>
   <div class="modal-content">
-    <h2 id="auth-link-title">Email Verification</h2>
-    <p>Enter your account email to resend the verification link.</p>
-    <input type="email" id="auth-email" placeholder="Your Royal Email" aria-label="Email Address" autocomplete="email" required />
-    <button id="send-auth-btn" class="royal-button">Send Verification Link</button>
-  <div id="auth-message" class="message"></div>
-  <button id="close-auth-btn" class="royal-button">Close</button>
+    <h2 id="resend-verification-title">Resend Verification Email</h2>
+    <p>Enter your email to receive a new verification link.</p>
+    <input type="email" id="resend-email" placeholder="Your Royal Email" aria-label="Email Address" autocomplete="email" required />
+    <div id="resend-verification-message" class="message" aria-live="polite"></div>
+    <button id="send-verification-btn" class="royal-button">Send</button>
+    <button id="close-verification-btn" class="royal-button">Cancel</button>
   </div>
 </div>
 
