@@ -166,6 +166,10 @@ REAUTH_LOCKOUT_THRESHOLD
 
 ```
 
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` must be provided at runtime. The
+frontend no longer includes fallback credentials, so deployments should supply
+these values via environment variables or `window.env`.
+
 `READ_REPLICA_URL` optionally points to a read-only Supabase replica used when
 the primary `DATABASE_URL` is unavailable.
 
