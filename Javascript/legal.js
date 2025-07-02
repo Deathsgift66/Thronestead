@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <p>${doc.desc}</p>
         <a class="btn" href="${doc.file}" target="_blank" rel="noopener">📄 View PDF</a>
       `;
+      card.addEventListener('click', () => {
+        window.open(doc.file, '_blank');
+      });
       docGrid.appendChild(card);
     });
   }
