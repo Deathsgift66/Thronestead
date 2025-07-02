@@ -83,26 +83,20 @@ TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-origins = TRUSTED_ORIGINS.copy()
-origins.extend([
-    "http://localhost",
-    "http://127.0.0.1",
-])
 
-# Allow additional origins via environment variable
-extra_origins = get_env_var("ALLOWED_ORIGINS")
-if extra_origins:
-    origins.extend(o.strip() for o in extra_origins.split(",") if o.strip())
+def _build_cors_origins() -> list[str]:
+    origins = TRUSTED_ORIGINS + ["http://localhost", "http://127.0.0.1"]
+    extra = get_env_var("ALLOWED_ORIGINS")
+    if extra:
+        origins.extend(o.strip() for o in extra.split(",") if o.strip())
+    return origins
 
-origin_regex = r"https:\/\/.*thronestead\.com"
-env_regex = get_env_var("ALLOWED_ORIGIN_REGEX")
-if env_regex:
-    origin_regex = env_regex
 
-allow_credentials = True
+origins = _build_cors_origins()
+
+origin_regex = get_env_var("ALLOWED_ORIGIN_REGEX", default=r"https:\/\/.*thronestead\.com")
 if "*" in origins:
     origins = ["*"]
-    # Credentials are still allowed even when wildcard origins are permitted.
 
 # Apply the CORS middleware before other custom middleware so that CORS
 # headers are always included in the response.
@@ -110,7 +104,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_origin_regex=origin_regex,
-    allow_credentials=allow_credentials,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

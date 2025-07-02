@@ -87,14 +87,8 @@ def decode_supabase_jwt(token: str) -> dict:
     if not secret:
         raise JWTError("SUPABASE_JWT_SECRET not configured")
     audience = get_env_var("SUPABASE_JWT_AUD")
-    if audience:
-        return jwt.decode(token, secret, algorithms=["HS256"], audience=audience)
-    return jwt.decode(
-        token,
-        secret,
-        algorithms=["HS256"],
-        options={"verify_aud": False},
-    )
+    kwargs = {"audience": audience} if audience else {"options": {"verify_aud": False}}
+    return jwt.decode(token, secret, algorithms=["HS256"], **kwargs)
 
 
 def verify_jwt_token(authorization: str | None = Header(None)) -> str:

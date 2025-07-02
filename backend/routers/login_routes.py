@@ -12,7 +12,7 @@ Version: 2025-06-21
 
 import logging
 import time
-from ..env_utils import get_env_var, strtobool
+from ..env_utils import get_env_var, get_env_bool
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -32,9 +32,7 @@ from .session import store_session_cookie, TokenPayload
 router = APIRouter(prefix="/api/login", tags=["login"])
 
 # Interpret common truthy values for allowing unverified emails during login
-ALLOW_UNVERIFIED_LOGIN = strtobool(
-    get_env_var("ALLOW_UNVERIFIED_LOGIN", default="false")
-)
+ALLOW_UNVERIFIED_LOGIN = get_env_bool("ALLOW_UNVERIFIED_LOGIN")
 
 
 @router.get("/announcements", response_class=JSONResponse)
