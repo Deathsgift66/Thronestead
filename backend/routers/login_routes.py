@@ -139,7 +139,11 @@ def authenticate(
     if has_active_ban(db, ip=ip, device_hash=device_hash):
         raise HTTPException(status_code=403, detail="Access banned")
 
-    sb = get_supabase_client()
+    try:
+        sb = get_supabase_client()
+    except RuntimeError as exc:
+        logging.exception("Supabase client unavailable")
+        raise HTTPException(status_code=503, detail="Supabase unavailable") from exc
     data = {"email": payload.email, "password": payload.password}
     if payload.otp:
         data["otp_token"] = payload.otp
@@ -284,7 +288,11 @@ def reauthenticate(
     if status and status.lower() == "suspicious" and not payload.otp:
         raise HTTPException(status_code=401, detail="2FA required")
 
-    sb = get_supabase_client()
+    try:
+        sb = get_supabase_client()
+    except RuntimeError as exc:
+        logging.exception("Supabase client unavailable")
+        raise HTTPException(status_code=503, detail="Supabase unavailable") from exc
     data = {"email": email, "password": payload.password}
     if payload.otp:
         data["otp_token"] = payload.otp
