@@ -16,7 +16,7 @@ import logging
 import traceback
 from pathlib import Path
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -65,9 +65,10 @@ setup_rate_limiter(app)
 async def _unhandled_exception_handler(request: Request, exc: Exception):
     logger.exception("Unhandled exception: %s", exc)
     if isinstance(exc, HTTPException):
-        # Preserve HTTPException status codes for well-formed API responses
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
-    return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
+        response = JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+    else:
+        response = JSONResponse({"detail": "Internal Server Error"}, status_code=500)
+    return _maybe_add_cors_headers(request, response)
 
 
 # -----------------------
@@ -112,6 +113,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Utility to apply CORS headers to custom responses (e.g., error handler)
+import re
+
+_origin_pattern = re.compile(origin_regex) if origin_regex else None
+
+
+def _maybe_add_cors_headers(request: Request, response: Response) -> Response:
+    """Attach CORS headers when the request origin is permitted."""
+    origin = request.headers.get("origin")
+    if not origin:
+        return response
+    if "*" in origins:
+        response.headers.setdefault("Access-Control-Allow-Origin", "*")
+        response.headers.setdefault("Access-Control-Allow-Credentials", "true")
+    elif origin in origins or (_origin_pattern and _origin_pattern.match(origin)):
+        response.headers.setdefault("Access-Control-Allow-Origin", origin)
+        response.headers.setdefault("Access-Control-Allow-Credentials", "true")
+    return response
 
 
 # Print configured origins during startup for debugging purposes.
