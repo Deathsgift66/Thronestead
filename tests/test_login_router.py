@@ -337,3 +337,17 @@ class DummyReauthClient:
 class DummyDBReauth:
     def __init__(self, status="active"):
         self.status = status
+
+
+def test_authenticate_supabase_unavailable():
+    def raise_err():
+        raise RuntimeError("no client")
+
+    login_routes.get_supabase_client = raise_err
+    db = DummyDBAuth()
+    payload = login_routes.AuthPayload(email="e@example.com", password="p")
+    req = DummyRequest()
+    resp = DummyResponse()
+    with pytest.raises(HTTPException) as exc:
+        login_routes.authenticate(req, payload, response=resp, db=db)
+    assert exc.value.status_code == 503
