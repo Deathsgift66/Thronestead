@@ -192,7 +192,8 @@ def _include_routers() -> None:
 
 
 _include_routers()
-app.include_router(auth.router, prefix="/api/auth")
+# Auth router already defines its own prefix
+app.include_router(auth.router)
 
 # -----------------------
 # 🖼️ Static File Serving (Frontend SPA)
