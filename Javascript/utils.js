@@ -68,6 +68,9 @@ export function openModal(modal) {
 export function closeModal(modal) {
   const el = typeof modal === 'string' ? document.getElementById(modal) : modal;
   if (!el) return;
+  if (el.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
   el.classList.add('hidden');
   el.setAttribute('aria-hidden', 'true');
   el.setAttribute('inert', '');
