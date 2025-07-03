@@ -11,7 +11,7 @@
     "validate-links": "node scripts/validate-links.js",
     "lint": "eslint . --ext .js,.mjs",
     "clean": "rm -rf dist",
-    "build": "vite build && cp _headers dist/_headers",
+    "build": "vite build && cp _headers dist/_headers && cp -r Assets dist/",
     "test": "echo \"No tests defined\""
   },
   "dependencies": {
