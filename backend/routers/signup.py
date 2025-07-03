@@ -497,10 +497,11 @@ def register(
                     "email": payload.email,
                     "password": payload.password,
                     "options": {
+                        "emailRedirectTo": "https://www.thronestead.com/login.html",
                         "data": {
                             "display_name": payload.display_name,
                             "username": payload.username,
-                        }
+                        },
                     },
                 }
             )
@@ -644,7 +645,11 @@ def register(
         ) from exc
     if not confirmed:
         try:
-            sb.auth.resend({"type": "signup", "email": payload.email})
+            sb.auth.resend({
+                "type": "signup",
+                "email": payload.email,
+                "emailRedirectTo": "https://www.thronestead.com/login.html",
+            })
         except Exception:
             logger.warning("Failed to trigger confirmation email for %s", payload.email)
 
@@ -681,7 +686,11 @@ def resend_confirmation(payload: ResendPayload):
         return {"status": "already_verified"}
 
     try:
-        res = sb.auth.resend({"type": "signup", "email": payload.email})
+        res = sb.auth.resend({
+            "type": "signup",
+            "email": payload.email,
+            "emailRedirectTo": "https://www.thronestead.com/login.html",
+        })
     except Exception as exc:
         logger.exception("Failed to resend confirmation email")
         raise HTTPException(status_code=500, detail="Failed to resend email") from exc

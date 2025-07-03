@@ -163,6 +163,7 @@ async function handleSignup() {
       email: values.email,
       password: values.password,
       options: {
+        emailRedirectTo: 'https://www.thronestead.com/login.html',
         data: {
           username: values.username,
           display_name: values.kingdomName
