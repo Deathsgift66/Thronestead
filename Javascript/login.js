@@ -238,17 +238,23 @@ async function handleVerificationResend() {
     resendVerificationMsg.textContent = 'Please enter your email address.';
     return;
   }
-  const { error } = await supabase.auth.signUp(
-    { email, password: 'temporary' },
-    { redirectTo: window.location.origin }
-  );
-  if (error) {
-    if (error.message.includes('already registered')) {
-      resendVerificationMsg.textContent = '✅ If unverified, the email was resent.';
+  sendVerificationBtn.disabled = true;
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/resend-confirmation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Failed to send email.');
+    if (data.status === 'already_verified') {
+      resendVerificationMsg.textContent = 'Email already verified.';
     } else {
-      resendVerificationMsg.textContent = `Error: ${error.message}`;
+      resendVerificationMsg.textContent = '✅ Verification email sent!';
     }
-  } else {
-    resendVerificationMsg.textContent = '✅ Verification email sent!';
+  } catch (error) {
+    resendVerificationMsg.textContent = `Error: ${error.message}`;
+  } finally {
+    sendVerificationBtn.disabled = false;
   }
 }
