@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, showToast, fragmentFrom, jsonFetch } from './utils.js';
+import { escapeHTML, showToast, fragmentFrom, jsonFetch, openModal, closeModal } from './utils.js';
 import { containsBannedContent } from './content_filter.js';
 
 let currentUser = null;
@@ -44,10 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('greeting').textContent = `Welcome, ${escapeHTML(displayName)}!`;
 
   const nameInput = document.getElementById('kingdom-name-input');
-  if (nameInput) {
-    nameInput.value = displayName;
-    nameInput.readOnly = true;
-  }
+  if (nameInput) nameInput.readOnly = true;
 
   selectedAvatar = avatarList[0];
   await loadVIPStatus();
@@ -55,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAnnouncements();
   renderAvatarOptions();
   bindUIEvents();
+  openModal('name-modal');
 });
 
 function redirectTo(url) {
@@ -62,6 +60,34 @@ function redirectTo(url) {
 }
 
 function bindUIEvents() {
+  const nextName = document.getElementById('step1-next');
+  const nameModalInput = document.getElementById('kingdom-name-modal-input');
+  nextName?.addEventListener('click', () => {
+    const val = nameModalInput?.value.trim();
+    if (!val || val.length < 3) return showToast('Kingdom name must be at least 3 characters.');
+    if (containsBannedContent(val)) return showToast('Inappropriate names are not allowed.');
+    const mainInput = document.getElementById('kingdom-name-input');
+    if (mainInput) {
+      mainInput.value = val;
+      mainInput.readOnly = true;
+    }
+    closeModal('name-modal');
+    openModal('region-modal');
+  });
+
+  const nextRegion = document.getElementById('step2-next');
+  const regionModalSelect = document.getElementById('region-modal-select');
+  nextRegion?.addEventListener('click', () => {
+    const region = regionModalSelect?.value;
+    if (!region) return showToast('Please select a region.');
+    const mainSelect = document.getElementById('region-select');
+    if (mainSelect) {
+      mainSelect.value = region;
+      mainSelect.dispatchEvent(new Event('change'));
+    }
+    closeModal('region-modal');
+  });
+
   const createBtn = document.getElementById('create-kingdom-btn');
   if (!createBtn) return;
 
@@ -161,23 +187,27 @@ async function loadVIPStatus() {
 
 async function loadRegions() {
   const regionEl = document.getElementById('region-select');
+  const modalSelect = document.getElementById('region-modal-select');
   const infoEl = document.getElementById('region-info');
+  const modalInfo = document.getElementById('region-modal-info');
   if (!regionEl || !infoEl) return;
 
   try {
     const regions = await jsonFetch('/api/kingdom/regions');
     regionEl.innerHTML = '<option value="">Select Region</option>';
+    if (modalSelect) modalSelect.innerHTML = '<option value="">Select Region</option>';
 
     regions.forEach(region => {
       regionMap[region.region_code] = region;
       const opt = document.createElement('option');
       opt.value = region.region_code;
       opt.textContent = region.region_name;
-      regionEl.appendChild(opt);
+      regionEl.appendChild(opt.cloneNode(true));
+      if (modalSelect) modalSelect.appendChild(opt);
     });
 
-    regionEl.addEventListener('change', () => {
-      const selected = regionMap[regionEl.value];
+    const updateInfo = (code, target) => {
+      const selected = regionMap[code];
       if (!selected) return;
       let html = selected.description ? `<p>${escapeHTML(selected.description)}</p>` : '';
       if (selected.resource_bonus) {
@@ -190,8 +220,13 @@ async function loadRegions() {
           Object.entries(selected.troop_bonus).map(([k, v]) =>
             `<li>${escapeHTML(k)}: ${v > 0 ? '+' : ''}${v}%</li>`).join('') + '</ul>';
       }
-      infoEl.innerHTML = html;
-    });
+      target.innerHTML = html;
+    };
+
+    regionEl.addEventListener('change', () => updateInfo(regionEl.value, infoEl));
+    if (modalSelect && modalInfo) {
+      modalSelect.addEventListener('change', () => updateInfo(modalSelect.value, modalInfo));
+    }
   } catch {
     regionEl.innerHTML = '<option value="">Failed to load regions</option>';
   }

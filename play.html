@@ -72,7 +72,7 @@ Developer: Deathsgift66
         <h3>Kingdom Setup</h3>
 
         <label for="kingdom-name-input">Kingdom Name</label>
-        <input type="text" id="kingdom-name-input" readonly aria-readonly="true" />
+        <input type="text" id="kingdom-name-input" />
 
         <label for="region-select">Region</label>
         <select id="region-select" aria-describedby="region-info">
@@ -110,9 +110,30 @@ Developer: Deathsgift66
     </section>
 
     <!-- Toast Notifications -->
-    <div id="toast" class="toast-notification" aria-live="assertive" role="status"></div>
+  <div id="toast" class="toast-notification" aria-live="assertive" role="status"></div>
 
   </main>
+
+  <!-- Step 1: Kingdom Name -->
+  <div id="name-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="name-modal-title" aria-hidden="true" inert>
+    <div class="modal-content">
+      <h2 id="name-modal-title">Name Your Kingdom</h2>
+      <input type="text" id="kingdom-name-modal-input" placeholder="Enter Kingdom Name" />
+      <button id="step1-next" class="btn">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Region -->
+  <div id="region-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="region-modal-title" aria-hidden="true" inert>
+    <div class="modal-content">
+      <h2 id="region-modal-title">Choose Your Region</h2>
+      <select id="region-modal-select" aria-describedby="region-modal-info">
+        <option value="">Select Region</option>
+      </select>
+      <div id="region-modal-info" class="region-info"></div>
+      <button id="step2-next" class="btn">Next</button>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="site-footer" role="contentinfo">
