@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { showToast, openModal, closeModal } from './utils.js';
+import { showToast, openModal, closeModal, validateEmail } from './utils.js';
 import { getEnvVar } from './env.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');
@@ -97,7 +97,12 @@ async function handleLogin(e) {
   e.preventDefault();
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  if (!email || !password) return showMessage('error', 'Email and password required.');
+  if (!email || !password) {
+    return showMessage('error', 'Email and password required.');
+  }
+  if (!validateEmail(email)) {
+    return showMessage('error', 'Please enter a valid email address.');
+  }
 
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
