@@ -167,6 +167,39 @@ function togglePassword() {
   togglePasswordBtn.setAttribute('aria-pressed', String(!visible));
 }
 
+// Ensure the user's profile exists in the database.
+async function ensureProfileRecord(user) {
+  const { data: existing } = await supabase
+    .from('users')
+    .select('setup_complete')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (existing) return existing;
+
+  const meta = user.user_metadata || {};
+  try {
+    await fetch(`${API_BASE_URL}/api/signup/finalize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: user.id,
+        username: meta.username || '',
+        display_name: meta.display_name || meta.username || 'New Ruler',
+        kingdom_name: meta.display_name || meta.username || 'New Kingdom',
+        email: user.email
+      })
+    });
+  } catch (err) {
+    console.error('Finalize signup error:', err);
+  }
+  const { data: refreshed } = await supabase
+    .from('users')
+    .select('setup_complete')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  return refreshed;
+}
+
 async function redirectToApp() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -174,11 +207,7 @@ async function redirectToApp() {
       return (window.location.href = 'overview.html');
     }
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('setup_complete')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const profile = await ensureProfileRecord(user);
 
     if (profile && profile.setup_complete === false) {
       window.location.href = 'play.html';
