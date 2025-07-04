@@ -329,6 +329,9 @@ class TableStub:
                 return {"data": [{"id": 1}]}
             if self.eq_col == "email" and self.value == "taken@example.com":
                 return {"data": [{"id": 1}]}
+        if self.table == "auth.users":
+            if self.eq_col == "raw_user_meta_data->>display_name" and self.value == "taken":
+                return {"data": [{"id": 1}]}
         if self.table == "kingdoms" and self.value == "taken":
             return {"data": [{"id": 1}]}
         return {"data": []}
