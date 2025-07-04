@@ -322,13 +322,15 @@ class TableStub:
         return self
 
     def execute(self):
-        if self.table == "kingdoms" and self.value == "taken":
-            return {"data": [{"id": 1}]}
         if self.table == "users":
+            if self.eq_col == "display_name" and self.value == "taken":
+                return {"data": [{"id": 1}]}
             if self.eq_col == "username" and self.value == "taken":
                 return {"data": [{"id": 1}]}
             if self.eq_col == "email" and self.value == "taken@example.com":
                 return {"data": [{"id": 1}]}
+        if self.table == "kingdoms" and self.value == "taken":
+            return {"data": [{"id": 1}]}
         return {"data": []}
 
 
@@ -340,12 +342,12 @@ class AvailClient:
 def test_check_availability(db_session):
     signup.get_supabase_client = AvailClient
     payload = signup.CheckPayload(
-        kingdom_name="taken",
+        display_name="taken",
         username="taken",
         email="taken@example.com",
     )
     res = signup.check_availability(payload, db=db_session)
-    assert not res["kingdom_available"]
+    assert not res["display_available"]
     assert not res["username_available"]
     assert not res["email_available"]
 
@@ -385,12 +387,12 @@ def test_check_availability_supabase_error(db_session):
     db_session.commit()
 
     payload = signup.CheckPayload(
-        kingdom_name="Dup",
+        display_name="Dup",
         username="dup",
         email="dup@example.com",
     )
     res = signup.check_availability(payload, db=db_session)
-    assert not res["kingdom_available"]
+    assert not res["display_available"]
     assert not res["username_available"]
     assert not res["email_available"]
 
