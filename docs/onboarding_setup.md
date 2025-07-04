@@ -1,6 +1,6 @@
 # New Player Onboarding
 
-When a player signs up and completes the onboarding flow (`play.html` & `play.js`), several database records are created to ensure the new kingdom can immediately begin play.
+When a player signs up and completes the onboarding flow (`play.html` & `play.js`), several database records are created to ensure the new kingdom can immediately begin play. The frontend now calls the `/api/onboarding` routes for each step, rather than a single bulk endpoint.
 
 1. **users** – A profile row with `setup_complete` marked `true` and the generated `kingdom_id`.
 2. **kingdoms** – The core kingdom record containing the chosen name and region.
