@@ -198,6 +198,18 @@ def check_availability(
                 rows = getattr(res, "data", res) or []
                 available_display = len(rows) == 0
 
+                if available_display:
+                    # Cross-check display name against auth.users metadata
+                    res = (
+                        sb.table("auth.users")
+                        .select("id")
+                        .eq("raw_user_meta_data->>display_name", payload.display_name)
+                        .limit(1)
+                        .execute()
+                    )
+                    rows = getattr(res, "data", res) or []
+                    available_display = len(rows) == 0
+
             if payload.username:
                 res = (
                     sb.table("users")
