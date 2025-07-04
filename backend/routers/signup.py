@@ -83,11 +83,11 @@ def _check_kingdom_free(db: Session, name: str) -> None:
 
 
 class CheckPayload(BaseModel):
-    kingdom_name: Optional[str] = None
+    display_name: Optional[str] = None
     username: Optional[constr(min_length=3, max_length=20)] = None
     email: Optional[EmailStr] = None
 
-    _check_kingdom = validator("kingdom_name", allow_reuse=True)(
+    _check_display = validator("display_name", allow_reuse=True)(
         lambda v: _validate_text(v)
     )
     _check_username = validator("username", allow_reuse=True)(
@@ -158,18 +158,18 @@ def check_availability(
     except Exception:  # pragma: no cover - service might be down
         logger.warning("Supabase client unavailable; falling back to DB")
         sb = None
-    available_kingdom = True
+    available_display = True
     available_username = True
     available_email = True
 
     def _query_db() -> None:
-        nonlocal available_kingdom, available_username, available_email
-        if payload.kingdom_name:
+        nonlocal available_display, available_username, available_email
+        if payload.display_name:
             row = db.execute(
-                text("SELECT 1 FROM kingdoms WHERE kingdom_name = :n LIMIT 1"),
-                {"n": payload.kingdom_name},
+                text("SELECT 1 FROM users WHERE display_name = :n LIMIT 1"),
+                {"n": payload.display_name},
             ).fetchone()
-            available_kingdom = row is None
+            available_display = row is None
 
         if payload.username:
             row = db.execute(
@@ -187,16 +187,16 @@ def check_availability(
 
     if sb:
         try:
-            if payload.kingdom_name:
+            if payload.display_name:
                 res = (
-                    sb.table("kingdoms")
-                    .select("kingdom_id")
-                    .eq("kingdom_name", payload.kingdom_name)
+                    sb.table("users")
+                    .select("id")
+                    .eq("display_name", payload.display_name)
                     .limit(1)
                     .execute()
                 )
                 rows = getattr(res, "data", res) or []
-                available_kingdom = len(rows) == 0
+                available_display = len(rows) == 0
 
             if payload.username:
                 res = (
@@ -233,7 +233,7 @@ def check_availability(
             ) from exc
 
     return {
-        "kingdom_available": available_kingdom,
+        "display_available": available_display,
         "username_available": available_username,
         "email_available": available_email,
     }

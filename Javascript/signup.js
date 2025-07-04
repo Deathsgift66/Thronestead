@@ -42,14 +42,12 @@ let messageEl;
 let signupForm;
 document.addEventListener("DOMContentLoaded", () => {
   signupForm = document.getElementById('signup-form');
-  const kingdomNameEl = document.getElementById('kingdomName');
   const usernameEl = document.getElementById('username');
   signupButton = signupForm.querySelector('button[type="submit"]');
   messageEl = document.getElementById('signup-message');
 
   // ✅ Debounced availability checker
   const check = debounce(checkAvailability, 400);
-  kingdomNameEl.addEventListener('input', check);
   usernameEl.addEventListener('input', check);
 
   // ✅ Bind form submit
@@ -65,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // ✅ Signup flow handler
 async function handleSignup() {
   const values = {
-    kingdomName: document.getElementById('kingdomName').value.trim(),
     username: document.getElementById('username').value.trim(),
     email: document.getElementById('email').value.trim(),
     password: document.getElementById('password').value,
@@ -78,11 +75,6 @@ async function handleSignup() {
   }
 
   // ✅ Input validations
-  if (!values.kingdomName) return showMessage('Kingdom Name is required.');
-  if (values.kingdomName.length < 3) return showMessage('Kingdom Name must be at least 3 characters.');
-  if (containsBannedWord(values.kingdomName)) {
-    return showMessage('Chosen Kingdom Name is not allowed.');
-  }
   if (!validateUsername(values.username)) {
     return showMessage('Ruler Name must be 3-20 alphanumeric characters.');
   }
@@ -108,7 +100,7 @@ async function handleSignup() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        kingdom_name: values.kingdomName,
+        display_name: values.username,
         username: values.username,
         email: values.email
       })
@@ -126,12 +118,6 @@ async function handleSignup() {
         signupButton.textContent = 'Seal Your Fate';
         setFormDisabled(false);
         return showMessage('Username already taken.');
-      }
-      if (!data.kingdom_available) {
-        signupButton.disabled = false;
-        signupButton.textContent = 'Seal Your Fate';
-        setFormDisabled(false);
-        return showMessage('Kingdom name already taken.');
       }
     }
   } catch (err) {
@@ -166,7 +152,7 @@ async function handleSignup() {
         emailRedirectTo: 'https://www.thronestead.com/login.html',
         data: {
           username: values.username,
-          display_name: values.kingdomName
+          display_name: values.username
         }
       }
     });
@@ -190,8 +176,8 @@ async function handleSignup() {
               user_id: userInfo.id,
               email: values.email,
               username: values.username,
-              kingdom_name: values.kingdomName,
-              display_name: values.kingdomName,
+              kingdom_name: values.username,
+              display_name: values.username,
               captcha_token: captchaToken
             })
           });
@@ -225,22 +211,15 @@ async function handleSignup() {
   }
 }
 
-// ✅ Realtime check kingdom availability
+// ✅ Realtime check name availability
 async function checkAvailability() {
-  const kingdom = document.getElementById('kingdomName').value.trim();
   const username = document.getElementById('username').value.trim();
 
-  if (!kingdom && !username) {
+  if (!username) {
     return;
   }
 
-  if (kingdom && (kingdom.length < 3 ||
-      containsBannedWord(kingdom))) {
-    updateAvailabilityUI('kingdomName-msg', false);
-    if (signupButton) signupButton.disabled = true;
-    return;
-  }
-  if (username && (!validateUsername(username) || containsBannedWord(username))) {
+  if (!validateUsername(username) || containsBannedWord(username)) {
     updateAvailabilityUI('username-msg', false);
     if (signupButton) signupButton.disabled = true;
     return;
@@ -248,8 +227,10 @@ async function checkAvailability() {
 
   try {
     const body = {};
-    if (kingdom) body.kingdom_name = kingdom;
-    if (username) body.username = username;
+    if (username) {
+      body.display_name = username;
+      body.username = username;
+    }
     const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -258,16 +239,13 @@ async function checkAvailability() {
     if (!res.ok) throw new Error('check failed');
     const data = await res.json();
 
-    if (kingdom) {
-      updateAvailabilityUI('kingdomName-msg', data.kingdom_available);
-    }
     if (username) {
       updateAvailabilityUI('username-msg', data.username_available);
     }
 
     if (signupButton) {
       signupButton.disabled =
-        !data.kingdom_available || !data.username_available;
+        !data.username_available || !data.display_available;
     }
   } catch (err) {
     console.error('Availability check failed', err);
