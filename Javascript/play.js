@@ -104,14 +104,17 @@ function bindUIEvents() {
     createBtn.disabled = true;
 
     try {
-      await postJSON('/api/kingdom/create', {
+      await postJSON('/api/onboarding/kingdom', {
         kingdom_name: kingdomName,
-        ruler_title: rulerTitle,
-        village_name: villageName,
-        region,
-        banner_url: bannerUrl,
-        emblem_url: emblemUrl
+        region
       });
+      await postJSON('/api/onboarding/village', { village_name: villageName });
+      await postJSON('/api/onboarding/resources');
+      await postJSON('/api/onboarding/troop_slots');
+      await postJSON('/api/onboarding/noble', { noble_name: 'Founding Noble' });
+      await postJSON('/api/onboarding/knight', { knight_name: 'First Knight' });
+      await postJSON('/api/onboarding/title');
+      await postJSON('/api/onboarding/complete');
 
       await postJSON('/api/account/update', {
         display_name: kingdomName,
