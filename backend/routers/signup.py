@@ -166,7 +166,7 @@ def check_availability(
         nonlocal available_display, available_username, available_email
         if payload.display_name:
             row = db.execute(
-                text("SELECT 1 FROM users WHERE display_name = :n LIMIT 1"),
+                text("SELECT 1 FROM users WHERE display_name ILIKE :n LIMIT 1"),
                 {"n": payload.display_name},
             ).fetchone()
             available_display = row is None
@@ -191,7 +191,7 @@ def check_availability(
                 res = (
                     sb.table("users")
                     .select("id")
-                    .eq("display_name", payload.display_name)
+                    .ilike("display_name", payload.display_name)
                     .limit(1)
                     .execute()
                 )
@@ -203,7 +203,7 @@ def check_availability(
                     res = (
                         sb.table("auth.users")
                         .select("id")
-                        .eq("raw_user_meta_data->>display_name", payload.display_name)
+                        .ilike("raw_user_meta_data->>display_name", payload.display_name)
                         .limit(1)
                         .execute()
                     )
