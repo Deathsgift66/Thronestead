@@ -24,7 +24,11 @@ const requireAdmin = window.requireAdmin === true;
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    let { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      const { data } = await supabase.auth.refreshSession();
+      session = data?.session;
+    }
     if (!session?.access_token) {
       return (window.location.href = '/login.html');
     }

@@ -119,6 +119,7 @@ async function handleLogin(e) {
         access_token: result.access_token,
         refresh_token: result.refresh_token
       });
+      await supabase.auth.getSession();
       localStorage.setItem('authToken', result.access_token);
     }
     showMessage('success', 'Login successful. Redirecting...');
