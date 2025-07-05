@@ -355,6 +355,29 @@ def test_check_availability(db_session):
     assert not res["email_available"]
 
 
+class AuthMetaStub(TableStub):
+    """Return a match only for auth.users metadata."""
+
+    def execute(self):
+        if self.table == "auth.users" and self.eq_col == "raw_user_meta_data->>display_name" and self.value == "authonly":
+            return {"data": [{"id": 1}]}
+        return {"data": []}
+
+
+class AuthMetaClient:
+    def table(self, name):
+        return AuthMetaStub(name)
+
+
+def test_check_availability_username_in_auth_metadata(db_session):
+    signup.get_supabase_client = AuthMetaClient
+    payload = signup.CheckPayload(username="authonly")
+    res = signup.check_availability(payload, db=db_session)
+    assert not res["username_available"]
+    assert res["display_available"]
+    assert res["email_available"]
+
+
 def test_check_availability_supabase_error(db_session):
     class ErrorTable:
         def select(self, *_args, **_kwargs):
