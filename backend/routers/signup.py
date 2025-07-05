@@ -221,6 +221,20 @@ def check_availability(
                 rows = getattr(res, "data", res) or []
                 available_username = len(rows) == 0
 
+                if available_username:
+                    res = (
+                        sb.table("auth.users")
+                        .select("id")
+                        .eq(
+                            "raw_user_meta_data->>display_name",
+                            payload.username,
+                        )
+                        .limit(1)
+                        .execute()
+                    )
+                    rows = getattr(res, "data", res) or []
+                    available_username = len(rows) == 0
+
             if payload.email:
                 res = (
                     sb.table("users")
