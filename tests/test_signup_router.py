@@ -304,6 +304,28 @@ def test_finalize_signup_conflict_kingdom(db_session):
     assert exc.value.status_code == 409
 
 
+def test_finalize_signup_conflict_email(db_session):
+    payload = signup.FinalizePayload(
+        user_id="dup5",
+        username="user5",
+        display_name="u5",
+        kingdom_name="Realm5",
+        email="same@example.com",
+    )
+    signup.finalize_signup(payload, db=db_session)
+
+    payload2 = signup.FinalizePayload(
+        user_id="dup6",
+        username="user6",
+        display_name="u6",
+        kingdom_name="Realm6",
+        email="same@example.com",
+    )
+    with pytest.raises(HTTPException) as exc:
+        signup.finalize_signup(payload2, db=db_session)
+    assert exc.value.status_code == 409
+
+
 class TableStub:
     def __init__(self, table):
         self.table = table

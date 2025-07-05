@@ -79,6 +79,16 @@ def _check_kingdom_free(db: Session, name: str) -> None:
         raise HTTPException(status_code=409, detail="Kingdom name already exists")
 
 
+def _check_email_free(db: Session, email: str) -> None:
+    """Raise 409 if the email address already exists."""
+    count = db.execute(
+        text("SELECT COUNT(*) FROM users WHERE email = :e"),
+        {"e": email},
+    ).scalar()
+    if count:
+        raise HTTPException(status_code=409, detail="Email already exists")
+
+
 # ------------- Payload Models -------------------
 
 
@@ -326,6 +336,7 @@ def create_user(payload: CreateUserPayload, db: Session = Depends(get_db)):
     """
     _check_username_free(db, payload.username)
     _check_kingdom_free(db, payload.kingdom_name)
+    _check_email_free(db, payload.email)
     try:
         db.execute(
             text(
@@ -390,6 +401,7 @@ def finalize_signup(payload: FinalizePayload, db: Session = Depends(get_db)):
 
     _check_username_free(db, payload.username)
     _check_kingdom_free(db, payload.kingdom_name)
+    _check_email_free(db, payload.email)
 
     try:
         db.execute(
@@ -496,12 +508,7 @@ def register(
 
     # --- Uniqueness Checks ---
     _check_username_free(db, payload.username)
-    count_email = db.execute(
-        text("SELECT COUNT(*) FROM users WHERE email = :e"),
-        {"e": payload.email},
-    ).scalar()
-    if count_email:
-        raise HTTPException(status_code=409, detail="Username or email already exists")
+    _check_email_free(db, payload.email)
 
     _check_kingdom_free(db, payload.kingdom_name)
 
