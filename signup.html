@@ -1,25 +1,145 @@
+<!--
+Project Name: Thronestead©
+File Name: signup.html
+Version: 7.5.2025.20.00
+Developer: Deathsgift66
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Signup | Thronestead</title>
+
+  <title>Sign Up | Thronestead</title>
+  <meta name="description" content="Create your account and begin your rise in Thronestead — a medieval strategy MMO." />
+  <meta name="keywords" content="Thronestead, sign up, create account, medieval strategy game, kingdom" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/signup.html" />
+  <meta name="theme-color" content="#2e2b27" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Sign Up | Thronestead" />
+  <meta property="og:description" content="Create your account and begin your rise in Thronestead — a medieval strategy MMO." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="signup.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Sign Up | Thronestead" />
+  <meta name="twitter:description" content="Create your account and begin your rise in Thronestead — a medieval strategy MMO." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/signup.css" rel="stylesheet" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
+  <script src="/Javascript/signup.js" type="module"></script>
+  <script src="/Javascript/apiHelper.js" type="module"></script>
+  <script src="/Javascript/cookieConsent.js" type="module"></script>
 </head>
+
 <body>
-  <form id="signup-form">
-    <label>Email:</label>
-    <input type="email" id="email" required />
-    <label>Password:</label>
-    <input type="password" id="password" required />
-    <label>Kingdom Name:</label>
-    <input type="text" id="kingdom_name" required />
-    <label>Region:</label>
-    <input type="text" id="region" />
-    <label>Profile Bio:</label>
-    <textarea id="profile_bio"></textarea>
-    <button type="submit">Create Account</button>
-  </form>
-  <script src="/signup.js" type="module"></script>
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Signup Banner">
+    <h1>Thronestead — Sign Up</h1>
+  </header>
+
+  <!-- Main Signup Form -->
+  <main id="main-content" class="main-centered-container" aria-label="Signup Form Interface">
+    <section class="alliance-members-container">
+      <div class="signup-panel" role="region" aria-labelledby="signup-header">
+        <h2 id="signup-header">Create Your Account</h2>
+
+        <form id="signup-form" aria-describedby="form-instructions" novalidate>
+          <p id="form-instructions" class="form-note">All fields are required unless stated otherwise.</p>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required autocomplete="email" />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" />
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" autocomplete="new-password" />
+          </div>
+
+          <div class="form-group">
+            <label for="kingdom_name">Kingdom Name</label>
+            <input type="text" id="kingdom_name" name="kingdom_name" required />
+            <div id="username-msg" class="availability" aria-live="polite"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="region">Region <span class="optional">(Optional)</span></label>
+            <input type="text" id="region" name="region" />
+          </div>
+
+          <div class="form-group">
+            <label for="profile_bio">Profile Bio <span class="optional">(Optional)</span></label>
+            <textarea id="profile_bio" name="profile_bio" rows="3"></textarea>
+          </div>
+
+          <!-- Legal Agreement -->
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="agreeLegal" name="agreeLegal" required />
+              I agree to the <a href="legal.html" target="_blank" rel="noopener noreferrer">Legal Documents</a>.
+            </label>
+          </div>
+
+          <!-- Captcha -->
+          <div id="signup-captcha" class="h-captcha" data-sitekey="56862342-e134-4d60-9d6a-0b42ff4ebc24"></div>
+          <script src="https://hcaptcha.com/1/api.js" async defer></script>
+
+          <!-- Submit Button -->
+          <button id="signup-submit" name="signup-submit" type="submit" class="form-btn" aria-label="Create Account">Seal Your Fate</button>
+        </form>
+
+        <!-- Alt Links -->
+        <div class="links-section">
+          Already sitting on a throne? <a href="login.html">Login Here</a>
+        </div>
+
+        <div id="signup-message" class="message" aria-live="polite"></div>
+
+        <!-- Optional: Leaderboard -->
+        <section class="stats-panel hidden" aria-labelledby="legends-header">
+          <h3 id="legends-header">Legends of the Realm</h3>
+          <ul id="top-kingdoms-list" class="top-kingdoms-list"></ul>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" aria-hidden="true">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a href="legal.html" target="_blank" rel="noopener noreferrer">View Legal Documents</a>
+      <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
 </body>
 </html>
