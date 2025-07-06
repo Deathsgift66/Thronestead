@@ -50,12 +50,17 @@ def make_request():
 
 def test_register_creates_user_row(db_session):
     signup.get_supabase_client = lambda: DummyClient("newid")
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('N', 'North')")
+    )
+    db_session.commit()
     payload = signup.RegisterPayload(
         email="e@example.com",
         password="pass",
         username="user",
         kingdom_name="Realm",
         display_name="user",
+        region="N",
         captcha_token="t",
     )
     res = signup.register(make_request(), payload, db=db_session)
@@ -72,6 +77,8 @@ def test_register_creates_user_row(db_session):
     ).fetchone()
     assert user.email == "e@example.com"
     assert kingdom.kingdom_name == "Realm"
+    assert user.region == "North"
+    assert kingdom.region == "North"
     assert vip.vip_level == 0
     assert user.sign_up_ip == "test"
     assert res_row is not None
@@ -80,12 +87,17 @@ def test_register_creates_user_row(db_session):
 
 def test_register_handles_error(db_session):
     signup.get_supabase_client = lambda: DummyClient(error=True)
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('N', 'North')")
+    )
+    db_session.commit()
     payload = signup.RegisterPayload(
         email="x@x.com",
         password="p",
         username="u",
         kingdom_name="k",
         display_name="u",
+        region="N",
         captcha_token="t",
     )
     try:
@@ -98,12 +110,17 @@ def test_register_handles_error(db_session):
 
 def test_register_returns_supabase_error(db_session):
     signup.get_supabase_client = lambda: DummyClient(error_resp=True)
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('N', 'North')")
+    )
+    db_session.commit()
     payload = signup.RegisterPayload(
         email="x@x.com",
         password="p",
         username="u",
         kingdom_name="k",
         display_name="u",
+        region="N",
         captcha_token="t",
     )
     try:
@@ -116,12 +133,17 @@ def test_register_returns_supabase_error(db_session):
 
 def test_register_invalid_username(db_session):
     signup.get_supabase_client = lambda: DummyClient("id")
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('N', 'North')")
+    )
+    db_session.commit()
     payload = signup.RegisterPayload(
         email="x@x.com",
         password="p",
         username="bad!name",
         kingdom_name="k",
         display_name="u",
+        region="N",
         captcha_token="t",
     )
     with pytest.raises(HTTPException):
@@ -137,12 +159,17 @@ def test_register_reserved_username(db_session):
             username="Admin",
             kingdom_name="k",
             display_name="u",
+            region="N",
             captcha_token="t",
         )
 
 
 def test_register_captcha_failure(db_session):
     signup.get_supabase_client = lambda: DummyClient("id")
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('N', 'North')")
+    )
+    db_session.commit()
 
     def fail_captcha(*_args, **_kwargs):
         return False
@@ -155,6 +182,7 @@ def test_register_captcha_failure(db_session):
         username="usera",
         kingdom_name="k",
         display_name="u",
+        region="N",
         captcha_token="bad",
     )
     with pytest.raises(HTTPException) as exc:
@@ -171,6 +199,10 @@ def test_register_with_existing_user(db_session):
             return {"user": {"id": "should-not"}}
 
     signup.get_supabase_client = lambda: type("C", (), {"auth": StubAuth()})()
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('N', 'North')")
+    )
+    db_session.commit()
     payload = signup.RegisterPayload(
         user_id="provided",
         email="e2@example.com",
@@ -178,6 +210,7 @@ def test_register_with_existing_user(db_session):
         username="user2",
         kingdom_name="Realm2",
         display_name="user2",
+        region="N",
         captcha_token="t",
     )
     res = signup.register(make_request(), payload, db=db_session)
