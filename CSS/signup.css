@@ -67,6 +67,14 @@ body {
   background: var(--parchment-dark);
   color: var(--ink);
 }
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  background: var(--parchment-dark);
+  color: var(--ink);
+}
 
 .checkbox-group {
   margin-bottom: 1.5rem;
@@ -142,6 +150,12 @@ body {
 
 .stats-panel li {
   padding: 0.25rem 0;
+}
+
+.region-info {
+  margin-top: 0.5rem;
+  color: var(--ink);
+  font-size: 0.9rem;
 }
 
 .message {
