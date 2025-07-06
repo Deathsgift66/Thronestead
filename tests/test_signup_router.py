@@ -4,6 +4,7 @@
 # Developer: Deathsgift66
 from fastapi import HTTPException
 import pytest
+import asyncio
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -12,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from backend.db_base import Base
 from backend.models import Kingdom, KingdomVipStatus, User
 from sqlalchemy import text
-from backend.routers import signup
+from backend.routers import signup, signup_router
 from fastapi import Request
 
 
@@ -451,3 +452,60 @@ def test_check_kingdom_name():
     assert not res["available"]
     res = signup.check_kingdom_name("open")
     assert res["available"]
+
+
+def test_simple_signup_requires_valid_region(db_session):
+    class Admin:
+        def create_user(self, *_a, **_k):
+            return {"user": {"id": "uid1"}}
+
+    class Auth:
+        def __init__(self):
+            self.admin = Admin()
+
+    class Client:
+        def __init__(self):
+            self.auth = Auth()
+
+    signup_router.get_supabase_client = Client
+    db_session.execute(
+        text(
+            "INSERT INTO region_catalogue (region_code, region_name) VALUES ('N', 'North')"
+        )
+    )
+    db_session.commit()
+    req = make_request()
+    payload = signup_router.SignupPayload(
+        email="a@b.com",
+        password="pass",
+        kingdom_name="Realm",
+        region="North",
+    )
+    res = asyncio.run(signup_router.create_user(payload, req, db=db_session))
+    assert res["message"] == "Signup complete"
+
+
+def test_simple_signup_invalid_region(db_session):
+    class Admin:
+        def create_user(self, *_a, **_k):
+            return {"user": {"id": "uid2"}}
+
+    class Auth:
+        def __init__(self):
+            self.admin = Admin()
+
+    class Client:
+        def __init__(self):
+            self.auth = Auth()
+
+    signup_router.get_supabase_client = Client
+    req = make_request()
+    payload = signup_router.SignupPayload(
+        email="x@y.com",
+        password="pass",
+        kingdom_name="Realm",
+        region="Bad",
+    )
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(signup_router.create_user(payload, req, db=db_session))
+    assert exc.value.status_code == 400
