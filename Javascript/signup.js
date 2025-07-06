@@ -78,7 +78,7 @@ async function handleSignup(button) {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
-  const region = document.getElementById('region')?.value?.trim() || null;
+  const region = document.getElementById('region').value.trim();
   const profile_bio = document.getElementById('profile_bio')?.value?.trim() || null;
   const agreed = document.getElementById('agreeLegal').checked;
 
@@ -87,6 +87,7 @@ async function handleSignup(button) {
   if (!validateEmail(email)) return showMessage('Invalid email address.');
   if (!validatePasswordComplexity(password)) return showMessage('Password must include a number and a symbol.');
   if (password !== confirmPassword) return showMessage('Passwords do not match.');
+  if (!region) return showMessage('Please select a region.');
   if (!agreed) return showMessage('You must agree to the legal terms.');
 
   button.disabled = true;

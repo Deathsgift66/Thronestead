@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from services.moderation import validate_clean_text
 
 from backend.database import get_db
 from backend.models import User
@@ -13,7 +16,7 @@ class SignupPayload(BaseModel):
     email: EmailStr
     password: str
     kingdom_name: str
-    region: str | None = None
+    region: str
     profile_bio: str | None = None
 
 
@@ -21,6 +24,20 @@ class SignupPayload(BaseModel):
 async def create_user(payload: SignupPayload, request: Request, db: Session = Depends(get_db)):
     sb = get_supabase_client()
     client_ip = request.client.host if request.client else None
+
+    if len(payload.kingdom_name) < 3 or len(payload.kingdom_name) > 32:
+        raise HTTPException(status_code=400, detail="Invalid kingdom name")
+    try:
+        validate_clean_text(payload.kingdom_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    row = db.execute(
+        text("SELECT 1 FROM region_catalogue WHERE region_name = :r"),
+        {"r": payload.region},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail="Invalid region")
 
     try:
         auth_resp = sb.auth.admin.create_user({
