@@ -509,3 +509,95 @@ def test_simple_signup_invalid_region(db_session):
     with pytest.raises(HTTPException) as exc:
         asyncio.run(signup_router.create_user(payload, req, db=db_session))
     assert exc.value.status_code == 400
+
+
+class SessionAuth:
+    def __init__(self, user=None):
+        self._user = user or {"id": "u1"}
+
+    def get_session(self):
+        return type("S", (), {"user": self._user})()
+
+
+class SessionClient:
+    def __init__(self, user=None):
+        self.auth = SessionAuth(user)
+
+
+def test_validate_signup_success(db_session):
+    signup_router.get_supabase_client = lambda: SessionClient()
+    signup_router.verify_hcaptcha = lambda *_a, **_k: True
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('S', 'South')")
+    )
+    db_session.commit()
+    req = make_request()
+    payload = signup_router.SignupCheckPayload(
+        email="new@example.com",
+        kingdom_name="Realm",
+        region="South",
+        captcha_token="t",
+    )
+    res = asyncio.run(signup_router.validate_signup(payload, req, db=db_session))
+    assert res["status"] == "ok"
+    assert res["auth_user_id"] == "u1"
+
+
+def test_validate_signup_email_taken(db_session):
+    signup_router.get_supabase_client = lambda: SessionClient()
+    signup_router.verify_hcaptcha = lambda *_a, **_k: True
+    db_session.execute(
+        text("INSERT INTO users (user_id, email, kingdom_name) VALUES ('u2', 'dup@example.com', 'King')")
+    )
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('S', 'South')")
+    )
+    db_session.commit()
+    req = make_request()
+    payload = signup_router.SignupCheckPayload(
+        email="dup@example.com",
+        kingdom_name="Unique",
+        region="South",
+        captcha_token="t",
+    )
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(signup_router.validate_signup(payload, req, db=db_session))
+    assert exc.value.status_code == 409
+
+
+def test_validate_signup_no_session(db_session):
+    signup_router.get_supabase_client = lambda: SessionClient(user=None)
+    signup_router.verify_hcaptcha = lambda *_a, **_k: True
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('S', 'South')")
+    )
+    db_session.commit()
+    req = make_request()
+    payload = signup_router.SignupCheckPayload(
+        email="a@b.com",
+        kingdom_name="Realm",
+        region="South",
+        captcha_token="t",
+    )
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(signup_router.validate_signup(payload, req, db=db_session))
+    assert exc.value.status_code == 401
+
+
+def test_validate_signup_captcha_fail(db_session):
+    signup_router.get_supabase_client = lambda: SessionClient()
+    signup_router.verify_hcaptcha = lambda *_a, **_k: False
+    db_session.execute(
+        text("INSERT INTO region_catalogue (region_code, region_name) VALUES ('S', 'South')")
+    )
+    db_session.commit()
+    req = make_request()
+    payload = signup_router.SignupCheckPayload(
+        email="a@b.com",
+        kingdom_name="Realm",
+        region="South",
+        captcha_token="bad",
+    )
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(signup_router.validate_signup(payload, req, db=db_session))
+    assert exc.value.status_code == 403
