@@ -32,10 +32,16 @@ function containsBannedWord(name) {
   return reservedWords.some(w => lower.includes(w)) || containsBannedContent(name);
 }
 
-function updateAvailabilityUI(id, available) {
+function updateAvailabilityUI(id, status) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.textContent = available ? "Available" : "Taken";
+  if (status === 'invalid') {
+    el.textContent = 'Invalid';
+    el.className = 'availability invalid';
+    return;
+  }
+  const available = Boolean(status);
+  el.textContent = available ? 'Available' : 'Taken';
   el.className = 'availability ' + (available ? 'available' : 'taken');
 }
 
@@ -167,7 +173,8 @@ async function handleSignup(button) {
 async function checkAvailability() {
   const username = document.getElementById('kingdom_name').value.trim();
   if (!username || !validateUsername(username) || containsBannedWord(username)) {
-    updateAvailabilityUI('username-msg', false);
+    updateAvailabilityUI('username-msg', 'invalid');
+    document.querySelector('button[type="submit"]').disabled = true;
     return;
   }
 
