@@ -115,7 +115,6 @@ class CreateUserPayload(BaseModel):
     _check_display = validator(
         "display_name",
         "kingdom_name",
-        "profile_bio",
         allow_reuse=True,
     )(lambda v: _validate_text(v))
     _check_username = validator("username", allow_reuse=True)(
