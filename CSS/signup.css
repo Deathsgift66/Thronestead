@@ -142,6 +142,9 @@ body {
 .taken {
   color: var(--error);
 }
+.invalid {
+  color: var(--warning);
+}
 
 .stats-panel {
   margin-top: 2rem;
