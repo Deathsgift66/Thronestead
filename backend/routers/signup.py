@@ -112,9 +112,12 @@ class CreateUserPayload(BaseModel):
     kingdom_name: str
     email: EmailStr
 
-    _check_display = validator("display_name", "kingdom_name", allow_reuse=True)(
-        lambda v: _validate_text(v)
-    )
+    _check_display = validator(
+        "display_name",
+        "kingdom_name",
+        "profile_bio",
+        allow_reuse=True,
+    )(lambda v: _validate_text(v))
     _check_username = validator("username", allow_reuse=True)(
         lambda v: _validate_username(v)
     )
@@ -126,12 +129,18 @@ class RegisterPayload(BaseModel):
     username: constr(min_length=3, max_length=20)
     kingdom_name: str
     display_name: str
+    region: str
+    profile_bio: Optional[str] = None
+    profile_picture_url: Optional[str] = None
     captcha_token: Optional[str] = None
     user_id: Optional[str] = None
 
-    _check_display = validator("display_name", "kingdom_name", allow_reuse=True)(
-        lambda v: _validate_text(v)
-    )
+    _check_display = validator(
+        "display_name",
+        "kingdom_name",
+        "profile_bio",
+        allow_reuse=True,
+    )(lambda v: _validate_text(v))
     _check_username = validator("username", allow_reuse=True)(
         lambda v: _validate_username(v)
     )
@@ -512,6 +521,14 @@ def register(
 
     _check_kingdom_free(db, payload.kingdom_name)
 
+    row = db.execute(
+        text("SELECT region_name FROM region_catalogue WHERE region_code = :c"),
+        {"c": payload.region},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail="Invalid region")
+    region_name = row[0]
+
     if not payload.username.isalnum():
         raise HTTPException(status_code=400, detail="Username must be alphanumeric")
 
@@ -522,6 +539,7 @@ def register(
     uid = payload.user_id
     confirmed = True
     user_obj = None
+    created_auth_user = False
 
     if uid is None:
         try:
@@ -580,12 +598,14 @@ def register(
         if not uid:
             raise HTTPException(status_code=500, detail="Signup failed - user ID missing")
 
+        created_auth_user = True
+
     try:
         db.execute(
             text(
                 """
-                INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id, sign_up_ip)
-                VALUES (:uid, :username, :display, :kingdom, :email, :uid, :ip)
+                INSERT INTO users (user_id, username, display_name, kingdom_name, email, auth_user_id, sign_up_ip, region, profile_bio, profile_picture_url)
+                VALUES (:uid, :username, :display, :kingdom, :email, :uid, :ip, :region, :bio, :pic)
                 ON CONFLICT (user_id) DO NOTHING
                 """
             ),
@@ -596,14 +616,17 @@ def register(
                 "kingdom": payload.kingdom_name,
                 "email": payload.email,
                 "ip": request.client.host if request.client else None,
+                "region": region_name,
+                "bio": payload.profile_bio,
+                "pic": payload.profile_picture_url,
             },
         )
 
         row = db.execute(
             text(
                 """
-                INSERT INTO kingdoms (user_id, kingdom_name, ruler_name)
-                VALUES (:uid, :kingdom, :display)
+                INSERT INTO kingdoms (user_id, kingdom_name, ruler_name, region)
+                VALUES (:uid, :kingdom, :display, :region)
                 RETURNING kingdom_id
                 """
             ),
@@ -611,6 +634,7 @@ def register(
                 "uid": uid,
                 "kingdom": payload.kingdom_name,
                 "display": payload.display_name,
+                "region": region_name,
             },
         ).fetchone()
         kid = int(row[0]) if row else None
@@ -673,6 +697,13 @@ def register(
         log_action(db, uid, "signup", f"User {uid} registered", ip, agent)
     except Exception as exc:
         logger.exception("Failed to save user profile")
+        if created_auth_user:
+            try:
+                admin = getattr(sb.auth, "admin", sb.auth)
+                if hasattr(admin, "delete_user"):
+                    admin.delete_user(uid)
+            except Exception:
+                logger.warning("Failed to delete Supabase user %s", uid)
         raise HTTPException(
             status_code=500, detail="Failed to save user profile"
         ) from exc
