@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await handleSignup(signupButton);
   });
   loadSignupStats();
+  loadRegions();
 });
 
 async function handleSignup(button) {
@@ -180,6 +181,33 @@ async function checkAvailability() {
     document.querySelector('button[type="submit"]').disabled = !data.username_available;
   } catch (err) {
     console.error('Availability check failed:', err);
+  }
+}
+
+async function loadRegions() {
+  const select = document.getElementById('region');
+  const infoEl = document.getElementById('region-info');
+  if (!select) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/kingdom/regions`);
+    const regions = await res.json();
+    select.innerHTML = '<option value="">Select Region</option>';
+    regions.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.region_code;
+      opt.textContent = r.region_name;
+      select.appendChild(opt);
+    });
+    if (infoEl) {
+      select.addEventListener('change', () => {
+        const r = regions.find(x => x.region_code === select.value);
+        infoEl.textContent = r?.description || '';
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load regions:', err);
+    select.innerHTML = '<option value="">Failed to load regions</option>';
   }
 }
 
