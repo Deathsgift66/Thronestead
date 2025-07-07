@@ -168,118 +168,106 @@ def _validate_username(value: str | None) -> str | None:
 def check_availability(
     payload: CheckPayload, db: Session = Depends(get_db)
 ):
-    """
-    Check if a kingdom name or username is available.
-    """
+    """Return availability for username, display name and email."""
+    username = (payload.username or "").strip().lower()
+    display = (payload.display_name or "").strip().lower()
+    email = (payload.email or "").strip().lower()
+
+    if not username and not display and not email:
+        raise HTTPException(status_code=400, detail="Missing required fields")
+
+    username_taken = False
+    display_taken = False
+    email_taken = False
+
+    if username:
+        user_row = db.execute(
+            text(
+                "SELECT 1 FROM users WHERE LOWER(TRIM(username)) = :u LIMIT 1"
+            ),
+            {"u": username},
+        ).fetchone()
+
+        kingdom_row = db.execute(
+            text(
+                "SELECT 1 FROM kingdoms "
+                "WHERE LOWER(TRIM(kingdom_name)) = :n "
+                "   OR LOWER(TRIM(ruler_name)) = :n LIMIT 1"
+            ),
+            {"n": username},
+        ).fetchone()
+
+        username_taken = user_row is not None or kingdom_row is not None
+
+    if display:
+        disp_user_row = db.execute(
+            text(
+                "SELECT 1 FROM users WHERE LOWER(TRIM(display_name)) = :n LIMIT 1"
+            ),
+            {"n": display},
+        ).fetchone()
+
+        disp_kingdom_row = db.execute(
+            text(
+                "SELECT 1 FROM kingdoms "
+                "WHERE LOWER(TRIM(kingdom_name)) = :n "
+                "   OR LOWER(TRIM(ruler_name)) = :n LIMIT 1"
+            ),
+            {"n": display},
+        ).fetchone()
+
+        display_taken = disp_user_row is not None or disp_kingdom_row is not None
+        username_taken = username_taken or display_taken
+
+    if email:
+        email_row = db.execute(
+            text("SELECT 1 FROM users WHERE LOWER(TRIM(email)) = :e LIMIT 1"),
+            {"e": email},
+        ).fetchone()
+        email_taken = email_row is not None
+
     try:
-        sb = get_supabase_client()
-    except Exception:  # pragma: no cover - service might be down
-        logger.warning("Supabase client unavailable; falling back to DB")
-        sb = None
-    available_display = True
-    available_username = True
-    available_email = True
-
-    def _query_db() -> None:
-        nonlocal available_display, available_username, available_email
-        if payload.display_name:
-            row = db.execute(
-                text("SELECT 1 FROM users WHERE display_name ILIKE :n LIMIT 1"),
-                {"n": payload.display_name},
+        if username:
+            username_row = db.execute(
+                text(
+                    "SELECT 1 FROM auth.users "
+                    "WHERE LOWER(TRIM(raw_user_meta_data->>'display_name')) = :u "
+                    "   OR LOWER(TRIM(raw_user_meta_data->>'username')) = :u "
+                    "LIMIT 1;"
+                ),
+                {"u": username},
             ).fetchone()
-            available_display = row is None
+            if username_row:
+                username_taken = True
 
-        if payload.username:
-            row = db.execute(
-                text("SELECT 1 FROM users WHERE username = :u LIMIT 1"),
-                {"u": payload.username},
+        if display and not display_taken:
+            disp_row = db.execute(
+                text(
+                    "SELECT 1 FROM auth.users "
+                    "WHERE LOWER(TRIM(raw_user_meta_data->>'display_name')) = :d LIMIT 1;"
+                ),
+                {"d": display},
             ).fetchone()
-            available_username = row is None
+            if disp_row:
+                display_taken = True
+                username_taken = True
 
-        if payload.email:
-            row = db.execute(
-                text("SELECT 1 FROM users WHERE email = :e LIMIT 1"),
-                {"e": payload.email},
+        if email:
+            email_row = db.execute(
+                text(
+                    "SELECT 1 FROM auth.users WHERE LOWER(TRIM(email)) = :e LIMIT 1;"
+                ),
+                {"e": email},
             ).fetchone()
-            available_email = row is None
-
-    if sb:
-        try:
-            if payload.display_name:
-                res = (
-                    sb.table("users")
-                    .select("id")
-                    .ilike("display_name", payload.display_name)
-                    .limit(1)
-                    .execute()
-                )
-                rows = getattr(res, "data", res) or []
-                available_display = len(rows) == 0
-
-                if available_display:
-                    # Cross-check display name against auth.users metadata
-                    res = (
-                        sb.table("auth.users")
-                        .select("id")
-                        .ilike("raw_user_meta_data->>display_name", payload.display_name)
-                        .limit(1)
-                        .execute()
-                    )
-                    rows = getattr(res, "data", res) or []
-                    available_display = len(rows) == 0
-
-            if payload.username:
-                res = (
-                    sb.table("users")
-                    .select("id")
-                    .eq("username", payload.username)
-                    .limit(1)
-                    .execute()
-                )
-                rows = getattr(res, "data", res) or []
-                available_username = len(rows) == 0
-
-                if available_username:
-                    res = (
-                        sb.table("auth.users")
-                        .select("id")
-                        .eq(
-                            "raw_user_meta_data->>display_name",
-                            payload.username,
-                        )
-                        .limit(1)
-                        .execute()
-                    )
-                    rows = getattr(res, "data", res) or []
-                    available_username = len(rows) == 0
-
-            if payload.email:
-                res = (
-                    sb.table("users")
-                    .select("id")
-                    .eq("email", payload.email)
-                    .limit(1)
-                    .execute()
-                )
-                rows = getattr(res, "data", res) or []
-                available_email = len(rows) == 0
-        except Exception:  # pragma: no cover - supabase failure
-            logger.warning("Supabase query failed; falling back to DB")
-            sb = None
-
-    if not sb:
-        try:
-            _query_db()
-        except Exception as exc:  # pragma: no cover - unexpected DB failure
-            logger.exception("Failed to query availability")
-            raise HTTPException(
-                status_code=500, detail="Failed to query availability"
-            ) from exc
+            if email_row:
+                email_taken = True
+    except Exception as exc:  # pragma: no cover - optional table missing
+        logger.warning("Supabase auth.users check failed: %s", exc)
 
     return {
-        "display_available": available_display,
-        "username_available": available_username,
-        "email_available": available_email,
+        "username_available": not username_taken,
+        "email_available": not email_taken,
+        "display_available": not display_taken,
     }
 
 
