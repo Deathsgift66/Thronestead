@@ -173,8 +173,11 @@ async function handleSignup(button) {
 }
 
 async function checkAvailability() {
-  const username = document.getElementById('kingdom_name').value.trim();
-  if (!username || !validateUsername(username) || containsBannedWord(username)) {
+  const kingdom_name = document.getElementById('kingdom_name').value.trim();
+  console.log('Checking name:', kingdom_name);
+  console.log('validateUsername:', validateUsername(kingdom_name));
+  console.log('containsBannedWord:', containsBannedWord(kingdom_name));
+  if (!kingdom_name || !validateUsername(kingdom_name) || containsBannedWord(kingdom_name)) {
     updateAvailabilityUI('username-msg', 'invalid');
     document.querySelector('button[type="submit"]').disabled = true;
     return;
@@ -184,7 +187,7 @@ async function checkAvailability() {
     const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, display_name: username })
+      body: JSON.stringify({ username: kingdom_name, display_name: kingdom_name })
     });
     const data = await res.json();
     updateAvailabilityUI('username-msg', data.username_available);
