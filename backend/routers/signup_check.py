@@ -29,62 +29,96 @@ async def check_signup_availability(
     display_name = (payload.display_name or "").strip().lower()
     email = (payload.email or "").strip().lower()
 
-    if not username and not email:
+    if not username and not display_name and not email:
         raise HTTPException(status_code=400, detail="Missing required fields")
 
     try:
-        user_row = db.execute(
-            text(
-                "SELECT 1 FROM users "
-                "WHERE LOWER(TRIM(username)) = :username "
-                "   OR LOWER(TRIM(display_name)) = :display LIMIT 1"
-            ),
-            {"username": username, "display": display_name},
-        ).fetchone()
+        username_taken = False
+        email_taken = False
 
-        kingdom_row = db.execute(
-            text(
-                "SELECT 1 FROM kingdoms "
-                "WHERE LOWER(TRIM(kingdom_name)) = :name "
-                "   OR LOWER(TRIM(ruler_name)) = :name LIMIT 1"
-            ),
-            {"name": username},
-        ).fetchone()
-
-        username_taken = user_row is not None or kingdom_row is not None
-
-        # Check if email exists in users table
-        email_result = db.execute(
-            text("""
-                SELECT 1 FROM users WHERE LOWER(TRIM(email)) = :email LIMIT 1;
-            """),
-            {"email": email}
-        ).fetchone()
-
-        email_taken = email_result is not None
-
-        # Optional: Check Supabase auth.users metadata (if synced with DB)
-        try:
-            username_row = db.execute(
+        if username:
+            user_row = db.execute(
                 text(
-                    "SELECT 1 FROM auth.users "
-                    "WHERE LOWER(TRIM(raw_user_meta_data->>'display_name')) = :username "
-                    "   OR LOWER(TRIM(raw_user_meta_data->>'username')) = :username "
-                    "LIMIT 1;"
+                    "SELECT 1 FROM users WHERE LOWER(TRIM(username)) = :username LIMIT 1"
                 ),
                 {"username": username},
             ).fetchone()
-            email_row = db.execute(
+
+            kingdom_row = db.execute(
                 text(
-                    "SELECT 1 FROM auth.users "
-                    "WHERE LOWER(TRIM(email)) = :email LIMIT 1;"
+                    "SELECT 1 FROM kingdoms "
+                    "WHERE LOWER(TRIM(kingdom_name)) = :name "
+                    "   OR LOWER(TRIM(ruler_name)) = :name LIMIT 1"
                 ),
+                {"name": username},
+            ).fetchone()
+
+            username_taken = user_row is not None or kingdom_row is not None
+
+        if display_name:
+            disp_user_row = db.execute(
+                text(
+                    "SELECT 1 FROM users WHERE LOWER(TRIM(display_name)) = :name LIMIT 1"
+                ),
+                {"name": display_name},
+            ).fetchone()
+
+            disp_kingdom_row = db.execute(
+                text(
+                    "SELECT 1 FROM kingdoms "
+                    "WHERE LOWER(TRIM(kingdom_name)) = :name "
+                    "   OR LOWER(TRIM(ruler_name)) = :name LIMIT 1"
+                ),
+                {"name": display_name},
+            ).fetchone()
+
+            username_taken = (
+                username_taken or disp_user_row is not None or disp_kingdom_row is not None
+            )
+
+        if email:
+            email_result = db.execute(
+                text("SELECT 1 FROM users WHERE LOWER(TRIM(email)) = :email LIMIT 1"),
                 {"email": email},
             ).fetchone()
-            if username_row:
-                username_taken = True
-            if email_row:
-                email_taken = True
+
+            email_taken = email_result is not None
+
+        # Optional: Check Supabase auth.users metadata (if synced with DB)
+        try:
+            if username:
+                username_row = db.execute(
+                    text(
+                        "SELECT 1 FROM auth.users "
+                        "WHERE LOWER(TRIM(raw_user_meta_data->>'display_name')) = :username "
+                        "   OR LOWER(TRIM(raw_user_meta_data->>'username')) = :username "
+                        "LIMIT 1;"
+                    ),
+                    {"username": username},
+                ).fetchone()
+                if username_row:
+                    username_taken = True
+
+            if display_name and not username_taken:
+                disp_row = db.execute(
+                    text(
+                        "SELECT 1 FROM auth.users "
+                        "WHERE LOWER(TRIM(raw_user_meta_data->>'display_name')) = :display LIMIT 1;"
+                    ),
+                    {"display": display_name},
+                ).fetchone()
+                if disp_row:
+                    username_taken = True
+
+            if email:
+                email_row = db.execute(
+                    text(
+                        "SELECT 1 FROM auth.users WHERE LOWER(TRIM(email)) = :email LIMIT 1;"
+                    ),
+                    {"email": email},
+                ).fetchone()
+                if email_row:
+                    email_taken = True
         except Exception as e:
             logger.warning("Supabase auth.users check failed: %s", e)
 
