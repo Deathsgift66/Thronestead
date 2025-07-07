@@ -11,3 +11,10 @@ def test_name_in_use_detects_existing(db_session):
     assert name_in_use(db_session, "realm")
     assert name_in_use(db_session, " king ")
     assert not name_in_use(db_session, "unique")
+
+
+def test_name_in_use_empty_and_no_rows(db_session):
+    # No users or kingdoms added
+    assert not name_in_use(db_session, "")
+    assert not name_in_use(db_session, None)
+    assert not name_in_use(db_session, "unknown")

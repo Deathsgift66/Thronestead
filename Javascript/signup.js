@@ -23,15 +23,25 @@ if (!API_BASE_URL) {
 
 const reservedWords = ['admin', 'moderator', 'support'];
 
+function normalizeWords(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
 function validateUsername(name) {
-  // Allow spaces and symbols; just enforce length 3-20 characters
+  // Allow spaces and symbols; just enforce length 3-32 characters
   const len = name.length;
-  return len >= 3 && len <= 20;
+  return len >= 3 && len <= 32;
 }
 
 function containsBannedWord(name) {
-  const lower = name.toLowerCase();
-  return reservedWords.some(w => lower.includes(w)) || containsBannedContent(name);
+  const words = normalizeWords(name);
+  return (
+    reservedWords.some(w => words.includes(w)) || containsBannedContent(name)
+  );
 }
 
 function updateAvailabilityUI(id, status) {
@@ -90,7 +100,7 @@ async function handleSignup(button) {
   const profile_bio = document.getElementById('profile_bio')?.value?.trim() || null;
   const agreed = document.getElementById('agreeLegal').checked;
 
-  if (!validateUsername(username)) return showMessage('Kingdom Name must be 3–20 characters.');
+  if (!validateUsername(username)) return showMessage('Kingdom Name must be 3–32 characters.');
   if (containsBannedWord(username)) return showMessage('Kingdom Name contains banned words.');
   if (!validateEmail(email)) return showMessage('Invalid email address.');
   if (!validatePasswordComplexity(password)) return showMessage('Password must include a number and a symbol.');
@@ -181,12 +191,14 @@ async function checkAvailability() {
   }
 
   try {
+    console.log(`Checking availability for: ${username}`);
     const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, display_name: username })
     });
     const data = await res.json();
+    console.log('Availability result:', data);
     updateAvailabilityUI('username-msg', data.username_available);
     document.querySelector('button[type="submit"]').disabled = !data.username_available;
   } catch (err) {
