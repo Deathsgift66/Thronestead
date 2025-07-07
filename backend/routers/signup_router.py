@@ -74,11 +74,15 @@ async def validate_signup(
         raise HTTPException(status_code=409, detail="Kingdom name already taken")
 
     region_row = db.execute(
-        text("SELECT 1 FROM region_catalogue WHERE region_name ILIKE :r"),
-        {"r": payload.region},
+        text(
+            "SELECT region_name FROM region_catalogue "
+            "WHERE region_code = :r OR region_name ILIKE :rn"
+        ),
+        {"r": payload.region, "rn": payload.region},
     ).fetchone()
     if not region_row:
         raise HTTPException(status_code=400, detail="Selected region is invalid")
+    region_name = region_row[0]
 
     return {
         "status": "ok",
@@ -88,7 +92,9 @@ async def validate_signup(
 
 
 @router.post("/create")
-async def create_user(payload: SignupPayload, request: Request, db: Session = Depends(get_db)):
+async def create_user(
+    payload: SignupPayload, request: Request, db: Session = Depends(get_db)
+):
     sb = get_supabase_client()
     client_ip = request.client.host if request.client else None
 
@@ -100,19 +106,27 @@ async def create_user(payload: SignupPayload, request: Request, db: Session = De
         raise HTTPException(status_code=400, detail=str(exc))
 
     row = db.execute(
-        text("SELECT 1 FROM region_catalogue WHERE region_name = :r"),
-        {"r": payload.region},
+        text(
+            "SELECT region_name FROM region_catalogue "
+            "WHERE region_code = :r OR region_name = :rn"
+        ),
+        {"r": payload.region, "rn": payload.region},
     ).fetchone()
     if not row:
         raise HTTPException(status_code=400, detail="Invalid region")
+    region_name = row[0]
 
     try:
-        auth_resp = sb.auth.admin.create_user({
-            "email": payload.email,
-            "password": payload.password,
-            "email_confirm": True,
-        })
-        auth_user = getattr(auth_resp, "user", None) or getattr(auth_resp, "data", {}).get("user")
+        auth_resp = sb.auth.admin.create_user(
+            {
+                "email": payload.email,
+                "password": payload.password,
+                "email_confirm": True,
+            }
+        )
+        auth_user = getattr(auth_resp, "user", None) or getattr(
+            auth_resp, "data", {}
+        ).get("user")
         auth_user_id = getattr(auth_user, "id", None) or (auth_user or {}).get("id")
         if not auth_user_id:
             raise ValueError("Missing auth user id")
@@ -124,7 +138,7 @@ async def create_user(payload: SignupPayload, request: Request, db: Session = De
             user_id=auth_user_id,
             email=payload.email,
             kingdom_name=payload.kingdom_name,
-            region=payload.region,
+            region=region_name,
             profile_bio=payload.profile_bio,
             auth_user_id=auth_user_id,
             sign_up_ip=client_ip,
