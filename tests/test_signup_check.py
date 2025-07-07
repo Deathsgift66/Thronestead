@@ -12,3 +12,4 @@ def test_check_available_empty_db(db_session):
     res = asyncio.run(check_signup_availability(payload, make_request(), db=db_session))
     assert res["username_available"] is True
     assert res["email_available"] is True
+    assert res["display_available"] is True
