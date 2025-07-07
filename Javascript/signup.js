@@ -38,10 +38,10 @@ function validateUsername(name) {
 }
 
 function containsBannedWord(name) {
-  const words = normalizeWords(name);
-  return (
-    reservedWords.some(w => words.includes(w)) || containsBannedContent(name)
-  );
+  const lower = name.toLowerCase();
+  return reservedWords.some(w => lower === w || lower.startsWith(w)) ||
+    containsBannedContent(name);
+
 }
 
 function updateAvailabilityUI(id, status) {
