@@ -24,7 +24,9 @@ if (!API_BASE_URL) {
 const reservedWords = ['admin', 'moderator', 'support'];
 
 function validateUsername(name) {
-  return /^[A-Za-z0-9]{3,20}$/.test(name);
+  // Allow spaces and symbols; just enforce length 3-20 characters
+  const len = name.length;
+  return len >= 3 && len <= 20;
 }
 
 function containsBannedWord(name) {
@@ -88,7 +90,7 @@ async function handleSignup(button) {
   const profile_bio = document.getElementById('profile_bio')?.value?.trim() || null;
   const agreed = document.getElementById('agreeLegal').checked;
 
-  if (!validateUsername(username)) return showMessage('Kingdom Name must be 3–20 alphanumeric characters.');
+  if (!validateUsername(username)) return showMessage('Kingdom Name must be 3–20 characters.');
   if (containsBannedWord(username)) return showMessage('Kingdom Name contains banned words.');
   if (!validateEmail(email)) return showMessage('Invalid email address.');
   if (!validatePasswordComplexity(password)) return showMessage('Password must include a number and a symbol.');

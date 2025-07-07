@@ -146,8 +146,8 @@ def test_register_invalid_username(db_session):
         region="N",
         captcha_token="t",
     )
-    with pytest.raises(HTTPException):
-        signup.register(make_request(), payload, db=db_session)
+    res = signup.register(make_request(), payload, db=db_session)
+    assert res["user_id"] == "id"
 
 
 def test_register_reserved_username(db_session):

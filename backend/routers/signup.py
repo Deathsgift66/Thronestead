@@ -528,8 +528,7 @@ def register(
         raise HTTPException(status_code=400, detail="Invalid region")
     region_name = row[0]
 
-    if not payload.username.isalnum():
-        raise HTTPException(status_code=400, detail="Username must be alphanumeric")
+
 
     # --- hCaptcha Verification ---
     if not verify_hcaptcha(payload.captcha_token, request.client.host if request.client else None):
