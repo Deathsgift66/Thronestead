@@ -8,7 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
-from database import get_db  # assumes your DB session logic
+from backend.database import get_db
 import logging
 
 logger = logging.getLogger(__name__)
@@ -33,23 +33,17 @@ async def check_signup_availability(
         raise HTTPException(status_code=400, detail="Missing required fields")
 
     try:
-        # Combined check against users and kingdoms for name/display_name
-        result = db.execute(
-            text("""
-                SELECT 1 FROM (
-                    SELECT LOWER(TRIM(kingdom_name)) AS name FROM users
-                    UNION
-                    SELECT LOWER(TRIM(display_name)) AS name FROM users
-                    UNION
-                    SELECT LOWER(TRIM(kingdom_name)) AS name FROM kingdoms
-                    UNION
-                    SELECT LOWER(TRIM(ruler_name)) AS name FROM kingdoms
-                ) x WHERE name IN (:username, :display_name) LIMIT 1;
-            """),
-            {"username": username, "display_name": display_name}
+        user_row = db.execute(
+            text("SELECT 1 FROM users WHERE LOWER(TRIM(username)) = :name OR LOWER(TRIM(display_name)) = :name LIMIT 1"),
+            {"name": username},
         ).fetchone()
 
-        username_taken = result is not None
+        kingdom_row = db.execute(
+            text("SELECT 1 FROM kingdoms WHERE LOWER(TRIM(kingdom_name)) = :name OR LOWER(TRIM(ruler_name)) = :name LIMIT 1"),
+            {"name": username},
+        ).fetchone()
+
+        username_taken = user_row is not None or kingdom_row is not None
 
         # Check if email exists in users table
         email_result = db.execute(
