@@ -31,7 +31,8 @@ function validateUsername(name) {
 
 function containsBannedWord(name) {
   const lower = name.toLowerCase();
-  return reservedWords.some(w => lower.includes(w)) || containsBannedContent(name);
+  return reservedWords.some(w => lower === w || lower.startsWith(w)) ||
+    containsBannedContent(name);
 }
 
 function updateAvailabilityUI(id, status) {
