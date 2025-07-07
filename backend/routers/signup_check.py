@@ -3,7 +3,7 @@
 # Version: 7.5.2025.21.01
 # Developer: Codex
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -20,7 +20,11 @@ class SignupCheckRequest(BaseModel):
     email: Optional[str] = None
 
 @router.post("/api/signup/check")
-async def check_signup_availability(payload: SignupCheckRequest, request: Request, db: Session = get_db()):
+async def check_signup_availability(
+    payload: SignupCheckRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     username = (payload.username or "").strip().lower()
     display_name = (payload.display_name or "").strip().lower()
     email = (payload.email or "").strip().lower()
