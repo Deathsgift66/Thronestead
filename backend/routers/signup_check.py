@@ -35,6 +35,7 @@ async def check_signup_availability(
     try:
         username_taken = False
         email_taken = False
+        display_taken = False
 
         if username:
             user_row = db.execute(
@@ -72,9 +73,8 @@ async def check_signup_availability(
                 {"name": display_name},
             ).fetchone()
 
-            username_taken = (
-                username_taken or disp_user_row is not None or disp_kingdom_row is not None
-            )
+            display_taken = disp_user_row is not None or disp_kingdom_row is not None
+            username_taken = username_taken or display_taken
 
         if email:
             email_result = db.execute(
@@ -99,7 +99,7 @@ async def check_signup_availability(
                 if username_row:
                     username_taken = True
 
-            if display_name and not username_taken:
+            if display_name and not display_taken:
                 disp_row = db.execute(
                     text(
                         "SELECT 1 FROM auth.users "
@@ -108,6 +108,7 @@ async def check_signup_availability(
                     {"display": display_name},
                 ).fetchone()
                 if disp_row:
+                    display_taken = True
                     username_taken = True
 
             if email:
@@ -124,7 +125,8 @@ async def check_signup_availability(
 
         return {
             "username_available": not username_taken,
-            "email_available": not email_taken
+            "email_available": not email_taken,
+            "display_available": not display_taken,
         }
 
     except Exception as e:
