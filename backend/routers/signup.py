@@ -80,10 +80,10 @@ def _check_kingdom_free(db: Session, name: str) -> None:
 
 
 def _check_email_free(db: Session, email: str) -> None:
-    """Raise 409 if the email address already exists."""
+    """Raise 409 if the email address already exists (case-insensitive)."""
     count = db.execute(
-        text("SELECT COUNT(*) FROM users WHERE email = :e"),
-        {"e": email},
+        text("SELECT COUNT(*) FROM users WHERE LOWER(TRIM(email)) = :e"),
+        {"e": email.strip().lower()},
     ).scalar()
     if count:
         raise HTTPException(status_code=409, detail="Email already exists")
