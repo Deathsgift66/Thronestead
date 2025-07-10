@@ -82,11 +82,23 @@ def _check_kingdom_free(db: Session, name: str) -> None:
 def _check_email_free(db: Session, email: str) -> None:
     """Raise 409 if the email address already exists (case-insensitive)."""
     count = db.execute(
-        text("SELECT COUNT(*) FROM users WHERE LOWER(TRIM(email)) = :e"),
+        text("SELECT email FROM users WHERE LOWER(TRIM(email)) = :e LIMIT 1"),
         {"e": email.strip().lower()},
-    ).scalar()
+    ).fetchone()
     if count:
         raise HTTPException(status_code=409, detail="Email already exists")
+
+    try:
+        row = db.execute(
+            text(
+                "SELECT email FROM auth.users WHERE LOWER(TRIM(email)) = :e LIMIT 1"
+            ),
+            {"e": email.strip().lower()},
+        ).fetchone()
+        if row:
+            raise HTTPException(status_code=409, detail="Email already exists")
+    except Exception:  # pragma: no cover - optional table missing
+        logger.warning("Supabase auth.users check failed during email validation")
 
 
 # ------------- Payload Models -------------------
