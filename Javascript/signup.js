@@ -116,12 +116,22 @@ async function handleSignup(button) {
   toggleLoading(true);
 
   try {
-    await checkEmailAvailability();
+    const emailStatus = await checkEmailAvailability();
+    if (emailStatus === false) {
+      throw new Error('Email already exists.');
+    }
+    if (emailStatus === null) {
+      throw new Error('Unable to verify email. Please try again later.');
+    }
+
     const checkRes = await fetch(`${API_BASE_URL}/api/signup/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ display_name: username, username, email })
     });
+    if (!checkRes.ok) {
+      throw new Error('Signup check failed');
+    }
     const checkData = await checkRes.json();
     if (!checkData.email_available) {
       console.warn('EMAIL BLOCKED:', email, 'pre-check');
@@ -225,7 +235,7 @@ async function checkEmailAvailability() {
   const email = document.getElementById('email').value.trim();
   if (!email || !validateEmail(email)) {
     updateAvailabilityUI('email-msg', 'invalid');
-    return false;
+    return null;
   }
 
   try {
@@ -234,6 +244,7 @@ async function checkEmailAvailability() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
+    if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     updateAvailabilityUI('email-msg', data.email_available);
     if (!data.email_available) {
@@ -242,7 +253,8 @@ async function checkEmailAvailability() {
     return data.email_available;
   } catch (err) {
     console.error('Email availability check failed:', err);
-    return false;
+    updateAvailabilityUI('email-msg', 'invalid');
+    return null;
   }
 }
 
