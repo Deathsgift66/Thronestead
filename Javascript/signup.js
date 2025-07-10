@@ -80,9 +80,11 @@ function setFormDisabled(disabled) {
 document.addEventListener('DOMContentLoaded', () => {
   const signupForm = document.getElementById('signup-form');
   const usernameEl = document.getElementById('kingdom_name');
+  const emailEl = document.getElementById('email');
   const signupButton = signupForm.querySelector('button[type="submit"]');
   const check = debounce(checkAvailability, 400);
   usernameEl.addEventListener('input', check);
+  emailEl.addEventListener('blur', checkEmailAvailability);
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleSignup(signupButton);
@@ -114,13 +116,17 @@ async function handleSignup(button) {
   toggleLoading(true);
 
   try {
+    await checkEmailAvailability();
     const checkRes = await fetch(`${API_BASE_URL}/api/signup/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ display_name: username, username, email })
     });
     const checkData = await checkRes.json();
-    if (!checkData.email_available) throw new Error('Email already exists.');
+    if (!checkData.email_available) {
+      console.warn('EMAIL BLOCKED:', email, 'pre-check');
+      throw new Error('Email already exists.');
+    }
     if (!checkData.username_available) throw new Error('Kingdom name is taken.');
 
     let captchaToken = 'test';
@@ -138,7 +144,13 @@ async function handleSignup(button) {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'auth/email-already-in-use') {
+        console.warn('EMAIL BLOCKED:', email, 'supabase');
+        throw new Error('Email already exists.');
+      }
+      throw error;
+    }
 
     const user = data.user;
     const confirmed = user?.email_confirmed_at || user?.confirmed_at;
@@ -206,6 +218,31 @@ async function checkAvailability() {
     document.querySelector('button[type="submit"]').disabled = !data.username_available;
   } catch (err) {
     console.error('Availability check failed:', err);
+  }
+}
+
+async function checkEmailAvailability() {
+  const email = document.getElementById('email').value.trim();
+  if (!email || !validateEmail(email)) {
+    updateAvailabilityUI('email-msg', 'invalid');
+    return false;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    updateAvailabilityUI('email-msg', data.email_available);
+    if (!data.email_available) {
+      console.warn('EMAIL BLOCKED:', email, 'pre-check');
+    }
+    return data.email_available;
+  } catch (err) {
+    console.error('Email availability check failed:', err);
+    return false;
   }
 }
 

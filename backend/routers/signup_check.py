@@ -78,7 +78,9 @@ async def check_signup_availability(
 
         if email:
             email_result = db.execute(
-                text("SELECT 1 FROM users WHERE LOWER(TRIM(email)) = :email LIMIT 1"),
+                text(
+                    "SELECT email FROM users WHERE LOWER(TRIM(email)) = :email LIMIT 1"
+                ),
                 {"email": email},
             ).fetchone()
 
@@ -114,7 +116,7 @@ async def check_signup_availability(
             if email:
                 email_row = db.execute(
                     text(
-                        "SELECT 1 FROM auth.users WHERE LOWER(TRIM(email)) = :email LIMIT 1;"
+                        "SELECT email FROM auth.users WHERE LOWER(TRIM(email)) = :email LIMIT 1"
                     ),
                     {"email": email},
                 ).fetchone()
