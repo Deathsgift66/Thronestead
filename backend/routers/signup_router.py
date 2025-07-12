@@ -59,19 +59,7 @@ async def validate_signup(
     if not auth_id:
         raise HTTPException(status_code=401, detail="Authentication session not found")
 
-    email_row = db.execute(
-        text("SELECT 1 FROM users WHERE lower(email) = :e"),
-        {"e": payload.email.lower()},
-    ).fetchone()
-    if email_row:
-        raise HTTPException(status_code=409, detail="Email already in use")
-
-    kingdom_row = db.execute(
-        text("SELECT 1 FROM users WHERE kingdom_name ILIKE :k"),
-        {"k": payload.kingdom_name},
-    ).fetchone()
-    if kingdom_row:
-        raise HTTPException(status_code=409, detail="Kingdom name already taken")
+    # Skip duplicate email and kingdom checks
 
     region_row = db.execute(
         text(

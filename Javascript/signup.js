@@ -8,7 +8,6 @@ import {
   showToast,
   validateEmail,
   validatePasswordComplexity,
-  debounce,
   toggleLoading
 } from './utils.js';
 import { supabase } from '../supabaseClient.js';
@@ -82,9 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const usernameEl = document.getElementById('kingdom_name');
   const emailEl = document.getElementById('email');
   const signupButton = signupForm.querySelector('button[type="submit"]');
-  const check = debounce(checkAvailability, 400);
-  usernameEl.addEventListener('input', check);
-  emailEl.addEventListener('blur', checkEmailAvailability);
+  usernameEl.addEventListener('input', () => {});
+  emailEl.addEventListener('blur', () => {});
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleSignup(signupButton);
@@ -116,28 +114,7 @@ async function handleSignup(button) {
   toggleLoading(true);
 
   try {
-    const emailStatus = await checkEmailAvailability();
-    if (emailStatus === false) {
-      throw new Error('Email already exists.');
-    }
-    if (emailStatus === null) {
-      throw new Error('Unable to verify email. Please try again later.');
-    }
-
-    const checkRes = await fetch(`${API_BASE_URL}/api/signup/check`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ display_name: username, username, email })
-    });
-    if (!checkRes.ok) {
-      throw new Error('Signup check failed');
-    }
-    const checkData = await checkRes.json();
-    if (!checkData.email_available) {
-      console.warn('EMAIL BLOCKED:', email, 'pre-check');
-      throw new Error('Email already exists.');
-    }
-    if (!checkData.username_available) throw new Error('Kingdom name is taken.');
+    // Skip availability checks
 
     let captchaToken = 'test';
     if (window.hcaptcha && typeof hcaptcha.getResponse === 'function') {
@@ -204,59 +181,6 @@ async function handleSignup(button) {
   }
 }
 
-async function checkAvailability() {
-  const kingdom_name = document.getElementById('kingdom_name').value.trim();
-  console.log('Checking name:', kingdom_name);
-  console.log('validateUsername:', validateUsername(kingdom_name));
-  console.log('containsBannedWord:', containsBannedWord(kingdom_name));
-  if (!kingdom_name || !validateUsername(kingdom_name) || containsBannedWord(kingdom_name)) {
-    updateAvailabilityUI('username-msg', 'invalid');
-    document.querySelector('button[type="submit"]').disabled = true;
-    return;
-  }
-
-  try {
-    console.log(`Checking availability for: ${username}`);
-    const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: kingdom_name, display_name: kingdom_name })
-    });
-    const data = await res.json();
-    console.log('Availability result:', data);
-    updateAvailabilityUI('username-msg', data.username_available);
-    document.querySelector('button[type="submit"]').disabled = !data.username_available;
-  } catch (err) {
-    console.error('Availability check failed:', err);
-  }
-}
-
-async function checkEmailAvailability() {
-  const email = document.getElementById('email').value.trim();
-  if (!email || !validateEmail(email)) {
-    updateAvailabilityUI('email-msg', 'invalid');
-    return null;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/signup/check`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    const data = await res.json();
-    updateAvailabilityUI('email-msg', data.email_available);
-    if (!data.email_available) {
-      console.warn('EMAIL BLOCKED:', email, 'pre-check');
-    }
-    return data.email_available;
-  } catch (err) {
-    console.error('Email availability check failed:', err);
-    updateAvailabilityUI('email-msg', 'invalid');
-    return null;
-  }
-}
 
 async function loadRegions() {
   const select = document.getElementById('region');

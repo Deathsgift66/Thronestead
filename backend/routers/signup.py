@@ -60,45 +60,18 @@ router = APIRouter(prefix="/api/signup", tags=["signup"])
 
 
 def _check_username_free(db: Session, username: str) -> None:
-    """Raise 409 if the username already exists."""
-    count = db.execute(
-        text("SELECT COUNT(*) FROM users WHERE username = :u"),
-        {"u": username},
-    ).scalar()
-    if count:
-        raise HTTPException(status_code=409, detail="Username already exists")
+    """No-op duplicate username check."""
+    return None
 
 
 def _check_kingdom_free(db: Session, name: str) -> None:
-    """Raise 409 if the kingdom name already exists."""
-    count = db.execute(
-        text("SELECT COUNT(*) FROM kingdoms WHERE kingdom_name = :n"),
-        {"n": name},
-    ).scalar()
-    if count:
-        raise HTTPException(status_code=409, detail="Kingdom name already exists")
+    """No-op duplicate kingdom name check."""
+    return None
 
 
 def _check_email_free(db: Session, email: str) -> None:
-    """Raise 409 if the email address already exists (case-insensitive)."""
-    count = db.execute(
-        text("SELECT email FROM users WHERE LOWER(TRIM(email)) = :e LIMIT 1"),
-        {"e": email.strip().lower()},
-    ).fetchone()
-    if count:
-        raise HTTPException(status_code=409, detail="Email already exists")
-
-    try:
-        row = db.execute(
-            text(
-                "SELECT email FROM auth.users WHERE LOWER(TRIM(email)) = :e LIMIT 1"
-            ),
-            {"e": email.strip().lower()},
-        ).fetchone()
-        if row:
-            raise HTTPException(status_code=409, detail="Email already exists")
-    except Exception:  # pragma: no cover - optional table missing
-        logger.warning("Supabase auth.users check failed during email validation")
+    """No-op duplicate email check."""
+    return None
 
 
 # ------------- Payload Models -------------------
@@ -180,129 +153,20 @@ def _validate_username(value: str | None) -> str | None:
 def check_availability(
     payload: CheckPayload, db: Session = Depends(get_db)
 ):
-    """Return availability for username, display name and email."""
-    username = (payload.username or "").strip().lower()
-    display = (payload.display_name or "").strip().lower()
-    email = (payload.email or "").strip().lower()
-
-    if not username and not display and not email:
+    """Always report all values as available."""
+    if not (payload.username or payload.display_name or payload.email):
         raise HTTPException(status_code=400, detail="Missing required fields")
-
-    username_taken = False
-    display_taken = False
-    email_taken = False
-
-    if username:
-        user_row = db.execute(
-            text(
-                "SELECT 1 FROM users WHERE LOWER(TRIM(username)) = :u LIMIT 1"
-            ),
-            {"u": username},
-        ).fetchone()
-
-        kingdom_row = db.execute(
-            text(
-                "SELECT 1 FROM kingdoms "
-                "WHERE LOWER(TRIM(kingdom_name)) = :n "
-                "   OR LOWER(TRIM(ruler_name)) = :n LIMIT 1"
-            ),
-            {"n": username},
-        ).fetchone()
-
-        username_taken = user_row is not None or kingdom_row is not None
-
-    if display:
-        disp_user_row = db.execute(
-            text(
-                "SELECT 1 FROM users WHERE LOWER(TRIM(display_name)) = :n LIMIT 1"
-            ),
-            {"n": display},
-        ).fetchone()
-
-        disp_kingdom_row = db.execute(
-            text(
-                "SELECT 1 FROM kingdoms "
-                "WHERE LOWER(TRIM(kingdom_name)) = :n "
-                "   OR LOWER(TRIM(ruler_name)) = :n LIMIT 1"
-            ),
-            {"n": display},
-        ).fetchone()
-
-        display_taken = disp_user_row is not None or disp_kingdom_row is not None
-        username_taken = username_taken or display_taken
-
-    if email:
-        email_row = db.execute(
-            text("SELECT 1 FROM users WHERE LOWER(TRIM(email)) = :e LIMIT 1"),
-            {"e": email},
-        ).fetchone()
-        email_taken = email_row is not None
-
-    try:
-        if username:
-            username_row = db.execute(
-                text(
-                    "SELECT 1 FROM auth.users "
-                    "WHERE LOWER(TRIM(raw_user_meta_data->>'display_name')) = :u "
-                    "   OR LOWER(TRIM(raw_user_meta_data->>'username')) = :u "
-                    "LIMIT 1;"
-                ),
-                {"u": username},
-            ).fetchone()
-            if username_row:
-                username_taken = True
-
-        if display and not display_taken:
-            disp_row = db.execute(
-                text(
-                    "SELECT 1 FROM auth.users "
-                    "WHERE LOWER(TRIM(raw_user_meta_data->>'display_name')) = :d LIMIT 1;"
-                ),
-                {"d": display},
-            ).fetchone()
-            if disp_row:
-                display_taken = True
-                username_taken = True
-
-        if email:
-            email_row = db.execute(
-                text(
-                    "SELECT 1 FROM auth.users WHERE LOWER(TRIM(email)) = :e LIMIT 1;"
-                ),
-                {"e": email},
-            ).fetchone()
-            if email_row:
-                email_taken = True
-    except Exception as exc:  # pragma: no cover - optional table missing
-        logger.warning("Supabase auth.users check failed: %s", exc)
-
     return {
-        "username_available": not username_taken,
-        "email_available": not email_taken,
-        "display_available": not display_taken,
+        "username_available": True,
+        "email_available": True,
+        "display_available": True,
     }
 
 
 @router.get("/check")
 def check_kingdom_name(kingdom: str):
-    """Return whether the provided kingdom name is available."""
-    sb = get_supabase_client()
-    try:
-        res = (
-            sb.table("kingdoms")
-            .select("kingdom_id")
-            .eq("kingdom_name", kingdom)
-            .limit(1)
-            .execute()
-        )
-        rows = getattr(res, "data", res) or []
-        available = len(rows) == 0
-    except Exception as exc:
-        logger.exception("Failed to query availability")
-        raise HTTPException(
-            status_code=500, detail="Failed to query availability"
-        ) from exc
-    return {"available": available}
+    """Always return available."""
+    return {"available": True}
 
 
 @router.get("/stats")
