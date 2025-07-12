@@ -9,6 +9,25 @@ import { getEnvVar } from './env.js';
 const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.hash.substring(1) || url.search);
+  const accessToken = params.get('access_token');
+  const type = params.get('type');
+
+  if (accessToken || type === 'signup') {
+    await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
+    url.hash = '';
+    url.search = '';
+    window.history.replaceState({}, document.title, url.pathname);
+    if (session) {
+      window.location.href = '/overview.html';
+      return;
+    }
+    window.location.href = '/login.html';
+    return;
+  }
+
   enableSmoothScroll();        // ✅ Smooth scrolling behavior
   await updateHeroCTA();       // ✅ Dynamic CTA buttons
   setupFloatingCTA();          // ✅ Sticky CTA on scroll

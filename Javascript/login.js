@@ -63,11 +63,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   const forgotModal = document.getElementById('forgot-password-modal');
   const closeForgotBtn = document.getElementById('close-forgot-btn');
   const requestAuthLink = document.getElementById('request-auth-link');
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.hash.substring(1) || url.search);
+  const accessToken = params.get('access_token');
+  const type = params.get('type');
 
-  const session = (await supabase.auth.getSession()).data.session;
+  if (accessToken || type === 'signup') {
+    await supabase.auth.getSession();
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) {
     await redirectToApp();
     return;
+  }
+
+  if (accessToken || type === 'signup') {
+    url.hash = '';
+    url.search = '';
+    window.history.replaceState({}, document.title, url.pathname);
   }
 
   loginForm?.addEventListener('submit', handleLogin);
@@ -210,7 +224,8 @@ async function redirectToApp() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return (window.location.href = 'overview.html');
+      window.location.href = 'login.html';
+      return;
     }
 
     const profile = await ensureProfileRecord(user);
@@ -222,7 +237,7 @@ async function redirectToApp() {
     }
   } catch (err) {
     console.error('Redirect failed:', err);
-    window.location.href = 'overview.html';
+    window.location.href = 'login.html';
   }
 }
 
