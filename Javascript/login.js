@@ -72,11 +72,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await supabase.auth.getSession();
   }
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) {
-    await redirectToApp();
-    return;
-  }
+  // Previously, users were automatically redirected if already logged in.
+  // This behavior has been removed so the login page always displays,
+  // even when a valid session exists.
 
   if (accessToken || type === 'signup') {
     url.hash = '';
