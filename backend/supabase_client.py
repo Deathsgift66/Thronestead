@@ -11,6 +11,8 @@ Used for server-side operations including authentication, data writes, and RLS-s
 import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING
+import inspect
+import asyncio
 
 if TYPE_CHECKING:  # pragma: no cover - type check only
     from supabase import Client
@@ -44,3 +46,10 @@ def get_supabase_client() -> "Client":
     except Exception as exc:
         logging.exception("❌ Failed to initialize Supabase client.")
         raise RuntimeError("Supabase client initialization failed") from exc
+
+
+def maybe_await(obj):
+    """Return awaited result if ``obj`` is awaitable."""
+    if inspect.isawaitable(obj):
+        return asyncio.run(obj)
+    return obj

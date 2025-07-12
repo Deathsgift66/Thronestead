@@ -26,7 +26,7 @@ from services.system_flag_service import get_flag
 
 from ..database import get_db
 from ..security import verify_jwt_token, has_active_ban, _extract_request_meta
-from ..supabase_client import get_supabase_client
+from ..supabase_client import get_supabase_client, maybe_await
 from .session import store_session_cookie, TokenPayload
 
 router = APIRouter(prefix="/api/login", tags=["login"])
@@ -148,7 +148,7 @@ def authenticate(
     if payload.otp:
         data["otp_token"] = payload.otp
     try:
-        res = sb.auth.sign_in_with_password(data)
+        res = maybe_await(sb.auth.sign_in_with_password(data))
     except Exception as exc:  # pragma: no cover - network/dependency issues
         raise HTTPException(
             status_code=500, detail="Authentication service error"
@@ -175,7 +175,7 @@ def authenticate(
         _log_attempt(False)
         raise HTTPException(status_code=401, detail="Invalid credentials")
     try:
-        chk = sb.auth.get_user(token)
+        chk = maybe_await(sb.auth.get_user(token))
         if isinstance(chk, dict) and chk.get("error"):
             raise ValueError("invalid session")
     except Exception:
@@ -231,9 +231,11 @@ def authenticate(
     except Exception:
         pass
     try:  # pragma: no cover - ignore failures
-        sb.table("user_active_sessions").insert(
-            {"user_id": uid, "ip_address": ip, "device_info": agent}
-        ).execute()
+        maybe_await(
+            sb.table("user_active_sessions")
+            .insert({"user_id": uid, "ip_address": ip, "device_info": agent})
+            .execute()
+        )
     except Exception:
         pass
 
@@ -297,7 +299,7 @@ def reauthenticate(
     if payload.otp:
         data["otp_token"] = payload.otp
     try:
-        res = sb.auth.sign_in_with_password(data)
+        res = maybe_await(sb.auth.sign_in_with_password(data))
     except Exception as exc:  # pragma: no cover - network/dependency issues
         raise HTTPException(
             status_code=500, detail="Authentication service error"

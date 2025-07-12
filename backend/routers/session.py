@@ -8,7 +8,7 @@ import time
 from ..database import get_db
 from ..security import decode_supabase_jwt
 
-from ..supabase_client import get_supabase_client
+from ..supabase_client import get_supabase_client, maybe_await
 
 router = APIRouter(prefix="/api/session", tags=["session"])
 
@@ -61,7 +61,7 @@ async def validate_session(request: Request):
         raise HTTPException(status_code=401, detail="Missing token")
     supabase = get_supabase_client()
     try:
-        user = supabase.auth.get_user(token)
+        user = maybe_await(supabase.auth.get_user(token))
     except Exception as exc:  # pragma: no cover - network failure
         raise HTTPException(status_code=401, detail="Invalid session") from exc
 
