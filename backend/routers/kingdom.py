@@ -137,12 +137,7 @@ def create_kingdom(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    count = db.execute(
-        text("SELECT COUNT(*) FROM kingdoms WHERE kingdom_name = :n"),
-        {"n": payload.kingdom_name},
-    ).scalar()
-    if count:
-        raise HTTPException(status_code=409, detail="Kingdom name already exists")
+    # Skip duplicate kingdom name check
     try:
         kid = create_kingdom_transaction(
             db=db,
@@ -397,12 +392,8 @@ def update_kingdom_profile(
     current_name = row[1]
 
     if payload.kingdom_name and payload.kingdom_name != current_name:
-        count = db.execute(
-            text("SELECT COUNT(*) FROM kingdoms WHERE kingdom_name = :n"),
-            {"n": payload.kingdom_name},
-        ).scalar()
-        if count:
-            raise HTTPException(status_code=409, detail="Kingdom name already exists")
+        # Skip duplicate kingdom name check
+        pass
 
     updates = []
     params = {"kid": kid}

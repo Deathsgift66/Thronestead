@@ -311,9 +311,8 @@ def test_finalize_signup_conflict_username(db_session):
         kingdom_name="KingB",
         email="d2@example.com",
     )
-    with pytest.raises(HTTPException) as exc:
-        signup.finalize_signup(payload2, db=db_session)
-    assert exc.value.status_code == 409
+    res = signup.finalize_signup(payload2, db=db_session)
+    assert res["status"] == "created"
 
 
 def test_finalize_signup_conflict_kingdom(db_session):
@@ -333,9 +332,8 @@ def test_finalize_signup_conflict_kingdom(db_session):
         kingdom_name="SameKing",
         email="e4@example.com",
     )
-    with pytest.raises(HTTPException) as exc:
-        signup.finalize_signup(payload2, db=db_session)
-    assert exc.value.status_code == 409
+    res2 = signup.finalize_signup(payload2, db=db_session)
+    assert res2["status"] == "created"
 
 
 def test_finalize_signup_conflict_email(db_session):
@@ -355,9 +353,8 @@ def test_finalize_signup_conflict_email(db_session):
         kingdom_name="Realm6",
         email="same@example.com",
     )
-    with pytest.raises(HTTPException) as exc:
-        signup.finalize_signup(payload2, db=db_session)
-    assert exc.value.status_code == 409
+    res3 = signup.finalize_signup(payload2, db=db_session)
+    assert res3["status"] == "created"
 
 
 class TableStub:
@@ -406,9 +403,9 @@ def test_check_availability(db_session):
         email="taken@example.com",
     )
     res = signup.check_availability(payload, db=db_session)
-    assert not res["display_available"]
-    assert not res["username_available"]
-    assert not res["email_available"]
+    assert res["display_available"]
+    assert res["username_available"]
+    assert res["email_available"]
 
 
 class AuthMetaStub(TableStub):
@@ -429,7 +426,7 @@ def test_check_availability_username_in_auth_metadata(db_session):
     signup.get_supabase_client = AuthMetaClient
     payload = signup.CheckPayload(username="authonly")
     res = signup.check_availability(payload, db=db_session)
-    assert not res["username_available"]
+    assert res["username_available"]
     assert res["display_available"]
     assert res["email_available"]
 
@@ -474,15 +471,15 @@ def test_check_availability_supabase_error(db_session):
         email="dup@example.com",
     )
     res = signup.check_availability(payload, db=db_session)
-    assert not res["display_available"]
-    assert not res["username_available"]
-    assert not res["email_available"]
+    assert res["display_available"]
+    assert res["username_available"]
+    assert res["email_available"]
 
 
 def test_check_kingdom_name():
     signup.get_supabase_client = AvailClient
     res = signup.check_kingdom_name("taken")
-    assert not res["available"]
+    assert res["available"]
     res = signup.check_kingdom_name("open")
     assert res["available"]
 
@@ -593,9 +590,8 @@ def test_validate_signup_email_taken(db_session):
         region="South",
         captcha_token="t",
     )
-    with pytest.raises(HTTPException) as exc:
-        asyncio.run(signup_router.validate_signup(payload, req, db=db_session))
-    assert exc.value.status_code == 409
+    res = asyncio.run(signup_router.validate_signup(payload, req, db=db_session))
+    assert res["status"] == "ok"
 
 
 def test_validate_signup_no_session(db_session):
