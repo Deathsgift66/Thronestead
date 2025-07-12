@@ -150,8 +150,9 @@ def authenticate(
     try:
         res = maybe_await(sb.auth.sign_in_with_password(data))
     except Exception as exc:  # pragma: no cover - network/dependency issues
+        logging.exception("Supabase authentication failed")
         raise HTTPException(
-            status_code=500, detail="Authentication service error"
+            status_code=503, detail="Authentication service unavailable"
         ) from exc
 
     if isinstance(res, dict):

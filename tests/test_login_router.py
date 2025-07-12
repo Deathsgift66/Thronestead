@@ -250,7 +250,7 @@ def test_authenticate_failure():
     resp = DummyResponse()
     with pytest.raises(HTTPException) as exc:
         login_routes.authenticate(req, payload, response=resp, db=db)
-    assert exc.value.status_code == 500
+    assert exc.value.status_code == 503
 
 
 def test_authenticate_disabled_by_flag():
