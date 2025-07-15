@@ -152,7 +152,7 @@ Developer: Deathsgift66
       const constructionEl = document.getElementById('temple-construction-options');
       const templeListEl = document.getElementById('temple-list-content');
 
-      overviewEl.innerHTML = '<p>Loading temple overview...</p>';
+      overviewEl.innerHTML = '<div class="loading-spinner"></div>';
       favorBarEl.style.width = '0%';
       constructionEl.innerHTML = '<p>Loading construction options...</p>';
       templeListEl.innerHTML = '<p>Loading your temples...</p>';
@@ -180,7 +180,7 @@ Developer: Deathsgift66
 
         renderTempleOverview(majorTemple);
         renderFavorBar(favorData.divine_favor);
-        renderConstructionOptions();
+        renderConstructionOptions(majorTemple);
         renderTempleList(subTemples);
       } catch (err) {
         console.error('❌ Temple Load Error:', err);
@@ -208,22 +208,32 @@ Developer: Deathsgift66
     }
 
     function renderFavorBar(favor) {
-      const el = document.querySelector('.favor-bar-fill');
+      const fillEl = document.querySelector('.favor-bar-fill');
+      const container = document.querySelector('.favor-bar');
       const safeVal = Math.min(Math.max(favor, 0), 100);
-      el.style.width = `${safeVal}%`;
-      el.textContent = `${safeVal}%`;
+      fillEl.style.width = `${safeVal}%`;
+      fillEl.textContent = `${safeVal}%`;
+      container.setAttribute('aria-valuenow', safeVal);
     }
 
-    function renderConstructionOptions() {
+    function renderConstructionOptions(majorTemple) {
       const el = document.getElementById('temple-construction-options');
       el.innerHTML = '';
 
-      const types = [
+      let types = [
         'Temple of Light',
         'Temple of War',
         'Temple of Wisdom',
         'Temple of Nature'
       ];
+
+      if (majorTemple) {
+        types = types.filter(t => t !== majorTemple.temple_type);
+        if (types.length === 0) {
+          el.innerHTML = '<p>Major temple already constructed.</p>';
+          return;
+        }
+      }
 
       types.forEach(type => {
         const btn = document.createElement('button');
