@@ -29,8 +29,6 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/tutorial.css" rel="stylesheet" />
-  <script src="/Javascript/tutorial.js" type="module"></script>
-  <script src="/Javascript/tutorialModal.js" type="module"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -124,6 +122,267 @@ Developer: Deathsgift66
   <div>© 2025 Thronestead</div>
   <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
 </footer>
+
+  <!-- Page-specific scripts -->
+  <script type="module">
+// Project Name: Thronestead©
+// File Name: tutorial.js (inlined)
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
+import { supabase } from '../supabaseClient.js';
+import { escapeHTML } from './utils.js';
+
+let currentUser = null;
+let tutorialChannel;
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return (window.location.href = "login.html");
+  currentUser = session.user;
+
+  await loadSteps();
+  setupRealtime();
+  initScrollAnimations();
+  setupProgressBar();
+});
+
+// ✅ Smooth fade-in animation for tutorial steps
+function initScrollAnimations() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      entry.target.classList.toggle('visible', entry.isIntersecting);
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.tutorial-step').forEach(step => observer.observe(step));
+}
+
+// ✅ Load tutorial steps from API
+async function loadSteps() {
+  const container = document.getElementById('steps');
+  container.innerHTML = '<p>📜 Loading tutorial steps...</p>';
+  try {
+    const res = await fetch('/api/tutorial/steps', {
+      headers: { 'X-User-ID': currentUser.id }
+    });
+    const { steps } = await res.json();
+    renderSteps(steps || []);
+  } catch (err) {
+    console.error('❌ Error loading tutorial steps:', err);
+    container.innerHTML = `<p>⚠️ Failed to load steps. <button onclick="location.reload()">Retry</button></p>`;
+  }
+}
+
+// ✅ Render steps into DOM
+function renderSteps(steps) {
+  const container = document.getElementById('steps');
+  container.innerHTML = '';
+
+  steps.forEach(step => {
+    const div = document.createElement('div');
+    div.className = 'tutorial-step';
+    div.setAttribute('tabindex', '0');
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', `Tutorial Step ${step.step_number}: ${step.title}`);
+
+    div.innerHTML = `
+      <h3>Step ${step.step_number}: ${escapeHTML(step.title)}</h3>
+      <p>${escapeHTML(step.description)}</p>
+    `;
+    container.appendChild(div);
+  });
+
+  // Scroll to top when reloaded
+  container.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ✅ Subscribe to live tutorial step updates
+function setupRealtime() {
+  tutorialChannel = supabase
+    .channel('public:tutorial_steps')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'tutorial_steps'
+    }, async () => {
+      await loadSteps();
+    })
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    if (tutorialChannel) supabase.removeChannel(tutorialChannel);
+  });
+}
+
+// ✅ Progress bar tracker
+function setupProgressBar() {
+  const container = document.getElementById('steps');
+  const bar = document.getElementById('progress-bar');
+  if (!container || !bar) return;
+
+  let ticking = false;
+  container.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const percent = (container.scrollTop / (container.scrollHeight - container.clientHeight)) * 100;
+        bar.style.width = `${percent.toFixed(1)}%`;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+}
+</script>
+
+  <script>
+// Project Name: Thronestead©
+// File Name: tutorialModal.js (inlined)
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('tutorialModal');
+  const closeBtn = document.getElementById('tutorialClose');
+  const tabs = document.querySelectorAll('#tutorialModal .tab');
+  const panels = document.querySelectorAll('#tutorialModal .tutorial-panel');
+  const continueBtns = document.querySelectorAll('#tutorialModal .continue-btn');
+
+  let currentStep = parseInt(getCookie('tutorialStep') || '0', 10);
+  if (Number.isNaN(currentStep) || currentStep >= panels.length) currentStep = 0;
+
+  showStep(currentStep);
+  openModal();
+
+  // Tab navigation
+  tabs.forEach((tab, idx) => {
+    tab.addEventListener('click', () => showStep(idx));
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('tabindex', '0');
+    tab.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        showStep(idx);
+        e.preventDefault();
+      }
+    });
+  });
+
+  continueBtns.forEach((btn, idx) => {
+    btn.addEventListener('click', () => {
+      if (idx < panels.length - 1) {
+        showStep(idx + 1);
+      } else {
+        finishTutorial();
+      }
+    });
+  });
+
+  closeBtn.addEventListener('click', finishTutorial);
+
+  function openModal() {
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.focus();
+  }
+
+  function finishTutorial() {
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    setCookie('tutorialComplete', 'true', 60);
+    if (typeof window.onTutorialComplete === 'function') {
+      window.onTutorialComplete();
+    }
+  }
+
+  function showStep(n) {
+    tabs.forEach((t, i) => {
+      t.classList.toggle('active', i === n);
+      t.setAttribute('aria-selected', i === n);
+    });
+    panels.forEach((p, i) => p.classList.toggle('active', i === n));
+    setCookie('tutorialStep', n, 30);
+    currentStep = n;
+  }
+
+  function setCookie(name, value, days) {
+    try {
+      const d = new Date();
+      d.setTime(d.getTime() + days * 86400000);
+      document.cookie =
+        `${name}=${value}; expires=${d.toUTCString()}; path=/; domain=${location.hostname}; secure; samesite=strict`;
+    } catch (err) {
+      console.warn("Cookies are disabled or blocked:", err);
+    }
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+});
+</script>
+
+  <!-- Backend route definition for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+
+from ..security import require_user_id
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/tutorial", tags=["tutorial"])
+
+
+@router.get("/steps", summary="Get Tutorial Steps")
+async def steps(user_id: str = Depends(require_user_id)):
+    """
+    Fetch ordered tutorial steps from the 'tutorial_steps' table for the authenticated user.
+    This ensures only valid players can access in-game tutorials.
+    """
+    supabase = get_supabase_client()
+
+    # Validate user exists
+    try:
+        user_check = (
+            supabase.table("users")
+            .select("user_id")
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+        if getattr(user_check, "error", None) or not getattr(user_check, "data", None):
+            raise HTTPException(status_code=401, detail="Invalid user")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to validate user") from exc
+
+    # Fetch tutorial steps in order
+    try:
+        res = (
+            supabase.table("tutorial_steps")
+            .select("id,title,description,step_number")
+            .order("step_number")
+            .execute()
+        )
+        rows = getattr(res, "data", res) or []
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail="Failed to load tutorial steps"
+        ) from exc
+
+    # Return structured tutorial list
+    steps = [
+        {
+            "step_id": r.get("id"),
+            "title": r.get("title"),
+            "description": r.get("description"),
+            "step_number": r.get("step_number"),
+        }
+        for r in rows
+    ]
+
+    return {"steps": steps}
+</script>
 
 </body>
 </html>
