@@ -29,7 +29,158 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/town_criers.css" rel="stylesheet" />
-  <script src="/Javascript/town_criers.js" type="module"></script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: town_criers.js (inlined)
+    // Version:  7/1/2025 10:38
+    // Developer: Deathsgift66
+    import { supabase } from '../supabaseClient.js';
+    import { escapeHTML, showToast } from './utils.js';
+    import { setupTabs } from './components/tabControl.js';
+
+    let scrollChannel = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      setupTabs();
+      await Promise.all([
+        loadBoard(),
+        loadYourScrolls()
+      ]);
+      subscribeToScrolls();
+
+      const composeForm = document.getElementById('compose-form');
+      composeForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await submitScroll();
+      });
+    });
+
+    // ✅ UI Tabs Handler
+
+    // ✅ Load Global Bulletin
+    async function loadBoard() {
+      const boardEl = document.getElementById('board-feed');
+      boardEl.innerHTML = "<p>Loading board feed...</p>";
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/town-criers/latest', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'X-User-ID': session.user.id
+          }
+        });
+        const { scrolls = [] } = await res.json();
+
+        boardEl.innerHTML = scrolls.length
+          ? scrolls.map(renderScrollCard).join('')
+          : "<p>No scrolls posted yet.</p>";
+
+      } catch (err) {
+        console.error("❌ Board Feed Error:", err);
+        showToast("Failed to load board feed.");
+      }
+    }
+
+    // ✅ Load Personal Scrolls
+    async function loadYourScrolls() {
+      const yourEl = document.getElementById('your-scrolls');
+      yourEl.innerHTML = "<p>Loading your scrolls...</p>";
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data = [], error } = await supabase
+          .from('town_crier_scrolls')
+          .select('*')
+          .eq('author_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        yourEl.innerHTML = data.length
+          ? data.map(renderScrollCard).join('')
+          : "<p>You have not posted any scrolls yet.</p>";
+
+      } catch (err) {
+        console.error("❌ Your Scrolls Error:", err);
+        showToast("Failed to load your scrolls.");
+      }
+    }
+
+    // ✅ Scroll Card Renderer
+    function renderScrollCard(scroll) {
+      const author = escapeHTML(scroll.author_name || ' (user)' || 'Unknown');
+      const title = escapeHTML(scroll.title);
+      const body = escapeHTML(scroll.content);
+      const date = new Date(scroll.posted_at).toLocaleString();
+
+      return `
+        <div class="scroll-card">
+          <h4>${title}</h4>
+          <p>${body}</p>
+          <small>Posted by: ${author} • ${date}</small>
+        </div>
+      `;
+    }
+
+    // ✅ Real-Time Subscription
+    function subscribeToScrolls() {
+      scrollChannel = supabase
+        .channel('public:town_crier_scrolls')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'town_crier_scrolls'
+        }, loadBoard)
+        .subscribe();
+
+      window.addEventListener('beforeunload', () => {
+        if (scrollChannel) supabase.removeChannel(scrollChannel);
+      });
+    }
+
+    // ✅ Submit New Scroll
+    async function submitScroll() {
+      const titleEl = document.getElementById('scroll-title');
+      const bodyEl = document.getElementById('scroll-body');
+      const title = titleEl.value.trim();
+      const body = bodyEl.value.trim();
+
+      if (title.length < 3) return showToast("Title must be at least 3 characters.");
+      if (body.length < 10) return showToast("Body must be at least 10 characters.");
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/town-criers/post', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+            'X-User-ID': session.user.id
+          },
+          body: JSON.stringify({ title, body })
+        });
+
+        if (!res.ok) {
+          const { detail } = await res.json();
+          throw new Error(detail || "Failed");
+        }
+
+        showToast("Scroll posted successfully!");
+        titleEl.value = "";
+        bodyEl.value = "";
+
+        await Promise.all([
+          loadBoard(),
+          loadYourScrolls()
+        ]);
+
+      } catch (err) {
+        console.error("❌ Submit Scroll Error:", err);
+        showToast("Failed to submit scroll.");
+      }
+    }
+  </script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -116,6 +267,129 @@ Developer: Deathsgift66
   <div>© 2025 Thronestead</div>
   <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
 </footer>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+# Project Name: Thronestead©
+# File Name: town_criers.py
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
+
+"""
+Project: Thronestead ©
+File: town_criers.py
+Role: API routes for town criers.
+Version: 2025-06-21
+"""
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field, validator
+from services.moderation import validate_clean_text
+
+from ..security import verify_jwt_token
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/town-criers", tags=["town criers"])
+
+
+def _validate_text(value: str | None) -> str | None:
+    if value is not None:
+        validate_clean_text(value)
+    return value
+
+
+# ---------------------------
+# Request Payload Models
+# ---------------------------
+class ScrollPayload(BaseModel):
+    title: str = Field(..., min_length=1, max_length=100)
+    body: str = Field(..., min_length=1, max_length=5000)
+
+    _check_fields = validator("title", "body", allow_reuse=True)(lambda v: _validate_text(v))
+
+
+# ---------------------------
+# Routes
+# ---------------------------
+
+
+@router.get("/latest", summary="Fetch latest scrolls")
+def latest_scrolls(user_id: str = Depends(verify_jwt_token)) -> dict:
+    """
+    Return recent town crier scrolls (latest 25) for authenticated users.
+    """
+    supabase = get_supabase_client()
+
+    check = (
+        supabase.table("users")
+        .select("user_id")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    if getattr(check, "error", None) or not getattr(check, "data", None):
+        raise HTTPException(status_code=401, detail="Invalid user")
+
+    try:
+        res = (
+            supabase.table("town_crier_scrolls")
+            .select("id,title,body,author_display_name,created_at")
+            .order("created_at", desc=True)
+            .limit(25)
+            .execute()
+        )
+        rows = getattr(res, "data", res) or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch scrolls") from e
+
+    scrolls = [
+        {
+            "scroll_id": r.get("id"),
+            "title": r.get("title"),
+            "body": r.get("body"),
+            "author_display_name": r.get("author_display_name"),
+            "created_at": r.get("created_at"),
+        }
+        for r in rows
+    ]
+    return {"scrolls": scrolls}
+
+
+@router.post("/post", summary="Post a new scroll")
+def post_scroll(
+    payload: ScrollPayload, user_id: str = Depends(verify_jwt_token)
+) -> dict:
+    """
+    Post a new town crier scroll authored by the current user.
+    """
+    supabase = get_supabase_client()
+    prof = (
+        supabase.table("users")
+        .select("display_name")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    prof_row = getattr(prof, "data", prof)
+    if getattr(prof, "error", None) or not prof_row:
+        raise HTTPException(status_code=401, detail="Invalid user")
+
+    record = {
+        "author_id": user_id,
+        "author_display_name": prof_row.get("display_name"),
+        "title": payload.title,
+        "body": payload.body,
+    }
+
+    try:
+        res = supabase.table("town_crier_scrolls").insert(record).execute()
+        if getattr(res, "status_code", 200) >= 400:
+            raise HTTPException(status_code=500, detail="Failed to post scroll")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error posting scroll") from e
+
+    return {"status": "posted"}
+  </script>
 
 </body>
 </html>
