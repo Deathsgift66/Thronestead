@@ -127,3 +127,54 @@ progress {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 }
+
+/* Tooltip */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.tooltip-container .tooltip-text {
+  visibility: hidden;
+  width: 180px;
+  background-color: var(--stone-panel);
+  color: var(--parchment);
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid var(--gold);
+  padding: 0.5rem;
+  position: absolute;
+  z-index: var(--z-index-tooltip);
+  bottom: 125%;
+  left: 50%;
+  margin-left: -90px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Loading state for grid */
+.achievement-grid.loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.achievement-grid.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 3px solid var(--parchment);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}

@@ -2,7 +2,7 @@
 // File Name: kingdom_achievements.js
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
-import { supabase } from '../supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 import { escapeHTML } from './utils.js';
 
 let allAchievements = [];
@@ -10,6 +10,8 @@ let filteredAchievements = [];
 let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const grid = document.getElementById('achievement-grid');
+  grid?.classList.add('loading');
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return window.location.href = 'login.html';
   currentUser = user;
@@ -23,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupSorting();
   updateProgressSummary(filteredAchievements);
   if (kingdomId) subscribeToUpdates(kingdomId);
+  grid?.classList.remove('loading');
 });
 
 // ✅ Load both unlocked and catalogued achievements
@@ -87,7 +90,29 @@ function renderAchievementsList(list) {
     name.textContent = !ach.is_hidden || ach.is_unlocked ? ach.name : '??? Unknown Deed';
     card.appendChild(name);
 
+    let tooltipText = '';
+    if (ach.is_hidden && !ach.is_unlocked) {
+      tooltipText = 'Unlock to reveal this achievement.';
+    } else if (ach.is_unlocked && ach.awarded_at) {
+      tooltipText = `Unlocked on ${new Date(ach.awarded_at).toLocaleString()}`;
+    }
+    if (tooltipText) {
+      card.classList.add('tooltip-container');
+      const tip = document.createElement('span');
+      tip.className = 'tooltip-text';
+      tip.textContent = tooltipText;
+      card.appendChild(tip);
+    }
+
+    card.tabIndex = 0;
     card.addEventListener('click', () => displayAchievementDetail(ach));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        displayAchievementDetail(ach);
+      }
+    });
+
     grid.appendChild(card);
   });
 }
@@ -186,7 +211,7 @@ function displayAchievementDetail(ach) {
   if (!modal) return;
 
   const reward = ach.reward && Object.keys(ach.reward).length
-    ? Object.entries(ach.reward).map(([k, v]) => `${k}: ${v}`).join(', ')
+    ? Object.entries(ach.reward).map(([k, v]) => `${escapeHTML(k)}: ${escapeHTML(v)}`).join(', ')
     : 'None';
 
   modal.innerHTML = `
@@ -197,7 +222,7 @@ function displayAchievementDetail(ach) {
       <img src="${ach.icon_url || '/Assets/icon-sword.svg'}" alt="${escapeHTML(ach.name)}" />
       <p><strong>Points:</strong> ${ach.points || 0}</p>
       <p><strong>Category:</strong> ${escapeHTML(ach.category || 'N/A')}</p>
-      <p><strong>Reward:</strong> ${escapeHTML(reward)}</p>
+      <p><strong>Reward:</strong> ${reward}</p>
     </div>`;
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
@@ -239,10 +264,13 @@ function subscribeToUpdates(kingdomId) {
       table: 'kingdom_achievements',
       filter: `kingdom_id=eq.${kingdomId}`
     }, async () => {
+      const grid = document.getElementById('achievement-grid');
+      grid?.classList.add('loading');
       const { achievements } = await loadKingdomAchievements(currentUser.id);
       filteredAchievements = [...achievements];
       renderAchievementsList(filteredAchievements);
       updateProgressSummary(filteredAchievements);
+      grid?.classList.remove('loading');
     })
     .subscribe();
 }
