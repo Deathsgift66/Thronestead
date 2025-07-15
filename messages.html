@@ -33,7 +33,180 @@ Developer: Deathsgift66
   <!-- Page-Specific Assets -->
   <link href="/CSS/messages.css" rel="stylesheet" />
   <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="/Javascript/messages.js" type="module"></script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: messages.js (inlined)
+    // Version:  7/1/2025 10:38
+    // Developer: Deathsgift66
+    // Inbox Viewer + Controls
+
+    import { supabase } from '/supabaseClient.js';
+    import { applyKingdomLinks } from '/Javascript/kingdom_name_linkify.js';
+
+    const list = document.getElementById('message-list');
+    const countLabel = document.getElementById('message-count');
+    const filterSelect = document.getElementById('category-filter');
+    const markAllBtn = document.getElementById('mark-all-read');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const pageInfo = document.getElementById('page-info');
+
+    let messages = [];
+    let currentPage = 1;
+    const pageSize = 10;
+    let currentFilter = 'all';
+    let session;
+
+    const formatTime = iso => new Date(iso).toLocaleString();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      if (!s) {
+        if (list) list.innerHTML = '<p>❌ Login required to view messages.</p>';
+        return;
+      }
+      session = s;
+
+      if (list) {
+        await loadInbox();
+        subscribeToNewMessages(session.user.id);
+        await applyKingdomLinks();
+      }
+
+      const container = document.getElementById('message-container');
+      if (container) {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id') || params.get('message_id');
+        if (id) {
+          await loadMessageView(id);
+          await applyKingdomLinks();
+        } else {
+          container.innerHTML = '<p>Invalid message.</p>';
+        }
+      }
+      await applyKingdomLinks();
+    });
+
+    async function loadInbox() {
+      let query = supabase
+        .from('player_messages')
+        .select('message_id, message, sent_at, is_read, category, users(username)')
+        .eq('recipient_id', session.user.id)
+        .order('sent_at', { ascending: false });
+
+      if (currentFilter !== 'all') query = query.eq('category', currentFilter);
+
+      const { data, error } = await query;
+      if (error) {
+        list.innerHTML = '<p>⚠️ Unable to load messages.</p>';
+        return;
+      }
+
+      messages = (data || []).map(row => ({
+        id: row.message_id,
+        subject: row.message.slice(0, 50),
+        sender_name: row.users?.username || 'Unknown',
+        created_at: row.sent_at,
+        is_read: row.is_read,
+        message_type: row.category
+      }));
+
+      currentPage = 1;
+      renderMessages();
+    }
+
+    function renderMessages() {
+      list.innerHTML = '';
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageMessages = messages.slice(start, end);
+
+      if (!pageMessages.length) {
+        list.innerHTML = '<p>No messages found.</p>';
+      } else {
+        for (const msg of pageMessages) {
+          const article = document.createElement('article');
+          article.className = `message-item ${msg.is_read ? '' : 'unread'}`;
+          article.innerHTML = `
+        <a href="message.html?id=${msg.id}" class="message-link">
+          <strong>${msg.subject}</strong>
+          <span class="sender">From: ${msg.sender_name}</span>
+          <span class="time">${formatTime(msg.created_at)}</span>
+          <span class="type">${msg.message_type}</span>
+        </a>
+      `;
+          list.appendChild(article);
+        }
+      }
+
+      pageInfo.textContent = `Page ${currentPage} of ${Math.ceil(messages.length / pageSize)}`;
+      countLabel.textContent = `Total Messages: ${messages.length}`;
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = end >= messages.length;
+      applyKingdomLinks();
+    }
+
+    async function loadMessageView(id) {
+      const container = document.getElementById('message-container');
+      container.innerHTML = '<p>Loading message...</p>';
+
+      const { data, error } = await supabase
+        .from('player_messages')
+        .select('message, sent_at, is_read, category, users(username)')
+        .eq('message_id', id)
+        .single();
+
+      if (error || !data) {
+        container.innerHTML = '<p>Failed to load message.</p>';
+        return;
+      }
+
+      await supabase.from('player_messages').update({ is_read: true }).eq('message_id', id);
+
+      container.innerHTML = `
+    <div class="message-meta">
+      <strong>From:</strong> ${data.users?.username || 'Unknown'}<br>
+      <strong>Date:</strong> ${formatTime(data.sent_at)}
+    </div>
+    <div class="message-body">${data.message}</div>
+  `;
+      applyKingdomLinks();
+    }
+
+    async function markAllAsRead() {
+      const ids = messages.filter(m => !m.is_read).map(m => m.id);
+      if (!ids.length) return;
+      const { error } = await supabase
+        .from('player_messages')
+        .update({ is_read: true })
+        .in('message_id', ids);
+      if (!error) {
+        messages.forEach(m => (m.is_read = true));
+        renderMessages();
+      }
+    }
+
+    function subscribeToNewMessages(uid) {
+      supabase.channel(`inbox-${uid}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'player_messages', filter: `recipient_id=eq.${uid}` }, loadInbox)
+        .subscribe();
+    }
+
+    filterSelect?.addEventListener('change', () => {
+      currentFilter = filterSelect.value;
+      loadInbox();
+    });
+
+    markAllBtn?.addEventListener('click', markAllAsRead);
+    prevBtn?.addEventListener('click', () => {
+      currentPage--;
+      renderMessages();
+    });
+    nextBtn?.addEventListener('click', () => {
+      currentPage++;
+      renderMessages();
+    });
+  </script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -110,6 +283,99 @@ Developer: Deathsgift66
     <a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a>
   </div>
 </footer>
+
+<!-- Backend route definition for reference -->
+<script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, validator
+import re
+from services.moderation import validate_clean_text
+
+from ..security import verify_jwt_token
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/messages", tags=["messages"])
+
+
+class MessagePayload(BaseModel):
+    recipient: str
+    content: str
+    subject: str | None = None
+    category: str | None = None
+
+    _TAG_RE = re.compile(r"<[^>]+>")
+
+    @validator("content")
+    def sanitize_content(cls, v: str) -> str:
+        cleaned = cls._TAG_RE.sub("", v)
+        if len(cleaned) > 5000:
+            raise ValueError("Message too long")
+        validate_clean_text(cleaned)
+        return cleaned.strip()
+
+    @validator("subject")
+    def sanitize_subject(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        cleaned = cls._TAG_RE.sub("", v)
+        validate_clean_text(cleaned)
+        return cleaned.strip()[:200] if cleaned else None
+
+
+class DeletePayload(BaseModel):
+    message_id: int
+
+
+@router.get("/inbox")
+def get_inbox(user_id: str = Depends(verify_jwt_token)):
+    """Fetch the latest 100 inbox messages for the current user."""
+    supabase = get_supabase_client()
+    res = (
+        supabase.table("player_messages")
+        .select("message_id,message,sent_at,is_read,user_id,users(username)")
+        .eq("recipient_id", user_id)
+        .order("sent_at", desc=True)
+        .limit(100)
+        .execute()
+    )
+    rows = getattr(res, "data", res) or []
+    ids = [r["message_id"] for r in rows]
+    meta = {}
+    if ids:
+        meta_res = (
+            supabase.table("message_metadata")
+            .select("message_id,key,value")
+            .in_("message_id", ids)
+            .execute()
+        )
+        for item in getattr(meta_res, "data", meta_res) or []:
+            meta.setdefault(item["message_id"], {})[item["key"]] = item["value"]
+
+    return {
+        "messages": [
+            {
+                "message_id": r["message_id"],
+                "message": r["message"],
+                "sent_at": r["sent_at"],
+                "is_read": r["is_read"],
+                "sender": r.get("users", {}).get("username"),
+                "subject": meta.get(r["message_id"], {}).get("subject"),
+                "category": meta.get(r["message_id"], {}).get("category"),
+            }
+            for r in rows
+        ]
+    }
+
+
+@router.post("/mark_all_read")
+def mark_all_messages_read(user_id: str = Depends(verify_jwt_token)):
+    """Mark all inbox messages as read."""
+    supabase = get_supabase_client()
+    supabase.table("player_messages").update({"is_read": True}).eq(
+        "recipient_id", user_id
+    ).execute()
+    return {"message": "All marked read"}
+</script>
 
 </body>
 </html>
