@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('save-plan');
   const warInput = document.getElementById('war-id');
   const planArea = document.getElementById('preplan-json');
+  const jsonWarning = document.getElementById('json-warning');
   const grid = document.getElementById('preplan-grid');
   const fallbackBtn = document.getElementById('fallback-mode');
   const pathBtn = document.getElementById('path-mode');
@@ -130,10 +131,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         .from('alliance_war_scores')
         .select('attacker_score, defender_score')
         .eq('alliance_war_id', warId)
-        .single();
+        .maybeSingle();
       if (!error) updateScoreDisplay(data);
 
-      if (channel) await channel.unsubscribe();
+      if (channel?.unsubscribe) await channel.unsubscribe();
 
       channel = supabase
         .channel('war_scores_' + warId)
@@ -166,14 +167,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   planArea.addEventListener('input', () => {
     try {
       plan = JSON.parse(planArea.value || '{}');
+      jsonWarning.style.display = 'none';
       renderGrid();
     } catch {
-      // Invalid JSON in textarea - ignore and wait for valid parse
+      jsonWarning.textContent = 'Invalid JSON';
+      jsonWarning.style.display = 'block';
     }
   });
 
-  // ✅ Save the preplan to backend
+  // ✅ Save the preplan to backend with simple debounce
+  let saveCooldown = false;
   saveBtn.addEventListener('click', async () => {
+    if (saveCooldown) return;
+    saveCooldown = true;
+    setTimeout(() => (saveCooldown = false), 1000);
     const warId = parseInt(warInput.value, 10);
     if (!warId) return alert('Enter valid War ID');
 
@@ -241,11 +248,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       <div class="form-row">
         <label for="war-id">War ID</label>
-        <input id="war-id" type="number" min="1" aria-required="true" />
+        <input id="war-id" type="number" min="1" max="999999" aria-required="true" />
       </div>
 
       <label for="preplan-json">JSON Preplan (optional raw override)</label>
       <textarea id="preplan-json" rows="8" aria-label="Preplan JSON Editor"></textarea>
+      <div id="json-warning" style="color:red;display:none" aria-live="polite"></div>
 
       <!-- Controls -->
       <div class="editor-controls" role="toolbar" aria-label="Editor Tools">
@@ -282,6 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from ..database import get_db
 from ..security import require_user_id, require_active_user_id
