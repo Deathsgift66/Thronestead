@@ -38,8 +38,173 @@ Developer: Deathsgift66
   <link href="/CSS/player_management.css" rel="stylesheet" />
 
   <!-- JS Modules -->
-  <script type="module" src="/Javascript/requireAdmin.js"></script>
-  <script src="/Javascript/player_management.js" type="module"></script>
+  <script type="module">
+    window.requireAdmin = true;
+  </script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: player_management.js (inlined)
+    // Version:  7/1/2025 10:38
+    // Developer: Deathsgift66
+
+    import { supabase } from '/supabaseClient.js';
+    import { escapeHTML, fragmentFrom, authJsonFetch } from '/Javascript/utils.js';
+
+    let playerChannel;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadPlayerTable();
+
+      document.getElementById("search-button")?.addEventListener("click", loadPlayerTable);
+      document.getElementById("search-reset")?.addEventListener("click", () => {
+        const input = document.getElementById("search-input");
+        if (input) input.value = "";
+        loadPlayerTable();
+      });
+
+      const bulkActions = {
+        "bulk-ban": "ban",
+        "bulk-flag": "flag",
+        "bulk-logout": "logout",
+        "bulk-reset-password": "reset_password"
+      };
+
+      Object.entries(bulkActions).forEach(([btnId, action]) => {
+        document.getElementById(btnId)?.addEventListener("click", () => handleBulkAction(action));
+      });
+
+      document.getElementById("modal-close-btn")?.addEventListener("click", () =>
+        document.getElementById("admin-modal")?.classList.add("hidden")
+      );
+
+      // ✅ Supabase real-time channel
+      playerChannel = supabase
+        .channel('players')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, loadPlayerTable)
+        .subscribe();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (playerChannel) playerChannel.unsubscribe();
+    });
+
+    // ✅ Load Player Table
+    /**
+     * Fetch and render the player table based on current search query.
+     * Utilizes a document fragment to minimize reflow when inserting rows.
+     */
+    async function loadPlayerTable() {
+      const tableBody = document.querySelector("#player-table tbody");
+      const query = document.getElementById("search-input")?.value.trim() || "";
+      tableBody.innerHTML = "<tr><td colspan='8'>Loading players...</td></tr>";
+
+      try {
+        const { players } = await authJsonFetch(`/api/admin/players?search=${encodeURIComponent(query)}`);
+
+        tableBody.innerHTML = players?.length
+          ? ''
+          : "<tr><td colspan='8'>No players found.</td></tr>";
+
+        const rows = fragmentFrom(players, player => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><input type="checkbox" class="player-select" data-id="${player.user_id}"></td>
+            <td>${escapeHTML(player.user_id)}</td>
+            <td>${escapeHTML(player.username)}</td>
+            <td>${escapeHTML(player.email)}</td>
+            <td>${escapeHTML(player.kingdom_name)}</td>
+            <td>${escapeHTML(player.vip_tier)}</td>
+            <td>${escapeHTML(player.status)}</td>
+            <td>
+              <button class="action-btn flag-btn" data-id="${player.user_id}">Flag</button>
+              <button class="action-btn freeze-btn" data-id="${player.user_id}">Freeze</button>
+              <button class="action-btn ban-btn" data-id="${player.user_id}">Ban</button>
+              <button class="action-btn history-btn" data-id="${player.user_id}">History</button>
+            </td>
+          `;
+          return row;
+        });
+        tableBody.appendChild(rows);
+
+        rebindActionButtons();
+
+      } catch (err) {
+        console.error("❌ Error loading player table:", err);
+        tableBody.innerHTML = "<tr><td colspan='8'>Failed to load players.</td></tr>";
+      }
+    }
+
+    function rebindActionButtons() {
+      const bindAction = (selector, actionName) => {
+        document.querySelectorAll(selector).forEach(btn =>
+          btn.addEventListener("click", () => showModalConfirm(`${capitalize(actionName)} Player`, btn.dataset.id, actionName))
+        );
+      };
+
+      bindAction(".flag-btn", "flag");
+      bindAction(".freeze-btn", "freeze");
+      bindAction(".ban-btn", "ban");
+      bindAction(".history-btn", "history");
+    }
+
+    // ✅ Handle Bulk Action
+    async function handleBulkAction(action) {
+      const selected = Array.from(document.querySelectorAll(".player-select:checked")).map(cb => cb.dataset.id);
+      if (!selected.length) return alert("Please select at least one player.");
+      if (!confirm(`Perform "${action}" on ${selected.length} players?`)) return;
+
+      try {
+        const result = await authJsonFetch("/api/admin/bulk_action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, player_ids: selected })
+        });
+
+        alert(result.message || `Bulk "${action}" completed.`);
+        await loadPlayerTable();
+      } catch (err) {
+        console.error(`❌ Bulk ${action} failed:`, err);
+        alert(`Failed to perform "${action}".`);
+      }
+    }
+
+    // ✅ Show Modal Confirmation
+    async function showModalConfirm(title, userId, action) {
+      const modal = document.getElementById("admin-modal");
+      const modalTitle = document.getElementById("modal-title");
+      const modalBody = document.getElementById("modal-body");
+      const confirmBtn = document.getElementById("modal-confirm-btn");
+
+      modalTitle.textContent = title;
+      modalBody.innerHTML = `Are you sure you want to <strong>${escapeHTML(action)}</strong> player ID <strong>${escapeHTML(userId)}</strong>?`;
+
+      modal.classList.remove("hidden");
+
+      const newConfirmBtn = confirmBtn.cloneNode(true);
+      confirmBtn.replaceWith(newConfirmBtn);
+
+      newConfirmBtn.addEventListener("click", async () => {
+        try {
+          const result = await authJsonFetch("/api/admin/player_action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action, player_id: userId })
+          });
+
+          alert(result.message || `Action "${action}" completed.`);
+          modal.classList.add("hidden");
+          await loadPlayerTable();
+        } catch (err) {
+          console.error(`❌ ${action} failed:`, err);
+          alert(`Failed to ${action}.`);
+        }
+      });
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+  </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
@@ -129,6 +294,166 @@ Developer: Deathsgift66
     <div>© 2025 Thronestead</div>
     <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
   </footer>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+# Project Name: Thronestead©
+# File Name: player_management.py
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
+
+"""
+Project: Thronestead ©
+File: player_management.py
+Role: API routes for player management.
+Version: 2025-06-21
+"""
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from services.audit_service import fetch_user_related_logs
+
+from ..database import get_db
+from ..security import verify_api_key, verify_jwt_token
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/admin", tags=["player_management"])
+
+
+# -----------------------------
+# Request Models
+# -----------------------------
+
+
+class BulkAction(BaseModel):
+    action: str  # valid: ban, flag, logout, reset_password
+    player_ids: list[str]
+
+
+class PlayerAction(BaseModel):
+    action: str  # valid: ban, flag, freeze, history
+    player_id: str
+
+
+# -----------------------------
+# Endpoint: Get Players
+# -----------------------------
+@router.get("/players")
+def players(
+    search: str | None = None,
+    verify: str = Depends(verify_api_key),
+    user_id: str = Depends(verify_jwt_token),
+):
+    """
+    Admin endpoint to fetch player list with optional search by username, email, or user_id.
+    """
+    supabase = get_supabase_client()
+
+    query = supabase.table("users").select("user_id,username,email,vip_tier,status")
+
+    # Apply search filters if provided
+    if search:
+        query = query.or_(
+            f"user_id.ilike.%{search}%,username.ilike.%{search}%,email.ilike.%{search}%"
+        )
+
+    # Execute query and return 100 max records
+    res = query.limit(100).execute()
+    players = getattr(res, "data", res) or []
+
+    # Fetch kingdom names in a single query for efficiency
+    user_ids = [p["user_id"] for p in players]
+    if user_ids:
+        mapping_res = (
+            supabase.table("kingdoms")
+            .select("user_id,kingdom_name")
+            .in_("user_id", user_ids)
+            .execute()
+        )
+        rows = getattr(mapping_res, "data", mapping_res) or []
+        name_map = {r["user_id"]: r.get("kingdom_name") for r in rows}
+        for p in players:
+            p["kingdom_name"] = name_map.get(p["user_id"])
+
+    return {"players": players}
+
+
+# -----------------------------
+# Endpoint: Bulk Admin Actions
+# -----------------------------
+@router.post("/bulk_action")
+def bulk_action(
+    payload: BulkAction,
+    verify: str = Depends(verify_api_key),
+    user_id: str = Depends(verify_jwt_token),
+):
+    """
+    Perform bulk administrative actions on a list of players.
+    Supported actions: ban, flag, logout, reset_password
+    """
+    supabase = get_supabase_client()
+    ids = payload.player_ids
+
+    if not ids:
+        raise HTTPException(status_code=400, detail="No player IDs provided")
+
+    if payload.action == "ban":
+        supabase.table("users").update({"status": "banned"}).in_(
+            "user_id", ids
+        ).execute()
+    elif payload.action == "flag":
+        supabase.table("users").update({"flagged": True}).in_("user_id", ids).execute()
+    elif payload.action == "logout":
+        supabase.table("user_active_sessions").update(
+            {"session_status": "expired"}
+        ).in_("user_id", ids).execute()
+    elif payload.action == "reset_password":
+        supabase.table("users").update({"force_password_reset": True}).in_(
+            "user_id", ids
+        ).execute()
+    else:
+        raise HTTPException(status_code=400, detail="Unknown action")
+
+    return {"message": "bulk done", "count": len(ids)}
+
+
+# -----------------------------
+# Endpoint: Single Player Action
+# -----------------------------
+@router.post("/player_action")
+def player_action(
+    payload: PlayerAction,
+    verify: str = Depends(verify_api_key),
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """
+    Perform an administrative action on a specific player.
+    Supported actions: ban, flag, freeze, history
+    """
+    supabase = get_supabase_client()
+    pid = payload.player_id
+
+    if payload.action == "ban":
+        supabase.table("users").update({"status": "banned"}).eq(
+            "user_id", pid
+        ).execute()
+    elif payload.action == "flag":
+        supabase.table("users").update({"flagged": True}).eq("user_id", pid).execute()
+    elif payload.action == "freeze":
+        supabase.table("users").update({"status": "frozen"}).eq(
+            "user_id", pid
+        ).execute()
+    elif payload.action == "history":
+        logs = fetch_user_related_logs(db, pid)
+        return {"history": logs}
+    else:
+        raise HTTPException(status_code=400, detail="Unknown action")
+
+    return {"message": "action done", "player": pid}
+  </script>
 
 </body>
 </html>
