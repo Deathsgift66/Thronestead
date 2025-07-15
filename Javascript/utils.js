@@ -164,6 +164,30 @@ export function formatDate(ts) {
 }
 
 /**
+ * Format a timestamp relative to now, e.g. "2 days ago".
+ * @param {string|number|Date} ts Date or timestamp
+ * @returns {string} Relative time string
+ */
+export function relativeTime(ts) {
+  const date = ts instanceof Date ? ts : new Date(ts);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (Number.isNaN(seconds)) return '';
+  const units = [
+    { sec: 31536000, label: 'year' },
+    { sec: 2592000, label: 'month' },
+    { sec: 604800, label: 'week' },
+    { sec: 86400, label: 'day' },
+    { sec: 3600, label: 'hour' },
+    { sec: 60, label: 'minute' }
+  ];
+  for (const { sec, label } of units) {
+    const count = Math.floor(seconds / sec);
+    if (count >= 1) return `${count} ${label}${count > 1 ? 's' : ''} ago`;
+  }
+  return 'just now';
+}
+
+/**
  * Fetch JSON from an endpoint with sensible defaults and error handling.
  *
  * This helper ensures the "Accept" header is set and rejects on
