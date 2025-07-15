@@ -37,7 +37,7 @@ async function loadBackups() {
     (data.queues || []).forEach(queue => {
       const li = document.createElement('li');
       li.dataset.queue = queue.toLowerCase();
-      li.textContent = queue;
+      li.textContent = escapeHTML(queue);
       list.appendChild(li);
     });
     const time = document.getElementById('backup-time');

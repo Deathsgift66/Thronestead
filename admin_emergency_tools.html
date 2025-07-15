@@ -84,7 +84,7 @@
         (data.queues || []).forEach(queue => {
           const li = document.createElement('li');
           li.dataset.queue = queue.toLowerCase();
-          li.textContent = queue;
+          li.textContent = escapeHTML(queue);
           list.appendChild(li);
         });
         const time = document.getElementById('backup-time');
@@ -101,7 +101,7 @@
         inputs: ['tick-war-id'],
         endpoint: '/api/admin/emergency/reprocess_tick',
         payload: ([warId]) => ({ war_id: Number(warId) }),
-        success: 'Tick reprocessed'
+        success: 'Tick reprocessed',
         confirm: true,
       },
       'recalc-res-btn': {
@@ -114,7 +114,7 @@
         inputs: ['quest-alliance-id', 'quest-code'],
         endpoint: '/api/admin/emergency/rollback_quest',
         payload: ([aid, code]) => ({ alliance_id: Number(aid), quest_code: code }),
-        success: 'Quest rolled back'
+        success: 'Quest rolled back',
         confirm: true,
       },
       'load-backups-btn': {
