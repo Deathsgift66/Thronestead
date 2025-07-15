@@ -29,13 +29,14 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/town_criers.css" rel="stylesheet" />
+  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script type="module">
     // Project Name: Thronestead©
     // File Name: town_criers.js (inlined)
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
     import { supabase } from '../supabaseClient.js';
-    import { escapeHTML, showToast } from './utils.js';
+    import { escapeHTML, showToast, sanitizeHTML } from './utils.js';
     import { setupTabs } from './components/tabControl.js';
 
     let scrollChannel = null;
@@ -53,33 +54,66 @@ Developer: Deathsgift66
         e.preventDefault();
         await submitScroll();
       });
+
+      document.getElementById('board-prev').addEventListener('click', () => {
+        currentPage--; renderBoard(supabase.auth.getUser().data.user.id);
+      });
+      document.getElementById('board-next').addEventListener('click', () => {
+        currentPage++; renderBoard(supabase.auth.getUser().data.user.id);
+      });
+
+      document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+          await deleteScroll(e.target.dataset.id);
+        } else if (e.target.classList.contains('edit-btn')) {
+          await editScroll(e.target.dataset.id);
+        }
+      });
     });
 
     // ✅ UI Tabs Handler
 
     // ✅ Load Global Bulletin
+    const pageSize = 10;
+    let boardScrolls = [];
+    let currentPage = 1;
+
     async function loadBoard() {
       const boardEl = document.getElementById('board-feed');
       boardEl.innerHTML = "<p>Loading board feed...</p>";
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch('/api/town-criers/latest', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'X-User-ID': session.user.id
-          }
-        });
-        const { scrolls = [] } = await res.json();
+        const { data, error } = await supabase
+          .from('town_crier_scrolls')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
 
-        boardEl.innerHTML = scrolls.length
-          ? scrolls.map(renderScrollCard).join('')
-          : "<p>No scrolls posted yet.</p>";
+        if (error) throw error;
+
+        boardScrolls = data || [];
+        currentPage = 1;
+        renderBoard(session.user.id);
 
       } catch (err) {
         console.error("❌ Board Feed Error:", err);
         showToast("Failed to load board feed.");
       }
+    }
+
+    function renderBoard(uid) {
+      const boardEl = document.getElementById('board-feed');
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const slice = boardScrolls.slice(start, end);
+      boardEl.innerHTML = slice.length
+        ? slice.map(s => renderScrollCard(s, uid)).join('')
+        : "<p>No scrolls posted yet.</p>";
+      document.getElementById('board-page-info').textContent =
+        `Page ${currentPage} of ${Math.max(1, Math.ceil(boardScrolls.length / pageSize))}`;
+      document.getElementById('board-prev').disabled = currentPage === 1;
+      document.getElementById('board-next').disabled = end >= boardScrolls.length;
     }
 
     // ✅ Load Personal Scrolls
@@ -98,7 +132,7 @@ Developer: Deathsgift66
         if (error) throw error;
 
         yourEl.innerHTML = data.length
-          ? data.map(renderScrollCard).join('')
+          ? data.map(s => renderScrollCard(s, user.id)).join('')
           : "<p>You have not posted any scrolls yet.</p>";
 
       } catch (err) {
@@ -108,17 +142,26 @@ Developer: Deathsgift66
     }
 
     // ✅ Scroll Card Renderer
-    function renderScrollCard(scroll) {
-      const author = escapeHTML(scroll.author_name || ' (user)' || 'Unknown');
+    function renderScrollCard(scroll, uid) {
+      const author = escapeHTML(scroll.author_display_name || 'Unknown');
       const title = escapeHTML(scroll.title);
-      const body = escapeHTML(scroll.content);
-      const date = new Date(scroll.posted_at).toLocaleString();
+      let body = scroll.body || scroll.content || '';
+      if (window.marked) body = sanitizeHTML(window.marked.parse(body));
+      else body = escapeHTML(body);
+      const category = escapeHTML(scroll.category || 'general');
+      const date = scroll.created_at
+        ? new Date(scroll.created_at).toLocaleString()
+        : scroll.posted_at
+          ? new Date(scroll.posted_at).toLocaleString()
+          : 'Unknown date';
+      const owner = uid && scroll.author_id === uid;
 
       return `
-        <div class="scroll-card">
+        <div class="scroll-card" data-id="${scroll.scroll_id || scroll.id}">
           <h4>${title}</h4>
-          <p>${body}</p>
-          <small>Posted by: ${author} • ${date}</small>
+          <div class="scroll-body">${body}</div>
+          <small>Posted by: ${author} • ${date} • ${category}</small>
+          ${owner ? `<div class="scroll-actions"><button class="edit-btn" data-id="${scroll.scroll_id || scroll.id}">Edit</button> <button class="delete-btn" data-id="${scroll.scroll_id || scroll.id}">Delete</button></div>` : ''}
         </div>
       `;
     }
@@ -145,6 +188,7 @@ Developer: Deathsgift66
       const bodyEl = document.getElementById('scroll-body');
       const title = titleEl.value.trim();
       const body = bodyEl.value.trim();
+      const category = document.getElementById('scroll-category').value;
 
       if (title.length < 3) return showToast("Title must be at least 3 characters.");
       if (body.length < 10) return showToast("Body must be at least 10 characters.");
@@ -158,7 +202,7 @@ Developer: Deathsgift66
             Authorization: `Bearer ${session.access_token}`,
             'X-User-ID': session.user.id
           },
-          body: JSON.stringify({ title, body })
+          body: JSON.stringify({ title, body, category })
         });
 
         if (!res.ok) {
@@ -179,6 +223,44 @@ Developer: Deathsgift66
         console.error("❌ Submit Scroll Error:", err);
         showToast("Failed to submit scroll.");
       }
+    }
+
+    async function deleteScroll(id) {
+      if (!confirm('Delete this scroll?')) return;
+      const { error } = await supabase
+        .from('town_crier_scrolls')
+        .delete()
+        .eq('id', id);
+      if (error) {
+        console.error('Delete failed', error);
+        showToast('Failed to delete');
+        return;
+      }
+      boardScrolls = boardScrolls.filter(s => (s.id || s.scroll_id) != id);
+      await loadYourScrolls();
+      renderBoard((await supabase.auth.getUser()).data.user.id);
+    }
+
+    async function editScroll(id) {
+      const scroll = boardScrolls.find(s => (s.id || s.scroll_id) == id);
+      if (!scroll) return;
+      const newTitle = prompt('Edit title', scroll.title);
+      if (newTitle === null) return;
+      const newBody = prompt('Edit body', scroll.body || scroll.content || '');
+      if (newBody === null) return;
+      const { error } = await supabase
+        .from('town_crier_scrolls')
+        .update({ title: newTitle, body: newBody })
+        .eq('id', id);
+      if (error) {
+        console.error('Edit failed', error);
+        showToast('Failed to edit');
+        return;
+      }
+      scroll.title = newTitle;
+      scroll.body = newBody;
+      await loadYourScrolls();
+      renderBoard((await supabase.auth.getUser()).data.user.id);
     }
   </script>
 
@@ -232,6 +314,11 @@ Developer: Deathsgift66
       <div id="board-feed" class="scroll-list custom-scrollbar" aria-live="polite">
         <!-- JS will populate -->
       </div>
+      <div class="pagination">
+        <button id="board-prev" class="btn-fantasy prev-page">Prev</button>
+        <span id="board-page-info"></span>
+        <button id="board-next" class="btn-fantasy next-page">Next</button>
+      </div>
     </section>
 
     <!-- Your Scrolls -->
@@ -249,6 +336,14 @@ Developer: Deathsgift66
         <div class="form-group">
           <label for="scroll-title">Title</label>
           <input type="text" id="scroll-title" name="scroll-title" required />
+        </div>
+        <div class="form-group">
+          <label for="scroll-category">Category</label>
+          <select id="scroll-category">
+            <option value="general">General</option>
+            <option value="trade">Trade</option>
+            <option value="roleplay">Roleplay</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="scroll-body">Body</label>
@@ -304,8 +399,9 @@ def _validate_text(value: str | None) -> str | None:
 class ScrollPayload(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
     body: str = Field(..., min_length=1, max_length=5000)
+    category: str | None = None
 
-    _check_fields = validator("title", "body", allow_reuse=True)(lambda v: _validate_text(v))
+    _check_fields = validator("title", "body", "category", allow_reuse=True)(lambda v: _validate_text(v))
 
 
 # ---------------------------
@@ -379,6 +475,7 @@ def post_scroll(
         "author_display_name": prof_row.get("display_name"),
         "title": payload.title,
         "body": payload.body,
+        "category": payload.category,
     }
 
     try:

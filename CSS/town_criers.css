@@ -113,6 +113,23 @@ body {
   color: #1a1a1a;
 }
 
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.scroll-actions {
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+.scroll-actions button {
+  margin-left: 0.5rem;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 10px;
 }
