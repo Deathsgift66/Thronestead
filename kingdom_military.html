@@ -228,7 +228,7 @@ async function loadTrainingHistory() {
   container.innerHTML = "<p>Loading training history...</p>";
 
   try {
-    const res = await fetch("/api/training-history?kingdom_id=1&limit=50", { headers: { 'X-User-ID': currentUserId } });
+    const res = await fetch("/api/training-history?limit=50", { headers: { 'X-User-ID': currentUserId } });
     const data = await res.json();
 
     container.innerHTML = renderTrainingHistory(data.history || []);
@@ -414,7 +414,7 @@ function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  return `${h}h ${m}m ${s}s`;
+  return `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
 }
 
 setInterval(() => {
