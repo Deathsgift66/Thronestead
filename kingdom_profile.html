@@ -46,10 +46,13 @@ Developer: Deathsgift66
     // Developer: Deathsgift66
     import { supabase } from '../supabaseClient.js';
     import { authFetchJson } from './fetchJson.js';
+    import { openModal, closeModal } from './utils.js';
 
     let targetKingdomId = null;
     let currentSession = null;
     let lastAction = 0;
+    let cooldownTimer;
+    const COOLDOWN_MS = 5000;
     let reportTextarea;
     let reportModal;
 
@@ -106,10 +109,30 @@ Developer: Deathsgift66
         diplomacyEl.textContent = `Diplomacy: ${data.diplomacy_score}`;
         villagesEl.textContent = `Villages: ${data.village_count}`;
 
+        const flagEl = document.getElementById('vacation-flag');
+        const spyBtn = document.getElementById('spy-btn');
+        const reportBtn = document.getElementById('report-btn');
+        const attackBtn = document.getElementById('attack-modal-btn');
+
+        if (data.is_on_vacation) {
+          flagEl.textContent = 'On Vacation';
+          flagEl.classList.remove('hidden');
+        } else if (data.is_banned) {
+          flagEl.textContent = 'User Banned';
+          flagEl.classList.remove('hidden');
+        }
+
+        if (currentSession && !data.is_on_vacation && !data.is_banned) {
+          spyBtn.classList.remove('hidden');
+          reportBtn.classList.remove('hidden');
+        } else {
+          spyBtn.classList.add('hidden');
+          reportBtn.classList.add('hidden');
+          if (attackBtn) attackBtn.classList.add('hidden');
+        }
+
         if (currentSession) {
-          document.getElementById('spy-btn').classList.remove('hidden');
           document.getElementById('message-btn').classList.remove('hidden');
-          document.getElementById('report-btn').classList.remove('hidden');
         }
       } catch (err) {
         console.error('profile load failed', err);
@@ -124,16 +147,10 @@ Developer: Deathsgift66
       const attackBtn = document.getElementById('attack-modal-btn');
 
       if (btn) {
-        btn.addEventListener('click', () => {
-          modal.classList.remove('hidden');
-          modal.setAttribute('aria-hidden', 'false');
-        });
+        btn.addEventListener('click', () => openModal(modal));
       }
       if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-          modal.classList.add('hidden');
-          modal.setAttribute('aria-hidden', 'true');
-        });
+        closeBtn.addEventListener('click', () => closeModal(modal));
       }
 
       document.querySelectorAll('.spy-option').forEach(el => {
@@ -162,16 +179,12 @@ Developer: Deathsgift66
       if (btn) {
         btn.addEventListener('click', () => {
           if (!currentSession) return alert('Login required');
-          reportModal.classList.remove('hidden');
-          reportModal.setAttribute('aria-hidden', 'false');
           if (reportTextarea) reportTextarea.value = '';
+          openModal(reportModal);
         });
       }
       if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-          reportModal.classList.add('hidden');
-          reportModal.setAttribute('aria-hidden', 'true');
-        });
+        closeBtn.addEventListener('click', () => closeModal(reportModal));
       }
       if (submitBtn) {
         submitBtn.addEventListener('click', submitReport);
@@ -181,11 +194,12 @@ Developer: Deathsgift66
     async function launchMission(missionType) {
       if (!currentSession) return alert('Login required');
       const now = Date.now();
-      if (now - lastAction < 5000) {
-        alert('Please wait before launching another mission.');
+      if (now - lastAction < COOLDOWN_MS) {
+        startCooldownTimer(lastAction + COOLDOWN_MS);
         return;
       }
       lastAction = now;
+      startCooldownTimer(now + COOLDOWN_MS);
 
       try {
         await authFetchJson('/api/kingdom/spy_missions', currentSession, {
@@ -212,6 +226,13 @@ Developer: Deathsgift66
         )
       )
         return;
+      const now = Date.now();
+      if (now - lastAction < COOLDOWN_MS) {
+        startCooldownTimer(lastAction + COOLDOWN_MS);
+        return;
+      }
+      lastAction = now;
+      startCooldownTimer(now + COOLDOWN_MS);
 
       try {
         const result = await authFetchJson('/api/wars/declare', currentSession, {
@@ -252,6 +273,25 @@ Developer: Deathsgift66
         reportModal.classList.add('hidden');
         reportModal.setAttribute('aria-hidden', 'true');
       }
+    }
+
+    function startCooldownTimer(end) {
+      const el = document.getElementById('cooldown-timer');
+      if (!el) return;
+      clearInterval(cooldownTimer);
+      function update() {
+        const remaining = Math.ceil((end - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(cooldownTimer);
+          el.textContent = '';
+          el.classList.add('hidden');
+        } else {
+          el.textContent = `Cooldown: ${remaining}s`;
+          el.classList.remove('hidden');
+        }
+      }
+      update();
+      cooldownTimer = setInterval(update, 1000);
     }
   </script>
 
@@ -294,9 +334,11 @@ Developer: Deathsgift66
         <p id="economy-score"></p>
         <p id="diplomacy-score"></p>
         <p id="village-count"></p>
+        <p id="vacation-flag" class="ban-warning hidden"></p>
         <button id="spy-btn" class="action-btn hidden">🕵️ Spy or Attack</button>
         <button id="message-btn" class="action-btn hidden">✉️ Message</button>
         <button id="report-btn" class="action-btn hidden">🚩 Report Player</button>
+        <div id="cooldown-timer" class="cooldown-timer hidden" aria-live="polite"></div>
       </div>
     </section>
 
