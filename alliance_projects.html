@@ -135,8 +135,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAllLists();
   await setupRealtimeProjects();
   setInterval(loadAllLists, 30000);
-  window.addEventListener('beforeunload', () => {
-    if (projectChannel) supabase.removeChannel(projectChannel);
+  window.addEventListener('beforeunload', async () => {
+    if (projectChannel) await supabase.removeChannel(projectChannel);
+    projectChannel = null;
   });
 });
 
@@ -144,7 +145,8 @@ async function setupRealtimeProjects() {
   const { allianceId } = await getAllianceInfo();
   if (!allianceId) return;
 
-  if (projectChannel) supabase.removeChannel(projectChannel);
+  if (projectChannel) await supabase.removeChannel(projectChannel);
+  projectChannel = null;
 
   projectChannel = supabase
     .channel(`realtime:alliance_projects_${allianceId}`)
