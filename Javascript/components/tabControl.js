@@ -27,6 +27,7 @@ export function setupTabs({
     buttons.forEach(btn => {
       const isActive = btn.dataset.tab === id;
       btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
 
     sections.forEach(section => {
