@@ -165,6 +165,7 @@ Developer: Deathsgift66
         btn.addEventListener('click', async () => {
           const questCode = btn.dataset.code;
           if (!confirm(`Accept quest "${questCode}"?`)) return;
+          btn.disabled = true;
           try {
             const res = await fetch('/api/kingdom/accept_quest', {
               method: 'POST',
@@ -177,6 +178,8 @@ Developer: Deathsgift66
           } catch (err) {
             console.error('❌ Accept failed:', err);
             showToast('Failed to accept quest');
+          } finally {
+            btn.disabled = false;
           }
         });
       });
@@ -235,6 +238,10 @@ Developer: Deathsgift66
       const elements = document.querySelectorAll('.countdown');
       elements.forEach(el => {
         const endsAt = new Date(el.dataset.endsAt).getTime();
+        if (Date.now() >= endsAt) {
+          el.textContent = 'Completed!';
+          return;
+        }
         const update = () => {
           const seconds = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
           el.textContent = formatTime(seconds);

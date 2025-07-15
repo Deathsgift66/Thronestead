@@ -8,3 +8,12 @@ class WarPhase(str, Enum):
     LIVE = "live"
     RESOLVED = "resolved"
 
+
+class QuestStatusKingdom(str, Enum):
+    """Status values for kingdom quests."""
+
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+

@@ -25,9 +25,11 @@ from sqlalchemy import (
     Text,
     Time,
     text,
+    Enum as SQLEnum,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.sql import func
+from backend.enums import QuestStatusKingdom
 
 from backend.db_base import Base
 
@@ -281,7 +283,6 @@ class AllianceMember(Base):
     contribution = Column(Integer, default=0)
     status = Column(String)
     crest = Column(String)
-    role_id = Column(Integer, ForeignKey("alliance_roles.role_id"))
 
 
 class AllianceRole(Base):
@@ -1422,8 +1423,7 @@ class QuestKingdomTracking(Base):
     quest_code = Column(
         String, ForeignKey("quest_kingdom_catalogue.quest_code"), primary_key=True
     )
-    status = Column(String)
-    progress = Column(Integer, default=0)
+    status = Column(SQLEnum(QuestStatusKingdom, name="quest_status_kingdom"))
     progress_details = Column(JSONB, default={})
     ends_at = Column(DateTime(timezone=True))
     started_at = Column(DateTime(timezone=True), server_default=func.now())
