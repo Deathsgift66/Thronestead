@@ -177,10 +177,18 @@ Developer: Deathsgift66
       fetchChangelog();
     }
 
-    function updateLastUpdated(timestamp) {
-      const el = document.getElementById('last-updated');
-      if (el && timestamp) el.textContent = new Date(timestamp).toLocaleString();
-    }
+      function formatCsvDate(ts) {
+        const d = new Date(ts);
+        if (Number.isNaN(d.getTime())) return '';
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      function updateLastUpdated(timestamp) {
+        const el = document.getElementById('last-updated');
+        if (el && timestamp)
+          el.textContent = new Date(timestamp).toLocaleString('en-US', { timeZoneName: 'short' });
+      }
 
     function renderChangelog(logs) {
       const container = document.getElementById('changelog-list');
@@ -218,7 +226,7 @@ Developer: Deathsgift66
       if (!changelogData.length) return;
       const header = 'Timestamp,Type,Description\n';
       const csv = changelogData
-        .map((l) => [l.timestamp, l.event_type, l.description]
+        .map((l) => [formatCsvDate(l.timestamp), l.event_type, l.description]
           .map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
         .join('\n');
       const blob = new Blob([header + csv], { type: 'text/csv' });
