@@ -57,8 +57,12 @@ Developer: Deathsgift66
         const res = await fetch(`/api/kingdom/villages/summary/${villageId}`);
         if (!res.ok) throw new Error('Failed to load village summary');
         const summary = await res.json();
-        const village = summary.village;
+        if (!summary?.village || !summary.village.village_name) {
+          showToast('Invalid village data.');
+          return;
+        }
 
+        const village = summary.village;
         document.getElementById('village-name').textContent = village.village_name;
 
         await loadVillageResources(villageId);
@@ -239,6 +243,8 @@ Developer: Deathsgift66
             Math.round(((now - start) / (end - start)) * 100),
             100
           );
+          if (isNaN(progress) || progress < 0) progress = 0;
+          if (progress > 100) progress = 100;
         }
 
         card.innerHTML = `
@@ -249,7 +255,7 @@ Developer: Deathsgift66
         if (entry.status !== 'in_progress') {
           const btn = document.createElement('button');
           btn.textContent = 'Cancel';
-          btn.onclick = () => cancelQueueItem(entry.queue_id);
+          btn.onclick = () => cancelQueueItem(entry.queue_id, villageId);
           card.appendChild(btn);
         }
 
@@ -257,12 +263,17 @@ Developer: Deathsgift66
       });
     }
 
-    async function cancelQueueItem(queueId) {
+    async function cancelQueueItem(queueId, villageId) {
+      if (!confirm('Cancel this build/training queue item?')) return;
+
       await fetch('/api/village/building/queue/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ queue_id: queueId })
       });
+
+      showToast('Queue item canceled.');
+      if (villageId) await loadVillageQueue(villageId);
     }
 
     async function loadVillageEvents(villageId) {
