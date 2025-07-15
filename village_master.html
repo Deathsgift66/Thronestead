@@ -43,6 +43,7 @@ Developer: Deathsgift66
 
     let realtimeChannel;
     let currentKingdomId;
+    let upgradeCooldown = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
       await validateVIPAccess();
@@ -67,7 +68,7 @@ Developer: Deathsgift66
 
         if (error) throw error;
 
-        if (!profile.vip_tier || profile.vip_tier < 2) {
+        if (typeof profile.vip_tier !== 'number' || profile.vip_tier < 2) {
           alert("Access Denied: VIP Tier 2 Required.");
           window.location.href = "play.html";
         }
@@ -100,6 +101,10 @@ Developer: Deathsgift66
         if (villagesError) throw villagesError;
 
         const gridEl = document.getElementById('village-grid');
+        if (!gridEl) {
+          console.error("Missing grid container");
+          return;
+        }
         gridEl.innerHTML = "";
 
         if (villages.length === 0) {
@@ -165,6 +170,8 @@ Developer: Deathsgift66
 
     // ✅ Mass Action: Bulk Upgrade All buildings
     async function bulkUpgradeAll() {
+      if (upgradeCooldown) return;
+      upgradeCooldown = true;
       showToast("Initiating bulk upgrade of all buildings...");
       try {
         const res = await fetch('/api/village-master/bulk_upgrade', {
@@ -175,11 +182,15 @@ Developer: Deathsgift66
       } catch (err) {
         console.error('❌ Bulk upgrade failed:', err);
         showToast('Bulk upgrade failed');
+      } finally {
+        setTimeout(() => upgradeCooldown = false, 3000);
       }
     }
 
     // ✅ Mass Action: Queue Troops in all villages
     async function bulkQueueTraining() {
+      if (upgradeCooldown) return;
+      upgradeCooldown = true;
       showToast("Queuing troops in all villages...");
       try {
         const res = await fetch('/api/village-master/bulk_queue_training', {
@@ -190,11 +201,15 @@ Developer: Deathsgift66
       } catch (err) {
         console.error('❌ Bulk queue failed:', err);
         showToast('Bulk queue failed');
+      } finally {
+        setTimeout(() => upgradeCooldown = false, 3000);
       }
     }
 
     // ✅ Mass Action: Harvest all village resources
     async function bulkHarvest() {
+      if (upgradeCooldown) return;
+      upgradeCooldown = true;
       showToast("Harvesting resources from all villages...");
       try {
         const res = await fetch('/api/village-master/bulk_harvest', {
@@ -205,6 +220,8 @@ Developer: Deathsgift66
       } catch (err) {
         console.error('❌ Bulk harvest failed:', err);
         showToast('Bulk harvest failed');
+      } finally {
+        setTimeout(() => upgradeCooldown = false, 3000);
       }
     }
 
@@ -231,10 +248,23 @@ Developer: Deathsgift66
         const res = await fetch('/api/village-master/overview', {
           headers: { 'X-User-ID': user.id }
         });
-        if (!res.ok) return;
-        const data = await res.json();
+        if (!res.ok) {
+          showToast("Overview failed to load.");
+          return;
+        }
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          showToast("Failed to parse overview.");
+          return;
+        }
 
         const statsEl = document.getElementById('village-stats');
+        if (!statsEl) {
+          console.error("Missing stats container");
+          return;
+        }
         statsEl.innerHTML = '';
 
         data.overview.forEach(v => {
