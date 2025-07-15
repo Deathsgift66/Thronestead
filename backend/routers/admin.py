@@ -168,6 +168,24 @@ def mark_alert_handled(
     return {"message": "Alert marked", "alert_id": aid}
 
 
+@router.post("/dismiss_alert")
+def dismiss_alert(
+    payload: dict,
+    verify: str = Depends(verify_api_key),
+    admin_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Delete an alert after verifying admin permissions."""
+    verify_admin(admin_id, db)
+    aid = payload.get("alert_id")
+    if not aid:
+        raise HTTPException(status_code=400, detail="alert_id required")
+    db.execute(text("DELETE FROM admin_alerts WHERE alert_id = :aid"), {"aid": aid})
+    db.commit()
+    log_action(db, admin_id, "dismiss_alert", f"Dismissed alert {aid}")
+    return {"message": "Dismissed", "alert_id": aid}
+
+
 # -------------------------
 # 🧑‍💻 Admin Query Routes
 # -------------------------

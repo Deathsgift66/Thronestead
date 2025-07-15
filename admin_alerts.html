@@ -181,7 +181,7 @@ Developer: Deathsgift66
             await postAdminAction('/api/admin/ban', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
             break;
           case 'dismiss':
-            await supabase.from('admin_alerts').delete().eq('alert_id', btn.dataset.alert_id);
+            await postAdminAction('/api/admin/dismiss_alert', { alert_id: btn.dataset.alert_id });
             break;
           case 'flag_ip':
             await postAdminAction('/api/admin/flag_ip', { ip: btn.dataset.ip });
