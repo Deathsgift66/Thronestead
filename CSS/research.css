@@ -106,6 +106,12 @@ body {
   color: var(--success);
 }
 
+#tech-filters .action-btn.selected {
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+  box-shadow: 0 0 5px var(--accent);
+}
+
 @media (min-width: 768px) {
   .alliance-members-container {
     display: grid;
