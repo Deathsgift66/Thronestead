@@ -41,7 +41,171 @@ Developer: Deathsgift66
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
 
   <!-- Scripts -->
-  <script src="/Javascript/preplan_editor.js" type="module"></script>
+  <script type="module">
+import { supabase } from './supabaseClient.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const saveBtn = document.getElementById('save-plan');
+  const warInput = document.getElementById('war-id');
+  const planArea = document.getElementById('preplan-json');
+  const grid = document.getElementById('preplan-grid');
+  const fallbackBtn = document.getElementById('fallback-mode');
+  const pathBtn = document.getElementById('path-mode');
+  const clearPathBtn = document.getElementById('clear-path');
+  const scoreDiv = document.getElementById('scoreboard-display');
+
+  let editMode = null;
+  let channel = null;
+  let plan = {};
+
+  // ✅ Render the battlefield grid
+  function renderGrid() {
+    grid.innerHTML = '';
+    for (let y = 0; y < 20; y++) {
+      for (let x = 0; x < 60; x++) {
+        const tile = document.createElement('div');
+        tile.className = 'grid-tile';
+        tile.dataset.x = x;
+        tile.dataset.y = y;
+
+        // Highlight based on current plan
+        if (plan.patrol_path?.some(p => p.x === x && p.y === y)) {
+          tile.classList.add('path');
+        }
+        if (plan.fallback_point?.x === x && plan.fallback_point?.y === y) {
+          tile.classList.add('fallback');
+        }
+
+        tile.addEventListener('click', () => handleTileClick(x, y));
+        grid.appendChild(tile);
+      }
+    }
+  }
+
+  // ✅ Handle tile click based on current mode
+  function handleTileClick(x, y) {
+    if (editMode === 'fallback') {
+      plan.fallback_point = { x, y };
+    } else if (editMode === 'path') {
+      plan.patrol_path ??= [];
+      plan.patrol_path.push({ x, y });
+    }
+    updatePlanArea();
+    renderGrid();
+  }
+
+  // ✅ Sync JSON view with plan object
+  function updatePlanArea() {
+    planArea.value = JSON.stringify(plan, null, 2);
+  }
+
+  // ✅ Load the pre-existing plan for this war
+  async function loadPlan() {
+    const warId = warInput.value;
+    if (!warId) return;
+    try {
+      const res = await fetch(`/api/alliance-wars/preplan?alliance_war_id=${warId}`);
+      const data = await res.json();
+      plan = data.plan || {};
+      updatePlanArea();
+      renderGrid();
+    } catch (err) {
+      console.error('❌ Failed to load preplan:', err);
+    }
+  }
+
+  // ✅ Update scoreboard display
+  async function updateScoreDisplay(score) {
+    if (score) {
+      scoreDiv.textContent = `${score.attacker_score} - ${score.defender_score}`;
+    }
+  }
+
+  // ✅ Subscribe to live score updates via Supabase channel
+  async function loadScore() {
+    const warId = warInput.value;
+    if (!warId) return;
+    try {
+      const { data, error } = await supabase
+        .from('alliance_war_scores')
+        .select('attacker_score, defender_score')
+        .eq('alliance_war_id', warId)
+        .single();
+      if (!error) updateScoreDisplay(data);
+
+      if (channel) await channel.unsubscribe();
+
+      channel = supabase
+        .channel('war_scores_' + warId)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'alliance_war_scores',
+            filter: `alliance_war_id=eq.${warId}`
+          },
+          payload => updateScoreDisplay(payload.new)
+        )
+        .subscribe();
+    } catch (err) {
+      console.error('❌ Failed to load score:', err);
+    }
+  }
+
+  // ✅ Button bindings
+  fallbackBtn.addEventListener('click', () => { editMode = 'fallback'; });
+  pathBtn.addEventListener('click', () => { editMode = 'path'; });
+  clearPathBtn.addEventListener('click', () => {
+    plan.patrol_path = [];
+    renderGrid();
+    updatePlanArea();
+  });
+
+  // ✅ Listen for manual JSON edits
+  planArea.addEventListener('input', () => {
+    try {
+      plan = JSON.parse(planArea.value || '{}');
+      renderGrid();
+    } catch {
+      // Invalid JSON in textarea - ignore and wait for valid parse
+    }
+  });
+
+  // ✅ Save the preplan to backend
+  saveBtn.addEventListener('click', async () => {
+    const warId = parseInt(warInput.value, 10);
+    if (!warId) return alert('Enter valid War ID');
+
+    try {
+      const res = await fetch('/api/alliance-wars/preplan/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alliance_war_id: warId,
+          preplan_jsonb: plan
+        })
+      });
+
+      if (!res.ok) throw new Error('Save failed');
+      alert('✅ Plan saved!');
+    } catch (err) {
+      console.error('❌ Error saving plan:', err);
+      alert('❌ Save failed.');
+    }
+  });
+
+  // ✅ Reload plan and score when War ID changes
+  warInput.addEventListener('change', async () => {
+    await loadPlan();
+    await loadScore();
+  });
+
+  // ✅ Initial run
+  await loadPlan();
+  await loadScore();
+});
+  </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
@@ -112,6 +276,74 @@ Developer: Deathsgift66
     <div>© 2025 Thronestead</div>
     <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
   </footer>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..security import require_user_id, require_active_user_id
+from services.audit_service import log_action
+
+router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
+
+# ----------- Pre-Plan Editing -----------
+
+class PreplanPayload(BaseModel):
+    alliance_war_id: int
+    preplan_jsonb: dict
+
+
+@router.get("/preplan")
+def get_preplan(
+    alliance_war_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    from .progression_router import get_kingdom_id
+
+    kid = get_kingdom_id(db, user_id)
+    row = (
+        db.execute(
+            text(
+                "SELECT preplan_jsonb FROM alliance_war_preplans "
+                "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+            ),
+            {"wid": alliance_war_id, "kid": kid},
+        )
+        .mappings()
+        .first()
+    )
+
+    return {"plan": row["preplan_jsonb"] if row else {}}
+
+
+@router.post("/preplan/submit")
+def submit_preplan(
+    payload: PreplanPayload,
+    user_id: str = Depends(require_active_user_id),
+    db: Session = Depends(get_db),
+):
+    from .progression_router import get_kingdom_id
+
+    kid = get_kingdom_id(db, user_id)
+    db.execute(
+        text(
+            """
+            INSERT INTO alliance_war_preplans (alliance_war_id, kingdom_id, preplan_jsonb)
+            VALUES (:wid, :kid, :plan)
+            ON CONFLICT (alliance_war_id, kingdom_id)
+              DO UPDATE SET preplan_jsonb = EXCLUDED.preplan_jsonb, last_updated = now()
+            """,
+        ),
+        {"wid": payload.alliance_war_id, "kid": kid, "plan": payload.preplan_jsonb},
+    )
+    db.commit()
+    log_action(db, user_id, "Save Preplan", str(payload.alliance_war_id))
+    return {"status": "saved"}
+  </script>
 
 </body>
 
