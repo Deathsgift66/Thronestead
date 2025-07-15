@@ -32,9 +32,476 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/overview.css" rel="stylesheet" />
-  <script src="/Javascript/overview.js" type="module"></script>
-  <script src="/Javascript/offlineFallback.js" type="module"></script>
-  <script src="/Javascript/progression.js" type="module"></script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: progression.js (inlined)
+    async function apiGET(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`GET failed: ${url}`);
+      return res.json();
+    }
+
+    async function apiPOST(url, data = {}) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `POST failed: ${url}`);
+      return json;
+    }
+
+    async function apiPUT(url, data = {}) {
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `PUT failed: ${url}`);
+      return json;
+    }
+
+    async function apiDELETE(url, data = {}) {
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `DELETE failed: ${url}`);
+      return json;
+    }
+
+    export async function getCastleProgression() {
+      return apiGET('/api/progression/castle');
+    }
+
+    export async function upgradeCastle() {
+      return apiPOST('/api/progression/castle/upgrade');
+    }
+
+    export async function viewNobles() {
+      return apiGET('/api/progression/nobles');
+    }
+
+    export async function nameNoble(name) {
+      return apiPOST('/api/progression/nobles', { noble_name: name });
+    }
+
+    export async function renameNoble(oldName, newName) {
+      return apiPUT('/api/progression/nobles/rename', {
+        old_name: oldName,
+        new_name: newName
+      });
+    }
+
+    export async function removeNoble(name) {
+      return apiDELETE('/api/progression/nobles', { noble_name: name });
+    }
+
+    export async function viewKnights() {
+      return apiGET('/api/progression/knights');
+    }
+
+    export async function nameKnight(name) {
+      return apiPOST('/api/progression/knights', { knight_name: name });
+    }
+
+    export async function renameKnight(oldName, newName) {
+      return apiPUT('/api/progression/knights/rename', {
+        old_name: oldName,
+        new_name: newName
+      });
+    }
+
+    export async function removeKnight(name) {
+      return apiDELETE('/api/progression/knights', { knight_name: name });
+    }
+
+    export async function promoteKnightApi(name) {
+      return apiPOST('/api/progression/knights/promote', { knight_name: name });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const castleEl = document.getElementById('castle-progress');
+      if (castleEl) {
+        try {
+          const data = await getCastleProgression();
+          castleEl.innerHTML = `
+        <p><strong>Level:</strong> ${data.level}</p>
+      `;
+        } catch (err) {
+          console.error('❌', err);
+          castleEl.innerHTML = '<p>Failed to load castle progression.</p>';
+        }
+      }
+
+      await renderNobles();
+      await renderKnights();
+
+      const nobleForm = document.getElementById('noble-form');
+      nobleForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('new-noble-name').value.trim();
+        if (!name) return;
+        try {
+          await nameNoble(name);
+          nobleForm.reset();
+          await renderNobles();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      const knightForm = document.getElementById('knight-form');
+      knightForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('new-knight-name').value.trim();
+        if (!name) return;
+        try {
+          await nameKnight(name);
+          knightForm.reset();
+          await renderKnights();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      const upgradeBtn = document.getElementById('upgrade-castle-btn');
+      upgradeBtn?.addEventListener('click', async () => {
+        upgradeBtn.disabled = true;
+        try {
+          const result = await upgradeCastle();
+          alert(result.message || 'Castle upgraded!');
+          const data = await getCastleProgression();
+          castleEl.innerHTML = `
+        <p><strong>Level:</strong> ${data.level}</p>
+      `;
+        } catch (err) {
+          alert(err.message || 'Upgrade failed');
+        } finally {
+          upgradeBtn.disabled = false;
+        }
+      });
+    });
+
+    async function renderNobles() {
+      const el = document.getElementById('noble-list');
+      if (!el) return;
+      try {
+        const { nobles = [] } = await viewNobles();
+        el.innerHTML = nobles.length
+          ? nobles.map(n => renderNameItem(n.name || n, 'noble')).join('')
+          : '<li>No nobles found.</li>';
+        bindNobleEvents();
+      } catch (err) {
+        console.error('❌', err);
+        el.innerHTML = '<li>Failed to load nobles.</li>';
+      }
+    }
+
+    async function renderKnights() {
+      const el = document.getElementById('knight-list');
+      if (!el) return;
+      try {
+        const { knights = [] } = await viewKnights();
+        el.innerHTML = knights.length
+          ? knights.map(k => renderNameItem(k.name || k, 'knight')).join('')
+          : '<li>No knights found.</li>';
+        bindKnightEvents();
+      } catch (err) {
+        console.error('❌', err);
+        el.innerHTML = '<li>Failed to load knights.</li>';
+      }
+    }
+
+    function renderNameItem(name, type) {
+      const base = `<li><strong>${name}</strong>`;
+      const buttons = {
+        noble: `
+      <button class="action-btn rename-noble" data-name="${name}">Rename</button>
+      <button class="action-btn remove-noble" data-name="${name}">Remove</button>
+    `,
+        knight: `
+      <button class="action-btn promote-knight" data-name="${name}">Promote</button>
+      <button class="action-btn rename-knight" data-name="${name}">Rename</button>
+      <button class="action-btn remove-knight" data-name="${name}">Remove</button>
+    `
+      };
+      return `${base} ${buttons[type]}</li>`;
+    }
+
+    function bindNobleEvents() {
+      document.querySelectorAll('.rename-noble').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          const oldName = btn.dataset.name;
+          const newName = prompt('Rename noble:', oldName);
+          if (!newName) return;
+          await renameNoble(oldName, newName);
+          await renderNobles();
+        })
+      );
+      document.querySelectorAll('.remove-noble').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          const name = btn.dataset.name;
+          if (confirm(`Remove noble ${name}?`)) {
+            await removeNoble(name);
+            await renderNobles();
+          }
+        })
+      );
+    }
+
+    function bindKnightEvents() {
+      document.querySelectorAll('.promote-knight').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          await promoteKnightApi(btn.dataset.name);
+          await renderKnights();
+        })
+      );
+      document.querySelectorAll('.rename-knight').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          const oldName = btn.dataset.name;
+          const newName = prompt('Rename knight:', oldName);
+          if (!newName) return;
+          await renameKnight(oldName, newName);
+          await renderKnights();
+        })
+      );
+      document.querySelectorAll('.remove-knight').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          const name = btn.dataset.name;
+          if (confirm(`Remove knight ${name}?`)) {
+            await removeKnight(name);
+            await renderKnights();
+          }
+        })
+      );
+    }
+  </script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: overview.js (inlined)
+    import { escapeHTML } from '/Javascript/utils.js';
+    import { fetchJson, authFetchJson } from '/Javascript/fetchJson.js';
+
+    import { supabase } from '/supabaseClient.js';
+    import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from '/Javascript/progressionGlobal.js';
+
+    function saveKingdomCache(data) {
+      try {
+        localStorage.setItem('cachedKingdomOverview', JSON.stringify(data));
+      } catch (err) {
+        console.error('Failed to cache kingdom data:', err);
+      }
+    }
+
+    function loadKingdomCache() {
+      try {
+        const raw = localStorage.getItem('cachedKingdomOverview');
+        return raw ? JSON.parse(raw) : null;
+      } catch (err) {
+        console.error('Failed to parse kingdom cache:', err);
+        return null;
+      }
+    }
+
+    function activateFallbackMode() {
+      const banner = document.getElementById('fallback-banner');
+      if (banner) banner.hidden = false;
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', e => e.preventDefault());
+      });
+      document.querySelectorAll('button, input[type="submit"]').forEach(el => {
+        el.disabled = true;
+      });
+    }
+
+    function deactivateFallbackMode() {
+      const banner = document.getElementById('fallback-banner');
+      if (banner) banner.hidden = true;
+      document.querySelectorAll('button, input[type="submit"]').forEach(el => {
+        el.disabled = false;
+      });
+    }
+
+    let currentUser = null;
+    let currentSession = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return window.location.href = "login.html";
+      currentUser = session.user;
+      currentSession = session;
+
+      loadPlayerProgressionFromStorage();
+      if (!window.playerProgression) await fetchAndStorePlayerProgression(currentUser.id);
+
+      const fallback = await loadOverview();
+      if (!fallback) subscribeToResourceUpdates();
+    });
+
+    async function loadOverview() {
+      const summaryContainer = document.querySelector(".overview-summary");
+      const resourcesContainer = document.getElementById("overview-resources");
+      const militaryContainer = document.getElementById("overview-military");
+      const questsContainer = document.getElementById("overview-quests");
+      const modifiersContainer = document.getElementById("overview-modifiers");
+
+      summaryContainer.innerHTML = "<p>Loading summary...</p>";
+      resourcesContainer.innerHTML = "<p>Loading resources...</p>";
+      militaryContainer.innerHTML = "<p>Loading military overview...</p>";
+      questsContainer.innerHTML = "<p>Loading quests...</p>";
+      if (modifiersContainer) modifiersContainer.innerHTML = "<p>Loading modifiers...</p>";
+
+      const prog = window.playerProgression;
+      let data;
+      let fallback = false;
+      try {
+        data = await authFetchJson('/api/overview', currentSession);
+        saveKingdomCache(data);
+      } catch (err) {
+        console.error("❌ Overview load error:", err);
+        data = loadKingdomCache();
+        if (!data) {
+          summaryContainer.innerHTML = "<p>Failed to load summary.</p>";
+          resourcesContainer.innerHTML = "<p>Failed to load resources.</p>";
+          militaryContainer.innerHTML = "<p>Failed to load military.</p>";
+          questsContainer.innerHTML = "<p>Failed to load quests.</p>";
+          return true;
+        }
+        fallback = true;
+        activateFallbackMode();
+      }
+
+      summaryContainer.innerHTML = `
+    <p id="summary-region"></p>
+    <p><strong>Castle Level:</strong> ${prog.castleLevel}</p>
+    <p id="vip-level"></p>
+    <p><strong>Max Villages:</strong> ${prog.maxVillages}</p>
+    <p><strong>Nobles:</strong> ${prog.availableNobles} / ${prog.totalNobles}</p>
+    <p><strong>Knights:</strong> ${prog.availableKnights} / ${prog.totalKnights}</p>
+    <p><strong>Troop Slots:</strong> ${prog.troopSlots.used} / ${prog.troopSlots.total}</p>
+  `;
+
+      if (fallback) {
+        const regionCode = data.kingdom?.region || 'Unspecified';
+        document.getElementById('summary-region').innerHTML = `<strong>Region:</strong> ${escapeHTML(regionCode)}`;
+        document.getElementById('vip-level').textContent = 'VIP: --';
+      } else {
+        try {
+          const { data: krec } = await supabase
+            .from('kingdoms')
+            .select('region')
+            .eq('user_id', currentUser.id)
+            .single();
+          const regionCode = krec?.region || 'Unspecified';
+          let regionName = regionCode;
+          if (regionCode) {
+            const { data: rdata } = await supabase
+              .from('region_catalogue')
+              .select('region_name')
+              .eq('region_code', regionCode)
+              .single();
+            regionName = rdata?.region_name || regionCode;
+          }
+          document.getElementById('summary-region').innerHTML = `<strong>Region:</strong> ${escapeHTML(regionName)}`;
+        } catch {
+          document.getElementById('summary-region').textContent = 'Region: --';
+        }
+
+        try {
+          const vipData = await authFetchJson('/api/kingdom/vip_status', currentSession);
+          document.getElementById('vip-level').innerHTML = `<strong>VIP:</strong> ${vipData.vip_level || 0}`;
+        } catch {
+          document.getElementById('vip-level').textContent = 'VIP: --';
+        }
+      }
+
+      renderResourceList(data.resources, resourcesContainer);
+
+      militaryContainer.innerHTML = "";
+      if (data.troops) {
+        militaryContainer.innerHTML = `
+      <p><strong>Total Troops:</strong> ${data.troops.total}</p>
+      <p><strong>Slots Used:</strong> ${data.troops.slots.used} / ${data.troops.slots.base}</p>
+    `;
+      } else {
+        militaryContainer.innerHTML = "<p>No military data found.</p>";
+      }
+
+      if (modifiersContainer) {
+        if (fallback) {
+          modifiersContainer.innerHTML = '<p>--</p>';
+        } else {
+          try {
+            const mods = await fetchJson('/api/progression/modifiers');
+            modifiersContainer.innerHTML = '';
+            for (const [cat, vals] of Object.entries(mods)) {
+              const h4 = document.createElement('h4');
+              h4.textContent = cat.replace(/_/g, ' ');
+              const ul = document.createElement('ul');
+              for (const [k, v] of Object.entries(vals)) {
+                const li = document.createElement('li');
+                li.textContent = `${k}: ${v}`;
+                ul.appendChild(li);
+              }
+              modifiersContainer.appendChild(h4);
+              modifiersContainer.appendChild(ul);
+            }
+          } catch {
+            modifiersContainer.innerHTML = '<p>Failed to load modifiers.</p>';
+          }
+        }
+      }
+
+      questsContainer.innerHTML = "<p>No active quests.</p>";
+      return fallback;
+    }
+
+    async function subscribeToResourceUpdates() {
+      const { data } = await supabase.auth.getUser();
+      const uid = data?.user?.id;
+      if (!uid) return;
+      const { data: kidRow } = await supabase
+        .from('users')
+        .select('kingdom_id')
+        .eq('user_id', uid)
+        .single();
+      const kid = kidRow?.kingdom_id;
+      if (!kid) return;
+      supabase
+        .channel('kr-overview-' + kid)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'kingdom_resources',
+          filter: `kingdom_id=eq.${kid}`
+        }, payload => {
+          if (payload.new) renderResourceList(payload.new, document.getElementById('overview-resources'));
+        })
+        .subscribe();
+    }
+
+    function renderResourceList(resources, container) {
+      if (!container) return;
+      container.innerHTML = '';
+      if (!resources || !Object.keys(resources).length) {
+        container.innerHTML = '<p>No resources found.</p>';
+        return;
+      }
+      const ul = document.createElement('ul');
+      for (const [k, v] of Object.entries(resources)) {
+        if (k === 'kingdom_id') continue;
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${escapeHTML(k)}:</strong> ${v}`;
+        ul.appendChild(li);
+      }
+      container.appendChild(ul);
+    }
+  </script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" />
