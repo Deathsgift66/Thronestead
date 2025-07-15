@@ -122,7 +122,7 @@ Developer: Deathsgift66
           entry.className = 'log-card';
           entry.innerHTML = `
             <p><strong>${escapeHTML(log.action)}</strong> — ${escapeHTML(log.details)}</p>
-            <p class="log-time">${new Date(log.created_at).toLocaleString()}</p>`;
+            <p class="log-time">${formatTimestamp(log.created_at)}</p>`;
           container.appendChild(entry);
         });
       } catch (e) {
@@ -145,7 +145,7 @@ Developer: Deathsgift66
           card.className = 'flagged-card';
           card.innerHTML = `
             <p><strong>${escapeHTML(row.user_id)}</strong> — ${escapeHTML(row.type)}</p>
-            <p>${new Date(row.created_at).toLocaleString()}</p>`;
+            <p>${formatTimestamp(row.created_at)}</p>`;
           container.appendChild(card);
         });
       } catch (e) {
@@ -158,13 +158,15 @@ Developer: Deathsgift66
       const container = document.getElementById('alerts');
       if (!container) return;
       container.innerHTML = '';
-      const socket = new WebSocket('/api/admin/alerts/live');
+      const origin = window.location.origin || location.protocol + '//' + location.host;
+      const wsUrl = new URL('/api/admin/alerts/live', origin);
+      const socket = new WebSocket(wsUrl.href.replace(/^http/, 'ws'));
 
       socket.onmessage = ({ data }) => {
         const alert = JSON.parse(data);
         const el = document.createElement('div');
         el.className = 'alert-item';
-        el.innerHTML = `<b>${escapeHTML(alert.type)}</b>: ${escapeHTML(alert.message)} <small>${new Date(alert.timestamp).toLocaleString()}</small>`;
+        el.innerHTML = `<b>${escapeHTML(alert.type)}</b>: ${escapeHTML(alert.message)} <small>${formatTimestamp(alert.timestamp)}</small>`;
         container.prepend(el);
       };
 
@@ -261,6 +263,7 @@ Developer: Deathsgift66
         ban: ['/api/admin/ban', 'User banned']
       };
       if (map[action]) {
+        if (!confirm(`Confirm ${capitalize(action)} for ${id}?`)) return;
         const [url, msg] = map[action];
         await handleAdminAction(url, { player_id: id }, msg);
       }
@@ -276,7 +279,18 @@ Developer: Deathsgift66
     }
 
     function capitalize(str) {
+      if (!str) return '';
       return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function formatTimestamp(ts) {
+      try {
+        if (!ts) return '';
+        const d = new Date(ts);
+        return isNaN(d) ? '' : d.toLocaleString();
+      } catch {
+        return '';
+      }
     }
   </script>
 
