@@ -34,12 +34,13 @@ Developer: Deathsgift66
   <link href="/CSS/leaderboard.css" rel="stylesheet" />
   <script type="module">
     import { supabase } from './supabaseClient.js';
-    import { escapeHTML } from '/Javascript/utils.js';
+    import { escapeHTML, showToast, openModal, closeModal } from '/Javascript/utils.js';
     import { setupTabs } from '/Javascript/components/tabControl.js';
     import { authHeaders, getStoredAuth } from '/Javascript/auth.js';
 
     let currentTab = 'kingdoms';
     let loggedIn = false;
+    const pageSize = 100; // future pagination support
 
     const headers = {
       kingdoms: ['Rank', 'Kingdom', 'Ruler', 'Power', 'Economy'],
@@ -80,18 +81,6 @@ Developer: Deathsgift66
         loadLeaderboard(currentTab);
       }, 30000);
 
-      document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelector('.tab-button.active')?.classList.remove('active');
-          document
-            .querySelector('.tab-button[aria-selected="true"]')
-            ?.setAttribute('aria-selected', 'false');
-          btn.classList.add('active');
-          btn.setAttribute('aria-selected', 'true');
-          currentTab = btn.dataset.tab;
-          loadLeaderboard(currentTab);
-        });
-      });
     });
 
     async function loadLeaderboard(type) {
@@ -103,7 +92,7 @@ Developer: Deathsgift66
 
       try {
         const fetchOptions = loggedIn ? { headers: await authHeaders() } : {};
-        const res = await fetch(`/api/leaderboard/${type}?limit=100`, fetchOptions);
+        const res = await fetch(`/api/leaderboard/${type}?limit=${pageSize}`, fetchOptions);
         const data = await res.json();
 
         headerRow.innerHTML = headers[type]
@@ -201,61 +190,72 @@ Developer: Deathsgift66
       const modalContent = modal.querySelector('.modal-content');
 
       modalContent.innerHTML = `
-        <h3>Apply to ${escapeHTML(allianceName)}</h3>
+        <h3 id="apply-modal-title">Apply to ${escapeHTML(allianceName)}</h3>
         <button class="action-btn" id="submit-application">Submit Application</button>
         <button class="action-btn" id="close-application">Cancel</button>
       `;
 
-      modal.classList.remove('hidden');
+      const close = () => {
+        document.removeEventListener('keydown', onKey);
+        modal.removeEventListener('click', onClick);
+        closeModal(modal);
+      };
+      const onKey = e => e.key === 'Escape' && close();
+      const onClick = e => e.target === modal && close();
 
-      document
-        .getElementById('submit-application')
-        .addEventListener('click', async () => {
-          try {
-            const {
-              data: { user }
-            } = await supabase.auth.getUser();
-            const res = await fetch('/api/alliance_members/apply', {
-              method: 'POST',
-              headers: { ...(await authHeaders()), 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                alliance_id: allianceId,
-                user_id: user.id,
-                username: user.user_metadata?.username || user.email
-              })
-            });
+      document.addEventListener('keydown', onKey);
+      modal.addEventListener('click', onClick);
 
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.error || 'Application failed.');
+      document.getElementById('close-application').addEventListener('click', close);
 
-            alert(result.message || 'Application submitted!');
-            modal.classList.add('hidden');
-          } catch (err) {
-            console.error('❌ Application error:', err);
-            alert('Application failed.');
-          }
-        });
+      document.getElementById('submit-application').addEventListener('click', async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          const res = await fetch('/api/alliance_members/apply', {
+            method: 'POST',
+            headers: { ...(await authHeaders()), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              alliance_id: allianceId,
+              user_id: user.id,
+              username: user.user_metadata?.username || user.email
+            })
+          });
 
-      document
-        .getElementById('close-application')
-        .addEventListener('click', () => {
-          modal.classList.add('hidden');
-        });
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error || 'Application failed.');
+
+          showToast(result.message || 'Application submitted!');
+          close();
+        } catch (err) {
+          console.error('❌ Application error:', err);
+          showToast('Application failed.');
+        }
+      });
+
+      openModal(modal);
     }
 
     function openPreviewModal(entry) {
       const modal = document.getElementById('preview-modal');
       if (!modal) return;
       const content = modal.querySelector('.modal-content');
-      content.textContent = entry.detail || 'No additional details';
-      modal.classList.remove('hidden');
-      modal.addEventListener(
-        'click',
-        e => {
-          if (e.target === modal) modal.classList.add('hidden');
-        },
-        { once: true }
-      );
+      content.innerHTML = `
+        <h3 id="preview-modal-title">Details</h3>
+        <p>${escapeHTML(entry.detail || 'No additional details')}</p>
+      `;
+
+      const close = () => {
+        document.removeEventListener('keydown', onKey);
+        modal.removeEventListener('click', onClick);
+        closeModal(modal);
+      };
+      const onKey = e => e.key === 'Escape' && close();
+      const onClick = e => e.target === modal && close();
+
+      document.addEventListener('keydown', onKey);
+      modal.addEventListener('click', onClick);
+
+      openModal(modal);
     }
   </script>
 
@@ -322,13 +322,13 @@ Developer: Deathsgift66
 
     <!-- Detail Modal -->
     <div id="apply-modal" class="modal hidden" aria-hidden="true">
-      <div class="modal-content">
+      <div class="modal-content" role="dialog" aria-labelledby="apply-modal-title">
         <!-- JS will populate content -->
       </div>
     </div>
     <!-- Preview Modal -->
     <div id="preview-modal" class="modal hidden" aria-hidden="true">
-      <div class="modal-content"></div>
+      <div class="modal-content" role="dialog" aria-labelledby="preview-modal-title"></div>
     </div>
 
   </section>
