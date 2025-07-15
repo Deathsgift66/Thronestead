@@ -96,9 +96,7 @@
     <!-- News Feed -->
     <section class="news-section" aria-label="Realm News">
     <h2>Realm News</h2>
-    <ul id="news-list" class="news-list">
-      <li>Loading news...</li>
-    </ul>
+    <ul id="news-list" class="news-list" aria-busy="true"></ul>
     </section>
 
     <!-- CTA -->
@@ -123,7 +121,7 @@
 </footer>
 
   <script type="module">
-    import { supabase } from './supabaseClient.js';
+    import { supabase } from '/Javascript/supabaseClient.js';
     import { escapeHTML } from './Javascript/utils.js';
     import { getEnvVar } from './Javascript/env.js';
 
@@ -200,12 +198,13 @@
     async function loadNews() {
       const list = document.getElementById('news-list');
       if (!list) return;
-      list.innerHTML = '<li>Loading news...</li>';
+      list.setAttribute('aria-busy', 'true');
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/homepage/featured`);
         const data = await res.json();
         list.innerHTML = '';
+        list.removeAttribute('aria-busy');
 
         if (!data.articles?.length) {
           list.innerHTML = '<li>No news available.</li>';
@@ -216,7 +215,7 @@
           const li = document.createElement('li');
           li.innerHTML = `
             <strong>${escapeHTML(a.title)}</strong>
-            <span class="date">${formatDate(a.published_at)}</span><br>
+            <span class="date">${escapeHTML(formatDate(a.published_at))}</span><br>
             ${escapeHTML(a.summary)}
           `;
           list.appendChild(li);
@@ -224,6 +223,7 @@
       } catch (err) {
         console.error('❌ Error loading news:', err);
         list.innerHTML = '<li>Failed to load news.</li>';
+        list.removeAttribute('aria-busy');
       }
     }
 
