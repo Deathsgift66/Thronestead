@@ -7,6 +7,8 @@
   <meta name="description" content="Your account has been banned from Thronestead." />
   <link href="/CSS/login.css" rel="stylesheet" />
   <script type="module">
+    import { getEnvVar } from '/Javascript/env.js';
+
     async function fetchJson(url, options = {}, timeoutMs = 8000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -44,10 +46,25 @@
       const emailInput = document.getElementById('appeal-email');
       const msgInput = document.getElementById('appeal-message');
       const messageEl = document.getElementById('appeal-status');
+      const captchaEl = document.getElementById('appeal-captcha');
+
+      captchaEl?.setAttribute('data-sitekey', getEnvVar('HCAPTCHA_SITEKEY'));
 
       form?.addEventListener('submit', async e => {
         e.preventDefault();
+        if (!emailInput.value || !emailInput.checkValidity()) {
+          messageEl.textContent = 'Enter a valid email address.';
+          messageEl.className = 'message show error-message';
+          return;
+        }
+
         const token = window.hcaptcha?.getResponse();
+        if (!token) {
+          messageEl.textContent = 'Please complete the CAPTCHA.';
+          messageEl.className = 'message show error-message';
+          return;
+        }
+
         try {
           await fetchJson('/api/ban/appeal', {
             method: 'POST',
@@ -89,10 +106,11 @@
       <p>If you believe this is a mistake you may appeal below.</p>
       <form id="appeal-form" class="login-form">
         <label for="appeal-email">Email Address</label>
-        <input type="email" id="appeal-email" required />
+        <input type="email" id="appeal-email" aria-describedby="emailHelp" required />
+        <span id="emailHelp" class="visually-hidden">Enter your email to file an appeal</span>
         <label for="appeal-message">Appeal Message</label>
         <textarea id="appeal-message" required rows="4"></textarea>
-        <div id="appeal-captcha" class="h-captcha" data-sitekey="56862342-e134-4d60-9d6a-0b42ff4ebc24"></div>
+        <div id="appeal-captcha" class="h-captcha"></div>
         <button type="submit" class="royal-button">Submit Appeal</button>
       </form>
       <div id="appeal-status" class="message" aria-live="polite"></div>
