@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadTreaties();
   document.getElementById('create-new-treaty')?.addEventListener('click', proposeTreaty);
+  document.getElementById('propose-treaty-form')?.addEventListener('submit', submitProposeTreaty);
+  document.getElementById('cancel-propose-treaty')?.addEventListener('click', closeProposeTreatyModal);
+  document.getElementById('propose-treaty-modal')?.addEventListener('click', e => {
+    if (e.target.id === 'propose-treaty-modal') closeProposeTreatyModal();
+  });
   document.querySelector('.modal-close')?.addEventListener('click', () => closeModal('treaty-modal'));
   document.getElementById('treaty-modal')?.addEventListener('click', e => {
     if (e.target.id === 'treaty-modal') closeModal('treaty-modal');
@@ -120,22 +125,19 @@ async function respondToTreaty(id, response) {
   }
 }
 
-async function proposeTreaty() {
-  const type = prompt('Enter treaty type (non_aggression_pact, defensive_pact, trade_pact, intelligence_sharing, research_collaboration):');
-  const partnerId = prompt('Enter partner alliance ID:');
+function proposeTreaty() {
+  openModal('propose-treaty-modal');
+}
+
+function closeProposeTreatyModal() {
+  closeModal('propose-treaty-modal');
+}
+
+async function submitProposeTreaty(event) {
+  event.preventDefault();
+  const type = document.getElementById('treaty-type')?.value;
+  const partnerId = document.getElementById('partner-alliance-id')?.value;
   if (!type || !partnerId) return;
-  if (
-    ![
-      'non_aggression_pact',
-      'defensive_pact',
-      'trade_pact',
-      'intelligence_sharing',
-      'research_collaboration'
-    ].includes(type)
-  ) {
-    alert('Invalid treaty type.');
-    return;
-  }
   try {
     await fetch('/api/alliance/treaties/propose', {
       method: 'POST',
@@ -146,6 +148,7 @@ async function proposeTreaty() {
         terms: { duration_days: 30, exclusive: true }
       })
     });
+    closeProposeTreatyModal();
     loadTreaties();
   } catch (err) {
     console.error('Failed to propose treaty:', err);

@@ -67,6 +67,17 @@ Developer: Deathsgift66
         .getElementById('create-new-treaty')
         ?.addEventListener('click', proposeTreaty);
       document
+        .getElementById('propose-treaty-form')
+        ?.addEventListener('submit', submitProposeTreaty);
+      document
+        .getElementById('cancel-propose-treaty')
+        ?.addEventListener('click', closeProposeTreatyModal);
+      document
+        .getElementById('propose-treaty-modal')
+        ?.addEventListener('click', e => {
+          if (e.target.id === 'propose-treaty-modal') closeProposeTreatyModal();
+        });
+      document
         .querySelector('.modal-close')
         ?.addEventListener('click', () => closeModal('treaty-modal'));
       document.getElementById('treaty-modal')?.addEventListener('click', e => {
@@ -176,24 +187,19 @@ Developer: Deathsgift66
       }
     }
 
-    async function proposeTreaty() {
-      const type = prompt(
-        'Enter treaty type (non_aggression_pact, defensive_pact, trade_pact, intelligence_sharing, research_collaboration):'
-      );
-      const partnerId = prompt('Enter partner alliance ID:');
+    function proposeTreaty() {
+      openModal('propose-treaty-modal');
+    }
+
+    function closeProposeTreatyModal() {
+      closeModal('propose-treaty-modal');
+    }
+
+    async function submitProposeTreaty(event) {
+      event.preventDefault();
+      const type = document.getElementById('treaty-type')?.value;
+      const partnerId = document.getElementById('partner-alliance-id')?.value;
       if (!type || !partnerId) return;
-      if (
-        ![
-          'non_aggression_pact',
-          'defensive_pact',
-          'trade_pact',
-          'intelligence_sharing',
-          'research_collaboration'
-        ].includes(type)
-      ) {
-        alert('Invalid treaty type.');
-        return;
-      }
       try {
         await fetch('/api/alliance/treaties/propose', {
           method: 'POST',
@@ -204,6 +210,7 @@ Developer: Deathsgift66
             terms: { duration_days: 30, exclusive: true }
           })
         });
+        closeProposeTreatyModal();
         loadTreaties();
       } catch (err) {
         console.error('Failed to propose treaty:', err);
@@ -266,6 +273,29 @@ Developer: Deathsgift66
       <div id="treaty-details" aria-live="polite">
         <!-- JS injects treaty detail view -->
       </div>
+    </div>
+  </div>
+
+  <!-- Propose Treaty Modal -->
+  <div id="propose-treaty-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="propose-modal-title" tabindex="-1">
+    <div class="modal-content">
+      <h3 id="propose-modal-title">Propose New Treaty</h3>
+      <form id="propose-treaty-form">
+        <label for="treaty-type">Treaty Type:</label>
+        <select id="treaty-type" name="treaty-type">
+          <option value="non_aggression_pact">Non Aggression Pact</option>
+          <option value="defensive_pact">Defensive Pact</option>
+          <option value="trade_pact">Trade Pact</option>
+          <option value="intelligence_sharing">Intelligence Sharing</option>
+          <option value="research_collaboration">Research Collaboration</option>
+        </select>
+        <label for="partner-alliance-id">Partner Alliance ID:</label>
+        <input type="number" id="partner-alliance-id" name="partner-alliance-id" min="1" required />
+        <div class="modal-actions">
+          <button type="submit" class="action-btn">Submit</button>
+          <button type="button" id="cancel-propose-treaty" class="action-btn">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
