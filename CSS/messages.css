@@ -118,6 +118,7 @@ body {
   justify-content: center;
   align-items: center;
   margin-top: 1rem;
+  margin-bottom: 1rem;
   gap: 0.5rem;
   color: var(--parchment);
 }

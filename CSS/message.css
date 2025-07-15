@@ -32,6 +32,13 @@ body {
   font-size: var(--font-sm);
 }
 
+.message-subject {
+  font-family: var(--font-secondary);
+  font-size: 1.2rem;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
 .message-body {
   font-size: var(--font-md);
   margin-bottom: 1.5rem;
