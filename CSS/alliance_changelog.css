@@ -58,6 +58,14 @@ body {
   color: #aaa;
 }
 
+.log-icon {
+  margin-right: 0.25rem;
+}
+
+.timeline-entry.collapsed .log-text {
+  display: none;
+}
+
 .log-time {
   font-weight: bold;
 }
