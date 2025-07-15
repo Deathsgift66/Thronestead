@@ -82,7 +82,6 @@ Developer: Deathsgift66
 
         const headers = {
           Authorization: `Bearer ${session.access_token}`,
-          'X-User-ID': session.user.id
         };
 
         // ✅ Load profile overview
@@ -93,7 +92,7 @@ Developer: Deathsgift66
         const data = overview.user || {};
         avatarImg.src =
           data.profile_avatar_url || '/Assets/avatars/default_avatar_emperor.png';
-        avatarImg.alt = `${data.username || 'Player'}'s Avatar`;
+        avatarImg.alt = `${escapeHTML(data.username || 'Player')}'s Avatar`;
 
         playerNameEl.textContent = data.username || 'Unnamed Player';
         kingdomNameEl.textContent = data.kingdom_name || 'Unnamed Kingdom';
@@ -117,7 +116,7 @@ Developer: Deathsgift66
         try {
           const vipRes = await fetch('/api/kingdom/vip_status', { headers });
           const vipData = await vipRes.json();
-          const lvl = vipData.vip_level || 0;
+          const lvl = vipData?.vip_level ?? 0;
           vipBadgeEl.textContent = lvl > 0 ? `VIP ${lvl}` : '';
           vipBadgeEl.style.display = lvl > 0 ? 'inline-block' : 'none';
         } catch {
@@ -169,7 +168,7 @@ Developer: Deathsgift66
 
         // ✅ Activity log + real-time updates
         await loadRecentActions(session.user.id);
-        subscribeRecentActions(session.user.id);
+        await subscribeRecentActions(session.user.id);
       } catch (err) {
         console.error('❌ Error loading profile:', err);
         playerNameEl.textContent = 'Failed to load.';
@@ -199,7 +198,7 @@ Developer: Deathsgift66
         data.logs.forEach(log => {
           const row = document.createElement('tr');
           row.innerHTML = `
-        <td>${formatTimestamp(log.created_at)}</td>
+        <td class="timestamp-column">${formatTimestamp(log.created_at)}</td>
         <td>${escapeHTML(log.action)}</td>
         <td>${escapeHTML(log.details)}</td>
       `;
@@ -214,8 +213,8 @@ Developer: Deathsgift66
     // ✅ Subscribe to real-time audit log updates
     let auditChannel = null;
 
-    function subscribeRecentActions(userId) {
-      if (auditChannel) supabase.removeChannel(auditChannel);
+    async function subscribeRecentActions(userId) {
+      if (auditChannel) await supabase.removeChannel(auditChannel);
       auditChannel = supabase
         .channel(`audit_log:user:${userId}`)
         .on(
@@ -237,7 +236,7 @@ Developer: Deathsgift66
       if (!tbody) return;
       const row = document.createElement('tr');
       row.innerHTML = `
-    <td>${formatTimestamp(entry.created_at)}</td>
+    <td class="timestamp-column">${formatTimestamp(entry.created_at)}</td>
     <td>${escapeHTML(entry.action)}</td>
     <td>${escapeHTML(entry.details)}</td>
   `;
@@ -325,7 +324,7 @@ Developer: Deathsgift66
         <table class="audit-log-table">
           <thead>
             <tr>
-              <th scope="col">Time</th>
+              <th scope="col" class="timestamp-column">Time</th>
               <th scope="col">Action</th>
               <th scope="col">Details</th>
             </tr>
@@ -385,7 +384,7 @@ def profile_overview(user_id: str = Depends(verify_jwt_token)):
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to fetch profile") from exc
 
-        return {
+    return {
         "user": {
             "username": user_data.get("username"),
             "kingdom_name": user_data.get("kingdom_name"),
