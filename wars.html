@@ -34,7 +34,7 @@ Developer: Deathsgift66
   <script type="module">
     import { escapeHTML } from '/Javascript/utils.js';
     import { applyKingdomLinks } from '/Javascript/kingdom_name_linkify.js';
-    import { supabase } from './supabaseClient.js';
+    import { supabase } from '/supabaseClient.js';
 
     document.addEventListener("DOMContentLoaded", async () => {
       setupControls();
@@ -175,11 +175,29 @@ Developer: Deathsgift66
     async function submitDeclareWar() {
       const targetInput = document.getElementById('target-kingdom-id');
       const reasonInput = document.getElementById('war-reason');
-      const targetId = targetInput?.value.trim();
+      const rawTargetId = targetInput?.value.trim();
+      const targetId = parseInt(rawTargetId, 10);
       const reason = reasonInput?.value.trim();
 
-      if (!targetId || !reason) {
+      if (!rawTargetId || !reason) {
         showToast("Please fill in all fields.");
+        return;
+      }
+
+      if (isNaN(targetId) || targetId <= 0) {
+        showToast("Invalid target kingdom ID.");
+        return;
+      }
+
+      const declareBtn = document.querySelector('#declare-war-form button[type="submit"]');
+      if (declareBtn) {
+        declareBtn.disabled = true;
+        setTimeout(() => { declareBtn.disabled = false; }, 3000);
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
+        showToast("Session expired. Please log in again.");
         return;
       }
 
@@ -188,7 +206,7 @@ Developer: Deathsgift66
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            target: parseInt(targetId, 10),
+            target: targetId,
             war_reason: reason
           })
         });
@@ -344,8 +362,6 @@ Developer: Deathsgift66
         <!-- Populated dynamically -->
       </div>
 
-      <!-- Toast Container -->
-      <div id="toast-container" class="toast-notification" aria-live="polite"></div>
 
     </div>
 
