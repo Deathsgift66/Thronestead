@@ -68,6 +68,7 @@ Developer: Deathsgift66
           <div class="form-group">
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" />
+            <small class="input-hint">Password must include a number and a symbol.</small>
           </div>
 
           <div class="form-group">
@@ -149,7 +150,8 @@ Developer: Deathsgift66
       showToast,
       validateEmail,
       validatePasswordComplexity,
-      toggleLoading
+      toggleLoading,
+      debounce
     } from './Javascript/utils.js';
     import { supabase } from './supabaseClient.js';
     import { fetchAndStorePlayerProgression } from './Javascript/progressionGlobal.js';
@@ -222,8 +224,44 @@ Developer: Deathsgift66
       const usernameEl = document.getElementById('kingdom_name');
       const emailEl = document.getElementById('email');
       const signupButton = signupForm.querySelector('button[type="submit"]');
-      usernameEl.addEventListener('input', () => {});
-      emailEl.addEventListener('blur', () => {});
+      usernameEl.addEventListener(
+        'input',
+        debounce(async () => {
+          const name = usernameEl.value.trim();
+          if (!validateUsername(name) || containsBannedWord(name)) {
+            updateAvailabilityUI('username-msg', 'invalid');
+            return;
+          }
+          try {
+            const res = await fetch(
+              `${API_BASE_URL}/api/signup/available?kingdom_name=${encodeURIComponent(name)}`
+            );
+            const { available } = await res.json();
+            updateAvailabilityUI('username-msg', available);
+          } catch (err) {
+            console.error('Username availability check failed:', err);
+          }
+        }, 400)
+      );
+      emailEl.addEventListener(
+        'blur',
+        debounce(async () => {
+          const emailVal = emailEl.value.trim();
+          if (!validateEmail(emailVal)) {
+            updateAvailabilityUI('email-msg', 'invalid');
+            return;
+          }
+          try {
+            const res = await fetch(
+              `${API_BASE_URL}/api/signup/available?email=${encodeURIComponent(emailVal)}`
+            );
+            const { available } = await res.json();
+            updateAvailabilityUI('email-msg', available);
+          } catch (err) {
+            console.error('Email availability check failed:', err);
+          }
+        }, 400)
+      );
       signupForm.addEventListener('submit', async e => {
         e.preventDefault();
         await handleSignup(signupButton);
