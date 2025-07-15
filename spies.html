@@ -28,7 +28,201 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/spies.css" rel="stylesheet" />
-  <script src="/Javascript/spies.js" type="module"></script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: spies.js (inlined)
+    // Version:  7/1/2025 10:38
+    // Developer: Deathsgift66
+    import { supabase } from '../supabaseClient.js';
+
+    let currentUserId = null;
+    let currentSession = null;
+    let realtimeChannel = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      currentUserId = session.user.id;
+      currentSession = session;
+
+      const trainBtn = document.getElementById('train-btn');
+      if (trainBtn) trainBtn.addEventListener('click', trainSpies);
+
+      await loadSpies();
+      await loadMissions();
+      subscribeRealtime();
+    });
+
+    /**
+     * Load current spy stats for the player's kingdom
+     */
+    async function loadSpies() {
+      const infoEl = document.getElementById('spy-info');
+      infoEl.textContent = 'Loading...';
+      try {
+        const res = await fetch('/api/kingdom/spies', {
+          headers: {
+            'X-User-ID': currentUserId,
+            Authorization: `Bearer ${currentSession.access_token}`
+          }
+        });
+        if (!res.ok) throw new Error('Failed to fetch spies');
+        const data = await res.json();
+
+        infoEl.innerHTML = `
+      <div>🕵️ Spy Level: ${data.spy_level}</div>
+      <div>🧍 Spies: ${data.spy_count} / ${data.max_spy_capacity}</div>
+      <div>💸 Upkeep: ${data.spy_upkeep_gold} gold/tick</div>
+      <div>💀 Spies Lost: ${data.spies_lost}</div>
+      <div>🎯 Missions Attempted: ${data.missions_attempted}</div>
+      <div>✅ Successful Missions: ${data.missions_successful}</div>
+    `;
+      } catch (err) {
+        console.error('loadSpies error:', err);
+        infoEl.textContent = 'Failed to load spy info';
+        showToast('Could not load spy stats.');
+      }
+    }
+
+    /**
+     * Load all spy missions (active, failed, complete)
+     */
+    async function loadMissions() {
+      const listEl = document.getElementById('missions');
+      listEl.textContent = 'Loading missions...';
+      try {
+        const res = await fetch('/api/kingdom/spy_missions', {
+          headers: {
+            'X-User-ID': currentUserId,
+            Authorization: `Bearer ${currentSession.access_token}`
+          }
+        });
+        if (!res.ok) throw new Error('Failed to fetch missions');
+        const data = await res.json();
+
+        listEl.innerHTML = '';
+        if (!data.missions?.length) {
+          listEl.innerHTML = '<p>No active missions.</p>';
+          return;
+        }
+
+        data.missions.forEach(m => {
+          const div = document.createElement('div');
+          const type = m.mission_type || m.mission || 'Unknown';
+          const status = m.status || 'Pending';
+
+          div.className = `mission-card status-${status.toLowerCase()}`;
+          div.innerHTML = `
+        <strong>${type}</strong> targeting <em>${m.target_id}</em><br/>
+        <span>Status:</span> ${status}
+      `;
+          listEl.appendChild(div);
+        });
+      } catch (err) {
+        console.error('loadMissions error:', err);
+        listEl.textContent = 'Failed to load missions';
+        showToast('Could not load missions.');
+      }
+    }
+
+    /**
+     * Send a POST request to train spies
+     */
+    async function trainSpies() {
+      const qtyEl = document.getElementById('train-qty');
+      const qty = parseInt(qtyEl.value, 10);
+      if (!qty || qty < 1) {
+        showToast('Enter a valid number of spies to train.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/kingdom/spies/train', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': currentUserId,
+            Authorization: `Bearer ${currentSession.access_token}`
+          },
+          body: JSON.stringify({ quantity: qty })
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) throw new Error(result.error || 'Training failed');
+
+        showToast(result.message || 'Spies training initiated.');
+        qtyEl.value = '';
+        await loadSpies();
+      } catch (err) {
+        console.error('trainSpies error:', err);
+        showToast('Failed to train spies.');
+      }
+    }
+
+    /**
+     * Subscribe to realtime updates via Supabase
+     */
+    function subscribeRealtime() {
+      if (!currentUserId) return;
+
+      realtimeChannel = supabase
+        .channel('spies-' + currentUserId)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'spy_missions',
+          filter: `kingdom_id=eq.${currentUserId}`
+        }, async () => {
+          await loadMissions();
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'kingdom_spies',
+          filter: `kingdom_id=eq.${currentUserId}`
+        }, async () => {
+          await loadSpies();
+        })
+        .subscribe(status => {
+          const indicator = document.getElementById('realtime-indicator');
+          if (indicator) {
+            if (status === 'SUBSCRIBED') {
+              indicator.textContent = 'Live';
+              indicator.className = 'connected';
+            } else {
+              indicator.textContent = 'Offline';
+              indicator.className = 'disconnected';
+            }
+          }
+        });
+
+      // Clean up on page unload
+      window.addEventListener('beforeunload', () => {
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+        }
+      });
+    }
+
+    /**
+     * Show user feedback via on-screen toast
+     */
+    function showToast(msg) {
+      const toastEl = document.getElementById('toast');
+      if (!toastEl) return;
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+
+      setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 3000);
+    }
+  </script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -94,10 +288,122 @@ Developer: Deathsgift66
 <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
 
 <!-- Footer -->
-<footer class="site-footer" role="contentinfo">
-  <div>© 2025 Thronestead</div>
-  <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
-</footer>
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Thronestead</div>
+    <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
+  </footer>
+
+  <!-- Backend route definition for reference -->
+  <script type="text/python">
+"""
+Project: Thronestead ©
+File: spies_router.py
+Role: API routes for spies router.
+Version: 2025-06-21
+"""
+
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from services import spies_service
+
+from ..database import get_db
+from ..security import verify_jwt_token
+from .progression_router import get_kingdom_id
+
+router = APIRouter(prefix="/api/kingdom", tags=["spies"])
+
+
+# -------------------- Request Payloads --------------------
+
+
+class SpyMissionPayload(BaseModel):
+    mission: Optional[str] = Field(
+        None, description="Alias for mission_type for backward compatibility"
+    )
+    mission_type: Optional[str] = Field(None, description="Type of mission to launch")
+    target_id: Optional[int] = Field(
+        None, description="Target kingdom ID for the spy mission"
+    )
+
+
+class TrainPayload(BaseModel):
+    quantity: int = Field(
+        ..., gt=0, le=100, description="Number of spies to train (1-100 max per call)"
+    )
+
+
+# -------------------- Spy Routes --------------------
+
+
+@router.get("/spies")
+def get_spy_info(
+    user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
+) -> dict:
+    """Return the player's spy count and training info."""
+    kid = get_kingdom_id(db, user_id)
+    try:
+        return spies_service.get_spy_record(db, kid)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to load spy data") from e
+
+
+@router.post("/spies/train")
+def train_spies(
+    payload: TrainPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Train a number of spies for the kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    try:
+        new_count = spies_service.train_spies(db, kid, payload.quantity)
+        return {"spy_count": new_count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to train spies") from e
+
+
+@router.post("/spy_missions")
+def launch_spy_mission(
+    payload: SpyMissionPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Start a new spy mission."""
+    kid = get_kingdom_id(db, user_id)
+    mtype = payload.mission_type or payload.mission
+    if not mtype:
+        raise HTTPException(status_code=400, detail="mission_type is required")
+
+    try:
+        spies_service.start_mission(db, kid, payload.target_id)
+        mission_id = spies_service.create_spy_mission(db, kid, mtype, payload.target_id)
+        return {"message": "Mission launched", "mission_id": mission_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to launch spy mission"
+        ) from e
+
+
+@router.get("/spy_missions")
+def list_spy_missions(
+    user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
+) -> dict:
+    """Return all spy missions currently active for the player's kingdom."""
+    kid = get_kingdom_id(db, user_id)
+    try:
+        missions = spies_service.list_spy_missions(db, kid)
+        return {"missions": missions}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to load spy missions"
+        ) from e
+  </script>
 
 </body>
 </html>
