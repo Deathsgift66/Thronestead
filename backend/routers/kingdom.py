@@ -253,7 +253,9 @@ def accept_quest(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    ends_at = db_start_quest(db, 1, payload.quest_code, user_id)
+    kid = get_kingdom_id(db, user_id)
+    ends_at = db_start_quest(db, kid, payload.quest_code, user_id)
+    log_action(db, user_id, "Quest Accepted", payload.quest_code)
     return {
         "message": "Quest accepted",
         "quest_code": payload.quest_code,

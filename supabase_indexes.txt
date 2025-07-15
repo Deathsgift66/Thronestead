@@ -1009,6 +1009,15 @@ View definition
 
 public
 
+quest_kingdom_tracking
+
+idx_quest_kingdom_tracking_kingdom_status
+
+
+View definition
+
+public
+
 region_catalogue
 
 idx_region_catalogue_region_name
