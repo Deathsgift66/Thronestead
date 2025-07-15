@@ -31,12 +31,23 @@ Developer: Deathsgift66
   <link href="/CSS/seasonal_effects.css" rel="stylesheet" />
   <script type="module">
 import { supabase } from '/supabaseClient.js';
-import { escapeHTML } from '/Javascript/utils.js';
+import { escapeHTML, openModal, closeModal, toggleLoading } from '/Javascript/utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return;
   await loadSeasonalEffects(session);
+
+  supabase
+    .channel('seasonal_effects')
+    .on('postgres_changes', { event: '*', table: 'seasonal_effects' }, () => {
+      loadSeasonalEffects(session);
+    })
+    .subscribe();
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal('forecast-modal');
+  });
 });
 
 async function loadSeasonalEffects(session) {
@@ -52,6 +63,7 @@ async function loadSeasonalEffects(session) {
   Object.entries(ui).forEach(([, el]) => {
     el.innerHTML = `<p>Loading...</p>`;
   });
+  toggleLoading(true);
 
   try {
     const res = await fetch('/api/seasonal-effects', {
@@ -74,6 +86,8 @@ async function loadSeasonalEffects(session) {
   } catch (err) {
     console.error('❌ Error loading Seasonal Effects Nexus:', err);
     showToast('Failed to load Seasonal Effects Nexus.');
+  } finally {
+    toggleLoading(false);
   }
 }
 
@@ -182,9 +196,9 @@ function openForecastModal(season) {
     <p>${escapeHTML(season.lore_text || 'No details')}</p>
   `;
 
-  overlay.classList.remove('hidden');
+  openModal(overlay);
   document.getElementById('close-forecast-modal').onclick = () => {
-    overlay.classList.add('hidden');
+    closeModal(overlay);
   };
 }
 
@@ -282,11 +296,15 @@ function showToast(msg) {
   </section>
 </main>
 
+  <div id="loading-overlay" aria-hidden="true">
+    <div class="spinner"></div>
+  </div>
+
 <!-- Toast for real-time updates -->
 <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
 
 <!-- Forecast Modal -->
-<div id="forecast-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="forecast-modal-label">
+<div id="forecast-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="forecast-modal-label" aria-hidden="true" inert>
   <div class="modal-content">
     <h4 id="forecast-modal-label">Forecast Details</h4>
     <div id="forecast-modal-body"></div>
