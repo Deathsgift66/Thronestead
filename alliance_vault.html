@@ -182,6 +182,8 @@ Developer: Deathsgift66
     import { setupTabs } from './Javascript/components/tabControl.js';
 
     let currentUser = null;
+    const maxVault = 100000; // TODO: fetch dynamically
+    let currentFilters = { action: '', days: '' };
 
     function subscribeToVault(allianceId) {
       supabase
@@ -209,7 +211,7 @@ Developer: Deathsgift66
       if (!user) return (window.location.href = 'login.html');
       currentUser = user;
 
-      setupTabs({ onShow: id => id === 'tab-transactions' && loadTransactions() });
+      setupTabs({ onShow: id => id === 'tab-transactions' && loadTransactions(currentFilters.action, currentFilters.days) });
       await Promise.all([
         loadVaultSummary(),
         loadCustomBoard({ endpoint: '/api/alliance/custom/vault', fetchFn: authFetch }),
@@ -239,9 +241,11 @@ Developer: Deathsgift66
         console.error('Permission check failed:', err);
       }
 
-      document.getElementById('apply-trans-filter')?.addEventListener('click', () =>
-        loadTransactions()
-      );
+      document.getElementById('apply-trans-filter')?.addEventListener('click', () => {
+        currentFilters.action = document.getElementById('filter-action')?.value || '';
+        currentFilters.days = document.getElementById('filter-days')?.value || '';
+        loadTransactions(currentFilters.action, currentFilters.days);
+      });
     });
 
     function renderVaultSummary(data) {
@@ -252,7 +256,7 @@ Developer: Deathsgift66
           return `
       <div class="progress-bar">
         <label>${label}</label>
-        <progress value="${value}" max="50000"></progress>
+        <progress value="${value}" max="${maxVault}"></progress>
         <span>${value.toLocaleString()}</span>
       </div>
     `;
@@ -303,6 +307,9 @@ Developer: Deathsgift66
           .filter(p => p.amt > 0);
         if (!payloads.length) return alert('Enter amounts.');
         for (const p of payloads) {
+          if (type === 'withdraw' && p.amt > 1000) {
+            if (!confirm(`Withdraw ${p.amt} ${p.res}?`)) continue;
+          }
           try {
             await authFetch(`/api/alliance/vault/${type}`, {
               method: 'POST',
