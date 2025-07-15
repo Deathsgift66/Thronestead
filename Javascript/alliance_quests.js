@@ -32,29 +32,29 @@ export function loadQuests(status = 'active') {
     });
 }
 
-// Bind tab clicks
-document.querySelectorAll('.filter-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    loadQuests(btn.dataset.filter);
+let modalEl;
+function bindUI() {
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadQuests(btn.dataset.filter);
+    });
   });
-});
 
-// Open quest modal when a card button is clicked
-const boardEl = document.getElementById('quest-board');
-boardEl.addEventListener('click', e => {
-  const card = e.target.closest('.view-quest-btn');
-  if (!card) return;
-  openQuestModal(card.dataset.id);
-});
+  const boardEl = document.getElementById('quest-board');
+  boardEl.addEventListener('click', e => {
+    const card = e.target.closest('.view-quest-btn');
+    if (!card) return;
+    openQuestModal(card.dataset.id);
+  });
 
-// Close modal with button or Escape key
-const modalEl = document.getElementById('quest-modal');
-modalEl.querySelector('.close-button').addEventListener('click', () => modalEl.classList.remove('visible'));
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') modalEl.classList.remove('visible');
-});
+  modalEl = document.getElementById('quest-modal');
+  modalEl.querySelector('.close-button').addEventListener('click', () => modalEl.classList.remove('visible'));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') modalEl.classList.remove('visible');
+  });
+}
 
 /**
  * Render a quest preview card.
@@ -79,26 +79,39 @@ function openQuestModal(id) {
     .then(res => res.json())
     .then(q => {
       document.getElementById('modal-quest-title').textContent = q.name;
+      document.querySelector('.quest-type-modal').textContent = q.type || 'Quest';
       document.getElementById('modal-quest-description').textContent = q.description;
-      document.getElementById('modal-time-left').textContent = formatDuration(new Date(q.ends_at) - Date.now());
+      startModalCountdown(q.ends_at);
 
       const contrib = document.getElementById('modal-quest-contributions');
       contrib.innerHTML = '';
-      Object.entries(q.contributions || {}).forEach(([k,v]) => {
-        const li = document.createElement('li');
-        li.textContent = `${k.charAt(0).toUpperCase()+k.slice(1)}: ${v.current} / ${v.required}`;
-        contrib.appendChild(li);
-      });
+      Object.entries(q.contributions || {})
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([k, v]) => {
+          const li = document.createElement('li');
+          li.textContent = `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v.current} / ${v.required}`;
+          contrib.appendChild(li);
+        });
       if (!contrib.children.length) contrib.innerHTML = '<li>No contributions listed.</li>';
 
       const rewards = document.getElementById('modal-quest-rewards');
       rewards.innerHTML = '';
-      Object.entries(q.rewards || {}).forEach(([k,v]) => {
-        const li = document.createElement('li');
-        li.textContent = `${k}: ${v}`;
-        rewards.appendChild(li);
-      });
+      Object.entries(q.rewards || {})
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([k, v]) => {
+          const li = document.createElement('li');
+          li.textContent = `${k}: ${v}`;
+          rewards.appendChild(li);
+        });
       if (!rewards.children.length) rewards.innerHTML = '<li>No rewards listed.</li>';
+
+      const acceptBtn = document.getElementById('accept-quest-button');
+      const claimBtn = document.getElementById('claim-reward-button');
+      acceptBtn.classList.toggle('hidden', q.status !== 'active');
+      claimBtn.classList.toggle('hidden', q.status !== 'completed' || !q.claimable);
+
+      document.getElementById('role-check-message').textContent = q.role_check_message || '';
+      document.getElementById('modal-quest-leader-note').textContent = q.leader_note || '';
 
       modalEl.classList.add('visible');
     });
@@ -126,5 +139,18 @@ function initCountdowns() {
   });
 }
 
-// Initial load
-document.addEventListener('DOMContentLoaded', () => loadQuests('active'));
+function startModalCountdown(endTime) {
+  const el = document.getElementById('modal-time-left');
+  const update = () => {
+    const diff = new Date(endTime) - Date.now();
+    el.textContent = formatDuration(diff);
+    if (diff > 0) requestAnimationFrame(update);
+  };
+  update();
+}
+
+// Initial load and event bindings
+document.addEventListener('DOMContentLoaded', () => {
+  bindUI();
+  loadQuests('active');
+});
