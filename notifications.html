@@ -32,7 +32,133 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Styles -->
   <link href="/CSS/notifications.css" rel="stylesheet" />
-  <script src="/Javascript/notifications.js" type="module"></script>
+  <script type="module">
+import { supabase } from '/supabaseClient.js';
+import { showToast } from '/Javascript/utils.js';
+import { applyKingdomLinks } from '/Javascript/kingdom_name_linkify.js';
+
+const feed = document.getElementById('notification-feed');
+const filterInput = document.getElementById('notification-filter');
+const markAllBtn = document.getElementById('mark-all-btn');
+const clearAllBtn = document.getElementById('clear-all-btn');
+
+let currentNotifications = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyKingdomLinks();
+});
+
+async function fetchNotifications() {
+  const user = await supabase.auth.getUser();
+  const userId = user.data?.user?.id;
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Fetch error:', error);
+    showToast('Failed to load notifications');
+    return;
+  }
+
+  currentNotifications = data;
+  renderNotifications(currentNotifications);
+  applyKingdomLinks();
+}
+
+function renderNotifications(data) {
+  feed.innerHTML = '';
+
+  if (!data.length) {
+    feed.innerHTML = '<p class="no-notifications">No notifications available.</p>';
+    return;
+  }
+
+  for (const n of data) {
+    const card = document.createElement('div');
+    card.classList.add('notification-card');
+    card.setAttribute('aria-label', 'notification card');
+    if (!n.is_read) card.classList.add('unread');
+
+    card.innerHTML = `
+      <div class="notification-header">
+        <strong>${n.title}</strong>
+        <span class="priority-tag ${n.priority}">${n.priority}</span>
+      </div>
+      <p class="notification-body">${n.message}</p>
+      <div class="notification-footer">
+        <small>${new Date(n.created_at).toLocaleString()}</small>
+        ${n.link_action ? `<a href="${n.link_action}" class="notification-link">View</a>` : ''}
+      </div>
+    `;
+
+    card.addEventListener('click', () => markAsRead(n.notification_id));
+    feed.appendChild(card);
+  }
+  applyKingdomLinks();
+}
+
+async function markAsRead(notificationId) {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('notification_id', notificationId);
+
+  if (error) {
+    console.error('Mark read failed:', error);
+    showToast('Could not update notification');
+  }
+  fetchNotifications();
+}
+
+markAllBtn.addEventListener('click', async () => {
+  const user = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', user.data.user.id);
+
+  if (error) {
+    console.error('Mark all failed:', error);
+    showToast('Failed to mark all read');
+  }
+  fetchNotifications();
+});
+
+clearAllBtn.addEventListener('click', async () => {
+  const user = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .eq('user_id', user.data.user.id);
+
+  if (error) {
+    console.error('Clear failed:', error);
+    showToast('Failed to clear notifications');
+  }
+  fetchNotifications();
+});
+
+filterInput.addEventListener('input', (e) => {
+  const keyword = e.target.value.toLowerCase();
+  const filtered = currentNotifications.filter(n =>
+    n.title.toLowerCase().includes(keyword) || n.message.toLowerCase().includes(keyword)
+  );
+  renderNotifications(filtered);
+});
+
+supabase
+  .channel('notification-updates')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+    fetchNotifications();
+  })
+  .subscribe();
+
+fetchNotifications();
+  </script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" />
@@ -137,6 +263,185 @@ Developer: Deathsgift66
     <a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a>
   </div>
 </footer>
+
+<script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
+import asyncio
+import json
+from datetime import datetime
+
+from backend.models import Notification
+from ..database import get_db
+from ..security import require_user_id
+from ..env_utils import get_env_var
+
+_interval = get_env_var("NOTIFICATION_STREAM_INTERVAL")
+STREAM_INTERVAL = int(_interval) if _interval else 5
+_cycles = get_env_var("NOTIFICATION_MAX_CYCLES")
+MAX_STREAM_CYCLES = int(_cycles) if _cycles else 30
+
+router = APIRouter(prefix="/api/notifications", tags=["notifications"])
+
+
+class NotificationAction(BaseModel):
+    notification_id: str | None = None
+
+
+def _serialize_notification(row: Notification) -> dict:
+    return {
+        "notification_id": row.notification_id,
+        "title": row.title,
+        "message": row.message,
+        "category": row.category,
+        "priority": row.priority,
+        "link_action": row.link_action,
+        "created_at": row.created_at,
+        "is_read": row.is_read,
+        "expires_at": row.expires_at,
+        "source_system": row.source_system,
+        "last_updated": row.last_updated,
+    }
+
+
+def _base_query(db: Session, user_id: str):
+    return db.query(Notification).filter((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
+
+
+@router.get("/list")
+def list_notifications(
+    limit: int | None = None,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    query = (
+        _base_query(db, user_id)
+        .filter((Notification.expires_at.is_(None)) | (Notification.expires_at > func.now()))
+        .order_by(Notification.is_read.asc(), Notification.created_at.desc())
+    )
+
+    if limit is not None:
+        if limit <= 0 or limit > 100:
+            raise HTTPException(status_code=400, detail="Limit must be between 1 and 100")
+        query = query.limit(limit)
+
+    rows = query.all()
+    return {"notifications": [_serialize_notification(r) for r in rows]}
+
+
+@router.get("/latest")
+def latest_notifications(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+    limit: int = 5,
+):
+    return list_notifications(limit=limit, user_id=user_id, db=db)
+
+
+@router.delete("/{notification_id}")
+def delete_notification(
+    notification_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    deleted = (
+        db.query(Notification)
+        .filter(
+            Notification.notification_id == notification_id,
+            Notification.user_id == user_id,
+        )
+        .delete()
+    )
+    db.commit()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"message": "Notification deleted", "id": notification_id}
+
+
+@router.get("/stream", response_class=StreamingResponse)
+async def stream_notifications(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    async def event_generator():
+        last_check = datetime.utcnow()
+        cycles = 0
+        while cycles < MAX_STREAM_CYCLES:
+            rows = (
+                _base_query(db, user_id)
+                .filter(Notification.last_updated > last_check)
+                .order_by(Notification.created_at)
+                .all()
+            )
+            last_check = datetime.utcnow()
+            if rows:
+                for row in rows:
+                    yield f"data: {json.dumps(_serialize_notification(row))}\n\n"
+            else:
+                yield ": ping\n\n"
+            cycles += 1
+            await asyncio.sleep(STREAM_INTERVAL)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@router.post("/mark_read")
+def mark_read(
+    payload: NotificationAction,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    notif = (
+        db.query(Notification)
+        .filter(
+            Notification.notification_id == payload.notification_id,
+            Notification.user_id == user_id,
+        )
+        .first()
+    )
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    notif.is_read = True
+    notif.last_updated = func.now()
+    db.commit()
+    return {"message": "Marked read", "id": payload.notification_id}
+
+
+@router.post("/mark_all_read")
+def mark_all_read(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    db.query(Notification).filter(Notification.user_id == user_id).update({"is_read": True, "last_updated": func.now()})
+    db.commit()
+    return {"message": "All marked as read"}
+
+
+@router.post("/clear_all")
+def clear_all(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    db.query(Notification).filter(Notification.user_id == user_id).delete()
+    db.commit()
+    return {"message": "All notifications cleared"}
+
+
+@router.post("/cleanup_expired")
+def cleanup_expired(db: Session = Depends(get_db)):
+    deleted = (
+        db.query(Notification)
+        .filter(
+            Notification.expires_at.is_not(None), Notification.expires_at < func.now()
+        )
+        .delete()
+    )
+    db.commit()
+    return {"message": "Expired notifications cleaned", "deleted": deleted}
+</script>
 
 </body>
 </html>
