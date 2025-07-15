@@ -50,6 +50,7 @@
 
       await loadUnits();
       subscribeRealtime();
+      bindToggleEvents();
     }
 
     async function loadUnits() {
@@ -76,7 +77,8 @@
 
       unlocked.forEach(t => {
         const s = stats[t];
-        if (!s || !categories[s.class]) return;
+        if (!s || typeof s.class !== 'string') return;
+        if (!categories[s.class]) categories[s.class] = [];
         categories[s.class].push(s);
         const img = new Image();
         img.src = `/assets/troops/${t}.png`;
@@ -102,13 +104,26 @@
         <h3>${escapeHTML(unit.name)}</h3>
         <p>Tier ${unit.tier}</p>
         <ul class="unit-stats">
-          <li>Dmg: ${unit.damage}</li>
-          <li>Def: ${unit.defense}</li>
-          <li>HP: ${unit.hp}</li>
-          <li>Speed: ${unit.speed}</li>
-          <li>Range: ${unit.range}</li>
+          <li><abbr title="Damage">Dmg</abbr>: ${unit.damage}</li>
+          <li><abbr title="Defense">Def</abbr>: ${unit.defense}</li>
+          <li><abbr title="Hit Points">HP</abbr>: ${unit.hp}</li>
+          <li><abbr title="Speed">Spd</abbr>: ${unit.speed}</li>
+          <li><abbr title="Range">Rng</abbr>: ${unit.range}</li>
         </ul>`;
       return card;
+    }
+
+    function bindToggleEvents() {
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = document.getElementById(btn.dataset.target);
+          if (!target) return;
+          target.classList.toggle('hidden');
+          const expanded = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', String(!expanded));
+          btn.textContent = `${btn.dataset.label} ${expanded ? '▶' : '▼'}`;
+        });
+      });
     }
 
     function subscribeRealtime() {
@@ -152,23 +167,23 @@
 </header>
 <main class="main-centered-container" aria-label="Unlocked Troops">
   <section class="units-section" id="infantry" aria-labelledby="infantry-header">
-    <h2 id="infantry-header">Infantry</h2>
+    <h2 id="infantry-header"><button class="toggle-btn" data-target="infantry-list" data-label="Infantry" aria-expanded="true">Infantry ▼</button></h2>
     <div class="units-grid" id="infantry-list"></div>
   </section>
   <section class="units-section" id="archers" aria-labelledby="archers-header">
-    <h2 id="archers-header">Archers</h2>
+    <h2 id="archers-header"><button class="toggle-btn" data-target="archers-list" data-label="Archers" aria-expanded="true">Archers ▼</button></h2>
     <div class="units-grid" id="archers-list"></div>
   </section>
   <section class="units-section" id="cavalry" aria-labelledby="cavalry-header">
-    <h2 id="cavalry-header">Cavalry</h2>
+    <h2 id="cavalry-header"><button class="toggle-btn" data-target="cavalry-list" data-label="Cavalry" aria-expanded="true">Cavalry ▼</button></h2>
     <div class="units-grid" id="cavalry-list"></div>
   </section>
   <section class="units-section" id="siege" aria-labelledby="siege-header">
-    <h2 id="siege-header">Siege</h2>
+    <h2 id="siege-header"><button class="toggle-btn" data-target="siege-list" data-label="Siege" aria-expanded="true">Siege ▼</button></h2>
     <div class="units-grid" id="siege-list"></div>
   </section>
   <section class="units-section" id="support" aria-labelledby="support-header">
-    <h2 id="support-header">Support</h2>
+    <h2 id="support-header"><button class="toggle-btn" data-target="support-list" data-label="Support" aria-expanded="true">Support ▼</button></h2>
     <div class="units-grid" id="support-list"></div>
   </section>
 </main>
