@@ -75,7 +75,7 @@ Developer: Deathsgift66
 </main>
 
 <!-- Tutorial Modal -->
-  <div id="tutorialModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div id="tutorialModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
   <div class="modal-content">
     <h2 id="modal-title" class="visually-hidden">Tutorial</h2>
     <button id="tutorialClose" class="close-btn" aria-label="Close tutorial modal">&times;</button>
@@ -245,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabs = document.querySelectorAll('#tutorialModal .tab');
   const panels = document.querySelectorAll('#tutorialModal .tutorial-panel');
   const continueBtns = document.querySelectorAll('#tutorialModal .continue-btn');
+  const focusableSelectors = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
   let currentStep = parseInt(getCookie('tutorialStep') || '0', 10);
   if (Number.isNaN(currentStep) || currentStep >= panels.length) currentStep = 0;
@@ -276,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   closeBtn.addEventListener('click', finishTutorial);
+  modal.addEventListener('keydown', trapFocus);
 
   function openModal() {
     modal.classList.remove('hidden');
@@ -308,8 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const d = new Date();
       d.setTime(d.getTime() + days * 86400000);
+      const domain = location.hostname.includes('localhost') ? '' : `domain=${location.hostname};`;
       document.cookie =
-        `${name}=${value}; expires=${d.toUTCString()}; path=/; domain=${location.hostname}; secure; samesite=strict`;
+        `${name}=${value}; expires=${d.toUTCString()}; path=/; ${domain} secure; samesite=strict`;
     } catch (err) {
       console.warn("Cookies are disabled or blocked:", err);
     }
@@ -320,6 +323,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
     return null;
+  }
+
+  function trapFocus(e) {
+    if (e.key !== 'Tab') return;
+    const focusables = Array.from(modal.querySelectorAll(focusableSelectors)).filter(el => !el.disabled && el.getAttribute('tabindex') !== '-1');
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      }
+    } else {
+      if (document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    }
   }
 });
 </script>
