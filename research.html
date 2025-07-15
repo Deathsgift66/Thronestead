@@ -29,6 +29,7 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Styles & Scripts -->
   <link href="/CSS/research.css" rel="stylesheet" />
+  <noscript><style>.tech-node, .tech-card { border:1px solid #666; padding:8px; margin:4px; }</style></noscript>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -158,8 +159,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadResearchData();
 });
 
-window.addEventListener('beforeunload', () => {
-  if (researchChannel) supabase.removeChannel(researchChannel);
+window.addEventListener('beforeunload', async () => {
+  if (researchChannel) await supabase.removeChannel(researchChannel);
 });
 
 async function loadResearchData() {
@@ -169,6 +170,8 @@ async function loadResearchData() {
   const activeEl = document.getElementById('active-research');
   const completedEl = document.getElementById('completed-research');
   const encyclopediaEl = document.getElementById('encyclopedia');
+
+  if (researchChannel && supabase.getChannels().includes(researchChannel)) return;
 
   [tree, filters, details, activeEl, completedEl, encyclopediaEl].forEach(el => {
     if (el) el.innerHTML = '<p>Loading...</p>';
@@ -238,7 +241,12 @@ function renderFilters(techs) {
     const btn = document.createElement('button');
     btn.className = 'action-btn';
     btn.textContent = cat;
-    btn.onclick = () => filterByCategory(cat);
+    btn.onclick = () => {
+      filterByCategory(cat);
+      document.querySelectorAll('#tech-filters .action-btn')
+        .forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
     filters.appendChild(btn);
   });
 }
@@ -309,6 +317,9 @@ function renderDetails(tech = null, isCompleted = false, isActive = false, unloc
 
   if (unlocked && !isCompleted && !isActive) {
     document.getElementById('start-research').onclick = async () => {
+      const btn = document.getElementById('start-research');
+      btn.disabled = true;
+      btn.textContent = 'Starting...';
       try {
         const res = await fetch('/api/kingdom/start_research', {
           method: 'POST',
@@ -326,6 +337,8 @@ function renderDetails(tech = null, isCompleted = false, isActive = false, unloc
       } catch (err) {
         console.error(err);
         showToast('Could not start research.');
+        btn.disabled = false;
+        btn.textContent = 'Start Research';
       }
     };
   }
