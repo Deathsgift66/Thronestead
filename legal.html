@@ -32,7 +32,82 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/legal.css" rel="stylesheet" />
-  <script src="/Javascript/legal.js" type="module"></script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: legal.js
+    // Version:  7/1/2025 10:38
+    // Developer: Deathsgift66
+    document.addEventListener('DOMContentLoaded', () => {
+      const legalDocs = [
+        {
+          title: 'Privacy Policy',
+          file: '/Assets/legal/THRONESTEAD_PrivacyPolicy.pdf',
+          desc: 'How we collect, use, and protect your data.'
+        },
+        {
+          title: 'Terms of Service',
+          file: '/Assets/legal/THRONESTEAD_TermsofService.pdf',
+          desc: 'Your rights and responsibilities as a player.'
+        },
+        {
+          title: 'End User License Agreement (EULA)',
+          file: '/Assets/legal/THRONESTEAD_EULA.pdf',
+          desc: 'Game usage terms and content licensing.'
+        },
+        {
+          title: 'Cookie Policy',
+          file: '/Assets/legal/THRONESTEAD_CookiePolicy.pdf',
+          desc: 'Our use of browser cookies and tracking.'
+        },
+        {
+          title: 'Community Guidelines',
+          file: '/Assets/legal/THRONESTEAD_GameRules.pdf',
+          desc: 'Code of conduct for players and alliance members.'
+        },
+        {
+          title: 'Data Processing Addendum (DPA)',
+          file: '/Assets/legal/THRONESTEAD_DPA.pdf',
+          desc: 'GDPR-compliant processing terms.'
+        }
+      ];
+
+      const docGrid = document.getElementById('legal-docs');
+      const searchInput = document.getElementById('doc-search');
+
+      function renderDocs(filter = '') {
+        docGrid.innerHTML = '';
+        const filtered = legalDocs.filter(doc =>
+          doc.title.toLowerCase().includes(filter.toLowerCase()) ||
+          doc.desc.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        if (filtered.length === 0) {
+          docGrid.innerHTML = '<p>No documents found.</p>';
+          return;
+        }
+
+        filtered.forEach(doc => {
+          const card = document.createElement('div');
+          card.className = 'legal-card';
+          card.innerHTML = `
+            <h3>${doc.title}</h3>
+            <p>${doc.desc}</p>
+            <a class="btn" href="${doc.file}" target="_blank" rel="noopener">📄 View PDF</a>
+          `;
+          card.addEventListener('click', () => {
+            window.open(doc.file, '_blank');
+          });
+          docGrid.appendChild(card);
+        });
+      }
+
+      searchInput.addEventListener('input', () => {
+        renderDocs(searchInput.value);
+      });
+
+      renderDocs();
+    });
+  </script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -88,6 +163,52 @@ Developer: Deathsgift66
     <a href="legal.html" target="_blank">and more</a> <a href="sitemap.xml" target="_blank">Site Map</a>
   </div>
 </footer>
+
+  <!-- Backend route definition for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, HTTPException
+
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/legal", tags=["legal"])
+
+
+@router.get("/documents")
+def list_documents():
+    """
+    📚 Retrieve all legal documents (ToS, Privacy Policy, etc.)
+
+    Returns:
+        - id (int): Unique document ID
+        - title (str): Name of the legal document
+        - summary (str): Short summary or description
+        - url (str): Link to full document
+    """
+    supabase = get_supabase_client()
+    try:
+        response = (
+            supabase.table("legal_documents")
+            .select("id,title,summary,url,display_order")
+            .order("display_order")
+            .execute()
+        )
+        rows = getattr(response, "data", response) or []
+    except Exception as e:
+        # Handles database/API errors gracefully
+        raise HTTPException(status_code=500, detail="Failed to fetch documents") from e
+
+    documents = [
+        {
+            "id": r.get("id"),
+            "title": r.get("title"),
+            "summary": r.get("summary"),
+            "url": r.get("url"),
+        }
+        for r in rows
+    ]
+
+    return {"documents": documents}
+  </script>
 
 
 </body>
