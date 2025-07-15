@@ -113,11 +113,18 @@ Developer: Deathsgift66
         .then(res => res.json())
         .then(t => {
           const box = document.getElementById('treaty-details');
+          const termsRows = Object.entries(t.terms || {})
+            .map(
+              ([k, v]) =>
+                `<tr><th>${escapeHTML(k)}</th><td>${escapeHTML(String(v))}</td></tr>`
+            )
+            .join('');
+          box.innerHTML = '';
           box.innerHTML = `
             <h3>${escapeHTML(t.name)}</h3>
             <p>Partner: ${escapeHTML(t.partner_name)}</p>
             <p>Status: ${escapeHTML(t.status)}</p>
-            <p>Terms: ${escapeHTML(JSON.stringify(t.terms))}</p>
+            <table class="terms-table"><tbody>${termsRows}</tbody></table>
             ${
               t.status === 'proposed'
                 ? `

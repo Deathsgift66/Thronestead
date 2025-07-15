@@ -62,6 +62,27 @@ body {
   font-family: 'Cinzel', serif;
 }
 
+/* Table for displaying treaty terms */
+.terms-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.terms-table th,
+.terms-table td {
+  padding: 0.5rem;
+  border: 1px solid var(--gold);
+  text-align: left;
+  color: var(--ink);
+}
+
+.terms-table th {
+  background: var(--gold);
+  color: #1a1a1a;
+  font-family: 'Cinzel', serif;
+}
+
 
 
 /* Treaty Card Layout */
