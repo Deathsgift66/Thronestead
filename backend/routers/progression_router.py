@@ -254,11 +254,24 @@ def upgrade_castle_explicit(
 @router.get("/nobles")
 def get_nobles(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
-    names = db.execute(
-        text("SELECT noble_name FROM kingdom_nobles WHERE kingdom_id = :kid"),
+    rows = db.execute(
+        text(
+            "SELECT noble_name, level, title, loyalty, specialization "
+            "FROM kingdom_nobles WHERE kingdom_id = :kid"
+        ),
         {"kid": kid},
     ).fetchall()
-    return {"nobles": [n[0] for n in names]}
+    nobles = [
+        {
+            "name": r[0],
+            "level": r[1],
+            "title": r[2],
+            "loyalty": r[3],
+            "specialization": r[4],
+        }
+        for r in rows
+    ]
+    return {"nobles": nobles}
 
 
 @router.post("/nobles")
@@ -327,11 +340,25 @@ def rename_noble(
 @router.get("/knights")
 def get_knights(user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
     kid = get_kingdom_id(db, user_id)
-    names = db.execute(
-        text("SELECT knight_name FROM kingdom_knights WHERE kingdom_id = :kid"),
+    rows = db.execute(
+        text(
+            "SELECT knight_name, rank, level, leadership, tactics, morale_aura "
+            "FROM kingdom_knights WHERE kingdom_id = :kid"
+        ),
         {"kid": kid},
     ).fetchall()
-    return {"knights": [k[0] for k in names]}
+    knights = [
+        {
+            "name": r[0],
+            "rank": r[1],
+            "level": r[2],
+            "leadership": r[3],
+            "tactics": r[4],
+            "morale_aura": r[5],
+        }
+        for r in rows
+    ]
+    return {"knights": knights}
 
 
 @router.post("/knights")
