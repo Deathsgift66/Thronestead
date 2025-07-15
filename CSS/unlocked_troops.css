@@ -62,3 +62,12 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 }
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  cursor: pointer;
+}
