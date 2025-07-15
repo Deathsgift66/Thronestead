@@ -109,6 +109,21 @@ body {
   position: relative;
 }
 
+.vip-card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px var(--gold);
+}
+
+.perk-type {
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.perk-desc {
+  font-style: italic;
+  margin-bottom: var(--gap-small);
+}
+
 .vip-button {
   background: var(--btn-bg);
   color: var(--btn-text);
