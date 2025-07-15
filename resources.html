@@ -38,7 +38,6 @@ Developer: Deathsgift66
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
 
   <!-- JS Modules -->
-  <script src="/Javascript/resources.js" type="module"></script>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
@@ -109,6 +108,287 @@ Developer: Deathsgift66
     <div>© 2025 Thronestead</div>
     <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
   </footer>
+
+  <script type="module">
+// Project Name: Thronestead©
+// File Name: resources.js
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
+import { supabase } from '../supabaseClient.js';
+import { fetchJson } from './fetchJson.js';
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadResourcesNexus();
+});
+
+// ✅ Load the full Resources Nexus page content
+async function loadResourcesNexus() {
+  const summaryEl = document.getElementById('resource-summary');
+  const resourceTableEl = document.getElementById('resource-table');
+  const vaultTableEl = document.getElementById('vault-table');
+  const simulatorsEl = document.getElementById('simulators');
+
+  // Initial placeholders
+  summaryEl.innerHTML = "<p>Loading resource summary...</p>";
+  resourceTableEl.innerHTML = "<p>Loading resources...</p>";
+  vaultTableEl.innerHTML = "<p>Loading vault...</p>";
+  simulatorsEl.innerHTML = "<p>Loading simulators...</p>";
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id;
+    if (!uid) throw new Error('User not authenticated');
+
+    const token = session.access_token;
+    const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
+
+    // ✅ Load kingdom resources
+    const { resources: resourcesData } = await fetchJson('/api/resources', { headers });
+
+    // ✅ Attempt alliance vault fetch
+    let vaultData = null;
+    try {
+      const { totals } = await fetchJson('/api/vault/resources', { headers });
+      vaultData = totals;
+    } catch {
+      vaultData = null;
+    }
+
+    renderResourceSummary(resourcesData);
+    renderResourceTable(resourcesData);
+    renderVaultTable(vaultData);
+    renderSimulators();
+    subscribeToResourceUpdates();
+
+  } catch (err) {
+    console.error("❌ Error loading Resources Nexus:", err);
+    showToast("Failed to load Resources Nexus.");
+  }
+}
+
+// ✅ Display a total resource summary
+function renderResourceSummary(resources) {
+  const summaryEl = document.getElementById('resource-summary');
+  summaryEl.innerHTML = "";
+
+  const totalResources = Object.entries(resources)
+    .filter(([key]) => key !== "kingdom_id")
+    .reduce((sum, [, val]) => sum + (val || 0), 0);
+
+  summaryEl.innerHTML = `
+    <h3>Total Resources</h3>
+    <p>${formatNumber(totalResources)} units across all categories.</p>
+  `;
+}
+
+// ✅ Show per-resource stats
+function renderResourceTable(resources) {
+  const tableEl = document.getElementById('resource-table');
+  tableEl.innerHTML = "";
+
+  const resourceEntries = Object.entries(resources)
+    .filter(([k]) => k !== "kingdom_id")
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  resourceEntries.forEach(([key, value]) => {
+    const card = document.createElement("div");
+    card.className = "resource-card";
+    card.innerHTML = `
+      <h4>${formatResourceName(key)}</h4>
+      <p>Amount: ${formatNumber(value)}</p>
+    `;
+    tableEl.appendChild(card);
+  });
+}
+
+// ✅ Show alliance vault holdings
+function renderVaultTable(vault) {
+  const vaultEl = document.getElementById('vault-table');
+  vaultEl.innerHTML = "";
+
+  if (!vault) {
+    vaultEl.innerHTML = "<p>You are not in an alliance, or no vault data found.</p>";
+    return;
+  }
+
+  const entries = Object.entries(vault)
+    .filter(([k]) => k !== "alliance_id")
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  entries.forEach(([key, value]) => {
+    const card = document.createElement("div");
+    card.className = "vault-card";
+    card.innerHTML = `
+      <h4>${formatResourceName(key)}</h4>
+      <p>Amount: ${formatNumber(value)}</p>
+    `;
+    vaultEl.appendChild(card);
+  });
+}
+
+// ✅ Provide simulator section (stub)
+function renderSimulators() {
+  const el = document.getElementById('simulators');
+  el.innerHTML = "";
+
+  const panel = document.createElement("div");
+  panel.className = "simulator-panel";
+
+  panel.innerHTML = `
+    <h3>Resource Simulators</h3>
+    <p class="text-muted">Estimate production rates, trade values, and net efficiency.</p>
+    <ul>
+      <li><a href="#" class="sim-link">🔧 Production Efficiency Simulator</a></li>
+      <li><a href="#" class="sim-link">📈 Market Value Calculator</a></li>
+      <li><a href="#" class="sim-link">⚖️ Trade Ratio Evaluator</a></li>
+    </ul>
+  `;
+
+  el.appendChild(panel);
+
+  panel.querySelectorAll('.sim-link').forEach(a =>
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      alert('🛠️ Simulator tools are coming soon.');
+    })
+  );
+}
+
+// ✅ Format resource keys to display-friendly names
+function formatResourceName(key) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+// ✅ Thousands separator
+function formatNumber(num) {
+  return (num ?? 0).toLocaleString();
+}
+
+// ✅ Toast for user notifications
+function showToast(message) {
+  const toastEl = document.getElementById('toast');
+  if (!toastEl) return;
+  toastEl.textContent = message;
+  toastEl.classList.add("show");
+  setTimeout(() => toastEl.classList.remove("show"), 3000);
+}
+
+// ✅ Realtime sync with Supabase channels
+function subscribeToResourceUpdates() {
+  supabase.auth.getUser().then(({ data }) => {
+    const uid = data?.user?.id;
+    if (!uid) return;
+
+    supabase
+      .from('users')
+      .select('kingdom_id, alliance_id')
+      .eq('user_id', uid)
+      .single()
+      .then(({ data }) => {
+        const kid = data?.kingdom_id;
+        const aid = data?.alliance_id;
+
+        if (kid) {
+          supabase
+            .channel(`kr-resources-${kid}`)
+            .on('postgres_changes', {
+              event: '*',
+              schema: 'public',
+              table: 'kingdom_resources',
+              filter: `kingdom_id=eq.${kid}`
+            }, (payload) => {
+              renderResourceSummary(payload.new);
+              renderResourceTable(payload.new);
+            })
+            .subscribe();
+        }
+
+        if (aid) {
+          supabase
+            .channel(`kr-vault-${aid}`)
+            .on('postgres_changes', {
+              event: '*',
+              schema: 'public',
+              table: 'alliance_vault',
+              filter: `alliance_id=eq.${aid}`
+            }, (payload) => {
+              renderVaultTable(payload.new);
+            })
+            .subscribe();
+        }
+      });
+  });
+}
+  </script>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+# Project Name: Thronestead©
+# File Name: resources.py
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
+
+"""
+Project: Thronestead ©
+File: resources.py
+Role: API routes for resources.
+Version: 2025-06-21
+"""
+
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from backend.models import KingdomResources, User
+from services.resource_service import METADATA_FIELDS, fetch_supabase_resources
+
+from ..database import get_db
+from ..security import verify_jwt_token
+
+router = APIRouter(prefix="/api/resources", tags=["resources"])
+logger = logging.getLogger("Thronestead.Resources")
+
+# Expose shared constant from resource_service for field filtering
+
+
+@router.get("")
+def get_resources(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """
+    Return the player's kingdom resource ledger.
+
+    - Attempts Supabase via :func:`fetch_supabase_resources` for real-time data.
+    - Falls back to SQLAlchemy if Supabase is unavailable.
+    - Removes metadata fields before returning the payload.
+    """
+    # Attempt Supabase first for real-time reads
+    resources = fetch_supabase_resources(user_id)
+    if resources is not None:
+        return {"resources": resources}
+
+    # Fallback to SQLAlchemy if Supabase fails
+    user = db.query(User).filter_by(user_id=user_id).first()
+    if not user or not user.kingdom_id:
+        raise HTTPException(status_code=404, detail="Kingdom not found")
+
+    row = db.query(KingdomResources).filter_by(kingdom_id=user.kingdom_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Resources not found")
+
+    # Build dict from model, skipping metadata fields
+    resources = {
+        col.name: getattr(row, col.name)
+        for col in KingdomResources.__table__.columns
+        if col.name not in METADATA_FIELDS
+    }
+
+    return {"resources": resources}
+  </script>
 
 </body>
 </html>
