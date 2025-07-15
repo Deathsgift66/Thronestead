@@ -48,7 +48,7 @@ def profile_overview(user_id: str = Depends(verify_jwt_token)):
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to fetch profile") from exc
 
-        return {
+    return {
         "user": {
             "username": user_data.get("username"),
             "kingdom_name": user_data.get("kingdom_name"),
