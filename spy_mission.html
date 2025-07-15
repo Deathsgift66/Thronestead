@@ -67,11 +67,11 @@ Developer: Deathsgift66
 
         <label for="mission-type">Mission Type</label>
         <select id="mission-type">
-          <option value="spy_troops">Spy Troops</option>
-          <option value="spy_resources">Spy Resources</option>
-          <option value="assassinate_spies">Assassinate Spies</option>
-          <option value="assassinate_noble">Assassinate Noble</option>
-          <option value="assassinate_knight">Assassinate Knight</option>
+          <option value="spy_troops" title="Reveal enemy troop numbers">Spy Troops</option>
+          <option value="spy_resources" title="Gather info on enemy resources">Spy Resources</option>
+          <option value="assassinate_spies" title="Kill enemy spies">Assassinate Spies</option>
+          <option value="assassinate_noble" title="Kill an enemy noble">Assassinate Noble</option>
+          <option value="assassinate_knight" title="Eliminate an enemy knight">Assassinate Knight</option>
         </select>
 
         <label for="spy-count">Number of Spies</label>
@@ -83,6 +83,10 @@ Developer: Deathsgift66
       </form>
       <div id="mission-results" class="mission-results" aria-live="polite"></div>
     </section>
+    <section class="recent-log-panel" aria-labelledby="recent-log-heading">
+      <h3 id="recent-log-heading">Recent Missions</h3>
+      <ul id="recent-log" class="recent-log"></ul>
+    </section>
   </main>
 
   <!-- Footer -->
@@ -92,8 +96,10 @@ Developer: Deathsgift66
   </footer>
   <script type="module">
     import { supabase } from './supabaseClient.js';
+    import { escapeHTML } from './Javascript/utils.js';
 
     let currentUserId = null;
+    let currentSession = null;
     let spyInfo = { spy_count: 0, spy_level: 1 };
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -103,8 +109,10 @@ Developer: Deathsgift66
         return;
       }
       currentUserId = session.user.id;
+      currentSession = session;
 
       await loadSpyInfo();
+      await loadRecentLog();
 
       const targetInput = document.getElementById('target-kingdom');
       targetInput.addEventListener('input', e => loadKingdomSuggestions(e.target.value));
@@ -119,7 +127,10 @@ Developer: Deathsgift66
     async function loadSpyInfo() {
       try {
         const res = await fetch('/api/kingdom/spies', {
-          headers: { 'X-User-ID': currentUserId }
+          headers: {
+            'X-User-ID': currentUserId,
+            'Authorization': `Bearer ${currentSession.access_token}`
+          }
         });
         const data = await res.json();
         spyInfo = data;
@@ -161,19 +172,36 @@ Developer: Deathsgift66
       rateEl.textContent = `Estimated Success Rate: ${rate}%`;
     }
 
+    async function loadRecentLog() {
+      const list = document.getElementById('recent-log');
+      if (!list) return;
+      list.innerHTML = '<li>Loading...</li>';
+      try {
+        const res = await fetch('/api/spy/log?limit=5', {
+          headers: {
+            'X-User-ID': currentUserId,
+            'Authorization': `Bearer ${currentSession.access_token}`
+          }
+        });
+        const data = await res.json();
+        list.innerHTML = '';
+        (data.logs || []).forEach(entry => {
+          const li = document.createElement('li');
+          const icon = entry.outcome === 'success' ? '✅' : '❌';
+          li.innerHTML = `<span class="result-icon">${icon}</span> ${escapeHTML(entry.mission_type)} → ${escapeHTML(entry.target_name || entry.target_id || '')}`;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        console.error('recent log error', err);
+        list.innerHTML = '<li>Failed to load log.</li>';
+      }
+    }
+
     async function launchMission(e) {
       e.preventDefault();
       const typedName = document.getElementById('target-kingdom').value.trim();
-      const normalizedName = typedName.toLowerCase();
-      const list = document.getElementById('kingdom-list');
-      const opt = Array.from(list.options).find(o => o.value.toLowerCase() === normalizedName);
-      const target_id = opt ? opt.dataset.id : null;
       const mission_type = document.getElementById('mission-type').value;
       const count = parseInt(document.getElementById('spy-count').value, 10);
-      if (!target_id) {
-        showResult('Target kingdom not found.');
-        return;
-      }
       if (isNaN(count) || count < 1) {
         showResult('Please enter a valid number of spies.');
         return;
@@ -184,26 +212,39 @@ Developer: Deathsgift66
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-User-ID': currentUserId
+            'X-User-ID': currentUserId,
+            'Authorization': `Bearer ${currentSession.access_token}`
           },
           body: JSON.stringify({
-            target_kingdom_name: typedName,
+            target_kingdom_name: escapeHTML(typedName),
             mission_type,
             num_spies: count
           })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Launch failed');
-        const msg = `Success: ${data.success ? 'Yes' : 'No'} | Accuracy: ${data.accuracy || '?'}% | Caught: ${data.caught ? 'Yes' : 'No'} | Spies Lost: ${data.spies_lost ?? '?'}`;
-        showResult(msg);
+        showResult(data);
+        await loadRecentLog();
       } catch (err) {
-        showResult('Error: ' + err.message);
+        showResult({ error: err.message });
       }
     }
 
-    function showResult(text) {
+    function showResult(result) {
       const el = document.getElementById('mission-results');
-      el.textContent = text;
+      if (typeof result === 'string') {
+        el.textContent = result;
+        return;
+      }
+      if (result.error) {
+        el.textContent = 'Error: ' + result.error;
+        return;
+      }
+      const icons = [result.outcome === 'success' || result.success ? '✅' : '❌'];
+      if (result.detected || result.caught) icons.push('🔥');
+      if (result.spies_lost) icons.push('💀');
+      const msg = `Accuracy: ${result.accuracy ?? result.accuracy_pct ?? '?'}%`;
+      el.innerHTML = icons.map(i => `<span class="result-icon">${i}</span>`).join(' ') + ' ' + msg;
     }
   </script>
 </body>
