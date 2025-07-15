@@ -41,6 +41,11 @@ def seed_data(db):
     db.commit()
 
 
+class DummyRequest:
+    def __init__(self, host="1.1.1.1"):
+        self.client = type("c", (), {"host": host})
+
+
 def test_launch_spy_mission_inserts_row(monkeypatch):
     Session = setup_db()
     db = Session()
@@ -50,6 +55,7 @@ def test_launch_spy_mission_inserts_row(monkeypatch):
     monkeypatch.setattr(random, "randint", lambda a, b: a)
 
     res = launch_spy_mission(
+        DummyRequest(),
         LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=3),
         user_id="u1",
         db=db,
@@ -71,6 +77,7 @@ def test_spy_defense_modifies_success(monkeypatch):
     monkeypatch.setattr(spies_service, "get_spy_defense", lambda *_: 20)
 
     res = launch_spy_mission(
+        DummyRequest(),
         LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=3),
         user_id="u1",
         db=db,
@@ -88,6 +95,7 @@ def test_daily_counters_increment(monkeypatch):
     monkeypatch.setattr(random, "randint", lambda a, b: a)
 
     launch_spy_mission(
+        DummyRequest(),
         LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
         user_id="u1",
         db=db,
@@ -112,6 +120,7 @@ def test_daily_limit_enforced(monkeypatch):
 
     with pytest.raises(HTTPException):
         launch_spy_mission(
+            DummyRequest(),
             LaunchPayload(
                 target_kingdom_name="Bking", mission_type="scout", num_spies=1
             ),
@@ -129,6 +138,7 @@ def test_launch_respects_cooldown(monkeypatch):
     monkeypatch.setattr(random, "randint", lambda a, b: a)
 
     launch_spy_mission(
+        DummyRequest(),
         LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
         user_id="u1",
         db=db,
@@ -136,6 +146,7 @@ def test_launch_respects_cooldown(monkeypatch):
 
     with pytest.raises(HTTPException):
         launch_spy_mission(
+            DummyRequest(),
             LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
             user_id="u1",
             db=db,

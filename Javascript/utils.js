@@ -59,6 +59,36 @@ export function openModal(modal) {
   el.classList.remove('hidden');
   el.setAttribute('aria-hidden', 'false');
   el.removeAttribute('inert');
+
+  const focusable = el.querySelectorAll(
+    'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+  );
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  const trap = e => {
+    if (e.key === 'Escape') {
+      closeModal(el);
+    } else if (e.key === 'Tab' && focusable.length) {
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
+
+  const outside = e => {
+    if (e.target === el) closeModal(el);
+  };
+
+  el.__trapFocus = trap;
+  el.__outsideClick = outside;
+  el.addEventListener('keydown', trap);
+  el.addEventListener('click', outside);
+  if (first) first.focus();
 }
 
 /**
@@ -72,6 +102,10 @@ export function closeModal(modal) {
   if (el.contains(document.activeElement)) {
     document.activeElement.blur();
   }
+  el.removeEventListener('keydown', el.__trapFocus);
+  el.removeEventListener('click', el.__outsideClick);
+  delete el.__trapFocus;
+  delete el.__outsideClick;
   el.classList.add('hidden');
   el.setAttribute('aria-hidden', 'true');
   el.setAttribute('inert', '');

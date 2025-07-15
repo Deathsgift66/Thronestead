@@ -7,6 +7,11 @@ from backend.routers.wars import DeclarePayload, declare_war
 from models.progression import KingdomKnight
 
 
+class DummyRequest:
+    def __init__(self, host="1.1.1.1"):
+        self.client = type("c", (), {"host": host})
+
+
 def setup_db():
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
@@ -30,7 +35,10 @@ def test_declare_war_persists_record():
     db.commit()
 
     res = declare_war(
-        DeclarePayload(target="d1", war_reason="testing"), user_id="a1", db=db
+        DummyRequest(),
+        DeclarePayload(target="d1", war_reason="testing"),
+        user_id="a1",
+        db=db,
     )
     war = db.query(War).first()
     assert war is not None

@@ -7,15 +7,17 @@
 
 import random
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from services import spies_service
 from services.spies_service import XP_PER_LEVEL
+from services.audit_service import log_action
 
 from ..database import get_db
+from ..rate_limiter import limiter
 from ..models import Kingdom
 from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
@@ -33,22 +35,25 @@ DAILY_LIMIT = 5
 
 
 @router.post("/launch")
+@limiter.limit("30/minute")
 def launch_spy_mission(
+    request: Request,
     payload: LaunchPayload,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ) -> dict:
     """Execute a spy mission against another kingdom."""
     kingdom_id = get_kingdom_id(db, user_id)
-    attacker_record = spies_service.get_spy_record(db, kingdom_id)
-    if payload.num_spies > attacker_record.get("spy_count", 0):
-        raise HTTPException(status_code=400, detail="Not enough spies available")
+    try:
+        attacker_record = spies_service.get_spy_record(db, kingdom_id)
+        if payload.num_spies > attacker_record.get("spy_count", 0):
+            raise HTTPException(status_code=400, detail="Not enough spies available")
 
-    target = db.execute(
-        select(Kingdom).where(Kingdom.kingdom_name == payload.target_kingdom_name)
-    ).scalar_one_or_none()
-    if not target:
-        raise HTTPException(status_code=404, detail="Target kingdom not found")
+        target = db.execute(
+            select(Kingdom).where(Kingdom.kingdom_name == payload.target_kingdom_name)
+        ).scalar_one_or_none()
+        if not target:
+            raise HTTPException(status_code=404, detail="Target kingdom not found")
 
     target_record = spies_service.get_spy_record(db, target.kingdom_id)
     if (
@@ -115,22 +120,28 @@ def launch_spy_mission(
         )
         db.commit()
 
-    spies_service.finalize_mission(
-        db,
-        mission_id,
-        accuracy=accuracy_pct,
-        detected=detected,
-        spies_killed=spies_lost,
-    )
+        spies_service.finalize_mission(
+            db,
+            mission_id,
+            accuracy=accuracy_pct,
+            detected=detected,
+            spies_killed=spies_lost,
+        )
 
-    return {
-        "mission_id": mission_id,
-        "outcome": "success" if success else "fail",
-        "success_pct": success_pct,
-        "detected": detected,
-        "accuracy_pct": accuracy_pct,
-        "spies_lost": spies_lost,
-    }
+        return {
+            "mission_id": mission_id,
+            "outcome": "success" if success else "fail",
+            "success_pct": success_pct,
+            "detected": detected,
+            "accuracy_pct": accuracy_pct,
+            "spies_lost": spies_lost,
+        }
+    except HTTPException as exc:
+        log_action(db, user_id, "spy_fail", exc.detail, kingdom_id=kingdom_id)
+        raise
+    except Exception as exc:
+        log_action(db, user_id, "spy_fail", str(exc), kingdom_id=kingdom_id)
+        raise
 
 
 @router.get("/defense")
