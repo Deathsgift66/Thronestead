@@ -32,7 +32,6 @@ Developer: Deathsgift66
 
   <!-- Page-Specific CSS & JS -->
   <link href="/CSS/changelog.css" rel="stylesheet" />
-  <script src="/Javascript/changelog.js" type="module"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -82,7 +81,7 @@ Developer: Deathsgift66
 
         <!-- Entries Container -->
         <section id="changelog-entries" aria-label="Game Changelog Entries">
-          <!-- Populated dynamically via changelog.js -->
+          <!-- Populated dynamically via inline script -->
         </section>
       </div>
     </section>
@@ -99,6 +98,97 @@ Developer: Deathsgift66
       <a href="legal.html" target="_blank">More</a> <a href="sitemap.xml" target="_blank">Site Map</a>
     </div>
   </footer>
+
+  <script type="module">
+    // Inline JavaScript for changelog functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      loadChangelog();
+
+      // Bind refresh button
+      document.getElementById('refresh-log')?.addEventListener('click', () => {
+        loadChangelog(true);
+      });
+    });
+
+    // Fetch changelog from backend and inject into HTML
+    async function loadChangelog(forceRefresh = false) {
+      const container = document.getElementById('changelog-entries');
+      container.innerHTML = '<p>Loading updates...</p>';
+
+      try {
+        const res = await fetch(`/api/system/changelog${forceRefresh ? '?refresh=true' : ''}`);
+        if (!res.ok) throw new Error('Failed to load changelog.');
+
+        const entries = await res.json();
+        container.innerHTML = '';
+
+        if (entries.length === 0) {
+          container.innerHTML = '<p>No changelog entries available.</p>';
+          return;
+        }
+
+        entries.forEach(entry => {
+          const section = document.createElement('section');
+          section.classList.add('changelog-entry');
+
+          const date = new Date(entry.date).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+          });
+
+          section.innerHTML = `
+            <h3>${entry.title} <span class="version-tag">v${entry.version}</span></h3>
+            <p class="entry-date">${date}</p>
+            <ul>
+              ${entry.changes.map(change => `<li>🔧 ${change}</li>`).join('')}
+            </ul>
+          `;
+
+          container.appendChild(section);
+        });
+
+      } catch (err) {
+        console.error('Error fetching changelog:', err);
+        container.innerHTML = `<p class="error-msg">Unable to load changelog at this time. Please try again later.</p>`;
+      }
+    }
+  </script>
+
+  <!-- Backend route definition for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, HTTPException, Query
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/system/changelog", tags=["system_changelog"])
+
+@router.get("")
+def get_system_changelog(refresh: bool = Query(False, description="Force data refresh")):
+    """Return the latest game changelog entries."""
+    supabase = get_supabase_client()
+
+    try:
+        res = (
+            supabase.table("game_changelog")
+            .select("*")
+            .order("release_date", desc=True)
+            .limit(50)
+            .execute()
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve changelog: {str(e)}")
+
+    rows = getattr(res, "data", res) or []
+    entries = [
+        {
+            "version": r.get("version"),
+            "title": r.get("title"),
+            "date": r.get("release_date"),
+            "changes": r.get("changes") or [],
+        }
+        for r in rows
+        if r.get("version") and r.get("release_date")
+    ]
+    return entries
+  </script>
 
 </body>
 
