@@ -9,6 +9,8 @@ import { RESOURCE_TYPES } from './resourceTypes.js';
 import { setupTabs } from './components/tabControl.js';
 
 let realtimeChannel = null;
+let sortAsc = false;
+let currentTrades = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   setupTabs({ onShow: loadTradeLogs });
@@ -17,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadTradeLogs();
   startAutoRefresh();
   subscribeRealtime();
-  applyKingdomLinks();
+  applyKingdomLinks('#ledger-table-body td');
 });
 
 // ✅ Initialize tab switching logic
@@ -25,6 +27,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ✅ Setup filters
 function initFilters() {
   document.getElementById('applyFilters')?.addEventListener('click', loadTradeLogs);
+  document.getElementById('toggleSort')?.addEventListener('click', () => {
+    sortAsc = !sortAsc;
+    document.getElementById('toggleSort').textContent = sortAsc ? 'Oldest \u2191' : 'Newest \u2193';
+    loadTradeLogs();
+  });
+  document.getElementById('export-csv-btn')?.addEventListener('click', exportCSV);
 }
 
 // ✅ Populate dropdown with resource options
@@ -60,7 +68,7 @@ async function loadTradeLogs() {
       .eq('user_id', user.id)
       .single();
 
-    const activeTab = document.querySelector('.tab-button.active')?.dataset.target;
+    const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
     const filters = {
       kingdom_id: userData.kingdom_id,
       alliance_id: userData.alliance_id,
@@ -70,10 +78,11 @@ async function loadTradeLogs() {
     };
 
     const trades = await queryTrades(activeTab, filters);
+    currentTrades = trades;
     renderTradeTable(trades);
     updateSummary(trades);
     updateLastUpdated();
-    applyKingdomLinks();
+    applyKingdomLinks('#ledger-table-body td');
 
   } catch (err) {
     console.error("❌ Trade Load Error:", err);
@@ -87,7 +96,7 @@ async function queryTrades(tab, filters) {
   let q = supabase
     .from('trade_logs')
     .select('*')
-    .order('timestamp', { ascending: false })
+    .order('timestamp', { ascending: sortAsc })
     .limit(100);
 
   if (tab === 'tab-kingdom') {
@@ -126,20 +135,22 @@ function renderTradeTable(trades) {
 
   trades.forEach(t => {
     const row = document.createElement('tr');
-    const totalPrice = t.quantity * t.unit_price;
+    const safeQty = parseInt(t.quantity, 10) || 0;
+    const safePrice = parseFloat(t.unit_price) || 0;
+    const totalPrice = safeQty * safePrice;
 
     row.innerHTML = `
       <td>${new Date(t.timestamp).toLocaleString()}</td>
-      <td>${escapeHTML(t.seller_name)}</td>
-      <td>${escapeHTML(t.buyer_name)}</td>
+      <td class="log-entry">${escapeHTML(t.seller_name)}</td>
+      <td class="log-entry">${escapeHTML(t.buyer_name)}</td>
       <td>${escapeHTML(t.resource)}</td>
-      <td>${t.quantity.toLocaleString()}</td>
+      <td>${safeQty.toLocaleString()}</td>
       <td>${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
     `;
 
     body.appendChild(row);
   });
-  applyKingdomLinks();
+  applyKingdomLinks('#ledger-table-body td');
 }
 
 // ✅ Update trade volume/summary
@@ -161,6 +172,27 @@ function updateSummary(trades) {
 function updateLastUpdated() {
   const el = document.getElementById('last-updated');
   if (el) el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+function exportCSV() {
+  if (!currentTrades.length) return;
+  const header = 'Timestamp,Seller,Buyer,Resource,Quantity,Unit Price,Total Price\n';
+  const csv = currentTrades
+    .map(t => {
+      const qty = parseInt(t.quantity, 10) || 0;
+      const price = parseFloat(t.unit_price) || 0;
+      const total = qty * price;
+      return [t.timestamp, t.seller_name, t.buyer_name, t.resource, qty, price.toFixed(2), total.toFixed(2)]
+        .map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+    })
+    .join('\n');
+  const blob = new Blob([header + csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trade_logs.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ✅ Show alert/feedback
