@@ -114,6 +114,7 @@ Developer: Deathsgift66
             <!-- JS Injected Withdraw UI -->
           </div>
         </div>
+        <div id="vault-message" class="feedback" aria-live="polite"></div>
       </div>
 
       <!-- Transaction Log Tab -->
@@ -175,14 +176,25 @@ Developer: Deathsgift66
 
   <!-- Tab interactivity handled by inline script -->
   <script type="module">
-    import { supabase } from './supabaseClient.js';
+    import { supabase } from '/Javascript/supabaseClient.js';
     import { RESOURCE_TYPES } from './Javascript/resourceTypes.js';
     import { loadCustomBoard } from './Javascript/customBoard.js';
     import { escapeHTML, authFetch } from './Javascript/utils.js';
     import { setupTabs } from './Javascript/components/tabControl.js';
 
     let currentUser = null;
-    const maxVault = 100000; // TODO: fetch dynamically
+    const MAX_VAULT = 100000; // TODO: fetch dynamically
+    const feedbackEl = document.getElementById('vault-message');
+    function showFeedback(msg) {
+      if (!feedbackEl) {
+        alert(msg);
+        return;
+      }
+      feedbackEl.textContent = msg;
+      setTimeout(() => {
+        if (feedbackEl.textContent === msg) feedbackEl.textContent = '';
+      }, 4000);
+    }
     let currentFilters = { action: '', days: '' };
 
     function subscribeToVault(allianceId) {
@@ -256,7 +268,7 @@ Developer: Deathsgift66
           return `
       <div class="progress-bar">
         <label>${label}</label>
-        <progress value="${value}" max="${maxVault}"></progress>
+        <progress value="${value}" max="${MAX_VAULT}"></progress>
         <span>${value.toLocaleString()}</span>
       </div>
     `;
@@ -283,6 +295,10 @@ Developer: Deathsgift66
 
     function buildResourceInputForm(type, containerId) {
       const container = document.getElementById(containerId);
+      if (!Array.isArray(RESOURCE_TYPES) || !RESOURCE_TYPES.length) {
+        container.innerHTML = '<p>Failed to load resource types.</p>';
+        return;
+      }
       container.innerHTML = `
     <form id="${type}-form" class="resource-form">
       ${RESOURCE_TYPES.map(
@@ -302,10 +318,10 @@ Developer: Deathsgift66
         const inputs = Array.from(
           document.querySelectorAll(`#${type}-form input[data-type='${type}']`)
         );
-        const payloads = inputs
-          .map(i => ({ res: i.name.toLowerCase().replace(/ /g, '_'), amt: parseInt(i.value) || 0 }))
-          .filter(p => p.amt > 0);
-        if (!payloads.length) return alert('Enter amounts.');
+      const payloads = inputs
+        .map(i => ({ res: i.name.toLowerCase().replace(/ /g, '_'), amt: parseInt(i.value) || 0 }))
+        .filter(p => p.amt > 0);
+        if (!payloads.length) return showFeedback('Enter amounts.');
         for (const p of payloads) {
           if (type === 'withdraw' && p.amt > 1000) {
             if (!confirm(`Withdraw ${p.amt} ${p.res}?`)) continue;
@@ -325,7 +341,7 @@ Developer: Deathsgift66
         inputs.forEach(i => {
           i.value = '';
         });
-        alert(`${type.charAt(0).toUpperCase() + type.slice(1)} complete.`);
+        showFeedback(`${type.charAt(0).toUpperCase() + type.slice(1)} complete.`);
       });
     }
 
