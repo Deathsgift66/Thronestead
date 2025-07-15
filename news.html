@@ -33,7 +33,6 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/news.css" rel="stylesheet" />
-  <script src="/Javascript/news.js" type="module"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" />
@@ -116,6 +115,173 @@ Developer: Deathsgift66
     <a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a>
   </div>
 </footer>
+
+  <script type="module">
+import { supabase } from '../supabaseClient.js';
+import { formatDate, openModal, closeModal } from './utils.js';
+
+let newsChannel = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  await loadNews();
+  setupRealtime();
+
+  const search = document.getElementById('search-input');
+  if (search) search.addEventListener('input', filterArticles);
+
+  // Close button for modal
+  document.getElementById('close-article-btn')?.addEventListener('click', hideArticleModal);
+});
+
+// ✅ Load News Articles
+async function loadNews() {
+  const articleGrid = document.getElementById('articles');
+  const loadingIndicator = document.getElementById('loading-news');
+  const noResultsMsg = document.getElementById('no-results-message');
+
+  if (!articleGrid || !loadingIndicator || !noResultsMsg) return;
+
+  loadingIndicator.style.display = 'block';
+  noResultsMsg.classList.add('hidden');
+  articleGrid.innerHTML = '';
+
+  const { data: articles, error } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('visible', true)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  loadingIndicator.style.display = 'none';
+
+  if (error || !articles || articles.length === 0) {
+    noResultsMsg.classList.remove('hidden');
+    return;
+  }
+
+  renderArticles(articles);
+}
+
+// ✅ Render News Cards
+function renderArticles(articles) {
+  const container = document.getElementById('articles');
+  const template = document.getElementById('article-template');
+  if (!container || !template) return;
+
+  container.innerHTML = '';
+
+  articles.forEach(article => {
+    const clone = template.content.firstElementChild.cloneNode(true);
+    clone.classList.add('news-article-card');
+    clone.dataset.title = (article.title || '').toLowerCase();
+    clone.dataset.summary = (article.content || '').toLowerCase();
+    clone.querySelector('.article-title').textContent = article.title;
+    clone.querySelector('.article-summary').textContent = `${article.content.slice(0, 140)}...`;
+    clone.querySelector('.article-meta').textContent = formatDate(article.created_at);
+    clone.addEventListener('click', () => showArticleModal(article));
+    container.appendChild(clone);
+  });
+}
+
+// ✅ Search Filter
+function filterArticles() {
+  const searchEl = document.getElementById('search-input');
+  const term = searchEl ? searchEl.value.toLowerCase() : '';
+
+  document.querySelectorAll('.news-article-card').forEach(card => {
+    const match = card.dataset.title.includes(term) || card.dataset.summary.includes(term);
+    card.style.display = match ? '' : 'none';
+  });
+}
+
+// ✅ Real-time Sync via Supabase
+function setupRealtime() {
+  newsChannel = supabase
+    .channel('news-hub')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => loadNews())
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    if (newsChannel) supabase.removeChannel(newsChannel);
+  });
+}
+
+// ✅ Modal viewer for full article
+function showArticleModal(article) {
+  const modal = document.getElementById('article-modal');
+  if (!modal) return;
+  modal.querySelector('#article-title').textContent = article.title || 'Untitled';
+  modal.querySelector('#article-meta').textContent = formatDate(article.created_at);
+  modal.querySelector('#article-body').innerHTML = article.content;
+  openModal('article-modal');
+}
+
+function hideArticleModal() {
+  closeModal('article-modal');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hideArticleModal();
+});
+  </script>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+
+from ..security import require_user_id
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/news", tags=["news"])
+
+
+@router.get("/articles")
+async def articles(user_id: str = Depends(require_user_id)):
+    """
+    📰 Return the latest news articles visible to authenticated users.
+    Validates user session via Supabase and retrieves news metadata.
+    """
+    supabase = get_supabase_client()
+
+    # Validate user exists and is authorized
+    user_check = (
+        supabase.table("users")
+        .select("user_id")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    if getattr(user_check, "error", None) or not getattr(user_check, "data", None):
+        raise HTTPException(status_code=401, detail="Invalid or unauthorized user")
+
+    # Fetch latest articles (limit 20, most recent first)
+    res = (
+        supabase.table("news_articles")
+        .select("id,title,summary,author_name,published_at")
+        .order("published_at", desc=True)
+        .limit(20)
+        .execute()
+    )
+
+    # Parse results
+    rows = getattr(res, "data", res) or []
+    articles = [
+        {
+            "article_id": r.get("id"),
+            "title": r.get("title"),
+            "summary": r.get("summary"),
+            "author_name": r.get("author_name"),
+            "published_at": r.get("published_at"),
+        }
+        for r in rows
+    ]
+    return {"articles": articles}
+  </script>
 
 </body>
 </html>
