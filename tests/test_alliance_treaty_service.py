@@ -27,7 +27,8 @@ class DummyResult:
 class DummyDB:
     def __init__(self):
         self.queries = []
-        self.row = None
+        self.row_active = None
+        self.row_proposed = None
         self.rows = []
         self.commits = 0
 
@@ -35,7 +36,11 @@ class DummyDB:
         q = str(query).strip()
         self.queries.append((q, params))
         if "SELECT 1 FROM alliance_treaties" in q:
-            return DummyResult(row=self.row)
+            if "status = 'active'" in q:
+                return DummyResult(row=self.row_active)
+            if "status = 'proposed'" in q:
+                return DummyResult(row=self.row_proposed)
+            return DummyResult(row=None)
         if q.startswith("SELECT treaty_id"):
             return DummyResult(rows=self.rows)
         return DummyResult()
@@ -53,7 +58,18 @@ def test_propose_treaty_inserts():
 
 def test_propose_existing_raises():
     db = DummyDB()
-    db.row = (1,)
+    db.row_active = (1,)
+    try:
+        propose_treaty(db, 1, 2, "NAP")
+    except ValueError:
+        assert True
+    else:
+        assert False
+
+
+def test_propose_duplicate_pending_raises():
+    db = DummyDB()
+    db.row_proposed = (1,)
     try:
         propose_treaty(db, 1, 2, "NAP")
     except ValueError:

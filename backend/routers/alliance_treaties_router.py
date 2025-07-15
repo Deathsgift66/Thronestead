@@ -120,6 +120,21 @@ def propose_treaty(
     if aid == payload.partner_alliance_id:
         raise HTTPException(status_code=400, detail="Cannot propose treaty to self")
 
+    dup = db.execute(
+        text(
+            """
+            SELECT 1 FROM alliance_treaties
+             WHERE alliance_id = :aid
+               AND partner_alliance_id = :pid
+               AND status = 'proposed'
+            """
+        ),
+        {"aid": aid, "pid": payload.partner_alliance_id},
+    ).fetchone()
+
+    if dup:
+        raise HTTPException(status_code=409, detail="Treaty already proposed")
+
     db.execute(
         text(
             """
