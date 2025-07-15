@@ -9,12 +9,20 @@
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/admin_emergency_tools.css" rel="stylesheet" />
+  <script type="module">
+    window.requireAdmin = true;
+  </script>
   <script type="module" src="/Javascript/requireAdmin.js"></script>
   <script src="/Javascript/components/authGuard.js" type="module"></script>
   <script src="/Javascript/apiHelper.js" type="module"></script>
   <script src="/Javascript/navLoader.js" type="module"></script>
 </head>
 <body data-theme="parchment">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is required for emergency tools. Please enable JS to proceed.
+    </div>
+  </noscript>
   <div id="navbar-container"></div>
   <header class="kr-top-banner" aria-label="Emergency Tools Banner">Thronestead – Emergency Tools</header>
   <main class="main-container" aria-label="Emergency Tools Interface">
@@ -38,12 +46,14 @@
       <section aria-label="Backup Queues">
         <h2>Backup Queues</h2>
         <button id="load-backups-btn">Load Queues</button>
+        <input id="backup-filter" type="text" placeholder="Filter backups" aria-label="Filter backups" />
+        <div id="backup-time" class="backup-time"></div>
         <ul id="backup-list"></ul>
       </section>
     </div>
   </main>
   <script type="module">
-    import { authFetch, authJsonFetch } from '/Javascript/utils.js';
+    import { authFetch, authJsonFetch, escapeHTML } from '/Javascript/utils.js';
 
     async function postAction(url, payload) {
       const res = await authFetch(url, {
@@ -52,6 +62,16 @@
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(await res.text());
+    }
+
+    function applyFilter() {
+      const input = document.getElementById('backup-filter');
+      const term = input?.value.toLowerCase() || '';
+      const list = document.getElementById('backup-list');
+      Array.from(list.children).forEach(li => {
+        const match = li.dataset.queue?.includes(term);
+        li.style.display = match ? '' : 'none';
+      });
     }
 
     async function loadBackups() {
@@ -63,9 +83,13 @@
         list.innerHTML = '';
         (data.queues || []).forEach(queue => {
           const li = document.createElement('li');
+          li.dataset.queue = queue.toLowerCase();
           li.textContent = queue;
           list.appendChild(li);
         });
+        const time = document.getElementById('backup-time');
+        if (time) time.textContent = `Last loaded: ${new Date().toLocaleString()}`;
+        applyFilter();
       } catch (err) {
         console.error('❌ Failed to load backups:', err);
         list.innerHTML = '<li>Error loading queues</li>';
@@ -78,6 +102,7 @@
         endpoint: '/api/admin/emergency/reprocess_tick',
         payload: ([warId]) => ({ war_id: Number(warId) }),
         success: 'Tick reprocessed'
+        confirm: true,
       },
       'recalc-res-btn': {
         inputs: ['recalc-kingdom-id'],
@@ -90,6 +115,7 @@
         endpoint: '/api/admin/emergency/rollback_quest',
         payload: ([aid, code]) => ({ alliance_id: Number(aid), quest_code: code }),
         success: 'Quest rolled back'
+        confirm: true,
       },
       'load-backups-btn': {
         action: loadBackups
@@ -103,6 +129,7 @@
 
         btn.addEventListener('click', async () => {
           if (typeof config.action === 'function') return config.action();
+          if (config.confirm && !confirm('Are you sure? This action cannot be undone.')) return;
 
           const values = config.inputs.map(id => document.getElementById(id)?.value.trim());
           if (values.some(v => !v)) return alert('⚠️ All fields required');
@@ -116,6 +143,7 @@
           }
         });
       });
+      document.getElementById('backup-filter')?.addEventListener('input', applyFilter);
     });
   </script>
 </body>
