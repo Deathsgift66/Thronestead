@@ -12,6 +12,7 @@ import { getReauthHeaders } from './reauth.js';
  * @returns {string} Sanitized text
  */
 export function escapeHTML(str = '') {
+  if (str === null || str === undefined) return '';
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
