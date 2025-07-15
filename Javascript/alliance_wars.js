@@ -9,6 +9,10 @@ import { setupTabs } from './components/tabControl.js';
 
 let currentWarId = null;
 let combatInterval = null;
+let lastActivity = 0;
+const activityEvents = ['mousemove', 'keydown', 'scroll'];
+const activityHandler = () => (lastActivity = Date.now());
+let alliances = [];
 let switchTab = () => {};
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -18,8 +22,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadActiveWars();
   await loadWarHistory();
   await loadPendingWars();
+  await fetchAlliances();
+
+  const input = document.getElementById('target-alliance-id');
+  input.addEventListener('input', e => showAllianceSuggestions(e.target.value));
 
   document.getElementById('declare-alliance-war-btn')?.addEventListener('click', declareWar);
+  document.getElementById('resume-live-btn')?.addEventListener('click', () => {
+    document.getElementById('resume-live-btn').hidden = true;
+    startCombatPolling();
+  });
 });
 
 
@@ -132,22 +144,35 @@ function renderParticipants(list) {
 // ✅ Live Polling
 function startCombatPolling() {
   stopCombatPolling();
+  lastActivity = Date.now();
+  const tab = document.getElementById('tab-live');
+  activityEvents.forEach(e => tab?.addEventListener(e, activityHandler));
   combatInterval = setInterval(() => {
-    if (document.getElementById('tab-live')?.classList.contains('active')) {
-      loadCombatLogs();
-      loadScoreboard();
+    if (!document.getElementById('tab-live')?.classList.contains('active')) return;
+    if (Date.now() - lastActivity > 120000) {
+      stopCombatPolling();
+      const btn = document.getElementById('resume-live-btn');
+      if (btn) btn.hidden = false;
+      return;
     }
+    loadCombatLogs();
+    loadScoreboard();
   }, 5000);
 }
 function stopCombatPolling() {
   if (combatInterval) clearInterval(combatInterval);
+  const tab = document.getElementById('tab-live');
+  activityEvents.forEach(e => tab?.removeEventListener(e, activityHandler));
 }
 
 // ✅ Tab Switching
 
 // ✅ Declare War
 async function declareWar() {
-  const targetId = document.getElementById('target-alliance-id').value;
+  const name = document.getElementById('target-alliance-id').value.trim();
+  const list = document.getElementById('alliance-list');
+  const opt = Array.from(list.options).find(o => o.value === name);
+  const targetId = opt ? opt.dataset.id : parseInt(name, 10);
   if (!targetId) return;
   const res = await fetch('/api/battle/declare', {
     method: 'POST',
@@ -156,6 +181,31 @@ async function declareWar() {
   });
   const data = await res.json();
   if (data.success) loadActiveWars();
+}
+
+async function fetchAlliances() {
+  try {
+    const res = await fetch('/api/diplomacy/alliances');
+    const data = await res.json();
+    alliances = data.alliances || [];
+  } catch (err) {
+    console.error('Alliance list error:', err);
+  }
+}
+
+function showAllianceSuggestions(query) {
+  const list = document.getElementById('alliance-list');
+  list.innerHTML = '';
+  if (!query) return;
+  alliances
+    .filter(a => a.name.toLowerCase().startsWith(query.toLowerCase()))
+    .slice(0, 5)
+    .forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.name;
+      opt.dataset.id = a.alliance_id;
+      list.appendChild(opt);
+    });
 }
 
 // ✅ Accept Pending
