@@ -4,6 +4,20 @@
 // Developer: Deathsgift66
 import { escapeHTML, openModal, closeModal } from './utils.js';
 
+// Fallbacks if utils.js didn't define them
+if (typeof openModal !== 'function') {
+  window.openModal = id => {
+    const el = document.getElementById(id);
+    el?.classList.remove('hidden');
+    el?.focus();
+  };
+}
+if (typeof closeModal !== 'function') {
+  window.closeModal = id => {
+    document.getElementById(id)?.classList.add('hidden');
+  };
+}
+
 // -------------------- Initialization --------------------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -65,19 +79,27 @@ function openTreatyModal(id) {
     .then(res => res.json())
     .then(t => {
       const box = document.getElementById('treaty-details');
+      const termsRows = Object.entries(t.terms || {}).length
+        ? Object.entries(t.terms)
+            .map(
+              ([k, v]) =>
+                `<tr><th>${escapeHTML(k)}</th><td>${escapeHTML(String(v))}</td></tr>`
+            )
+            .join('')
+        : '<tr><td colspan="2">No terms listed.</td></tr>';
       box.innerHTML = `
         <h3>${escapeHTML(t.name)}</h3>
         <p>Partner: ${escapeHTML(t.partner_name)}</p>
         <p>Status: ${escapeHTML(t.status)}</p>
-        <p>Terms: ${escapeHTML(JSON.stringify(t.terms))}</p>
+        <table class="terms-table"><tbody>${termsRows}</tbody></table>
         ${t.status === 'proposed' ? `
-          <button class="accept-btn" data-id="${t.id}">Accept</button>
-          <button class="reject-btn" data-id="${t.id}">Reject</button>
+          <button class="accept-btn" data-id="${t.treaty_id}">Accept</button>
+          <button class="reject-btn" data-id="${t.treaty_id}">Reject</button>
         ` : ''}
       `;
       openModal('treaty-modal');
-      document.querySelector('.accept-btn')?.addEventListener('click', () => respondToTreaty(t.id, 'accept'));
-      document.querySelector('.reject-btn')?.addEventListener('click', () => respondToTreaty(t.id, 'reject'));
+      document.querySelector('.accept-btn')?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'accept'));
+      document.querySelector('.reject-btn')?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'reject'));
     })
     .catch(err => console.error('Failed to load treaty:', err));
 }
@@ -102,6 +124,18 @@ async function proposeTreaty() {
   const type = prompt('Enter treaty type (non_aggression_pact, defensive_pact, trade_pact, intelligence_sharing, research_collaboration):');
   const partnerId = prompt('Enter partner alliance ID:');
   if (!type || !partnerId) return;
+  if (
+    ![
+      'non_aggression_pact',
+      'defensive_pact',
+      'trade_pact',
+      'intelligence_sharing',
+      'research_collaboration'
+    ].includes(type)
+  ) {
+    alert('Invalid treaty type.');
+    return;
+  }
   try {
     await fetch('/api/alliance/treaties/propose', {
       method: 'POST',
