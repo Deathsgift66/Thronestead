@@ -62,7 +62,7 @@ Developer: Deathsgift66
       <h2 id="mission-heading">Launch Spy Mission</h2>
       <form id="launch-form">
         <label for="target-kingdom">Target Kingdom</label>
-        <input id="target-kingdom" list="kingdom-list" autocomplete="off" required />
+        <input id="target-kingdom" list="kingdom-list" autocomplete="off" maxlength="64" required />
         <datalist id="kingdom-list"></datalist>
 
         <label for="mission-type">Mission Type</label>
@@ -163,16 +163,22 @@ Developer: Deathsgift66
 
     async function launchMission(e) {
       e.preventDefault();
-      const name = document.getElementById('target-kingdom').value.trim();
+      const typedName = document.getElementById('target-kingdom').value.trim();
+      const normalizedName = typedName.toLowerCase();
       const list = document.getElementById('kingdom-list');
-      const opt = Array.from(list.options).find(o => o.value === name);
+      const opt = Array.from(list.options).find(o => o.value.toLowerCase() === normalizedName);
       const target_id = opt ? opt.dataset.id : null;
       const mission_type = document.getElementById('mission-type').value;
-      const count = parseInt(document.getElementById('spy-count').value, 10) || 1;
+      const count = parseInt(document.getElementById('spy-count').value, 10);
       if (!target_id) {
         showResult('Target kingdom not found.');
         return;
       }
+      if (isNaN(count) || count < 1) {
+        showResult('Please enter a valid number of spies.');
+        return;
+      }
+      showResult('Sending mission...');
       try {
         const res = await fetch('/api/spy/launch', {
           method: 'POST',
@@ -181,7 +187,7 @@ Developer: Deathsgift66
             'X-User-ID': currentUserId
           },
           body: JSON.stringify({
-            target_kingdom_name: name,
+            target_kingdom_name: typedName,
             mission_type,
             num_spies: count
           })
