@@ -79,7 +79,7 @@ function renderVaultSummary(data) {
     return `
       <div class="progress-bar">
         <label>${label}</label>
-        <progress value="${value}" max="50000"></progress>
+        <progress value="${value}" max="${value}"></progress>
         <span>${value.toLocaleString()}</span>
       </div>
     `;

@@ -183,7 +183,6 @@ Developer: Deathsgift66
     import { setupTabs } from './Javascript/components/tabControl.js';
 
     let currentUser = null;
-    const MAX_VAULT = 100000; // TODO: fetch dynamically
     const feedbackEl = document.getElementById('vault-message');
     function showFeedback(msg) {
       if (!feedbackEl) {
@@ -268,7 +267,7 @@ Developer: Deathsgift66
           return `
       <div class="progress-bar">
         <label>${label}</label>
-        <progress value="${value}" max="${MAX_VAULT}"></progress>
+        <progress value="${value}" max="${value}"></progress>
         <span>${value.toLocaleString()}</span>
       </div>
     `;
