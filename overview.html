@@ -35,6 +35,7 @@ Developer: Deathsgift66
   <script type="module">
     // Project Name: Thronestead©
     // File Name: progression.js (inlined)
+    import { toggleLoading, escapeHTML } from '/Javascript/utils.js';
     async function apiGET(url) {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`GET failed: ${url}`);
@@ -172,6 +173,7 @@ Developer: Deathsgift66
       const upgradeBtn = document.getElementById('upgrade-castle-btn');
       upgradeBtn?.addEventListener('click', async () => {
         upgradeBtn.disabled = true;
+        toggleLoading(true);
         try {
           const result = await upgradeCastle();
           alert(result.message || 'Castle upgraded!');
@@ -183,6 +185,7 @@ Developer: Deathsgift66
           alert(err.message || 'Upgrade failed');
         } finally {
           upgradeBtn.disabled = false;
+          toggleLoading(false);
         }
       });
     });
@@ -193,7 +196,7 @@ Developer: Deathsgift66
       try {
         const { nobles = [] } = await viewNobles();
         el.innerHTML = nobles.length
-          ? nobles.map(n => renderNameItem(n.name || n, 'noble')).join('')
+          ? nobles.map(n => renderNameItem(n, 'noble')).join('')
           : '<li>No nobles found.</li>';
         bindNobleEvents();
       } catch (err) {
@@ -208,7 +211,7 @@ Developer: Deathsgift66
       try {
         const { knights = [] } = await viewKnights();
         el.innerHTML = knights.length
-          ? knights.map(k => renderNameItem(k.name || k, 'knight')).join('')
+          ? knights.map(k => renderNameItem(k, 'knight')).join('')
           : '<li>No knights found.</li>';
         bindKnightEvents();
       } catch (err) {
@@ -217,8 +220,15 @@ Developer: Deathsgift66
       }
     }
 
-    function renderNameItem(name, type) {
-      const base = `<li><strong>${name}</strong>`;
+    function renderNameItem(data, type) {
+      const name = escapeHTML(data.name || data);
+      let tooltip = '';
+      if (type === 'noble' && data.level !== undefined) {
+        tooltip = `Lvl ${data.level} ${escapeHTML(data.title)} \u2022 Loyalty ${data.loyalty} \u2022 ${escapeHTML(data.specialization)}`;
+      } else if (type === 'knight' && data.level !== undefined) {
+        tooltip = `${escapeHTML(data.rank)} Lvl ${data.level} \u2022 Lead ${data.leadership} \u2022 Tac ${data.tactics}`;
+      }
+      const base = `<li class="tooltip-container"><strong>${name}</strong>`;
       const buttons = {
         noble: `
       <button class="action-btn rename-noble" data-name="${name}">Rename</button>
@@ -230,7 +240,8 @@ Developer: Deathsgift66
       <button class="action-btn remove-knight" data-name="${name}">Remove</button>
     `
       };
-      return `${base} ${buttons[type]}</li>`;
+      const tip = tooltip ? `<span class="tooltip-text">${tooltip}</span>` : '';
+      return `${base} ${buttons[type]}${tip}</li>`;
     }
 
     function bindNobleEvents() {
@@ -340,7 +351,11 @@ Developer: Deathsgift66
       if (!window.playerProgression) await fetchAndStorePlayerProgression(currentUser.id);
 
       const fallback = await loadOverview();
-      if (!fallback) subscribeToResourceUpdates();
+      if (!fallback) {
+        subscribeToResourceUpdates();
+        subscribeToTroopCounts();
+        checkActiveAllianceQuests();
+      }
     });
 
     async function loadOverview() {
@@ -485,7 +500,7 @@ Developer: Deathsgift66
         .subscribe();
     }
 
-    function renderResourceList(resources, container) {
+  function renderResourceList(resources, container) {
       if (!container) return;
       container.innerHTML = '';
       if (!resources || !Object.keys(resources).length) {
@@ -500,6 +515,58 @@ Developer: Deathsgift66
         ul.appendChild(li);
       }
       container.appendChild(ul);
+    }
+
+    function renderTroopSummary(troops) {
+      const el = document.getElementById('overview-military');
+      if (!el || !troops) return;
+      el.innerHTML = `
+      <p><strong>Total Troops:</strong> ${troops.total}</p>
+      <p><strong>Slots Used:</strong> ${troops.slots.used} / ${troops.slots.base}</p>
+    `;
+    }
+
+    async function subscribeToTroopCounts() {
+      const { data } = await supabase.auth.getUser();
+      const uid = data?.user?.id;
+      if (!uid) return;
+      const { data: kidRow } = await supabase
+        .from('users')
+        .select('kingdom_id')
+        .eq('user_id', uid)
+        .single();
+      const kid = kidRow?.kingdom_id;
+      if (!kid) return;
+      supabase
+        .channel('kr-troops-' + kid)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'kingdom_troops',
+          filter: `kingdom_id=eq.${kid}`
+        }, async () => {
+          try {
+            const data = await authFetchJson('/api/overview', currentSession);
+            if (data.troops) renderTroopSummary(data.troops);
+          } catch (err) {
+            console.error('Failed to refresh troop counts:', err);
+          }
+        })
+        .subscribe();
+    }
+
+    async function checkActiveAllianceQuests() {
+      try {
+        const res = await fetch('/api/alliance/quests?status=active');
+        if (!res.ok) return;
+        const quests = await res.json();
+        if (Array.isArray(quests) && quests.length) {
+          const el = document.getElementById('overview-quests');
+          if (el) el.innerHTML = `<p>${quests.length} alliance quest(s) active!</p>`;
+        }
+      } catch (err) {
+        console.error('Failed to fetch alliance quests:', err);
+      }
     }
   </script>
 
@@ -610,6 +677,10 @@ Developer: Deathsgift66
     </div>
   </section>
 </main>
+
+  <div id="loading-overlay" aria-hidden="true">
+    <div class="spinner"></div>
+  </div>
 
 <!-- Footer -->
 <footer class="site-footer">
