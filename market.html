@@ -53,22 +53,37 @@ Developer: Deathsgift66
     const historyContainer = document.getElementById('trade-history');
     const updated = document.getElementById('last-updated');
     let allListings = [];
+    let page = 1;
+    const PAGE_SIZE = 50;
+    let hasMore = true;
+    let listingsChannel = null;
 
-    async function fetchListings() {
+    async function fetchListings(reset = false) {
+      if (reset) {
+        page = 1;
+        hasMore = true;
+        allListings = [];
+        listingsContainer.innerHTML = '';
+      }
+      if (!hasMore) return;
       try {
-        const res = await fetch('/api/market/listings');
+        const res = await fetch(`/api/market/listings?page=${page}&page_size=${PAGE_SIZE}`);
         const data = await res.json();
-        allListings = data.listings || [];
-        renderListings(allListings);
+        const newListings = data.listings || [];
+        if (newListings.length < PAGE_SIZE) hasMore = false;
+        allListings.push(...newListings);
+        applyFilters();
         updated.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        page += 1;
+        toggleLoadMore();
       } catch {
         listingsContainer.textContent = 'Failed to load listings.';
       }
     }
 
-    function renderListings(data) {
-      listingsContainer.innerHTML = '';
-      if (!data.length) {
+    function renderListings(data, append = false) {
+      if (!append) listingsContainer.innerHTML = '';
+      if (!data.length && !append) {
         listingsContainer.textContent = 'No items listed.';
         return;
       }
@@ -88,6 +103,11 @@ Developer: Deathsgift66
       });
     }
 
+    function toggleLoadMore() {
+      const btn = document.getElementById('load-more');
+      if (btn) btn.style.display = hasMore ? 'block' : 'none';
+    }
+
     function applyFilters() {
       const search = document.getElementById('market-search').value.trim().toLowerCase();
       const cat = document.getElementById('market-category').value.toLowerCase();
@@ -99,6 +119,7 @@ Developer: Deathsgift66
         data = data.filter(i => i.item_type.toLowerCase() === cat);
       }
       renderListings(data);
+      toggleLoadMore();
     }
 
     async function loadMyListings() {
@@ -106,9 +127,9 @@ Developer: Deathsgift66
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return (myListingsContainer.textContent = 'Not logged in.');
-        const res = await fetch('/api/market/listings');
+        const res = await fetch('/api/market/my-listings', { headers: await authHeaders() });
         const data = await res.json();
-        const mine = (data.listings || []).filter(l => l.seller_id === user.id);
+        const mine = data.listings || [];
         if (!mine.length) {
           myListingsContainer.textContent = 'You have no active listings.';
           return;
@@ -158,16 +179,35 @@ Developer: Deathsgift66
     }
 
     async function openPurchase(item) {
-      const qty = 1;
+      let qty = parseInt(prompt(`Enter quantity to buy (max ${item.quantity})`, '1'), 10);
+      if (!qty || qty < 1) return;
+      if (qty > item.quantity) qty = item.quantity;
       const headers = await authHeaders();
       await fetch('/api/market/buy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ listing_id: item.listing_id, quantity: qty }),
       }).then(() => {
-        showToast(`Purchased ${item.item}`);
-        fetchListings();
+        showToast(`Purchased ${qty} ${item.item}`);
+        fetchListings(true);
       }).catch(() => showToast('Purchase failed'));
+    }
+
+    function subscribeRealtime() {
+      listingsChannel = supabase
+        .channel('market_listings')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'market_listings' }, () => fetchListings(true))
+        .subscribe(status => {
+          const indicator = document.getElementById('realtime-indicator');
+          if (indicator) {
+            indicator.textContent = status === 'SUBSCRIBED' ? 'Live' : 'Offline';
+            indicator.className = status === 'SUBSCRIBED' ? 'connected' : 'disconnected';
+          }
+        });
+
+      window.addEventListener('beforeunload', () => {
+        if (listingsChannel) supabase.removeChannel(listingsChannel);
+      });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -176,8 +216,9 @@ Developer: Deathsgift66
         if (id === 'history') loadHistory();
       }});
       document.getElementById('apply-filters')?.addEventListener('click', applyFilters);
-      fetchListings();
-      setInterval(fetchListings, 15000);
+      document.getElementById('load-more')?.addEventListener('click', () => fetchListings());
+      fetchListings(true);
+      subscribeRealtime();
     });
   </script>
 
@@ -246,6 +287,7 @@ Developer: Deathsgift66
       <div id="market-listings" class="market-listing-grid" aria-live="polite">
         <!-- JS injects listings here -->
       </div>
+      <button type="button" id="load-more" class="royal-button" style="display:none; margin-top:1rem;">Load More</button>
     </div>
 
     <!-- My Listings -->
