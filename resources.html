@@ -117,8 +117,15 @@ Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { fetchJson } from './fetchJson.js';
 
+let krSub = null, vaultSub = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   await loadResourcesNexus();
+});
+
+window.addEventListener("beforeunload", () => {
+  krSub?.unsubscribe();
+  vaultSub?.unsubscribe();
 });
 
 // ✅ Load the full Resources Nexus page content
@@ -129,10 +136,10 @@ async function loadResourcesNexus() {
   const simulatorsEl = document.getElementById('simulators');
 
   // Initial placeholders
-  summaryEl.innerHTML = "<p>Loading resource summary...</p>";
-  resourceTableEl.innerHTML = "<p>Loading resources...</p>";
-  vaultTableEl.innerHTML = "<p>Loading vault...</p>";
-  simulatorsEl.innerHTML = "<p>Loading simulators...</p>";
+  summaryEl.innerHTML = "<div class='loading-spinner'></div>";
+  resourceTableEl.innerHTML = "<div class='loading-spinner'></div>";
+  vaultTableEl.innerHTML = "<div class='loading-spinner'></div>";
+  simulatorsEl.innerHTML = "<div class='loading-spinner'></div>";
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -162,6 +169,10 @@ async function loadResourcesNexus() {
 
   } catch (err) {
     console.error("❌ Error loading Resources Nexus:", err);
+    summaryEl.innerHTML = "<div class='error-spinner'></div>";
+    resourceTableEl.innerHTML = "<div class='error-spinner'></div>";
+    vaultTableEl.innerHTML = "<div class='error-spinner'></div>";
+    simulatorsEl.innerHTML = "<div class='error-spinner'></div>";
     showToast("Failed to load Resources Nexus.");
   }
 }
@@ -238,9 +249,9 @@ function renderSimulators() {
     <h3>Resource Simulators</h3>
     <p class="text-muted">Estimate production rates, trade values, and net efficiency.</p>
     <ul>
-      <li><a href="#" class="sim-link">🔧 Production Efficiency Simulator</a></li>
-      <li><a href="#" class="sim-link">📈 Market Value Calculator</a></li>
-      <li><a href="#" class="sim-link">⚖️ Trade Ratio Evaluator</a></li>
+      <li><a href="#" class="sim-link" data-coming-soon="true">🔧 Production Efficiency Simulator</a></li>
+      <li><a href="#" class="sim-link" data-coming-soon="true">📈 Market Value Calculator</a></li>
+      <li><a href="#" class="sim-link" data-coming-soon="true">⚖️ Trade Ratio Evaluator</a></li>
     </ul>
   `;
 
@@ -291,7 +302,7 @@ function subscribeToResourceUpdates() {
         const aid = data?.alliance_id;
 
         if (kid) {
-          supabase
+          krSub = supabase
             .channel(`kr-resources-${kid}`)
             .on('postgres_changes', {
               event: '*',
@@ -306,7 +317,7 @@ function subscribeToResourceUpdates() {
         }
 
         if (aid) {
-          supabase
+          vaultSub = supabase
             .channel(`kr-vault-${aid}`)
             .on('postgres_changes', {
               event: '*',
@@ -365,11 +376,20 @@ def get_resources(
     - Attempts Supabase via :func:`fetch_supabase_resources` for real-time data.
     - Falls back to SQLAlchemy if Supabase is unavailable.
     - Removes metadata fields before returning the payload.
+
+    Returns:
+        {
+          "resources": {
+             "wood": 1200,
+             "stone": 950
+          }
+        }
     """
     # Attempt Supabase first for real-time reads
     resources = fetch_supabase_resources(user_id)
     if resources is not None:
         return {"resources": resources}
+    logger.warning(f"Supabase fetch failed for user_id={user_id}, falling back.")
 
     # Fallback to SQLAlchemy if Supabase fails
     user = db.query(User).filter_by(user_id=user_id).first()
