@@ -7,7 +7,36 @@
   <meta name="description" content="Request a password reset link for your Thronestead account." />
   <link rel="canonical" href="https://www.thronestead.com/forgot.html" />
   <link href="/CSS/forgot_password.css" rel="stylesheet" />
-  <script src="/Javascript/forgot.js" type="module"></script>
+  <script type="module">
+    import { supabase } from '/supabaseClient.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('forgot-form');
+      const emailInput = document.getElementById('forgot-email');
+      const message = document.getElementById('forgot-message');
+      const button = form.querySelector('button');
+
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const email = emailInput.value.trim();
+        if (!email) {
+          message.textContent = 'Please enter a valid email.';
+          return;
+        }
+        button.disabled = true;
+        try {
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: 'https://www.thronestead.com/update-password.html'
+          });
+          message.textContent = error ? `Error: ${error.message}` : 'Reset link sent! Check your email.';
+        } catch (err) {
+          message.textContent = `Unexpected error: ${err.message}`;
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+  </script>
   <!-- <script src="/Javascript/themeToggle.js" type="module"></script> -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
 </head>
@@ -31,5 +60,43 @@
       <!-- <button id="theme-toggle" class="royal-button" type="button">Dark Mode</button> -->
     </div>
   </main>
+  <!-- Backend route definition for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.orm import Session
+import time
+import uuid
+
+from ..database import get_db
+from backend.models import User
+from services.email_service import send_email
+
+router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+@router.post("/request-password-reset", status_code=status.HTTP_201_CREATED)
+def request_password_reset(payload: EmailPayload, request: Request, db: Session = Depends(get_db)):
+    _prune_expired()
+    ip = request.client.host if request.client else ""
+    history = RATE_LIMIT.setdefault(ip, [])
+    if len(history) >= RATE_LIMIT_MAX:
+        raise HTTPException(status_code=429, detail="Too many requests")
+    history.append(time.time())
+
+    user = db.query(User).filter(User.email == payload.email).first()
+    if user:
+        uid = str(user.user_id)
+        user_hist = USER_RATE_LIMIT.setdefault(uid, [])
+        if len(user_hist) >= RATE_LIMIT_MAX:
+            raise HTTPException(status_code=429, detail="Too many requests")
+        user_hist.append(time.time())
+        token = uuid.uuid4().hex
+        token_hash = _hash_token(token)
+        RESET_STORE[token_hash] = (str(user.user_id), time.time() + TOKEN_TTL)
+
+        send_email(user.email, subject="Reset Code", body=token)
+        logger.info("Reset requested for %s", mask_email(user.email))
+
+    return {"message": "If the email exists, a reset link has been sent."}
+  </script>
 </body>
 </html>
