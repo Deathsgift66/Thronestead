@@ -9,6 +9,7 @@ import { applyKingdomLinks } from './kingdom_name_linkify.js';
 
 const feed = document.getElementById('notification-feed');
 const filterInput = document.getElementById('notification-filter');
+const categorySelect = document.getElementById('category-filter');
 const markAllBtn = document.getElementById('mark-all-btn');
 const clearAllBtn = document.getElementById('clear-all-btn');
 
@@ -17,6 +18,11 @@ let currentNotifications = [];
 document.addEventListener('DOMContentLoaded', () => {
   applyKingdomLinks();
 });
+
+function updateTitle() {
+  const count = currentNotifications.filter(n => !n.is_read).length;
+  document.title = count ? `(${count}) Notifications | Thronestead` : 'Notifications | Thronestead';
+}
 
 async function fetchNotifications() {
   const user = await supabase.auth.getUser();
@@ -37,6 +43,7 @@ async function fetchNotifications() {
   currentNotifications = data;
   renderNotifications(currentNotifications);
   applyKingdomLinks();
+  updateTitle();
 }
 
 function renderNotifications(data) {
@@ -53,6 +60,8 @@ function renderNotifications(data) {
     card.setAttribute('aria-label', 'notification card');
     if (!n.is_read) card.classList.add('unread');
 
+    const toggleText = n.is_read ? 'Mark Unread' : 'Mark Read';
+
     card.innerHTML = `
       <div class="notification-header">
         <strong>${n.title}</strong>
@@ -62,19 +71,24 @@ function renderNotifications(data) {
       <div class="notification-footer">
         <small>${new Date(n.created_at).toLocaleString()}</small>
         ${n.link_action ? `<a href="${n.link_action}" class="notification-link">View</a>` : ''}
+        <button class="toggle-read-btn" data-id="${n.notification_id}" data-read="${n.is_read}">${toggleText}</button>
       </div>
     `;
 
-    card.addEventListener('click', () => markAsRead(n.notification_id));
+    card.querySelector('.toggle-read-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleRead(n.notification_id, !n.is_read);
+    });
+
     feed.appendChild(card);
   }
   applyKingdomLinks();
 }
 
-async function markAsRead(notificationId) {
+async function toggleRead(notificationId, readState) {
   const { error } = await supabase
     .from('notifications')
-    .update({ is_read: true })
+    .update({ is_read: readState })
     .eq('notification_id', notificationId);
 
   if (error) {
@@ -112,13 +126,19 @@ clearAllBtn.addEventListener('click', async () => {
   fetchNotifications();
 });
 
-filterInput.addEventListener('input', (e) => {
-  const keyword = e.target.value.toLowerCase();
-  const filtered = currentNotifications.filter(n =>
-    n.title.toLowerCase().includes(keyword) || n.message.toLowerCase().includes(keyword)
-  );
+function applyFilters() {
+  const keyword = filterInput.value.toLowerCase();
+  const cat = categorySelect.value;
+  const filtered = currentNotifications.filter(n => {
+    const matchesText = n.title.toLowerCase().includes(keyword) || n.message.toLowerCase().includes(keyword);
+    const matchesCat = !cat || n.category === cat;
+    return matchesText && matchesCat;
+  });
   renderNotifications(filtered);
-});
+}
+
+filterInput.addEventListener('input', applyFilters);
+categorySelect.addEventListener('change', applyFilters);
 
 supabase
   .channel('notification-updates')

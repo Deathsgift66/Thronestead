@@ -19,6 +19,7 @@ from backend.routers.notifications import (
     list_notifications,
     mark_all_read,
     mark_read,
+    broadcast_notification_route,
 )
 
 
@@ -95,3 +96,22 @@ def test_notifications_flow():
 
     clear_all(uid, db)
     assert db.query(Notification).filter(Notification.user_id == uid).count() == 0
+
+
+def test_broadcast_notification():
+    Session = setup_db()
+    db = Session()
+    uid = create_user(db)
+    db.query(User).filter(User.user_id == uid).update({"is_admin": True})
+    db.commit()
+
+    broadcast_notification_route(
+        title="System",
+        message="Hello",
+        admin_user_id=uid,
+        verify="secret",
+        db=db,
+    )
+
+    res = list_notifications(user_id=uid, db=db)
+    assert any(n["title"] == "System" for n in res["notifications"])
