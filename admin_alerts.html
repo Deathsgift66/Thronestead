@@ -120,7 +120,11 @@ Developer: Deathsgift66
         div.innerHTML = `
       <strong>[${(item.event_type || item.type || 'log').toUpperCase()}]</strong>
       <p>${formatItem(item)}</p>
-      <small>Kingdom: ${item.kingdom_id || '—'} | Alliance: ${item.alliance_id || '—'} | ${formatTime(item.timestamp)}</small>
+      <small>
+        Kingdom: ${item.kingdom_id || '—'} |
+        Alliance: ${item.alliance_id || '—'} |
+        ${item.timestamp ? formatTime(item.timestamp) : '—'}
+      </small>
     `;
 
         const actions = document.createElement('div');
@@ -136,7 +140,8 @@ Developer: Deathsgift66
         ];
 
         actionMap.forEach(({ action, label, data }) => {
-          if (!Object.values(data).some(Boolean)) return;
+          const hasValidData = Object.values(data).some(v => v !== undefined && v !== null && v !== '');
+          if (!hasValidData) return;
           const btn = document.createElement('button');
           btn.className = 'btn btn-small action-btn';
           btn.textContent = label;
@@ -156,6 +161,13 @@ Developer: Deathsgift66
       if (!e.target.classList.contains('action-btn')) return;
       const btn = e.target;
       const action = btn.dataset.action;
+
+      const requiresConfirm = ['ban', 'freeze', 'suspend_user'];
+      if (requiresConfirm.includes(action)) {
+        const label = btn.textContent || action;
+        const confirmed = confirm(`⚠️ Are you sure you want to ${label.toLowerCase()} this user?`);
+        if (!confirmed) return;
+      }
 
       try {
         switch (action) {
@@ -220,8 +232,17 @@ Developer: Deathsgift66
       return 'severity-low';
     }
 
+    function escapeHTML(str = '') {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function formatItem(item) {
-      return item.message || `${item.action || ''} - ${item.details || item.note || JSON.stringify(item)}`;
+      return escapeHTML(item.message || `${item.action || ''} - ${item.details || item.note || JSON.stringify(item)}`);
     }
 
     function formatTime(ts) {
@@ -263,7 +284,7 @@ Developer: Deathsgift66
         <input type="datetime-local" id="filter-start" class="filter-input" aria-label="Start Time" />
         <input type="datetime-local" id="filter-end" class="filter-input" aria-label="End Time" />
         
-        <select id="filter-alert-type" class="filter-input" aria-label="Alert Type">
+        <select id="filter-type" class="filter-input" aria-label="Alert Type">
           <option value="">All Types</option>
           <option value="moderation">Moderation</option>
           <option value="war">War</option>
