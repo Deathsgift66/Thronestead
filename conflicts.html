@@ -252,7 +252,7 @@ function renderRows(rows) {
 
   tbody.innerHTML = '';
   rows.forEach(r => {
-    const tickPct = r.battle_tick ? Math.min(r.battle_tick * 100 / 12, 100) : 0;
+    const tickPct = Math.min((r.battle_tick ?? 0) * 100 / 12, 100);
     const progress = `
       <div class="progress-bar-bg">
         <div class="progress-bar-fill" data-width="${tickPct}" title="Tick Progress: ${r.battle_tick || 0}/12"></div>
@@ -263,12 +263,14 @@ function renderRows(rows) {
     const linkRes = r.victor || r.winner_side
       ? ` | <a href="battle_resolution.html?war_id=${r.war_id}">View Resolution</a>` : '';
 
+    const flagA = r.attacker_alliance_id ? `<img src="/Assets/flags/${r.attacker_alliance_id}.png" alt="" class="flag-icon" />` : '';
+    const flagB = r.defender_alliance_id ? `<img src="/Assets/flags/${r.defender_alliance_id}.png" alt="" class="flag-icon" />` : '';
     const tr = document.createElement('tr');
     tr.classList.add(`row-${(r.phase || '').toLowerCase()}`);
     tr.innerHTML = `
       <td>${r.war_id}</td>
-      <td>${escapeHTML(r.attacker_alliance || r.attacker_kingdom || '')}</td>
-      <td>${escapeHTML(r.defender_alliance || r.defender_kingdom || '')}</td>
+      <td>${flagA}${escapeHTML(r.attacker_alliance || r.attacker_kingdom || '')}</td>
+      <td>${flagB}${escapeHTML(r.defender_alliance || r.defender_kingdom || '')}</td>
       <td>${escapeHTML(r.war_type || '')}</td>
       <td>${r.start_date ? new Date(r.start_date).toLocaleDateString() : ''}</td>
       <td class="${phaseClass}">${escapeHTML(r.phase || '')}</td>
@@ -287,12 +289,14 @@ async function openWarModal(warId) {
   const modal = document.getElementById('war-detail-modal');
   if (!modal) return;
   modal.classList.remove('hidden');
+  modal.setAttribute('tabindex', '-1');
+  modal.focus();
   modal.innerHTML = '<div class="modal-content"><p>Loading...</p></div>';
 
   try {
     const data = await jsonFetch(`/api/conflicts/${warId}`, { headers });
     const w = data.war || {};
-    const tickPct = w.battle_tick ? Math.min(w.battle_tick * 100 / 12, 100) : 0;
+    const tickPct = Math.min((w.battle_tick ?? 0) * 100 / 12, 100);
     const participants = [w.alliance_a_name, w.alliance_b_name].filter(Boolean);
 
     modal.innerHTML = `
@@ -319,7 +323,10 @@ async function openWarModal(warId) {
 
 function closeWarModal() {
   const modal = document.getElementById('war-detail-modal');
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.removeAttribute('tabindex');
+  }
 }
   </script>
 

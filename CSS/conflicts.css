@@ -103,6 +103,12 @@ body {
   border: 1px solid var(--gold);
 }
 
+.flag-icon {
+  width: 20px;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
 .conflict-table th {
   background: var(--gold);
   color: #1a1a1a;
