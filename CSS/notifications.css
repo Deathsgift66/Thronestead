@@ -255,6 +255,21 @@ body {
   text-decoration: underline;
 }
 
+.toggle-read-btn {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.toggle-read-btn:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
 /* Empty state */
 .no-notifications {
   text-align: center;
