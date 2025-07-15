@@ -35,6 +35,15 @@ body {
   color: #999;
   font-style: italic;
   margin: 1rem auto;
+  position: relative;
+}
+
+.empty-state::before {
+  content: '📜';
+  display: block;
+  font-size: 2rem;
+  animation: empty-bounce 1.6s infinite;
+  margin-bottom: 0.25rem;
 }
 
 
@@ -101,8 +110,32 @@ body {
   to { background: transparent; }
 }
 
+@keyframes empty-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 @media (max-width: 600px) {
   .timeline-entry {
     padding-left: 0.75rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: var(--text-on-dark);
+  }
+  .changelog-container {
+    background: rgba(0, 0, 0, 0.4);
+    color: var(--text-on-dark);
+  }
+  .timeline-entry {
+    border-left-color: var(--gold);
+  }
+  .timeline-bullet {
+    background: var(--gold);
+  }
+  .log-icon {
+    filter: brightness(1.2);
   }
 }
