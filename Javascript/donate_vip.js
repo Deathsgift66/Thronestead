@@ -18,12 +18,16 @@ const REDEEM_OPTIONS = [
     perk_id: 'vip1',
     name: 'VIP 1',
     cost: 1,
+    type: 'Cosmetic',
+    description: 'Gold username and chat badge',
     details: ['Gold username', 'VIP chat badge', 'Custom troop names']
   },
   {
     perk_id: 'vip2',
     name: 'VIP 2',
     cost: 2,
+    type: 'Cosmetic',
+    description: 'Extra cosmetics and founder badge',
     details: [
       'All VIP1 perks',
       'Custom troop image',
@@ -112,6 +116,7 @@ function renderStatus(status) {
 
   if (status.vip_level) {
     banner.innerHTML = `\u{1F396}\uFE0F Your Status: <strong>VIP ${status.vip_level}</strong> \u2014 Active until ${new Date(status.expires_at).toLocaleDateString()}`;
+    renderTimer(status.expires_at);
   } else {
     banner.innerHTML = `\u{1F9D9} You are not currently a VIP.`;
   }
@@ -141,6 +146,7 @@ function renderPackages(packs) {
   packs.forEach(pack => {
     const card = document.createElement('div');
     card.className = 'vip-card';
+    card.dataset.packageId = pack.package_id;
     card.innerHTML = `
       <h3>${escapeHTML(pack.name)}</h3>
       <p>$${pack.price_usd.toFixed(2)}</p>
@@ -158,18 +164,28 @@ function renderRedeemables(options) {
   options.forEach(perk => {
     const card = document.createElement('div');
     card.className = 'vip-card';
+    card.setAttribute('data-bs-toggle', 'tooltip');
+    card.title = perk.details.join(', ');
     card.innerHTML = `
       <h3>${escapeHTML(perk.name)}</h3>
       <p>${perk.cost} Token${perk.cost > 1 ? 's' : ''}</p>
-      <ul>${perk.details.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul>
+      <p class="perk-type">${escapeHTML(perk.type)}</p>
+      <p class="perk-desc">${escapeHTML(perk.description)}</p>
       <button onclick="redeemPerk('${perk.perk_id}')" class="vip-button">Redeem</button>
     `;
     container.appendChild(card);
+    if (window.bootstrap) new window.bootstrap.Tooltip(card);
   });
 }
 
 // Triggered when a package card is selected
 export function selectPackage(packId) {
+  const container = document.getElementById('token-package-cards');
+  if (container) {
+    container.querySelectorAll('.vip-card').forEach(card => {
+      card.classList.toggle('selected', card.dataset.packageId == packId);
+    });
+  }
   document.getElementById('selected-tier-id').value = packId;
   document.getElementById('donation-form').hidden = false;
 }
