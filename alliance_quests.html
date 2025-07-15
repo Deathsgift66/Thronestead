@@ -47,6 +47,9 @@ Developer: Deathsgift66
   <script type="module">
     import { escapeHTML } from '/Javascript/utils.js';
 
+    let modalEl;
+
+
     /**
      * Fetch and render quests for the selected status tab.
      * @param {string} status active|completed|expired
@@ -80,6 +83,7 @@ Developer: Deathsgift66
         btn.addEventListener('click', () => {
           document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
+          sessionStorage.setItem('lastTab', btn.dataset.filter);
           loadQuests(btn.dataset.filter);
         });
       });
@@ -91,7 +95,7 @@ Developer: Deathsgift66
         openQuestModal(card.dataset.id);
       });
 
-      const modalEl = document.getElementById('quest-modal');
+      modalEl = document.getElementById('quest-modal');
       modalEl.querySelector('.close-button').addEventListener('click', () => modalEl.classList.remove('visible'));
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') modalEl.classList.remove('visible');
@@ -152,10 +156,30 @@ Developer: Deathsgift66
           acceptBtn.classList.toggle('hidden', q.status !== 'active');
           claimBtn.classList.toggle('hidden', q.status !== 'completed' || !q.claimable);
 
+          acceptBtn.onclick = async () => {
+            const res = await fetch(`/api/alliance/quests/${id}/accept`, { method: 'POST' });
+            if (res.ok) {
+              alert('Quest accepted!');
+              modalEl.classList.remove('visible');
+              loadQuests('active');
+            }
+          };
+          claimBtn.onclick = async () => {
+            const res = await fetch(`/api/alliance/quests/${id}/claim`, { method: 'POST' });
+            if (res.ok) {
+              alert('Reward claimed!');
+              modalEl.classList.remove('visible');
+              loadQuests('completed');
+            }
+          };
+
           document.getElementById('role-check-message').textContent = q.role_check_message || '';
           document.getElementById('modal-quest-leader-note').textContent = q.leader_note || '';
 
           modalEl.classList.add('visible');
+        })
+        .catch(() => {
+          alert('Failed to load quest details.');
         });
     }
 
@@ -191,10 +215,32 @@ Developer: Deathsgift66
       update();
     }
 
+    async function loadHeroes() {
+      const ul = document.getElementById('hero-list');
+      ul.innerHTML = '<li>Loading heroes...</li>';
+      try {
+        const res = await fetch('/api/alliance/quests/heroes');
+        const heroes = await res.json();
+        ul.innerHTML = '';
+        heroes.forEach(h => {
+          const li = document.createElement('li');
+          li.textContent = `${h.name}: ${h.quests_completed} quests`;
+          ul.appendChild(li);
+        });
+      } catch {
+        ul.innerHTML = '<li>Failed to load heroes.</li>';
+      }
+    }
+
     // Initial load and event bindings
     document.addEventListener('DOMContentLoaded', () => {
       bindUI();
-      loadQuests('active');
+      const lastTab = sessionStorage.getItem('lastTab') || 'active';
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector(`.filter-tab[data-filter="${lastTab}"]`);
+      if (btn) btn.classList.add('active');
+      loadQuests(lastTab);
+      loadHeroes();
     });
   </script>
 
