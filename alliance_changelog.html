@@ -55,7 +55,7 @@ Developer: Deathsgift66
 <body class="alliance-bg">
   <noscript>
     <div class="noscript-warning">
-      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+      JavaScript is required to view alliance history. Please enable JS in your browser.
     </div>
   </noscript>
 
@@ -96,6 +96,7 @@ Developer: Deathsgift66
 
         <button id="apply-filters-btn">Filter</button>
         <button id="refresh-btn">Refresh</button>
+        <button id="export-csv-btn">Export CSV</button>
       </div>
 
       <div class="last-updated">Last updated: <span id="last-updated">--</span></div>
@@ -116,10 +117,38 @@ Developer: Deathsgift66
   <!-- Alliance Changelog Logic -->
   <script type="module">
     import { supabase } from './supabaseClient.js';
-    import { escapeHTML } from './Javascript/utils.js';
+    import { escapeHTML, formatDate } from './Javascript/utils.js';
     import { authFetchJson } from './Javascript/fetchJson.js';
 
     let changelogData = [];
+
+    const iconMap = {
+      war: '🛡',
+      treaty: '📜',
+      project: '🛠',
+      quest: '🗺',
+      member: '👤',
+      admin: '⚙'
+    };
+
+    function getIcon(type) {
+      return iconMap[type] || '';
+    }
+
+    function loadFilters() {
+      ['start', 'end', 'type'].forEach((key) => {
+        const val = sessionStorage.getItem('clog-' + key);
+        if (val) document.getElementById(`filter-${key}`).value = val;
+      });
+    }
+
+    function saveFilters() {
+      ['start', 'end', 'type'].forEach((key) => {
+        const el = document.getElementById(`filter-${key}`);
+        if (el && el.value) sessionStorage.setItem('clog-' + key, el.value);
+        else sessionStorage.removeItem('clog-' + key);
+      });
+    }
 
     async function fetchChangelog() {
       try {
@@ -134,6 +163,7 @@ Developer: Deathsgift66
 
         const data = await authFetchJson(`/api/alliance/changelog?${filters}`, session);
         changelogData = data.logs || [];
+        saveFilters();
 
         updateLastUpdated(data.last_updated);
         renderChangelog(changelogData);
@@ -143,6 +173,7 @@ Developer: Deathsgift66
     }
 
     function applyFilters() {
+      saveFilters();
       fetchChangelog();
     }
 
@@ -166,14 +197,37 @@ Developer: Deathsgift66
       <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry">
         <div class="timeline-bullet"></div>
         <div class="timeline-content">
+          <span class="log-icon">${getIcon(log.event_type)}</span>
           <span class="log-type">${escapeHTML(log.event_type.toUpperCase())}</span>
           <p class="log-text">${escapeHTML(log.description)}</p>
-          <time datetime="${log.timestamp}">${new Date(log.timestamp).toLocaleString()}</time>
+          <time datetime="${log.timestamp}">
+            ${log.timestamp ? formatDate(log.timestamp) : '—'}
+          </time>
         </div>
       </li>
     `
         )
         .join('');
+
+      container.querySelectorAll('.timeline-entry').forEach((entry) => {
+        entry.addEventListener('click', () => entry.classList.toggle('collapsed'));
+      });
+    }
+
+    function exportCSV() {
+      if (!changelogData.length) return;
+      const header = 'Timestamp,Type,Description\n';
+      const csv = changelogData
+        .map((l) => [l.timestamp, l.event_type, l.description]
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+      const blob = new Blob([header + csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'alliance_changelog.csv';
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     function bindEvent(id, handler) {
@@ -181,10 +235,12 @@ Developer: Deathsgift66
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      loadFilters();
       fetchChangelog();
       setInterval(fetchChangelog, 30000);
       bindEvent('apply-filters-btn', applyFilters);
       bindEvent('refresh-btn', fetchChangelog);
+      bindEvent('export-csv-btn', exportCSV);
     });
   </script>
 </body>
