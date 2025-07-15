@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import Alliance
@@ -39,12 +40,64 @@ async def list_treaties(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns available diplomatic treaties for a kingdom that has nobles.
-    This will later return treaties either from:
-    - alliance_treaties if part of alliance
-    - kingdom-level treaties if implemented
-    """
-    # TODO: implement returning relevant treaties once diplomacy is fully built
-    get_kingdom_id(db, user_id)
-    return {}
+    """Return diplomatic treaties for the caller's kingdom or alliance."""
+    kid = get_kingdom_id(db, user_id)
+
+    # Determine alliance membership without raising if none exists
+    alliance_id = (
+        db.execute(
+            text("SELECT alliance_id FROM kingdoms WHERE kingdom_id = :kid"),
+            {"kid": kid},
+        ).scalar()
+    )
+
+    if alliance_id:
+        rows = db.execute(
+            text(
+                """
+                SELECT treaty_id, alliance_id, treaty_type, partner_alliance_id,
+                       status, signed_at
+                  FROM alliance_treaties
+                 WHERE alliance_id = :aid OR partner_alliance_id = :aid
+                 ORDER BY signed_at DESC
+                """
+            ),
+            {"aid": alliance_id},
+        ).fetchall()
+        treaties = [
+            {
+                "treaty_id": r[0],
+                "alliance_id": r[1],
+                "treaty_type": r[2],
+                "partner_alliance_id": r[3],
+                "status": r[4],
+                "signed_at": r[5].isoformat() if r[5] else None,
+            }
+            for r in rows
+        ]
+    else:
+        rows = db.execute(
+            text(
+                """
+                SELECT treaty_id, kingdom_id, treaty_type, partner_kingdom_id,
+                       status, signed_at
+                  FROM kingdom_treaties
+                 WHERE kingdom_id = :kid OR partner_kingdom_id = :kid
+                 ORDER BY signed_at DESC
+                """
+            ),
+            {"kid": kid},
+        ).fetchall()
+        treaties = [
+            {
+                "treaty_id": r[0],
+                "kingdom_id": r[1],
+                "treaty_type": r[2],
+                "partner_kingdom_id": r[3],
+                "status": r[4],
+                "signed_at": r[5].isoformat() if r[5] else None,
+            }
+            for r in rows
+        ]
+
+    return {"treaties": treaties}
