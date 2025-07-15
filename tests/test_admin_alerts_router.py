@@ -7,6 +7,7 @@ from backend.routers.admin import (
     flag_ip,
     get_admin_alerts,
     mark_alert_handled,
+    dismiss_alert,
     query_admin_alerts,
     suspend_user,
 )
@@ -63,4 +64,16 @@ def test_suspend_user_logs():
 def test_mark_alert_logs():
     db = DummyDB()
     mark_alert_handled({"alert_id": "a5"}, admin_id="a1", db=db)
+    assert any("insert into audit_log" in q[0].lower() for q in db.queries)
+
+
+def test_dismiss_alert_deletes_and_logs():
+    class DB(DummyDB):
+        def commit(self):
+            self.committed = True
+
+    db = DB()
+    dismiss_alert({"alert_id": 7}, admin_id="a1", db=db)
+    joined = " ".join(db.queries[0][0].split()).lower()
+    assert "delete from admin_alerts" in joined
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
