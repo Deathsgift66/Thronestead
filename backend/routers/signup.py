@@ -169,6 +169,37 @@ def check_kingdom_name(kingdom: str):
     return {"available": True}
 
 
+@router.get("/available")
+def available(
+    kingdom_name: str | None = None,
+    email: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """Check if a kingdom name or email address is already taken."""
+    if not kingdom_name and not email:
+        raise HTTPException(status_code=400, detail="Missing parameters")
+
+    if kingdom_name:
+        row = db.execute(
+            text(
+                "SELECT 1 FROM kingdoms WHERE lower(kingdom_name) = lower(:n)"
+            ),
+            {"n": kingdom_name},
+        ).fetchone()
+        if row:
+            return {"available": False}
+
+    if email:
+        row = db.execute(
+            text("SELECT 1 FROM users WHERE lower(email) = lower(:e)"),
+            {"e": email},
+        ).fetchone()
+        if row:
+            return {"available": False}
+
+    return {"available": True}
+
+
 @router.get("/stats")
 def signup_stats(db: Session = Depends(get_db)):
     """Return top kingdoms for display on the signup screen."""

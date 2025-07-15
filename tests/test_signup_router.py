@@ -630,3 +630,28 @@ def test_validate_signup_captcha_fail(db_session):
     with pytest.raises(HTTPException) as exc:
         asyncio.run(signup_router.validate_signup(payload, req, db=db_session))
     assert exc.value.status_code == 403
+
+
+def test_available_endpoint(db_session):
+    db_session.execute(
+        text(
+            "INSERT INTO users (user_id, username, display_name, kingdom_name, email)"
+            " VALUES ('u1', 'taken', 'taken', 'Realm', 'used@example.com')"
+        )
+    )
+    db_session.execute(
+        text(
+            "INSERT INTO kingdoms (kingdom_id, user_id, kingdom_name, ruler_name)"
+            " VALUES (1, 'u1', 'Realm', 'taken')"
+        )
+    )
+    db_session.commit()
+
+    assert not signup.available(email="used@example.com", db=db_session)["available"]
+    assert not signup.available(kingdom_name="Realm", db=db_session)["available"]
+    assert signup.available(email="new@example.com", db=db_session)["available"]
+
+
+def test_available_requires_param(db_session):
+    with pytest.raises(HTTPException):
+        signup.available(db=db_session)
