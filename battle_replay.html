@@ -76,7 +76,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  document.getElementById('replay-timeline').disabled = true;
   await loadReplay();
+  document.getElementById('replay-timeline').disabled = false;
   renderTick(0);
   displayOutcome();
   togglePlayButtons(false);
@@ -125,7 +127,7 @@ export async function loadReplay() {
     const headers = await authHeaders();
     const res = await fetch(`/api/battle/replay/${warId}`, { headers });
     replayData = await res.json();
-    tickInterval = replayData.tick_interval_seconds * 1000;
+    tickInterval = (replayData.tick_interval_seconds ?? 1) * 1000;
     document.getElementById('replay-timeline').max = replayData.total_ticks;
   } catch (err) {
     console.error('Failed to load replay data', err);
@@ -164,7 +166,7 @@ export function renderTick(tick) {
   });
 
   const fog = document.getElementById('fog-overlay');
-  if (replayData.fog_of_war) {
+  if (replayData?.fog_of_war === true) {
     fog.style.display = 'block';
   } else {
     fog.style.display = 'none';
@@ -227,7 +229,7 @@ export function reset() {
   currentTick = 0;
   renderTick(0);
   const fog = document.getElementById('fog-overlay');
-  if (fog) fog.style.display = replayData?.fog_of_war ? 'block' : 'none';
+  if (fog) fog.style.display = replayData?.fog_of_war === true ? 'block' : 'none';
   togglePlayButtons(false);
 }
   </script>
@@ -270,12 +272,13 @@ export function reset() {
           <button id="play-btn">▶ Play</button>
           <button id="pause-btn" disabled>⏸ Pause</button>
           <button id="reset-btn">⟳ Reset</button>
-          <label for="speed-select">Speed:</label>
-          <select id="speed-select" aria-label="Playback Speed">
-            <option value="1">1x</option>
-            <option value="2">2x</option>
-            <option value="4">4x</option>
-          </select>
+          <label class="speed-select-label">Speed:
+            <select id="speed-select" aria-label="Playback Speed">
+              <option value="1">1x</option>
+              <option value="2">2x</option>
+              <option value="4">4x</option>
+            </select>
+          </label>
         </section>
 
         <!-- Timeline -->
