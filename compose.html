@@ -31,7 +31,149 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/compose.css" rel="stylesheet" />
-  <script src="/Javascript/compose.js" type="module"></script>
+  <script type="module">
+    import { supabase } from '/supabaseClient.js';
+    import { authFetchJson } from '/Javascript/fetchJson.js';
+    import { showToast, getValue, setText } from '/Javascript/utils.js';
+
+    let session;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const {
+        data: { session: s }
+      } = await supabase.auth.getSession();
+      if (!s) {
+        window.location.href = 'login.html';
+        return;
+      }
+      session = s;
+      setupTabs();
+      setupForms();
+      prefillRecipient();
+    });
+
+    function setupTabs() {
+      const tabs = document.querySelectorAll('.tab');
+      const contents = document.querySelectorAll('.tab-content');
+      tabs.forEach(t => {
+        t.addEventListener('click', () => {
+          tabs.forEach(b => b.classList.remove('active'));
+          contents.forEach(c => c.classList.remove('active'));
+          t.classList.add('active');
+          document.getElementById(t.dataset.tab).classList.add('active');
+        });
+      });
+    }
+
+    function setupForms() {
+      const msgForm = document.getElementById('message-form');
+      const noticeForm = document.getElementById('notice-form');
+      const treatyForm = document.getElementById('treaty-form');
+      const warForm = document.getElementById('war-form');
+
+      if (msgForm) {
+        const preview = document.getElementById('msg-preview');
+        msgForm.addEventListener('input', () => {
+          setText('msg-preview', getValue('msg-content'));
+        });
+        msgForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          try {
+            await authFetchJson('/api/compose/message', session, {
+              method: 'POST',
+              body: JSON.stringify({
+                recipient_id: getValue('msg-recipient'),
+                message: getValue('msg-content')
+              })
+            });
+            showToast('Message sent');
+            msgForm.reset();
+            preview.textContent = '';
+          } catch (err) {
+            showToast(err.message);
+          }
+        });
+      }
+
+      if (noticeForm) {
+        noticeForm.addEventListener('input', () => {
+          setText('notice-preview', getValue('notice-message'));
+        });
+        noticeForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          try {
+            await authFetchJson('/api/compose/notice', session, {
+              method: 'POST',
+              body: JSON.stringify({
+                title: getValue('notice-title'),
+                message: getValue('notice-message'),
+                category: getValue('notice-category', true),
+                link_action: getValue('notice-link', true),
+                image_url: getValue('notice-image-url', true),
+                expires_at: getValue('notice-expires', true)
+              })
+            });
+            showToast('Notice created');
+            noticeForm.reset();
+            setText('notice-preview', '');
+          } catch (err) {
+            showToast(err.message);
+          }
+        });
+      }
+
+      if (treatyForm) {
+        treatyForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          try {
+            await authFetchJson('/api/compose/treaty', session, {
+              method: 'POST',
+              body: JSON.stringify({
+                partner_alliance_id: parseInt(getValue('treaty-partner')),
+                treaty_type: getValue('treaty-type')
+              })
+            });
+            showToast('Treaty proposed');
+            treatyForm.reset();
+          } catch (err) {
+            showToast(err.message);
+          }
+        });
+      }
+
+      if (warForm) {
+        warForm.addEventListener('input', () => {
+          setText('war-preview', getValue('war-reason'));
+        });
+        warForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          try {
+            await authFetchJson('/api/compose/war', session, {
+              method: 'POST',
+              body: JSON.stringify({
+                defender_id: getValue('war-defender'),
+                war_reason: getValue('war-reason')
+              })
+            });
+            showToast('War declared');
+            warForm.reset();
+            setText('war-preview', '');
+          } catch (err) {
+            showToast(err.message);
+          }
+        });
+      }
+    }
+
+    function prefillRecipient() {
+      const params = new URLSearchParams(window.location.search);
+      const val = params.get('recipient') || params.get('recipient_id');
+      if (val) {
+        const input = document.getElementById('msg-recipient');
+        if (input) input.value = val;
+      }
+    }
+  </script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -158,6 +300,161 @@ Developer: Deathsgift66
       <a href="legal.html" target="_blank">More</a> <a href="sitemap.xml" target="_blank">Site Map</a>
     </div>
   </footer>
+
+  <!-- Backend route definition for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from backend.models import AllianceNotice, PlayerMessage, War
+from services.audit_service import log_action
+
+from ..database import get_db
+from ..security import verify_jwt_token
+
+router = APIRouter(prefix="/api/compose", tags=["compose"])
+
+
+class MessagePayload(BaseModel):
+    recipient_id: str
+    message: str
+    anonymous: bool = False
+
+
+class NoticePayload(BaseModel):
+    title: str
+    message: str
+    category: str | None = None
+    link_action: str | None = None
+    alliance_id: int | None = None
+    image_url: str | None = None
+    expires_at: datetime | None = None
+
+
+class TreatyPayload(BaseModel):
+    partner_alliance_id: int
+    treaty_type: str
+
+
+class WarPayload(BaseModel):
+    defender_id: str
+    war_reason: str
+
+
+@router.post("/send-message")
+@router.post("/message")
+def send_message(
+    payload: MessagePayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Send an in-game message to another player."""
+    recipient = db.execute(
+        text("SELECT user_id FROM users WHERE user_id = :rid"),
+        {"rid": payload.recipient_id},
+    ).fetchone()
+
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+
+    msg = PlayerMessage(
+        recipient_id=payload.recipient_id,
+        user_id=user_id,
+        message=payload.message,
+    )
+
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+
+    log_action(db, user_id, "send_message", f"To: {payload.recipient_id}")
+    return {"status": "sent", "message_id": msg.message_id}
+
+
+@router.post("/notice")
+def create_notice(
+    payload: NoticePayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Create an alliance notice."""
+
+    row = AllianceNotice(
+        alliance_id=payload.alliance_id,
+        title=payload.title,
+        message=payload.message,
+        category=payload.category,
+        link_action=payload.link_action,
+        image_url=payload.image_url,
+        expires_at=payload.expires_at,
+        created_by=user_id,
+    )
+
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+
+    log_action(db, user_id, "create_notice", f"Notice {row.notice_id}")
+    return {"status": "created", "notice_id": row.notice_id}
+
+
+@router.post("/treaty")
+def propose_treaty(
+    payload: TreatyPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Propose an alliance treaty."""
+
+    aid = db.execute(
+        text("SELECT alliance_id FROM users WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).scalar()
+
+    if not aid:
+        raise HTTPException(status_code=400, detail="User has no alliance")
+
+    db.execute(
+        text(
+            """
+            INSERT INTO alliance_treaties (alliance_id, partner_alliance_id, treaty_type, status)
+            VALUES (:aid, :pid, :type, 'proposed')
+            """
+        ),
+        {"aid": aid, "pid": payload.partner_alliance_id, "type": payload.treaty_type},
+    )
+    db.commit()
+
+    log_action(db, user_id, "propose_treaty", payload.treaty_type)
+    return {"status": "proposed"}
+
+
+@router.post("/war")
+def declare_war(
+    payload: WarPayload,
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
+    """Declare a war on another player."""
+
+    war = War(
+        attacker_id=user_id,
+        defender_id=payload.defender_id,
+        war_reason=payload.war_reason,
+        status="pending",
+        submitted_by=user_id,
+    )
+
+    db.add(war)
+    db.commit()
+    db.refresh(war)
+
+    log_action(db, user_id, "declare_war", f"Defender {payload.defender_id}")
+    return {"status": "pending", "war_id": war.war_id}
+  </script>
 
 </body>
 
