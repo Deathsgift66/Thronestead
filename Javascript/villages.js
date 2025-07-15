@@ -29,7 +29,9 @@ async function loadVillages() {
   listEl.innerHTML = '<li>Loading villages...</li>';
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !session.user) throw new Error('No session');
+    const user = session.user;
     const res = await fetch(`${API_BASE_URL}/api/kingdom/villages`, {
       headers: { 'X-User-ID': user.id }
     });
@@ -78,7 +80,12 @@ function setupRealtime() {
       }
     };
     eventSource.onerror = e => {
-      console.error('SSE connection error:', e);
+      console.warn('🔁 SSE connection error. Will attempt reconnect...');
+      showToast('Real-time updates lost. Reload to reconnect.');
+      eventSource.close();
+      setTimeout(() => {
+        setupRealtime();
+      }, 5000);
     };
   } catch (err) {
     console.error('SSE initialization failed', err);
@@ -98,8 +105,18 @@ async function createVillage() {
     showToast("Village name cannot be empty.");
     return;
   }
+  if (name.length < 3 || name.length > 40) {
+    showToast("Village name must be 3–40 characters.");
+    return;
+  }
+  if (!/^[A-Za-z0-9\s\-\'’]+$/.test(name)) {
+    showToast("Name contains invalid characters.");
+    return;
+  }
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !session.user) throw new Error('No session');
+    const user = session.user;
     const res = await fetch(`${API_BASE_URL}/api/kingdom/villages`, {
       method: 'POST',
       headers: {
@@ -109,8 +126,12 @@ async function createVillage() {
       body: JSON.stringify({ village_name: name, village_type: type })
     });
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Failed to create village');
+      let errorMessage = 'Failed to create village';
+      try {
+        const errorData = await res.json();
+        if (errorData?.detail) errorMessage = errorData.detail;
+      } catch {}
+      throw new Error(errorMessage);
     }
     nameInput.value = '';
     showToast("Village created successfully!");
