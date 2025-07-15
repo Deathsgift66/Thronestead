@@ -31,7 +31,6 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/conflicts.css" rel="stylesheet" />
-  <script src="/Javascript/conflicts.js" type="module"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -124,6 +123,301 @@ Developer: Deathsgift66
       <a href="legal.html" target="_blank">Legal Center</a> <a href="sitemap.xml" target="_blank">Site Map</a>
     </div>
   </footer>
+
+  <script type="module">
+// Project Name: Thronestead©
+// File Name: conflicts.js (inlined)
+// Version:  7/1/2025 10:38
+// Developer: Deathsgift66
+import { supabase } from '../supabaseClient.js';
+import { escapeHTML, debounce, jsonFetch, setBarWidths } from './utils.js';
+
+let headers = {};
+const REFRESH_MS = 30000;
+
+let conflicts = [];
+let currentFilter = 'all';
+let sortBy = 'start_date';
+let sortDir = 'desc';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return (window.location.href = 'login.html');
+  headers = {
+    'Authorization': `Bearer ${session.access_token}`,
+    'X-User-ID': session.user.id
+  };
+
+  setupControls();
+  await loadConflicts();
+  setInterval(loadConflicts, REFRESH_MS);
+});
+
+function setupControls() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  const search = document.getElementById('conflictSearch');
+  if (search) search.addEventListener('input', debounce(applyFilters, 300));
+
+  document.querySelectorAll('#conflictTable th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const field = th.dataset.field;
+      if (sortBy === field) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else {
+        sortBy = field;
+        sortDir = 'asc';
+      }
+      applyFilters();
+    });
+  });
+}
+
+async function loadConflicts() {
+  const tbody = document.getElementById('conflictRows');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10">Loading conflicts...</td></tr>';
+
+  try {
+    const data = await jsonFetch('/api/conflicts/all', { headers });
+    conflicts = data.wars || [];
+    applyFilters();
+  } catch (err) {
+    console.error('❌ Error loading conflicts:', err);
+    tbody.innerHTML = '<tr><td colspan="10">Failed to load conflicts.</td></tr>';
+  }
+}
+
+function applyFilters() {
+  const searchVal = (document.getElementById('conflictSearch')?.value || '').toLowerCase();
+  let rows = conflicts.slice();
+
+  switch (currentFilter) {
+    case 'active':
+      rows = rows.filter(r => r.phase === 'live');
+      break;
+    case 'planning':
+      rows = rows.filter(r => r.phase === 'planning' || r.phase === 'alert');
+      break;
+    case 'resolution':
+      rows = rows.filter(r => r.phase === 'resolved' && !r.victor);
+      break;
+    case 'concluded':
+      rows = rows.filter(r => r.phase === 'resolved' && !!r.victor);
+      break;
+  }
+
+  if (searchVal) {
+    rows = rows.filter(r =>
+      (r.attacker_alliance || '').toLowerCase().includes(searchVal) ||
+      (r.defender_alliance || '').toLowerCase().includes(searchVal) ||
+      (r.attacker_kingdom || '').toLowerCase().includes(searchVal) ||
+      (r.defender_kingdom || '').toLowerCase().includes(searchVal)
+    );
+  }
+
+  if (sortBy) {
+    rows.sort((a, b) => compareFields(a, b, sortBy));
+  }
+
+  renderRows(rows);
+}
+
+function compareFields(a, b, field) {
+  if (field === 'start_date') {
+    const da = a[field] ? new Date(a[field]) : 0;
+    const db = b[field] ? new Date(b[field]) : 0;
+    return sortDir === 'asc' ? da - db : db - da;
+  }
+
+  const valA = (a[field] || '').toString();
+  const valB = (b[field] || '').toString();
+  return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+}
+
+function renderRows(rows) {
+  const tbody = document.getElementById('conflictRows');
+  if (!tbody) return;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10">No conflicts found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tickPct = r.battle_tick ? Math.min(r.battle_tick * 100 / 12, 100) : 0;
+    const progress = `
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" data-width="${tickPct}" title="Tick Progress: ${r.battle_tick || 0}/12"></div>
+      </div>
+    `;
+    const phaseClass = `status-${r.phase || 'alert'}`;
+    const linkLive = `<a href="battle_live.html?war_id=${r.war_id}">View Battle</a>`;
+    const linkRes = r.victor || r.winner_side
+      ? ` | <a href="battle_resolution.html?war_id=${r.war_id}">View Resolution</a>` : '';
+
+    const tr = document.createElement('tr');
+    tr.classList.add(`row-${(r.phase || '').toLowerCase()}`);
+    tr.innerHTML = `
+      <td>${r.war_id}</td>
+      <td>${escapeHTML(r.attacker_alliance || r.attacker_kingdom || '')}</td>
+      <td>${escapeHTML(r.defender_alliance || r.defender_kingdom || '')}</td>
+      <td>${escapeHTML(r.war_type || '')}</td>
+      <td>${r.start_date ? new Date(r.start_date).toLocaleDateString() : ''}</td>
+      <td class="${phaseClass}">${escapeHTML(r.phase || '')}</td>
+      <td>${escapeHTML(r.victor || r.winner_side || '')}</td>
+      <td>${progress}</td>
+      <td>${r.castle_hp ?? ''}</td>
+      <td>${linkLive}${linkRes}</td>
+    `;
+    tr.addEventListener('click', () => openWarModal(r.war_id));
+    tbody.appendChild(tr);
+  });
+  setBarWidths(tbody);
+}
+
+async function openWarModal(warId) {
+  const modal = document.getElementById('war-detail-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.innerHTML = '<div class="modal-content"><p>Loading...</p></div>';
+
+  try {
+    const data = await jsonFetch(`/api/conflicts/${warId}`, { headers });
+    const w = data.war || {};
+    const tickPct = w.battle_tick ? Math.min(w.battle_tick * 100 / 12, 100) : 0;
+    const participants = [w.alliance_a_name, w.alliance_b_name].filter(Boolean);
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3 id="warDetailHeader">${escapeHTML(w.alliance_a_name || '')} vs ${escapeHTML(w.alliance_b_name || '')}</h3>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" data-width="${tickPct}"></div></div>
+        <p>Phase: ${escapeHTML(w.phase || '')}</p>
+        <p>Castle HP: ${w.castle_hp ?? ''}</p>
+        <p>Score: ${w.attacker_score ?? 0} - ${w.defender_score ?? 0}</p>
+        <p>Victor: ${escapeHTML(w.victor || '')}</p>
+        <ul>${participants.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul>
+        <button type="button" class="action-btn" id="war-detail-close-btn">Close</button>
+      </div>`;
+
+    setBarWidths(modal);
+
+    modal.querySelector('#war-detail-close-btn').addEventListener('click', closeWarModal);
+  } catch (err) {
+    console.error('Failed to load war details:', err);
+    modal.innerHTML = `<div class="modal-content"><p>Failed to load war details.</p><button type="button" class="action-btn" id="war-detail-close-btn">Close</button></div>`;
+    modal.querySelector('#war-detail-close-btn').addEventListener('click', closeWarModal);
+  }
+}
+
+function closeWarModal() {
+  const modal = document.getElementById('war-detail-modal');
+  if (modal) modal.classList.add('hidden');
+}
+  </script>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..security import require_user_id
+from ..supabase_client import get_supabase_client
+from .progression_router import get_kingdom_id
+from services.alliance_service import get_alliance_id
+
+router = APIRouter(prefix="/api/conflicts", tags=["conflicts"])
+
+@router.get("/all")
+def list_all_conflicts(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return all wars involving the player's alliance."""
+    aid = get_alliance_id(db, user_id)
+    rows = db.execute(
+        text(
+            """
+            SELECT wt.war_id, aa.name AS attacker_alliance, da.name AS defender_alliance,
+                   w.war_type, w.start_date, wt.war_status, wt.tick_interval_seconds,
+                   wt.attacker_kingdom_id, wt.defender_kingdom_id, wt.current_turn
+            FROM wars_tactical wt
+            JOIN wars w ON wt.war_id = w.war_id
+            LEFT JOIN alliances aa ON w.attacker_alliance_id = aa.alliance_id
+            LEFT JOIN alliances da ON w.defender_alliance_id = da.alliance_id
+            WHERE w.attacker_alliance_id = :aid OR w.defender_alliance_id = :aid
+            ORDER BY w.start_date DESC
+            """
+        ),
+        {"aid": aid},
+    ).fetchall()
+
+    wars = [
+        {
+            "war_id": r[0],
+            "attacker_alliance": r[1],
+            "defender_alliance": r[2],
+            "war_type": r[3],
+            "start_date": r[4],
+            "war_status": r[5],
+            "tick_interval_seconds": r[6],
+            "attacker_kingdom_id": r[7],
+            "defender_kingdom_id": r[8],
+            "current_turn": r[9],
+        }
+        for r in rows
+    ]
+    return {"wars": wars}
+
+
+@router.get("/view")
+def get_conflict_details(
+    war_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return detailed information about a specific war."""
+    rows = db.execute(
+        text(
+            """
+            SELECT wt.war_id, aa.name AS attacker_alliance, da.name AS defender_alliance,
+                   w.war_type, w.start_date, wt.war_status, wt.tick_interval_seconds,
+                   wt.attacker_kingdom_id, wt.defender_kingdom_id, wt.current_turn
+            FROM wars_tactical wt
+            JOIN wars w ON wt.war_id = w.war_id
+            LEFT JOIN alliances aa ON w.attacker_alliance_id = aa.alliance_id
+            LEFT JOIN alliances da ON w.defender_alliance_id = da.alliance_id
+            WHERE wt.war_id = :wid
+            """
+        ),
+        {"wid": war_id},
+    ).fetchall()
+    if not rows:
+        raise HTTPException(status_code=404, detail="War not found")
+    r = rows[0]
+    war = {
+        "war_id": r[0],
+        "attacker_alliance": r[1],
+        "defender_alliance": r[2],
+        "war_type": r[3],
+        "start_date": r[4],
+        "war_status": r[5],
+        "tick_interval_seconds": r[6],
+        "attacker_kingdom_id": r[7],
+        "defender_kingdom_id": r[8],
+        "current_turn": r[9],
+    }
+    return {"war": war}
+  </script>
 
 </body>
 </html>
