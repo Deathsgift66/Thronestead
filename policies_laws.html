@@ -42,8 +42,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ✅ Load Policies and Laws
 async function loadPoliciesAndLaws() {
-  const policyContainer = document.querySelector(".policy-options");
-  const lawContainer = document.querySelector(".law-options");
+  const policyContainer = document.querySelector(".policy-options fieldset");
+  const lawContainer = document.querySelector(".law-options fieldset");
   const summaryContainer = document.getElementById("summary-content");
 
   policyContainer.innerHTML = "<p>Loading policies...</p>";
@@ -54,6 +54,10 @@ async function loadPoliciesAndLaws() {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     const uid = session?.user?.id;
+    if (!token || !uid) {
+      alert("You are not logged in. Please refresh or log in again.");
+      return;
+    }
 
     const headers = {
       'Authorization': `Bearer ${token}`,
@@ -88,7 +92,7 @@ async function loadPoliciesAndLaws() {
         <p><strong>Category:</strong> ${escapeHTML(policy.category)}</p>
         <p><strong>Unlock:</strong> Castle Lvl ${policy.unlock_at_level}</p>
         <p><strong>Effect:</strong> ${escapeHTML(policy.effect_summary)}</p>
-        <button class="action-btn policy-select-btn" data-id="${policy.id}">Select</button>
+        <button class="action-btn policy-select-btn" data-id="${policy.id}" aria-pressed="${policy.id === activePolicy}">Select</button>
       `;
       policyContainer.appendChild(card);
     }
@@ -108,7 +112,7 @@ async function loadPoliciesAndLaws() {
         <p><strong>Category:</strong> ${escapeHTML(law.category)}</p>
         <p><strong>Unlock:</strong> Castle Lvl ${law.unlock_at_level}</p>
         <p><strong>Effect:</strong> ${escapeHTML(law.effect_summary)}</p>
-        <label><input type="checkbox" class="law-toggle" data-id="${law.id}" ${isActive ? "checked" : ""}> Active</label>
+        <label><input type="checkbox" class="law-toggle" data-id="${law.id}" ${isActive ? "checked" : ""} aria-checked="${isActive}"> Active</label>
       `;
       lawContainer.appendChild(card);
     }
@@ -117,6 +121,10 @@ async function loadPoliciesAndLaws() {
     document.querySelectorAll(".policy-select-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const policyId = parseInt(btn.dataset.id);
+        if (isNaN(policyId)) {
+          alert("Invalid policy.");
+          return;
+        }
         btn.disabled = true;
         try {
           await jsonFetch('/api/policies-laws/policy', {
@@ -242,14 +250,18 @@ function updateSummary(activePolicyId, activeLawsIds, policies, laws) {
 
       <!-- Policies Selection Area -->
       <section class="policy-options" role="region" aria-labelledby="policy-section-title">
-        <h3 id="policy-section-title">National Policies</h3>
-        <!-- JS will dynamically populate policy cards here -->
+        <fieldset>
+          <legend id="policy-section-title">National Policies</legend>
+          <!-- JS will dynamically populate policy cards here -->
+        </fieldset>
       </section>
 
       <!-- Laws Selection Area -->
       <section class="law-options" role="region" aria-labelledby="law-section-title">
-        <h3 id="law-section-title">Enacted Laws</h3>
-        <!-- JS will dynamically populate law cards here -->
+        <fieldset>
+          <legend id="law-section-title">Enacted Laws</legend>
+          <!-- JS will dynamically populate law cards here -->
+        </fieldset>
       </section>
 
       <!-- Summary Section -->
@@ -300,7 +312,10 @@ def catalogue(user_id: str = Depends(verify_jwt_token)):
             supabase.table("policies_laws_catalogue").select("*").order("id").execute()
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to fetch catalogue") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch catalogue: {exc}"
+        ) from exc
 
     entries = getattr(result, "data", result) or []
     return {"entries": entries}
@@ -319,7 +334,10 @@ def user_settings(user_id: str = Depends(verify_jwt_token)):
             .execute()
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to fetch user data") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch user data: {exc}"
+        ) from exc
 
     data = getattr(result, "data", result) or {}
     return {
@@ -340,7 +358,10 @@ def update_user_policy(
             "user_id", user_id
         ).execute()
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to update policy") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update policy: {exc}"
+        ) from exc
 
     return {"message": "Policy updated", "policy_id": payload.policy_id}
 
@@ -357,7 +378,10 @@ def update_user_laws(
             "user_id", user_id
         ).execute()
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Failed to update laws") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update laws: {exc}"
+        ) from exc
 
     return {"message": "Laws updated", "law_ids": payload.law_ids}
   </script>
