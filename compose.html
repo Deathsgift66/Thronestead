@@ -34,7 +34,7 @@ Developer: Deathsgift66
   <script type="module">
     import { supabase } from '/supabaseClient.js';
     import { authFetchJson } from '/Javascript/fetchJson.js';
-    import { showToast, getValue, setText } from '/Javascript/utils.js';
+    import { showToast, getValue, setText, escapeHTML } from '/Javascript/utils.js';
 
     let session;
 
@@ -50,6 +50,7 @@ Developer: Deathsgift66
       setupTabs();
       setupForms();
       prefillRecipient();
+      loadRecipients();
     });
 
     function setupTabs() {
@@ -74,7 +75,7 @@ Developer: Deathsgift66
       if (msgForm) {
         const preview = document.getElementById('msg-preview');
         msgForm.addEventListener('input', () => {
-          setText('msg-preview', getValue('msg-content'));
+          setText('msg-preview', escapeHTML(getValue('msg-content')));
         });
         msgForm.addEventListener('submit', async e => {
           e.preventDefault();
@@ -97,7 +98,7 @@ Developer: Deathsgift66
 
       if (noticeForm) {
         noticeForm.addEventListener('input', () => {
-          setText('notice-preview', getValue('notice-message'));
+          setText('notice-preview', escapeHTML(getValue('notice-message')));
         });
         noticeForm.addEventListener('submit', async e => {
           e.preventDefault();
@@ -143,7 +144,7 @@ Developer: Deathsgift66
 
       if (warForm) {
         warForm.addEventListener('input', () => {
-          setText('war-preview', getValue('war-reason'));
+          setText('war-preview', escapeHTML(getValue('war-reason')));
         });
         warForm.addEventListener('submit', async e => {
           e.preventDefault();
@@ -171,6 +172,22 @@ Developer: Deathsgift66
       if (val) {
         const input = document.getElementById('msg-recipient');
         if (input) input.value = val;
+      }
+    }
+
+    async function loadRecipients() {
+      const list = document.getElementById('recipient-list');
+      if (!list) return;
+      try {
+        const res = await authFetchJson('/api/players/lookup', session);
+        res.players.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.user_id;
+          opt.textContent = p.display_name;
+          list.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load recipients', err);
       }
     }
   </script>
@@ -221,7 +238,7 @@ Developer: Deathsgift66
       <form id="message-form">
         <div class="form-group">
           <label for="msg-recipient">Recipient</label>
-          <input id="msg-recipient" list="recipient-list" autocomplete="off" required />
+          <input id="msg-recipient" list="recipient-list" autocomplete="off" required pattern="[a-f0-9-]+" />
           <datalist id="recipient-list"></datalist>
         </div>
         <div class="form-group">
@@ -265,7 +282,7 @@ Developer: Deathsgift66
     <!-- Treaty Tab -->
     <section id="tab-treaty" class="tab-content" role="tabpanel">
       <form id="treaty-form">
-        <div class="form-group"><label for="treaty-partner">Partner Alliance ID</label><input id="treaty-partner" required /></div>
+        <div class="form-group"><label for="treaty-partner">Partner Alliance ID</label><input id="treaty-partner" required pattern="[a-f0-9-]+" /></div>
         <div class="form-group"><label for="treaty-type">Treaty Type</label>
           <select id="treaty-type" required>
             <option value="non_aggression">Non-Aggression</option>
@@ -281,7 +298,7 @@ Developer: Deathsgift66
     <!-- War Tab -->
     <section id="tab-war" class="tab-content" role="tabpanel">
       <form id="war-form">
-        <div class="form-group"><label for="war-defender">Defender Alliance ID</label><input id="war-defender" required /></div>
+        <div class="form-group"><label for="war-defender">Defender Alliance ID</label><input id="war-defender" required pattern="[a-f0-9-]+" /></div>
         <div class="form-group"><label for="war-reason">Reason for War</label><textarea id="war-reason" rows="6" required></textarea></div>
         <div class="action-buttons"><button type="submit" class="btn-fantasy">⚔️ Declare War</button></div>
       </form>

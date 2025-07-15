@@ -36,7 +36,7 @@ def propose_treaty(
                         OR (alliance_id = :pid AND partner_alliance_id = :aid))
                    AND treaty_type = :type
                    AND status = 'active'
-            """
+                """
             ),
             {"aid": alliance_id, "pid": partner_alliance_id, "type": treaty_type},
         ).fetchone()
@@ -45,6 +45,21 @@ def propose_treaty(
             raise ValueError(
                 "An active treaty of this type already exists between the two alliances."
             )
+
+        dup = db.execute(
+            text(
+                """
+                SELECT 1 FROM alliance_treaties
+                 WHERE alliance_id = :aid
+                   AND partner_alliance_id = :pid
+                   AND status = 'proposed'
+                """
+            ),
+            {"aid": alliance_id, "pid": partner_alliance_id},
+        ).fetchone()
+
+        if dup:
+            raise ValueError("A treaty proposal is already in progress.")
 
         db.execute(
             text(
