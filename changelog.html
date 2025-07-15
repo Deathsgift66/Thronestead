@@ -110,6 +110,13 @@ Developer: Deathsgift66
       });
     });
 
+    // Escape HTML entities for safer rendering
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, tag => (
+        {'&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'}[tag]
+      ));
+    }
+
     // Fetch changelog from backend and inject into HTML
     async function loadChangelog(forceRefresh = false) {
       const container = document.getElementById('changelog-entries');
@@ -136,10 +143,10 @@ Developer: Deathsgift66
           });
 
           section.innerHTML = `
-            <h3>${entry.title} <span class="version-tag">v${entry.version}</span></h3>
+            <h3 id="version-${entry.version}">${entry.title} <span class="version-tag">v${entry.version}</span></h3>
             <p class="entry-date">${date}</p>
             <ul>
-              ${entry.changes.map(change => `<li>🔧 ${change}</li>`).join('')}
+              ${entry.changes.map(change => `<li>🔧 ${escapeHTML(change)}</li>`).join('')}
             </ul>
           `;
 
