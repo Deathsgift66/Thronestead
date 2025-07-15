@@ -56,17 +56,31 @@ Developer: Deathsgift66
       userId = session.user.id;
 
       const warId = getWarIdFromURL();
+      if (warId === null) {
+        return;
+      }
       await fetchBattleResolution(warId);
 
       document.getElementById('refresh-btn').addEventListener('click', () => {
-        fetchBattleResolution(getWarIdFromURL());
+        const id = getWarIdFromURL();
+        if (id !== null) {
+          fetchBattleResolution(id);
+        }
       });
       document
         .getElementById('view-replay-btn')
         .addEventListener('click', () => {
-          window.location.href = `/battle_replay.html?war_id=${getWarIdFromURL()}`;
+          const id = getWarIdFromURL();
+          if (id !== null) {
+            window.location.href = `/battle_replay.html?war_id=${id}`;
+          }
         });
-      setInterval(() => fetchBattleResolution(getWarIdFromURL()), 30000);
+      setInterval(() => {
+        const id = getWarIdFromURL();
+        if (id !== null) {
+          fetchBattleResolution(id);
+        }
+      }, 30000);
 
       // log to audit_log (best effort)
       try {
@@ -75,18 +89,23 @@ Developer: Deathsgift66
           action: 'view_battle_resolution',
           details: `War ${warId}`
         });
-      } catch {
-        console.warn('audit log insert failed');
+      } catch (e) {
+        console.warn('Audit log failed:', e.message);
       }
     });
 
     async function fetchBattleResolution(warId) {
+      document.getElementById('resolution-summary').innerHTML = '<p>Loading results...</p>';
       const res = await fetch(`/api/battle/resolution?war_id=${warId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'X-User-ID': userId
         }
       });
+      if (!res.ok) {
+        document.getElementById('resolution-summary').textContent = '❌ Failed to load battle results.';
+        return;
+      }
       const data = await res.json();
       renderResolutionData(data);
       document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
@@ -180,7 +199,12 @@ Developer: Deathsgift66
 
     function getWarIdFromURL() {
       const params = new URLSearchParams(window.location.search);
-      return parseInt(params.get('war_id'), 10);
+      const warId = parseInt(params.get('war_id'), 10);
+      if (isNaN(warId)) {
+        alert('⚠ Invalid war ID');
+        return null;
+      }
+      return warId;
     }
   </script>
 
