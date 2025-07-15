@@ -36,17 +36,25 @@ Developer: Deathsgift66
   <script src="/Javascript/apiHelper.js" type="module"></script>
   <script src="/Javascript/cookieConsent.js" type="module"></script>
   <script type="module">
-import { supabase } from './supabaseClient.js';
+import { supabase } from '/Javascript/supabaseClient.js';
 import { showToast, openModal, closeModal, validateEmail } from './Javascript/utils.js';
 import { getEnvVar } from './Javascript/env.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 function showModal(modalId) {
+  const el = document.getElementById(modalId);
+  if (el) {
+    el.setAttribute('aria-hidden', 'false');
+  }
   openModal(modalId);
 }
 
 function hideModal(modalId) {
+  const el = document.getElementById(modalId);
+  if (el) {
+    el.setAttribute('aria-hidden', 'true');
+  }
   closeModal(modalId);
 }
 
@@ -151,6 +159,10 @@ async function handleLogin(e) {
 
   loginButton.disabled = true;
   loginButton.textContent = 'Entering Realm...';
+  const failSafe = setTimeout(() => {
+    loginButton.disabled = false;
+    loginButton.textContent = 'Enter the Realm';
+  }, 10000);
   showMessage('info', 'Authenticating...');
 
   try {
@@ -183,6 +195,7 @@ async function handleLogin(e) {
       showMessage('error', err.message);
     }
   } finally {
+    clearTimeout(failSafe);
     loginButton.disabled = false;
     loginButton.textContent = 'Enter the Realm';
   }
@@ -446,7 +459,7 @@ async function handleVerificationResend() {
   </div>
 </footer>
 
-  <!-- Backend route definition for reference -->
+  <!-- Backend route definition for reference
   <script type="text/python">
 # Project Name: Thronestead©
 # File Name: login_routes.py
@@ -767,6 +780,7 @@ def reauthenticate(
 
     return {"reauthenticated": True}
   </script>
+  -->
 
 </body>
 </html>
