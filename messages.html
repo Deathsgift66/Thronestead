@@ -47,14 +47,16 @@ Developer: Deathsgift66
     const countLabel = document.getElementById('message-count');
     const filterSelect = document.getElementById('category-filter');
     const markAllBtn = document.getElementById('mark-all-read');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-    const pageInfo = document.getElementById('page-info');
+    const prevBtns = document.querySelectorAll('.prev-page');
+    const nextBtns = document.querySelectorAll('.next-page');
+    const pageInfos = document.querySelectorAll('.page-info');
+    const unreadToggle = document.getElementById('unread-only');
 
     let messages = [];
     let currentPage = 1;
     const pageSize = 10;
     let currentFilter = 'all';
+    let showUnreadOnly = false;
     let session;
 
     const formatTime = iso => new Date(iso).toLocaleString();
@@ -95,6 +97,7 @@ Developer: Deathsgift66
         .order('sent_at', { ascending: false });
 
       if (currentFilter !== 'all') query = query.eq('category', currentFilter);
+      if (showUnreadOnly) query = query.eq('is_read', false);
 
       const { data, error } = await query;
       if (error) {
@@ -139,10 +142,12 @@ Developer: Deathsgift66
         }
       }
 
-      pageInfo.textContent = `Page ${currentPage} of ${Math.ceil(messages.length / pageSize)}`;
+      pageInfos.forEach(el => {
+        el.textContent = `Page ${currentPage} of ${Math.ceil(messages.length / pageSize)}`;
+      });
       countLabel.textContent = `Total Messages: ${messages.length}`;
-      prevBtn.disabled = currentPage === 1;
-      nextBtn.disabled = end >= messages.length;
+      prevBtns.forEach(btn => (btn.disabled = currentPage === 1));
+      nextBtns.forEach(btn => (btn.disabled = end >= messages.length));
       applyKingdomLinks();
     }
 
@@ -198,14 +203,22 @@ Developer: Deathsgift66
     });
 
     markAllBtn?.addEventListener('click', markAllAsRead);
-    prevBtn?.addEventListener('click', () => {
-      currentPage--;
-      renderMessages();
+    unreadToggle?.addEventListener('change', () => {
+      showUnreadOnly = unreadToggle.checked;
+      loadInbox();
     });
-    nextBtn?.addEventListener('click', () => {
-      currentPage++;
-      renderMessages();
-    });
+    prevBtns.forEach(btn =>
+      btn.addEventListener('click', () => {
+        currentPage--;
+        renderMessages();
+      })
+    );
+    nextBtns.forEach(btn =>
+      btn.addEventListener('click', () => {
+        currentPage++;
+        renderMessages();
+      })
+    );
   </script>
 
   <!-- Global Assets -->
@@ -257,7 +270,14 @@ Developer: Deathsgift66
         <option value="battle">Battle</option>
         <option value="system">System</option>
       </select>
+      <label><input type="checkbox" id="unread-only" /> Unread Only</label>
       <button class="royal-button" id="mark-all-read" aria-label="Mark all messages as read">Mark All Read</button>
+    </div>
+
+    <div class="pagination top-page">
+      <button class="royal-button prev-page" aria-label="Previous page">Prev</button>
+      <span class="page-info"></span>
+      <button class="royal-button next-page" aria-label="Next page">Next</button>
     </div>
 
     <!-- Message Count -->
@@ -268,9 +288,9 @@ Developer: Deathsgift66
       <!-- JS dynamically inserts messages here -->
     </div>
     <div class="pagination">
-      <button id="prev-page" class="royal-button" aria-label="Previous page">Prev</button>
-      <span id="page-info"></span>
-      <button id="next-page" class="royal-button" aria-label="Next page">Next</button>
+      <button class="royal-button prev-page" aria-label="Previous page">Prev</button>
+      <span class="page-info"></span>
+      <button class="royal-button next-page" aria-label="Next page">Next</button>
     </div>
 
   </section>
