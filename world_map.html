@@ -38,13 +38,12 @@ Developer: Deathsgift66
     // Developer: Deathsgift66
     // world_map.js — Tile-based world map engine for Thronestead
     import { supabase } from './supabaseClient.js';
+    import { showToast } from './Javascript/utils.js';
 
     let currentSession;
     let mapChannel;
-
-    const canvas = document.getElementById('world-canvas');
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) throw new Error('world-canvas element missing');
+    let canvas;
+    let ctx;
 
     let zoom = 1;
     let offsetX = 0;
@@ -66,6 +65,10 @@ Developer: Deathsgift66
     };
 
     window.addEventListener('DOMContentLoaded', async () => {
+      canvas = document.getElementById('world-canvas');
+      ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) throw new Error('world-canvas element missing');
+
       const {
         data: { session }
       } = await supabase.auth.getSession();
@@ -159,6 +162,10 @@ Developer: Deathsgift66
 
     async function renderVisibleTiles() {
       if (!ctx) return;
+      if (!currentSession || !currentSession.access_token) {
+        window.location.href = 'login.html';
+        return;
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const cols = Math.floor(canvas.width / (TILE_SIZE * zoom)) + 2;
       const rows = Math.floor(canvas.height / (TILE_SIZE * zoom)) + 2;
@@ -186,6 +193,7 @@ Developer: Deathsgift66
         tiles.forEach(drawTile);
       } catch (err) {
         console.error('Failed to render tiles:', err);
+        showToast('Map failed to load. Try refreshing.');
       }
     }
 
@@ -193,8 +201,8 @@ Developer: Deathsgift66
       const terrain = tile.terrain_type || 'unknown';
       const color = TERRAIN_COLORS[terrain] || TERRAIN_COLORS.unknown;
 
-      const screenX = (tile.x * TILE_SIZE + offsetX) * zoom;
-      const screenY = (tile.y * TILE_SIZE + offsetY) * zoom;
+      const screenX = Math.round((tile.x * TILE_SIZE + offsetX) * zoom);
+      const screenY = Math.round((tile.y * TILE_SIZE + offsetY) * zoom);
 
       ctx.fillStyle = color;
       ctx.fillRect(screenX, screenY, TILE_SIZE * zoom, TILE_SIZE * zoom);
