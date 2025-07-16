@@ -6,9 +6,19 @@
   <title>Emergency Tools | Thronestead</title>
   <meta name="description" content="Developer emergency tools for rapid fixes." />
   <meta name="robots" content="noindex, nofollow" />
+  <meta name="author" content="Thronestead Dev Team" />
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/admin_emergency_tools.css" rel="stylesheet" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Thronestead Emergency Tools",
+    "applicationCategory": "DeveloperUtility",
+    "url": "https://www.thronestead.com/admin_emergency_tools.html"
+  }
+  </script>
   <script type="module">
     window.requireAdmin = true;
   </script>
@@ -25,39 +35,44 @@
   </noscript>
   <div id="navbar-container"></div>
   <header class="kr-top-banner" aria-label="Emergency Tools Banner">Thronestead – Emergency Tools</header>
-  <main class="main-container" aria-label="Emergency Tools Interface">
+  <main role="main" class="main-container" aria-label="Emergency Tools Interface">
     <div class="container">
       <section aria-label="Reprocess War Tick">
         <h2>Reprocess War Tick</h2>
+        <label for="tick-war-id">War ID</label>
         <input id="tick-war-id" type="number" placeholder="War ID" aria-label="War ID" />
         <button id="reprocess-tick-btn">Reprocess Tick</button>
       </section>
       <section aria-label="Recalculate Resources">
         <h2>Recalculate Resources</h2>
+        <label for="recalc-kingdom-id">Kingdom ID</label>
         <input id="recalc-kingdom-id" type="number" placeholder="Kingdom ID" aria-label="Kingdom ID" />
         <button id="recalc-res-btn">Recalculate</button>
       </section>
       <section aria-label="Rollback Alliance Quest">
         <h2>Rollback Quest</h2>
+        <label for="quest-alliance-id">Alliance ID</label>
         <input id="quest-alliance-id" type="number" placeholder="Alliance ID" aria-label="Alliance ID" />
+        <label for="quest-code">Quest Code</label>
         <input id="quest-code" type="text" placeholder="Quest Code" aria-label="Quest Code" />
         <button id="rollback-quest-btn">Rollback</button>
       </section>
       <section aria-label="Backup Queues">
         <h2>Backup Queues</h2>
         <button id="load-backups-btn">Load Queues</button>
+        <label for="backup-filter">Filter Backups</label>
         <input id="backup-filter" type="text" placeholder="Filter backups" aria-label="Filter backups" />
         <div id="backup-time" class="backup-time"></div>
-        <ul id="backup-list"></ul>
+        <ul id="backup-list" role="list"></ul>
       </section>
     </div>
   </main>
 
   <!-- Confirmation Modal -->
-  <div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true" inert>
+  <div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true" hidden>
     <div class="modal-content">
       <h3 id="confirm-title">Confirm Action</h3>
-      <p id="confirm-body">Are you sure? This action cannot be undone.</p>
+      <p id="confirm-body" aria-describedby="confirm-body">Are you sure? This action cannot be undone.</p>
       <div class="modal-actions">
         <button id="confirm-yes" class="btn">Yes</button>
         <button id="confirm-no" class="btn">Cancel</button>
@@ -86,7 +101,10 @@
     async function postAction(url, payload) {
       const res = await authFetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': sessionStorage.getItem('csrf_token') || ''
+        },
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(await res.text());
@@ -115,16 +133,17 @@
           const li = document.createElement('li');
           li.dataset.queue = queue.toLowerCase();
           li.textContent = escapeHTML(queue);
+          li.setAttribute('role', 'listitem');
           list.appendChild(li);
         });
         const time = document.getElementById('backup-time');
         if (time) time.textContent = `Last loaded: ${new Date().toLocaleString()}`;
         applyFilter();
-        showToast('Backups loaded');
+        showToast('Backups loaded', 'success');
       } catch (err) {
         console.error('❌ Failed to load backups:', err);
         list.innerHTML = '<li>Error loading queues</li>';
-        showToast('Failed to load backups');
+        showToast('Failed to load backups', 'error');
       } finally {
         btn?.removeAttribute('disabled');
         toggleLoading(false);
@@ -167,16 +186,25 @@
             if (typeof config.action === 'function') return config.action(btn);
 
             const values = config.inputs.map(id => document.getElementById(id)?.value.trim());
-            if (values.some(v => !v)) return showToast('⚠️ All fields required');
+            if (values.some(v => !v)) return showToast('⚠️ All fields required', 'error');
+            for (let i = 0; i < config.inputs.length; i++) {
+              const el = document.getElementById(config.inputs[i]);
+              if (el && el.type === 'number') {
+                const num = Number(values[i]);
+                if (!Number.isInteger(num) || num <= 0) {
+                  return showToast('Invalid ID', 'error');
+                }
+              }
+            }
 
             btn.disabled = true;
             toggleLoading(true);
             try {
               await postAction(config.endpoint, config.payload(values));
-              showToast(`✅ ${config.success}`);
+              showToast(`✅ ${config.success}`, 'success');
             } catch (err) {
               console.error(`❌ ${config.endpoint} failed:`, err);
-              showToast(`❌ ${err.message}`);
+              showToast(`❌ ${escapeHTML(err.message || '')}`, 'error');
             } finally {
               btn.disabled = false;
               toggleLoading(false);
@@ -203,6 +231,14 @@
       confirmNo?.addEventListener('click', () => {
         closeModal('confirm-modal');
         pendingAction = null;
+      });
+
+      document.addEventListener('keydown', e => {
+        const modal = document.getElementById('confirm-modal');
+        if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+          closeModal('confirm-modal');
+          pendingAction = null;
+        }
       });
     });
   </script>

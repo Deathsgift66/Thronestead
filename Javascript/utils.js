@@ -73,6 +73,7 @@ export function showToast(msg, type = 'info') {
 export function toggleLoading(show) {
   const overlay = document.getElementById('loading-overlay');
   if (overlay) overlay.classList.toggle('visible', show);
+  document.body.classList.toggle('loading', show);
 }
 
 /**
