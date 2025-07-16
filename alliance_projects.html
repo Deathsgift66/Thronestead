@@ -158,6 +158,9 @@ let projectChannel = null;
 const loadedTabs = { completed: false, catalogue: false };
 let cachedAlliance = null;
 let startingProject = false;
+let availableData = [];
+let completedData = [];
+let catalogueData = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
@@ -231,6 +234,8 @@ function setupTabs() {
       }
     });
   });
+  document.getElementById('available-sort')?.addEventListener('change', () => renderAvailable(availableData));
+  document.getElementById('completed-sort')?.addEventListener('change', () => renderCompleted(completedData));
 }
 
 async function loadAllLists() {
@@ -262,12 +267,13 @@ async function getAllianceInfo(force = false) {
 async function loadAvailable() {
   const container = document.getElementById('available-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  renderSkeletons(container);
 
   try {
     const { allianceId } = await getAllianceInfo();
     const json = await authJsonFetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
-    renderAvailable(json.projects || []);
+    availableData = json.projects || [];
+    renderAvailable(availableData);
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
       console.error('loadAvailable', err);
@@ -278,23 +284,28 @@ async function loadAvailable() {
 
 function renderAvailable(list) {
   const container = document.getElementById('available-projects-list');
-  container.innerHTML = list.length
+  const sort = document.getElementById('available-sort')?.value || 'name';
+  const sorted = sortProjects(list, sort);
+  container.innerHTML = sorted.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
+
+  availableData = list;
 
   if (!window.user) {
     console.warn('⚠️ No user context found. Permissions may be unavailable.');
   }
   const canStart = window.user?.permissions?.includes('can_manage_projects');
-  list.forEach(p => {
+  sorted.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card';
     card.setAttribute('role', 'region');
     card.setAttribute('aria-label', `Project: ${p.project_name}`);
+    const cost = formatCostFromColumns(p);
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)}</h3>
       <p>${escapeHTML(p.description || '')}</p>
-      <p>Costs: ${formatCostFromColumns(p)}</p>
+      <p class="project-cost" title="${cost}">Costs: ${cost}</p>
       <p>Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
       ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}">Start Project</button>` : ''}
     `;
@@ -309,7 +320,7 @@ function renderAvailable(list) {
 async function loadInProgress() {
   const container = document.getElementById('in-progress-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  renderSkeletons(container);
 
   try {
     const { allianceId } = await getAllianceInfo();
@@ -340,12 +351,14 @@ function renderInProgress(list) {
 
     card.innerHTML = `
       <h3>${escapeHTML(title)}</h3>
-      <progress value="${percent}" max="100"></progress>
+      <div class="progress-bar"><div class="progress-bar-fill" style="width:0%"></div></div>
       <span>${percent}% - ETA ${eta}</span>
       <div class="contrib-summary">Loading...</div>
     `;
 
     container.appendChild(card);
+    const fill = card.querySelector('.progress-bar-fill');
+    requestAnimationFrame(() => { fill.style.width = `${percent}%`; });
     loadContributions(p.project_key, card.querySelector('.contrib-summary'));
   });
 }
@@ -394,12 +407,20 @@ async function loadContributions(key, element) {
 async function loadCompleted() {
   const container = document.getElementById('completed-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  const cached = sessionStorage.getItem('completedProjects');
+  if (cached) {
+    completedData = JSON.parse(cached);
+    renderCompleted(completedData);
+  } else {
+    renderSkeletons(container);
+  }
 
   try {
     const { allianceId } = await getAllianceInfo();
     const json = await authJsonFetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
-    renderCompleted(json.projects || []);
+    completedData = json.projects || [];
+    sessionStorage.setItem('completedProjects', JSON.stringify(completedData));
+    renderCompleted(completedData);
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
       console.error('loadCompleted', err);
@@ -410,11 +431,15 @@ async function loadCompleted() {
 
 function renderCompleted(list) {
   const container = document.getElementById('completed-projects-list');
-  container.innerHTML = list.length
+  const sort = document.getElementById('completed-sort')?.value || 'name';
+  const sorted = sortProjects(list, sort);
+  container.innerHTML = sorted.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
 
-  list.forEach(p => {
+  completedData = list;
+
+  sorted.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card completed-project';
     card.setAttribute('role', 'region');
@@ -431,11 +456,19 @@ function renderCompleted(list) {
 async function loadCatalogue() {
   const container = document.getElementById('catalogue-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  const cached = sessionStorage.getItem('catalogueProjects');
+  if (cached) {
+    catalogueData = JSON.parse(cached);
+    renderCatalogue(catalogueData);
+  } else {
+    renderSkeletons(container);
+  }
 
   try {
     const json = await authJsonFetch('/api/alliance/projects/catalogue');
-    renderCatalogue(json.projects || []);
+    catalogueData = json.projects || [];
+    sessionStorage.setItem('catalogueProjects', JSON.stringify(catalogueData));
+    renderCatalogue(catalogueData);
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
       console.error('loadCatalogue', err);
@@ -449,6 +482,8 @@ function renderCatalogue(list) {
   container.innerHTML = list.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
+
+  catalogueData = list;
 
   list.forEach(p => {
     const card = document.createElement('article');
@@ -542,6 +577,34 @@ function formatCostFromColumns(obj) {
     .map(key => `${obj[key]} ${escapeHTML(key.replace(/_cost$/, ''))}`)
     .join(', ') || 'N/A';
 }
+
+function totalCost(obj) {
+  return RESOURCE_KEYS
+    .filter(key => typeof obj[key] === 'number' && obj[key] > 0)
+    .reduce((sum, key) => sum + obj[key], 0);
+}
+
+function sortProjects(list, sortBy) {
+  const key = sortBy || 'name';
+  const sorted = [...list];
+  if (key === 'category') {
+    sorted.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+  } else if (key === 'cost') {
+    sorted.sort((a, b) => totalCost(a) - totalCost(b));
+  } else {
+    sorted.sort((a, b) => (a.project_name || a.name || '').localeCompare(b.project_name || b.name || ''));
+  }
+  return sorted;
+}
+
+function renderSkeletons(container, count = 3) {
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const skel = document.createElement('article');
+    skel.className = 'project-card skeleton';
+    container.appendChild(skel);
+  }
+}
 </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
@@ -594,6 +657,12 @@ function formatCostFromColumns(obj) {
 
       <!-- Tabs Content -->
       <section id="available-tab" class="tab-content active" aria-labelledby="available-tab">
+        <label for="available-sort" class="visually-hidden">Sort Available Projects</label>
+        <select id="available-sort" class="sort-select">
+          <option value="name">Name</option>
+          <option value="category">Category</option>
+          <option value="cost">Cost</option>
+        </select>
         <div class="project-list" id="available-projects-list" aria-live="polite">
           <!-- JS will inject available projects -->
         </div>
@@ -606,6 +675,12 @@ function formatCostFromColumns(obj) {
       </section>
 
       <section id="completed-tab" class="tab-content" aria-labelledby="completed-tab">
+        <label for="completed-sort" class="visually-hidden">Sort Completed Projects</label>
+        <select id="completed-sort" class="sort-select">
+          <option value="name">Name</option>
+          <option value="category">Category</option>
+          <option value="cost">Cost</option>
+        </select>
         <div class="project-list" id="completed-projects-list">
           <!-- JS will inject completed projects -->
         </div>

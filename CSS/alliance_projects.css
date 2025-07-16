@@ -90,11 +90,34 @@ h2, h3 {
   gap: 1rem;
 }
 
+.sort-select {
+  margin-bottom: 0.5rem;
+}
+
 .project-card {
   background: rgba(255,255,255,0.1);
   border: 1px solid var(--gold);
   padding: 1rem;
   border-radius: 8px;
+}
+
+.project-card.skeleton {
+  position: relative;
+  overflow: hidden;
+  min-height: 6rem;
+}
+
+.project-card.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: skeleton 1.2s infinite;
+}
+
+@keyframes skeleton {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
 }
 
 .progress-bar {
