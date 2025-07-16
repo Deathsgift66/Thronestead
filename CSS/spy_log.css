@@ -55,3 +55,25 @@ body {
 #realtime-indicator.disconnected {
   color: var(--error);
 }
+
+.scroll-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.spy-log-table {
+  min-width: 600px;
+  table-layout: auto;
+}
+
+.spy-log-table .success {
+  color: var(--success);
+}
+
+.spy-log-table .fail {
+  color: var(--error);
+}
+
+.spy-log-table .detected {
+  color: var(--warning);
+}
