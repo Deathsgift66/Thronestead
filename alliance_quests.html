@@ -56,6 +56,8 @@ Developer: Deathsgift66
 
     let modalEl;
     let filterDebounce;
+    let searchDebounce;
+    let inAction = false;
     let lastFocusedEl = null;
     let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
@@ -82,6 +84,7 @@ Developer: Deathsgift66
       } catch (err) {
         console.error('Quest fetch error:', err);
         document.getElementById('quest-board').textContent = 'Failed to load quests.';
+        showToast('Failed to load quests', 'error');
       } finally {
         toggleLoading(false);
       }
@@ -131,8 +134,11 @@ Developer: Deathsgift66
       });
 
       document.getElementById('quest-search')?.addEventListener('input', () => {
-        currentPage = 1;
-        renderQuestPage();
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+          currentPage = 1;
+          renderQuestPage();
+        }, 250);
       });
 
       document.querySelectorAll('.prev-page').forEach(btn =>
@@ -159,10 +165,6 @@ Developer: Deathsgift66
 
       modalEl = document.getElementById('quest-modal');
       modalEl.querySelector('.close-button').addEventListener('click', closeQuestModal);
-      modalEl.addEventListener('keydown', trapFocus);
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeQuestModal();
-      });
     }
 
     /**
@@ -184,6 +186,7 @@ Developer: Deathsgift66
      * Populate and display the quest modal.
      */
     async function openQuestModal(id) {
+      inAction = false;
       lastFocusedEl = document.activeElement;
       try {
         toggleLoading(true);
@@ -222,7 +225,8 @@ Developer: Deathsgift66
           claimBtn.classList.toggle('hidden', q.status !== 'completed' || !q.claimable);
 
           acceptBtn.onclick = async () => {
-            if (!confirm('Accept this quest?')) return;
+            if (inAction || !confirm('Accept this quest?')) return;
+            inAction = true;
             acceptBtn.disabled = true;
             toggleLoading(true);
             try {
@@ -243,10 +247,12 @@ Developer: Deathsgift66
             } finally {
               toggleLoading(false);
               acceptBtn.disabled = false;
+              inAction = false;
             }
           };
           claimBtn.onclick = async () => {
-            if (!confirm('Claim reward for this quest?')) return;
+            if (inAction || !confirm('Claim reward for this quest?')) return;
+            inAction = true;
             claimBtn.disabled = true;
             toggleLoading(true);
             try {
@@ -267,12 +273,16 @@ Developer: Deathsgift66
             } finally {
               toggleLoading(false);
               claimBtn.disabled = false;
+              inAction = false;
             }
           };
 
           document.getElementById('role-check-message').textContent = q.role_check_message || '';
           document.getElementById('modal-quest-leader-note').textContent = q.leader_note || '';
 
+          document.querySelector('main')?.setAttribute('aria-hidden', 'true');
+          modalEl.addEventListener('keydown', trapFocus);
+          document.addEventListener('keydown', handleEsc);
           modalEl.classList.add('visible');
           modalEl.focus();
         } catch (err) {
@@ -283,17 +293,22 @@ Developer: Deathsgift66
         }
     }
 
-    /** Format ms to HH:MM:SS */
+    /** Format ms to human readable duration */
     function formatDuration(ms) {
       if (!ms || ms < 0) return '0s';
       const s = Math.floor(ms / 1000);
       const h = Math.floor(s / 3600);
       const m = Math.floor((s % 3600) / 60);
       const secs = s % 60;
-      return `${h}h ${m}m ${secs}s`;
+      const parts = [];
+      if (h) parts.push(`${h}h`);
+      if (m) parts.push(`${m}m`);
+      if (secs || parts.length === 0) parts.push(`${secs}s`);
+      return parts.join(' ');
     }
 
     let countdownInterval;
+    let modalCountdownId;
     function initCountdowns() {
       clearInterval(countdownInterval);
       countdownInterval = setInterval(() => {
@@ -310,17 +325,22 @@ Developer: Deathsgift66
     }
 
     function startModalCountdown(endTime) {
+      clearTimeout(modalCountdownId);
       const el = document.getElementById('modal-time-left');
       const update = () => {
         const diff = new Date(endTime) - Date.now();
         el.textContent = formatDuration(diff);
-        if (diff > 0) setTimeout(update, 1000);
+        if (diff > 0) modalCountdownId = setTimeout(update, 1000);
       };
       update();
     }
 
     function closeQuestModal() {
       modalEl.classList.remove('visible');
+      modalEl.removeEventListener('keydown', trapFocus);
+      document.removeEventListener('keydown', handleEsc);
+      document.querySelector('main')?.removeAttribute('aria-hidden');
+      clearTimeout(modalCountdownId);
       if (lastFocusedEl) lastFocusedEl.focus();
     }
 
@@ -341,6 +361,10 @@ Developer: Deathsgift66
       }
     }
 
+    function handleEsc(e) {
+      if (e.key === 'Escape') closeQuestModal();
+    }
+
     async function loadHeroes() {
       const ul = document.getElementById('hero-list');
       ul.innerHTML = '<li>Loading heroes...</li>';
@@ -355,6 +379,7 @@ Developer: Deathsgift66
         });
       } catch {
         ul.innerHTML = '<li>Failed to load heroes.</li>';
+        showToast('Failed to load heroes', 'error');
       }
     }
 
@@ -365,12 +390,14 @@ Developer: Deathsgift66
       document.body.setAttribute('data-theme', saved);
       btn.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
       btn.setAttribute('aria-pressed', saved === 'dark');
+      btn.setAttribute('aria-label', saved === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
       btn.addEventListener('click', () => {
         const current = document.body.getAttribute('data-theme') === 'dark' ? 'parchment' : 'dark';
         document.body.setAttribute('data-theme', current);
         localStorage.setItem('theme', current);
         btn.textContent = current === 'dark' ? 'Light Mode' : 'Dark Mode';
         btn.setAttribute('aria-pressed', current === 'dark');
+        btn.setAttribute('aria-label', current === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
       });
     }
 
@@ -388,6 +415,12 @@ Developer: Deathsgift66
         .eq('user_id', user.id)
         .single();
       if (alliance?.alliance_id) initRealtime(alliance.alliance_id);
+      supabase.auth.onAuthStateChange(() => {
+        if (questsChannel) {
+          supabase.removeChannel(questsChannel);
+          questsChannel = null;
+        }
+      });
       const lastTab = sessionStorage.getItem('lastTab') || 'active';
       document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.filter-tab[data-filter="${lastTab}"]`);
@@ -397,6 +430,10 @@ Developer: Deathsgift66
     });
 
     function initRealtime(aid) {
+      if (questsChannel) {
+        supabase.removeChannel(questsChannel);
+        questsChannel = null;
+      }
       questsChannel = supabase
         .channel('public:quest_alliance_tracking')
         .on(
@@ -409,7 +446,10 @@ Developer: Deathsgift66
         )
         .subscribe();
       window.addEventListener('beforeunload', async () => {
-        if (questsChannel) await supabase.removeChannel(questsChannel);
+        if (questsChannel) {
+          await supabase.removeChannel(questsChannel);
+          questsChannel = null;
+        }
       });
     }
   </script>
@@ -473,10 +513,10 @@ Developer: Deathsgift66
 
       <!-- Quest Action Button -->
       <section class="quest-actions" aria-label="Quest Actions">
-        <button class="action-btn medieval-banner-btn" id="start-new-quest" title="Start a New Alliance Quest">
+        <button class="action-btn medieval-banner-btn" id="start-new-quest" title="Start a New Alliance Quest" disabled>
           <span class="plus-icon">➕</span> Start New Quest
         </button>
-        <button id="theme-toggle" class="action-btn" aria-pressed="false">Dark Mode</button>
+        <button id="theme-toggle" class="action-btn" aria-pressed="false" aria-label="Toggle theme">Dark Mode</button>
       </section>
     </div>
 
