@@ -96,3 +96,9 @@ body {
   }
 }
 
+.error-inline {
+  color: var(--error);
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+}
+

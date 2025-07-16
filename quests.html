@@ -36,32 +36,52 @@ Developer: Deathsgift66
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, showToast } from './utils.js';
+    import {
+      escapeHTML,
+      showToast,
+      openModal,
+      closeModal,
+      authFetch
+    } from './utils.js';
 
     let questChannel = null;
+    let cachedKingdomId = null;
+    let pendingQuest = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       await loadKingdomQuests();
 
-      // Subscribe to live updates on the quest tracking table
-      questChannel = supabase
-        .channel('public:quest_kingdom_tracking')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'quest_kingdom_tracking'
-          },
-          async () => {
-            await loadKingdomQuests();
-          }
-        )
-        .subscribe();
+      if (cachedKingdomId) {
+        questChannel = supabase
+          .channel('public:quest_kingdom_tracking')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'quest_kingdom_tracking',
+              filter: `kingdom_id=eq.${cachedKingdomId}`
+            },
+            async () => {
+              await loadKingdomQuests();
+            }
+          )
+          .subscribe();
 
-      // Cleanup on unload
-      window.addEventListener('beforeunload', () => {
-        if (questChannel) supabase.removeChannel(questChannel);
+        window.addEventListener('beforeunload', () => {
+          if (questChannel) supabase.removeChannel(questChannel);
+        });
+      }
+
+      document.getElementById('accept-yes')?.addEventListener('click', () => {
+        if (!pendingQuest) return;
+        acceptQuest(pendingQuest.code, pendingQuest.btn);
+        pendingQuest = null;
+        closeModal('accept-modal');
+      });
+      document.getElementById('accept-no')?.addEventListener('click', () => {
+        pendingQuest = null;
+        closeModal('accept-modal');
       });
     });
 
@@ -78,14 +98,17 @@ Developer: Deathsgift66
         const {
           data: { user }
         } = await supabase.auth.getUser();
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('kingdom_id')
-          .eq('user_id', user.id)
-          .single();
-        if (userError) throw userError;
+        if (!cachedKingdomId) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('kingdom_id')
+            .eq('user_id', user.id)
+            .single();
+          if (userError) throw userError;
+          cachedKingdomId = userData.kingdom_id;
+        }
 
-        const kingdomId = userData.kingdom_id;
+        const kingdomId = cachedKingdomId;
         const castleLevel = window.playerProgression?.castleLevel || 1;
 
         const [catalogue, tracking] = await Promise.all([
@@ -162,25 +185,11 @@ Developer: Deathsgift66
       }
 
       document.querySelectorAll('.accept-quest-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
+        btn.addEventListener('click', () => {
           const questCode = btn.dataset.code;
-          if (!confirm(`Accept quest "${questCode}"?`)) return;
-          btn.disabled = true;
-          try {
-            const res = await fetch('/api/kingdom/accept_quest', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ quest_code: questCode })
-            });
-            if (!res.ok) throw new Error('Failed to accept quest');
-            showToast('Quest accepted!');
-            await loadKingdomQuests();
-          } catch (err) {
-            console.error('❌ Accept failed:', err);
-            showToast('Failed to accept quest');
-          } finally {
-            btn.disabled = false;
-          }
+          pendingQuest = { code: questCode, btn };
+          document.getElementById('accept-body').textContent = `Accept quest "${questCode}"?`;
+          openModal('accept-modal');
         });
       });
     }
@@ -196,16 +205,18 @@ Developer: Deathsgift66
 
       for (const quest of list) {
         const def = catalogue.find(c => c.quest_code === quest.quest_code);
-        const remaining = Math.max(
-          0,
-          Math.floor((new Date(quest.ends_at).getTime() - Date.now()) / 1000)
-        );
+        const endMs = Date.parse(quest.ends_at);
+        const remaining = Number.isFinite(endMs)
+          ? Math.max(0, Math.floor((endMs - Date.now()) / 1000))
+          : 0;
         const card = document.createElement('div');
         card.className = 'quest-card';
         card.innerHTML = `
       <h3>${escapeHTML(def?.name || quest.quest_code)}</h3>
       <p>${escapeHTML(def?.description || '')}</p>
-      <p>Time Remaining: <span class="countdown" data-ends-at="${quest.ends_at}">${formatTime(remaining)}</span></p>
+      <p>Time Remaining: <span class="countdown" data-ends-at="${quest.ends_at}">${
+        Number.isFinite(endMs) ? formatTime(remaining) : 'Unknown'
+      }</span></p>
       <p>Progress: ${quest.progress}%</p>
     `;
         container.appendChild(card);
@@ -228,7 +239,10 @@ Developer: Deathsgift66
         card.innerHTML = `
       <h3>${escapeHTML(def?.name || quest.quest_code)}</h3>
       <p>${escapeHTML(def?.description || '')}</p>
-      <p>Completed on: ${new Date(quest.ends_at).toLocaleString()}</p>
+      <p>Completed on: ${(() => {
+        const d = new Date(quest.ends_at);
+        return isNaN(d) ? 'Unknown' : d.toLocaleString();
+      })()}</p>
     `;
         container.appendChild(card);
       }
@@ -237,18 +251,21 @@ Developer: Deathsgift66
     function startCountdownTimers() {
       const elements = document.querySelectorAll('.countdown');
       elements.forEach(el => {
-        const endsAt = new Date(el.dataset.endsAt).getTime();
-        if (Date.now() >= endsAt) {
-          el.textContent = 'Completed!';
+        const endsAt = Date.parse(el.dataset.endsAt);
+        if (!Number.isFinite(endsAt)) {
+          el.textContent = 'Invalid date';
           return;
         }
         const update = () => {
           const seconds = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
           el.textContent = formatTime(seconds);
-          if (seconds > 0) requestAnimationFrame(update);
-          else el.textContent = 'Completed!';
+          if (seconds <= 0) {
+            clearInterval(interval);
+            el.textContent = 'Completed!';
+          }
         };
         update();
+        const interval = setInterval(update, 1000);
       });
     }
 
@@ -272,6 +289,39 @@ Developer: Deathsgift66
       } catch {
         return `<li>${escapeHTML(String(json))}</li>`;
       }
+    }
+
+    function showInlineError(btn, msg) {
+      let span = btn.nextElementSibling;
+      if (!span || !span.classList.contains('error-inline')) {
+        span = document.createElement('span');
+        span.className = 'error-inline';
+        btn.insertAdjacentElement('afterend', span);
+      }
+      span.textContent = msg;
+      setTimeout(() => span.remove(), 3000);
+    }
+
+    function acceptQuest(code, btn) {
+      btn.disabled = true;
+      authFetch('/api/kingdom/accept_quest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quest_code: code })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Request failed');
+          showToast('Quest accepted!');
+          return loadKingdomQuests();
+        })
+        .catch(err => {
+          console.error('❌ Accept failed:', err);
+          showToast('Failed to accept quest');
+          showInlineError(btn, 'Failed to accept');
+        })
+        .finally(() => {
+          btn.disabled = false;
+        });
     }
   </script>
 
@@ -346,6 +396,18 @@ Developer: Deathsgift66
     </section>
 
   </main>
+
+  <!-- Accept Confirmation Modal -->
+  <div id="accept-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="accept-title" aria-hidden="true" inert>
+    <div class="modal-content">
+      <h3 id="accept-title">Accept Quest</h3>
+      <p id="accept-body">Are you sure?</p>
+      <div class="modal-actions">
+        <button id="accept-yes" class="btn">Yes</button>
+        <button id="accept-no" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="site-footer">
