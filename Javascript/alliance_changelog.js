@@ -21,8 +21,9 @@ export async function fetchChangelog() {
       return params;
     }, new URLSearchParams());
 
-    const data = await authFetchJson(`/api/alliance/changelog?${filters}`, session);
-    changelogData = data.logs || [];
+    filters.set('ts', Date.now());
+    const data = await authFetchJson(`/api/alliance/changelog?${filters}`);
+    changelogData = Array.isArray(data.logs) ? data.logs : [];
 
     updateLastUpdated(data.last_updated);
     renderChangelog(changelogData);
@@ -53,15 +54,22 @@ function renderChangelog(logs) {
   }
 
   container.innerHTML = logs.map(log => `
-    <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry">
+    <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry" aria-expanded="true">
       <div class="timeline-bullet"></div>
       <div class="timeline-content">
         <span class="log-type">${escapeHTML(log.event_type.toUpperCase())}</span>
         <p class="log-text">${escapeHTML(log.description)}</p>
-        <time datetime="${log.timestamp}">${new Date(log.timestamp).toLocaleString()}</time>
+        <time datetime="${log.timestamp}">${!log.timestamp || isNaN(new Date(log.timestamp)) ? '—' : new Date(log.timestamp).toLocaleString()}</time>
       </div>
     </li>
   `).join('');
+
+  container.querySelectorAll('.timeline-entry').forEach(entry => {
+    entry.addEventListener('click', () => {
+      entry.classList.toggle('collapsed');
+      entry.setAttribute('aria-expanded', entry.classList.contains('collapsed') ? 'false' : 'true');
+    });
+  });
 }
 
 // 🚀 Init changelog on page load

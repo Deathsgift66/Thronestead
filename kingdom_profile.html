@@ -220,7 +220,7 @@ Developer: Deathsgift66
       startCooldownTimer(now + COOLDOWN_MS);
 
       try {
-        await authFetchJson('/api/kingdom/spy_missions', currentSession, {
+        await authFetchJson('/api/kingdom/spy_missions', {
           method: 'POST',
           body: JSON.stringify({
             target_id: targetKingdomId,
@@ -253,7 +253,7 @@ Developer: Deathsgift66
       startCooldownTimer(now + COOLDOWN_MS);
 
       try {
-        const result = await authFetchJson('/api/wars/declare', currentSession, {
+        const result = await authFetchJson('/api/wars/declare', {
           method: 'POST',
           body: JSON.stringify({ target: targetKingdomId })
         });
@@ -276,7 +276,7 @@ Developer: Deathsgift66
       }
 
       try {
-        await authFetchJson('/api/reports/submit', currentSession, {
+        await authFetchJson('/api/reports/submit', {
           method: 'POST',
           body: JSON.stringify({
             category: 'player',
