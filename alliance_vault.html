@@ -90,7 +90,7 @@ Developer: Deathsgift66
       </nav>
 
       <!-- Manage Tab -->
-      <div id="tab-manage" class="tab-section active" role="tabpanel">
+      <div id="tab-manage" class="tab-section active" role="tabpanel" data-testid="tab-manage">
         <p>Securely manage alliance resources — deposit, withdraw, and track treasury activity.</p>
 
         <!-- Vault Totals -->
@@ -101,7 +101,7 @@ Developer: Deathsgift66
         <!-- Deposit Form -->
         <div class="panel">
           <h3 class="panel-title">Deposit Resources</h3>
-          <div id="deposit-section" aria-label="Deposit Interface">
+          <div id="deposit-section" aria-label="Deposit Interface" data-testid="deposit-section">
             <!-- JS Injected Deposit UI -->
           </div>
           <p>Manage tax policies to automate deposits.</p>
@@ -110,22 +110,22 @@ Developer: Deathsgift66
         <!-- Withdraw Form -->
         <div class="panel">
           <h3 class="panel-title">Withdraw Resources</h3>
-          <div id="withdraw-section" aria-label="Withdraw Interface">
+          <div id="withdraw-section" aria-label="Withdraw Interface" data-testid="withdraw-section">
             <!-- JS Injected Withdraw UI -->
           </div>
         </div>
-        <div id="vault-message" class="feedback" aria-live="polite"></div>
+        <div id="vault-message" class="feedback" aria-live="polite" data-testid="vault-message"></div>
       </div>
 
       <!-- Transaction Log Tab -->
-      <div id="tab-transactions" class="tab-section" role="tabpanel" hidden>
+      <div id="tab-transactions" class="tab-section" role="tabpanel" hidden data-testid="tab-transactions">
         <div class="panel">
           <h3 class="panel-title">Vault Transactions</h3>
 
           <!-- Filters -->
           <div class="filter-toolbar" aria-label="Transaction Filters">
             <label for="filter-action">Filter:</label>
-            <select id="filter-action">
+            <select id="filter-action" data-testid="filter-action">
               <option value="">All</option>
               <option value="deposit">Deposits</option>
               <option value="withdraw">Withdrawals</option>
@@ -134,7 +134,7 @@ Developer: Deathsgift66
             </select>
 
             <label for="filter-days">Time:</label>
-            <select id="filter-days">
+            <select id="filter-days" data-testid="filter-days">
               <option value="">All</option>
               <option value="1">Last Day</option>
               <option value="7">Last 7 Days</option>
@@ -142,7 +142,7 @@ Developer: Deathsgift66
               <option value="90">Last 90 Days</option>
             </select>
 
-            <button id="apply-trans-filter" class="action-btn">Apply</button>
+            <button id="apply-trans-filter" class="action-btn" data-testid="apply-trans-filter">Apply</button>
           </div>
 
           <!-- Table -->
@@ -158,7 +158,7 @@ Developer: Deathsgift66
                   <th>Notes</th>
                 </tr>
               </thead>
-              <tbody id="vault-history" aria-live="polite">
+              <tbody id="vault-history" aria-live="polite" data-testid="vault-history">
                 <!-- JS Injected Transaction Logs -->
               </tbody>
             </table>
@@ -190,6 +190,7 @@ Developer: Deathsgift66
         return;
       }
       feedbackEl.textContent = msg;
+      feedbackEl.scrollIntoView({ behavior: 'smooth' });
       setTimeout(() => {
         if (feedbackEl.textContent === msg) feedbackEl.textContent = '';
       }, 4000);
@@ -222,7 +223,16 @@ Developer: Deathsgift66
       if (!user) return (window.location.href = 'login.html');
       currentUser = user;
 
-      setupTabs({ onShow: id => id === 'tab-transactions' && loadTransactions(currentFilters.action, currentFilters.days) });
+      setupTabs({
+        onShow: id => {
+          if (id === 'tab-transactions') {
+            loadTransactions(currentFilters.action, currentFilters.days);
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+          } else if (id === 'tab-manage') {
+            document.getElementById('vault-message')?.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      });
       await Promise.all([
         loadVaultSummary(),
         loadCustomBoard({ endpoint: '/api/alliance/custom/vault', fetchFn: authFetch }),
@@ -299,12 +309,12 @@ Developer: Deathsgift66
         return;
       }
       container.innerHTML = `
-    <form id="${type}-form" class="resource-form">
+    <form id="${type}-form" class="resource-form" data-testid="${type}-form">
       ${RESOURCE_TYPES.map(
         r => `
         <div class="resource-input-row">
           <label>${r}</label>
-          <input type="number" min="0" name="${r}" data-type="${type}" />
+          <input type="number" min="0" name="${r}" data-type="${type}" data-testid="${type}-${r.replace(/\s+/g, '-')}-input" />
         </div>
       `
       ).join('')}
@@ -375,8 +385,9 @@ Developer: Deathsgift66
 
         history.forEach(log => {
           const row = document.createElement('tr');
+          const ts = new Date(log.timestamp || log.created_at);
           row.innerHTML = `
-        <td>${new Date(log.timestamp || log.created_at).toLocaleString()}</td>
+        <td><time datetime="${ts.toISOString()}" data-testid="transaction-time">${ts.toLocaleString()}</time></td>
         <td>${escapeHTML(log.user || log.username || log.user_id || 'System')}</td>
         <td>${escapeHTML(log.action)}</td>
         <td>${escapeHTML(log.resource_type)}</td>
