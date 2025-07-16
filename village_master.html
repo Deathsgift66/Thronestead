@@ -112,6 +112,11 @@ Developer: Deathsgift66
           return;
         }
 
+        if (!window.SovereignUtils?.createVillageCard) {
+          showToast("UI failed to load. Please refresh.");
+          return;
+        }
+
         villages.forEach(village => {
           const card = SovereignUtils.createVillageCard(village);
           gridEl.appendChild(card);
@@ -156,9 +161,8 @@ Developer: Deathsgift66
       const ambientToggle = document.getElementById('ambient-toggle');
       if (!ambientToggle) return;
 
-      ambientToggle.addEventListener('click', () => {
-        const isActive = ambientToggle.classList.toggle('active');
-        if (isActive) {
+      ambientToggle.addEventListener('change', () => {
+        if (ambientToggle.checked) {
           SovereignUtils.playAmbientAudio();
           showToast("Ambient sounds enabled.");
         } else {
@@ -174,8 +178,13 @@ Developer: Deathsgift66
       upgradeCooldown = true;
       showToast("Initiating bulk upgrade of all buildings...");
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch('/api/village-master/bulk_upgrade', {
-          method: 'POST'
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
         });
         if (!res.ok) throw new Error('Failed');
         showToast("Bulk upgrade complete!");
@@ -193,8 +202,13 @@ Developer: Deathsgift66
       upgradeCooldown = true;
       showToast("Queuing troops in all villages...");
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch('/api/village-master/bulk_queue_training', {
-          method: 'POST'
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
         });
         if (!res.ok) throw new Error('Failed');
         showToast("Troop training queues started!");
@@ -212,8 +226,13 @@ Developer: Deathsgift66
       upgradeCooldown = true;
       showToast("Harvesting resources from all villages...");
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch('/api/village-master/bulk_harvest', {
-          method: 'POST'
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
         });
         if (!res.ok) throw new Error('Failed');
         showToast("Resources harvested!");
@@ -238,6 +257,10 @@ Developer: Deathsgift66
     // ✅ Sort villages using SovereignUtils helper
     function sortVillages() {
       const sortBy = document.getElementById('sortVillages').value;
+      if (!window.SovereignUtils?.sortVillageGrid) {
+        showToast("UI failed to load. Please refresh.");
+        return;
+      }
       SovereignUtils.sortVillageGrid(sortBy);
     }
 
@@ -257,6 +280,10 @@ Developer: Deathsgift66
           data = await res.json();
         } catch {
           showToast("Failed to parse overview.");
+          return;
+        }
+        if (!data || !Array.isArray(data.overview)) {
+          showToast("Invalid overview data");
           return;
         }
 
@@ -290,6 +317,10 @@ Developer: Deathsgift66
             await loadVillageOverview();
           }
         )
+        .on('error', (e) => {
+          console.error("Realtime error:", e);
+          showToast("Realtime sync error.");
+        })
         .subscribe(status => {
           const ind = document.getElementById('realtime-indicator');
           if (ind) {
@@ -303,8 +334,8 @@ Developer: Deathsgift66
           }
         });
 
-      window.addEventListener('beforeunload', () => {
-        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      window.addEventListener('beforeunload', async () => {
+        if (realtimeChannel) await supabase.removeChannel(realtimeChannel);
       });
     }
 
@@ -315,6 +346,9 @@ Developer: Deathsgift66
         toastEl = document.createElement("div");
         toastEl.id = "toast";
         toastEl.className = "toast-notification";
+        toastEl.setAttribute('role', 'status');
+        toastEl.setAttribute('aria-live', 'polite');
+        toastEl.setAttribute('aria-atomic', 'true');
         document.body.appendChild(toastEl);
       }
 
@@ -513,6 +547,8 @@ def bulk_upgrade_all(
     db: Session = Depends(get_db),
 ):
     """Increase the level of every building in the player's villages."""
+    # NOTE: This bulk action bypasses individual building cooldowns and
+    # should be restricted to high-tier VIP players.
     kid = get_kingdom_id(db, user_id)
     db.execute(
         text(
@@ -538,6 +574,9 @@ def bulk_queue_training(
 ):
     """Queue a default training order in every village."""
     kid = get_kingdom_id(db, user_id)
+    unit_id = db.execute(
+        text("SELECT id FROM units WHERE unit_name = 'Militia' LIMIT 1")
+    ).scalar()
     db.execute(
         text(
             """
@@ -545,14 +584,14 @@ def bulk_queue_training(
                                        training_ends_at, started_at, status,
                                        training_speed_modifier,
                                        modifiers_applied, initiated_by, priority)
-            SELECT :kid, 1, 'Militia', 10,
+            SELECT :kid, :unit_id, 'Militia', 10,
                    now() + interval '60 seconds', now(), 'queued',
                    1, '{}', :uid, 1
               FROM kingdom_villages kv
              WHERE kv.kingdom_id = :kid
             """
         ),
-        {"kid": kid, "uid": user_id},
+        {"kid": kid, "uid": user_id, "unit_id": unit_id},
     )
     db.commit()
     return {"status": "queued"}
@@ -564,6 +603,7 @@ def bulk_harvest(
     db: Session = Depends(get_db),
 ):
     """Harvest accumulated resources in all villages."""
+    # NOTE: This ignores per-building harvest cooldowns; limit usage via VIP.
     kid = get_kingdom_id(db, user_id)
     db.execute(
         text(
