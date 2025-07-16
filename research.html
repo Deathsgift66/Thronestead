@@ -110,32 +110,20 @@ Developer: Deathsgift66
 
   <script type="module">
 import { supabase } from '/Javascript/supabaseClient.js';
-// Utility to escape HTML from strings to prevent XSS
-function escapeHTML(str = '') {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+import { escapeHTML, showToast, formatDate } from '/Javascript/utils.js';
 
 let currentSession = null;
 let researchChannel = null;
+let channelActive = false;
+let loading = false;
+let loadQueued = false;
+const techMap = new Map();
 
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   return `${h}h ${m}m ${s}s`;
-}
-
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 function startCountdownTimers() {
@@ -145,10 +133,13 @@ function startCountdownTimers() {
     const update = () => {
       const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
       el.textContent = formatTime(remaining);
-      if (remaining > 0) requestAnimationFrame(update);
-      else el.textContent = 'Completed!';
+      if (remaining <= 0) {
+        el.textContent = 'Completed!';
+        clearInterval(timer);
+      }
     };
     update();
+    const timer = setInterval(update, 1000);
   });
 }
 
@@ -160,18 +151,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('beforeunload', async () => {
-  if (researchChannel) await supabase.removeChannel(researchChannel);
+  if (researchChannel) {
+    await supabase.removeChannel(researchChannel);
+    channelActive = false;
+    researchChannel = null;
+  }
 });
 
 async function loadResearchData() {
+  if (loading) {
+    loadQueued = true;
+    return;
+  }
+  loading = true;
+
   const tree = document.getElementById('tech-tree');
   const filters = document.getElementById('tech-filters');
   const details = document.getElementById('tech-details');
   const activeEl = document.getElementById('active-research');
   const completedEl = document.getElementById('completed-research');
   const encyclopediaEl = document.getElementById('encyclopedia');
-
-  if (researchChannel && supabase.getChannels().includes(researchChannel)) return;
 
   [tree, filters, details, activeEl, completedEl, encyclopediaEl].forEach(el => {
     if (el) el.innerHTML = '<p>Loading...</p>';
@@ -183,20 +182,21 @@ async function loadResearchData() {
       .from('users').select('kingdom_id').eq('user_id', user.id).single();
     const kingdomId = userRow.kingdom_id;
 
-    if (!researchChannel) {
+    if (!channelActive) {
       researchChannel = supabase
         .channel(`research-${kingdomId}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'kingdom_research_tracking',
-          filter: `kingdom_id=eq.${kingdomId}`
-        }, loadResearchData)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'kingdom_research_tracking', filter: `kingdom_id=eq.${kingdomId}` },
+          () => loadResearchData()
+        )
         .subscribe();
+      channelActive = true;
     }
 
-    const [{ data: techs }, trackingRes] = await Promise.all([
-      supabase.from('tech_catalogue')
+    const [{ data: techs, error: techErr }, trackingRes] = await Promise.all([
+      supabase
+        .from('tech_catalogue')
         .select('*')
         .eq('is_active', true)
         .order('tier', { ascending: true }),
@@ -209,17 +209,28 @@ async function loadResearchData() {
       })
     ]);
 
+    if (techErr) throw techErr;
+    if (!trackingRes.ok) {
+      const msg = await trackingRes.text();
+      throw new Error(msg || 'Research list failed');
+    }
+
+    techMap.clear();
+    techs.forEach(t => techMap.set(t.tech_code, t));
+
     const overview = await trackingRes.json();
+    const completed = Array.isArray(overview.completed) ? overview.completed : [];
+    const activeList = Array.isArray(overview.in_progress) ? overview.in_progress : [];
     const progress = [
-      ...overview.completed.map(t => ({ tech_code: t.tech_code, status: 'completed', ends_at: t.ends_at })),
-      ...overview.in_progress.map(t => ({ tech_code: t.tech_code, status: 'active', ends_at: t.ends_at }))
+      ...completed.map(t => ({ tech_code: t.tech_code, status: 'completed', ends_at: t.ends_at })),
+      ...activeList.map(t => ({ tech_code: t.tech_code, status: 'active', ends_at: t.ends_at }))
     ];
-    const completed = overview.completed;
-    const active = overview.in_progress[0];
+    const active = activeList[0];
+    const completedSet = new Set(completed.map(t => t.tech_code));
 
     renderFilters(techs);
-    renderTree(techs, progress);
-    renderDetails();
+    renderTree(techs, progress, completedSet);
+    renderDetails(null, false, false, false, completedSet);
     renderActive(active, techs);
     renderCompleted(completed, techs);
     renderEncyclopedia(completed, techs);
@@ -228,6 +239,12 @@ async function loadResearchData() {
   } catch (err) {
     console.error('❌ Failed to load research:', err);
     showToast('Failed to load research tree.');
+  } finally {
+    loading = false;
+    if (loadQueued) {
+      loadQueued = false;
+      loadResearchData();
+    }
   }
 }
 
@@ -251,7 +268,7 @@ function renderFilters(techs) {
   });
 }
 
-function renderTree(techs, tracking) {
+function renderTree(techs, tracking, completedSet) {
   const tree = document.getElementById('tech-tree');
   if (!tree) return;
 
@@ -278,7 +295,16 @@ function renderTree(techs, tracking) {
       <p>Tier ${tech.tier}</p>
       <p>${escapeHTML(tech.category)}</p>
     `;
-    node.onclick = () => renderDetails(tech, isCompleted, isActive, unlocked);
+    node.onclick = () => renderDetails(tech, isCompleted, isActive, unlocked, completedSet);
+    node.tabIndex = 0;
+    node.setAttribute('role', 'button');
+    node.setAttribute('aria-label', tech.name);
+    node.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        node.click();
+      }
+    });
     tree.appendChild(node);
   });
 }
@@ -290,7 +316,7 @@ function filterByCategory(category) {
   });
 }
 
-function renderDetails(tech = null, isCompleted = false, isActive = false, unlocked = false) {
+function renderDetails(tech = null, isCompleted = false, isActive = false, unlocked = false, completedSet = new Set()) {
   const details = document.getElementById('tech-details');
   if (!details) return;
 
@@ -299,8 +325,14 @@ function renderDetails(tech = null, isCompleted = false, isActive = false, unloc
     return;
   }
 
-  const prereqs = tech.prerequisites || [];
-  const prereqList = prereqs.map(p => `<span class="prereq">${escapeHTML(p)}</span>`).join(', ') || 'None';
+  const prereqs = Array.isArray(tech.prerequisites) ? tech.prerequisites : [];
+  const prereqList = prereqs
+    .map(p => {
+      const name = techMap.get(p)?.name || p;
+      const cls = completedSet.has(p) ? 'prereq done' : 'prereq';
+      return `<span class="${cls}">${escapeHTML(name)}</span>`;
+    })
+    .join(', ') || 'None';
 
   details.innerHTML = `
     <h3>${escapeHTML(tech.name)}</h3>
@@ -382,7 +414,7 @@ function renderCompleted(completed, techs) {
       <div class="tech-card">
         <h3>${escapeHTML(def?.name || entry.tech_code)}</h3>
         <p>${escapeHTML(def?.description || '')}</p>
-        <p>Completed: ${new Date(entry.ends_at).toLocaleString()}</p>
+        <p>Completed: ${formatDate(entry.ends_at)}</p>
       </div>
     `;
   });
