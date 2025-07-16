@@ -70,6 +70,7 @@ Developer: Deathsgift66
     let allQuests = [];
     let currentPage = 1;
     let pageSize = 10;
+    let currentCategory = '';
 
 
     /**
@@ -82,6 +83,11 @@ Developer: Deathsgift66
         const res = await authFetch(`/api/alliance/quests?status=${status}`);
         if (!res.ok) throw new Error(await res.text());
         allQuests = res.ok ? await res.json() : [];
+        const sel = document.getElementById('quest-category-filter');
+        if (sel) {
+          const cats = [...new Set(allQuests.map(q => q.category).filter(Boolean))].sort();
+          sel.innerHTML = '<option value="">All Types</option>' + cats.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+        }
         currentPage = 1;
         renderQuestPage();
       } catch (err) {
@@ -97,9 +103,11 @@ Developer: Deathsgift66
       const board = document.getElementById('quest-board');
       const msg = document.getElementById('no-quests-message');
       const search = document.getElementById('quest-search')?.value.trim().toLowerCase() || '';
-      const filtered = allQuests.filter(q =>
-        q.name.toLowerCase().includes(search) || q.description.toLowerCase().includes(search)
-      );
+      const filtered = allQuests.filter(q => {
+        const matchesSearch = q.name.toLowerCase().includes(search) || q.description.toLowerCase().includes(search);
+        const matchesCat = !currentCategory || q.category === currentCategory;
+        return matchesSearch && matchesCat;
+      });
       const start = (currentPage - 1) * pageSize;
       const pageQuests = filtered.slice(start, start + pageSize);
       board.innerHTML = '';
@@ -163,6 +171,11 @@ Developer: Deathsgift66
         currentPage = 1;
         renderQuestPage();
       });
+      document.getElementById('quest-category-filter')?.addEventListener('change', e => {
+        currentCategory = e.target.value;
+        currentPage = 1;
+        renderQuestPage();
+      });
 
       const boardEl = document.getElementById('quest-board');
       boardEl.addEventListener('click', e => {
@@ -185,9 +198,12 @@ Developer: Deathsgift66
     function renderQuestCard(q) {
       const div = document.createElement('div');
       div.className = 'quest-card';
+      const progress = q.status === 'active' ? Number(q.progress || 0) : null;
+      const progressHtml = progress !== null ? `<div class="quest-progress-bar"><div class="quest-progress-bar-inner" style="width: ${progress}%"></div></div><p class="progress-label">${progress}%</p>` : '';
       div.innerHTML = `
         <h3 class="quest-title">${escapeHTML(q.name)}</h3>
         <p class="quest-type">${escapeHTML(q.type || 'Quest')}</p>
+        ${progressHtml}
         <p>${escapeHTML(q.description)}</p>
         <p>Ends in: <span data-end-time="${q.ends_at || ''}">--:--:--</span></p>
         <button class="view-quest-btn" data-id="${q.id || q.quest_code}">View</button>
@@ -228,13 +244,16 @@ Developer: Deathsgift66
             .forEach(([k, v]) => {
               const li = document.createElement('li');
               li.textContent = `${k}: ${v}`;
+              li.title = `${k} - ${v}`;
               rewards.appendChild(li);
             });
           if (!rewards.children.length) rewards.innerHTML = '<li>No rewards listed.</li>';
 
           const acceptBtn = document.getElementById('accept-quest-button');
           const claimBtn = document.getElementById('claim-reward-button');
+          const contribBtn = document.getElementById('contribute-progress-button');
           acceptBtn.classList.toggle('hidden', q.status !== 'active');
+          contribBtn.classList.toggle('hidden', q.status !== 'active');
           claimBtn.classList.toggle('hidden', q.status !== 'completed' || !q.claimable);
 
           acceptBtn.onclick = async () => {
@@ -286,6 +305,33 @@ Developer: Deathsgift66
             } finally {
               toggleLoading(false);
               claimBtn.disabled = false;
+              inAction = false;
+            }
+          };
+          contribBtn.onclick = async () => {
+            if (inAction) return;
+            inAction = true;
+            contribBtn.disabled = true;
+            toggleLoading(true);
+            try {
+              const res2 = await authFetch('/api/alliance/quests/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                body: JSON.stringify({ quest_code: id, amount: 1 })
+              });
+              if (res2.ok) {
+                showToast('Contribution added!', 'success');
+                openQuestModal(id);
+                loadQuests('active');
+              } else {
+                showToast('Contribution failed', 'error');
+              }
+            } catch (err) {
+              console.error('Contribute error:', err);
+              showToast('Contribution failed', 'error');
+            } finally {
+              toggleLoading(false);
+              contribBtn.disabled = false;
               inAction = false;
             }
           };
@@ -429,7 +475,12 @@ Developer: Deathsgift66
 
     async function loadHeroes() {
       const ul = document.getElementById('hero-list');
-      ul.innerHTML = '<li>Loading heroes...</li>';
+      ul.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const li = document.createElement('li');
+        li.className = 'loading-skeleton';
+        ul.appendChild(li);
+      }
       try {
         const res = await authFetch('/api/alliance/quests/heroes');
         const heroes = res.ok ? await res.json() : [];
@@ -576,6 +627,9 @@ Developer: Deathsgift66
 
       <div class="quest-search-controls">
         <input type="text" id="quest-search" placeholder="Search quests..." aria-label="Search quests" />
+        <select id="quest-category-filter" aria-label="Quest Category">
+          <option value="">All Types</option>
+        </select>
         <div class="pagination">
           <button class="royal-button prev-page" aria-label="Previous page">Prev</button>
           <span class="page-info"></span>
@@ -654,6 +708,7 @@ Developer: Deathsgift66
         <div class="modal-action-area">
           <p id="role-check-message" class="role-check-message">&nbsp;</p>
           <button class="action-btn medieval-banner-btn accept-quest-btn hidden" id="accept-quest-button" title="Accept This Quest">Accept Quest</button>
+          <button class="action-btn medieval-banner-btn contribute-btn hidden" id="contribute-progress-button" title="Contribute to Quest">Contribute</button>
           <button class="action-btn medieval-banner-btn claim-reward-btn hidden" id="claim-reward-button" title="Claim Quest Reward">Claim Reward</button>
         </div>
       </div>
