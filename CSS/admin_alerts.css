@@ -178,3 +178,34 @@ tr:nth-child(even) {
     padding: 1rem;
   }
 }
+
+/* Tabs for Alert Types */
+.alert-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.alert-tabs .tab {
+  background: var(--accent);
+  color: var(--btn-text);
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  cursor: pointer;
+  font-family: var(--font-header);
+  transition: background var(--transition-medium), color var(--transition-medium);
+}
+.alert-tabs .tab.active,
+.alert-tabs .tab:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* Fading expired alerts */
+.alert-item {
+  transition: opacity 0.5s ease-in-out;
+}
+.alert-item.expired {
+  opacity: 0.4;
+}

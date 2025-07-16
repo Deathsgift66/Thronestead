@@ -51,7 +51,9 @@ Developer: Deathsgift66
     import { setupReauthButtons } from '/Javascript/reauth.js';
 
     const REFRESH_MS = 30000;
+    const AUTO_EXPIRE_MS = 60000;
     let realtimeSub = null;
+    let currentData = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       loadAlerts();
@@ -59,6 +61,12 @@ Developer: Deathsgift66
       subscribeToRealtime();
       document.getElementById('refresh-alerts')?.addEventListener('click', loadAlerts);
       document.getElementById('clear-filters')?.addEventListener('click', clearFilters);
+      document.getElementById('export-csv')?.addEventListener('click', exportCSV);
+      document.getElementById('export-json')?.addEventListener('click', exportJSON);
+      document.querySelectorAll('.alert-tabs .tab').forEach(tab =>
+        tab.addEventListener('click', () => selectTab(tab))
+      );
+      initThemeToggle();
       setupReauthButtons('.action-btn');
     });
 
@@ -84,6 +92,7 @@ Developer: Deathsgift66
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(getFilters())
         });
+        currentData = data;
 
         container.innerHTML = '';
 
@@ -151,6 +160,7 @@ Developer: Deathsgift66
         });
 
         div.appendChild(actions);
+        setTimeout(() => div.classList.add('expired'), AUTO_EXPIRE_MS);
         section.appendChild(div);
       });
 
@@ -252,6 +262,65 @@ Developer: Deathsgift66
     function getAlertId(item) {
       return item.alert_id || item.id || "";
     }
+
+    function exportJSON() {
+      if (!currentData) return;
+      const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'alerts.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCSV() {
+      if (!currentData || !Array.isArray(currentData.alerts)) return;
+      const rows = [
+        ['type', 'message', 'kingdom', 'alliance', 'timestamp', 'severity']
+      ];
+      currentData.alerts.forEach(it => {
+        rows.push([
+          it.event_type || it.type || '',
+          (it.message || it.note || '').replace(/"/g, '""'),
+          it.kingdom_id || '',
+          it.alliance_id || '',
+          it.timestamp || '',
+          it.severity || it.priority || ''
+        ]);
+      });
+      const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'alerts.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function selectTab(tab) {
+      document.querySelectorAll('.alert-tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const type = tab.dataset.type || '';
+      const select = document.getElementById('filter-type');
+      if (select) select.value = type;
+      loadAlerts();
+    }
+
+    function initThemeToggle() {
+      const btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      const saved = localStorage.getItem('theme') || document.body.getAttribute('data-theme');
+      document.body.setAttribute('data-theme', saved);
+      btn.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
+      btn.addEventListener('click', () => {
+        const current = document.body.getAttribute('data-theme') === 'dark' ? 'parchment' : 'dark';
+        document.body.setAttribute('data-theme', current);
+        localStorage.setItem('theme', current);
+        btn.textContent = current === 'dark' ? 'Light Mode' : 'Dark Mode';
+      });
+    }
   </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
@@ -282,6 +351,13 @@ Developer: Deathsgift66
     <div class="admin-alerts-container">
 
       <h2>Flagged Accounts & Suspicious Events</h2>
+      <div class="alert-tabs" aria-label="Alert Type Tabs">
+        <button class="tab active" data-type="">All</button>
+        <button class="tab" data-type="moderation">Moderation</button>
+        <button class="tab" data-type="war">War</button>
+        <button class="tab" data-type="diplomacy">Diplomacy</button>
+        <button class="tab" data-type="economy">Economy</button>
+      </div>
 
       <!-- Filters -->
       <section class="search-sort-controls" aria-label="Admin Alert Filters">
@@ -312,6 +388,9 @@ Developer: Deathsgift66
 
         <button id="refresh-alerts" class="btn btn-primary">Refresh</button>
         <button id="clear-filters" class="btn btn-secondary">Clear</button>
+        <button id="export-csv" class="btn btn-secondary" type="button">Export CSV</button>
+        <button id="export-json" class="btn btn-secondary" type="button">Export JSON</button>
+        <button id="theme-toggle" class="btn btn-secondary" type="button">Dark Mode</button>
       </section>
 
       <!-- Alert Feed Panel -->
