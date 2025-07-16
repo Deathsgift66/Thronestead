@@ -62,7 +62,29 @@ Developer: Deathsgift66
 
     const debouncedLoad = debounce(loadAlerts, 400);
 
+    function initTabs() {
+      const container = document.querySelector('.alert-tabs');
+      if (!container) return;
+      container.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => selectTab(tab));
+      });
+      container.addEventListener('keydown', e => {
+        const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+        if (!keys.includes(e.key)) return;
+        const tabs = Array.from(container.querySelectorAll('.tab'));
+        let idx = tabs.indexOf(document.activeElement);
+        if (idx === -1) idx = 0;
+        if (e.key === 'ArrowRight') idx = (idx + 1) % tabs.length;
+        if (e.key === 'ArrowLeft') idx = (idx - 1 + tabs.length) % tabs.length;
+        if (e.key === 'Home') idx = 0;
+        if (e.key === 'End') idx = tabs.length - 1;
+        tabs[idx].focus();
+        e.preventDefault();
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      initTabs();
       loadAlerts();
       setInterval(loadAlerts, REFRESH_MS);
       subscribeToRealtime();
@@ -70,13 +92,14 @@ Developer: Deathsgift66
       document.getElementById('clear-filters')?.addEventListener('click', clearFilters);
       document.getElementById('export-csv')?.addEventListener('click', exportCSV);
       document.getElementById('export-json')?.addEventListener('click', exportJSON);
-      document.querySelectorAll('.alert-tabs .tab').forEach(tab =>
-        tab.addEventListener('click', () => selectTab(tab))
-      );
       document.getElementById('alerts-feed')?.addEventListener('click', handleActionClick);
       document.querySelectorAll('.filter-input').forEach(el => {
         const ev = el.tagName === 'SELECT' ? 'change' : 'input';
-        el.addEventListener(ev, debouncedLoad);
+        el.addEventListener(ev, () => {
+          lastTimestamp = null;
+          debouncedLoad();
+          subscribeToRealtime();
+        });
       });
       document.getElementById('load-more-alerts')?.addEventListener('click', () => loadAlerts(true));
       initThemeToggle();
@@ -91,16 +114,28 @@ Developer: Deathsgift66
     });
 
     function subscribeToRealtime() {
+      if (realtimeSub) supabase.removeChannel(realtimeSub);
+      const { kingdom, alliance } = getFilters();
+      const opts = { event: 'INSERT', schema: 'public', table: 'admin_alerts' };
+      const parts = [];
+      if (kingdom) parts.push(`kingdom_id=eq.${kingdom}`);
+      if (alliance) parts.push(`alliance_id=eq.${alliance}`);
+      if (parts.length) opts.filter = parts.join(',');
       realtimeSub = supabase
         .channel('admin_alerts')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'admin_alerts' }, loadAlerts)
+        .on('postgres_changes', opts, debouncedLoad)
         .subscribe();
     }
 
     async function loadAlerts(append = false) {
       const container = document.getElementById('alerts-feed');
       if (!container) return;
-      if (!append) container.innerHTML = '<p>Loading alerts...</p>';
+      const moreBtn = document.getElementById('load-more-alerts');
+      if (append && moreBtn) moreBtn.disabled = true;
+      if (!append) {
+        container.innerHTML = '<p>Loading alerts...</p>';
+        lastTimestamp = null;
+      }
 
       try {
         const filters = getFilters();
@@ -162,6 +197,8 @@ Developer: Deathsgift66
         const msg = escapeHTML(err.message || 'Unknown error');
         container.innerHTML = `<p>Error loading alerts: ${msg}. Please try again later.</p>`;
         showToast(`❌ Failed to load alerts: ${msg}`, 'error');
+      } finally {
+        if (moreBtn) moreBtn.disabled = false;
       }
     }
 
@@ -275,7 +312,8 @@ Developer: Deathsgift66
         loadAlerts();
       } catch (err) {
         console.error(`❌ Action [${action}] failed:`, err);
-        showToast(`❌ ${action} failed: ${err.message}`, 'error');
+        const msg = escapeHTML(err.message || 'Unknown error');
+        showToast(`❌ ${action} failed: ${msg}`, 'error');
       }
     }
 
@@ -306,7 +344,9 @@ Developer: Deathsgift66
 
     function clearFilters() {
       document.querySelectorAll('.filter-input').forEach(el => (el.value = ''));
+      lastTimestamp = null;
       loadAlerts();
+      subscribeToRealtime();
     }
 
     function mapSeverity(sev = '') {
@@ -384,8 +424,14 @@ Developer: Deathsgift66
     }
 
     function selectTab(tab) {
-      document.querySelectorAll('.alert-tabs .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.alert-tabs .tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+        t.setAttribute('tabindex', '-1');
+      });
       tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      tab.setAttribute('tabindex', '0');
       const type = tab.dataset.type || '';
       const select = document.getElementById('filter-type');
       if (select) select.value = type;
@@ -393,7 +439,9 @@ Developer: Deathsgift66
       if (type) url.searchParams.set('type', type);
       else url.searchParams.delete('type');
       history.pushState({}, '', url);
+      lastTimestamp = null;
       loadAlerts();
+      subscribeToRealtime();
     }
 
     function initThemeToggle() {
@@ -443,12 +491,12 @@ Developer: Deathsgift66
     <div class="admin-alerts-container">
 
       <h2>Flagged Accounts & Suspicious Events</h2>
-      <div class="alert-tabs" aria-label="Alert Type Tabs">
-        <button class="tab active" data-type="">All</button>
-        <button class="tab" data-type="moderation">Moderation</button>
-        <button class="tab" data-type="war">War</button>
-        <button class="tab" data-type="diplomacy">Diplomacy</button>
-        <button class="tab" data-type="economy">Economy</button>
+      <div class="alert-tabs" aria-label="Alert Type Tabs" role="tablist">
+        <button class="tab active" role="tab" aria-selected="true" tabindex="0" data-type="">All</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="moderation">Moderation</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="war">War</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="diplomacy">Diplomacy</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="economy">Economy</button>
       </div>
 
       <!-- Filters -->
