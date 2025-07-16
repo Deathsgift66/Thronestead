@@ -495,6 +495,24 @@ body[data-theme="parchment"] {
   z-index: var(--z-index-toast);
 }
 
+.toast-notification.success {
+  background: var(--success);
+  color: var(--parchment);
+  border-color: var(--success);
+}
+
+.toast-notification.error {
+  background: var(--error);
+  color: var(--parchment);
+  border-color: var(--error);
+}
+
+.toast-notification.info {
+  background: rgba(245, 231, 196, 0.95);
+  color: var(--ink);
+  border-color: var(--gold);
+}
+
 .toast-notification.show {
   opacity: 1;
 }
