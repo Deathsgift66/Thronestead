@@ -59,6 +59,10 @@ Developer: Deathsgift66
     let lastTimestamp = null;
     let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
+    setInterval(() => {
+      csrfToken = crypto.randomUUID();
+      sessionStorage.setItem('csrf_token', csrfToken);
+    }, 15 * 60 * 1000);
 
     const debouncedLoad = debounce(loadAlerts, 400);
 
@@ -117,14 +121,11 @@ Developer: Deathsgift66
       if (realtimeSub) supabase.removeChannel(realtimeSub);
       const { kingdom, alliance } = getFilters();
       const opts = { event: 'INSERT', schema: 'public', table: 'admin_alerts' };
-      const parts = [];
-      if (kingdom) parts.push(`kingdom_id=eq.${kingdom}`);
-      if (alliance) parts.push(`alliance_id=eq.${alliance}`);
-      if (parts.length) opts.filter = parts.join(',');
-      realtimeSub = supabase
-        .channel('admin_alerts')
-        .on('postgres_changes', opts, debouncedLoad)
-        .subscribe();
+      const channel = supabase.channel('admin_alerts');
+      if (kingdom) channel.on('postgres_changes', { ...opts, filter: `kingdom_id=eq.${kingdom}` }, debouncedLoad);
+      if (alliance) channel.on('postgres_changes', { ...opts, filter: `alliance_id=eq.${alliance}` }, debouncedLoad);
+      if (!kingdom && !alliance) channel.on('postgres_changes', opts, debouncedLoad);
+      realtimeSub = channel.subscribe();
     }
 
     async function loadAlerts(append = false) {
@@ -273,6 +274,7 @@ Developer: Deathsgift66
         if (!confirmed) return;
       }
 
+      btn.disabled = true;
       try {
         switch (action) {
           case 'flag':
@@ -305,15 +307,14 @@ Developer: Deathsgift66
             break;
         }
 
-        btn.disabled = true;
-        setTimeout(() => (btn.disabled = false), 3000);
-
         showToast(`✅ ${action.replace(/_/g, ' ')} successful.`, 'success');
         loadAlerts();
       } catch (err) {
         console.error(`❌ Action [${action}] failed:`, err);
         const msg = escapeHTML(err.message || 'Unknown error');
         showToast(`❌ ${action} failed: ${msg}`, 'error');
+      } finally {
+        setTimeout(() => (btn.disabled = false), 3000);
       }
     }
 
@@ -334,12 +335,21 @@ Developer: Deathsgift66
       if (!res.ok) throw new Error(await res.text());
     }
 
+    function toUTC(val) {
+      if (!val) return '';
+      const d = new Date(val);
+      return isNaN(d) ? '' : d.toISOString();
+    }
+
     function getFilters() {
-      return Object.fromEntries(
-        ['start', 'end', 'type', 'severity', 'kingdom', 'alliance']
-          .map(k => [k, document.getElementById(`filter-${k}`)?.value])
-          .filter(([, v]) => v)
-      );
+      const entries = ['start', 'end', 'type', 'severity', 'kingdom', 'alliance']
+        .map(k => {
+          let v = document.getElementById(`filter-${k}`)?.value;
+          if ((k === 'start' || k === 'end') && v) v = toUTC(v);
+          return [k, v];
+        })
+        .filter(([, v]) => v);
+      return Object.fromEntries(entries);
     }
 
     function clearFilters() {
@@ -357,7 +367,7 @@ Developer: Deathsgift66
     }
 
     function escapeHTML(str = '') {
-      return str
+      return String(str || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -371,7 +381,20 @@ Developer: Deathsgift66
     }
 
     function formatTime(ts) {
-      return ts ? new Date(ts).toLocaleString() : '';
+      if (!ts) return '';
+      const d = new Date(ts);
+      const diff = Date.now() - d.getTime();
+      const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+      const minutes = Math.round(diff / 60000);
+      let rel;
+      if (Math.abs(minutes) < 60) {
+        rel = rtf.format(-minutes, 'minute');
+      } else {
+        const hours = Math.round(diff / 3600000);
+        if (Math.abs(hours) < 24) rel = rtf.format(-hours, 'hour');
+        else rel = rtf.format(-Math.round(diff / 86400000), 'day');
+      }
+      return `${d.toLocaleString()} (${rel})`;
     }
 
 
@@ -389,6 +412,12 @@ Developer: Deathsgift66
 
     function exportJSON() {
       if (!currentData) return;
+      const btn = document.getElementById('export-json');
+      const origText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+      }
       const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -396,24 +425,35 @@ Developer: Deathsgift66
       a.download = 'alerts.json';
       a.click();
       URL.revokeObjectURL(url);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
     }
 
     function exportCSV() {
       if (!currentData || !Array.isArray(currentData.alerts)) return;
+      const btn = document.getElementById('export-csv');
+      const origText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+      }
+      const sanitize = v => `"${String(v).replace(/"/g, '""')}"`;
       const rows = [
-        ['type', 'message', 'kingdom', 'alliance', 'timestamp', 'severity']
+        ['type', 'message', 'kingdom', 'alliance', 'timestamp', 'severity'].map(sanitize)
       ];
       currentData.alerts.forEach(it => {
         rows.push([
-          it.event_type || it.type || '',
-          (it.message || it.note || '').replace(/"/g, '""'),
-          it.kingdom_id || '',
-          it.alliance_id || '',
-          it.timestamp || '',
-          it.severity || it.priority || ''
+          sanitize(it.event_type || it.type || ''),
+          sanitize(it.message || it.note || ''),
+          sanitize(it.kingdom_id || ''),
+          sanitize(it.alliance_id || ''),
+          sanitize(it.timestamp || ''),
+          sanitize(it.severity || it.priority || '')
         ]);
       });
-      const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+      const csv = rows.map(r => r.join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -421,6 +461,10 @@ Developer: Deathsgift66
       a.download = 'alerts.csv';
       a.click();
       URL.revokeObjectURL(url);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
     }
 
     function selectTab(tab) {
