@@ -13,6 +13,8 @@ import { getEnvVar } from '../env.js';
 
 // Configurable per page
 const requireAdmin = window.requireAdmin === true;
+// Pages that don't require authentication
+const publicPages = ['/about.html', '/index.html', '/projects.html'];
 
 (async () => {
   try {
@@ -21,6 +23,10 @@ const requireAdmin = window.requireAdmin === true;
       if (session?.access_token) {
         return (window.location.href = '/overview.html');
       }
+      return;
+    }
+
+    if (publicPages.includes(window.location.pathname)) {
       return;
     }
 
