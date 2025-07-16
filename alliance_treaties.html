@@ -44,19 +44,51 @@ Developer: Deathsgift66
   <script src="/Javascript/allianceAppearance.js" type="module"></script>
   <script src="/Javascript/progressionBanner.js" type="module"></script>
   <script type="module">
-    import { escapeHTML, openModal, closeModal } from '/Javascript/utils.js';
+    import { escapeHTML, openModal, closeModal, authFetch, showToast } from '/Javascript/utils.js';
+
+    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    sessionStorage.setItem('csrf_token', csrfToken);
 
     // Fallbacks if utils.js didn't define them
     if (typeof openModal !== 'function') {
       window.openModal = id => {
         const el = document.getElementById(id);
-        el?.classList.remove('hidden');
-        el?.focus();
+        if (!el) return;
+        el.classList.remove('hidden');
+        el.setAttribute('aria-hidden', 'false');
+        el.removeAttribute('inert');
+        const focusable = el.querySelectorAll(
+          'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const trap = e => {
+          if (e.key === 'Escape') {
+            window.closeModal(id);
+          } else if (e.key === 'Tab' && focusable.length) {
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        };
+        el.__trapFocus = trap;
+        el.addEventListener('keydown', trap);
+        if (first) first.focus();
       };
     }
     if (typeof closeModal !== 'function') {
       window.closeModal = id => {
-        document.getElementById(id)?.classList.add('hidden');
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.removeEventListener('keydown', el.__trapFocus);
+        delete el.__trapFocus;
+        el.classList.add('hidden');
+        el.setAttribute('aria-hidden', 'true');
+        el.setAttribute('inert', '');
       };
     }
 
@@ -101,6 +133,7 @@ Developer: Deathsgift66
       } catch (err) {
         console.error('Failed to load treaties:', err);
         container.innerHTML = '<p>Failed to load treaties.</p>';
+        showToast('Failed to load treaties.', 'error');
       }
     }
 
@@ -133,21 +166,20 @@ Developer: Deathsgift66
     }
 
     // -------------------- Modal --------------------
-    function openTreatyModal(id) {
-      fetch(`/api/alliance/treaty/${id}`)
-        .then(res => res.json())
-        .then(t => {
-          const box = document.getElementById('treaty-details');
-          const termsRows = Object.entries(t.terms || {}).length
-            ? Object.entries(t.terms)
-                .map(
-                  ([k, v]) =>
-                    `<tr><th>${escapeHTML(k)}</th><td>${escapeHTML(String(v))}</td></tr>`
-                )
-                .join('')
-            : '<tr><td colspan="2">No terms listed.</td></tr>';
-          box.innerHTML = '';
-          box.innerHTML = `
+    async function openTreatyModal(id) {
+      try {
+        const res = await fetch(`/api/alliance/treaty/${id}`);
+        const t = await res.json();
+        const box = document.getElementById('treaty-details');
+        const termsRows = Object.entries(t.terms || {}).length
+          ? Object.entries(t.terms)
+              .map(
+                ([k, v]) =>
+                  `<tr><th>${escapeHTML(k)}</th><td>${escapeHTML(String(v))}</td></tr>`
+              )
+              .join('')
+          : '<tr><td colspan="2">No terms listed.</td></tr>';
+        box.innerHTML = `
             <h3>${escapeHTML(t.name)}</h3>
             <p>Partner: ${escapeHTML(t.partner_name)}</p>
             <p>Status: ${escapeHTML(t.status)}</p>
@@ -161,29 +193,37 @@ Developer: Deathsgift66
                 : ''
             }
           `;
-          openModal('treaty-modal');
-          document
-            .querySelector('.accept-btn')
-            ?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'accept'));
-          document
-            .querySelector('.reject-btn')
-            ?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'reject'));
-        })
-        .catch(err => console.error('Failed to load treaty:', err));
+        openModal('treaty-modal');
+        document
+          .querySelector('.accept-btn')
+          ?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'accept'));
+        document
+          .querySelector('.reject-btn')
+          ?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'reject'));
+      } catch (err) {
+        console.error('Failed to load treaty:', err);
+        showToast('Failed to load treaty details.', 'error');
+      }
     }
 
     // -------------------- Actions --------------------
     async function respondToTreaty(id, response) {
+      if (!confirm(`Are you sure you want to ${response} this treaty?`)) return;
       try {
-        await fetch('/api/alliance/treaties/respond', {
+        const res = await authFetch('/api/alliance/treaties/respond', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
           body: JSON.stringify({ treaty_id: parseInt(id, 10), response })
         });
+        if (!res.ok) throw new Error(await res.text());
         closeModal('treaty-modal');
         loadTreaties();
       } catch (err) {
         console.error('Failed to respond:', err);
+        showToast('Failed to update treaty.', 'error');
       }
     }
 
@@ -201,19 +241,24 @@ Developer: Deathsgift66
       const partnerId = document.getElementById('partner-alliance-id')?.value;
       if (!type || !partnerId) return;
       try {
-        await fetch('/api/alliance/treaties/propose', {
+        const res = await authFetch('/api/alliance/treaties/propose', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
           body: JSON.stringify({
             partner_alliance_id: parseInt(partnerId, 10),
             treaty_type: type,
             terms: { duration_days: 30, exclusive: true }
           })
         });
+        if (!res.ok) throw new Error(await res.text());
         closeProposeTreatyModal();
         loadTreaties();
       } catch (err) {
         console.error('Failed to propose treaty:', err);
+        showToast('Failed to propose treaty.', 'error');
       }
     }
   </script>
