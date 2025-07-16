@@ -56,7 +56,7 @@ def test_launch_spy_mission_inserts_row(monkeypatch):
 
     res = launch_spy_mission(
         DummyRequest(),
-        LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=3),
+        LaunchPayload(target_kingdom_name="Bking", target_kingdom_id=2, mission_type="spy_troops", num_spies=3),
         user_id="u1",
         db=db,
     )
@@ -78,7 +78,7 @@ def test_spy_defense_modifies_success(monkeypatch):
 
     res = launch_spy_mission(
         DummyRequest(),
-        LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=3),
+        LaunchPayload(target_kingdom_name="Bking", target_kingdom_id=2, mission_type="spy_troops", num_spies=3),
         user_id="u1",
         db=db,
     )
@@ -96,7 +96,7 @@ def test_daily_counters_increment(monkeypatch):
 
     launch_spy_mission(
         DummyRequest(),
-        LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+        LaunchPayload(target_kingdom_name="Bking", target_kingdom_id=2, mission_type="spy_troops", num_spies=1),
         user_id="u1",
         db=db,
     )
@@ -122,7 +122,7 @@ def test_daily_limit_enforced(monkeypatch):
         launch_spy_mission(
             DummyRequest(),
             LaunchPayload(
-                target_kingdom_name="Bking", mission_type="scout", num_spies=1
+                target_kingdom_name="Bking", target_kingdom_id=2, mission_type="spy_troops", num_spies=1
             ),
             user_id="u1",
             db=db,
@@ -139,7 +139,7 @@ def test_launch_respects_cooldown(monkeypatch):
 
     launch_spy_mission(
         DummyRequest(),
-        LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+        LaunchPayload(target_kingdom_name="Bking", target_kingdom_id=2, mission_type="spy_troops", num_spies=1),
         user_id="u1",
         db=db,
     )
@@ -147,7 +147,7 @@ def test_launch_respects_cooldown(monkeypatch):
     with pytest.raises(HTTPException):
         launch_spy_mission(
             DummyRequest(),
-            LaunchPayload(target_kingdom_name="Bking", mission_type="scout", num_spies=1),
+            LaunchPayload(target_kingdom_name="Bking", target_kingdom_id=2, mission_type="spy_troops", num_spies=1),
             user_id="u1",
             db=db,
         )
