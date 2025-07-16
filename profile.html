@@ -47,14 +47,19 @@ Developer: Deathsgift66
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML } from './Javascript/utils.js';
+    import { escapeHTML, showToast, debounce } from './Javascript/utils.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
-      await loadPlayerProfile();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+      await loadPlayerProfile(session);
     });
 
     // ✅ Main Profile Loader
-    async function loadPlayerProfile() {
+    async function loadPlayerProfile(session) {
       const avatarImg = document.getElementById('profile-picture');
       const playerNameEl = document.getElementById('player-name');
       const kingdomNameEl = document.getElementById('kingdom-name');
@@ -75,11 +80,6 @@ Developer: Deathsgift66
       customizationContainer.innerHTML = '<p>Loading customization options...</p>';
 
       try {
-        const {
-          data: { session }
-        } = await supabase.auth.getSession();
-        if (!session) throw new Error('Not authenticated');
-
         const headers = {
           Authorization: `Bearer ${session.access_token}`,
         };
@@ -118,6 +118,7 @@ Developer: Deathsgift66
           const vipData = await vipRes.json();
           const lvl = vipData?.vip_level ?? 0;
           vipBadgeEl.textContent = lvl > 0 ? `VIP ${lvl}` : '';
+          vipBadgeEl.title = lvl > 0 ? `VIP level ${lvl}` : '';
           vipBadgeEl.style.display = lvl > 0 ? 'inline-block' : 'none';
         } catch {
           vipBadgeEl.style.display = 'none';
@@ -153,24 +154,18 @@ Developer: Deathsgift66
         // ✅ Profile customization
         customizationContainer.innerHTML = `
       <h3>Customize Profile</h3>
-      <button class="action-btn" id="edit-avatar-btn">Change Avatar</button>
-      <button class="action-btn" id="edit-banner-btn">Change Banner</button>
-      <button class="action-btn" id="edit-border-btn">Change Border</button>
-      <button class="action-btn" id="edit-motto-btn">Edit Motto</button>
+      <button class="action-btn" id="edit-avatar-btn" disabled title="Coming soon">Change Avatar</button>
+      <button class="action-btn" id="edit-banner-btn" disabled title="Coming soon">Change Banner</button>
+      <button class="action-btn" id="edit-border-btn" disabled title="Coming soon">Change Border</button>
+      <button class="action-btn" id="edit-motto-btn" disabled title="Coming soon">Edit Motto</button>
     `;
-        customizationContainer
-          .querySelectorAll('.action-btn')
-          .forEach(btn =>
-            btn.addEventListener('click', () =>
-              alert('🛠️ This customization feature is coming soon.')
-            )
-          );
 
         // ✅ Activity log + real-time updates
-        await loadRecentActions(session.user.id);
+        await loadRecentActions(session.user.id, session.access_token);
         await subscribeRecentActions(session.user.id);
       } catch (err) {
         console.error('❌ Error loading profile:', err);
+        showToast('Failed to load profile', 'error');
         playerNameEl.textContent = 'Failed to load.';
         kingdomNameEl.textContent = 'Failed to load.';
         mottoEl.textContent = 'Failed to load.';
@@ -179,14 +174,16 @@ Developer: Deathsgift66
     }
 
     // ✅ Load Recent Activity Log
-    async function loadRecentActions(userId) {
+    async function loadRecentActions(userId, token) {
       const tbody = document.getElementById('recent-log-body');
       if (!tbody) return;
 
       tbody.innerHTML = `<tr><td colspan="3">Loading...</td></tr>`;
 
       try {
-        const res = await fetch(`/api/audit-log?user_id=${encodeURIComponent(userId)}&limit=10`);
+        const res = await fetch(`/api/audit-log?user_id=${encodeURIComponent(userId)}&limit=10`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = await res.json();
 
         tbody.innerHTML = '';
@@ -206,6 +203,7 @@ Developer: Deathsgift66
         });
       } catch (err) {
         console.error('❌ Error loading audit log:', err);
+        showToast('Failed to load activity log', 'error');
         tbody.innerHTML = `<tr><td colspan="3">Failed to load.</td></tr>`;
       }
     }
@@ -231,7 +229,11 @@ Developer: Deathsgift66
     }
 
     // ✅ Add new audit entry live
+    let lastAdd = 0;
     function addAuditEntry(entry) {
+      const now = Date.now();
+      if (now - lastAdd < 500) return;
+      lastAdd = now;
       const tbody = document.getElementById('recent-log-body');
       if (!tbody) return;
       const row = document.createElement('tr');
@@ -248,7 +250,8 @@ Developer: Deathsgift66
     function formatTimestamp(timestamp) {
       if (!timestamp) return 'Unknown';
       const date = new Date(timestamp);
-      return date.toLocaleString(undefined, {
+      return date.toLocaleString('en-US', {
+        timeZone: 'UTC',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -322,6 +325,7 @@ Developer: Deathsgift66
       <div class="recent-actions" aria-labelledby="activity-heading">
         <h3 id="activity-heading">Recent Activity</h3>
         <table class="audit-log-table">
+          <caption class="sr-only">Player audit log listing recent actions</caption>
           <thead>
             <tr>
               <th scope="col" class="timestamp-column">Time</th>
