@@ -14,10 +14,16 @@ const activityEvents = ['mousemove', 'keydown', 'scroll'];
 const activityHandler = () => (lastActivity = Date.now());
 let alliances = [];
 let switchTab = () => {};
+let preplanLoaded = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Init
-  switchTab = setupTabs({ onShow: id => id !== 'tab-live' && stopCombatPolling() });
+  switchTab = setupTabs({
+    onShow: id => {
+      if (id !== 'tab-live') stopCombatPolling();
+      if (id === 'tab-preplan') loadPreplan();
+    }
+  });
   await loadCustomBoard({ altText: 'Alliance War Banner' });
   await loadActiveWars();
   await loadWarHistory();
@@ -81,10 +87,12 @@ function renderBattleMap(tileMap) {
   battleMap.style.gridTemplateColumns = `repeat(${width}, 20px)`;
   tileMap.flat().forEach(type => {
     const tile = document.createElement('div');
-    tile.className = 'tile';
-    tile.style.backgroundColor = {
-      forest: '#228B22', river: '#1E90FF', hill: '#8B4513'
-    }[type] || '#ccc';
+    const cls = {
+      forest: 'tile-forest',
+      river: 'tile-river',
+      hill: 'tile-hill'
+    }[type];
+    tile.className = `tile ${cls || ''}`.trim();
     battleMap.appendChild(tile);
   });
 }
@@ -130,15 +138,30 @@ async function loadParticipants() {
     .from('alliance_war_participants')
     .select('kingdom_id, role')
     .eq('alliance_war_id', currentWarId);
-  renderParticipants(data || []);
+  const participants = await Promise.all(
+    (data || []).map(async p => {
+      try {
+        const res = await fetch(`/api/kingdoms/public/${p.kingdom_id}`);
+        const info = await res.json();
+        return { ...p, name: info.kingdom_name };
+      } catch {
+        return { ...p, name: `Kingdom ${p.kingdom_id}` };
+      }
+    })
+  );
+  renderParticipants(participants);
 }
 
 function renderParticipants(list) {
   const attackers = list.filter(p => p.role === 'attacker');
   const defenders = list.filter(p => p.role === 'defender');
   document.getElementById('participants').innerHTML = `
-    <div class="participant-list"><h4>Attackers</h4>${attackers.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>
-    <div class="participant-list"><h4>Defenders</h4>${defenders.map(p => `<div>${p.kingdom_id}</div>`).join('')}</div>`;
+    <div class="participant-list"><h4>Attackers</h4>${attackers
+      .map(p => `<div>${escapeHTML(p.name)}</div>`)
+      .join('')}</div>
+    <div class="participant-list"><h4>Defenders</h4>${defenders
+      .map(p => `<div>${escapeHTML(p.name)}</div>`)
+      .join('')}</div>`;
 }
 
 // ✅ Live Polling
@@ -169,11 +192,14 @@ function stopCombatPolling() {
 
 // ✅ Declare War
 async function declareWar() {
+  const btn = document.getElementById('declare-alliance-war-btn');
   const name = document.getElementById('target-alliance-id').value.trim();
   const list = document.getElementById('alliance-list');
   const opt = Array.from(list.options).find(o => o.value === name);
   const targetId = opt ? opt.dataset.id : parseInt(name, 10);
   if (!targetId) return;
+  btn.disabled = true;
+  setTimeout(() => (btn.disabled = false), 3000);
   const res = await fetch('/api/battle/declare', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -206,6 +232,19 @@ function showAllianceSuggestions(query) {
       opt.dataset.id = a.alliance_id;
       list.appendChild(opt);
     });
+}
+
+function loadPreplan() {
+  if (preplanLoaded) return;
+  const container = document.getElementById('preplan-area');
+  const frame = document.createElement('iframe');
+  frame.src = '/preplan_editor.html';
+  frame.loading = 'lazy';
+  frame.width = '100%';
+  frame.height = '600';
+  frame.style.border = 'none';
+  container.appendChild(frame);
+  preplanLoaded = true;
 }
 
 // ✅ Accept Pending
@@ -262,14 +301,23 @@ async function surrenderWar() {
 async function loadActiveWars() {
   const res = await fetch('/api/battle/wars');
   const wars = await res.json();
-  document.getElementById('wars-container').innerHTML = wars
-    .map(w => `
-    <div class="war-card">
-      <strong>vs ${w.enemy_name}</strong> – Phase: ${w.phase}
-      <br>Score: ${w.our_score} vs ${w.their_score}
+  const container = document.getElementById('wars-container');
+  container.innerHTML = wars
+    .map(
+      w => `
+    <div class="war-card" data-id="${w.alliance_war_id}">
+      <strong>vs ${escapeHTML(w.enemy_name)}</strong> – Phase: ${escapeHTML(w.phase)}
+      <br>Score: ${escapeHTML(String(w.our_score))} vs ${escapeHTML(String(w.their_score))}
+      <br><button class="view-war-btn" data-id="${w.alliance_war_id}">Details</button>
     </div>
-  `)
+  `
+    )
     .join('');
+  container.querySelectorAll('.view-war-btn').forEach(btn =>
+    btn.addEventListener('click', () =>
+      viewWarDetails({ alliance_war_id: parseInt(btn.dataset.id, 10) })
+    )
+  );
 }
 
 // 3. Load War History
