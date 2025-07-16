@@ -20,7 +20,7 @@
   <script src="/Javascript/resourceBar.js" type="module"></script>
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, showToast, toggleLoading, debounce, safeUUID } from '/Javascript/utils.js';
+    import { escapeHTML, showToast, toggleLoading, debounce } from '/Javascript/utils.js';
 
     const RANK_TOOLTIPS = {
       Leader: 'Alliance leader with full authority',
@@ -56,7 +56,6 @@
       (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '')
         .split('=')[1] ||
       generateUUID();
-      safeUUID();
 
     sessionStorage.setItem('csrf_token', csrfToken);
     document.cookie =
@@ -83,11 +82,11 @@
       }, 45 * 60 * 1000);
     });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.onAuthStateChange(async (_event, session) => {
       authToken = session?.access_token || '';
       currentUser = session?.user || null;
       if (!session && membersChannel) {
-        supabase.removeChannel(membersChannel);
+        await membersChannel.unsubscribe();
         membersChannel = null;
       }
     });
@@ -276,7 +275,7 @@
 
       window.addEventListener('beforeunload', async () => {
         if (membersChannel) {
-          await supabase.removeChannel(membersChannel);
+          await membersChannel.unsubscribe();
           membersChannel = null;
         }
       });

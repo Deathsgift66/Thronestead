@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from uuid import UUID
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -67,6 +68,14 @@ RANK_LEVELS = {
 }
 
 
+def _validate_uuid(uid: str) -> None:
+    """Ensure the provided string is a valid UUID."""
+    try:
+        UUID(uid)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
+
+
 def rank_level(rank: str) -> int:
     return RANK_LEVELS.get((rank or "member").lower(), -1)
 
@@ -121,6 +130,7 @@ def join(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
+    _validate_uuid(payload.user_id)
     if db.query(AllianceMember).filter_by(user_id=payload.user_id).first():
         raise HTTPException(status_code=400, detail="User already in an alliance.")
 
@@ -150,6 +160,7 @@ def leave(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
+    _validate_uuid(payload.user_id)
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if member:
         db.delete(member)
@@ -184,6 +195,7 @@ def demote(
 
 
 def _change_rank(payload: RankPayload, db: Session, action: str, acting_user_id: str):
+    _validate_uuid(payload.user_id)
     aid, role = validate_management_role(db, acting_user_id)
     if role != "Leader":
         raise HTTPException(status_code=403, detail="Only the leader may modify ranks")
@@ -217,6 +229,7 @@ def remove(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
+    _validate_uuid(payload.user_id)
     aid, role = validate_management_role(db, user_id)
     if rank_level(role) < rank_level("war officer"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
@@ -250,6 +263,7 @@ def contribute(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
+    _validate_uuid(payload.user_id)
     aid, _ = validate_management_role(db, user_id)
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if not member:
@@ -268,6 +282,7 @@ def apply_to_alliance(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
+    _validate_uuid(payload.user_id)
     if db.query(AllianceMember).filter_by(user_id=payload.user_id).first():
         raise HTTPException(status_code=400, detail="Already applied or a member.")
 
@@ -291,6 +306,7 @@ def approve_member(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
+    _validate_uuid(payload.user_id)
     member = (
         db.query(AllianceMember)
         .filter_by(
@@ -315,6 +331,7 @@ def transfer_leadership(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
+    _validate_uuid(payload.new_leader_id)
     alliance = db.query(Alliance).filter_by(alliance_id=payload.alliance_id).first()
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance not found")
