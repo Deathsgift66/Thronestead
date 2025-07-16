@@ -205,7 +205,10 @@ def list_players(
     if search:
         pattern = f"%{search}%"
         query = query.filter(
-            User.username.ilike(pattern) | User.display_name.ilike(pattern)
+            User.username.ilike(pattern)
+            | User.display_name.ilike(pattern)
+            | User.email.ilike(pattern)
+            | User.kingdom_name.ilike(pattern)
         )
     rows = query.order_by(User.username).limit(50).all()
 

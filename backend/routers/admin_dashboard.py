@@ -12,7 +12,7 @@ from typing import Any, Optional
 
 from ..env_utils import get_env_var
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
 from sqlalchemy import text, update
 from sqlalchemy.orm import Session
@@ -71,6 +71,9 @@ def get_audit_logs(
     sort_by: str = "created_at",
     sort_dir: str = "desc",
     user_id: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    format: str = "json",
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -91,6 +94,12 @@ def get_audit_logs(
     if user_id:
         filters.append("user_id = :uid")
         params["uid"] = user_id
+    if start_date:
+        filters.append("created_at >= :start")
+        params["start"] = start_date
+    if end_date:
+        filters.append("created_at <= :end")
+        params["end"] = end_date
 
     if filters:
         query += " WHERE " + " AND ".join(filters)
@@ -101,7 +110,22 @@ def get_audit_logs(
     params["offset"] = (page - 1) * per_page
 
     rows = db.execute(text(query), params).fetchall()
-    return [dict(r._mapping) for r in rows]
+    logs = [dict(r._mapping) for r in rows]
+
+    if format == "csv" and logs:
+        import csv
+        import io
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=list(logs[0].keys()))
+        writer.writeheader()
+        writer.writerows(logs)
+        return Response(
+            output.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=audit_logs.csv"},
+        )
+
+    return logs
 
 
 # ---------------------
@@ -126,6 +150,17 @@ def toggle_flag(
     db.commit()
     log_action(db, admin_user_id, "Toggle System Flag", f"Set {flag_key} to {value}")
     return {"status": "updated"}
+
+
+@router.get("/flags")
+def list_flags(
+    verify: str = Depends(verify_api_key),
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    verify_admin(admin_user_id, db)
+    rows = db.execute(text("SELECT flag_key, flag_value FROM system_flags ORDER BY flag_key"))
+    return [dict(r._mapping) for r in rows]
 
 
 # ---------------------
