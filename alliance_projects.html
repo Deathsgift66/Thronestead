@@ -87,6 +87,17 @@ async function applyAllianceAppearance() {
 }
 
 document.addEventListener('DOMContentLoaded', applyAllianceAppearance);
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const ctx = await fetch(`/api/player/context?user_id=${user.id}`).then(r => r.json());
+      window.user = { ...(window.user || {}), ...ctx };
+    }
+  } catch (err) {
+    console.error('Failed to load user context:', err);
+  }
+});
 
 import { loadPlayerProgressionFromStorage } from '/Javascript/progressionGlobal.js';
 
@@ -389,11 +400,10 @@ function renderCatalogue(list) {
 
 async function startProject(projectKey) {
   try {
-    const { userId } = await getAllianceInfo();
     const res = await fetch('/api/alliance/projects/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_key: projectKey, user_id: userId })
+      body: JSON.stringify({ project_key: projectKey })
     });
 
     const json = await res.json();
@@ -449,8 +459,8 @@ function formatCostFromColumns(obj) {
   <!-- Hero Section -->
   <section class="hero-section alliance-hero" aria-label="Alliance Project Introduction">
     <div class="hero-content">
-      <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
-      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
+      <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" onerror="this.src='/Assets/banner.png'" />
+      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" onerror="this.src='/Assets/avatars/default_avatar_emperor.png'" />
       <h1>Forge Mighty Works</h1>
       <p>Unite your alliance to build wonders and fortifications that change the realm.</p>
     </div>
