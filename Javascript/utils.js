@@ -195,7 +195,9 @@ export function setText(id, value) {
  */
 export function formatDate(ts) {
   const date = ts instanceof Date ? ts : new Date(ts);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleString('en-US', { timeZone: 'UTC' });
 }
 
 /**
