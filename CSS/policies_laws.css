@@ -43,6 +43,12 @@ body.medieval-page {
   position: relative;
 }
 
+.policy-card:focus-within,
+.law-card:focus-within {
+  outline: 2px dashed var(--gold);
+  outline-offset: 2px;
+}
+
 .policy-card .glow,
 .law-card .glow {
   position: absolute;
