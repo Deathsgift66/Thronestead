@@ -43,6 +43,7 @@ Developer: Deathsgift66
   <!-- Scripts -->
   <script type="module">
 import { supabase } from '/Javascript/supabaseClient.js';
+import { showToast } from '/Javascript/utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('save-plan');
@@ -53,11 +54,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const fallbackBtn = document.getElementById('fallback-mode');
   const pathBtn = document.getElementById('path-mode');
   const clearPathBtn = document.getElementById('clear-path');
+  const clearFallbackBtn = document.getElementById('clear-fallback');
+  const undoBtn = document.getElementById('undo-plan');
   const scoreDiv = document.getElementById('scoreboard-display');
 
   let editMode = null;
   let channel = null;
   let plan = {};
+  let lastSavedPlan = {};
+
+  function updateModeButtons() {
+    fallbackBtn.classList.toggle('active', editMode === 'fallback');
+    pathBtn.classList.toggle('active', editMode === 'path');
+  }
 
   // ✅ Render the battlefield grid
   function renderGrid() {
@@ -100,6 +109,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     planArea.value = JSON.stringify(plan, null, 2);
   }
 
+  function validatePlan(p) {
+    if (p.fallback_point) {
+      const f = p.fallback_point;
+      if (typeof f.x !== 'number' || typeof f.y !== 'number') return false;
+    }
+    if (p.patrol_path) {
+      if (!Array.isArray(p.patrol_path)) return false;
+      for (const node of p.patrol_path) {
+        if (typeof node.x !== 'number' || typeof node.y !== 'number') return false;
+      }
+    }
+    return true;
+  }
+
   // ✅ Load the pre-existing plan for this war
   async function loadPlan() {
     const warId = warInput.value;
@@ -108,6 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch(`/api/alliance-wars/preplan?alliance_war_id=${warId}`);
       const data = await res.json();
       plan = data.plan || {};
+      lastSavedPlan = JSON.parse(JSON.stringify(plan));
       updatePlanArea();
       renderGrid();
     } catch (err) {
@@ -155,10 +179,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ✅ Button bindings
-  fallbackBtn.addEventListener('click', () => { editMode = 'fallback'; });
-  pathBtn.addEventListener('click', () => { editMode = 'path'; });
+  fallbackBtn.addEventListener('click', () => {
+    editMode = 'fallback';
+    updateModeButtons();
+  });
+  pathBtn.addEventListener('click', () => {
+    editMode = 'path';
+    updateModeButtons();
+  });
   clearPathBtn.addEventListener('click', () => {
     plan.patrol_path = [];
+    renderGrid();
+    updatePlanArea();
+  });
+  clearFallbackBtn.addEventListener('click', () => {
+    delete plan.fallback_point;
+    renderGrid();
+    updatePlanArea();
+  });
+  undoBtn.addEventListener('click', () => {
+    plan = JSON.parse(JSON.stringify(lastSavedPlan));
     renderGrid();
     updatePlanArea();
   });
@@ -166,7 +206,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ✅ Listen for manual JSON edits
   planArea.addEventListener('input', () => {
     try {
-      plan = JSON.parse(planArea.value || '{}');
+      const parsed = JSON.parse(planArea.value || '{}');
+      if (!validatePlan(parsed)) throw new Error('invalid');
+      plan = parsed;
       jsonWarning.style.display = 'none';
       renderGrid();
     } catch {
@@ -180,9 +222,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   saveBtn.addEventListener('click', async () => {
     if (saveCooldown) return;
     saveCooldown = true;
+    saveBtn.disabled = true;
     setTimeout(() => (saveCooldown = false), 1000);
     const warId = parseInt(warInput.value, 10);
-    if (!warId) return alert('Enter valid War ID');
+    if (!warId) {
+      showToast('Enter valid War ID', 'error');
+      saveBtn.disabled = false;
+      return;
+    }
+    if (!validatePlan(plan)) {
+      showToast('Plan JSON invalid', 'error');
+      saveBtn.disabled = false;
+      return;
+    }
 
     try {
       const res = await fetch('/api/alliance-wars/preplan/submit', {
@@ -195,10 +247,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (!res.ok) throw new Error('Save failed');
-      alert('✅ Plan saved!');
+      lastSavedPlan = JSON.parse(JSON.stringify(plan));
+      showToast('Plan saved!', 'success');
     } catch (err) {
       console.error('❌ Error saving plan:', err);
-      alert('❌ Save failed.');
+      showToast('Save failed', 'error');
+    } finally {
+      saveBtn.disabled = false;
     }
   });
 
@@ -211,6 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ✅ Initial run
   await loadPlan();
   await loadScore();
+  updateModeButtons();
 });
   </script>
 
@@ -260,6 +316,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         <button id="fallback-mode" class="btn" type="button">Set Fallback Point</button>
         <button id="path-mode" class="btn" type="button">Draw Patrol Path</button>
         <button id="clear-path" class="btn" type="button">Clear Path</button>
+        <button id="clear-fallback" class="btn" type="button">Clear Fallback</button>
+        <button id="undo-plan" class="btn" type="button">Reset to Saved</button>
       </div>
 
       <!-- Interactive Grid -->
@@ -290,7 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 
 from ..database import get_db
 from ..security import require_user_id, require_active_user_id
@@ -300,9 +358,19 @@ router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
 
 # ----------- Pre-Plan Editing -----------
 
+class Point(BaseModel):
+    x: int
+    y: int
+
+
+class PreplanData(BaseModel):
+    fallback_point: Point | None = None
+    patrol_path: list[Point] | None = None
+
+
 class PreplanPayload(BaseModel):
-    alliance_war_id: int
-    preplan_jsonb: dict
+    alliance_war_id: PositiveInt
+    preplan_jsonb: PreplanData
 
 
 @router.get("/preplan")
@@ -314,6 +382,19 @@ def get_preplan(
     from .progression_router import get_kingdom_id
 
     kid = get_kingdom_id(db, user_id)
+    if not db.execute(
+        text("SELECT 1 FROM alliance_wars WHERE alliance_war_id = :wid"),
+        {"wid": alliance_war_id},
+    ).first():
+        raise HTTPException(404, "War not found")
+    if not db.execute(
+        text(
+            "SELECT 1 FROM alliance_war_participants WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+        ),
+        {"wid": alliance_war_id, "kid": kid},
+    ).first():
+        raise HTTPException(403, "Not part of this war")
+
     row = (
         db.execute(
             text(
@@ -338,18 +419,36 @@ def submit_preplan(
     from .progression_router import get_kingdom_id
 
     kid = get_kingdom_id(db, user_id)
-    db.execute(
+    if not db.execute(
+        text("SELECT 1 FROM alliance_wars WHERE alliance_war_id = :wid"),
+        {"wid": payload.alliance_war_id},
+    ).first():
+        raise HTTPException(404, "War not found")
+    if not db.execute(
         text(
-            """
-            INSERT INTO alliance_war_preplans (alliance_war_id, kingdom_id, preplan_jsonb)
-            VALUES (:wid, :kid, :plan)
-            ON CONFLICT (alliance_war_id, kingdom_id)
-              DO UPDATE SET preplan_jsonb = EXCLUDED.preplan_jsonb, last_updated = now()
-            """,
+            "SELECT 1 FROM alliance_war_participants WHERE alliance_war_id = :wid AND kingdom_id = :kid"
         ),
-        {"wid": payload.alliance_war_id, "kid": kid, "plan": payload.preplan_jsonb},
-    )
-    db.commit()
+        {"wid": payload.alliance_war_id, "kid": kid},
+    ).first():
+        raise HTTPException(403, "Not part of this war")
+
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO alliance_war_preplans (alliance_war_id, kingdom_id, preplan_jsonb)
+                VALUES (:wid, :kid, :plan)
+                ON CONFLICT (alliance_war_id, kingdom_id)
+                  DO UPDATE SET preplan_jsonb = EXCLUDED.preplan_jsonb, last_updated = now()
+                """,
+            ),
+            {"wid": payload.alliance_war_id, "kid": kid, "plan": payload.preplan_jsonb.dict()},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(500, "Failed to save preplan")
+
     log_action(db, user_id, "Save Preplan", str(payload.alliance_war_id))
     return {"status": "saved"}
   </script>
