@@ -175,6 +175,7 @@
       if (!btn) return;
       const handler = debounce(async () => {
         btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
         const original = btn.textContent;
         btn.innerHTML = '<div class="loading-spinner"></div>';
         currentPage = 1;
@@ -183,6 +184,7 @@
         const direction = document.getElementById('sort-direction')?.value || 'asc';
         await fetchMembers(sortBy, direction, keyword);
         btn.disabled = false;
+        btn.setAttribute('aria-disabled', 'false');
         btn.textContent = original;
       }, 300);
       btn.addEventListener('click', handler);
@@ -236,13 +238,17 @@
         if (!btn || btn.disabled) return;
         const userId = btn.dataset.id;
         btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
         try {
           if (btn.classList.contains('promote-btn')) await promoteMember(userId);
           else if (btn.classList.contains('demote-btn')) await demoteMember(userId);
           else if (btn.classList.contains('kick-btn')) await removeMember(userId);
           else if (btn.classList.contains('transfer-btn')) await transferLeadership(userId);
         } finally {
-          setTimeout(() => { btn.disabled = false; }, 3000);
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.setAttribute('aria-disabled', 'false');
+          }, 3000);
         }
       });
       actionsBound = true;
@@ -296,10 +302,11 @@
       slice.forEach(member => {
         const row = document.createElement('tr');
         if (member.rank === 'Leader') row.classList.add('leader-row');
+        if (member.user_id === userId) row.classList.add('highlight-current-user');
         const canManage = isAdmin || rankLevel(userRank) > rankLevel(member.rank);
         const showFull = member.same_alliance;
         row.innerHTML = `
-          <td><img src="/Assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest" loading="lazy" decoding="async" onerror="this.src='/Assets/crests/default.png'"></td>
+          <td><img src="/Assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="${escapeHTML(member.username)} crest" loading="lazy" decoding="async" onerror="this.src='/Assets/crests/default.png'"></td>
           <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}</td>
           <td title="${escapeHTML(RANK_TOOLTIPS[member.rank] || '')}">${escapeHTML(member.rank)}</td>
           <td>${showFull ? roleBadge(member) : '—'}</td>
@@ -344,17 +351,17 @@
       if (currentRole === 'leader') {
         if (member.rank.toLowerCase() !== 'leader') {
           if (memberLevel < rankPower.length - 1) {
-            actions.push(`<button data-id="${member.user_id}" class="promote-btn" aria-label="Promote member ${escapeHTML(member.username)}">Promote</button>`);
+            actions.push(`<button data-id="${member.user_id}" class="promote-btn" aria-label="Promote member ${escapeHTML(member.username)}" title="Promote member ${escapeHTML(member.username)}">Promote</button>`);
           }
           if (memberLevel > 0) {
-            actions.push(`<button data-id="${member.user_id}" class="demote-btn" aria-label="Demote member ${escapeHTML(member.username)}">Demote</button>`);
+            actions.push(`<button data-id="${member.user_id}" class="demote-btn" aria-label="Demote member ${escapeHTML(member.username)}" title="Demote member ${escapeHTML(member.username)}">Demote</button>`);
           }
-          actions.push(`<button data-id="${member.user_id}" class="kick-btn danger-btn" aria-label="Kick member ${escapeHTML(member.username)}">Kick</button>`);
-          actions.push(`<button data-id="${member.user_id}" class="transfer-btn" aria-label="Transfer leadership to ${escapeHTML(member.username)}">Transfer Leadership</button>`);
+          actions.push(`<button data-id="${member.user_id}" class="kick-btn danger-btn" aria-label="Kick member ${escapeHTML(member.username)}" title="Kick member ${escapeHTML(member.username)}">Kick</button>`);
+          actions.push(`<button data-id="${member.user_id}" class="transfer-btn" aria-label="Transfer leadership to ${escapeHTML(member.username)}" title="Transfer leadership to ${escapeHTML(member.username)}">Transfer Leadership</button>`);
         }
       } else if (currentRole === 'war officer' && member.rank.toLowerCase() === 'member') {
-        actions.push(`<button data-id="${member.user_id}" class="promote-btn" aria-label="Promote member ${escapeHTML(member.username)}">Promote</button>`);
-        actions.push(`<button data-id="${member.user_id}" class="kick-btn" aria-label="Kick member ${escapeHTML(member.username)}">Kick</button>`);
+        actions.push(`<button data-id="${member.user_id}" class="promote-btn" aria-label="Promote member ${escapeHTML(member.username)}" title="Promote member ${escapeHTML(member.username)}">Promote</button>`);
+        actions.push(`<button data-id="${member.user_id}" class="kick-btn" aria-label="Kick member ${escapeHTML(member.username)}" title="Kick member ${escapeHTML(member.username)}">Kick</button>`);
       }
       return actions.join(' ');
     }
@@ -367,7 +374,7 @@
       const icons = { leader: '👑', officer: '🛡' };
       const icon = icons[cls] || '';
       const label = member.role || member.rank || '';
-      return `<span class="badge role-badge ${cls}">${icon ? icon + ' ' : ''}${escapeHTML(label)}</span>`;
+      return `<span class="badge role-badge ${cls}">${icon ? `<span aria-hidden="true">${icon}</span> ` : ''}${escapeHTML(label)}<span class="sr-only">${escapeHTML(label)}</span></span>`;
     }
 
     async function confirmAndPost(endpoint, payload, successMsg, hardConfirm = false) {
