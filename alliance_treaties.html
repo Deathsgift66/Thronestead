@@ -95,6 +95,8 @@ Developer: Deathsgift66
     // -------------------- Initialization --------------------
     let lastFocused = null;
     let treatyChannel = null;
+    let submitting = false;
+    let pendingResponse = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       loadTreaties();
@@ -123,6 +125,27 @@ Developer: Deathsgift66
           respondToTreaty(e.target.dataset.id, 'reject');
         } else if (e.target.id === 'treaty-modal') {
           closeTreatyModal();
+        }
+      });
+      document.getElementById('respond-yes')?.addEventListener('click', () => {
+        closeModal('respond-confirm-modal');
+        pendingResponse?.();
+        pendingResponse = null;
+      });
+      document.getElementById('respond-no')?.addEventListener('click', () => {
+        closeModal('respond-confirm-modal');
+        pendingResponse = null;
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          if (!document.getElementById('treaty-modal').classList.contains('hidden')) {
+            closeTreatyModal();
+          } else if (!document.getElementById('propose-treaty-modal').classList.contains('hidden')) {
+            closeProposeTreatyModal();
+          } else if (!document.getElementById('respond-confirm-modal').classList.contains('hidden')) {
+            closeModal('respond-confirm-modal');
+            pendingResponse = null;
+          }
         }
       });
     });
@@ -190,15 +213,29 @@ Developer: Deathsgift66
           () => loadTreaties()
         )
         .subscribe();
+
+      window.addEventListener('beforeunload', async () => {
+        if (treatyChannel) await window.supabase.removeChannel(treatyChannel);
+        treatyChannel = null;
+      });
+      window.supabase.auth.onAuthStateChange(() => {
+        if (treatyChannel) {
+          window.supabase.removeChannel(treatyChannel);
+          treatyChannel = null;
+        }
+      });
     }
 
     // -------------------- Modal --------------------
     async function openTreatyModal(id) {
       try {
         lastFocused = document.activeElement;
+        const box = document.getElementById('treaty-details');
+        box.innerHTML = '<p>Loading...</p>';
+        openModal('treaty-modal');
         const res = await authFetch(`/api/alliance/treaty/${id}`);
         const t = await res.json();
-        const box = document.getElementById('treaty-details');
+        
         const termsRows = Object.entries(t.terms || {}).length
           ? Object.entries(t.terms)
               .map(
@@ -221,7 +258,6 @@ Developer: Deathsgift66
                 : ''
             }
           `;
-        openModal('treaty-modal');
       } catch (err) {
         console.error('Failed to load treaty:', err);
         showToast('Failed to load treaty details.', 'error');
@@ -229,8 +265,13 @@ Developer: Deathsgift66
     }
 
     // -------------------- Actions --------------------
-    async function respondToTreaty(id, response) {
-      if (!confirm(`Are you sure you want to ${response} this treaty?`)) return;
+    function respondToTreaty(id, response) {
+      pendingResponse = () => executeResponse(id, response);
+      document.getElementById('respond-body').textContent = `Are you sure you want to ${response} this treaty?`;
+      openModal('respond-confirm-modal');
+    }
+
+    async function executeResponse(id, response) {
       const acceptBtn = document.querySelector('.accept-btn');
       const rejectBtn = document.querySelector('.reject-btn');
       acceptBtn?.setAttribute('disabled', '');
@@ -260,22 +301,31 @@ Developer: Deathsgift66
     }
 
     function proposeTreaty() {
-      openModal('propose-treaty-modal');
       lastFocused = document.activeElement;
+      document.getElementById('create-new-treaty')?.setAttribute('aria-pressed', 'true');
+      openModal('propose-treaty-modal');
     }
 
     function closeProposeTreatyModal() {
       closeModal('propose-treaty-modal');
+      document.getElementById('create-new-treaty')?.setAttribute('aria-pressed', 'false');
       lastFocused?.focus();
     }
 
     async function submitProposeTreaty(event) {
       event.preventDefault();
-      const type = document.getElementById('treaty-type')?.value;
+      if (submitting) return;
+      submitting = true;
+      const errorBox = document.getElementById('form-error');
+      if (errorBox) errorBox.textContent = '';
+      const typeRaw = document.getElementById('treaty-type')?.value;
+      const type = String(typeRaw || '').trim();
       const partnerId = document.getElementById('partner-alliance-id')?.value;
       const partnerNum = parseInt(partnerId, 10);
-      if (!type || !partnerId || !Number.isInteger(partnerNum) || partnerNum <= 0) {
+      if (!type || !/^[a-z_]+$/.test(type) || !partnerId || !Number.isInteger(partnerNum) || partnerNum <= 0) {
+        errorBox.textContent = 'Invalid alliance ID or treaty type.';
         showToast('Invalid alliance ID.', 'error');
+        submitting = false;
         return;
       }
       const submitBtn = event.target.querySelector('button[type="submit"]');
@@ -300,10 +350,12 @@ Developer: Deathsgift66
         loadTreaties();
       } catch (err) {
         console.error('Failed to propose treaty:', err);
+        if (errorBox) errorBox.textContent = err.message;
         showToast('Failed to propose treaty.', 'error');
       } finally {
         toggleLoading(false);
         submitBtn?.removeAttribute('disabled');
+        submitting = false;
       }
     }
   </script>
@@ -345,7 +397,7 @@ Developer: Deathsgift66
       <p>Track active treaties, propose new agreements, and manage diplomatic relations with other alliances.</p>
 
       <!-- Create Treaty -->
-      <button id="create-new-treaty" class="action-btn" aria-label="Propose New Treaty">
+      <button id="create-new-treaty" class="action-btn" aria-label="Propose New Treaty" aria-haspopup="dialog" aria-pressed="false">
         New Proposal
       </button>
 
@@ -385,11 +437,24 @@ Developer: Deathsgift66
         </select>
         <label for="partner-alliance-id">Partner Alliance ID:</label>
         <input type="number" id="partner-alliance-id" name="partner-alliance-id" min="1" required />
+        <div id="form-error" class="form-error" aria-live="polite"></div>
         <div class="modal-actions">
           <button type="submit" class="action-btn">Submit</button>
           <button type="button" id="cancel-propose-treaty" class="action-btn">Cancel</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Response Confirmation Modal -->
+  <div id="respond-confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="respond-title" inert>
+    <div class="modal-content">
+      <h3 id="respond-title">Confirm Action</h3>
+      <p id="respond-body">Are you sure?</p>
+      <div class="modal-actions">
+        <button id="respond-yes" class="action-btn">Yes</button>
+        <button id="respond-no" class="action-btn">Cancel</button>
+      </div>
     </div>
   </div>
 
