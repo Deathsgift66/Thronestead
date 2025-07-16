@@ -4,37 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML } from './utils.js';
-
-const RESOURCE_KEYS = [
-  'wood',
-  'stone',
-  'iron_ore',
-  'gold',
-  'gems',
-  'food',
-  'coal',
-  'livestock',
-  'clay',
-  'flax',
-  'tools',
-  'wood_planks',
-  'refined_stone',
-  'iron_ingots',
-  'charcoal',
-  'leather',
-  'arrows',
-  'swords',
-  'axes',
-  'shields',
-  'armor',
-  'wagon',
-  'siege_weapons',
-  'jewelry',
-  'spear',
-  'horses',
-  'pitchforks',
-  'gold_cost'
-];
+import { RESOURCE_KEYS } from './resourceKeys.js';
 
 let currentSession = null;
 
@@ -284,7 +254,7 @@ function startCountdowns() {
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+  const s = Math.floor(seconds % 60);
 
   return `${h}h ${m}m ${s}s`;
 }

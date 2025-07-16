@@ -5,20 +5,14 @@
 
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, openModal } from './utils.js';
-
-const RESOURCE_KEYS = [
-  'wood', 'stone', 'iron_ore', 'gold', 'gems', 'food', 'coal', 'livestock',
-  'clay', 'flax', 'tools', 'wood_planks', 'refined_stone', 'iron_ingots',
-  'charcoal', 'leather', 'arrows', 'swords', 'axes', 'shields', 'armor',
-  'wagon', 'siege_weapons', 'jewelry', 'spear', 'horses', 'pitchforks',
-  'wood_cost', 'stone_cost', 'iron_cost', 'gold_cost', 'wood_plan_cost', 'iron_ingot_cost'
-];
+import { RESOURCE_KEYS } from './resourceKeys.js';
 
 let projectChannel = null;
+const loadedTabs = { completed: false, catalogue: false };
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
-  await loadAllLists();
+  await Promise.all([loadAvailable(), loadInProgress()]);
   await setupRealtimeProjects();
   setInterval(loadAllLists, 30000); // Auto-refresh
   window.addEventListener('beforeunload', () => {
@@ -56,6 +50,12 @@ function setupTabs() {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.tab)?.classList.add('active');
+
+      if (btn.dataset.tab === 'completed-tab' && !loadedTabs.completed) {
+        loadCompleted().then(() => { loadedTabs.completed = true; });
+      } else if (btn.dataset.tab === 'catalogue-tab' && !loadedTabs.catalogue) {
+        loadCatalogue().then(() => { loadedTabs.catalogue = true; });
+      }
     });
     btn.addEventListener('keydown', e => {
       if (['ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -75,12 +75,10 @@ function setupTabs() {
 // 📥 Load All Tabs
 // ----------------------------
 async function loadAllLists() {
-  await Promise.all([
-    loadAvailable(),
-    loadInProgress(),
-    loadCompleted(),
-    loadCatalogue()
-  ]);
+  const tasks = [loadAvailable(), loadInProgress()];
+  if (loadedTabs.completed) tasks.push(loadCompleted());
+  if (loadedTabs.catalogue) tasks.push(loadCatalogue());
+  await Promise.all(tasks);
   const live = document.getElementById('project-updates');
   if (live) live.textContent = 'Project data updated.';
 }
@@ -179,11 +177,12 @@ function renderInProgress(list) {
     const card = document.createElement('article');
     card.className = 'project-card';
     card.setAttribute('role', 'region');
-    card.setAttribute('aria-label', `Project: ${p.project_key}`);
+    const title = p.project_name || p.project_key;
+    card.setAttribute('aria-label', `Project: ${title}`);
     const eta = formatTime(Math.max(0, Math.floor((new Date(p.expected_end) - Date.now()) / 1000)));
 
     card.innerHTML = `
-      <h3>${escapeHTML(p.project_key)}</h3>
+      <h3>${escapeHTML(title)}</h3>
       <progress value="${percent}" max="100"></progress>
       <span>${percent}% - ETA ${eta}</span>
       <div class="contrib-summary">Loading...</div>
@@ -380,7 +379,7 @@ async function openContribModal(key) {
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+  const s = Math.floor(seconds % 60);
   return `${h}h ${m}m ${s}s`;
 }
 
