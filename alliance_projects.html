@@ -46,6 +46,10 @@ import { supabase } from '/Javascript/supabaseClient.js';
 
 const DEFAULT_BANNER = '/Assets/banner.png';
 
+let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
+sessionStorage.setItem('csrf_token', csrfToken);
+document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
+
 async function applyAllianceAppearance() {
   try {
     const { data: { session } = {} } = await supabase.auth.getSession();
@@ -145,7 +149,8 @@ import {
   closeModal,
   authHeaders,
   authJsonFetch,
-  debounce
+  debounce,
+  safeUUID
 } from '/Javascript/utils.js';
 import { RESOURCE_KEYS } from '/Javascript/resourceKeys.js';
 
@@ -160,14 +165,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   await setupRealtimeProjects();
   setInterval(loadAllLists, 30000);
   window.addEventListener('beforeunload', async () => {
-    if (projectChannel) await supabase.removeChannel(projectChannel);
+    if (projectChannel) await projectChannel.unsubscribe();
     projectChannel = null;
   });
 
   supabase.auth.onAuthStateChange(() => {
     cachedAlliance = null;
     if (projectChannel) {
-      supabase.removeChannel(projectChannel);
+      projectChannel.unsubscribe();
       projectChannel = null;
     }
   });
@@ -177,7 +182,7 @@ async function setupRealtimeProjects() {
   const { allianceId } = await getAllianceInfo();
   if (!allianceId) return;
 
-  if (projectChannel) await supabase.removeChannel(projectChannel);
+  if (projectChannel) await projectChannel.unsubscribe();
   projectChannel = null;
 
   projectChannel = supabase
@@ -240,9 +245,9 @@ async function loadAllLists() {
 async function getAllianceInfo(force = false) {
   if (cachedAlliance && !force) return cachedAlliance;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  if (!user?.id || typeof user.id !== 'string') {
     window.location.href = 'login.html';
-    throw new Error('Unauthorized');
+    throw new Error('User session lost or invalid.');
   }
   const { data, error } = await supabase
     .from('users')
@@ -477,7 +482,7 @@ async function startProject(projectKey, btn) {
     const headers = await authHeaders();
     await authJsonFetch('/api/alliance/projects/start', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken, ...headers },
       body: JSON.stringify({ project_key: projectKey })
     });
 
@@ -509,9 +514,11 @@ async function openContribModal(key) {
   try {
     const data = await authJsonFetch(`/api/alliance/projects/contributions?project_key=${key}`);
     const list = data.contributions || [];
-    listEl.innerHTML = list
-      .map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`)
-      .join('') || '<p class="empty-state">No contributions.</p>';
+    if (list.length === 0) {
+      listEl.innerHTML = '<p class="empty-state">No contributions.</p>';
+    } else {
+      listEl.innerHTML = list.map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`).join('');
+    }
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
       console.error('openContribModal', err);

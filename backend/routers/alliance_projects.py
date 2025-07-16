@@ -13,6 +13,7 @@ Version: 2025-06-21
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
+import re
 from pydantic import BaseModel
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
@@ -27,7 +28,7 @@ from backend.models import (
 )
 
 from ..database import get_db
-from ..security import verify_jwt_token
+from ..security import verify_jwt_token, require_csrf_token
 
 router = APIRouter(prefix="/api/alliance/projects", tags=["alliance_projects"])
 
@@ -192,11 +193,14 @@ def get_built_projects(
 @router.post("/start")
 def start_alliance_project(
     payload: StartPayload,
+    csrf: str = Depends(require_csrf_token),
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """Start construction of a new alliance project."""
     expire_old_projects(db)
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", payload.project_key or ""):
+        raise HTTPException(status_code=400, detail="Invalid project key")
     if payload.user_id != user_id:
         raise HTTPException(status_code=401, detail="Token mismatch")
 
@@ -265,6 +269,7 @@ def start_alliance_project(
 @router.post("/contribute")
 def contribute_to_project(
     payload: ContributionPayload,
+    csrf: str = Depends(require_csrf_token),
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
