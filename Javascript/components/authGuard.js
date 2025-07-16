@@ -15,6 +15,10 @@ import { getEnvVar } from '../env.js';
 const requireAdmin = window.requireAdmin === true;
 
 (async () => {
+  if (window.location.pathname === '/404.html') {
+    console.info('Auth guard skipped on 404 page.');
+    return;
+  }
   try {
     if (window.location.pathname === '/login.html') {
       const { data: { session } } = await supabase.auth.getSession();
