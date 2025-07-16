@@ -29,6 +29,14 @@ from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
 
 
+ALLOWED_TEMPLE_TYPES = {
+    "Temple of Light",
+    "Temple of War",
+    "Temple of Wisdom",
+    "Temple of Nature",
+}
+MAX_SUB_TEMPLES = 3
+
 def _validate_text(value: str | None) -> str | None:
     if value is not None:
         validate_clean_text(value)
@@ -269,7 +277,30 @@ def construct_temple(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
+    if payload.temple_type not in ALLOWED_TEMPLE_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid temple type")
+
     kid = get_kingdom_id(db, user_id)
+
+    if payload.is_major:
+        exists = db.execute(
+            text(
+                "SELECT 1 FROM kingdom_temples WHERE kingdom_id = :kid AND is_major = true"
+            ),
+            {"kid": kid},
+        ).fetchone()
+        if exists:
+            raise HTTPException(status_code=400, detail="Major temple already exists")
+    else:
+        count = db.execute(
+            text(
+                "SELECT COUNT(*) FROM kingdom_temples WHERE kingdom_id = :kid AND is_major = false"
+            ),
+            {"kid": kid},
+        ).scalar()
+        if count >= MAX_SUB_TEMPLES:
+            raise HTTPException(status_code=400, detail="Maximum sub-temples reached")
+
     db.execute(
         text(
             """

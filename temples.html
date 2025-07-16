@@ -73,8 +73,8 @@ Developer: Deathsgift66
       <!-- Divine Favor Bar -->
       <div class="temple-stat">
         <label for="favor-bar-fill">Divine Favor:</label>
-        <div class="favor-bar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" role="progressbar">
-          <div id="favor-bar-fill" class="favor-bar-fill"></div>
+        <div class="favor-bar" aria-label="Divine Favor" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" role="progressbar">
+          <div id="favor-bar-fill" class="favor-bar-fill" title="0% Divine Favor"></div>
         </div>
       </div>
 
@@ -145,6 +145,9 @@ Developer: Deathsgift66
     window.addEventListener('beforeunload', () => {
       if (templeChannel) supabase.removeChannel(templeChannel);
     });
+    window.addEventListener('pagehide', () => {
+      if (templeChannel) supabase.removeChannel(templeChannel);
+    });
 
     async function loadTemplesNexus() {
       const overviewEl = document.getElementById('temple-overview-content');
@@ -154,6 +157,7 @@ Developer: Deathsgift66
 
       overviewEl.innerHTML = '<div class="loading-spinner"></div>';
       favorBarEl.style.width = '0%';
+      favorBarEl.title = '0% Divine Favor';
       constructionEl.innerHTML = '<p>Loading construction options...</p>';
       templeListEl.innerHTML = '<p>Loading your temples...</p>';
 
@@ -180,7 +184,7 @@ Developer: Deathsgift66
 
         renderTempleOverview(majorTemple);
         renderFavorBar(favorData.divine_favor);
-        renderConstructionOptions(majorTemple);
+        renderConstructionOptions(majorTemple, subTemples);
         renderTempleList(subTemples);
       } catch (err) {
         console.error('❌ Temple Load Error:', err);
@@ -213,12 +217,15 @@ Developer: Deathsgift66
       const safeVal = Math.min(Math.max(favor, 0), 100);
       fillEl.style.width = `${safeVal}%`;
       fillEl.textContent = `${safeVal}%`;
+      fillEl.title = `${safeVal}% Divine Favor`;
       container.setAttribute('aria-valuenow', safeVal);
     }
 
-    function renderConstructionOptions(majorTemple) {
+    function renderConstructionOptions(majorTemple, subTemples = []) {
       const el = document.getElementById('temple-construction-options');
       el.innerHTML = '';
+
+      const MAX_SUB_TEMPLES = 3;
 
       let types = [
         'Temple of Light',
@@ -235,11 +242,24 @@ Developer: Deathsgift66
         }
       }
 
+      if (subTemples.length >= MAX_SUB_TEMPLES) {
+        el.innerHTML = `<p>Maximum of ${MAX_SUB_TEMPLES} sub-temples reached.</p>`;
+        return;
+      }
+
       types.forEach(type => {
         const btn = document.createElement('button');
         btn.className = 'action-btn';
         btn.textContent = `Construct ${type}`;
-        btn.addEventListener('click', () => constructTemple(type));
+        btn.setAttribute('aria-label', `Construct ${type} Temple`);
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          try {
+            await constructTemple(type);
+          } finally {
+            btn.disabled = false;
+          }
+        });
         el.appendChild(btn);
       });
     }
@@ -252,6 +272,8 @@ Developer: Deathsgift66
         el.innerHTML = '<p>No sub-temples constructed yet.</p>';
         return;
       }
+
+      subTemples.sort((a, b) => a.temple_name.localeCompare(b.temple_name));
 
       subTemples.forEach(t => {
         const card = document.createElement('div');
@@ -291,20 +313,19 @@ Developer: Deathsgift66
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${currentSession.access_token}`,
-            'X-User-ID': currentSession.user.id
+            Authorization: `Bearer ${currentSession.access_token}`
           },
           body: JSON.stringify({ temple_type: type })
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.error || 'Failed to construct temple');
+        if (!res.ok) throw new Error(result.detail || result.error || 'Failed to construct temple');
 
         showToast(`Temple "${type}" constructed!`);
         await loadTemplesNexus();
       } catch (err) {
         console.error('❌ Construct Temple Error:', err);
-        showToast('Failed to construct temple.');
+        showToast(err.message || 'Failed to construct temple.');
       }
     }
   </script>
