@@ -52,7 +52,13 @@ Developer: Deathsgift66
       const composeForm = document.getElementById('compose-form');
       composeForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await submitScroll();
+        const btn = composeForm.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+        try {
+          await submitScroll();
+        } finally {
+          if (btn) btn.disabled = false;
+        }
       });
 
       document.getElementById('board-prev').addEventListener('click', () => {
@@ -167,6 +173,7 @@ Developer: Deathsgift66
     }
 
     // ✅ Real-Time Subscription
+    let realtimeTimer;
     function subscribeToScrolls() {
       scrollChannel = supabase
         .channel('public:town_crier_scrolls')
@@ -174,7 +181,10 @@ Developer: Deathsgift66
           event: 'INSERT',
           schema: 'public',
           table: 'town_crier_scrolls'
-        }, loadBoard)
+        }, payload => {
+          clearTimeout(realtimeTimer);
+          realtimeTimer = setTimeout(loadBoard, 300);
+        })
         .subscribe();
 
       window.addEventListener('beforeunload', () => {
@@ -190,8 +200,8 @@ Developer: Deathsgift66
       const body = bodyEl.value.trim();
       const category = document.getElementById('scroll-category').value;
 
-      if (title.length < 3) return showToast("Title must be at least 3 characters.");
-      if (body.length < 10) return showToast("Body must be at least 10 characters.");
+      if (title.length < 1) return showToast("Title is required.");
+      if (body.length < 1) return showToast("Body is required.");
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -199,8 +209,7 @@ Developer: Deathsgift66
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-            'X-User-ID': session.user.id
+            Authorization: `Bearer ${session.access_token}`
           },
           body: JSON.stringify({ title, body, category })
         });
@@ -244,10 +253,14 @@ Developer: Deathsgift66
     async function editScroll(id) {
       const scroll = boardScrolls.find(s => (s.id || s.scroll_id) == id);
       if (!scroll) return;
-      const newTitle = prompt('Edit title', scroll.title);
-      if (newTitle === null) return;
-      const newBody = prompt('Edit body', scroll.body || scroll.content || '');
-      if (newBody === null) return;
+      const newTitleRaw = prompt('Edit title', scroll.title);
+      if (newTitleRaw === null) return;
+      const newTitle = newTitleRaw.trim();
+      if (newTitle.length < 1) return showToast('Title is required.');
+      const newBodyRaw = prompt('Edit body', scroll.body || scroll.content || '');
+      if (newBodyRaw === null) return;
+      const newBody = newBodyRaw.trim();
+      if (newBody.length < 1) return showToast('Body is required.');
       const { error } = await supabase
         .from('town_crier_scrolls')
         .update({ title: newTitle, body: newBody })
