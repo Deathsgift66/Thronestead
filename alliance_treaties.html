@@ -244,12 +244,12 @@ Developer: Deathsgift66
         .subscribe();
 
       window.addEventListener('beforeunload', async () => {
-        if (treatyChannel) await window.supabase.removeChannel(treatyChannel);
+        if (treatyChannel) await treatyChannel.unsubscribe();
         treatyChannel = null;
       });
       window.supabase.auth.onAuthStateChange(() => {
         if (treatyChannel) {
-          window.supabase.removeChannel(treatyChannel);
+          treatyChannel.unsubscribe();
           treatyChannel = null;
         }
       });
@@ -263,6 +263,7 @@ Developer: Deathsgift66
         box.innerHTML = '<p>Loading...</p>';
         openModal('treaty-modal');
         const res = await authFetch(`/api/alliance/treaty/${id}`);
+        if (!res.ok) throw new Error('Failed to fetch treaty');
         const t = await res.json();
         
         const termsRows = Object.entries(t.terms || {}).length
@@ -297,7 +298,7 @@ Developer: Deathsgift66
     function respondToTreaty(id, response) {
       lastFocused = document.activeElement;
       pendingResponse = () => executeResponse(id, response);
-      document.getElementById('respond-body').textContent = `Are you sure you want to ${response} this treaty?`;
+      document.getElementById('respond-body').textContent = `Are you sure you want to ${escapeHTML(response)} this treaty?`;
       openModal('respond-confirm-modal');
     }
 
@@ -352,6 +353,8 @@ Developer: Deathsgift66
       const type = String(typeRaw || '').trim();
       const partnerId = document.getElementById('partner-alliance-id')?.value;
       const partnerNum = parseInt(partnerId, 10);
+      const durationVal = parseInt(document.getElementById('duration-days')?.value, 10);
+      const exclusive = document.getElementById('exclusive')?.checked;
       const allowedTypes = [
         'non_aggression_pact',
         'defensive_pact',
@@ -359,9 +362,15 @@ Developer: Deathsgift66
         'intelligence_sharing',
         'research_collaboration'
       ];
-      if (!allowedTypes.includes(type) || !partnerId || !Number.isInteger(partnerNum) || partnerNum <= 0) {
-        errorBox.textContent = 'Invalid alliance ID or treaty type.';
-        showToast('Invalid alliance ID.', 'error');
+      if (
+        !allowedTypes.includes(type) ||
+        !partnerId ||
+        !Number.isInteger(partnerNum) ||
+        partnerNum <= 0 ||
+        (durationVal && (!Number.isInteger(durationVal) || durationVal <= 0))
+      ) {
+        errorBox.textContent = 'Invalid treaty details.';
+        showToast('Invalid treaty details.', 'error');
         submitting = false;
         return;
       }
@@ -378,7 +387,7 @@ Developer: Deathsgift66
           body: JSON.stringify({
             partner_alliance_id: partnerNum,
             treaty_type: type,
-            terms: { duration_days: 30, exclusive: true }
+            terms: { duration_days: durationVal || 30, exclusive: !!exclusive }
           })
         });
         if (!res.ok) throw new Error(await res.text());
@@ -463,9 +472,9 @@ Developer: Deathsgift66
   <div id="propose-treaty-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="propose-modal-title" tabindex="-1">
     <div class="modal-content">
       <h3 id="propose-modal-title">Propose New Treaty</h3>
-      <form id="propose-treaty-form">
+      <form id="propose-treaty-form" aria-describedby="form-error">
         <label for="treaty-type">Treaty Type:</label>
-        <select id="treaty-type" name="treaty-type">
+        <select id="treaty-type" name="treaty-type" aria-describedby="form-error">
           <option value="non_aggression_pact" title="Promise not to attack each other">Non Aggression Pact</option>
           <option value="defensive_pact" title="Assist each other when attacked">Defensive Pact</option>
           <option value="trade_pact" title="Improve trade relations">Trade Pact</option>
@@ -473,7 +482,10 @@ Developer: Deathsgift66
           <option value="research_collaboration" title="Cooperate on research projects">Research Collaboration</option>
         </select>
         <label for="partner-alliance-id">Partner Alliance ID:</label>
-        <input type="number" id="partner-alliance-id" name="partner-alliance-id" min="1" required />
+        <input type="number" id="partner-alliance-id" name="partner-alliance-id" min="1" required aria-describedby="form-error" />
+        <label for="duration-days">Duration (days):</label>
+        <input type="number" id="duration-days" name="duration-days" min="1" value="30" aria-describedby="form-error" />
+        <label><input type="checkbox" id="exclusive" name="exclusive" /> Exclusive Agreement</label>
         <div id="form-error" class="form-error" aria-live="polite"></div>
         <div class="modal-actions">
           <button type="submit" class="action-btn">Submit</button>
