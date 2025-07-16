@@ -49,9 +49,11 @@ Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
     import { authFetch, authJsonFetch } from '/Javascript/utils.js';
     import { setupReauthButtons } from '/Javascript/reauth.js';
+    import { validateSessionOrLogout } from '/Javascript/auth.js';
 
     const REFRESH_MS = 30000;
     const AUTO_EXPIRE_MS = 60000;
+    const MAX_FEED_ITEMS = 250;
     let realtimeSub = null;
     let currentData = null;
 
@@ -68,6 +70,9 @@ Developer: Deathsgift66
       );
       initThemeToggle();
       setupReauthButtons('.action-btn');
+      supabase.auth.onAuthStateChange((_evt, session) => {
+        if (!session) validateSessionOrLogout();
+      });
     });
 
     window.addEventListener('beforeunload', () => {
@@ -105,6 +110,16 @@ Developer: Deathsgift66
               { title: 'Audit Log', items: data.audit },
               { title: 'Admin Actions', items: data.admin_actions }
             ];
+
+        let remaining = MAX_FEED_ITEMS;
+        renderSet.forEach(set => {
+          if (!remaining) {
+            set.items = [];
+            return;
+          }
+          set.items = (set.items || []).slice(0, remaining);
+          remaining -= set.items.length;
+        });
 
         renderSet.forEach(({ title, items }) => renderCategory(container, title, items));
       } catch (err) {
@@ -260,7 +275,15 @@ Developer: Deathsgift66
     }
 
     function getAlertId(item) {
-      return item.alert_id || item.id || "";
+      if (!item.alert_id) {
+        if (item.id) {
+          console.warn('Missing alert_id, using fallback id:', item.id);
+          return item.id;
+        }
+        console.warn('Missing alert_id and fallback id:', item);
+        return '';
+      }
+      return item.alert_id;
     }
 
     function exportJSON() {
