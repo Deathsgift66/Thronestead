@@ -32,12 +32,21 @@ export function showToast(msg, type = 'info') {
     toast = document.createElement('div');
     toast.id = 'toast';
     toast.className = 'toast-notification';
+    toast.setAttribute('tabindex', '-1');
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.setAttribute('aria-hidden', 'true');
     document.body.appendChild(toast);
   }
   toast.textContent = msg;
   toast.className = `toast-notification ${type}`;
+  toast.setAttribute('aria-hidden', 'false');
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  toast.focus();
+  setTimeout(() => {
+    toast.classList.remove('show');
+    toast.setAttribute('aria-hidden', 'true');
+  }, 3000);
 }
 
 /**
