@@ -46,6 +46,12 @@ import { supabase } from '/Javascript/supabaseClient.js';
 
 const DEFAULT_BANNER = '/Assets/banner.png';
 
+function logError(context, err) {
+  if (process.env.NODE_ENV === 'development') {
+    console.error(`❌ ${context}`, err);
+  }
+}
+
 let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
 sessionStorage.setItem('csrf_token', csrfToken);
 document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
@@ -89,9 +95,7 @@ async function applyAllianceAppearance() {
     });
 
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ Failed to apply alliance appearance:', err);
-    }
+    logError('Failed to apply alliance appearance', err);
     document.querySelectorAll('.alliance-banner').forEach(img => {
       img.src = DEFAULT_BANNER;
     });
@@ -107,9 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.user = { ...(window.user || {}), ...ctx };
     }
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to load user context:', err);
-    }
+    logError('Failed to load user context', err);
   }
 });
 
@@ -175,12 +177,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     projectChannel = null;
   });
 
-  supabase.auth.onAuthStateChange(() => {
+  supabase.auth.onAuthStateChange(async () => {
     cachedAlliance = null;
+    sessionStorage.removeItem('completedProjects');
+    sessionStorage.removeItem('catalogueProjects');
     if (projectChannel) {
-      projectChannel.unsubscribe();
+      await projectChannel.unsubscribe();
       projectChannel = null;
     }
+    await setupRealtimeProjects();
   });
 
   document.addEventListener('keydown', e => {
@@ -195,6 +200,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       tabs[next].click();
     }
   });
+
+  document.getElementById('contrib-modal-close')?.addEventListener('click', () =>
+    closeModal('contrib-modal')
+  );
 });
 
 async function setupRealtimeProjects() {
@@ -212,6 +221,11 @@ async function setupRealtimeProjects() {
       table: 'alliance_projects',
       filter: `alliance_id=eq.${allianceId}`
     }, () => loadAllLists())
+    .on('error', err => {
+      logError('realtime error', err);
+      setupRealtimeProjects();
+    })
+    .on('close', () => setupRealtimeProjects())
     .subscribe();
 }
 
@@ -288,12 +302,15 @@ async function loadAvailable() {
   try {
     const { allianceId } = await getAllianceInfo();
     const json = await authJsonFetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
-    availableData = json.projects || [];
+    if (!json.projects) {
+      container.innerHTML = '<p class="empty-state">No projects returned.</p>';
+      availableData = [];
+    } else {
+      availableData = json.projects;
+    }
     renderAvailable(availableData);
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadAvailable', err);
-    }
+    logError('loadAvailable', err);
     container.innerHTML = '<p>Failed to load available projects.</p>';
   }
 }
@@ -318,12 +335,14 @@ function renderAvailable(list) {
     card.setAttribute('role', 'region');
     card.setAttribute('aria-label', `Project: ${p.project_name}`);
     const cost = formatCostFromColumns(p);
+    const costId = `cost-${p.project_key}`;
+    const timeId = `time-${p.project_key}`;
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)}</h3>
       <p>${escapeHTML(p.description || '')}</p>
-      <p class="project-cost" title="${cost}">Costs: ${cost}</p>
-      <p>Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
-      ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}">Start Project</button>` : ''}
+      <p id="${costId}" class="project-cost" title="${cost}">Costs: ${cost}</p>
+      <p id="${timeId}">Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
+      ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}" aria-describedby="${costId} ${timeId}">Start Project</button>` : ''}
     `;
     container.appendChild(card);
   });
@@ -343,9 +362,7 @@ async function loadInProgress() {
     const json = await authJsonFetch(`/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
     renderInProgress(json.projects || []);
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadInProgress', err);
-    }
+    logError('loadInProgress', err);
     container.innerHTML = '<p>Failed to load in-progress projects.</p>';
   }
 }
@@ -413,9 +430,7 @@ async function loadContributions(key, element) {
       element.appendChild(btn);
     }
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('contributions', err);
-    }
+    logError('contributions', err);
     element.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
 }
@@ -434,13 +449,16 @@ async function loadCompleted() {
   try {
     const { allianceId } = await getAllianceInfo();
     const json = await authJsonFetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
-    completedData = json.projects || [];
+    if (!json.projects) {
+      container.innerHTML = '<p class="empty-state">No projects returned.</p>';
+      completedData = [];
+    } else {
+      completedData = json.projects;
+    }
     sessionStorage.setItem('completedProjects', JSON.stringify(completedData));
     renderCompleted(completedData);
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadCompleted', err);
-    }
+    logError('loadCompleted', err);
     container.innerHTML = '<p>Failed to load completed projects.</p>';
   }
 }
@@ -482,13 +500,16 @@ async function loadCatalogue() {
 
   try {
     const json = await authJsonFetch('/api/alliance/projects/catalogue');
-    catalogueData = json.projects || [];
+    if (!json.projects) {
+      container.innerHTML = '<p class="empty-state">No projects returned.</p>';
+      catalogueData = [];
+    } else {
+      catalogueData = json.projects;
+    }
     sessionStorage.setItem('catalogueProjects', JSON.stringify(catalogueData));
     renderCatalogue(catalogueData);
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadCatalogue', err);
-    }
+    logError('loadCatalogue', err);
     container.innerHTML = '<p>Failed to load project catalogue.</p>';
   }
 }
@@ -542,9 +563,7 @@ async function startProject(projectKey, btn) {
     const live = document.getElementById('project-updates');
     if (live) live.textContent = 'Project started successfully.';
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('startProject', err);
-    }
+    logError('startProject', err);
     alert('❌ Failed to start project.');
   } finally {
     startingProject = false;
@@ -573,9 +592,7 @@ async function openContribModal(key) {
       renderContribPage();
     }
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('openContribModal', err);
-    }
+    logError('openContribModal', err);
     if (listEl) listEl.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
   openModal(modal);
@@ -677,9 +694,13 @@ function renderSkeletons(container, count = 3) {
 
   <!-- Hero Section -->
   <section class="hero-section alliance-hero" aria-label="Alliance Project Introduction">
-    <div class="hero-content">
-      <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" onerror="this.src='/Assets/banner.png'" />
-      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" onerror="this.src='/Assets/avatars/default_avatar_emperor.png'" />
+      <div class="hero-content">
+        <a href="alliance_home.html" aria-label="Alliance Profile" class="alliance-banner-link">
+          <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" onerror="this.src='/Assets/banner.png'" />
+        </a>
+        <a href="alliance_home.html" aria-label="Alliance Profile" class="alliance-emblem-link">
+          <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" onerror="this.src='/Assets/avatars/default_avatar_emperor.png'" />
+        </a>
       <h1>Forge Mighty Works</h1>
       <p>Unite your alliance to build wonders and fortifications that change the realm.</p>
     </div>
@@ -744,7 +765,7 @@ function renderSkeletons(container, count = 3) {
       <h3 id="contrib-modal-title" class="modal-title">Contributions</h3>
       <div class="modal-list"></div>
       <div class="modal-pagination"></div>
-      <button class="btn" onclick="closeModal('contrib-modal')">Close</button>
+      <button id="contrib-modal-close" class="btn">Close</button>
     </div>
   </div>
 
