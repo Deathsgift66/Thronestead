@@ -157,6 +157,7 @@
         }
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         members = await res.json();
+        updateRoleCounts(members);
         renderMembers(members);
       } catch (err) {
         console.error('❌ Member fetch error:', err);
@@ -234,6 +235,18 @@
       const tbody = document.getElementById('members-list');
       if (!tbody || actionsBound) return;
       tbody.addEventListener('click', async e => {
+        const copyBtn = e.target.closest('.copy-btn');
+        if (copyBtn) {
+          try {
+            await navigator.clipboard.writeText(copyBtn.dataset.username || '');
+            showToast('Username copied!', 'success');
+          } catch (err) {
+            console.error('❌ Copy failed:', err);
+            showToast('Failed to copy username', 'error');
+          }
+          return;
+        }
+
         const btn = e.target.closest('button');
         if (!btn || btn.disabled) return;
         const userId = btn.dataset.id;
@@ -307,7 +320,7 @@
         const showFull = member.same_alliance;
         row.innerHTML = `
           <td><img src="/Assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="${escapeHTML(member.username)} crest" loading="lazy" decoding="async" onerror="this.src='/Assets/crests/default.png'"></td>
-          <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}</td>
+          <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}<button class="copy-btn" data-username="${escapeHTML(member.username)}" aria-label="Copy username ${escapeHTML(member.username)}" title="Copy username">📋</button></td>
           <td title="${escapeHTML(RANK_TOOLTIPS[member.rank] || '')}">${escapeHTML(member.rank)}</td>
           <td>${showFull ? roleBadge(member) : '—'}</td>
           <td>${showFull ? escapeHTML(member.status) : '—'}</td>
@@ -322,6 +335,40 @@
       });
 
       document.getElementById('load-more')?.classList.toggle('hidden', data.length <= currentPage * pageSize);
+    }
+
+    function updateRoleCounts(list) {
+      const rankHeader = document.getElementById('rank-header');
+      const roleHeader = document.getElementById('role-header');
+      if (rankHeader) {
+        rankHeader.innerHTML = 'Rank';
+        const rankCounts = {};
+        list.forEach(m => {
+          const r = m.rank || 'Unknown';
+          rankCounts[r] = (rankCounts[r] || 0) + 1;
+        });
+        Object.entries(rankCounts).forEach(([rank, count]) => {
+          const span = document.createElement('span');
+          span.className = 'count-badge';
+          span.title = `${rank}: ${count}`;
+          span.textContent = count;
+          rankHeader.appendChild(span);
+        });
+      }
+      if (roleHeader) {
+        roleHeader.innerHTML = 'Role';
+        const roleCounts = {};
+        list.forEach(m => {
+          if (m.role) roleCounts[m.role] = (roleCounts[m.role] || 0) + 1;
+        });
+        Object.entries(roleCounts).forEach(([role, count]) => {
+          const span = document.createElement('span');
+          span.className = 'count-badge';
+          span.title = `${role}: ${count}`;
+          span.textContent = count;
+          roleHeader.appendChild(span);
+        });
+      }
     }
 
     async function getUserPrivileges() {
@@ -438,7 +485,7 @@
         <option value="asc">Asc</option>
         <option value="desc">Desc</option>
       </select>
-      <button id="apply-sort">Apply</button>
+      <button id="apply-sort" title="Apply search and sort options">Apply</button>
     </section>
 
     <div class="members-table-container">
@@ -448,8 +495,8 @@
           <tr>
             <th scope="col">Crest</th>
             <th scope="col" data-sort="username" class="sortable" tabindex="0" role="button">Name</th>
-            <th scope="col" data-sort="rank" class="sortable" tabindex="0" role="button">Rank</th>
-            <th scope="col">Role</th>
+            <th scope="col" id="rank-header" data-sort="rank" class="sortable" tabindex="0" role="button">Rank</th>
+            <th scope="col" id="role-header">Role</th>
             <th scope="col" data-sort="status" class="sortable" tabindex="0" role="button">Status</th>
             <th scope="col" data-sort="contribution" class="sortable" tabindex="0" role="button">Contribution</th>
             <th scope="col" data-sort="economy_score" class="sortable" tabindex="0" role="button">Economy</th>
@@ -465,7 +512,7 @@
       </table>
     </div>
     <div class="load-more-container">
-      <button id="load-more" class="load-more-btn hidden">Load More</button>
+      <button id="load-more" class="load-more-btn hidden" title="Load more members">Load More</button>
     </div>
   </main>
 
