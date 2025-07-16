@@ -19,7 +19,7 @@ from backend.models import Alliance, AllianceMember
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import require_user_id, require_csrf_token
 
 router = APIRouter(prefix="/api/alliance_members", tags=["alliance_members"])
 
@@ -105,6 +105,7 @@ def list_members(
 def join(
     payload: JoinPayload,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     if db.query(AllianceMember).filter_by(user_id=payload.user_id).first():
@@ -133,6 +134,7 @@ def join(
 def leave(
     payload: MemberAction,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
@@ -152,6 +154,7 @@ def leave(
 def promote(
     payload: RankPayload,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     return _change_rank(payload, db, "Promoted", user_id)
@@ -161,6 +164,7 @@ def promote(
 def demote(
     payload: RankPayload,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     return _change_rank(payload, db, "Demoted", user_id)
@@ -190,6 +194,7 @@ def _change_rank(payload: RankPayload, db: Session, action: str, acting_user_id:
 def remove(
     payload: MemberAction,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     aid = validate_management_role(db, user_id)
@@ -215,6 +220,7 @@ def remove(
 def contribute(
     payload: ContributionPayload,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     aid = validate_management_role(db, user_id)
@@ -232,6 +238,7 @@ def contribute(
 def apply_to_alliance(
     payload: JoinPayload,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     if db.query(AllianceMember).filter_by(user_id=payload.user_id).first():
@@ -254,6 +261,7 @@ def apply_to_alliance(
 def approve_member(
     payload: MemberAction,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     member = (
@@ -277,6 +285,7 @@ def approve_member(
 def transfer_leadership(
     payload: TransferLeadershipPayload,
     user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     alliance = db.query(Alliance).filter_by(alliance_id=payload.alliance_id).first()

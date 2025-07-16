@@ -36,8 +36,14 @@
     let membersChannel = null;
     let currentUser = null;
     let authToken = '';
-    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    let csrfToken =
+      sessionStorage.getItem('csrf_token') ||
+      (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '')
+        .split('=')[1] ||
+      crypto.randomUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
+    document.cookie =
+      `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -50,6 +56,10 @@
       await fetchMembers(sortBy, direction);
       setupUIControls();
       setupRealtime();
+      setInterval(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) authToken = session.access_token;
+      }, 45 * 60 * 1000);
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
@@ -137,6 +147,27 @@
         btn.textContent = original;
       }, 300);
       btn.addEventListener('click', handler);
+      setupSortableHeaders();
+    }
+
+    function setupSortableHeaders() {
+      document.querySelectorAll('.members-table th.sortable').forEach(th => {
+        const sortKey = th.dataset.sort;
+        if (!sortKey) return;
+        th.addEventListener('click', () => {
+          const sortInput = document.getElementById('sort-by');
+          const dirInput = document.getElementById('sort-direction');
+          let direction = dirInput.value;
+          if (sortInput.value === sortKey) {
+            direction = direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortInput.value = sortKey;
+            direction = 'asc';
+          }
+          dirInput.value = direction;
+          fetchMembers(sortKey, direction, document.getElementById('member-search')?.value.toLowerCase() || '');
+        });
+      });
     }
 
     function setupRealtime() {
@@ -328,18 +359,18 @@
         <thead>
           <tr>
             <th scope="col">Crest</th>
-            <th scope="col">Name</th>
-            <th scope="col">Rank</th>
+            <th scope="col" data-sort="username" class="sortable">Name</th>
+            <th scope="col" data-sort="rank" class="sortable">Rank</th>
             <th scope="col">Role</th>
-            <th scope="col">Status</th>
-            <th scope="col">Contribution</th>
-            <th scope="col">Economy</th>
-            <th scope="col">Military</th>
-            <th scope="col">Diplomacy</th>
-            <th scope="col">Output</th>
+            <th scope="col" data-sort="status" class="sortable">Status</th>
+            <th scope="col" data-sort="contribution" class="sortable">Contribution</th>
+            <th scope="col" data-sort="economy_score" class="sortable">Economy</th>
+            <th scope="col" data-sort="military_score" class="sortable">Military</th>
+            <th scope="col" data-sort="diplomacy_score" class="sortable">Diplomacy</th>
+            <th scope="col" data-sort="total_output" class="sortable">Output</th>
             <th scope="col">Actions</th>
-          </tr>
-        </thead>
+         </tr>
+       </thead>
         <tbody id="members-list" aria-live="polite">
           <tr><td colspan="11"><div class="loading-spinner"></div></td></tr>
         </tbody>

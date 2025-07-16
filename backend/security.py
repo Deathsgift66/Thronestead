@@ -42,6 +42,7 @@ __all__ = [
     "create_reauth_token",
     "validate_reauth_token",
     "decode_supabase_jwt",
+    "require_csrf_token",
 ]
 
 
@@ -268,3 +269,11 @@ def verify_reauth_token(
     if not x_reauth_token or not validate_reauth_token(db, user_id, x_reauth_token):
         raise HTTPException(status_code=401, detail="Invalid re-auth token")
     return user_id
+
+
+def require_csrf_token(request: Request, x_csrf_token: str | None = Header(None, alias="X-CSRF-Token")) -> str:
+    """Validate that the CSRF header matches the csrf_token cookie."""
+    cookie_token = request.cookies.get("csrf_token")
+    if not x_csrf_token or not cookie_token or cookie_token != x_csrf_token:
+        raise HTTPException(status_code=403, detail="CSRF token missing or invalid")
+    return x_csrf_token
