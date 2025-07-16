@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from typing import Iterable
 
 from services.audit_service import log_action, log_alliance_activity
 from services.alliance_service import get_alliance_id
@@ -50,6 +51,21 @@ class RespondPayload(BaseModel):
 
 
 # --- Utility Methods ---
+
+def has_role(db: Session, user_id: str, alliance_id: int, roles: Iterable[str]) -> bool:
+    """Return True if the user has one of ``roles`` in the alliance."""
+    row = db.execute(
+        text(
+            """
+            SELECT r.role_name
+              FROM alliance_members m
+              JOIN alliance_roles r ON m.role_id = r.role_id
+             WHERE m.user_id = :uid AND m.alliance_id = :aid
+            """
+        ),
+        {"uid": user_id, "aid": alliance_id},
+    ).fetchone()
+    return bool(row and row[0] in roles)
 
 
 def validate_alliance_permission(db: Session, user_id: str, permission: str) -> int:
@@ -115,25 +131,35 @@ def propose_treaty(
     db: Session = Depends(get_db),
 ):
     aid = validate_alliance_permission(db, user_id, "can_manage_treaties")
+    if not has_role(db, user_id, aid, ["Leader", "Elder"]):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     # Ensure not proposing with self
     if aid == payload.partner_alliance_id:
         raise HTTPException(status_code=400, detail="Cannot propose treaty to self")
 
+    partner = db.execute(
+        text("SELECT 1 FROM alliances WHERE alliance_id = :pid AND status = 'active'"),
+        {"pid": payload.partner_alliance_id},
+    ).fetchone()
+    if not partner:
+        raise HTTPException(status_code=404, detail="Partner alliance not found")
+
     dup = db.execute(
         text(
             """
             SELECT 1 FROM alliance_treaties
-             WHERE alliance_id = :aid
-               AND partner_alliance_id = :pid
-               AND status = 'proposed'
+             WHERE ((alliance_id = :aid AND partner_alliance_id = :pid)
+                    OR (alliance_id = :pid AND partner_alliance_id = :aid))
+               AND treaty_type = :type
+               AND status IN ('proposed', 'active')
             """
         ),
-        {"aid": aid, "pid": payload.partner_alliance_id},
+        {"aid": aid, "pid": payload.partner_alliance_id, "type": payload.treaty_type},
     ).fetchone()
 
     if dup:
-        raise HTTPException(status_code=409, detail="Treaty already proposed")
+        raise HTTPException(status_code=409, detail="Treaty already exists")
 
     db.execute(
         text(
