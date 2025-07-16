@@ -45,62 +45,6 @@ Developer: Deathsgift66
   <!-- JS -->
   <script type="module">
     // Project Name: Thronestead©
-    // File Name: allianceAppearance.js
-    // Version:  7/1/2025 10:38
-    // Developer: Deathsgift66
-
-    import { supabase } from '/Javascript/supabaseClient.js';
-
-    const DEFAULT_BANNER = '/Assets/banner.png';
-
-    async function applyAllianceAppearance() {
-      try {
-        const { data: { session } = {} } = await supabase.auth.getSession();
-        const userId = session?.user?.id;
-        if (!userId) return;
-
-        const res = await fetch('/api/alliance-home/details', {
-          headers: { 'X-User-ID': userId }
-        });
-        if (!res.ok) return;
-
-        const { alliance } = await res.json();
-        if (!alliance) return;
-
-        const banner = alliance.banner || DEFAULT_BANNER;
-        const emblem = alliance.emblem_url;
-
-        // Update banner images
-        document.querySelectorAll('.alliance-banner').forEach(img => {
-          img.src = banner;
-        });
-
-        // Update emblem images
-        if (emblem) {
-          document.querySelectorAll('.alliance-emblem').forEach(img => {
-            img.src = emblem;
-          });
-        }
-
-        // Update background styles
-        document.querySelectorAll('.alliance-bg').forEach(el => {
-          el.style.backgroundImage = `url(${banner})`;
-          el.style.backgroundSize = 'cover';
-          el.style.backgroundAttachment = 'fixed';
-          el.style.backgroundRepeat = 'no-repeat';
-          el.style.backgroundPosition = 'center';
-        });
-
-      } catch (err) {
-        console.error('❌ Failed to apply alliance appearance:', err);
-      }
-    }
-
-    // 🚀 Initialize on load
-    document.addEventListener('DOMContentLoaded', applyAllianceAppearance);
-  </script>
-  <script type="module">
-    // Project Name: Thronestead©
     // File Name: alliance_home.js
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
@@ -458,6 +402,7 @@ Developer: Deathsgift66
         </thead>
         <tbody id="members-list"></tbody>
       </table>
+      <button id="load-more-members" class="load-more">Load More</button>
     </section>
 
     <!-- Achievements -->
@@ -478,6 +423,7 @@ Developer: Deathsgift66
     <section class="panel active-battles" aria-labelledby="active-battles-heading">
       <h2 id="active-battles-heading">Active Battles</h2>
       <div id="active-battles-list"></div>
+      <button id="load-more-wars" class="load-more">Load More</button>
     </section>
 
     <!-- War Score -->
@@ -496,6 +442,7 @@ Developer: Deathsgift66
     <section class="panel activity-log" aria-labelledby="activity-heading">
       <h2 id="activity-heading">Recent Activity Log</h2>
       <ul id="activity-log"></ul>
+      <button id="load-more-activity" class="load-more">Load More</button>
     </section>
   </main>
 

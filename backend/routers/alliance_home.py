@@ -17,14 +17,16 @@ from sqlalchemy.orm import Session
 from backend.models import Alliance, AllianceMember, AllianceVault, User
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import verify_jwt_token
 
 router = APIRouter(prefix="/api/alliance-home", tags=["alliance_home"])
 
 
 @router.get("/details")
 def alliance_details(
-    user_id: str = Depends(require_user_id),
+    limit: int = 50,
+    offset: int = 0,
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """Return full summary data for the user's current alliance."""
@@ -43,6 +45,8 @@ def alliance_details(
         .join(User, AllianceMember.user_id == User.user_id)
         .filter(AllianceMember.alliance_id == aid)
         .order_by(AllianceMember.rank, AllianceMember.contribution.desc())
+        .limit(limit)
+        .offset(offset)
         .all()
     )
     members = [
@@ -128,9 +132,10 @@ def alliance_details(
             FROM alliance_wars
             WHERE attacker_alliance_id = :aid OR defender_alliance_id = :aid
             ORDER BY start_date DESC
+            LIMIT :lim OFFSET :off
         """
         ),
-        {"aid": aid},
+        {"aid": aid, "lim": limit, "off": offset},
     ).fetchall()
     wars = [
         {
@@ -179,10 +184,10 @@ def alliance_details(
             JOIN users u ON l.user_id = u.user_id
             WHERE l.alliance_id = :aid
             ORDER BY l.created_at DESC
-            LIMIT 10
+            LIMIT :lim OFFSET :off
         """
         ),
-        {"aid": aid},
+        {"aid": aid, "lim": limit, "off": offset},
     ).fetchall()
     activity = [
         {

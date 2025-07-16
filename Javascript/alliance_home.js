@@ -6,7 +6,50 @@
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, setText, formatDate, fragmentFrom, jsonFetch } from './utils.js';
 
+const DEFAULT_BANNER = '/Assets/banner.png';
+const LIMIT = 50;
+let sessionData = null;
 let activityChannel = null;
+let membersOffset = 0;
+let activityOffset = 0;
+let warsOffset = 0;
+
+async function applyAllianceAppearance() {
+  try {
+    if (!sessionData) return;
+    const res = await fetch('/api/alliance-home/details', {
+      headers: { Authorization: `Bearer ${sessionData.access_token}` }
+    });
+    if (!res.ok) return;
+    const { alliance } = await res.json();
+    if (!alliance) return;
+
+    const banner = alliance.banner || DEFAULT_BANNER;
+    const emblem = alliance.emblem_url;
+
+    document.querySelectorAll('.alliance-banner').forEach(img => {
+      img.src = banner;
+      img.onerror = () => (img.src = '/Assets/fallback.png');
+    });
+
+    if (emblem) {
+      document.querySelectorAll('.alliance-emblem').forEach(img => {
+        img.src = emblem;
+        img.onerror = () => (img.src = '/Assets/fallback.png');
+      });
+    }
+
+    document.querySelectorAll('.alliance-bg').forEach(el => {
+      el.style.backgroundImage = `url(${banner})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundAttachment = 'fixed';
+      el.style.backgroundRepeat = 'no-repeat';
+      el.style.backgroundPosition = 'center';
+    });
+  } catch (err) {
+    console.error('❌ Failed to apply alliance appearance:', err);
+  }
+}
 
 window.addEventListener('beforeunload', () => {
   if (activityChannel) supabase.removeChannel(activityChannel);
@@ -19,19 +62,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'login.html';
     return;
   }
-  fetchAllianceDetails(userId);
+  sessionData = session;
+  applyAllianceAppearance();
+  const data = await fetchAllianceDetails();
+  populateAlliance(data);
+  setupRealtime(data.alliance?.alliance_id);
+  membersOffset = data.members.length;
+  activityOffset = data.activity.length;
+  warsOffset = data.wars.length;
+  updateLoadButtons(data);
+  document.getElementById('load-more-members')?.addEventListener('click', loadMoreMembers);
+  document.getElementById('load-more-activity')?.addEventListener('click', loadMoreActivity);
+  document.getElementById('load-more-wars')?.addEventListener('click', loadMoreWars);
 });
 
-async function fetchAllianceDetails(userId) {
-  try {
-    const data = await jsonFetch('/api/alliance-home/details', {
-      headers: { 'X-User-ID': userId }
-    });
-    populateAlliance(data);
-    setupRealtime(data.alliance?.alliance_id);
-  } catch (err) {
-    console.error('❌ Failed to fetch alliance details:', err);
-  }
+async function fetchAllianceDetails(offset = 0) {
+  const data = await jsonFetch(`/api/alliance-home/details?limit=${LIMIT}&offset=${offset}`, {
+    headers: { Authorization: `Bearer ${sessionData.access_token}` }
+  });
+  return data;
 }
 
 function populateAlliance(data) {
@@ -56,11 +105,15 @@ function populateAlliance(data) {
   const banner = document.getElementById('alliance-banner-img');
   if (banner) {
     banner.src = a.banner || '/Assets/banner.png';
+    banner.onerror = () => (banner.src = '/Assets/fallback.png');
     banner.alt = `Banner of ${a.name}`;
   }
 
   const emblem = document.getElementById('alliance-emblem-img');
-  if (emblem) emblem.alt = `Emblem of ${a.name}`;
+  if (emblem) {
+    emblem.onerror = () => (emblem.src = '/Assets/fallback.png');
+    emblem.alt = `Emblem of ${a.name}`;
+  }
 
   if (data.vault) {
     setText('alliance-fortification', safe(data.vault.fortification_level));
@@ -100,10 +153,10 @@ function renderProjects(projects = []) {
   container.replaceChildren(frag);
 }
 
-function renderMembers(members = []) {
+function renderMembers(members = [], append = false) {
   const body = document.getElementById('members-list');
   if (!body) return;
-  if (!members.length) return setFallbackText(body, 'No members.', 'tr');
+  if (!members.length && !append) return setFallbackText(body, 'No members.', 'tr');
 
   const top = Math.max(0, ...members.map(m => m.contribution || 0));
   const frag = fragmentFrom(members, m => {
@@ -120,7 +173,8 @@ function renderMembers(members = []) {
       <td>${escapeHTML(m.status)}</td>`;
     return row;
   });
-  body.replaceChildren(frag);
+  if (append) body.appendChild(frag);
+  else body.replaceChildren(frag);
 }
 
 function renderTopContributors(members = []) {
@@ -174,10 +228,10 @@ function renderAchievements(achievements = []) {
   list.replaceChildren(frag);
 }
 
-function renderActivity(entries = []) {
+function renderActivity(entries = [], append = false) {
   const list = document.getElementById('activity-log');
   if (!list) return;
-  if (!entries.length) return setFallbackText(list, 'No recent activity.');
+  if (!entries.length && !append) return setFallbackText(list, 'No recent activity.');
 
   const frag = fragmentFrom(entries, e => {
     const li = document.createElement('li');
@@ -185,7 +239,8 @@ function renderActivity(entries = []) {
     li.textContent = `[${formatDate(e.created_at)}] ${e.username}: ${e.description}`;
     return li;
   });
-  list.replaceChildren(frag);
+  if (append) list.appendChild(frag);
+  else list.replaceChildren(frag);
 }
 
 function renderDiplomacy(treaties = []) {
@@ -201,12 +256,12 @@ function renderDiplomacy(treaties = []) {
   container.replaceChildren(frag);
 }
 
-function renderActiveBattles(wars = []) {
+function renderActiveBattles(wars = [], append = false) {
   const container = document.getElementById('active-battles-list');
   if (!container) return;
 
   const active = wars.filter(w => w.war_status === 'active');
-  if (!active.length) return setFallbackText(container, 'No active battles.');
+  if (!active.length && !append) return setFallbackText(container, 'No active battles.');
 
   const frag = fragmentFrom(active, w => {
     const div = document.createElement('div');
@@ -214,13 +269,14 @@ function renderActiveBattles(wars = []) {
     div.textContent = `War ${w.alliance_war_id} — ${w.war_status}`;
     return div;
   });
-  container.replaceChildren(frag);
+  if (append) container.appendChild(frag);
+  else container.replaceChildren(frag);
 }
 
-function renderWarScore(wars = []) {
+function renderWarScore(wars = [], append = false) {
   const container = document.getElementById('war-score-summary');
   if (!container) return;
-  if (!wars.length) return setFallbackText(container, 'No war scores.');
+  if (!wars.length && !append) return setFallbackText(container, 'No war scores.');
 
   const frag = fragmentFrom(wars, w => {
     const div = document.createElement('div');
@@ -229,7 +285,8 @@ function renderWarScore(wars = []) {
     div.textContent = `War ${w.alliance_war_id}: Attacker ${att} vs Defender ${def}`;
     return div;
   });
-  container.replaceChildren(frag);
+  if (append) container.appendChild(frag);
+  else container.replaceChildren(frag);
 }
 
 // === Realtime Handling ===
@@ -259,4 +316,37 @@ function addActivityEntry(entry) {
   list.prepend(li);
 
   if (list.children.length > 20) list.removeChild(list.lastChild);
+}
+
+async function loadMoreMembers() {
+  const data = await fetchAllianceDetails(membersOffset);
+  renderMembers(data.members, true);
+  membersOffset += data.members.length;
+  toggleButton('load-more-members', data.members.length === LIMIT);
+}
+
+async function loadMoreActivity() {
+  const data = await fetchAllianceDetails(activityOffset);
+  renderActivity(data.activity, true);
+  activityOffset += data.activity.length;
+  toggleButton('load-more-activity', data.activity.length === LIMIT);
+}
+
+async function loadMoreWars() {
+  const data = await fetchAllianceDetails(warsOffset);
+  renderActiveBattles(data.wars, true);
+  renderWarScore(data.wars, true);
+  warsOffset += data.wars.length;
+  toggleButton('load-more-wars', data.wars.length === LIMIT);
+}
+
+function updateLoadButtons(data) {
+  toggleButton('load-more-members', data.members.length === LIMIT);
+  toggleButton('load-more-activity', data.activity.length === LIMIT);
+  toggleButton('load-more-wars', data.wars.length === LIMIT);
+}
+
+function toggleButton(id, show) {
+  const btn = document.getElementById(id);
+  if (btn) btn.style.display = show ? 'block' : 'none';
 }
