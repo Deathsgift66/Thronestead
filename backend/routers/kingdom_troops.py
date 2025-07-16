@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from services import resource_service
 
 from ..database import get_db
-from ..security import require_user_id
+from ..security import verify_jwt_token
 from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/kingdom_troops", tags=["kingdom_troops"])
@@ -33,7 +33,7 @@ class UpgradePayload(BaseModel):
 
 @router.get("/unlocked")
 def unlocked_troops(
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """Return the list of unlocked troop types and their stats."""
@@ -113,7 +113,7 @@ def unlocked_troops(
 @router.post("/upgrade")
 def upgrade_troops(
     payload: UpgradePayload,
-    user_id: str = Depends(require_user_id),
+    user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """Upgrade troops to a new unit type if requirements are met."""

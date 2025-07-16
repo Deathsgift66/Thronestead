@@ -30,6 +30,7 @@
     let userId = null;
     let kingdomId = null;
     let realtimeChannel = null;
+    let accessToken = null;
 
     document.addEventListener('DOMContentLoaded', init);
 
@@ -41,6 +42,7 @@
       }
 
       userId = session.user.id;
+      accessToken = session.access_token;
       const { data } = await supabase
         .from('users')
         .select('kingdom_id')
@@ -54,15 +56,19 @@
     }
 
     async function loadUnits() {
+      const loadingEl = document.getElementById('units-loading');
+      if (loadingEl) loadingEl.style.display = 'block';
       try {
         const res = await fetch('/api/kingdom_troops/unlocked', {
-          headers: { 'X-User-ID': userId }
+          headers: { Authorization: `Bearer ${accessToken}` }
         });
         if (!res.ok) throw new Error('Failed to load units');
         const { unlockedUnits, unitStats } = await res.json();
         renderUnits(unlockedUnits, unitStats);
       } catch (err) {
         console.error('loadUnits error:', err);
+      } finally {
+        if (loadingEl) loadingEl.style.display = 'none';
       }
     }
 
@@ -77,11 +83,13 @@
 
       unlocked.forEach(t => {
         const s = stats[t];
-        if (!s || typeof s.class !== 'string') return;
+        if (!s) {
+          console.warn(`Missing unitStats for: ${t}`);
+          return;
+        }
+        if (typeof s.class !== 'string') return;
         if (!categories[s.class]) categories[s.class] = [];
         categories[s.class].push(s);
-        const img = new Image();
-        img.src = `/assets/troops/${t}.png`;
       });
 
       for (const cls in categories) {
@@ -100,7 +108,7 @@
       const card = document.createElement('div');
       card.className = 'unit-card';
       card.innerHTML = `
-        <img src="/assets/troops/${unit.unit_type}.png" alt="${escapeHTML(unit.name)}" onerror="this.src='/Assets/icon-sword.svg'; this.onerror=null;">
+        <img src="/assets/troops/${unit.unit_type}.png" alt="${escapeHTML(unit.name || 'Unnamed Unit')}" onerror="this.src='/Assets/icon-sword.svg'; this.onerror=null;">
         <h3>${escapeHTML(unit.name)}</h3>
         <p>Tier ${unit.tier}</p>
         <ul class="unit-stats">
@@ -115,13 +123,20 @@
 
     function bindToggleEvents() {
       document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        const toggle = () => {
           const target = document.getElementById(btn.dataset.target);
           if (!target) return;
           target.classList.toggle('hidden');
           const expanded = btn.getAttribute('aria-expanded') === 'true';
           btn.setAttribute('aria-expanded', String(!expanded));
           btn.textContent = `${btn.dataset.label} ${expanded ? '▶' : '▼'}`;
+        };
+        btn.addEventListener('click', toggle);
+        btn.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggle();
+          }
         });
       });
     }
@@ -136,9 +151,16 @@
           table: 'kingdom_troops',
           filter: `kingdom_id=eq.${kingdomId}`
         }, loadUnits)
-        .subscribe();
+        .subscribe(status => {
+          if (status !== 'SUBSCRIBED') {
+            console.error('Realtime subscription failed:', status);
+          }
+        });
 
       window.addEventListener('beforeunload', () => {
+        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      });
+      window.addEventListener('pagehide', () => {
         if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       });
     }
@@ -166,24 +188,25 @@
   Thronestead — Muster Hall
 </header>
 <main class="main-centered-container" aria-label="Unlocked Troops">
+  <p id="units-loading">Loading...</p>
   <section class="units-section" id="infantry" aria-labelledby="infantry-header">
-    <h2 id="infantry-header"><button class="toggle-btn" data-target="infantry-list" data-label="Infantry" aria-expanded="true">Infantry ▼</button></h2>
+    <h2 id="infantry-header"><button class="toggle-btn" data-target="infantry-list" data-label="Infantry" aria-expanded="true" role="button" tabindex="0">Infantry ▼</button></h2>
     <div class="units-grid" id="infantry-list"></div>
   </section>
   <section class="units-section" id="archers" aria-labelledby="archers-header">
-    <h2 id="archers-header"><button class="toggle-btn" data-target="archers-list" data-label="Archers" aria-expanded="true">Archers ▼</button></h2>
+    <h2 id="archers-header"><button class="toggle-btn" data-target="archers-list" data-label="Archers" aria-expanded="true" role="button" tabindex="0">Archers ▼</button></h2>
     <div class="units-grid" id="archers-list"></div>
   </section>
   <section class="units-section" id="cavalry" aria-labelledby="cavalry-header">
-    <h2 id="cavalry-header"><button class="toggle-btn" data-target="cavalry-list" data-label="Cavalry" aria-expanded="true">Cavalry ▼</button></h2>
+    <h2 id="cavalry-header"><button class="toggle-btn" data-target="cavalry-list" data-label="Cavalry" aria-expanded="true" role="button" tabindex="0">Cavalry ▼</button></h2>
     <div class="units-grid" id="cavalry-list"></div>
   </section>
   <section class="units-section" id="siege" aria-labelledby="siege-header">
-    <h2 id="siege-header"><button class="toggle-btn" data-target="siege-list" data-label="Siege" aria-expanded="true">Siege ▼</button></h2>
+    <h2 id="siege-header"><button class="toggle-btn" data-target="siege-list" data-label="Siege" aria-expanded="true" role="button" tabindex="0">Siege ▼</button></h2>
     <div class="units-grid" id="siege-list"></div>
   </section>
   <section class="units-section" id="support" aria-labelledby="support-header">
-    <h2 id="support-header"><button class="toggle-btn" data-target="support-list" data-label="Support" aria-expanded="true">Support ▼</button></h2>
+    <h2 id="support-header"><button class="toggle-btn" data-target="support-list" data-label="Support" aria-expanded="true" role="button" tabindex="0">Support ▼</button></h2>
     <div class="units-grid" id="support-list"></div>
   </section>
 </main>
