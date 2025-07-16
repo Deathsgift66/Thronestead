@@ -194,6 +194,12 @@ h2 {
 .modal.active,
 .modal.visible {
   display: flex;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Modal Content */

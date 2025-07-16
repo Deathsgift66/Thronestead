@@ -81,7 +81,7 @@ Developer: Deathsgift66
       try {
         const res = await authFetch(`/api/alliance/quests?status=${status}`);
         if (!res.ok) throw new Error(await res.text());
-        allQuests = await res.json();
+        allQuests = res.ok ? await res.json() : [];
         currentPage = 1;
         renderQuestPage();
       } catch (err) {
@@ -204,10 +204,10 @@ Developer: Deathsgift66
       try {
         toggleLoading(true);
         const res = await authFetch(`/api/alliance/quests/${id}`);
-        const q = await res.json();
-        document.getElementById('modal-quest-title').textContent = q.name;
-          document.querySelector('.quest-type-modal').textContent = q.type || 'Quest';
-          document.getElementById('modal-quest-description').textContent = q.description;
+        const q = res.ok ? await res.json() : {};
+        document.getElementById('modal-quest-title').textContent = escapeHTML(q.name);
+          document.querySelector('.quest-type-modal').textContent = escapeHTML(q.type || 'Quest');
+          document.getElementById('modal-quest-description').textContent = escapeHTML(q.description);
           startModalCountdown(q.ends_at);
 
           const contrib = document.getElementById('modal-quest-contributions');
@@ -290,13 +290,14 @@ Developer: Deathsgift66
             }
           };
 
-          document.getElementById('role-check-message').textContent = q.role_check_message || '';
-          document.getElementById('modal-quest-leader-note').textContent = q.leader_note || '';
+          document.getElementById('role-check-message').textContent = escapeHTML(q.role_check_message || '');
+          document.getElementById('modal-quest-leader-note').textContent = escapeHTML(q.leader_note || '');
 
           document.querySelector('main')?.setAttribute('aria-hidden', 'true');
           modalEl.addEventListener('keydown', trapFocus);
           document.addEventListener('keydown', handleEsc);
           modalEl.classList.add('visible');
+          modalEl.setAttribute('tabindex', '0');
           modalEl.focus();
         } catch (err) {
           console.error('Quest modal load error:', err);
@@ -356,7 +357,6 @@ Developer: Deathsgift66
       clearTimeout(modalCountdownId);
       if (lastFocusedEl) lastFocusedEl.focus();
       modalEl.removeAttribute('tabindex');
-      modalEl.blur();
     }
 
     function trapFocus(e) {
@@ -388,7 +388,7 @@ Developer: Deathsgift66
       openModal(modal);
       try {
         const res = await authFetch('/api/alliance/quests?status=available');
-        const list = await res.json();
+        const list = res.ok ? await res.json() : [];
         select.innerHTML = list
           .map(q => `<option value="${q.quest_code}">${escapeHTML(q.name)}</option>`)
           .join('') || '<option>No quests available</option>';
@@ -432,15 +432,16 @@ Developer: Deathsgift66
       ul.innerHTML = '<li>Loading heroes...</li>';
       try {
         const res = await authFetch('/api/alliance/quests/heroes');
-        const heroes = await res.json();
+        const heroes = res.ok ? await res.json() : [];
         ul.innerHTML = '';
         heroes.forEach(h => {
           const li = document.createElement('li');
           li.textContent = `${h.name}: ${h.quests_completed} quests`;
           ul.appendChild(li);
         });
-      } catch {
+      } catch (err) {
         ul.innerHTML = '<li>Failed to load heroes.</li>';
+        console.error(err);
         showToast('Failed to load heroes', 'error');
       }
     }
@@ -474,7 +475,7 @@ Developer: Deathsgift66
       let canStart = false;
       try {
         const res = await authFetch('/api/alliance-members/view');
-        const json = await res.json();
+        const json = res.ok ? await res.json() : {};
         const me = (json.alliance_members || []).find(m => m.user_id === user.id);
         if (window.user?.is_admin || me?.permissions?.can_manage_quests || ['Leader','Elder'].includes(me?.rank)) {
           canStart = true;
@@ -561,7 +562,7 @@ Developer: Deathsgift66
     <!-- Visual Identity -->
     <div class="alliance-visuals">
       <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
-      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" onerror="this.src='/Assets/avatars/default_avatar_emperor.png'" />
+      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
     </div>
 
     <!-- Quest Controls -->
