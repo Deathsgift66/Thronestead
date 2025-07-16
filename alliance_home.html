@@ -71,8 +71,10 @@ Developer: Deathsgift66
 
     let activityChannel = null;
 
-    window.addEventListener('beforeunload', () => {
-      if (activityChannel) supabase.removeChannel(activityChannel).catch(console.error);
+    window.addEventListener('beforeunload', async () => {
+      if (activityChannel) {
+        await supabase.removeChannel(activityChannel).catch(console.error);
+      }
     });
 
     const LIMIT = 50;
@@ -108,7 +110,8 @@ Developer: Deathsgift66
 
       let cached = sessionStorage.getItem('lastAllianceDetails');
       if (!cached) {
-        const ts = parseInt(localStorage.getItem('lastAllianceDetailsTs') || '0', 10);
+        const tsRaw = localStorage.getItem('lastAllianceDetailsTs');
+        const ts = Number.isFinite(+tsRaw) ? parseInt(tsRaw, 10) : 0;
         if (Date.now() - ts < 60 * 60 * 1000) {
           cached = localStorage.getItem('lastAllianceDetails');
         }
@@ -184,13 +187,13 @@ Developer: Deathsgift66
       const banner = document.getElementById('alliance-banner-img');
       if (banner) {
         banner.src = a.banner || '/Assets/banner.png';
-        banner.alt = a.name ? `Banner of ${escapeHTML(a.name)}` : 'Alliance Banner';
+        banner.alt = 'Alliance Banner';
       }
 
       const emblem = document.getElementById('alliance-emblem-img');
       if (emblem && a.emblem_url) {
         emblem.src = a.emblem_url;
-        emblem.alt = a.name ? `Emblem of ${escapeHTML(a.name)}` : 'Alliance Emblem';
+        emblem.alt = 'Alliance Emblem';
       }
 
       if (data.vault) {
@@ -207,9 +210,17 @@ Developer: Deathsgift66
       safeRender(renderQuests, data.quests);
       safeRender(renderAchievements, data.achievements);
       safeRender(renderActivity, data.activity, !initial);
-      safeRender(renderDiplomacy, data.treaties);
+      try {
+        renderDiplomacy(data.treaties);
+      } catch (e) {
+        setFallbackText(document.getElementById('diplomacy-table'), 'Failed to render diplomacy overview.');
+      }
       safeRender(renderActiveBattles, data.wars);
-      safeRender(renderWarScore, data.wars);
+      try {
+        renderWarScore(data.wars);
+      } catch (e) {
+        setFallbackText(document.getElementById('war-score-summary'), 'Failed to render war score.');
+      }
     }
 
     // === Render Utilities ===
@@ -374,9 +385,9 @@ Developer: Deathsgift66
 
     // === Realtime Handling ===
 
-    function setupRealtime(allianceId) {
+    async function setupRealtime(allianceId) {
       if (!allianceId) return;
-      if (activityChannel) supabase.removeChannel(activityChannel).catch(console.error);
+      if (activityChannel) await supabase.removeChannel(activityChannel).catch(console.error);
 
       activityChannel = supabase
         .channel(`alliance_home_${allianceId}`)
