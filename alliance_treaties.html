@@ -115,6 +115,9 @@ Developer: Deathsgift66
         .getElementById('create-new-treaty')
         ?.addEventListener('click', proposeTreaty);
       document
+        .getElementById('filter-active')
+        ?.addEventListener('change', loadTreaties);
+      document
         .getElementById('propose-treaty-form')
         ?.addEventListener('submit', submitProposeTreaty);
       document
@@ -133,6 +136,8 @@ Developer: Deathsgift66
           respondToTreaty(e.target.dataset.id, 'accept');
         } else if (e.target.classList.contains('reject-btn')) {
           respondToTreaty(e.target.dataset.id, 'reject');
+        } else if (e.target.classList.contains('cancel-btn')) {
+          cancelTreaty(e.target.dataset.id);
         } else if (e.target.id === 'treaty-modal') {
           closeTreatyModal();
         }
@@ -169,11 +174,18 @@ Developer: Deathsgift66
       try {
         const res = await authFetch('/api/alliance/treaties');
         const treaties = await res.json();
-        if (!treaties.length) {
+        const onlyActive = document.getElementById('filter-active')?.checked;
+        const filtered = onlyActive
+          ? treaties.filter(t => t.status === 'active')
+          : treaties;
+        if (!filtered.length) {
           container.innerHTML = "<p class='empty-state'>No treaties found.</p>";
           return;
         }
-        container.innerHTML = treaties.map(t => renderTreatyCard(t)).join('');
+        container.innerHTML = filtered.map(t => renderTreatyCard(t)).join('');
+        container.classList.remove('fade-in');
+        void container.offsetWidth;
+        container.classList.add('fade-in');
         bindCardActions();
       } catch (err) {
         console.error('Failed to load treaties:', err);
@@ -183,12 +195,19 @@ Developer: Deathsgift66
     }
 
     function renderTreatyCard(t) {
-      const type = (t.type || t.treaty_type || '')
-        .replaceAll('_', ' ')
-        .toUpperCase();
+      const rawType = t.type || t.treaty_type || '';
+      const type = rawType.replaceAll('_', ' ').toUpperCase();
+      const icons = {
+        non_aggression_pact: '🕊',
+        defensive_pact: '🛡',
+        trade_pact: '⚔',
+        intelligence_sharing: '⚔',
+        research_collaboration: '🕊'
+      };
+      const icon = icons[rawType] || '';
       return `
         <div class="treaty-card ${t.status}">
-          <h3>${escapeHTML(type)}</h3>
+          <h3>${icon} ${escapeHTML(type)}</h3>
           <p><strong>With:</strong> ${escapeHTML(t.partner_name)}</p>
           <p><strong>Status:</strong> ${escapeHTML(t.status)}</p>
           ${
@@ -287,6 +306,11 @@ Developer: Deathsgift66
         `
                 : ''
             }
+            ${
+              t.status === 'active' && userHasTreatyPermission
+                ? `<button class="cancel-btn" data-id="${t.treaty_id}">Cancel Treaty</button>`
+                : ''
+            }
           `;
       } catch (err) {
         console.error('Failed to load treaty:', err);
@@ -328,6 +352,30 @@ Developer: Deathsgift66
         toggleLoading(false);
         acceptBtn?.removeAttribute('disabled');
         rejectBtn?.removeAttribute('disabled');
+      }
+    }
+
+    async function cancelTreaty(id) {
+      if (!confirm('Cancel this treaty?')) return;
+      toggleLoading(true);
+      try {
+        const res = await authFetch('/api/alliance/treaties/cancel', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify({ treaty_id: parseInt(id, 10) })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        closeTreatyModal();
+        showToast('Treaty cancelled.', 'success');
+        loadTreaties();
+      } catch (err) {
+        console.error('Failed to cancel treaty:', err);
+        showToast('Failed to cancel treaty.', 'error');
+      } finally {
+        toggleLoading(false);
       }
     }
 
@@ -446,6 +494,7 @@ Developer: Deathsgift66
       <button id="create-new-treaty" class="action-btn" aria-label="Propose New Treaty" aria-haspopup="dialog" aria-pressed="false">
         New Proposal
       </button>
+      <label class="filter-toggle"><input type="checkbox" id="filter-active" /> View My Active Treaties</label>
 
       <!-- Treaty Feed -->
       <div id="treaties-container" aria-live="polite" aria-label="Treaty Status Feed">
@@ -481,11 +530,15 @@ Developer: Deathsgift66
           <option value="intelligence_sharing" title="Share spy reports">Intelligence Sharing</option>
           <option value="research_collaboration" title="Cooperate on research projects">Research Collaboration</option>
         </select>
+        <div class="helper-text">Choose the kind of agreement.</div>
         <label for="partner-alliance-id">Partner Alliance ID:</label>
         <input type="number" id="partner-alliance-id" name="partner-alliance-id" min="1" required aria-describedby="form-error" />
+        <div class="helper-text">Enter the numeric ID of the partner alliance.</div>
         <label for="duration-days">Duration (days):</label>
         <input type="number" id="duration-days" name="duration-days" min="1" value="30" aria-describedby="form-error" />
+        <div class="helper-text">Leave blank for default 30 days.</div>
         <label><input type="checkbox" id="exclusive" name="exclusive" /> Exclusive Agreement</label>
+        <div class="helper-text">Blocks similar treaties with other alliances.</div>
         <div id="form-error" class="form-error" aria-live="polite"></div>
         <div class="modal-actions">
           <button type="submit" class="action-btn">Submit</button>
