@@ -73,6 +73,7 @@ export function toggleLoading(show) {
 export function openModal(modal) {
   const el = typeof modal === 'string' ? document.getElementById(modal) : modal;
   if (!el) return;
+  el.__prevFocus = document.activeElement;
   el.classList.remove('hidden');
   el.setAttribute('aria-hidden', 'false');
   el.removeAttribute('inert');
@@ -126,6 +127,10 @@ export function closeModal(modal) {
   el.classList.add('hidden');
   el.setAttribute('aria-hidden', 'true');
   el.setAttribute('inert', '');
+  if (el.__prevFocus && typeof el.__prevFocus.focus === 'function') {
+    el.__prevFocus.focus();
+  }
+  delete el.__prevFocus;
 }
 
 /**
