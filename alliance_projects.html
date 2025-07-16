@@ -49,11 +49,24 @@ const DEFAULT_BANNER = '/Assets/banner.png';
 function logError(context, err) {
   if (process.env.NODE_ENV === 'development') {
     console.error(`❌ ${context}`, err);
+  } else {
+    try {
+      supabase.from('client_errors').insert({
+        context,
+        message: err?.message || String(err),
+        stack: err?.stack || null
+      });
+    } catch (e) {
+      console.error('error reporting failed', e);
+    }
   }
 }
 
-let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
-sessionStorage.setItem('csrf_token', csrfToken);
+let csrfToken = sessionStorage.getItem('csrf_token');
+if (!csrfToken) {
+  csrfToken = crypto.randomUUID();
+  sessionStorage.setItem('csrf_token', csrfToken);
+}
 document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
 
 async function applyAllianceAppearance() {
@@ -102,18 +115,19 @@ async function applyAllianceAppearance() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', applyAllianceAppearance);
-document.addEventListener('DOMContentLoaded', async () => {
+let userContext = JSON.parse(sessionStorage.getItem('userContext') || 'null');
+async function loadUserContext() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const ctx = await authJsonFetch(`/api/player/context?user_id=${user.id}`);
-      window.user = { ...(window.user || {}), ...ctx };
+      userContext = { ...(userContext || {}), ...ctx };
+      sessionStorage.setItem('userContext', JSON.stringify(userContext));
     }
   } catch (err) {
     logError('Failed to load user context', err);
   }
-});
+}
 
 import { loadPlayerProgressionFromStorage } from '/Javascript/progressionGlobal.js';
 
@@ -143,7 +157,7 @@ export function renderProgressionBanner(target = 'body') {
   `;
 }
 
-document.addEventListener('DOMContentLoaded', () => renderProgressionBanner());
+
 
 import {
   escapeHTML,
@@ -152,7 +166,7 @@ import {
   authHeaders,
   authJsonFetch,
   debounce,
-  safeUUID
+  
 } from '/Javascript/utils.js';
 import { RESOURCE_KEYS } from '/Javascript/resourceKeys.js';
 
@@ -166,8 +180,13 @@ let catalogueData = [];
 let contribList = [];
 let contribPage = 0;
 const CONTRIB_PAGE_SIZE = 50;
+let realtimeRetries = 0;
+const MAX_REALTIME_RETRIES = 5;
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function main() {
+  renderProgressionBanner();
+  await applyAllianceAppearance();
+  await loadUserContext();
   setupTabs();
   await Promise.all([loadAvailable(), loadInProgress()]);
   await setupRealtimeProjects();
@@ -175,6 +194,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('beforeunload', async () => {
     if (projectChannel) await projectChannel.unsubscribe();
     projectChannel = null;
+    sessionStorage.removeItem('completedProjects');
+    sessionStorage.removeItem('catalogueProjects');
   });
 
   supabase.auth.onAuthStateChange(async () => {
@@ -201,10 +222,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  document.getElementById('contrib-modal-close')?.addEventListener('click', () =>
-    closeModal('contrib-modal')
-  );
-});
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeContribModal();
+  });
+
+  const modal = document.getElementById('contrib-modal');
+  modal?.addEventListener('click', e => {
+    if (e.target === modal) closeContribModal();
+  });
+  document.getElementById('contrib-modal-close')?.addEventListener('click', closeContribModal);
+}
+
+document.addEventListener('DOMContentLoaded', main);
 
 async function setupRealtimeProjects() {
   const { allianceId } = await getAllianceInfo();
@@ -212,6 +241,7 @@ async function setupRealtimeProjects() {
 
   if (projectChannel) await projectChannel.unsubscribe();
   projectChannel = null;
+  realtimeRetries = 0;
 
   projectChannel = supabase
     .channel(`realtime:alliance_projects_${allianceId}`)
@@ -223,10 +253,17 @@ async function setupRealtimeProjects() {
     }, () => loadAllLists())
     .on('error', err => {
       logError('realtime error', err);
-      setupRealtimeProjects();
+      retryRealtime();
     })
-    .on('close', () => setupRealtimeProjects())
+    .on('close', retryRealtime)
     .subscribe();
+}
+
+function retryRealtime() {
+  if (realtimeRetries >= MAX_REALTIME_RETRIES) return;
+  const delay = Math.min(1000 * 2 ** realtimeRetries, 30000);
+  realtimeRetries++;
+  setTimeout(setupRealtimeProjects, delay);
 }
 
 const debouncedLoadCompleted = debounce(async () => {
@@ -241,9 +278,13 @@ const debouncedLoadCatalogue = debounce(async () => {
 function setupTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('tabindex', '-1');
+      });
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
+      btn.setAttribute('tabindex', '0');
       document.getElementById(btn.dataset.tab)?.classList.add('active');
 
       if (btn.dataset.tab === 'completed-tab' && !loadedTabs.completed) {
@@ -264,8 +305,17 @@ function setupTabs() {
       }
     });
   });
-  document.getElementById('available-sort')?.addEventListener('change', () => renderAvailable(availableData));
-  document.getElementById('completed-sort')?.addEventListener('change', () => renderCompleted(completedData));
+  document.getElementById('available-sort')?.addEventListener('change', debounce(() => renderAvailable(availableData), 250));
+  document.getElementById('completed-sort')?.addEventListener('change', debounce(() => renderCompleted(completedData), 250));
+}
+
+function setLiveMessage(msg) {
+  const live = document.getElementById('project-updates');
+  if (!live) return;
+  live.textContent = msg;
+  setTimeout(() => {
+    if (live.textContent === msg) live.textContent = '';
+  }, 3000);
 }
 
 async function loadAllLists() {
@@ -273,8 +323,7 @@ async function loadAllLists() {
   if (loadedTabs.completed) tasks.push(loadCompleted());
   if (loadedTabs.catalogue) tasks.push(loadCatalogue());
   await Promise.all(tasks);
-  const live = document.getElementById('project-updates');
-  if (live) live.textContent = 'Project data updated.';
+  setLiveMessage('Project data updated!');
 }
 
 async function getAllianceInfo(force = false) {
@@ -325,10 +374,10 @@ function renderAvailable(list) {
 
   availableData = list;
 
-  if (!window.user) {
+  if (!userContext) {
     console.warn('⚠️ No user context found. Permissions may be unavailable.');
   }
-  const canStart = window.user?.permissions?.includes('can_manage_projects');
+  const canStart = userContext?.permissions?.includes('can_manage_projects');
   sorted.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card';
@@ -340,8 +389,10 @@ function renderAvailable(list) {
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)}</h3>
       <p>${escapeHTML(p.description || '')}</p>
-      <p id="${costId}" class="project-cost" title="${cost}">Costs: ${cost}</p>
-      <p id="${timeId}">Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
+      <dl>
+        <div><dt>Costs</dt><dd id="${costId}" class="project-cost" title="${cost}">${cost}</dd></div>
+        <div><dt>Build Time</dt><dd id="${timeId}">${formatTime(p.build_time_seconds || 0)}</dd></div>
+      </dl>
       ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}" aria-describedby="${costId} ${timeId}">Start Project</button>` : ''}
     `;
     container.appendChild(card);
@@ -560,8 +611,7 @@ async function startProject(projectKey, btn) {
     });
 
     await loadAllLists();
-    const live = document.getElementById('project-updates');
-    if (live) live.textContent = 'Project started successfully.';
+    setLiveMessage('Project started successfully.');
   } catch (err) {
     logError('startProject', err);
     alert('❌ Failed to start project.');
@@ -596,6 +646,11 @@ async function openContribModal(key) {
     if (listEl) listEl.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
   openModal(modal);
+}
+
+function closeContribModal() {
+  contribList = [];
+  closeModal('contrib-modal');
 }
 
 function renderContribPage() {
@@ -712,11 +767,11 @@ function renderSkeletons(container, count = 3) {
       <h2>Alliance Projects</h2>
 
       <!-- Tab Navigation -->
-      <nav class="tab-buttons" aria-label="Project Category Tabs">
-        <button class="tab-btn active" data-tab="available-tab">Available Projects</button>
-        <button class="tab-btn" data-tab="in-progress-tab">In Progress</button>
-        <button class="tab-btn" data-tab="completed-tab">Completed</button>
-        <button class="tab-btn" data-tab="catalogue-tab">All Projects</button>
+      <nav class="tab-buttons" aria-label="Project Category Tabs" role="tablist">
+        <button class="tab-btn active" data-tab="available-tab" role="tab" tabindex="0">Available Projects</button>
+        <button class="tab-btn" data-tab="in-progress-tab" role="tab" tabindex="-1">In Progress</button>
+        <button class="tab-btn" data-tab="completed-tab" role="tab" tabindex="-1">Completed</button>
+        <button class="tab-btn" data-tab="catalogue-tab" role="tab" tabindex="-1">All Projects</button>
       </nav>
 
       <div aria-live="polite" id="project-updates">Loading updates…</div>
