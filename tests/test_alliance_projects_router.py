@@ -94,7 +94,7 @@ def test_start_creates_progress_row():
     )
     db.commit()
 
-    start_alliance_project(StartPayload(project_key="p3", user_id=uid), uid, db)
+    start_alliance_project(StartPayload(project_key="p3", user_id=uid), "t", uid, db)
     rows = get_in_progress_projects(1, uid, db)
     assert len(rows["projects"]) == 1
     assert rows["projects"][0]["project_key"] == "p3"
@@ -117,7 +117,7 @@ def test_start_rejects_if_active():
     )
     db.commit()
     with pytest.raises(HTTPException):
-        start_alliance_project(StartPayload(project_key="p5", user_id=uid), uid, db)
+        start_alliance_project(StartPayload(project_key="p5", user_id=uid), "t", uid, db)
 
 
 def test_start_requires_permission():
@@ -127,7 +127,7 @@ def test_start_requires_permission():
     db.add(ProjectAllianceCatalogue(project_key="p9", project_name="Nine"))
     db.commit()
     with pytest.raises(HTTPException):
-        start_alliance_project(StartPayload(project_key="p9", user_id=uid), uid, db)
+        start_alliance_project(StartPayload(project_key="p9", user_id=uid), "t", uid, db)
 
 
 def test_contribute_records_entry():
@@ -150,6 +150,7 @@ def test_contribute_records_entry():
         ContributionPayload(
             project_key="p6", resource_type="wood", amount=5, user_id=uid
         ),
+        "t",
         uid,
         db,
     )
