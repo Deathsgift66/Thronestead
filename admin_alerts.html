@@ -24,7 +24,7 @@ Developer: Deathsgift66
   <meta property="og:title" content="Admin Alerts | Thronestead" />
   <meta property="og:description" content="Monitor flagged accounts, suspicious behavior, and enforce realm-wide security policies." />
   <meta property="og:image" content="Assets/banner_main.png" />
-  <meta property="og:url" content="admin_alerts.html" />
+  <meta property="og:url" content="https://www.thronestead.com/admin_alerts.html" />
   <meta property="og:type" content="website" />
 
   <!-- Twitter -->
@@ -133,10 +133,10 @@ Developer: Deathsgift66
           { action: 'flag', label: 'Flag', data: { player_id: item.player_id } },
           { action: 'freeze', label: 'Freeze', data: { player_id: item.player_id } },
           { action: 'ban', label: 'Ban', data: { player_id: item.player_id } },
-          { action: 'dismiss', label: 'Dismiss', data: { alert_id: item.alert_id || item.id } },
+          { action: 'dismiss', label: 'Dismiss', data: { alert_id: getAlertId(item) } },
           { action: 'flag_ip', label: 'Flag IP', data: { ip: item.ip } },
           { action: 'suspend_user', label: 'Suspend', data: { user_id: item.user_id } },
-          { action: 'mark_alert_handled', label: 'Mark Reviewed', data: { alert_id: item.alert_id || item.id } }
+          { action: 'mark_alert_handled', label: 'Mark Reviewed', data: { alert_id: getAlertId(item) } }
         ];
 
         actionMap.forEach(({ action, label, data }) => {
@@ -248,6 +248,10 @@ Developer: Deathsgift66
     function formatTime(ts) {
       return ts ? new Date(ts).toLocaleString() : '';
     }
+
+    function getAlertId(item) {
+      return item.alert_id || item.id || "";
+    }
   </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
@@ -323,9 +327,9 @@ Developer: Deathsgift66
   <footer class="site-footer">
     <div>© 2025 Thronestead</div>
     <div>
-      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
-      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
-      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a target="_blank" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
       <a href="legal.html" target="_blank">Legal</a> <a href="sitemap.xml" target="_blank">Site Map</a>
     </div>
   </footer>
