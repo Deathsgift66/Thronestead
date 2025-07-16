@@ -281,8 +281,8 @@ Developer: Deathsgift66
       window.supabase.auth.onAuthStateChange(() => {
         if (treatyChannel) {
           treatyChannel.unsubscribe();
-          treatyChannel = null;
         }
+        subscribeToRealtime();
       });
     }
 
