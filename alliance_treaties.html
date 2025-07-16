@@ -44,9 +44,9 @@ Developer: Deathsgift66
   <script src="/Javascript/allianceAppearance.js" type="module"></script>
   <script src="/Javascript/progressionBanner.js" type="module"></script>
   <script type="module">
-    import { escapeHTML, openModal, closeModal, authFetch, showToast } from '/Javascript/utils.js';
+    import { escapeHTML, openModal, closeModal, authFetch, showToast, safeUUID } from '/Javascript/utils.js';
 
-    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
 
     // Fallbacks if utils.js didn't define them
