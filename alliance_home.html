@@ -162,7 +162,10 @@ Developer: Deathsgift66
       }
 
       const emblem = document.getElementById('alliance-emblem-img');
-      if (emblem) emblem.alt = `Emblem of ${a.name}`;
+      if (emblem && a.emblem_url) {
+        emblem.src = a.emblem_url;
+        emblem.alt = `Emblem of ${a.name}`;
+      }
 
       if (data.vault) {
         setText('alliance-fortification', safe(data.vault.fortification_level));
@@ -348,7 +351,8 @@ Developer: Deathsgift66
           table: 'alliance_activity_log',
           filter: `alliance_id=eq.${allianceId}`
         }, payload => addActivityEntry(payload.new))
-        .subscribe();
+        .subscribe()
+        .catch(err => console.error('Failed to setup realtime channel:', err));
     }
 
     function addActivityEntry(entry) {
