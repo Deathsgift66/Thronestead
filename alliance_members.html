@@ -32,9 +32,11 @@
 
     const rankPower = ['Member', 'Diplomat', 'War Officer', 'Co-Leader', 'Leader'];
     const rankPowerNormalized = rankPower.map(r => r.toLowerCase());
+    const rankLevel = r => rankPowerNormalized.indexOf((r || 'member').toLowerCase());
     let members = [];
     let membersChannel = null;
     let currentUser = null;
+    let currentAllianceId = null;
     let authToken = '';
     let csrfToken =
       sessionStorage.getItem('csrf_token') ||
@@ -96,12 +98,25 @@
       return false;
     }
 
+    let fetchInProgress = false;
+
     async function fetchMembers(sortBy = 'username', direction = 'asc', search = '') {
+      if (fetchInProgress) return;
+      fetchInProgress = true;
       const tbody = document.getElementById('members-list');
-      if (!tbody) return;
+      if (!tbody) {
+        fetchInProgress = false;
+        return;
+      }
       tbody.innerHTML = `<tr><td colspan="11"><div class="loading-spinner"></div></td></tr>`;
       toggleLoading(true);
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          redirectToLogin();
+          return;
+        }
+        currentUser = user;
         const url = new URL('/api/alliance/members', window.location.origin);
         const validSort = ['username','rank','contribution','status','military_score','economy_score','diplomacy_score','total_output'];
         if (!validSort.includes(sortBy)) sortBy = 'username';
@@ -129,6 +144,7 @@
         tbody.innerHTML = `<tr><td colspan="11">Failed to load members.</td></tr>`;
       } finally {
         toggleLoading(false);
+        fetchInProgress = false;
       }
     }
 
@@ -151,33 +167,47 @@
     }
 
     function setupSortableHeaders() {
+      const activateSort = sortKey => {
+        const sortInput = document.getElementById('sort-by');
+        const dirInput = document.getElementById('sort-direction');
+        let direction = dirInput.value;
+        if (sortInput.value === sortKey) {
+          direction = direction === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortInput.value = sortKey;
+          direction = 'asc';
+        }
+        dirInput.value = direction;
+        fetchMembers(sortKey, direction, document.getElementById('member-search')?.value.toLowerCase() || '');
+      };
+
       document.querySelectorAll('.members-table th.sortable').forEach(th => {
         const sortKey = th.dataset.sort;
         if (!sortKey) return;
-        th.addEventListener('click', () => {
-          const sortInput = document.getElementById('sort-by');
-          const dirInput = document.getElementById('sort-direction');
-          let direction = dirInput.value;
-          if (sortInput.value === sortKey) {
-            direction = direction === 'asc' ? 'desc' : 'asc';
-          } else {
-            sortInput.value = sortKey;
-            direction = 'asc';
+        th.addEventListener('click', () => activateSort(sortKey));
+        th.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            activateSort(sortKey);
           }
-          dirInput.value = direction;
-          fetchMembers(sortKey, direction, document.getElementById('member-search')?.value.toLowerCase() || '');
         });
       });
     }
 
     function setupRealtime() {
+      if (!currentAllianceId) return;
       membersChannel = supabase
         .channel('public:alliance_members')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'alliance_members'
-        }, async () => await fetchMembers())
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'alliance_members',
+            filter: `alliance_id=eq.${currentAllianceId}`
+          },
+          async () => await fetchMembers()
+        )
         .subscribe();
 
       window.addEventListener('beforeunload', async () => {
@@ -198,7 +228,6 @@
         return;
       }
 
-      const rankLevel = r => rankPowerNormalized.indexOf((r || 'member').toLowerCase());
       data.forEach(member => {
         const row = document.createElement('tr');
         if (member.rank === 'Leader') row.classList.add('leader-row');
@@ -242,14 +271,16 @@
       const user = currentUser;
       const [admin, rank] = await Promise.all([
         supabase.from('users').select('is_admin').eq('user_id', user.id).single(),
-        supabase.from('alliance_members').select('rank').eq('user_id', user.id).maybeSingle()
+        supabase.from('alliance_members').select('rank,alliance_id').eq('user_id', user.id).maybeSingle()
       ]);
       if (admin.error) console.error(admin.error.message || admin.error);
       if (rank.error) console.error(rank.error.message || rank.error);
+      currentAllianceId = rank.data?.alliance_id || null;
       return {
         isAdmin: admin.data?.is_admin || false,
         userRank: rank.data?.rank || '',
-        userId: user.id
+        userId: user.id,
+        allianceId: currentAllianceId
       };
     }
 
@@ -321,7 +352,7 @@
     const removeMember = id => confirmAndPost('/api/alliance_members/remove', { user_id: id }, 'Member removed.', true);
     const transferLeadership = id => {
       const confirmName = prompt('Type TRANSFER to confirm leadership transfer:');
-      if (confirmName !== 'TRANSFER') return;
+      if (!confirmName || confirmName.trim().toUpperCase() !== 'TRANSFER') return;
       confirmAndPost('/api/alliance_members/transfer_leadership', { new_leader_id: id }, 'Leadership transferred.', true);
     };
   </script>
@@ -359,15 +390,15 @@
         <thead>
           <tr>
             <th scope="col">Crest</th>
-            <th scope="col" data-sort="username" class="sortable">Name</th>
-            <th scope="col" data-sort="rank" class="sortable">Rank</th>
+            <th scope="col" data-sort="username" class="sortable" tabindex="0" role="button">Name</th>
+            <th scope="col" data-sort="rank" class="sortable" tabindex="0" role="button">Rank</th>
             <th scope="col">Role</th>
-            <th scope="col" data-sort="status" class="sortable">Status</th>
-            <th scope="col" data-sort="contribution" class="sortable">Contribution</th>
-            <th scope="col" data-sort="economy_score" class="sortable">Economy</th>
-            <th scope="col" data-sort="military_score" class="sortable">Military</th>
-            <th scope="col" data-sort="diplomacy_score" class="sortable">Diplomacy</th>
-            <th scope="col" data-sort="total_output" class="sortable">Output</th>
+            <th scope="col" data-sort="status" class="sortable" tabindex="0" role="button">Status</th>
+            <th scope="col" data-sort="contribution" class="sortable" tabindex="0" role="button">Contribution</th>
+            <th scope="col" data-sort="economy_score" class="sortable" tabindex="0" role="button">Economy</th>
+            <th scope="col" data-sort="military_score" class="sortable" tabindex="0" role="button">Military</th>
+            <th scope="col" data-sort="diplomacy_score" class="sortable" tabindex="0" role="button">Diplomacy</th>
+            <th scope="col" data-sort="total_output" class="sortable" tabindex="0" role="button">Output</th>
             <th scope="col">Actions</th>
          </tr>
        </thead>
