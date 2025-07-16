@@ -166,4 +166,9 @@ def view_war(
     )
     if not war:
         raise HTTPException(status_code=404, detail="War not found")
+
+    kid = get_kingdom_id(db, user_id)
+    if war.attacker_kingdom_id != kid and war.defender_kingdom_id != kid:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     return {"war": _serialize_war(war)}
