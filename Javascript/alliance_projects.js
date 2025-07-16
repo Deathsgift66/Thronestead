@@ -7,6 +7,7 @@ import { supabase } from '../supabaseClient.js';
 import {
   escapeHTML,
   openModal,
+  showToast,
   authHeaders,
   authJsonFetch,
   debounce
@@ -370,7 +371,7 @@ async function startProject(projectKey, btn) {
     if (process.env.NODE_ENV === 'development') {
       console.error('startProject', err);
     }
-    alert('❌ Failed to start project.');
+    showToast('❌ Failed to start project.', 'error');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -410,7 +411,7 @@ function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-  return `${h}h ${m}m ${s}s`;
+  return `${h ? `${h}h` : ''} ${m ? `${m}m` : ''} ${s ? `${s}s` : ''}`.trim();
 }
 
 function formatCostFromColumns(obj) {

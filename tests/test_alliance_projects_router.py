@@ -12,6 +12,8 @@ from sqlalchemy.orm import sessionmaker
 from backend.db_base import Base
 from backend.models import (
     Alliance,
+    AllianceMember,
+    AllianceRole,
     ProjectAllianceCatalogue,
     ProjectAllianceContribution,
     ProjectsAlliance,
@@ -35,7 +37,7 @@ def setup_db():
     return Session
 
 
-def seed_basic(db):
+def seed_basic(db, perms=("can_manage_projects",)):
     user = User(
         user_id="00000000-0000-0000-0000-000000000001",
         username="tester",
@@ -46,6 +48,11 @@ def seed_basic(db):
     db.add(user)
     alliance = Alliance(alliance_id=1, name="A", level=3)
     db.add(alliance)
+    db.commit()
+
+    role = AllianceRole(role_id=1, alliance_id=1, role_name="Leader", permissions=list(perms))
+    db.add(role)
+    db.add(AllianceMember(alliance_id=1, user_id=user.user_id, username="tester", role_id=1))
     db.commit()
     return user.user_id
 
@@ -111,6 +118,16 @@ def test_start_rejects_if_active():
     db.commit()
     with pytest.raises(HTTPException):
         start_alliance_project(StartPayload(project_key="p5", user_id=uid), uid, db)
+
+
+def test_start_requires_permission():
+    Session = setup_db()
+    db = Session()
+    uid = seed_basic(db, perms=())
+    db.add(ProjectAllianceCatalogue(project_key="p9", project_name="Nine"))
+    db.commit()
+    with pytest.raises(HTTPException):
+        start_alliance_project(StartPayload(project_key="p9", user_id=uid), uid, db)
 
 
 def test_contribute_records_entry():

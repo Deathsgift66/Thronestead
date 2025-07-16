@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from backend.models import (
@@ -63,6 +63,27 @@ def expire_old_projects(db: Session):
         project.status = "expired"
     if expired:
         db.commit()
+
+
+def validate_alliance_permission(db: Session, user_id: str, permission: str) -> int:
+    """Return the alliance_id if the user has ``permission`` or raise 403."""
+    row = db.execute(
+        text(
+            """
+            SELECT m.alliance_id, r.permissions
+              FROM alliance_members m
+              JOIN alliance_roles r ON m.role_id = r.role_id
+             WHERE m.user_id = :uid
+            """
+        ),
+        {"uid": user_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    alliance_id, perms = row
+    if not perms or permission not in perms:
+        raise HTTPException(status_code=403, detail="Permission required")
+    return alliance_id
 
 
 # ---------- ROUTES ----------
@@ -179,11 +200,9 @@ def start_alliance_project(
     if payload.user_id != user_id:
         raise HTTPException(status_code=401, detail="Token mismatch")
 
-    user = db.query(User).filter_by(user_id=user_id).first()
-    if not user or not user.alliance_id:
-        raise HTTPException(status_code=404, detail="User not in alliance")
+    alliance_id = validate_alliance_permission(db, user_id, "can_manage_projects")
 
-    alliance = db.query(Alliance).filter_by(alliance_id=user.alliance_id).first()
+    alliance = db.query(Alliance).filter_by(alliance_id=alliance_id).first()
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance not found")
 
@@ -207,10 +226,26 @@ def start_alliance_project(
 
     if (
         db.query(ProjectsAllianceInProgress.progress_id)
+        .filter_by(alliance_id=alliance.alliance_id, project_key=payload.project_key, status="building")
+        .first()
+    ):
+        raise HTTPException(status_code=400, detail="Project already in progress")
+
+    if (
+        db.query(ProjectsAllianceInProgress.progress_id)
         .filter_by(alliance_id=alliance.alliance_id, status="building")
         .first()
     ):
         raise HTTPException(status_code=400, detail="Another project is active")
+
+    recent = (
+        db.query(ProjectsAllianceInProgress.progress_id)
+        .filter(ProjectsAllianceInProgress.alliance_id == alliance.alliance_id)
+        .filter(ProjectsAllianceInProgress.started_at > datetime.utcnow() - timedelta(seconds=5))
+        .first()
+    )
+    if recent:
+        raise HTTPException(status_code=429, detail="Project start cooldown")
 
     new_project = ProjectsAllianceInProgress(
         alliance_id=alliance.alliance_id,
