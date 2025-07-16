@@ -75,6 +75,7 @@ Developer: Deathsgift66
         <div>🏰 Castle HP: <span id="castle-hp">--</span></div>
         <div>🏹 Score A: <span id="score-a">0</span> vs B: <span id="score-b">0</span></div>
         <div>⏳ Next Tick in: <span id="tick-timer">--</span></div>
+        <progress id="tick-progress" value="0" max="100" aria-label="Tick progress"></progress>
       </div>
 
       <!-- 🗺️ Battle Grid & Fog -->
@@ -88,6 +89,7 @@ Developer: Deathsgift66
         <aside class="sidebar" aria-label="Combat Sidebar">
           <section id="combat-log" class="combat-log" aria-label="Combat Log" aria-live="polite">
             <strong>Combat Log:</strong>
+            <label style="display:block"><input type="checkbox" id="autoscroll" checked> Auto-scroll</label>
             <hr>
           </section>
 
@@ -113,7 +115,7 @@ Developer: Deathsgift66
         <p>Selected Unit: <span id="order-unit">--</span></p>
         <label>Move to X: <input type="number" id="order-x" min="0" max="59" /></label>
         <label>Y: <input type="number" id="order-y" min="0" max="19" /></label>
-        <button class="btn-fantasy" onclick="submitOrders()">Submit Order</button>
+        <button id="submit-order-btn" class="btn-fantasy" onclick="submitOrders()">Submit Order</button>
         <button class="btn-fantasy" onclick="closeOrderPanel()">Close</button>
       </div>
     </section>
@@ -132,10 +134,12 @@ Developer: Deathsgift66
 
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
+    import { showToast } from '/Javascript/utils.js';
 
     let accessToken = null;
     let userId = null;
     const UNIT_COUNTERS = { infantry: 'archers', cavalry: 'spearmen', archers: 'infantry', mage: 'infantry' };
+    const UNIT_ICONS = { infantry: '⚔️', archers: '🏹', cavalry: '🐎', mage: '🧙' };
     const TERRAIN_EFFECTS = { forest: 'Defense bonus', river: 'Slows movement', hill: 'Ranged bonus' };
     const TERRAIN_COLORS = {
       forest: '#228B22',
@@ -168,6 +172,17 @@ Developer: Deathsgift66
       }
       accessToken = session.access_token;
       userId = session.user.id;
+      const valid = await fetch(`/api/battle/validate-access?war_id=${warId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'X-User-ID': userId
+        }
+      });
+      if (!valid.ok) {
+        showToast('Access denied to this battle', 'error');
+        window.location.href = 'wars.html';
+        return;
+      }
       await refreshBattle();
       subscribeScoreboard();
       pollStatus();
@@ -176,7 +191,7 @@ Developer: Deathsgift66
     });
 
     window.addEventListener('beforeunload', () => {
-      if (scoreboardChannel) supabase.removeChannel(scoreboardChannel);
+      if (scoreboardChannel?.unsubscribe) scoreboardChannel.unsubscribe();
     });
 
     let lastTick = 0;
@@ -202,6 +217,7 @@ Developer: Deathsgift66
         document.getElementById('score-b').textContent = data.defender_score;
       } catch (e) {
         console.error('Error loading status', e);
+        showToast('Failed to load battle status', 'error');
       }
     }
 
@@ -216,6 +232,8 @@ Developer: Deathsgift66
       timer -= 5;
       if (timer <= 0) timer = tickInterval;
       document.getElementById('tick-timer').textContent = `${timer}s`;
+      const progress = document.getElementById('tick-progress');
+      if (progress) progress.value = ((tickInterval - timer) / tickInterval) * 100;
       if (lastTick !== 0 && timer === tickInterval) {
         playTickSound();
         refreshBattle();
@@ -235,6 +253,7 @@ Developer: Deathsgift66
         refreshBattle();
       } catch (err) {
         console.error('Error triggering next tick:', err);
+        showToast('Failed to trigger next tick', 'error');
       }
     }
 
@@ -271,6 +290,7 @@ Developer: Deathsgift66
         if (data.victor !== undefined) renderScoreboard(data);
       } catch (err) {
         console.error('Error refreshing battle', err);
+        showToast('Failed to refresh battle data', 'error');
       }
     }
 
@@ -293,7 +313,9 @@ Developer: Deathsgift66
           const type = rowData[col];
           const color = TERRAIN_COLORS[type] || TERRAIN_COLORS.default;
           tile.style.backgroundColor = color;
-          tile.title = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${TERRAIN_EFFECTS[type] || ''}`;
+          const desc = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${TERRAIN_EFFECTS[type] || ''}`;
+          tile.title = desc;
+          tile.setAttribute('aria-label', desc);
           frag.appendChild(tile);
           tileElements.push(tile);
         }
@@ -310,7 +332,7 @@ Developer: Deathsgift66
         if (!tile) return;
         const unitDiv = document.createElement('div');
         unitDiv.className = 'unit-icon';
-        unitDiv.textContent = unit.unit_type.charAt(0).toUpperCase();
+        unitDiv.textContent = UNIT_ICONS[unit.unit_type] || unit.unit_type.charAt(0).toUpperCase();
         const counter = UNIT_COUNTERS[unit.unit_type] || 'none';
         unitDiv.title = `HP: ${unit.hp ?? '?' }  Morale: ${unit.morale ?? '?' }%  Counters: ${counter}`;
         unitDiv.addEventListener('click', () => showOrderPanel(unit));
@@ -340,6 +362,8 @@ Developer: Deathsgift66
         line.innerText = `[Tick ${log.tick_number}] ${log.event_type.toUpperCase()} — ${log.notes} (Damage: ${log.damage_dealt})`;
         logDiv.appendChild(line);
       });
+      const auto = document.getElementById('autoscroll');
+      if (auto?.checked) logDiv.scrollTop = logDiv.scrollHeight;
     }
 
     function renderScoreboard(score) {
@@ -386,6 +410,8 @@ Developer: Deathsgift66
       if (!activeUnit) return;
       const x = parseInt(document.getElementById('order-x').value, 10);
       const y = parseInt(document.getElementById('order-y').value, 10);
+      const btn = document.getElementById('submit-order-btn');
+      if (btn) btn.disabled = true;
       try {
         await fetch('/api/battle/orders', {
           method: 'POST',
@@ -394,12 +420,15 @@ Developer: Deathsgift66
             'Authorization': `Bearer ${accessToken}`,
             'X-User-ID': userId
           },
-          body: JSON.stringify({ war_id: warId, unit_id: activeUnit.movement_id, x, y })
+          body: JSON.stringify({ war_id: warId, unit_id: activeUnit.movement_id, x, y, nonce: Date.now() })
         });
         closeOrderPanel();
         refreshBattle();
       } catch (e) {
         console.error('Failed to submit orders', e);
+        showToast('Failed to submit orders', 'error');
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
