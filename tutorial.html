@@ -18,12 +18,14 @@ Developer: Deathsgift66
   <meta property="og:title" content="Tutorial | Thronestead" />
   <meta property="og:description" content="Learn how to play Thronestead — explore the tutorial and master kingdom strategy, diplomacy, and war." />
   <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:image:alt" content="Thronestead banner" />
   <meta property="og:url" content="tutorial.html" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Tutorial | Thronestead" />
   <meta name="twitter:description" content="Learn how to play Thronestead — explore the tutorial and master kingdom strategy, diplomacy, and war." />
   <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="twitter:image:alt" content="Thronestead banner" />
   <link rel="canonical" href="https://www.thronestead.com/tutorial.html" />
   <meta name="theme-color" content="#2e2b27" />
 
@@ -130,7 +132,7 @@ Developer: Deathsgift66
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '/Javascript/supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML } from '/Javascript/utils.js';
 
 let currentUser = null;
 let tutorialChannel;
@@ -163,7 +165,10 @@ async function loadSteps() {
   container.innerHTML = '<p>📜 Loading tutorial steps...</p>';
   try {
     const res = await fetch('/api/tutorial/steps', {
-      headers: { 'X-User-ID': currentUser.id }
+      headers: {
+        'X-User-ID': currentUser.id,
+        'X-CSRF-Token': getCsrfToken()
+      }
     });
     const { steps } = await res.json();
     renderSteps(steps || []);
@@ -177,6 +182,11 @@ async function loadSteps() {
 function renderSteps(steps) {
   const container = document.getElementById('steps');
   container.innerHTML = '';
+
+  if (steps.length === 0) {
+    container.innerHTML = '<p>No tutorial steps found.</p>';
+    return;
+  }
 
   steps.forEach(step => {
     const div = document.createElement('div');
@@ -209,8 +219,8 @@ function setupRealtime() {
     })
     .subscribe();
 
-  window.addEventListener('beforeunload', () => {
-    if (tutorialChannel) supabase.removeChannel(tutorialChannel);
+  window.addEventListener('beforeunload', async () => {
+    if (tutorialChannel) await supabase.removeChannel(tutorialChannel);
   });
 }
 
@@ -226,6 +236,7 @@ function setupProgressBar() {
       window.requestAnimationFrame(() => {
         const percent = (container.scrollTop / (container.scrollHeight - container.clientHeight)) * 100;
         bar.style.width = `${percent.toFixed(1)}%`;
+        bar.setAttribute('aria-valuenow', percent.toFixed(1));
         ticking = false;
       });
       ticking = true;
@@ -250,8 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentStep = parseInt(getCookie('tutorialStep') || '0', 10);
   if (Number.isNaN(currentStep) || currentStep >= panels.length) currentStep = 0;
 
-  showStep(currentStep);
-  openModal();
+  const tutorialCompleted = getCookie('tutorialComplete');
+  if (!tutorialCompleted) {
+    showStep(currentStep);
+    openModal();
+  }
 
   // Tab navigation
   tabs.forEach((tab, idx) => {
@@ -284,12 +298,14 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.setAttribute('aria-hidden', 'false');
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
+    document.body.style.overflow = 'hidden';
     modal.focus();
   }
 
   function finishTutorial() {
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
     setCookie('tutorialComplete', 'true', 60);
     if (typeof window.onTutorialComplete === 'function') {
       window.onTutorialComplete();
@@ -310,9 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const d = new Date();
       d.setTime(d.getTime() + days * 86400000);
-      const domain = location.hostname.includes('localhost') ? '' : `domain=${location.hostname};`;
+      const domain = location.hostname.includes('localhost') ? '' : `domain=${location.hostname}; `;
       document.cookie =
-        `${name}=${value}; expires=${d.toUTCString()}; path=/; ${domain} secure; samesite=strict`;
+        `${name}=${value}; expires=${d.toUTCString()}; path=/; ${domain}secure; samesite=strict`;
     } catch (err) {
       console.warn("Cookies are disabled or blocked:", err);
     }
@@ -323,6 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
     return null;
+  }
+
+  function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
   }
 
   function trapFocus(e) {
@@ -346,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-  <!-- Backend route definition for reference -->
+  <!-- Backend route definition for reference
   <script type="text/python">
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -404,7 +424,8 @@ async def steps(user_id: str = Depends(require_user_id)):
     ]
 
     return {"steps": steps}
-</script>
+  </script>
+  -->
 
 </body>
 </html>
