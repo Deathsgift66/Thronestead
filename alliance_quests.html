@@ -52,7 +52,9 @@ Developer: Deathsgift66
       enforceAllianceOrAdminAccess,
       authFetch,
       toggleLoading,
-      safeUUID
+      safeUUID,
+      openModal,
+      closeModal
     } from '/Javascript/utils.js';
 
     let modalEl;
@@ -67,7 +69,7 @@ Developer: Deathsgift66
 
     let allQuests = [];
     let currentPage = 1;
-    const pageSize = 10;
+    let pageSize = 10;
 
 
     /**
@@ -156,6 +158,11 @@ Developer: Deathsgift66
           renderQuestPage();
         })
       );
+      document.getElementById('page-size')?.addEventListener('change', e => {
+        pageSize = +e.target.value;
+        currentPage = 1;
+        renderQuestPage();
+      });
 
       const boardEl = document.getElementById('quest-board');
       boardEl.addEventListener('click', e => {
@@ -166,6 +173,10 @@ Developer: Deathsgift66
 
       modalEl = document.getElementById('quest-modal');
       modalEl.querySelector('.close-button').addEventListener('click', closeQuestModal);
+
+      document.getElementById('start-new-quest')?.addEventListener('click', openStartQuestModal);
+      document.querySelector('#quest-start-modal .close-button')?.addEventListener('click', () => closeModal('quest-start-modal'));
+      document.getElementById('confirm-start-quest')?.addEventListener('click', startSelectedQuest);
     }
 
     /**
@@ -176,6 +187,7 @@ Developer: Deathsgift66
       div.className = 'quest-card';
       div.innerHTML = `
         <h3 class="quest-title">${escapeHTML(q.name)}</h3>
+        <p class="quest-type">${escapeHTML(q.type || 'Quest')}</p>
         <p>${escapeHTML(q.description)}</p>
         <p>Ends in: <span data-end-time="${q.ends_at || ''}">--:--:--</span></p>
         <button class="view-quest-btn" data-id="${q.id || q.quest_code}">View</button>
@@ -343,6 +355,8 @@ Developer: Deathsgift66
       document.querySelector('main')?.removeAttribute('aria-hidden');
       clearTimeout(modalCountdownId);
       if (lastFocusedEl) lastFocusedEl.focus();
+      modalEl.removeAttribute('tabindex');
+      modalEl.blur();
     }
 
     function trapFocus(e) {
@@ -364,6 +378,53 @@ Developer: Deathsgift66
 
     function handleEsc(e) {
       if (e.key === 'Escape') closeQuestModal();
+    }
+
+    async function openStartQuestModal() {
+      const modal = document.getElementById('quest-start-modal');
+      const select = document.getElementById('quest-template-select');
+      if (!modal || !select) return;
+      select.innerHTML = '<option>Loading...</option>';
+      openModal(modal);
+      try {
+        const res = await authFetch('/api/alliance/quests?status=available');
+        const list = await res.json();
+        select.innerHTML = list
+          .map(q => `<option value="${q.quest_code}">${escapeHTML(q.name)}</option>`)
+          .join('') || '<option>No quests available</option>';
+      } catch (err) {
+        select.innerHTML = '<option>Error loading</option>';
+        console.error('Quest load failed', err);
+      }
+    }
+
+    async function startSelectedQuest() {
+      const select = document.getElementById('quest-template-select');
+      const code = select?.value;
+      if (!code) return;
+      const btn = document.getElementById('confirm-start-quest');
+      btn.disabled = true;
+      toggleLoading(true);
+      try {
+        const res = await authFetch('/api/alliance/quests/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+          body: JSON.stringify({ quest_code: code })
+        });
+        if (res.ok) {
+          showToast('Quest started!', 'success');
+          closeModal('quest-start-modal');
+          loadQuests('active');
+        } else {
+          showToast('Failed to start quest', 'error');
+        }
+      } catch (err) {
+        console.error('Start quest error:', err);
+        showToast('Failed to start quest', 'error');
+      } finally {
+        toggleLoading(false);
+        btn.disabled = false;
+      }
     }
 
     async function loadHeroes() {
@@ -410,6 +471,22 @@ Developer: Deathsgift66
       initThemeToggle();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      let canStart = false;
+      try {
+        const res = await authFetch('/api/alliance-members/view');
+        const json = await res.json();
+        const me = (json.alliance_members || []).find(m => m.user_id === user.id);
+        if (window.user?.is_admin || me?.permissions?.can_manage_quests || ['Leader','Elder'].includes(me?.rank)) {
+          canStart = true;
+        }
+      } catch (err) {
+        console.error('Permission lookup failed', err);
+      }
+      const startBtn = document.getElementById('start-new-quest');
+      if (startBtn) {
+        startBtn.disabled = !canStart;
+        if (!canStart) startBtn.style.display = 'none';
+      }
       const { data: alliance } = await supabase
         .from('users')
         .select('alliance_id')
@@ -502,6 +579,11 @@ Developer: Deathsgift66
           <button class="royal-button prev-page" aria-label="Previous page">Prev</button>
           <span class="page-info"></span>
           <button class="royal-button next-page" aria-label="Next page">Next</button>
+          <select id="page-size" aria-label="Quests per page">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+          </select>
         </div>
       </div>
 
@@ -530,6 +612,16 @@ Developer: Deathsgift66
     </div>
   </main>
 
+  <!-- Start Quest Modal -->
+  <div id="quest-start-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quest-start-title" tabindex="-1">
+    <div class="modal-content">
+      <button class="close-button wax-seal-btn" aria-label="Close start quest">×</button>
+      <h3 id="quest-start-title">Start New Quest</h3>
+      <select id="quest-template-select" aria-label="Quest Template"></select>
+      <button id="confirm-start-quest" class="action-btn medieval-banner-btn">Start</button>
+    </div>
+  </div>
+
   <!-- Quest Modal -->
   <div id="quest-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-quest-title" aria-describedby="modal-quest-description" tabindex="-1">
     <div class="modal-content">
@@ -555,7 +647,7 @@ Developer: Deathsgift66
           </ul>
         </div>
 
-        <p class="time-limit-display">Time Left: <span id="modal-time-left">--:--:--</span></p>
+        <p class="time-limit-display">Time Left (local): <span id="modal-time-left">--:--:--</span></p>
         <p id="modal-quest-leader-note" class="quest-leader-note-modal">&nbsp;</p>
 
         <div class="modal-action-area">

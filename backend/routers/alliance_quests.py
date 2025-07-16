@@ -22,6 +22,7 @@ from backend.models import (
     QuestAllianceContribution,
     QuestAllianceTracking,
     User,
+    AllianceRole,
 )
 from services.audit_service import log_action
 
@@ -41,6 +42,19 @@ def get_alliance_info(user_id: str, db: Session) -> tuple[int, str]:
     if not user or not user.alliance_id:
         raise HTTPException(status_code=404, detail="Alliance not found")
     return user.alliance_id, user.alliance_role or "Member"
+
+
+def _has_quest_permission(db: Session, alliance_id: int, role: str) -> bool:
+    """Return True if ``role`` can manage alliance quests."""
+    if role in {"Leader", "Elder"}:
+        return True
+    row = (
+        db.query(AllianceRole.permissions)
+        .filter_by(alliance_id=alliance_id, role_name=role)
+        .first()
+    )
+    perms = row.permissions if row else {}
+    return bool(perms and perms.get("can_manage_quests"))
 
 
 @router.get("/catalogue")
@@ -155,7 +169,7 @@ def start_quest(
     db: Session = Depends(get_db),
 ):
     aid, role = get_alliance_info(user_id, db)
-    if role not in {"Leader", "Co-Leader", "Officer"}:
+    if not _has_quest_permission(db, aid, role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     quest = (
         db.query(QuestAllianceCatalogue)
@@ -360,7 +374,7 @@ def claim_reward(
     db: Session = Depends(get_db),
 ):
     aid, role = get_alliance_info(user_id, db)
-    if role not in {"Leader", "Co-Leader", "Officer"}:
+    if not _has_quest_permission(db, aid, role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     row = (
         db.query(QuestAllianceTracking)

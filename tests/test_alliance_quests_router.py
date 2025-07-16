@@ -4,6 +4,8 @@
 # Developer: Deathsgift66
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import pytest
+from fastapi import HTTPException
 
 from backend.db_base import Base
 from backend.models import (
@@ -234,3 +236,18 @@ def test_alt_endpoints_work():
     )
     heroes = alliance_quests.alt_heroes(user_id=uid, db=db)
     assert heroes and heroes[0]["contributions"] >= 100
+
+
+def test_start_requires_permission():
+    Session = setup_db()
+    db = Session()
+    uid = create_user(db, role="Member")
+    db.add(QuestAllianceCatalogue(quest_code="q4", name="Four", is_active=True))
+    db.commit()
+
+    with pytest.raises(HTTPException):
+        alliance_quests.start_quest(
+            alliance_quests.QuestStartPayload(quest_code="q4"),
+            user_id=uid,
+            db=db,
+        )
