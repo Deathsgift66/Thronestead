@@ -26,7 +26,10 @@ class DummyDB:
         self.queries = []
 
     def execute(self, query, params=None):
-        self.queries.append((str(query), params))
+        q = str(query)
+        self.queries.append((q, params))
+        if q.strip().lower().startswith("select is_admin"):
+            return DummyResult([(True,)])
         return DummyResult()
 
 
