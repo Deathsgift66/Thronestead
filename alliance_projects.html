@@ -152,6 +152,7 @@ import { RESOURCE_KEYS } from '/Javascript/resourceKeys.js';
 let projectChannel = null;
 const loadedTabs = { completed: false, catalogue: false };
 let cachedAlliance = null;
+let startingProject = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
@@ -464,9 +465,12 @@ function renderCatalogue(list) {
 }
 
 async function startProject(projectKey, btn) {
+  if (startingProject) return;
+  startingProject = true;
+  const buttons = document.querySelectorAll('.build-btn');
+  buttons.forEach(b => (b.disabled = true));
   try {
     if (btn) {
-      btn.disabled = true;
       btn.dataset.orig = btn.textContent;
       btn.textContent = 'Starting...';
     }
@@ -486,8 +490,9 @@ async function startProject(projectKey, btn) {
     }
     alert('❌ Failed to start project.');
   } finally {
+    startingProject = false;
+    buttons.forEach(b => (b.disabled = false));
     if (btn) {
-      btn.disabled = false;
       btn.textContent = btn.dataset.orig || 'Start Project';
       delete btn.dataset.orig;
     }
@@ -521,7 +526,7 @@ function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-  return `${h}h ${m}m ${s}s`;
+  return `${h ? h + 'h ' : ''}${m ? m + 'm ' : ''}${s ? s + 's' : ''}`.trim();
 }
 
 function formatCostFromColumns(obj) {
@@ -607,7 +612,7 @@ function formatCostFromColumns(obj) {
     </div>
   </main>
 
-  <div id="contrib-modal" class="modal hidden" aria-hidden="true">
+  <div id="contrib-modal" class="modal hidden" aria-hidden="true" aria-modal="true" tabindex="-1">
     <div class="modal-content" role="dialog" aria-labelledby="contrib-modal-title">
       <h3 id="contrib-modal-title" class="modal-title">Contributions</h3>
       <div class="modal-list"></div>
