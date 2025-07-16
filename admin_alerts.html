@@ -6,11 +6,13 @@ Developer: Deathsgift66
 -->
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="parchment">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin" />
+  <meta name="author" content="Thronestead Moderation Team" />
 
   <title>Admin Alerts | Thronestead</title>
 
@@ -41,6 +43,16 @@ Developer: Deathsgift66
   <link href="/CSS/admin_alerts.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Thronestead Admin Center",
+    "url": "https://www.thronestead.com/admin_alerts.html",
+    "applicationCategory": "Security"
+  }
+  </script>
+
   <!-- Admin Scripts -->
   <script type="module">
     window.requireAdmin = true;
@@ -54,18 +66,40 @@ Developer: Deathsgift66
     const REFRESH_MS = 30000;
     const AUTO_EXPIRE_MS = 60000;
     const MAX_FEED_ITEMS = 250;
+    const FILTER_KEYS = ['start', 'end', 'type', 'severity', 'kingdom', 'alliance'];
+    const API_ENDPOINTS = {
+      flag: '/api/admin/flag',
+      freeze: '/api/admin/freeze',
+      ban: '/api/admin/ban',
+      dismiss: '/api/admin/dismiss_alert',
+      flag_ip: '/api/admin/flag_ip',
+      suspend_user: '/api/admin/suspend_user',
+      mark_alert_handled: '/api/admin/mark_alert_handled'
+    };
     let realtimeSub = null;
     let currentData = null;
     let lastTimestamp = null;
     const buttonCooldownSet = new Set();
     let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
-    document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
-    setInterval(() => {
+
+    async function refreshCsrf() {
       csrfToken = safeUUID();
       sessionStorage.setItem('csrf_token', csrfToken);
-      document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
-    }, 15 * 60 * 1000);
+      try {
+        await fetch('/api/admin/csrf', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: csrfToken })
+        });
+      } catch (err) {
+        console.warn('Failed to sync CSRF token', err);
+      }
+    }
+
+    refreshCsrf();
+    setInterval(refreshCsrf, 15 * 60 * 1000);
 
     const debouncedLoad = debounce(loadAlerts, 400);
 
@@ -124,7 +158,11 @@ Developer: Deathsgift66
       initThemeToggle();
       setupReauthButtons('.action-btn');
       supabase.auth.onAuthStateChange((_evt, session) => {
-        if (!session) validateSessionOrLogout();
+        try {
+          if (!session) validateSessionOrLogout();
+        } catch (err) {
+          console.error('Auth state handler failed', err);
+        }
       });
     });
 
@@ -135,9 +173,13 @@ Developer: Deathsgift66
       }
     });
 
-    function subscribeToRealtime() {
+    async function subscribeToRealtime() {
       if (realtimeSub) {
-        realtimeSub.unsubscribe();
+        try {
+          await realtimeSub.unsubscribe();
+        } catch (err) {
+          console.warn('Failed to unsubscribe realtime', err);
+        }
         realtimeSub = null;
       }
       const { kingdom, alliance } = getFilters();
@@ -159,7 +201,7 @@ Developer: Deathsgift66
         moreBtn.innerHTML = '<span class="loading-spinner"></span> Loading...';
       }
       if (!append) {
-        container.innerHTML = '<p>Loading alerts...</p>';
+        container.innerHTML = '<p><span class="loading-spinner" aria-hidden="true"></span> Loading alerts...</p>';
         lastTimestamp = null;
       }
 
@@ -314,7 +356,7 @@ Developer: Deathsgift66
               console.warn('Invalid player id:', btn.dataset.player_id);
               throw new Error('Invalid player id');
             }
-            await postAdminAction('/api/admin/flag', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
+            await postAdminAction(API_ENDPOINTS.flag, { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
             success = true;
             break;
           case 'freeze':
@@ -322,7 +364,7 @@ Developer: Deathsgift66
               console.warn('Invalid player id:', btn.dataset.player_id);
               throw new Error('Invalid player id');
             }
-            await postAdminAction('/api/admin/freeze', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
+            await postAdminAction(API_ENDPOINTS.freeze, { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
             success = true;
             break;
           case 'ban':
@@ -330,7 +372,7 @@ Developer: Deathsgift66
               console.warn('Invalid player id:', btn.dataset.player_id);
               throw new Error('Invalid player id');
             }
-            await postAdminAction('/api/admin/ban', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
+            await postAdminAction(API_ENDPOINTS.ban, { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
             success = true;
             break;
           case 'dismiss':
@@ -338,7 +380,7 @@ Developer: Deathsgift66
               console.warn('Invalid alert id:', btn.dataset.alert_id);
               throw new Error('Invalid alert id');
             }
-            await postAdminAction('/api/admin/dismiss_alert', { alert_id: btn.dataset.alert_id });
+            await postAdminAction(API_ENDPOINTS.dismiss, { alert_id: btn.dataset.alert_id });
             success = true;
             break;
           case 'flag_ip':
@@ -346,7 +388,7 @@ Developer: Deathsgift66
               console.warn('Invalid IP:', btn.dataset.ip);
               throw new Error('Invalid IP');
             }
-            await postAdminAction('/api/admin/flag_ip', { ip: btn.dataset.ip });
+            await postAdminAction(API_ENDPOINTS.flag_ip, { ip: btn.dataset.ip });
             success = true;
             break;
           case 'suspend_user':
@@ -354,11 +396,11 @@ Developer: Deathsgift66
               console.warn('Invalid user id:', btn.dataset.user_id);
               throw new Error('Invalid user id');
             }
-            await postAdminAction('/api/admin/suspend_user', { user_id: btn.dataset.user_id });
+            await postAdminAction(API_ENDPOINTS.suspend_user, { user_id: btn.dataset.user_id });
             success = true;
             break;
           case 'mark_alert_handled':
-            await postAdminAction('/api/admin/mark_alert_handled', { alert_id: btn.dataset.alert_id });
+            await postAdminAction(API_ENDPOINTS.mark_alert_handled, { alert_id: btn.dataset.alert_id });
             btn.disabled = true;
             success = true;
             break;
@@ -387,16 +429,18 @@ Developer: Deathsgift66
 
     async function postAdminAction(endpoint, payload) {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session missing. Reauthenticate.');
       const headers = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || ''}`,
-        'X-User-ID': session?.user?.id || '',
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-Admin-ID': session.user?.id || '',
         'X-CSRF-Token': csrfToken
       };
       const res = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
         headers,
+        referrerPolicy: 'strict-origin',
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
@@ -412,7 +456,7 @@ Developer: Deathsgift66
     }
 
     function getFilters() {
-      const entries = ['start', 'end', 'type', 'severity', 'kingdom', 'alliance']
+      const entries = FILTER_KEYS
         .map(k => {
           let v = document.getElementById(`filter-${k}`)?.value;
           if ((k === 'start' || k === 'end') && v) v = toUTC(v);
@@ -481,7 +525,10 @@ Developer: Deathsgift66
     }
 
     function exportJSON() {
-      if (!currentData) return;
+      if (!currentData || (currentData.alerts || []).length === 0) {
+        showToast('No data to export.', 'info');
+        return;
+      }
       const btn = document.getElementById('export-json');
       const origText = btn ? btn.textContent : '';
       if (btn) {
@@ -502,7 +549,10 @@ Developer: Deathsgift66
     }
 
     function exportCSV() {
-      if (!currentData || !Array.isArray(currentData.alerts)) return;
+      if (!currentData || !(Array.isArray(currentData.alerts)) || currentData.alerts.length === 0) {
+        showToast('No data to export.', 'info');
+        return;
+      }
       const btn = document.getElementById('export-csv');
       const origText = btn ? btn.textContent : '';
       if (btn) {
@@ -561,16 +611,16 @@ Developer: Deathsgift66
     function initThemeToggle() {
       const btn = document.getElementById('theme-toggle');
       if (!btn) return;
-      const saved = localStorage.getItem('theme') || document.body.getAttribute('data-theme');
-      document.body.setAttribute('data-theme', saved);
+      const saved = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme');
+      document.documentElement.setAttribute('data-theme', saved);
       btn.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
       btn.addEventListener('click', () => {
         document.documentElement.classList.add('theme-transition');
         setTimeout(() => {
           document.documentElement.classList.remove('theme-transition');
         }, 300);
-        const current = document.body.getAttribute('data-theme') === 'dark' ? 'parchment' : 'dark';
-        document.body.setAttribute('data-theme', current);
+        const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'parchment' : 'dark';
+        document.documentElement.setAttribute('data-theme', current);
         localStorage.setItem('theme', current);
         btn.textContent = current === 'dark' ? 'Light Mode' : 'Dark Mode';
       });
@@ -584,7 +634,7 @@ Developer: Deathsgift66
   <script src="/Javascript/resourceBar.js" type="module"></script>
 </head>
 
-<body data-theme="parchment">
+<body>
   <noscript>
     <div class="noscript-warning">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
@@ -601,16 +651,16 @@ Developer: Deathsgift66
   </header>
 
   <!-- Main Admin Panel -->
-  <main class="main-container" aria-label="Admin Alerts Interface">
+  <main class="main-container" aria-label="Admin Alerts Interface" role="main">
     <div class="admin-alerts-container">
 
       <h2>Flagged Accounts & Suspicious Events</h2>
       <div class="alert-tabs" aria-label="Alert Type Tabs" role="tablist">
-        <button class="tab active" role="tab" aria-selected="true" tabindex="0" data-type="">All</button>
-        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="moderation">Moderation</button>
-        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="war">War</button>
-        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="diplomacy">Diplomacy</button>
-        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="economy">Economy</button>
+        <button class="tab active" role="tab" aria-selected="true" tabindex="0" data-type="" aria-controls="alerts-feed">All</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="moderation" aria-controls="alerts-feed">Moderation</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="war" aria-controls="alerts-feed">War</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="diplomacy" aria-controls="alerts-feed">Diplomacy</button>
+        <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="economy" aria-controls="alerts-feed">Economy</button>
       </div>
 
       <!-- Filters -->
@@ -649,7 +699,7 @@ Developer: Deathsgift66
 
       <!-- Alert Feed Panel -->
       <section class="kr-alerts-panel" aria-label="Live Alert Feed" role="feed">
-        <div id="alerts-feed" aria-live="polite" class="alerts-feed">
+        <div id="alerts-feed" aria-live="assertive" class="alerts-feed" role="log">
           <!-- JavaScript inserts real-time alerts here -->
         </div>
         <button id="load-more-alerts" class="btn btn-secondary hidden" type="button">Load More</button>

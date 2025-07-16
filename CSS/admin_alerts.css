@@ -146,6 +146,15 @@ tr:nth-child(even) {
 .alert-item.severity-low { border-left-color: var(--alert-yellow); }
 .alert-item.severity-medium { border-left-color: var(--alert-blue); }
 .alert-item.severity-high { border-left-color: var(--alert-red); }
+.alert-item.severity-high::before {
+  content: '🛑 ';
+}
+.alert-item.severity-medium::before {
+  content: '⚠ ';
+}
+.alert-item.severity-low::before {
+  content: '🕵️ ';
+}
 
 /* New alert card styling */
 .alert-card {

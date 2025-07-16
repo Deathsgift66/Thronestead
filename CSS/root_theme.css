@@ -421,18 +421,21 @@ header.kr-top-banner {
 /* -----------------------------------------------
    Theme Variants
 ------------------------------------------------ */
+html[data-theme="light"],
 body[data-theme="light"] {
   --input-bg: #ffffff;
   --panel-bg: #f5f5f5;
   background-color: #fafafa;
   color: var(--ink);
 }
+html[data-theme="dark"],
 body[data-theme="dark"] {
   --input-bg: var(--dark-panel);
   --panel-bg: var(--dark-panel);
   background-color: #1b1b1b;
   color: var(--text-on-dark);
 }
+html[data-theme="parchment"],
 body[data-theme="parchment"] {
   --input-bg: var(--parchment-dark);
   --panel-bg: var(--panel-bg);

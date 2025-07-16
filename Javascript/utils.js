@@ -41,7 +41,7 @@ export function showToast(msg, type = 'info') {
     toast.className = 'toast-notification';
     toast.setAttribute('tabindex', '-1');
     toast.setAttribute('role', 'status');
-    toast.setAttribute('aria-live', 'polite');
+    toast.setAttribute('aria-live', 'assertive');
     toast.setAttribute('aria-hidden', 'true');
     document.body.appendChild(toast);
   }
