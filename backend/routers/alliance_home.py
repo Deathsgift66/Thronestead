@@ -15,6 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import Alliance, AllianceMember, AllianceVault, User
+from services.audit_service import log_action, log_alliance_activity
 
 from ..database import get_db
 from ..security import verify_jwt_token
@@ -35,6 +36,7 @@ def alliance_details(
         raise HTTPException(status_code=404, detail="Alliance not found")
 
     aid = user.alliance_id
+    role = user.alliance_role or "Member"
     alliance = db.query(Alliance).filter(Alliance.alliance_id == aid).first()
     if not alliance:
         raise HTTPException(status_code=404, detail="Alliance data missing")
@@ -217,6 +219,18 @@ def alliance_details(
         "projects_active": alliance.projects_active,
         "member_count": len(members),
     }
+
+    allow_sensitive = role in {"Leader", "Co-Leader", "Officer"}
+    if not allow_sensitive:
+        vault_data = {}
+        alliance_info["military_score"] = None
+        alliance_info["economy_score"] = None
+        alliance_info["diplomacy_score"] = None
+        for m in members:
+            m.pop("rank", None)
+
+    log_action(db, user_id, "view_alliance_home", str(aid))
+    log_alliance_activity(db, aid, user_id, "ViewAllianceHome", "")
 
     return {
         "alliance": alliance_info,

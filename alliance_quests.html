@@ -51,7 +51,8 @@ Developer: Deathsgift66
       showToast,
       enforceAllianceOrAdminAccess,
       authFetch,
-      toggleLoading
+      toggleLoading,
+      safeUUID
     } from '/Javascript/utils.js';
 
     let modalEl;
@@ -59,7 +60,7 @@ Developer: Deathsgift66
     let searchDebounce;
     let inAction = false;
     let lastFocusedEl = null;
-    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
     document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
     const focusableSelectors = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';

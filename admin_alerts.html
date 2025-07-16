@@ -47,7 +47,7 @@ Developer: Deathsgift66
   </script>
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { authJsonFetch, showToast, debounce } from '/Javascript/utils.js';
+    import { authJsonFetch, showToast, debounce, safeUUID } from '/Javascript/utils.js';
     import { setupReauthButtons } from '/Javascript/reauth.js';
     import { validateSessionOrLogout } from '/Javascript/auth.js';
 
@@ -57,10 +57,11 @@ Developer: Deathsgift66
     let realtimeSub = null;
     let currentData = null;
     let lastTimestamp = null;
-    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    const buttonCooldownSet = new Set();
+    let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
     setInterval(() => {
-      csrfToken = crypto.randomUUID();
+      csrfToken = safeUUID();
       sessionStorage.setItem('csrf_token', csrfToken);
     }, 15 * 60 * 1000);
 
@@ -263,8 +264,11 @@ Developer: Deathsgift66
       if (!e.target.classList.contains('action-btn')) return;
       const btn = e.target;
       const action = btn.dataset.action;
+      const key = `${action}:${btn.dataset.alert_id || btn.dataset.player_id || btn.dataset.user_id || btn.dataset.ip || ''}`;
+      if (buttonCooldownSet.has(key)) return;
+      buttonCooldownSet.add(key);
 
-      const idPattern = /^[0-9a-fA-F-]{8,}$/;
+      const idPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       const ipPattern = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
 
       const requiresConfirm = ['ban', 'freeze', 'suspend_user'];
@@ -275,35 +279,43 @@ Developer: Deathsgift66
       }
 
       btn.disabled = true;
+      let success = false;
       try {
         switch (action) {
           case 'flag':
             if (!idPattern.test(btn.dataset.player_id)) throw new Error('Invalid player id');
             await postAdminAction('/api/admin/flag', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
+            success = true;
             break;
           case 'freeze':
             if (!idPattern.test(btn.dataset.player_id)) throw new Error('Invalid player id');
             await postAdminAction('/api/admin/freeze', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
+            success = true;
             break;
           case 'ban':
             if (!idPattern.test(btn.dataset.player_id)) throw new Error('Invalid player id');
             await postAdminAction('/api/admin/ban', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
+            success = true;
             break;
           case 'dismiss':
             if (!idPattern.test(btn.dataset.alert_id)) throw new Error('Invalid alert id');
             await postAdminAction('/api/admin/dismiss_alert', { alert_id: btn.dataset.alert_id });
+            success = true;
             break;
           case 'flag_ip':
             if (!ipPattern.test(btn.dataset.ip)) throw new Error('Invalid IP');
             await postAdminAction('/api/admin/flag_ip', { ip: btn.dataset.ip });
+            success = true;
             break;
           case 'suspend_user':
             if (!idPattern.test(btn.dataset.user_id)) throw new Error('Invalid user id');
             await postAdminAction('/api/admin/suspend_user', { user_id: btn.dataset.user_id });
+            success = true;
             break;
           case 'mark_alert_handled':
             await postAdminAction('/api/admin/mark_alert_handled', { alert_id: btn.dataset.alert_id });
             btn.disabled = true;
+            success = true;
             break;
         }
 
@@ -314,7 +326,14 @@ Developer: Deathsgift66
         const msg = escapeHTML(err.message || 'Unknown error');
         showToast(`❌ ${action} failed: ${msg}`, 'error');
       } finally {
-        setTimeout(() => (btn.disabled = false), 3000);
+        if (success) {
+          buttonCooldownSet.delete(key);
+        } else {
+          setTimeout(() => {
+            buttonCooldownSet.delete(key);
+            btn.disabled = false;
+          }, 3000);
+        }
       }
     }
 

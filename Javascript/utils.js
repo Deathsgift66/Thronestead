@@ -7,6 +7,12 @@ import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js'
 import { getReauthHeaders } from './reauth.js';
 import { supabase } from '../supabaseClient.js';
 
+export const safeUUID = () =>
+  crypto?.randomUUID?.() ||
+  ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> (c / 4)).toString(16)
+  );
+
 /**
  * Escape HTML special characters to prevent injection.
  * @param {string} str Potentially unsafe text
