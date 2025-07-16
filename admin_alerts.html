@@ -148,13 +148,14 @@ Developer: Deathsgift66
         const div = document.createElement('div');
         div.className = `alert-item ${mapSeverity(item.severity || item.priority)}`;
         div.setAttribute('role', 'article');
+        const evType = escapeHTML((item.event_type || item.type || 'log').toUpperCase());
         div.innerHTML = `
-      <strong>[${(item.event_type || item.type || 'log').toUpperCase()}]</strong>
+      <strong>[${evType}]</strong>
       <p>${formatItem(item)}</p>
       <small>
-        Kingdom: ${item.kingdom_id || '—'} |
-        Alliance: ${item.alliance_id || '—'} |
-        ${item.timestamp ? formatTime(item.timestamp) : '—'}
+         Kingdom: ${escapeHTML(String(item.kingdom_id || '—'))} |
+         Alliance: ${escapeHTML(String(item.alliance_id || '—'))} |
+         ${item.timestamp ? formatTime(item.timestamp) : '—'}
       </small>
     `;
 
@@ -194,6 +195,9 @@ Developer: Deathsgift66
       const btn = e.target;
       const action = btn.dataset.action;
 
+      const idPattern = /^[0-9a-fA-F-]{8,}$/;
+      const ipPattern = /^\d{1,3}(\.\d{1,3}){3}$/;
+
       const requiresConfirm = ['ban', 'freeze', 'suspend_user'];
       if (requiresConfirm.includes(action)) {
         const label = btn.textContent || action;
@@ -204,21 +208,27 @@ Developer: Deathsgift66
       try {
         switch (action) {
           case 'flag':
+            if (!idPattern.test(btn.dataset.player_id)) throw new Error('Invalid player id');
             await postAdminAction('/api/admin/flag', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
             break;
           case 'freeze':
+            if (!idPattern.test(btn.dataset.player_id)) throw new Error('Invalid player id');
             await postAdminAction('/api/admin/freeze', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
             break;
           case 'ban':
+            if (!idPattern.test(btn.dataset.player_id)) throw new Error('Invalid player id');
             await postAdminAction('/api/admin/ban', { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
             break;
           case 'dismiss':
+            if (!idPattern.test(btn.dataset.alert_id)) throw new Error('Invalid alert id');
             await postAdminAction('/api/admin/dismiss_alert', { alert_id: btn.dataset.alert_id });
             break;
           case 'flag_ip':
+            if (!ipPattern.test(btn.dataset.ip)) throw new Error('Invalid IP');
             await postAdminAction('/api/admin/flag_ip', { ip: btn.dataset.ip });
             break;
           case 'suspend_user':
+            if (!idPattern.test(btn.dataset.user_id)) throw new Error('Invalid user id');
             await postAdminAction('/api/admin/suspend_user', { user_id: btn.dataset.user_id });
             break;
           case 'mark_alert_handled':
@@ -226,6 +236,9 @@ Developer: Deathsgift66
             btn.disabled = true;
             break;
         }
+
+        btn.disabled = true;
+        setTimeout(() => (btn.disabled = false), 3000);
 
         alert(`✅ ${action.replace(/_/g, ' ')} successful.`);
         loadAlerts();
@@ -238,7 +251,10 @@ Developer: Deathsgift66
     async function postAdminAction(endpoint, payload) {
       const res = await authFetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCSRFToken()
+        },
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(await res.text());
@@ -280,6 +296,10 @@ Developer: Deathsgift66
 
     function formatTime(ts) {
       return ts ? new Date(ts).toLocaleString() : '';
+    }
+
+    function getCSRFToken() {
+      return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1] || '';
     }
 
     function getAlertId(item) {
@@ -336,6 +356,10 @@ Developer: Deathsgift66
       const type = tab.dataset.type || '';
       const select = document.getElementById('filter-type');
       if (select) select.value = type;
+      const url = new URL(window.location);
+      if (type) url.searchParams.set('type', type);
+      else url.searchParams.delete('type');
+      history.pushState({}, '', url);
       loadAlerts();
     }
 
@@ -391,7 +415,7 @@ Developer: Deathsgift66
       </div>
 
       <!-- Filters -->
-      <section class="search-sort-controls" aria-label="Admin Alert Filters">
+      <section class="search-sort-controls" aria-label="Admin Alert Filters" role="form">
         <input type="datetime-local" id="filter-start" class="filter-input" aria-label="Start Time" />
         <input type="datetime-local" id="filter-end" class="filter-input" aria-label="End Time" />
         
