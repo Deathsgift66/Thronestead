@@ -61,6 +61,7 @@ Developer: Deathsgift66
       setText,
       formatDate,
       fragmentFrom,
+      setFallbackText,
       jsonFetch,
       showToast,
       authFetch,
@@ -70,6 +71,9 @@ Developer: Deathsgift66
     import { refreshSessionAndStore } from '/Javascript/auth.js';
 
     let activityChannel = null;
+
+    const DEFAULT_AVATAR = '/Assets/avatars/default_avatar_emperor.png';
+    const DEFAULT_BANNER = '/Assets/banner.png';
 
     window.addEventListener('beforeunload', async () => {
       if (activityChannel) {
@@ -186,7 +190,7 @@ Developer: Deathsgift66
 
       const banner = document.getElementById('alliance-banner-img');
       if (banner) {
-        banner.src = a.banner || '/Assets/banner.png';
+        banner.src = a.banner || DEFAULT_BANNER;
         banner.alt = 'Alliance Banner';
       }
 
@@ -225,9 +229,6 @@ Developer: Deathsgift66
 
     // === Render Utilities ===
 
-    function setFallbackText(el, message, tag = 'p') {
-      el.innerHTML = `<${tag} class="empty">${message}</${tag}>`;
-    }
 
     function renderProjects(projects = []) {
       const container = document.getElementById('project-progress-bars');
@@ -281,11 +282,14 @@ Developer: Deathsgift66
           const li = document.createElement('li');
           li.className = 'top-contrib-entry';
           const name = escapeHTML(m.username || 'Alliance Member');
-          const avatarSrc = m.avatar || '/Assets/avatars/default_avatar_emperor.png';
+          const avatarSrc = m.avatar || DEFAULT_AVATAR;
           const altText = m.avatar ? `${name}'s avatar` : `Default avatar for ${name}`;
+          let badge = '';
+          if (m.rank === 'Leader') badge = '👑 ';
+          else if (m.rank === 'Officer') badge = '🛡️ ';
           li.innerHTML = `
         <img class="contrib-avatar" src="${avatarSrc}" alt="${altText}" loading="lazy" decoding="async">
-        <span> ${name} - ${m.contribution}</span>`;
+        <span> ${badge}${name} - ${m.contribution}</span>`;
           list.appendChild(li);
         });
     }
@@ -589,7 +593,7 @@ Developer: Deathsgift66
     <section class="panel top-contributors" aria-labelledby="top-contrib-heading">
       <h2 id="top-contrib-heading">Top Contributors</h2>
       <ul id="top-contrib-list">
-        <li>Loading...</li>
+        <li class="loading-skeleton">Loading...</li>
       </ul>
     </section>
 
@@ -615,7 +619,7 @@ Developer: Deathsgift66
           </tr>
         </thead>
         <tbody id="members-list">
-          <tr><td colspan="5">Loading...</td></tr>
+          <tr><td colspan="5" class="loading-skeleton">Loading...</td></tr>
         </tbody>
       </table>
       <button id="load-more-members" class="royal-button hidden">Load More</button>
