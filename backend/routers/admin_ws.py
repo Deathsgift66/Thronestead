@@ -7,10 +7,13 @@ Version: 2025-06-22
 """
 
 import asyncio
-from ..env_utils import get_env_var
+from jose import JWTError
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from starlette.websockets import WebSocketState
+
+from ..database import SessionLocal
+from ..security import decode_supabase_jwt, verify_admin
 
 router = APIRouter()
 
@@ -19,9 +22,28 @@ connected_admins: list[WebSocket] = []
 
 @router.websocket("/api/admin/alerts/live")
 async def live_admin_alerts(websocket: WebSocket):
-    """Stream live admin alerts once API key verified."""
-    api_key = websocket.headers.get("x-api-key")
-    if api_key != get_env_var("API_SECRET"):
+    """Stream live admin alerts once JWT verified as an admin."""
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008)
+        return
+
+    try:
+        claims = decode_supabase_jwt(token)
+    except JWTError:
+        await websocket.close(code=1008)
+        return
+
+    user_id = claims.get("sub")
+    if not user_id:
+        await websocket.close(code=1008)
+        return
+
+    db = SessionLocal()
+    try:
+        verify_admin(user_id, db)
+    except HTTPException:
+        db.close()
         await websocket.close(code=1008)
         return
 
@@ -37,3 +59,4 @@ async def live_admin_alerts(websocket: WebSocket):
     finally:
         if websocket in connected_admins:
             connected_admins.remove(websocket)
+        db.close()

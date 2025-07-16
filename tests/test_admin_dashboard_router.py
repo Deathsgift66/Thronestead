@@ -40,6 +40,25 @@ class DummyDB:
         pass
 
 
+def test_list_flags_returns_rows():
+    db = DummyDB()
+    db.rows = [("test", True)]
+    flags = admin_dashboard.list_flags(admin_user_id="a1", db=db)
+    assert flags[0]["flag_key"] == "test"
+
+
+def test_get_audit_logs_with_dates():
+    db = DummyDB()
+    admin_dashboard.get_audit_logs(
+        start_date="2025-01-01",
+        end_date="2025-01-31",
+        admin_user_id="a1",
+        db=db,
+    )
+    joined = " ".join(db.queries[-1][0].lower().split())
+    assert "created_at >=" in joined and "created_at <=" in joined
+
+
 def test_get_audit_logs_returns_rows():
     db = DummyDB()
     db.rows = [(1, "u1", "login", "ok", "2025-01-01")]
