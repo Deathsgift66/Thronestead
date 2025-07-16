@@ -102,13 +102,13 @@ Developer: Deathsgift66
       const banner = document.getElementById('alliance-banner-img');
       if (banner) {
         banner.src = a.banner || '/Assets/banner.png';
-        banner.alt = `Banner of ${a.name}`;
+        banner.alt = a.name ? `Banner of ${a.name}` : 'Alliance Banner';
       }
 
       const emblem = document.getElementById('alliance-emblem-img');
       if (emblem && a.emblem_url) {
         emblem.src = a.emblem_url;
-        emblem.alt = `Emblem of ${a.name}`;
+        emblem.alt = a.name ? `Emblem of ${a.name}` : 'Alliance Emblem';
       }
 
       if (data.vault) {
@@ -161,9 +161,10 @@ Developer: Deathsgift66
         if (m.rank === 'Leader') icons += '👑 ';
         else if (m.rank === 'Officer') icons += '🛡️ ';
         if ((m.contribution || 0) === top && top > 0) icons += '🔥 ';
+        const name = escapeHTML(m.username || 'Alliance Member');
         row.innerHTML = `
-      <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${escapeHTML(m.username)}" class="crest"></td>
-      <td>${escapeHTML(m.username)}</td>
+      <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${name}" class="crest"></td>
+      <td>${name}</td>
       <td>${escapeHTML(m.rank)}</td>
       <td>${m.contribution ?? 0}</td>
       <td>${escapeHTML(m.status)}</td>`;
@@ -185,9 +186,10 @@ Developer: Deathsgift66
         .forEach(m => {
           const li = document.createElement('li');
           li.className = 'top-contrib-entry';
+          const name = escapeHTML(m.username || 'Alliance Member');
           li.innerHTML = `
-        <img class="contrib-avatar" src="${m.avatar || '/Assets/avatars/default_avatar_emperor.png'}" alt="${escapeHTML(m.username)}">
-        <span> ${escapeHTML(m.username)} - ${m.contribution}</span>`;
+        <img class="contrib-avatar" src="${m.avatar || '/Assets/avatars/default_avatar_emperor.png'}" alt="${name}'s avatar">
+        <span> ${name} - ${m.contribution}</span>`;
           list.appendChild(li);
         });
     }
@@ -402,7 +404,7 @@ Developer: Deathsgift66
         </thead>
         <tbody id="members-list"></tbody>
       </table>
-      <button id="load-more-members" class="load-more">Load More</button>
+      <!-- Load more button removed pending pagination support -->
     </section>
 
     <!-- Achievements -->
@@ -423,7 +425,7 @@ Developer: Deathsgift66
     <section class="panel active-battles" aria-labelledby="active-battles-heading">
       <h2 id="active-battles-heading">Active Battles</h2>
       <div id="active-battles-list"></div>
-      <button id="load-more-wars" class="load-more">Load More</button>
+      <!-- Load more button removed pending pagination support -->
     </section>
 
     <!-- War Score -->
@@ -442,7 +444,7 @@ Developer: Deathsgift66
     <section class="panel activity-log" aria-labelledby="activity-heading">
       <h2 id="activity-heading">Recent Activity Log</h2>
       <ul id="activity-log"></ul>
-      <button id="load-more-activity" class="load-more">Load More</button>
+      <!-- Load more button removed pending pagination support -->
     </section>
   </main>
 

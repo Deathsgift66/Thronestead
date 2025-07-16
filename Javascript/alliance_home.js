@@ -106,13 +106,13 @@ function populateAlliance(data) {
   if (banner) {
     banner.src = a.banner || '/Assets/banner.png';
     banner.onerror = () => (banner.src = '/Assets/fallback.png');
-    banner.alt = `Banner of ${a.name}`;
+    banner.alt = a.name ? `Banner of ${a.name}` : 'Alliance Banner';
   }
 
   const emblem = document.getElementById('alliance-emblem-img');
   if (emblem) {
     emblem.onerror = () => (emblem.src = '/Assets/fallback.png');
-    emblem.alt = `Emblem of ${a.name}`;
+    emblem.alt = a.name ? `Emblem of ${a.name}` : 'Alliance Emblem';
   }
 
   if (data.vault) {
@@ -165,9 +165,10 @@ function renderMembers(members = [], append = false) {
     if (m.rank === 'Leader') icons += '👑 ';
     else if (m.rank === 'Officer') icons += '🛡️ ';
     if ((m.contribution || 0) === top && top > 0) icons += '🔥 ';
+    const name = escapeHTML(m.username || 'Alliance Member');
     row.innerHTML = `
-      <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${escapeHTML(m.username)}" class="crest"></td>
-      <td>${escapeHTML(m.username)}</td>
+      <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${name}" class="crest"></td>
+      <td>${name}</td>
       <td>${escapeHTML(m.rank)}</td>
       <td>${m.contribution ?? 0}</td>
       <td>${escapeHTML(m.status)}</td>`;
@@ -190,9 +191,10 @@ function renderTopContributors(members = []) {
     .forEach(m => {
       const li = document.createElement('li');
       li.className = 'top-contrib-entry';
+      const name = escapeHTML(m.username || 'Alliance Member');
       li.innerHTML = `
-        <img class="contrib-avatar" src="${m.avatar || '/Assets/avatars/default_avatar_emperor.png'}" alt="${escapeHTML(m.username)}">
-        <span> ${escapeHTML(m.username)} - ${m.contribution}</span>`;
+        <img class="contrib-avatar" src="${m.avatar || '/Assets/avatars/default_avatar_emperor.png'}" alt="${name}'s avatar">
+        <span> ${name} - ${m.contribution}</span>`;
       list.appendChild(li);
     });
 }
