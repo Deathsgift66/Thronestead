@@ -113,7 +113,9 @@ Developer: Deathsgift66
         }
       }
 
-      await fetchAllianceDetails();
+      const first = await fetchAllianceDetails();
+      membersOffset = first.members.length;
+      activityOffset = first.activity.length;
       await cacheUserPermissions(session.user.id);
 
       document
@@ -135,8 +137,6 @@ Developer: Deathsgift66
         }
         populateAlliance(data, offset === 0);
         if (offset === 0) setupRealtime(data.alliance?.alliance_id);
-        membersOffset += data.members.length;
-        activityOffset += data.activity.length;
         toggleButton('load-more-members', data.members.length === LIMIT);
         toggleButton('load-more-activity', data.activity.length === ACTIVITY_LIMIT);
         return data;
@@ -493,7 +493,8 @@ Developer: Deathsgift66
 
     function toggleButton(id, show) {
       const btn = document.getElementById(id);
-      if (btn) btn.style.display = show ? 'block' : 'none';
+      if (!btn) return;
+      btn.classList.toggle('hidden', !show);
     }
   </script>
 
@@ -591,7 +592,7 @@ Developer: Deathsgift66
           <tr><td colspan="5">Loading...</td></tr>
         </tbody>
       </table>
-      <button id="load-more-members" class="royal-button" style="display:none">Load More</button>
+      <button id="load-more-members" class="royal-button hidden">Load More</button>
     </section>
 
     <!-- Achievements -->
@@ -631,7 +632,7 @@ Developer: Deathsgift66
     <section class="panel activity-log" aria-labelledby="activity-heading">
       <h2 id="activity-heading">Recent Activity Log</h2>
       <ul id="activity-log" role="log" aria-live="polite" aria-atomic="false"><li class="loading-skeleton">Loading...</li></ul>
-      <button id="load-more-activity" class="royal-button" style="display:none">Load More</button>
+      <button id="load-more-activity" class="royal-button hidden">Load More</button>
     </section>
   </main>
 
