@@ -80,6 +80,7 @@ Developer: Deathsgift66
     async function loadPlayerList() {
       const q = document.getElementById('search-player')?.value.toLowerCase() || '';
       const status = document.getElementById('status-filter')?.value || '';
+      const sort = document.getElementById('sort-order')?.value || 'username-asc';
       const container = document.getElementById('player-list');
       if (!container) return;
 
@@ -88,7 +89,12 @@ Developer: Deathsgift66
         const url = new URL('/api/admin/search_user', window.location.origin);
         if (q) url.searchParams.set('q', q);
         if (status) url.searchParams.set('status', status);
-        const players = await authJsonFetch(url);
+        let players = await authJsonFetch(url);
+        if (sort === 'username-desc') {
+          players = players.sort((a, b) => b.username.localeCompare(a.username));
+        } else {
+          players = players.sort((a, b) => a.username.localeCompare(b.username));
+        }
         container.innerHTML = players.length ? '' : '<p>No players found.</p>';
 
         players.forEach(p => {
@@ -211,10 +217,10 @@ Developer: Deathsgift66
     async function handleAdminAction(endpoint, payload, msg) {
       try {
         await postAdminAction(endpoint, payload);
-        showToast(`✅ ${msg}`);
+        showToast(msg, 'success');
       } catch (err) {
         console.error('❌ Action failed:', err);
-        showToast(`❌ Action failed: ${err.message}`);
+        showToast(`Action failed: ${err.message}`, 'error');
       }
     }
 
@@ -231,29 +237,29 @@ Developer: Deathsgift66
       'toggle-flag-btn': async () => {
         const key = getValue('flag-key');
         const value = getValue('flag-value') === 'true';
-        if (!key) return showToast('Enter a flag key');
+        if (!key) return showToast('Enter a flag key', 'error');
         await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value }, 'Flag updated');
       },
       'update-kingdom-btn': async () => {
         const id = Number(getValue('kingdom-id'));
         const field = getValue('kingdom-field');
         const value = getValue('kingdom-value');
-        if (!id || !field) return showToast('Missing field/kingdom');
+        if (!id || !field) return showToast('Missing field/kingdom', 'error');
         await handleAdminAction('/api/admin/kingdom/update_field', { kingdom_id: id, field, value }, 'Kingdom updated');
       },
       'force-end-war-btn': async () => {
         const id = Number(getValue('war-id'));
-        if (!id) return showToast('Enter war ID');
+        if (!id) return showToast('Enter war ID', 'error');
         await handleAdminAction('/api/admin/war/force_end', { war_id: id }, 'War ended');
       },
       'rollback-tick-btn': async () => {
         const id = Number(getValue('war-id'));
-        if (!id) return showToast('Enter war ID');
+        if (!id) return showToast('Enter war ID', 'error');
         await handleAdminAction('/api/admin/war/rollback_tick', { war_id: id }, 'Tick rolled back');
       },
       'rollback-btn': async () => {
         const pass = getValue('rollback-password');
-        if (!pass) return showToast('Enter master password');
+        if (!pass) return showToast('Enter master password', 'error');
         if (!confirm('⚠️ Are you sure you want to rollback?')) return;
         try {
           await handleAdminAction('/api/admin/system/rollback', { password: pass }, 'Rollback triggered');
@@ -261,6 +267,7 @@ Developer: Deathsgift66
         } catch (e) {
           if (++rollbackAttempts >= 3) {
             document.getElementById('rollback-btn').disabled = true;
+            showToast('Rollback disabled after multiple failed attempts', 'error');
           }
           throw e;
         }
@@ -275,7 +282,7 @@ Developer: Deathsgift66
           acc[id] = getValue(`news-${id}`).trim();
           return acc;
         }, {});
-        if (!payload.title || !payload.summary || !payload.content) return showToast('Fill all news fields');
+        if (!payload.title || !payload.summary || !payload.content) return showToast('Fill all news fields', 'error');
         await handleAdminAction('/api/admin/news/post', payload, 'News published');
         ['title', 'summary', 'content'].forEach(id => (document.getElementById(`news-${id}`).value = ''));
       }
@@ -400,6 +407,10 @@ Developer: Deathsgift66
           <option value="banned">Banned</option>
           <option value="frozen">Frozen</option>
         </select>
+        <select id="sort-order" aria-label="Sort Players">
+          <option value="username-asc">Username A-Z</option>
+          <option value="username-desc">Username Z-A</option>
+        </select>
         <button id="search-btn">Search</button>
         <div id="player-list" class="scrollable-panel" aria-live="polite"></div>
       </section>
@@ -452,7 +463,9 @@ Developer: Deathsgift66
       <section class="data-rollback" aria-label="Emergency Rollback Tool">
         <h3>Database Rollback</h3>
         <input id="rollback-password" type="password" placeholder="Master Password" aria-label="Admin Password" />
-        <button id="rollback-btn" class="danger-btn">Trigger Rollback</button>
+        <button id="rollback-btn" class="danger-btn tooltip-container">Trigger Rollback
+          <span class="tooltip-text">Reverts the database to the last backup. Use cautiously.</span>
+        </button>
       </section>
 
       <!-- Audit Logs -->

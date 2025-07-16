@@ -164,6 +164,36 @@ input[type="text"], select {
   font-size: 1rem;
 }
 
+/* Tooltip */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.tooltip-container .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--stone-panel);
+  color: var(--parchment);
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid var(--gold);
+  padding: 0.5rem;
+  position: absolute;
+  z-index: var(--z-index-tooltip);
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
 
 /* Responsive */
 @media (min-width: 769px) {

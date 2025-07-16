@@ -26,7 +26,7 @@ export function escapeHTML(str = '') {
  * Creates the container dynamically if it does not exist.
  * @param {string} msg Message to display
  */
-export function showToast(msg) {
+export function showToast(msg, type = 'info') {
   let toast = document.getElementById('toast');
   if (!toast) {
     toast = document.createElement('div');
@@ -35,6 +35,7 @@ export function showToast(msg) {
     document.body.appendChild(toast);
   }
   toast.textContent = msg;
+  toast.className = `toast-notification ${type}`;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
