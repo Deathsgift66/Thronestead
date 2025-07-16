@@ -49,6 +49,8 @@ Developer: Deathsgift66
     import { escapeHTML, showToast, enforceAllianceOrAdminAccess } from '/Javascript/utils.js';
 
     let modalEl;
+    let filterDebounce;
+    const focusableSelectors = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
 
     /**
@@ -85,7 +87,8 @@ Developer: Deathsgift66
           document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           sessionStorage.setItem('lastTab', btn.dataset.filter);
-          loadQuests(btn.dataset.filter);
+          clearTimeout(filterDebounce);
+          filterDebounce = setTimeout(() => loadQuests(btn.dataset.filter), 300);
         });
       });
 
@@ -98,6 +101,7 @@ Developer: Deathsgift66
 
       modalEl = document.getElementById('quest-modal');
       modalEl.querySelector('.close-button').addEventListener('click', () => modalEl.classList.remove('visible'));
+      modalEl.addEventListener('keydown', trapFocus);
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') modalEl.classList.remove('visible');
       });
@@ -158,6 +162,7 @@ Developer: Deathsgift66
           claimBtn.classList.toggle('hidden', q.status !== 'completed' || !q.claimable);
 
           acceptBtn.onclick = async () => {
+            if (!confirm('Accept this quest?')) return;
             acceptBtn.disabled = true;
             try {
               const { data: { user } } = await supabase.auth.getUser();
@@ -180,6 +185,7 @@ Developer: Deathsgift66
             }
           };
           claimBtn.onclick = async () => {
+            if (!confirm('Claim reward for this quest?')) return;
             claimBtn.disabled = true;
             try {
               const { data: { user } } = await supabase.auth.getUser();
@@ -206,6 +212,7 @@ Developer: Deathsgift66
           document.getElementById('modal-quest-leader-note').textContent = q.leader_note || '';
 
           modalEl.classList.add('visible');
+          modalEl.focus();
         })
         .catch(() => {
           showToast('Failed to load quest details.', 'error');
@@ -228,7 +235,7 @@ Developer: Deathsgift66
         const update = () => {
           const diff = new Date(el.dataset.endTime) - Date.now();
           el.textContent = formatDuration(diff);
-          if (diff > 0) requestAnimationFrame(update);
+          if (diff > 0) setTimeout(update, 1000);
         };
         update();
       });
@@ -239,9 +246,26 @@ Developer: Deathsgift66
       const update = () => {
         const diff = new Date(endTime) - Date.now();
         el.textContent = formatDuration(diff);
-        if (diff > 0) requestAnimationFrame(update);
+        if (diff > 0) setTimeout(update, 1000);
       };
       update();
+    }
+
+    function trapFocus(e) {
+      if (e.key !== 'Tab') return;
+      const focusables = Array.from(modalEl.querySelectorAll(focusableSelectors)).filter(el => !el.disabled && el.getAttribute('tabindex') !== '-1');
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        }
+      } else if (document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
     }
 
     async function loadHeroes() {
@@ -261,6 +285,20 @@ Developer: Deathsgift66
       }
     }
 
+    function initThemeToggle() {
+      const btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      const saved = localStorage.getItem('theme') || document.body.getAttribute('data-theme');
+      document.body.setAttribute('data-theme', saved);
+      btn.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
+      btn.addEventListener('click', () => {
+        const current = document.body.getAttribute('data-theme') === 'dark' ? 'parchment' : 'dark';
+        document.body.setAttribute('data-theme', current);
+        localStorage.setItem('theme', current);
+        btn.textContent = current === 'dark' ? 'Light Mode' : 'Dark Mode';
+      });
+    }
+
     // Initial load and event bindings
     document.addEventListener('DOMContentLoaded', async () => {
       if (!(await enforceAllianceOrAdminAccess())) return;
@@ -271,6 +309,7 @@ Developer: Deathsgift66
       if (btn) btn.classList.add('active');
       loadQuests(lastTab);
       loadHeroes();
+      initThemeToggle();
     });
   </script>
 
@@ -327,6 +366,7 @@ Developer: Deathsgift66
         <button class="action-btn medieval-banner-btn" id="start-new-quest" title="Start a New Alliance Quest">
           <span class="plus-icon">➕</span> Start New Quest
         </button>
+        <button id="theme-toggle" class="action-btn">Dark Mode</button>
       </section>
     </div>
 
