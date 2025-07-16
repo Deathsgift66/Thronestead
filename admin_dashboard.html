@@ -13,6 +13,8 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Admin Dashboard | Thronestead</title>
+  <meta name="author" content="Thronestead Moderation Team" />
+  <meta name="version" content="7.1.2025.10.38" />
 
   <!-- Metadata -->
   <meta name="description" content="Admin Dashboard for Thronestead — View user metrics, suspicious activity, audit logs, and system tools." />
@@ -26,6 +28,16 @@ Developer: Deathsgift66
   <meta property="og:image" content="Assets/banner_main.png" />
   <meta property="og:url" content="https://www.thronestead.com/admin_dashboard.html" />
   <meta property="og:type" content="website" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Thronestead Admin Dashboard",
+    "applicationCategory": "Moderation",
+    "url": "https://www.thronestead.com/admin_dashboard.html"
+  }
+  </script>
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -50,24 +62,37 @@ Developer: Deathsgift66
     // Version: 7/1/2025 10:38
     // Developer: Deathsgift66
 
-    import { escapeHTML, authJsonFetch, authFetch, showToast } from '/Javascript/utils.js';
+    import { escapeHTML, authJsonFetch, authFetch, showToast, debounce, safeUUID } from '/Javascript/utils.js';
     import { getAuth } from '/Javascript/auth.js';
 
     const REFRESH_MS = 30000;
     let rollbackAttempts = 0;
+    let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
+    sessionStorage.setItem('csrf_token', csrfToken);
+    document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
+    const csrfPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const isValidCsrf = token => csrfPattern.test(token);
+    setInterval(() => {
+      csrfToken = safeUUID();
+      sessionStorage.setItem('csrf_token', csrfToken);
+      document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
+    }, 15 * 60 * 1000);
 
-    function setupAutoRefresh() {
-      loadDashboardStats();
-      loadFlaggedUsers();
-      setInterval(() => {
-        loadDashboardStats();
-        loadFlaggedUsers();
+    async function setupAutoRefresh() {
+      await loadDashboardStats();
+      await loadFlaggedUsers();
+      setInterval(async () => {
+        await loadDashboardStats();
+        await loadFlaggedUsers();
       }, REFRESH_MS);
     }
 
+    let lastStats = {};
     async function loadDashboardStats() {
       try {
         const data = await authJsonFetch('/api/admin/stats');
+        if (JSON.stringify(data) === JSON.stringify(lastStats)) return;
+        lastStats = data;
         ['total-users', 'sum-users'].forEach(id => setText(id, data.active_users));
         ['flagged-users', 'sum-flags'].forEach(id => setText(id, data.flagged_users));
         setText('suspicious-activity', data.suspicious_count);
@@ -125,16 +150,23 @@ Developer: Deathsgift66
         const url = new URL('/api/admin/audit/logs', window.location.origin);
         const type = document.getElementById('log-type')?.value.trim();
         const user = document.getElementById('log-user')?.value.trim();
-        const start = document.getElementById('log-start')?.value;
-        const end = document.getElementById('log-end')?.value;
+        const startDate = document.getElementById('log-start')?.valueAsDate;
+        const endDate = document.getElementById('log-end')?.valueAsDate;
         if (type) url.searchParams.set('search', type);
         if (user) url.searchParams.set('user_id', user);
-        if (start) url.searchParams.set('start_date', start);
-        if (end) url.searchParams.set('end_date', end);
+        if (startDate) url.searchParams.set('start_date', startDate.toISOString());
+        if (endDate) url.searchParams.set('end_date', endDate.toISOString());
         url.searchParams.set('format', format);
 
         if (format === 'csv') {
-          window.location.href = url;
+          const res = await authFetch(url);
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = 'audit_logs.csv';
+          a.click();
+          URL.revokeObjectURL(blobUrl);
           return;
         }
 
@@ -167,8 +199,9 @@ Developer: Deathsgift66
         rows.forEach(row => {
           const card = document.createElement('div');
           card.className = 'flagged-card';
+          const icon = row.type === 'ban' ? '⛔' : '⚠️';
           card.innerHTML = `
-            <p><strong>${escapeHTML(row.user_id)}</strong> — ${escapeHTML(row.type)}</p>
+            <p><span class="severity-icon">${icon}</span> <strong>${escapeHTML(row.user_id)}</strong> — ${escapeHTML(row.type)}</p>
             <p>${formatTimestamp(row.created_at)}</p>`;
           container.appendChild(card);
         });
@@ -199,25 +232,41 @@ Developer: Deathsgift66
       container.innerHTML = '';
       const origin = window.location.origin || location.protocol + '//' + location.host;
       const { session } = await getAuth();
-      const wsUrl = new URL('/api/admin/alerts/live', origin);
-      wsUrl.searchParams.set('token', session.access_token);
-      const socket = new WebSocket(wsUrl.href.replace(/^http/, 'ws'));
+      const connect = await authJsonFetch('/api/admin/alerts/connect', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': csrfToken }
+      });
+      const { url: wsPath } = connect;
+      const socket = new WebSocket(new URL(wsPath, origin).href.replace(/^http/, 'ws'));
 
       socket.onmessage = ({ data }) => {
-        const alert = JSON.parse(data);
+        let alert;
+        try {
+          alert = JSON.parse(data);
+        } catch (err) {
+          console.error('Invalid alert payload', err);
+          return;
+        }
         const el = document.createElement('div');
         el.className = 'alert-item';
         el.innerHTML = `<b>${escapeHTML(alert.type)}</b>: ${escapeHTML(alert.message)} <small>${formatTimestamp(alert.timestamp)}</small>`;
         container.prepend(el);
       };
 
-      socket.onerror = err => console.error('❌ Alert socket error:', err);
+      socket.onerror = () => {
+        console.error('❌ Alert socket error');
+        container.innerHTML = '<p class="error-msg">Alert feed offline.</p>';
+      };
     }
 
-    async function handleAdminAction(endpoint, payload, msg) {
+    async function handleAdminAction(endpoint, payload, msg, btn) {
       try {
         await postAdminAction(endpoint, payload);
         showToast(msg, 'success');
+        if (btn) {
+          btn.classList.add('flash-success');
+          setTimeout(() => btn.classList.remove('flash-success'), 600);
+        }
       } catch (err) {
         console.error('❌ Action failed:', err);
         showToast(`Action failed: ${err.message}`, 'error');
@@ -225,44 +274,45 @@ Developer: Deathsgift66
     }
 
     async function postAdminAction(endpoint, payload) {
+      if (!isValidCsrf(csrfToken)) throw new Error('Invalid session');
       const res = await authFetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(await res.text());
     }
 
     const actions = {
-      'toggle-flag-btn': async () => {
+      'toggle-flag-btn': async btn => {
         const key = getValue('flag-key');
         const value = getValue('flag-value') === 'true';
         if (!key) return showToast('Enter a flag key', 'error');
-        await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value }, 'Flag updated');
+        await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value }, 'Flag updated', btn);
       },
-      'update-kingdom-btn': async () => {
+      'update-kingdom-btn': async btn => {
         const id = Number(getValue('kingdom-id'));
         const field = getValue('kingdom-field');
         const value = getValue('kingdom-value');
         if (!id || !field) return showToast('Missing field/kingdom', 'error');
-        await handleAdminAction('/api/admin/kingdom/update_field', { kingdom_id: id, field, value }, 'Kingdom updated');
+        await handleAdminAction('/api/admin/kingdom/update_field', { kingdom_id: id, field, value }, 'Kingdom updated', btn);
       },
-      'force-end-war-btn': async () => {
+      'force-end-war-btn': async btn => {
         const id = Number(getValue('war-id'));
         if (!id) return showToast('Enter war ID', 'error');
-        await handleAdminAction('/api/admin/war/force_end', { war_id: id }, 'War ended');
+        await handleAdminAction('/api/admin/war/force_end', { war_id: id }, 'War ended', btn);
       },
-      'rollback-tick-btn': async () => {
+      'rollback-tick-btn': async btn => {
         const id = Number(getValue('war-id'));
         if (!id) return showToast('Enter war ID', 'error');
-        await handleAdminAction('/api/admin/war/rollback_tick', { war_id: id }, 'Tick rolled back');
+        await handleAdminAction('/api/admin/war/rollback_tick', { war_id: id }, 'Tick rolled back', btn);
       },
-      'rollback-btn': async () => {
+      'rollback-btn': async btn => {
         const pass = getValue('rollback-password');
         if (!pass) return showToast('Enter master password', 'error');
         if (!confirm('⚠️ Are you sure you want to rollback?')) return;
         try {
-          await handleAdminAction('/api/admin/system/rollback', { password: pass }, 'Rollback triggered');
+          await handleAdminAction('/api/admin/system/rollback', { password: pass }, 'Rollback triggered', btn);
           rollbackAttempts = 0;
         } catch (e) {
           if (++rollbackAttempts >= 3) {
@@ -272,18 +322,18 @@ Developer: Deathsgift66
           throw e;
         }
       },
-      'create-event': async () => {
+      'create-event': async btn => {
         const name = prompt('Event name?');
-        if (!name) return;
-        await handleAdminAction('/api/admin/events/create', { name }, 'Event created');
+        if (!name || !name.trim()) return showToast('Event name required', 'error');
+        await handleAdminAction('/api/admin/events/create', { name: name.trim() }, 'Event created', btn);
       },
-      'publish-news-btn': async () => {
+      'publish-news-btn': async btn => {
         const payload = ['title', 'summary', 'content'].reduce((acc, id) => {
           acc[id] = getValue(`news-${id}`).trim();
           return acc;
         }, {});
         if (!payload.title || !payload.summary || !payload.content) return showToast('Fill all news fields', 'error');
-        await handleAdminAction('/api/admin/news/post', payload, 'News published');
+        await handleAdminAction('/api/admin/news/post', payload, 'News published', btn);
         ['title', 'summary', 'content'].forEach(id => (document.getElementById(`news-${id}`).value = ''));
       }
     };
@@ -296,13 +346,16 @@ Developer: Deathsgift66
       loadFlags();
       setupAutoRefresh();
 
-      document.getElementById('search-btn')?.addEventListener('click', loadPlayerList);
-      document.getElementById('status-filter')?.addEventListener('change', loadPlayerList);
+      const debouncedLoad = debounce(loadPlayerList, 400);
+
+      document.getElementById('search-btn')?.addEventListener('click', debouncedLoad);
+      document.getElementById('status-filter')?.addEventListener('change', debouncedLoad);
       document.getElementById('load-logs-btn')?.addEventListener('click', () => loadAuditLogs('json'));
       document.getElementById('export-csv')?.addEventListener('click', () => loadAuditLogs('csv'));
 
       Object.entries(actions).forEach(([id, fn]) => {
-        document.getElementById(id)?.addEventListener('click', fn);
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', () => fn(el));
       });
     });
 
@@ -318,7 +371,7 @@ Developer: Deathsgift66
       if (map[action]) {
         if (!confirm(`Confirm ${capitalize(action)} for ${id}?`)) return;
         const [url, msg] = map[action];
-        await handleAdminAction(url, { player_id: id }, msg);
+        await handleAdminAction(url, { player_id: id }, msg, e.target);
       }
     });
 
@@ -377,7 +430,7 @@ Developer: Deathsgift66
   </div>
 
   <!-- Main Dashboard -->
-  <main class="main-container" aria-label="Admin Tools Interface">
+  <main class="main-container" role="main" aria-label="Admin Tools Interface">
     <div class="container" id="admin-dashboard-content">
       <h2>Command your administrative forces. Monitor, manage, and moderate in real time.</h2>
 
@@ -400,13 +453,16 @@ Developer: Deathsgift66
       <!-- User Management -->
       <section class="user-management" aria-label="Player Moderation Tools">
         <h3>User Management</h3>
+        <label for="search-player">Search Player</label>
         <input id="search-player" type="text" placeholder="Search by username" aria-label="Search Player" />
+        <label for="status-filter">Status</label>
         <select id="status-filter" aria-label="User Status Filter">
           <option value="">All Statuses</option>
           <option value="active">Active</option>
           <option value="banned">Banned</option>
           <option value="frozen">Frozen</option>
         </select>
+        <label for="sort-order">Sort</label>
         <select id="sort-order" aria-label="Sort Players">
           <option value="username-asc">Username A-Z</option>
           <option value="username-desc">Username Z-A</option>
@@ -424,8 +480,11 @@ Developer: Deathsgift66
       <!-- News Publishing -->
       <section class="news-management" aria-label="Publish News">
         <h3>Publish News</h3>
+        <label for="news-title">Title</label>
         <input id="news-title" type="text" placeholder="Title" aria-label="News Title" />
+        <label for="news-summary">Summary</label>
         <input id="news-summary" type="text" placeholder="Summary" aria-label="News Summary" />
+        <label for="news-content">Content</label>
         <textarea id="news-content" placeholder="Content" aria-label="News Content"></textarea>
         <button id="publish-news-btn">Publish</button>
       </section>
@@ -433,7 +492,9 @@ Developer: Deathsgift66
       <!-- System Flags -->
       <section class="flag-management" aria-label="System Flag Controls">
         <h3>System Flags</h3>
+        <label for="flag-key">Flag key</label>
         <input id="flag-key" type="text" placeholder="Flag key" aria-label="System Flag Key" />
+        <label for="flag-value">Flag value</label>
         <select id="flag-value" aria-label="Flag Value">
           <option value="true">True</option>
           <option value="false">False</option>
@@ -445,8 +506,11 @@ Developer: Deathsgift66
       <!-- Kingdom Tools -->
       <section class="kingdom-management" aria-label="Kingdom Editing Tools">
         <h3>Kingdom Update</h3>
-        <input id="kingdom-id" type="number" placeholder="Kingdom ID" aria-label="Kingdom ID" />
+        <label for="kingdom-id">Kingdom ID</label>
+        <input id="kingdom-id" type="number" min="1" required placeholder="Kingdom ID" aria-label="Kingdom ID" />
+        <label for="kingdom-field">Field</label>
         <input id="kingdom-field" type="text" placeholder="Field" aria-label="Field Name" />
+        <label for="kingdom-value">Value</label>
         <input id="kingdom-value" type="text" placeholder="Value" aria-label="Field Value" />
         <button id="update-kingdom-btn">Update</button>
       </section>
@@ -454,7 +518,8 @@ Developer: Deathsgift66
       <!-- War Controls -->
       <section class="war-management" aria-label="War Control Tools">
         <h3>War Controls</h3>
-        <input id="war-id" type="number" placeholder="War ID" aria-label="War ID" />
+        <label for="war-id">War ID</label>
+        <input id="war-id" type="number" min="1" required placeholder="War ID" aria-label="War ID" />
         <button id="force-end-war-btn">Force End War</button>
         <button id="rollback-tick-btn">Rollback Combat Tick</button>
       </section>
@@ -462,18 +527,23 @@ Developer: Deathsgift66
       <!-- System Rollback -->
       <section class="data-rollback" aria-label="Emergency Rollback Tool">
         <h3>Database Rollback</h3>
-        <input id="rollback-password" type="password" placeholder="Master Password" aria-label="Admin Password" />
+        <label for="rollback-password">Master Password</label>
+        <input id="rollback-password" type="password" required placeholder="Master Password" aria-label="Admin Password" aria-describedby="rollback-tooltip" />
         <button id="rollback-btn" class="danger-btn tooltip-container">Trigger Rollback
-          <span class="tooltip-text">Reverts the database to the last backup. Use cautiously.</span>
+          <span id="rollback-tooltip" class="tooltip-text">Reverts the database to the last backup. Use cautiously.</span>
         </button>
       </section>
 
       <!-- Audit Logs -->
       <section class="audit-logs" aria-label="System Audit Logs">
         <h3>Audit Logs</h3>
+        <label for="log-type">Type</label>
         <input id="log-type" type="text" placeholder="Type" aria-label="Log Type" />
+        <label for="log-user">User ID</label>
         <input id="log-user" type="text" placeholder="User ID" aria-label="User ID" />
+        <label for="log-start">Start Date</label>
         <input id="log-start" type="date" aria-label="Start Date" />
+        <label for="log-end">End Date</label>
         <input id="log-end" type="date" aria-label="End Date" />
         <button id="load-logs-btn">Load Logs</button>
         <button id="export-csv">Export CSV</button>
@@ -491,6 +561,7 @@ Developer: Deathsgift66
   <!-- Footer -->
   <footer class="site-footer">
     <div>© 2025 Thronestead</div>
+    <div class="build-info">Version 7.1.2025.10.38</div>
     <div>
       <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
       <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>

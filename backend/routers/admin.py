@@ -27,6 +27,7 @@ from ..security import (
     require_user_id,
     verify_admin,
     require_csrf_token,
+    create_reauth_token,
 )
 from .admin_dashboard import dashboard_summary, get_audit_logs
 
@@ -358,6 +359,18 @@ def query_admin_alerts(
     sql = text(f"SELECT * FROM admin_alerts{where} ORDER BY created_at DESC LIMIT 100")
     rows = db.execute(sql, params).fetchall()
     return {"alerts": [dict(r._mapping) for r in rows]}
+
+
+@router.post("/alerts/connect")
+def alerts_connect(
+    verify: str = Depends(verify_api_key),
+    admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
+    db: Session = Depends(get_db),
+):
+    """Return a short-lived token for websocket authentication."""
+    token = create_reauth_token(db, admin_id, ttl=60)
+    return {"url": f"/api/admin/alerts/live?uid={admin_id}&token={token}"}
 
 
 # -------------------------
