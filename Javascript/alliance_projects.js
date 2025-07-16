@@ -110,6 +110,9 @@ function renderAvailable(list) {
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
 
+  if (!window.user) {
+    console.warn('⚠️ No user context found. Permissions may be unavailable.');
+  }
   const canStart = window.user?.permissions?.includes('can_manage_projects');
   list.forEach(p => {
     const card = document.createElement('article');
@@ -197,6 +200,8 @@ async function loadContributions(key, element) {
         <span>${escapeHTML(r.player_name)}</span>
         <div class="contrib-bar"><div class="contrib-bar-fill" data-width="${(r.amount / total) * 100}"></div></div>
       `;
+      const fill = div.querySelector('.contrib-bar-fill');
+      fill.style.width = `${(r.amount / total) * 100}%`;
       element.appendChild(div);
     });
   } catch (err) {
