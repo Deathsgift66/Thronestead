@@ -375,7 +375,7 @@ Developer: Deathsgift66
       let data;
       let fallback = false;
       try {
-        data = await authFetchJson('/api/overview', currentSession);
+        data = await authFetchJson('/api/overview');
         saveKingdomCache(data);
       } catch (err) {
         console.error("❌ Overview load error:", err);
@@ -428,7 +428,7 @@ Developer: Deathsgift66
         }
 
         try {
-          const vipData = await authFetchJson('/api/kingdom/vip_status', currentSession);
+          const vipData = await authFetchJson('/api/kingdom/vip_status');
           document.getElementById('vip-level').innerHTML = `<strong>VIP:</strong> ${vipData.vip_level || 0}`;
         } catch {
           document.getElementById('vip-level').textContent = 'VIP: --';
@@ -546,7 +546,7 @@ Developer: Deathsgift66
           filter: `kingdom_id=eq.${kid}`
         }, async () => {
           try {
-            const data = await authFetchJson('/api/overview', currentSession);
+            const data = await authFetchJson('/api/overview');
             if (data.troops) renderTroopSummary(data.troops);
           } catch (err) {
             console.error('Failed to refresh troop counts:', err);

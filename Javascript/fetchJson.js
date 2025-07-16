@@ -58,23 +58,13 @@ export async function fetchJson(url, options = {}, timeoutMs = 8000) {
 
 /**
  * Convenience wrapper for authenticated API requests.
- * Adds Authorization and X-User-ID headers using the provided session.
+ * Automatically includes Supabase auth headers using the stored session.
  *
  * @param {string} url            API endpoint
- * @param {object} session        Supabase session with `access_token` and `user.id`
  * @param {RequestInit} [options] Additional fetch options
  * @param {number} [timeoutMs]    Optional timeout override
  * @returns {Promise<any>}        Parsed JSON data
  */
-export async function authFetchJson(url, session, options = {}, timeoutMs = 8000) {
-  const opts = {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      Authorization: `Bearer ${session.access_token}`,
-      'X-User-ID': session.user.id,
-      'Content-Type': 'application/json'
-    }
-  };
-  return fetchJsonInternal(fetch, url, opts, timeoutMs);
+export async function authFetchJson(url, options = {}, timeoutMs = 8000) {
+  return fetchJsonInternal(authFetch, url, options, timeoutMs);
 }

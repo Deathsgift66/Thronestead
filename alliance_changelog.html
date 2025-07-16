@@ -18,6 +18,7 @@ Developer: Deathsgift66
   <meta name="description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
   <meta name="keywords" content="Thronestead, alliance log, history, changes, updates, policy" />
   <meta name="robots" content="index, follow" />
+  <meta name="author" content="Thronestead Dev Team" />
   <link rel="canonical" href="https://www.thronestead.com/alliance_changelog.html" />
 
   <!-- Open Graph -->
@@ -32,6 +33,16 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Alliance Changelog | Thronestead" />
   <meta name="twitter:description" content="Track alliance wars, treaties, project completions, quests, and more in the changelog." />
   <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Alliance Changelog",
+    "url": "https://www.thronestead.com/alliance_changelog.html",
+    "description": "Chronological historical log of alliance actions in Thronestead."
+  }
+  </script>
 
   <!-- Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -53,6 +64,7 @@ Developer: Deathsgift66
 </head>
 
 <body class="alliance-bg">
+  <a href="#changelog-list" class="skip-link">Skip to Changelog</a>
   <noscript>
     <div class="noscript-warning">
       JavaScript is required to view alliance history. Please enable JS in your browser.
@@ -71,7 +83,7 @@ Developer: Deathsgift66
   </header>
 
   <!-- Main Content -->
-  <main class="main-centered-container" aria-label="Alliance History Feed">
+  <main role="main" class="main-centered-container" aria-label="Alliance History Feed">
     <section class="changelog-container">
       <h2>Alliance Changelog</h2>
 
@@ -102,7 +114,7 @@ Developer: Deathsgift66
       <div class="last-updated">Last updated: <span id="last-updated">--</span></div>
 
       <!-- Timeline Feed -->
-      <ul id="changelog-list" class="timeline-feed" aria-live="polite">
+      <ul id="changelog-list" class="timeline-feed" role="log" aria-live="polite">
         <li>Loading...</li>
       </ul>
     </section>
@@ -117,7 +129,7 @@ Developer: Deathsgift66
   <!-- Alliance Changelog Logic -->
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, formatDate } from '/Javascript/utils.js';
+    import { escapeHTML, formatDate, debounce } from '/Javascript/utils.js';
     import { authFetchJson } from '/Javascript/fetchJson.js';
 
     let changelogData = [];
@@ -152,7 +164,7 @@ Developer: Deathsgift66
       });
     }
 
-    async function fetchChangelog() {
+    async function fetchChangelog(manual = false) {
       try {
         const { data: { session } = {} } = await supabase.auth.getSession();
         if (!session) return (window.location.href = 'login.html');
@@ -168,8 +180,9 @@ Developer: Deathsgift66
           return params;
         }, new URLSearchParams());
 
-        const data = await authFetchJson(`/api/alliance/changelog?${filters}`, session);
-        changelogData = data.logs || [];
+        filters.set('ts', Date.now());
+        const data = await authFetchJson(`/api/alliance/changelog?${filters}`);
+        changelogData = Array.isArray(data.logs) ? data.logs : [];
         saveFilters();
 
         updateLastUpdated(data.last_updated);
@@ -181,6 +194,7 @@ Developer: Deathsgift66
           '<li class="error-state">Failed to load changelog.</li>';
         backoff = Math.min(backoff * 2, 300000);
       } finally {
+        if (manual) backoff = 30000;
         scheduleNextFetch();
       }
     }
@@ -190,10 +204,10 @@ Developer: Deathsgift66
       fetchTimer = setTimeout(fetchChangelog, backoff);
     }
 
-    function applyFilters() {
-      saveFilters();
-      fetchChangelog();
-    }
+   function applyFilters() {
+     saveFilters();
+      fetchChangelog(true);
+   }
 
       function formatCsvDate(ts) {
         const d = new Date(ts);
@@ -220,14 +234,14 @@ Developer: Deathsgift66
       container.innerHTML = logs
         .map(
           (log) => `
-      <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry">
+      <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry" aria-expanded="true">
         <div class="timeline-bullet"></div>
         <div class="timeline-content">
           <span class="log-icon">${getIcon(log.event_type)}</span>
           <span class="log-type">${escapeHTML(log.event_type.toUpperCase())}</span>
           <p class="log-text">${escapeHTML(log.description)}</p>
           <time datetime="${log.timestamp}">
-            ${log.timestamp ? formatDate(log.timestamp) : '—'}
+            ${log.timestamp && !isNaN(new Date(log.timestamp)) ? formatDate(log.timestamp) : '—'}
           </time>
         </div>
       </li>
@@ -236,7 +250,11 @@ Developer: Deathsgift66
         .join('');
 
       container.querySelectorAll('.timeline-entry').forEach((entry) => {
-        entry.addEventListener('click', () => entry.classList.toggle('collapsed'));
+        entry.setAttribute('aria-expanded', 'true');
+        entry.addEventListener('click', () => {
+          entry.classList.toggle('collapsed');
+          entry.setAttribute('aria-expanded', entry.classList.contains('collapsed') ? 'false' : 'true');
+        });
       });
     }
 
@@ -247,11 +265,11 @@ Developer: Deathsgift66
         .map((l) => [formatCsvDate(l.timestamp), l.event_type, l.description]
           .map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
         .join('\n');
-      const blob = new Blob([header + csv], { type: 'text/csv' });
+      const blob = new Blob(["\uFEFF" + header + csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'alliance_changelog.csv';
+      a.download = `alliance_changelog_${Date.now()}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -263,9 +281,12 @@ Developer: Deathsgift66
       document.addEventListener('DOMContentLoaded', () => {
         loadFilters();
         fetchChangelog();
-        bindEvent('apply-filters-btn', applyFilters);
-        bindEvent('refresh-btn', fetchChangelog);
+        const debouncedApply = debounce(applyFilters, 400);
+        bindEvent('apply-filters-btn', debouncedApply);
+        const debouncedRefresh = debounce(() => fetchChangelog(true), 400);
+        bindEvent('refresh-btn', debouncedRefresh);
         bindEvent('export-csv-btn', exportCSV);
+        window.addEventListener('beforeunload', () => clearTimeout(fetchTimer));
       });
   </script>
 </body>

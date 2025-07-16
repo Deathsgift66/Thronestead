@@ -80,7 +80,7 @@ Developer: Deathsgift66
         msgForm.addEventListener('submit', async e => {
           e.preventDefault();
           try {
-            await authFetchJson('/api/compose/message', session, {
+            await authFetchJson('/api/compose/message', {
               method: 'POST',
               body: JSON.stringify({
                 recipient_id: getValue('msg-recipient'),
@@ -103,7 +103,7 @@ Developer: Deathsgift66
         noticeForm.addEventListener('submit', async e => {
           e.preventDefault();
           try {
-            await authFetchJson('/api/compose/notice', session, {
+            await authFetchJson('/api/compose/notice', {
               method: 'POST',
               body: JSON.stringify({
                 title: getValue('notice-title'),
@@ -127,7 +127,7 @@ Developer: Deathsgift66
         treatyForm.addEventListener('submit', async e => {
           e.preventDefault();
           try {
-            await authFetchJson('/api/compose/treaty', session, {
+            await authFetchJson('/api/compose/treaty', {
               method: 'POST',
               body: JSON.stringify({
                 partner_alliance_id: parseInt(getValue('treaty-partner')),
@@ -149,7 +149,7 @@ Developer: Deathsgift66
         warForm.addEventListener('submit', async e => {
           e.preventDefault();
           try {
-            await authFetchJson('/api/compose/war', session, {
+            await authFetchJson('/api/compose/war', {
               method: 'POST',
               body: JSON.stringify({
                 defender_id: getValue('war-defender'),
@@ -179,7 +179,7 @@ Developer: Deathsgift66
       const list = document.getElementById('recipient-list');
       if (!list) return;
       try {
-        const res = await authFetchJson('/api/players/lookup', session);
+        const res = await authFetchJson('/api/players/lookup');
         res.players.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.user_id;
