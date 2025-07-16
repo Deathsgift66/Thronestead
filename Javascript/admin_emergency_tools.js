@@ -3,7 +3,17 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 
-import { authFetch, authJsonFetch, escapeHTML } from './utils.js';
+import {
+  authFetch,
+  authJsonFetch,
+  escapeHTML,
+  showToast,
+  openModal,
+  closeModal,
+  toggleLoading
+} from './utils.js';
+
+let pendingAction = null;
 
 // 🔁 Unified POST helper
 async function postAction(url, payload) {
@@ -27,10 +37,12 @@ function applyFilter() {
 }
 
 // 📦 Load Backups
-async function loadBackups() {
+async function loadBackups(btn) {
   const list = document.getElementById('backup-list');
   if (!list) return;
+  btn?.setAttribute('disabled', 'disabled');
   list.innerHTML = '<li>Loading...</li>';
+  toggleLoading(true);
   try {
     const data = await authJsonFetch('/api/admin/emergency/backups');
     list.innerHTML = '';
@@ -43,9 +55,14 @@ async function loadBackups() {
     const time = document.getElementById('backup-time');
     if (time) time.textContent = `Last loaded: ${new Date().toLocaleString()}`;
     applyFilter();
+    showToast('Backups loaded');
   } catch (err) {
     console.error('❌ Failed to load backups:', err);
     list.innerHTML = '<li>Error loading queues</li>';
+    showToast('Failed to load backups');
+  } finally {
+    btn?.removeAttribute('disabled');
+    toggleLoading(false);
   }
 }
 
@@ -83,20 +100,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!btn) return;
 
     btn.addEventListener('click', async () => {
-      if (typeof config.action === 'function') return config.action();
-      if (config.confirm && !confirm('Are you sure? This action cannot be undone.')) return;
+      const execute = async () => {
+        if (typeof config.action === 'function') return config.action(btn);
 
-      const values = config.inputs.map(id => document.getElementById(id)?.value.trim());
-      if (values.some(v => !v)) return alert('⚠️ All fields required');
+        const values = config.inputs.map(id => document.getElementById(id)?.value.trim());
+        if (values.some(v => !v)) return showToast('⚠️ All fields required');
 
-      try {
-        await postAction(config.endpoint, config.payload(values));
-        alert(`✅ ${config.success}`);
-      } catch (err) {
-        console.error(`❌ ${config.endpoint} failed:`, err);
-        alert(`❌ ${err.message}`);
+        btn.disabled = true;
+        toggleLoading(true);
+        try {
+          await postAction(config.endpoint, config.payload(values));
+          showToast(`✅ ${config.success}`);
+        } catch (err) {
+          console.error(`❌ ${config.endpoint} failed:`, err);
+          showToast(`❌ ${err.message}`);
+        } finally {
+          btn.disabled = false;
+          toggleLoading(false);
+        }
+      };
+
+      if (config.confirm) {
+        pendingAction = execute;
+        openModal('confirm-modal');
+      } else {
+        execute();
       }
     });
   });
+
   document.getElementById('backup-filter')?.addEventListener('input', applyFilter);
+
+  const confirmYes = document.getElementById('confirm-yes');
+  const confirmNo = document.getElementById('confirm-no');
+  confirmYes?.addEventListener('click', () => {
+    closeModal('confirm-modal');
+    pendingAction?.();
+    pendingAction = null;
+  });
+  confirmNo?.addEventListener('click', () => {
+    closeModal('confirm-modal');
+    pendingAction = null;
+  });
 });
