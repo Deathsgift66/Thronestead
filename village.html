@@ -37,6 +37,7 @@ Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
+      await loadVillageList();
       await loadVillagePage();
       const urlParams = new URLSearchParams(window.location.search);
       const villageId = urlParams.get('village_id');
@@ -44,6 +45,23 @@ Developer: Deathsgift66
         initRealtime(villageId);
       }
     });
+
+    async function loadVillageList() {
+      const list = document.getElementById('village-list');
+      if (!list) return;
+      const { data, error } = await supabase
+        .from('villages')
+        .select('village_id, village_name');
+      if (error || !data) return;
+      data.forEach(v => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `/village.html?village_id=${v.village_id}`;
+        a.textContent = v.village_name;
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+    }
 
     async function loadVillagePage() {
       try {
@@ -101,9 +119,10 @@ Developer: Deathsgift66
         if (key === 'village_id') return;
         const card = document.createElement('div');
         card.classList.add('resource-card');
+        const val = resData[key] ?? 0;
         card.innerHTML = `
           <h4>${formatResourceName(key)}</h4>
-          <p>${resData[key].toLocaleString()}</p>
+          <p>${val.toLocaleString()}</p>
         `;
         gridEl.appendChild(card);
       });
@@ -136,7 +155,7 @@ Developer: Deathsgift66
         const card = document.createElement('div');
         card.classList.add('building-card');
         card.innerHTML = `
-          <h4>${building.building_name}</h4>
+          <h4>${escapeHTML(building.building_name)}</h4>
           <p>Level: ${building.level}</p>
         `;
         listEl.appendChild(card);
@@ -171,8 +190,8 @@ Developer: Deathsgift66
         const card = document.createElement('div');
         card.classList.add('modifier-card');
         card.innerHTML = `
-          <h4>${mod.source}</h4>
-          <p>Expires: ${mod.expires_at ? new Date(mod.expires_at).toLocaleDateString() : 'Never'}</p>
+          <h4>${escapeHTML(mod.source)}</h4>
+          <p>Expires: ${mod.expires_at ? new Date(mod.expires_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Never'}</p>
         `;
         modEl.appendChild(card);
       });
@@ -205,7 +224,7 @@ Developer: Deathsgift66
         const card = document.createElement('div');
         card.classList.add('military-card');
         card.innerHTML = `
-          <h4>${unit.unit_name}</h4>
+          <h4>${escapeHTML(unit.unit_name)}</h4>
           <p>Quantity: ${unit.quantity}</p>
         `;
         milEl.appendChild(card);
@@ -234,13 +253,15 @@ Developer: Deathsgift66
         const card = document.createElement('div');
         card.classList.add('queue-card');
 
-        const end = new Date(entry.ends_at).getTime();
+        const endDate = new Date(entry.ends_at);
+        const startDate = new Date(entry.starts_at);
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return;
+
         let progress = 0;
         if (entry.starts_at) {
-          const start = new Date(entry.starts_at).getTime();
           const now = Date.now();
           progress = Math.min(
-            Math.round(((now - start) / (end - start)) * 100),
+            Math.round(((now - startDate.getTime()) / (endDate.getTime() - startDate.getTime())) * 100),
             100
           );
           if (isNaN(progress) || progress < 0) progress = 0;
@@ -248,14 +269,16 @@ Developer: Deathsgift66
         }
 
         card.innerHTML = `
-          <h4>${entry.building_type} → Lv${entry.target_level}</h4>
-          <div class="progress-bar"><div class="progress" style="width:${progress}%"></div></div>
+          <h4>${escapeHTML(entry.building_type)} → Lv${entry.target_level}</h4>
+          <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}">
+            <div class="progress" style="width:${progress}%"></div>
+          </div>
         `;
 
         if (entry.status !== 'in_progress') {
           const btn = document.createElement('button');
           btn.textContent = 'Cancel';
-          btn.onclick = () => cancelQueueItem(entry.queue_id, villageId);
+          btn.onclick = () => cancelQueueItem(entry.queue_id, villageId, btn);
           card.appendChild(btn);
         }
 
@@ -263,8 +286,12 @@ Developer: Deathsgift66
       });
     }
 
-    async function cancelQueueItem(queueId, villageId) {
+    async function cancelQueueItem(queueId, villageId, btn) {
       if (!confirm('Cancel this build/training queue item?')) return;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Canceling...';
+      }
 
       await fetch('/api/village/building/queue/cancel', {
         method: 'POST',
@@ -304,7 +331,7 @@ Developer: Deathsgift66
         const entry = document.createElement('div');
         entry.classList.add('event-entry');
         entry.innerHTML = `
-          <p>[${new Date(event.event_time).toLocaleString()}] ${event.event_description}</p>
+          <p>[${new Date(event.event_time).toLocaleString()}] ${escapeHTML(event.event_description)}</p>
         `;
         logEl.appendChild(entry);
       });
@@ -344,11 +371,21 @@ Developer: Deathsgift66
         }
       });
 
-      window.addEventListener('beforeunload', () => {
-        supabase.removeChannel(channel);
+      window.addEventListener('beforeunload', async () => {
+        await supabase.removeChannel(channel);
       });
 
       return channel;
+    }
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[c]);
     }
 
     function formatResourceName(key) {
@@ -363,6 +400,8 @@ Developer: Deathsgift66
         toastEl = document.createElement('div');
         toastEl.id = 'toast';
         toastEl.className = 'toast-notification';
+        toastEl.setAttribute('role', 'status');
+        toastEl.setAttribute('aria-live', 'polite');
         document.body.appendChild(toastEl);
       }
       toastEl.textContent = msg;
@@ -434,7 +473,7 @@ Developer: Deathsgift66
         <!-- Resource Overview -->
         <div class="ledger-section" aria-labelledby="resource-section">
           <h3 id="resource-section">Resources</h3>
-          <div class="resource-grid" id="resource-grid">
+          <div class="resource-grid" id="resource-grid" aria-live="polite">
             <!-- JS will populate -->
           </div>
         </div>
@@ -442,7 +481,7 @@ Developer: Deathsgift66
         <!-- Building Overview -->
         <div class="ledger-section" aria-labelledby="building-section">
           <h3 id="building-section">Buildings</h3>
-          <div class="building-list" id="building-list">
+          <div class="building-list" id="building-list" aria-live="polite">
             <!-- JS will populate -->
           </div>
         </div>
@@ -450,7 +489,7 @@ Developer: Deathsgift66
         <!-- Active Modifiers -->
         <div class="ledger-section" aria-labelledby="modifiers-section">
           <h3 id="modifiers-section">Active Modifiers</h3>
-          <div class="modifier-list" id="modifier-list">
+          <div class="modifier-list" id="modifier-list" aria-live="polite">
             <!-- JS will populate -->
           </div>
         </div>
@@ -458,7 +497,7 @@ Developer: Deathsgift66
         <!-- Military -->
         <div class="ledger-section" aria-labelledby="military-section">
           <h3 id="military-section">Military</h3>
-          <div class="military-stats" id="military-stats">
+          <div class="military-stats" id="military-stats" aria-live="polite">
             <!-- JS will populate -->
           </div>
         </div>
@@ -466,7 +505,7 @@ Developer: Deathsgift66
         <!-- Build/Training Queue -->
         <div class="ledger-section" aria-labelledby="queue-section">
           <h3 id="queue-section">Training / Build Queue</h3>
-          <div class="queue-list" id="queue-list">
+          <div class="queue-list" id="queue-list" aria-live="polite">
             <!-- JS will populate -->
           </div>
         </div>
@@ -474,7 +513,7 @@ Developer: Deathsgift66
         <!-- Event Log -->
         <div class="ledger-section" aria-labelledby="event-section">
           <h3 id="event-section">Event Log</h3>
-          <div class="event-log" id="event-log">
+          <div class="event-log" id="event-log" aria-live="polite">
             <!-- JS will populate -->
           </div>
         </div>
