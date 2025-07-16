@@ -75,6 +75,11 @@ body {
   display: none;
 }
 
+.timeline-entry.collapsed .timeline-content {
+  max-height: 40px;
+  overflow: hidden;
+}
+
 .log-time {
   font-weight: bold;
 }

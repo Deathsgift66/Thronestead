@@ -117,10 +117,12 @@ Developer: Deathsgift66
   <!-- Alliance Changelog Logic -->
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, formatDate } from './Javascript/utils.js';
-    import { authFetchJson } from './Javascript/fetchJson.js';
+    import { escapeHTML, formatDate } from '/Javascript/utils.js';
+    import { authFetchJson } from '/Javascript/fetchJson.js';
 
     let changelogData = [];
+    let fetchTimer;
+    let backoff = 30000;
 
     const iconMap = {
       war: '🛡',
@@ -132,7 +134,7 @@ Developer: Deathsgift66
     };
 
     function getIcon(type) {
-      return iconMap[type] || '';
+      return iconMap[type] || '📝';
     }
 
     function loadFilters() {
@@ -157,7 +159,12 @@ Developer: Deathsgift66
 
         const filters = ['start', 'end', 'type'].reduce((params, key) => {
           const val = document.getElementById(`filter-${key}`)?.value;
-          if (val) params.set(key, val);
+          if (val) {
+            let v = val;
+            if (key === 'start') v += 'T00:00:00Z';
+            if (key === 'end') v += 'T23:59:59Z';
+            params.set(key, v);
+          }
           return params;
         }, new URLSearchParams());
 
@@ -167,9 +174,20 @@ Developer: Deathsgift66
 
         updateLastUpdated(data.last_updated);
         renderChangelog(changelogData);
+        backoff = 30000;
       } catch (err) {
         console.error('❌ Error fetching changelog:', err);
+        document.getElementById('changelog-list').innerHTML =
+          '<li class="error-state">Failed to load changelog.</li>';
+        backoff = Math.min(backoff * 2, 300000);
+      } finally {
+        scheduleNextFetch();
       }
+    }
+
+    function scheduleNextFetch() {
+      clearTimeout(fetchTimer);
+      fetchTimer = setTimeout(fetchChangelog, backoff);
     }
 
     function applyFilters() {
@@ -181,7 +199,7 @@ Developer: Deathsgift66
         const d = new Date(ts);
         if (Number.isNaN(d.getTime())) return '';
         const pad = n => String(n).padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
       }
 
       function updateLastUpdated(timestamp) {
@@ -242,14 +260,13 @@ Developer: Deathsgift66
       document.getElementById(id)?.addEventListener('click', handler);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      loadFilters();
-      fetchChangelog();
-      setInterval(fetchChangelog, 30000);
-      bindEvent('apply-filters-btn', applyFilters);
-      bindEvent('refresh-btn', fetchChangelog);
-      bindEvent('export-csv-btn', exportCSV);
-    });
+      document.addEventListener('DOMContentLoaded', () => {
+        loadFilters();
+        fetchChangelog();
+        bindEvent('apply-filters-btn', applyFilters);
+        bindEvent('refresh-btn', fetchChangelog);
+        bindEvent('export-csv-btn', exportCSV);
+      });
   </script>
 </body>
 
