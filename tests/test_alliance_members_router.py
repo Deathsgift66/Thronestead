@@ -11,8 +11,11 @@ from backend.db_base import Base
 from backend.models import Alliance, AllianceMember, User
 from backend.routers.alliance_members import (
     RankPayload,
+    MemberAction,
     TransferLeadershipPayload,
     promote,
+    demote,
+    remove,
     transfer_leadership,
 )
 
@@ -65,3 +68,42 @@ def test_transfer_leadership_changes_leader():
     m2 = db.query(AllianceMember).filter_by(user_id="u2").first()
     assert m1.rank == "Co-Leader"
     assert m2.rank == "Leader"
+
+
+def test_officer_cannot_promote():
+    Session = setup_db()
+    db = Session()
+    db.add(AllianceMember(alliance_id=1, user_id="u1", username="A", rank="Member"))
+    db.add(
+        User(
+            user_id="u2",
+            username="Officer",
+            email="o@test.com",
+            alliance_id=1,
+            alliance_role="Officer",
+        )
+    )
+    db.commit()
+
+    with pytest.raises(HTTPException):
+        promote(RankPayload(user_id="u1", alliance_id=1, new_rank="Diplomat"), user_id="u2", db=db)
+
+
+def test_member_cannot_kick():
+    Session = setup_db()
+    db = Session()
+    db.add(AllianceMember(alliance_id=1, user_id="u1", username="A", rank="Member"))
+    db.add(AllianceMember(alliance_id=1, user_id="target", username="T", rank="Member"))
+    db.add(
+        User(
+            user_id="u1",
+            username="Member",
+            email="m@test.com",
+            alliance_id=1,
+            alliance_role="Member",
+        )
+    )
+    db.commit()
+
+    with pytest.raises(HTTPException):
+        remove(MemberAction(user_id="target"), user_id="u1", db=db)
