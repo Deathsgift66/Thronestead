@@ -255,13 +255,20 @@ export function relativeTime(ts) {
  * @param {object} [options] fetch options
  * @returns {Promise<any>}   Parsed JSON data
  */
-export async function jsonFetch(url, options = {}) {
-  const res = await fetch(url, {
-    headers: { Accept: 'application/json', ...(options.headers || {}) },
-    credentials: options.credentials || 'include',
-    ...options
-  });
-  return parseJsonResponse(res);
+export async function jsonFetch(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json', ...(options.headers || {}) },
+      credentials: options.credentials || 'include',
+      ...options,
+      signal: controller.signal
+    });
+    return await parseJsonResponse(res);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
