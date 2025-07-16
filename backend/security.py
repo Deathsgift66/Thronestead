@@ -172,6 +172,16 @@ def verify_admin(user_id: str, db: Session) -> None:
         raise HTTPException(status_code=403, detail="Admin access required")
 
 
+def require_admin_user(
+    authorization: str | None = Header(None),
+    db: Session = Depends(get_db),
+) -> str:
+    """Return the verified admin user ID from the Authorization header."""
+    user_id = verify_jwt_token(authorization=authorization)
+    verify_admin(user_id, db)
+    return user_id
+
+
 async def get_current_user(request: Request, db: Session = Depends(get_db)):
     """Return the current user's profile based on the Authorization token."""
     auth_header = request.headers.get("Authorization")

@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { authFetch, authJsonFetch } from './utils.js';
+import { authFetch, authJsonFetch, showToast } from './utils.js';
 import { setupReauthButtons } from './reauth.js';
 
 const REFRESH_MS = 30000;
@@ -145,11 +145,11 @@ document.addEventListener('click', async e => {
         break;
     }
 
-    alert(`✅ ${action.replace(/_/g, ' ')} successful.`);
+    showToast(`✅ ${action.replace(/_/g, ' ')} successful.`, 'success');
     loadAlerts();
   } catch (err) {
     console.error(`❌ Action [${action}] failed:`, err);
-    alert(`❌ ${action} failed: ${err.message}`);
+    showToast(`❌ ${action} failed: ${err.message}`, 'error');
   }
 });
 
