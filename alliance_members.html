@@ -33,8 +33,14 @@
     const rankPowerNormalized = rankPower.map(r => r.toLowerCase());
     let members = [];
     let membersChannel = null;
+    let currentUser = null;
+    let authToken = '';
 
     document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      authToken = session?.access_token || '';
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUser = user;
       if (!(await enforceAllianceOrAdminAccess())) return;
       const sortBy = document.getElementById('sort-by')?.value || 'username';
       const direction = document.getElementById('sort-direction')?.value || 'asc';
@@ -43,13 +49,21 @@
       setupRealtime();
     });
 
+    supabase.auth.onAuthStateChange((_event, session) => {
+      authToken = session?.access_token || '';
+      currentUser = session?.user || null;
+      if (!session && membersChannel) {
+        supabase.removeChannel(membersChannel);
+        membersChannel = null;
+      }
+    });
+
     async function enforceAllianceOrAdminAccess() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return redirectToLogin();
+        if (!currentUser) return redirectToLogin();
         const [admin, alliance] = await Promise.all([
-          supabase.from('users').select('is_admin').eq('user_id', user.id).single(),
-          supabase.from('alliance_members').select('user_id').eq('user_id', user.id).maybeSingle()
+          supabase.from('users').select('is_admin').eq('user_id', currentUser.id).single(),
+          supabase.from('alliance_members').select('user_id').eq('user_id', currentUser.id).maybeSingle()
         ]);
         if (admin.error) console.error(admin.error.message || admin.error);
         if (alliance.error) console.error(alliance.error.message || alliance.error);
@@ -75,12 +89,21 @@
       tbody.innerHTML = `<tr><td colspan="11"><div class="loading-spinner"></div></td></tr>`;
       toggleLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         const url = new URL('/api/alliance/members', window.location.origin);
+        const validSort = ['username','rank','contribution','status','military_score','economy_score','diplomacy_score','total_output'];
+        if (!validSort.includes(sortBy)) sortBy = 'username';
+        const validDir = ['asc','desc'];
+        if (!validDir.includes(direction.toLowerCase())) direction = 'asc';
+        const sanitizedSearch = search.replace(/[^\w\s-]/g, '').slice(0,50);
         url.searchParams.set('sort_by', sortBy);
         url.searchParams.set('direction', direction);
-        if (search) url.searchParams.set('search', search);
-        const res = await fetch(url, { headers: { 'X-User-ID': user.id } });
+        if (sanitizedSearch) url.searchParams.set('search', sanitizedSearch);
+        const res = await fetch(url, {
+          headers: {
+            'X-User-ID': currentUser.id,
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         members = await res.json();
         renderMembers(members);
@@ -159,19 +182,24 @@
         tbody.appendChild(row);
       });
 
-      tbody.addEventListener('click', e => {
+      tbody.addEventListener('click', async e => {
         const btn = e.target.closest('button');
-        if (!btn) return;
+        if (!btn || btn.disabled) return;
         const userId = btn.dataset.id;
-        if (btn.classList.contains('promote-btn')) promoteMember(userId);
-        else if (btn.classList.contains('demote-btn')) demoteMember(userId);
-        else if (btn.classList.contains('kick-btn')) removeMember(userId);
-        else if (btn.classList.contains('transfer-btn')) transferLeadership(userId);
+        btn.disabled = true;
+        try {
+          if (btn.classList.contains('promote-btn')) await promoteMember(userId);
+          else if (btn.classList.contains('demote-btn')) await demoteMember(userId);
+          else if (btn.classList.contains('kick-btn')) await removeMember(userId);
+          else if (btn.classList.contains('transfer-btn')) await transferLeadership(userId);
+        } finally {
+          btn.disabled = false;
+        }
       });
     }
 
     async function getUserPrivileges() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = currentUser;
       const [admin, rank] = await Promise.all([
         supabase.from('users').select('is_admin').eq('user_id', user.id).single(),
         supabase.from('alliance_members').select('rank').eq('user_id', user.id).maybeSingle()
@@ -217,10 +245,13 @@
       const confirmed = confirm(hardConfirm ? 'Are you sure? This cannot be undone.' : 'Are you sure you want to proceed?');
       if (!confirmed) return;
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         const res = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-User-ID': user.id },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': currentUser.id,
+            'Authorization': `Bearer ${authToken}`
+          },
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error(await res.text());
@@ -247,13 +278,46 @@
   <div id="resource-bar-container"></div>
 
   <main>
-    <!-- Sorting & Table structure here -->
-    <table class="members-table">
-      <thead>...header columns...</thead>
-      <tbody id="members-list" aria-live="polite">
-        <tr><td colspan="11"><div class="loading-spinner"></div></td></tr>
-      </tbody>
-    </table>
+    <section class="search-sort-controls" aria-label="Member search and sort">
+      <input type="text" id="member-search" placeholder="Search username" aria-label="Search Username" />
+      <select id="sort-by" aria-label="Sort by">
+        <option value="username">Username</option>
+        <option value="rank">Rank</option>
+        <option value="contribution">Contribution</option>
+        <option value="economy_score">Economy</option>
+        <option value="military_score">Military</option>
+        <option value="diplomacy_score">Diplomacy</option>
+        <option value="total_output">Output</option>
+      </select>
+      <select id="sort-direction" aria-label="Sort direction">
+        <option value="asc">Asc</option>
+        <option value="desc">Desc</option>
+      </select>
+      <button id="apply-sort">Apply</button>
+    </section>
+
+    <div class="members-table-container">
+      <table class="members-table">
+        <thead>
+          <tr>
+            <th scope="col">Crest</th>
+            <th scope="col">Name</th>
+            <th scope="col">Rank</th>
+            <th scope="col">Role</th>
+            <th scope="col">Status</th>
+            <th scope="col">Contribution</th>
+            <th scope="col">Economy</th>
+            <th scope="col">Military</th>
+            <th scope="col">Diplomacy</th>
+            <th scope="col">Output</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="members-list" aria-live="polite">
+          <tr><td colspan="11"><div class="loading-spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
   </main>
 
   <div id="toast" class="toast-notification" role="status" aria-live="polite" aria-hidden="true" tabindex="-1"></div>
