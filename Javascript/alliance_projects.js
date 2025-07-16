@@ -4,11 +4,18 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, openModal } from './utils.js';
+import {
+  escapeHTML,
+  openModal,
+  authHeaders,
+  authJsonFetch,
+  debounce
+} from './utils.js';
 import { RESOURCE_KEYS } from './resourceKeys.js';
 
 let projectChannel = null;
 const loadedTabs = { completed: false, catalogue: false };
+let cachedAlliance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
@@ -17,6 +24,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   setInterval(loadAllLists, 30000); // Auto-refresh
   window.addEventListener('beforeunload', () => {
     if (projectChannel) supabase.removeChannel(projectChannel);
+  });
+
+  supabase.auth.onAuthStateChange(() => {
+    cachedAlliance = null;
+    if (projectChannel) {
+      supabase.removeChannel(projectChannel);
+      projectChannel = null;
+    }
   });
 });
 
@@ -43,6 +58,15 @@ async function setupRealtimeProjects() {
 // ----------------------------
 // 🧭 Tab UI
 // ----------------------------
+const debouncedLoadCompleted = debounce(async () => {
+  await loadCompleted();
+  loadedTabs.completed = true;
+}, 300);
+const debouncedLoadCatalogue = debounce(async () => {
+  await loadCatalogue();
+  loadedTabs.catalogue = true;
+}, 300);
+
 function setupTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -52,9 +76,9 @@ function setupTabs() {
       document.getElementById(btn.dataset.tab)?.classList.add('active');
 
       if (btn.dataset.tab === 'completed-tab' && !loadedTabs.completed) {
-        loadCompleted().then(() => { loadedTabs.completed = true; });
+        debouncedLoadCompleted();
       } else if (btn.dataset.tab === 'catalogue-tab' && !loadedTabs.catalogue) {
-        loadCatalogue().then(() => { loadedTabs.catalogue = true; });
+        debouncedLoadCatalogue();
       }
     });
     btn.addEventListener('keydown', e => {
@@ -83,15 +107,21 @@ async function loadAllLists() {
   if (live) live.textContent = 'Project data updated.';
 }
 
-async function getAllianceInfo() {
+async function getAllianceInfo(force = false) {
+  if (cachedAlliance && !force) return cachedAlliance;
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    window.location.href = 'login.html';
+    throw new Error('Unauthorized');
+  }
   const { data, error } = await supabase
     .from('users')
     .select('alliance_id')
     .eq('user_id', user.id)
     .single();
   if (error) throw error;
-  return { userId: user.id, allianceId: data.alliance_id };
+  cachedAlliance = { userId: user.id, allianceId: data.alliance_id };
+  return cachedAlliance;
 }
 
 // ----------------------------
@@ -104,8 +134,7 @@ async function loadAvailable() {
 
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
-    const json = await res.json();
+    const json = await authJsonFetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
     renderAvailable(json.projects || []);
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
@@ -141,7 +170,7 @@ function renderAvailable(list) {
   });
 
   container.querySelectorAll('.build-btn').forEach(btn => {
-    btn.addEventListener('click', () => startProject(btn.dataset.project));
+    btn.addEventListener('click', () => startProject(btn.dataset.project, btn));
   });
 }
 
@@ -155,8 +184,7 @@ async function loadInProgress() {
 
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
-    const json = await res.json();
+    const json = await authJsonFetch(`/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
     renderInProgress(json.projects || []);
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
@@ -195,8 +223,7 @@ function renderInProgress(list) {
 
 async function loadContributions(key, element) {
   try {
-    const res = await fetch(`/api/alliance/projects/contributions?project_key=${key}`);
-    const data = await res.json();
+    const data = await authJsonFetch(`/api/alliance/projects/contributions?project_key=${key}`);
     const list = data.contributions || [];
     const totalContributors = data.totalContributors || list.length;
 
@@ -245,8 +272,7 @@ async function loadCompleted() {
 
   try {
     const { allianceId } = await getAllianceInfo();
-    const res = await fetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
-    const json = await res.json();
+    const json = await authJsonFetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
     renderCompleted(json.projects || []);
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
@@ -285,8 +311,7 @@ async function loadCatalogue() {
   container.innerHTML = '<p>Loading...</p>';
 
   try {
-    const res = await fetch('/api/alliance/projects/catalogue');
-    const json = await res.json();
+    const json = await authJsonFetch('/api/alliance/projects/catalogue');
     renderCatalogue(json.projects || []);
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
@@ -324,20 +349,19 @@ function renderCatalogue(list) {
 // ----------------------------
 // ➕ Start a Project
 // ----------------------------
-async function startProject(projectKey) {
+async function startProject(projectKey, btn) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const res = await fetch('/api/alliance/projects/start', {
+    if (btn) {
+      btn.disabled = true;
+      btn.dataset.orig = btn.textContent;
+      btn.textContent = 'Starting...';
+    }
+    const headers = await authHeaders();
+    const json = await authJsonFetch('/api/alliance/projects/start', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-ID': user.id
-      },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({ project_key: projectKey })
     });
-
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.detail || 'Unknown error');
 
     await loadAllLists();
     const live = document.getElementById('project-updates');
@@ -347,6 +371,12 @@ async function startProject(projectKey) {
       console.error('startProject', err);
     }
     alert('❌ Failed to start project.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.orig || 'Start Project';
+      delete btn.dataset.orig;
+    }
   }
 }
 
@@ -358,8 +388,7 @@ async function openContribModal(key) {
   if (title) title.textContent = `Contributors for ${key}`;
   if (listEl) listEl.innerHTML = 'Loading...';
   try {
-    const res = await fetch(`/api/alliance/projects/contributions?project_key=${key}`);
-    const data = await res.json();
+    const data = await authJsonFetch(`/api/alliance/projects/contributions?project_key=${key}`);
     const list = data.contributions || [];
     listEl.innerHTML = list
       .map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`)
@@ -377,6 +406,7 @@ async function openContribModal(key) {
 // 🧮 Utility
 // ----------------------------
 function formatTime(seconds) {
+  if (seconds === 0) return 'Instant';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
