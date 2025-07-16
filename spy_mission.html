@@ -101,6 +101,7 @@ Developer: Deathsgift66
     let currentUserId = null;
     let currentSession = null;
     let spyInfo = { spy_count: 0, spy_level: 1 };
+    let selectedKingdomId = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -115,7 +116,12 @@ Developer: Deathsgift66
       await loadRecentLog();
 
       const targetInput = document.getElementById('target-kingdom');
-      targetInput.addEventListener('input', e => loadKingdomSuggestions(e.target.value));
+      targetInput.addEventListener('input', e => {
+        const val = e.target.value;
+        loadKingdomSuggestions(val);
+        const opt = document.querySelector(`#kingdom-list option[value="${val}"]`);
+        selectedKingdomId = opt ? parseInt(opt.dataset.id, 10) : null;
+      });
 
       document.getElementById('mission-type').addEventListener('change', updateSuccessRate);
       const qtyInput = document.getElementById('spy-count');
@@ -128,7 +134,6 @@ Developer: Deathsgift66
       try {
         const res = await fetch('/api/kingdom/spies', {
           headers: {
-            'X-User-ID': currentUserId,
             'Authorization': `Bearer ${currentSession.access_token}`
           }
         });
@@ -137,6 +142,8 @@ Developer: Deathsgift66
         const qtyEl = document.getElementById('spy-count');
         qtyEl.max = data.spy_count || 1;
         qtyEl.value = 1;
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.disabled = data.spy_count === 0;
         updateSuccessRate();
       } catch (err) {
         console.error('Failed to load spy info', err);
@@ -167,7 +174,8 @@ Developer: Deathsgift66
     function updateSuccessRate() {
       const qty = parseInt(document.getElementById('spy-count').value, 10) || 0;
       const level = spyInfo.spy_level || 0;
-      const rate = Math.min(95, 30 + level * 5 + qty * 10);
+      const base = 30 + level * 5 + qty * 10;
+      const rate = Math.min(95, Math.max(5, base));
       const rateEl = document.getElementById('success-rate');
       rateEl.textContent = `Estimated Success Rate: ${rate}%`;
     }
@@ -178,14 +186,13 @@ Developer: Deathsgift66
       list.innerHTML = '<li>Loading...</li>';
       try {
         const res = await fetch('/api/spy/log?limit=5', {
-          headers: {
-            'X-User-ID': currentUserId,
-            'Authorization': `Bearer ${currentSession.access_token}`
-          }
+          headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
         });
         const data = await res.json();
         list.innerHTML = '';
-        (data.logs || []).forEach(entry => {
+        (data.logs || [])
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+          .forEach(entry => {
           const li = document.createElement('li');
           const icon = entry.outcome === 'success' ? '✅' : '❌';
           li.innerHTML = `<span class="result-icon">${icon}</span> ${escapeHTML(entry.mission_type)} → ${escapeHTML(entry.target_name || entry.target_id || '')}`;
@@ -202,21 +209,28 @@ Developer: Deathsgift66
       const typedName = document.getElementById('target-kingdom').value.trim();
       const mission_type = document.getElementById('mission-type').value;
       const count = parseInt(document.getElementById('spy-count').value, 10);
+      const submitBtn = document.querySelector('button[type="submit"]');
       if (isNaN(count) || count < 1) {
         showResult('Please enter a valid number of spies.');
         return;
       }
+      if (!selectedKingdomId) {
+        showResult('Please select a valid target kingdom.');
+        return;
+      }
+      submitBtn.disabled = true;
+      setTimeout(() => (submitBtn.disabled = false), 3000);
       showResult('Sending mission...');
       try {
         const res = await fetch('/api/spy/launch', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-User-ID': currentUserId,
             'Authorization': `Bearer ${currentSession.access_token}`
           },
           body: JSON.stringify({
-            target_kingdom_name: escapeHTML(typedName),
+            target_kingdom_id: selectedKingdomId,
+            target_kingdom_name: typedName,
             mission_type,
             num_spies: count
           })

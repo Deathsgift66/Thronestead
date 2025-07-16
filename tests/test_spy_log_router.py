@@ -25,7 +25,7 @@ def test_get_spy_log_returns_rows(monkeypatch):
     db = DummyDB(
         rows=[
             {
-                "mission_type": "scout",
+                "mission_type": "spy_troops",
                 "target_id": 2,
                 "target_name": "Enemy",
                 "outcome": "success",
@@ -39,5 +39,5 @@ def test_get_spy_log_returns_rows(monkeypatch):
 
     monkeypatch.setattr(spy_router, "get_kingdom_id", lambda d, uid: 1)
     result = spy_router.get_spy_log(user_id="u1", db=db)
-    assert result["logs"][0]["mission_type"] == "scout"
+    assert result["logs"][0]["mission_type"] == "spy_troops"
     assert db.queries[0][1]["kid"] == 1

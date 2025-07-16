@@ -106,7 +106,7 @@ def test_detection_increments_counter(monkeypatch):
     monkeypatch.setattr(spies_service, "finalize_mission", lambda *a, **k: None)
 
     launch_spy_mission(
-        LaunchPayload(target_kingdom_name="B", mission_type="scout", num_spies=1),
+        LaunchPayload(target_kingdom_name="B", target_kingdom_id=2, mission_type="spy_troops", num_spies=1),
         user_id="u1",
         db=db,
     )
