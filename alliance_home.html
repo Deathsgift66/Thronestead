@@ -64,7 +64,8 @@ Developer: Deathsgift66
       jsonFetch,
       showToast,
       authFetch,
-      debounce
+      debounce,
+      setBarWidths
     } from '/Javascript/utils.js';
 
     let activityChannel = null;
@@ -77,6 +78,13 @@ Developer: Deathsgift66
     const ACTIVITY_LIMIT = 20;
     let membersOffset = 0;
     let activityOffset = 0;
+    const pendingEntries = [];
+    let flushTimer = null;
+
+    function resetOffsets() {
+      membersOffset = 0;
+      activityOffset = 0;
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
       let session;
@@ -118,6 +126,7 @@ Developer: Deathsgift66
 
     async function fetchAllianceDetails(offset = 0) {
       try {
+        if (offset === 0) resetOffsets();
         const data = await jsonFetch(
           `/api/alliance-home/details?limit=${LIMIT}&offset=${offset}`
         );
@@ -136,6 +145,10 @@ Developer: Deathsgift66
         showToast('Failed to load alliance data.', 'error');
         throw err;
       }
+    }
+
+    function safeRender(fn, ...args) {
+      try { fn(...args); } catch (err) { console.error(`Render failed: ${fn.name}`, err); }
     }
 
     function populateAlliance(data, initial = true) {
@@ -177,15 +190,15 @@ Developer: Deathsgift66
         setText('vault-ore', safe(data.vault.iron_ore));
       }
 
-      renderProjects(data.projects);
-      renderMembers(data.members, !initial);
-      renderTopContributors(data.members);
-      renderQuests(data.quests);
-      renderAchievements(data.achievements);
-      renderActivity(data.activity, !initial);
-      renderDiplomacy(data.treaties);
-      renderActiveBattles(data.wars);
-      renderWarScore(data.wars);
+      safeRender(renderProjects, data.projects);
+      safeRender(renderMembers, data.members, !initial);
+      safeRender(renderTopContributors, data.members);
+      safeRender(renderQuests, data.quests);
+      safeRender(renderAchievements, data.achievements);
+      safeRender(renderActivity, data.activity, !initial);
+      safeRender(renderDiplomacy, data.treaties);
+      safeRender(renderActiveBattles, data.wars);
+      safeRender(renderWarScore, data.wars);
     }
 
     // === Render Utilities ===
@@ -267,6 +280,7 @@ Developer: Deathsgift66
         return div;
       });
       container.replaceChildren(frag);
+      setBarWidths(container);
     }
 
     function renderAchievements(achievements = []) {
@@ -374,16 +388,29 @@ Developer: Deathsgift66
     }
 
     function addActivityEntry(entry) {
-      const list = document.getElementById('activity-log');
-      if (!list) return;
+      pendingEntries.push(entry);
+      if (!flushTimer) flushTimer = setTimeout(flushActivityEntries, 1000);
+    }
 
-      const li = document.createElement('li');
-      li.className = 'activity-log-entry';
-      li.setAttribute('role', 'listitem');
-      const actor = entry.username || entry.user_id;
-      li.textContent = `[${formatDate(entry.created_at)}] ${actor}: ${entry.description}`;
-      list.prepend(li);
+    function flushActivityEntries() {
+      const list = document.getElementById('activity-log');
+      if (!list || !pendingEntries.length) {
+        pendingEntries.length = 0;
+        flushTimer = null;
+        return;
+      }
+      const frag = fragmentFrom(pendingEntries, e => {
+        const li = document.createElement('li');
+        li.className = 'activity-log-entry';
+        li.setAttribute('role', 'listitem');
+        const actor = e.username || e.user_id;
+        li.textContent = `[${formatDate(e.created_at)}] ${actor}: ${e.description}`;
+        return li;
+      });
+      list.prepend(frag);
       pruneActivityLog(list);
+      pendingEntries.length = 0;
+      flushTimer = null;
     }
 
     function pruneActivityLog(list, limit = 20) {
@@ -438,10 +465,13 @@ Developer: Deathsgift66
       }
     }
 
+    const PERMISSIONS_CACHE_MS = 60 * 60 * 1000;
+
     async function cacheUserPermissions(userId) {
       if (!userId) return;
       const cached = sessionStorage.getItem('userPermissions');
-      if (cached) {
+      const ts = parseInt(sessionStorage.getItem('userPermissionsTs') || '0', 10);
+      if (cached && Date.now() - ts < PERMISSIONS_CACHE_MS) {
         window.user = window.user || {};
         window.user.permissions = JSON.parse(cached);
         return;
@@ -454,6 +484,7 @@ Developer: Deathsgift66
           window.user = window.user || {};
           window.user.permissions = me.permissions;
           sessionStorage.setItem('userPermissions', JSON.stringify(me.permissions));
+          sessionStorage.setItem('userPermissionsTs', Date.now().toString());
         }
       } catch (err) {
         console.error('Failed to cache permissions:', err);
