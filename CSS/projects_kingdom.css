@@ -129,6 +129,11 @@ body {
   color: #1a1a1a;
 }
 
+.start-project-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Footer */
 .site-footer {
   text-align: center;
