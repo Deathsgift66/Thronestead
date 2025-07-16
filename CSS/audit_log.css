@@ -95,6 +95,11 @@ body {
   padding: 0.5rem;
 }
 
+.sse-status {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
 @media (max-width: 600px) {
   .audit-filter-form {
     flex-direction: column;
@@ -104,6 +109,12 @@ body {
   .audit-log-table td {
     padding: 0.4rem;
     font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .audit-log-table td:nth-child(4) {
+    display: none;
   }
 }
 

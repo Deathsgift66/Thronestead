@@ -48,15 +48,26 @@ Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
     const API_BASE_URL = getEnvVar('API_BASE_URL');
     let eventSource;
+    let offset = 0;
+    let connectedAt = 0;
+    let sseTimer;
 
     document.addEventListener("DOMContentLoaded", async () => {
 
-      // ✅ Enforce admin access (you can add RLS in Supabase, this is frontend safety)
+      // ✅ Enforce admin and server validation
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         window.location.href = "login.html";
         return;
       }
+      try {
+        await checkAdmin();
+      } catch {
+        window.location.href = "overview.html";
+        return;
+      }
+
+      await authJsonFetch('/api/admin/audit-log/view', { method: 'POST' });
 
       const form = document.getElementById("audit-filter-form");
       if (form) {
@@ -66,18 +77,39 @@ Developer: Deathsgift66
         });
       }
 
+      document.getElementById('export-csv').addEventListener('click', () => {
+        window.open(`/api/admin/audit/logs?${buildExportQuery()}&format=csv`, '_blank');
+      });
+      document.getElementById('export-json').addEventListener('click', () => {
+        window.open(`/api/admin/audit/logs?${buildExportQuery()}&format=json`, '_blank');
+      });
+      document.getElementById('load-more-btn').addEventListener('click', () => loadAuditLog(false));
+
       // ✅ Initial load
       await loadAuditLog();
 
       // ✅ Real-time updates via SSE
       try {
+        const statusEl = document.getElementById('sse-status');
         eventSource = new EventSource(`${API_BASE_URL}/api/admin/audit-log/stream`);
+        eventSource.onopen = () => {
+          connectedAt = Date.now();
+          updateSseStatus();
+          if (sseTimer) clearInterval(sseTimer);
+          sseTimer = setInterval(updateSseStatus, 1000);
+        };
         eventSource.onmessage = (ev) => {
           const log = JSON.parse(ev.data);
           prependLogRow(log);
         };
+        eventSource.onerror = () => {
+          connectedAt = 0;
+          updateSseStatus();
+        };
+        if (statusEl) statusEl.textContent = 'SSE Connected';
       } catch (err) {
         console.error('SSE connection failed', err);
+        updateSseStatus();
       }
       window.addEventListener('beforeunload', () => {
         if (eventSource) eventSource.close();
@@ -86,7 +118,7 @@ Developer: Deathsgift66
     });
 
     // ✅ Load Audit Log
-    async function loadAuditLog() {
+    async function loadAuditLog(reset = true) {
       const tbody = document.getElementById("audit-log-body");
       const user = document.getElementById("filter-user")?.value.trim();
       const action = document.getElementById("filter-action")?.value.trim();
@@ -94,10 +126,15 @@ Developer: Deathsgift66
       const to = document.getElementById("filter-to")?.value;
       const limit = document.getElementById("filter-limit")?.value || 100;
 
-      // Show loading state
-      tbody.innerHTML = `
-        <tr><td colspan="4">Loading audit log...</td></tr>
-      `;
+      if (user && !/^[\w-]{36}$/.test(user)) {
+        alert("Invalid UUID format");
+        return;
+      }
+
+      if (reset) {
+        offset = 0;
+        tbody.innerHTML = `<tr><td colspan="4">Loading audit log...</td></tr>`;
+      }
 
       try {
         const params = new URLSearchParams();
@@ -105,37 +142,41 @@ Developer: Deathsgift66
         if (action) params.append("action", action);
         if (from) params.append("date_from", from);
         if (to) params.append("date_to", to);
-        if (limit) params.append("limit", limit);
+        params.append("limit", limit);
+        params.append("offset", offset);
 
         const data = await authJsonFetch(`/api/admin/audit-log?${params.toString()}`);
 
-        tbody.innerHTML = "";
+        if (reset) tbody.innerHTML = "";
 
         if (!data.logs || data.logs.length === 0) {
-          tbody.innerHTML = `
-            <tr><td colspan="4">No audit log entries found.</td></tr>
-          `;
+          if (reset) {
+            tbody.innerHTML = `<tr><td colspan="4">No audit log entries found.</td></tr>`;
+          }
+          document.getElementById('load-more-btn').style.display = 'none';
           return;
         }
 
         data.logs.forEach(log => {
           const row = document.createElement("tr");
-
+          const details = formatDetails(log.details);
           row.innerHTML = `
             <td>${formatTimestamp(log.created_at)}</td>
             <td>${escapeHTML(log.action)}</td>
             <td>${escapeHTML(log.user_id || '')}</td>
-            <td>${escapeHTML(log.details)}</td>
+            <td>${details}</td>
           `;
-
           tbody.appendChild(row);
         });
 
+        offset += data.logs.length;
+        document.getElementById('load-more-btn').style.display = data.logs.length >= limit ? '' : 'none';
+
       } catch (err) {
         console.error("❌ Error fetching audit log data:", err);
-        tbody.innerHTML = `
-          <tr><td colspan="4">Failed to load audit log.</td></tr>
-        `;
+        if (reset) {
+          tbody.innerHTML = `<tr><td colspan="4">Failed to load audit log.</td></tr>`;
+        }
       }
       applyKingdomLinks();
     }
@@ -143,11 +184,12 @@ Developer: Deathsgift66
     function prependLogRow(log) {
       const tbody = document.getElementById('audit-log-body');
       const row = document.createElement('tr');
+      const details = formatDetails(log.details);
       row.innerHTML = `
         <td>${formatTimestamp(log.created_at)}</td>
         <td>${escapeHTML(log.action)}</td>
         <td>${escapeHTML(log.user_id || '')}</td>
-        <td>${escapeHTML(log.details)}</td>
+        <td>${details}</td>
       `;
       tbody.prepend(row);
       if (tbody.children.length > 100) {
@@ -165,7 +207,46 @@ Developer: Deathsgift66
       });
     }
 
-    // ✅ Basic HTML escape (to prevent injection)
+    function tryParseJSON(str) {
+      try { return JSON.parse(str); } catch { return null; }
+    }
+
+    function renderKeyValueTable(obj) {
+      return '<table>' + Object.entries(obj).map(([k,v]) => `<tr><th>${escapeHTML(k)}</th><td>${escapeHTML(String(v))}</td></tr>`).join('') + '</table>';
+    }
+
+    function formatDetails(details) {
+      const parsed = tryParseJSON(details);
+      return parsed && typeof parsed === 'object' ? renderKeyValueTable(parsed) : escapeHTML(details);
+    }
+
+    function buildExportQuery() {
+      const user = document.getElementById('filter-user')?.value.trim();
+      const action = document.getElementById('filter-action')?.value.trim();
+      const from = document.getElementById('filter-from')?.value;
+      const to = document.getElementById('filter-to')?.value;
+      const params = new URLSearchParams();
+      if (user) params.append('user_id', user);
+      if (action) params.append('search', action);
+      if (from) params.append('start_date', from);
+      if (to) params.append('end_date', to);
+      return params.toString();
+    }
+
+    function checkAdmin() {
+      return authJsonFetch('/api/admin/check-admin');
+    }
+
+    function updateSseStatus() {
+      const el = document.getElementById('sse-status');
+      if (!el) return;
+      if (connectedAt) {
+        const secs = Math.floor((Date.now() - connectedAt) / 1000);
+        el.textContent = `SSE Connected (${secs}s)`;
+      } else {
+        el.textContent = 'SSE Disconnected';
+      }
+    }
   </script>
 
   <!-- Global Assets -->
@@ -204,6 +285,7 @@ Developer: Deathsgift66
 
       <h2>Administrative Action Tracker</h2>
       <p>Track all significant administrative actions and system-level changes in Thronestead.</p>
+      <div id="sse-status" class="sse-status" aria-live="polite"></div>
 
       <!-- 🔎 Filter Bar -->
       <form id="audit-filter-form" class="audit-filter-form" role="search" aria-label="Filter Audit Logs">
@@ -219,6 +301,10 @@ Developer: Deathsgift66
         <input id="filter-limit" name="limit" type="number" value="100" min="1" />
         <button type="submit" class="action-btn">Apply Filters</button>
       </form>
+      <div class="export-buttons">
+        <button id="export-csv" type="button" class="action-btn">Export CSV</button>
+        <button id="export-json" type="button" class="action-btn">Export JSON</button>
+      </div>
 
       <!-- 🧾 Audit Log Entries -->
       <section class="log-entry-list" aria-label="Audit Log Entries Table">
@@ -233,11 +319,12 @@ Developer: Deathsgift66
                 <th scope="col">Details</th>
               </tr>
             </thead>
-            <tbody id="audit-log-body" aria-live="polite">
-              <tr><td colspan="4">Loading audit logs...</td></tr>
-            </tbody>
-          </table>
-        </div>
+          <tbody id="audit-log-body" aria-live="polite">
+            <tr><td colspan="4">Loading audit logs...</td></tr>
+          </tbody>
+        </table>
+        <button id="load-more-btn" type="button" class="action-btn" style="display:none">Load More</button>
+      </div>
       </section>
     </section>
   </main>

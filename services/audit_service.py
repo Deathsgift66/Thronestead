@@ -135,6 +135,7 @@ def fetch_filtered_logs(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     limit: int = 100,
+    offset: int = 0,
 ) -> list[dict]:
     """
     Filter audit logs by optional user ID, action keyword, and date range.
@@ -143,7 +144,7 @@ def fetch_filtered_logs(
         "SELECT l.log_id, l.user_id, u.is_deleted, l.action, l.details, l.created_at, l.kingdom_id "
         "FROM audit_log l LEFT JOIN users u ON l.user_id = u.user_id WHERE 1=1"
     )
-    params = {"limit": limit}
+    params = {"limit": limit, "offset": offset}
     if user_id:
         query += " AND l.user_id = :uid"
         params["uid"] = user_id
@@ -156,7 +157,7 @@ def fetch_filtered_logs(
     if date_to:
         query += " AND l.created_at <= :date_to"
         params["date_to"] = date_to
-    query += " ORDER BY l.created_at DESC LIMIT :limit"
+    query += " ORDER BY l.created_at DESC LIMIT :limit OFFSET :offset"
 
     try:
         rows = db.execute(text(query), params).fetchall()

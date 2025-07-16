@@ -71,12 +71,13 @@ def test_log_alliance_activity_inserts():
 def test_fetch_filtered_logs_params():
     db = DummyDB()
     db.select_rows = [(1, "u1", False, "login", "success", "2025-01-01")]
-    logs = fetch_filtered_logs(db, user_id="u1", action="log", limit=5)
+    logs = fetch_filtered_logs(db, user_id="u1", action="log", limit=5, offset=10)
     assert len(logs) == 1
     q, params = db.queries[-1]
     assert params["uid"] == "u1"
     assert params["act"] == "%log%"
     assert params["limit"] == 5
+    assert params["offset"] == 10
 
 
 def test_fetch_logs_masks_deleted_user():
