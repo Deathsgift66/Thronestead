@@ -333,6 +333,19 @@ export async function authJsonFetch(url, options = {}) {
 }
 
 /**
+ * Replace an element's contents with a simple message.
+ * Useful for empty state placeholders.
+ *
+ * @param {HTMLElement} el  Target element
+ * @param {string} message  Message text
+ * @param {string} [tag='p'] Wrapper tag name
+ */
+export function setFallbackText(el, message, tag = 'p') {
+  if (!el) return;
+  el.innerHTML = `<${tag} class="empty">${escapeHTML(message)}</${tag}>`;
+}
+
+/**
  * Build a DocumentFragment from an array of items.
  * @template T
  * @param {T[]} items Data items
