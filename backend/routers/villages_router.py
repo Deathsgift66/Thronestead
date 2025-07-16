@@ -22,6 +22,8 @@ from sqlalchemy.orm import Session
 from ..data import get_max_villages_allowed
 from ..database import get_db
 from ..security import require_user_id
+from ..rate_limiter import limiter
+from services.moderation import validate_village_name
 from .progression_router import get_kingdom_id
 
 router = APIRouter(prefix="/api/kingdom/villages", tags=["villages"])
@@ -78,6 +80,7 @@ async def list_villages(
 
 
 @router.post("")
+@limiter.limit("10/minute")
 def create_village(
     payload: VillagePayload,
     user_id: str = Depends(require_user_id),
@@ -89,6 +92,19 @@ def create_village(
     - User has at least one noble
     """
     kid = get_kingdom_id(db, user_id)
+    try:
+        validate_village_name(payload.village_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    exists_name = db.execute(
+        text(
+            "SELECT 1 FROM kingdom_villages WHERE kingdom_id = :kid AND lower(village_name) = lower(:name)"
+        ),
+        {"kid": kid, "name": payload.village_name},
+    ).fetchone()
+    if exists_name:
+        raise HTTPException(status_code=400, detail="Village name already exists")
 
     # Check current castle level
     record = db.execute(

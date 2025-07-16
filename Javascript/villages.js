@@ -10,12 +10,20 @@ import { getEnvVar } from './env.js';
 const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 let eventSource;
+let isEditing = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadVillages();
-  setupRealtime();
+  await setupRealtime();
+  document.getElementById('village-list')?.setAttribute('aria-live', 'polite');
   const form = document.getElementById('create-village-form');
   if (form) {
+    const nameInput = document.getElementById('village-name');
+    const typeSelect = document.getElementById('village-type');
+    nameInput.addEventListener('focus', () => (isEditing = true));
+    nameInput.addEventListener('blur', () => (isEditing = false));
+    typeSelect.addEventListener('focus', () => (isEditing = true));
+    typeSelect.addEventListener('blur', () => (isEditing = false));
     form.addEventListener('submit', async e => {
       e.preventDefault();
       await createVillage();
@@ -47,6 +55,7 @@ async function loadVillages() {
 // Render the village list with safe escaping
 function renderVillages(villages) {
   const listEl = document.getElementById('village-list');
+  if (isEditing) return;
   listEl.innerHTML = '';
   if (!villages || villages.length === 0) {
     listEl.innerHTML = '<li>No villages found.</li>';
@@ -56,10 +65,11 @@ function renderVillages(villages) {
   const frag = fragmentFrom(villages, v => {
     const li = document.createElement('li');
     li.className = 'village-item';
+    const buildings = v.building_count ?? 0;
     li.innerHTML = `
       <span class="village-name">${escapeHTML(v.village_name)}</span>
       <span class="village-type">${escapeHTML(v.village_type)}</span>
-      <span class="village-buildings">Buildings: ${v.building_count.toLocaleString()}</span>
+      <span class="village-buildings">Buildings: ${buildings.toLocaleString()}</span>
     `;
     return li;
   });
@@ -68,9 +78,12 @@ function renderVillages(villages) {
 }
 
 // Setup Server-Sent Events connection for real-time updates
-function setupRealtime() {
+async function setupRealtime() {
   try {
-    eventSource = new EventSource(`${API_BASE_URL}/api/kingdom/villages/stream`);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !session.user) throw new Error('No session');
+    const uid = encodeURIComponent(session.user.id);
+    eventSource = new EventSource(`${API_BASE_URL}/api/kingdom/villages/stream?uid=${uid}`);
     eventSource.onmessage = ev => {
       try {
         const villages = JSON.parse(ev.data);
@@ -99,6 +112,7 @@ function setupRealtime() {
 async function createVillage() {
   const nameInput = document.getElementById('village-name');
   const typeSelect = document.getElementById('village-type');
+  const submitBtn = document.querySelector('#create-village-form button[type="submit"]');
   const name = nameInput.value.trim();
   const type = typeSelect.value;
   if (!name) {
@@ -117,6 +131,10 @@ async function createVillage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !session.user) throw new Error('No session');
     const user = session.user;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+    }
     const res = await fetch(`${API_BASE_URL}/api/kingdom/villages`, {
       method: 'POST',
       headers: {
@@ -138,6 +156,11 @@ async function createVillage() {
   } catch (err) {
     console.error('Error creating village', err);
     showToast("Failed to create village.");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create';
+    }
   }
 }
 
