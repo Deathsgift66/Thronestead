@@ -5,6 +5,7 @@
 // Shared frontend utilities for DOM helpers and validation.
 import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js';
 import { getReauthHeaders } from './reauth.js';
+import { supabase } from '../supabaseClient.js';
 
 /**
  * Escape HTML special characters to prevent injection.
@@ -373,6 +374,39 @@ export function setBarWidths(root = document) {
       el.style.width = `${Math.min(100, Math.max(0, pct))}%`;
     }
   });
+}
+
+/**
+ * Ensure the current user belongs to an alliance or is an admin.
+ * Redirects when unauthorized.
+ * @returns {Promise<boolean>} True if authorized
+ */
+export async function enforceAllianceOrAdminAccess() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = 'login.html';
+      return false;
+    }
+
+    const [admin, alliance] = await Promise.all([
+      supabase.from('users').select('is_admin').eq('user_id', user.id).single(),
+      supabase.from('alliance_members').select('user_id').eq('user_id', user.id).maybeSingle()
+    ]);
+
+    if (admin.error) console.error(admin.error.message || admin.error);
+    if (alliance.error) console.error(alliance.error.message || alliance.error);
+
+    if (admin.data?.is_admin || alliance.data) return true;
+
+    showToast('You must be in an alliance or be an admin to access this page.', 'error');
+    window.location.href = 'overview.html';
+    return false;
+  } catch (err) {
+    console.error('❌ Access check error:', err);
+    window.location.href = 'overview.html';
+    return false;
+  }
 }
 
 

@@ -45,7 +45,8 @@ Developer: Deathsgift66
   <script src="/Javascript/allianceAppearance.js" type="module"></script>
   <script src="/Javascript/progressionBanner.js" type="module"></script>
   <script type="module">
-    import { escapeHTML } from '/Javascript/utils.js';
+    import { supabase } from '/Javascript/supabaseClient.js';
+    import { escapeHTML, showToast, enforceAllianceOrAdminAccess } from '/Javascript/utils.js';
 
     let modalEl;
 
@@ -157,19 +158,47 @@ Developer: Deathsgift66
           claimBtn.classList.toggle('hidden', q.status !== 'completed' || !q.claimable);
 
           acceptBtn.onclick = async () => {
-            const res = await fetch(`/api/alliance/quests/${id}/accept`, { method: 'POST' });
-            if (res.ok) {
-              alert('Quest accepted!');
-              modalEl.classList.remove('visible');
-              loadQuests('active');
+            acceptBtn.disabled = true;
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              const res = await fetch(`/api/alliance/quests/${id}/accept`, {
+                method: 'POST',
+                headers: { 'X-User-ID': user.id, 'Content-Type': 'application/json' }
+              });
+              if (res.ok) {
+                showToast('Quest accepted!', 'success');
+                modalEl.classList.remove('visible');
+                loadQuests('active');
+              } else {
+                showToast('Failed to accept quest', 'error');
+              }
+            } catch (err) {
+              console.error('Accept quest error:', err);
+              showToast('Failed to accept quest', 'error');
+            } finally {
+              acceptBtn.disabled = false;
             }
           };
           claimBtn.onclick = async () => {
-            const res = await fetch(`/api/alliance/quests/${id}/claim`, { method: 'POST' });
-            if (res.ok) {
-              alert('Reward claimed!');
-              modalEl.classList.remove('visible');
-              loadQuests('completed');
+            claimBtn.disabled = true;
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              const res = await fetch(`/api/alliance/quests/${id}/claim`, {
+                method: 'POST',
+                headers: { 'X-User-ID': user.id, 'Content-Type': 'application/json' }
+              });
+              if (res.ok) {
+                showToast('Reward claimed!', 'success');
+                modalEl.classList.remove('visible');
+                loadQuests('completed');
+              } else {
+                showToast('Failed to claim reward', 'error');
+              }
+            } catch (err) {
+              console.error('Claim reward error:', err);
+              showToast('Failed to claim reward', 'error');
+            } finally {
+              claimBtn.disabled = false;
             }
           };
 
@@ -179,7 +208,7 @@ Developer: Deathsgift66
           modalEl.classList.add('visible');
         })
         .catch(() => {
-          alert('Failed to load quest details.');
+          showToast('Failed to load quest details.', 'error');
         });
     }
 
@@ -233,7 +262,8 @@ Developer: Deathsgift66
     }
 
     // Initial load and event bindings
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!(await enforceAllianceOrAdminAccess())) return;
       bindUI();
       const lastTab = sessionStorage.getItem('lastTab') || 'active';
       document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
@@ -273,7 +303,7 @@ Developer: Deathsgift66
     <!-- Visual Identity -->
     <div class="alliance-visuals">
       <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
-      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
+      <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" onerror="this.src='/Assets/avatars/default_avatar_emperor.png'" />
     </div>
 
     <!-- Quest Controls -->
