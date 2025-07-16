@@ -21,7 +21,13 @@ from backend.models import User
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_admin_user, verify_api_key
+from ..security import (
+    require_admin_user,
+    verify_api_key,
+    require_user_id,
+    verify_admin,
+    require_csrf_token,
+)
 from .admin_dashboard import dashboard_summary, get_audit_logs
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -387,3 +393,14 @@ def get_logs(
 ):
     """Alias for recent audit logs."""
     return get_audit_logs(admin_user_id=admin_user_id, db=db)
+
+
+@router.get("/check-admin")
+def check_admin(
+    verify: str = Depends(verify_api_key),
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Return true if the requesting user is an admin."""
+    verify_admin(admin_user_id, db)
+    return {"is_admin": True}

@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from services.audit_service import fetch_filtered_logs, fetch_user_related_logs
+from services.audit_service import fetch_filtered_logs, fetch_user_related_logs, log_action
 
 from ..database import get_db
 from ..security import require_user_id, verify_api_key
@@ -38,6 +38,7 @@ def get_audit_logs(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
     limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
@@ -62,6 +63,7 @@ def get_audit_logs(
         date_from=date_from,
         date_to=date_to,
         limit=limit,
+        offset=offset,
     )
     return {"logs": logs}
 
@@ -111,3 +113,18 @@ async def stream_logs(
             await asyncio.sleep(5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+# -------------------------
+# 📜 Log View Event
+# -------------------------
+@router.post("/view")
+def log_view_event(
+    verify: str = Depends(verify_api_key),
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Record that an admin viewed the audit log."""
+    verify_admin(admin_user_id, db)
+    log_action(db, admin_user_id, "view_audit_log", "Viewed audit log")
+    return {"status": "logged"}
