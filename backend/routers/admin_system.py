@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key
+from ..security import require_user_id, verify_api_key, require_csrf_token
 
 router = APIRouter(prefix="/api/admin/system", tags=["admin_system"])
 
@@ -28,6 +28,7 @@ def rollback_system(
     payload: RollbackPayload,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ) -> dict:
     """Trigger a database rollback if the master password matches."""

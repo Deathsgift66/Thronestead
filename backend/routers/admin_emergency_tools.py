@@ -8,8 +8,12 @@ from sqlalchemy.orm import Session
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key
-from ..security import verify_admin
+from ..security import (
+    require_user_id,
+    verify_api_key,
+    verify_admin,
+    require_csrf_token,
+)
 
 router = APIRouter(prefix="/api/admin/emergency", tags=["admin_emergency"])
 
@@ -23,6 +27,7 @@ def reprocess_tick(
     payload: WarTick,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     """Re-run a war tick for the given war."""
@@ -42,6 +47,7 @@ def recalculate_resources(
     payload: KingdomPayload,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     """Recalculate resources for a kingdom."""
@@ -62,6 +68,7 @@ def rollback_quest(
     payload: QuestRollback,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     """Rollback an alliance quest."""

@@ -60,9 +60,11 @@ Developer: Deathsgift66
     const buttonCooldownSet = new Set();
     let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
+    document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
     setInterval(() => {
       csrfToken = safeUUID();
       sessionStorage.setItem('csrf_token', csrfToken);
+      document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
     }, 15 * 60 * 1000);
 
     const debouncedLoad = debounce(loadAlerts, 400);
@@ -90,7 +92,11 @@ Developer: Deathsgift66
 
     document.addEventListener('DOMContentLoaded', () => {
       initTabs();
-      loadAlerts();
+      const params = new URLSearchParams(window.location.search);
+      const type = params.get('type');
+      const tab = type ? document.querySelector(`.tab[data-type="${type}"]`) : null;
+      if (tab) tab.click();
+      else loadAlerts();
       setInterval(loadAlerts, REFRESH_MS);
       subscribeToRealtime();
       document.getElementById('refresh-alerts')?.addEventListener('click', loadAlerts);
@@ -115,11 +121,17 @@ Developer: Deathsgift66
     });
 
     window.addEventListener('beforeunload', async () => {
-      if (realtimeSub) await supabase.removeChannel(realtimeSub);
+      if (realtimeSub) {
+        await realtimeSub.unsubscribe();
+        realtimeSub = null;
+      }
     });
 
     function subscribeToRealtime() {
-      if (realtimeSub) supabase.removeChannel(realtimeSub);
+      if (realtimeSub) {
+        realtimeSub.unsubscribe();
+        realtimeSub = null;
+      }
       const { kingdom, alliance } = getFilters();
       const opts = { event: 'INSERT', schema: 'public', table: 'admin_alerts' };
       const channel = supabase.channel('admin_alerts');
@@ -320,7 +332,10 @@ Developer: Deathsgift66
         }
 
         showToast(`✅ ${action.replace(/_/g, ' ')} successful.`, 'success');
-        loadAlerts();
+        if (btn.dataset.alert_id) {
+          const item = btn.closest('.alert-item');
+          if (item) item.remove();
+        }
       } catch (err) {
         console.error(`❌ Action [${action}] failed:`, err);
         const msg = escapeHTML(err.message || 'Unknown error');

@@ -12,9 +12,13 @@ from sqlalchemy.orm import Session
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key
+from ..security import (
+    require_user_id,
+    verify_api_key,
+    verify_admin,
+    require_csrf_token,
+)
 from ..supabase_client import get_supabase_client
-from ..security import verify_admin
 
 router = APIRouter(prefix="/api/admin/news", tags=["admin_news"])
 
@@ -30,6 +34,7 @@ def post_news(
     payload: NewsPayload,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ) -> dict:
     """
