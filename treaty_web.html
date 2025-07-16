@@ -125,6 +125,12 @@ const typeColor = {
   war: 'red'
 };
 
+function formatDate(d) {
+  return d?.date_signed
+    ? new Date(d.date_signed).toLocaleDateString()
+    : 'Pending';
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   initControls();
   await loadNetwork();
@@ -135,8 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadNetwork() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    const headers = session ? { 'X-User-ID': session.user.id } : {};
-    const res = await fetch('/api/treaty_web/data', { headers });
+    const res = await fetch('/api/treaty_web/data');
     const data = await res.json();
 
     rawData.nodes = (data.alliances || []).map(a => ({
@@ -193,7 +198,9 @@ function renderGraph() {
 function updateGraph() {
   const active = Array.from(document.querySelectorAll('.filter-btn.active'))
     .map(b => b.dataset.type);
-  const filteredLinks = rawData.links.filter(l => active.includes(l.type));
+  const filteredLinks = rawData.links.filter(
+    l => l && l.type && active.includes(l.type)
+  );
 
   // Update Links
   const linkSel = linkGroup.selectAll('line')
@@ -206,7 +213,7 @@ function updateGraph() {
     .attr('stroke', d => typeColor[d.type] || '#999')
     .attr('class', d => d.type === 'war' && d.status === 'active' ? 'war-active' : null);
 
-  linkEnter.append('title').text(d => `${d.type.toUpperCase()} – ${d.date_signed || 'Pending'}`);
+  linkEnter.append('title').text(d => `${d.type.toUpperCase()} – ${formatDate(d)}`);
   linkSel.merge(linkEnter);
 
   // Update Nodes
@@ -231,7 +238,8 @@ function updateGraph() {
     .attr('height', 40)
     .attr('x', -20)
     .attr('y', -20)
-    .attr('clip-path', 'circle(20px at 20px 20px)');
+    .attr('clip-path', 'circle(20px at 20px 20px)')
+    .attr('onerror', "this.setAttribute('href','/Assets/avatars/default_avatar_emperor.png')");
 
   nodeEnter.append('title')
     .text(d => `${d.name} (Lv ${d.level})`);
@@ -337,7 +345,12 @@ def treaty_web_data(user_id: str = Depends(verify_jwt_token)):
         kingdoms_res = (
             supabase.table("users").select("kingdom_id,kingdom_name").execute()
         )
-        treaties_res = supabase.table("alliance_treaties").select("*").execute()
+        treaties_res = (
+            supabase.table("alliance_treaties")
+            .select("*")
+            .eq("status", "active")
+            .execute()
+        )
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail="Failed to load treaty web data"
