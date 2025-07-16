@@ -7,6 +7,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
   <title>Alliance Members | Thronestead</title>
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
@@ -35,6 +36,8 @@
     let membersChannel = null;
     let currentUser = null;
     let authToken = '';
+    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    sessionStorage.setItem('csrf_token', csrfToken);
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -104,6 +107,10 @@
             'Authorization': `Bearer ${authToken}`
           }
         });
+        if (res.status === 403) {
+          redirectToLogin();
+          return;
+        }
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         members = await res.json();
         renderMembers(members);
@@ -167,7 +174,7 @@
         const canManage = isAdmin || rankLevel(userRank) > rankLevel(member.rank);
         const showFull = member.same_alliance;
         row.innerHTML = `
-          <td><img src="/assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest" onerror="this.src='/assets/crests/default.png'"></td>
+          <td><img src="/Assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest" onerror="this.src='/Assets/crests/default.png'"></td>
           <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}</td>
           <td title="${escapeHTML(RANK_TOOLTIPS[member.rank] || '')}">${escapeHTML(member.rank)}</td>
           <td>${showFull ? roleBadge(member) : '—'}</td>
@@ -193,7 +200,9 @@
           else if (btn.classList.contains('kick-btn')) await removeMember(userId);
           else if (btn.classList.contains('transfer-btn')) await transferLeadership(userId);
         } finally {
-          btn.disabled = false;
+          setTimeout(() => {
+            btn.disabled = false;
+          }, 3000);
         }
       });
     }
@@ -216,10 +225,18 @@
     function renderActions(member, currentRole, currentUserId) {
       const actions = [];
       if (member.user_id === currentUserId) return '';
+      const memberLevel = rankLevel(member.rank);
+      const currentLevel = rankLevel(currentRole);
+      if (currentLevel <= memberLevel) return '';
+
       if (currentRole === 'leader') {
         if (member.rank.toLowerCase() !== 'leader') {
-          actions.push(`<button data-id="${member.user_id}" class="promote-btn">Promote</button>`);
-          actions.push(`<button data-id="${member.user_id}" class="demote-btn">Demote</button>`);
+          if (memberLevel < rankPower.length - 1) {
+            actions.push(`<button data-id="${member.user_id}" class="promote-btn">Promote</button>`);
+          }
+          if (memberLevel > 0) {
+            actions.push(`<button data-id="${member.user_id}" class="demote-btn">Demote</button>`);
+          }
           actions.push(`<button data-id="${member.user_id}" class="kick-btn danger-btn">Kick</button>`);
           actions.push(`<button data-id="${member.user_id}" class="transfer-btn">Transfer Leadership</button>`);
         }
@@ -250,10 +267,15 @@
           headers: {
             'Content-Type': 'application/json',
             'X-User-ID': currentUser.id,
-            'Authorization': `Bearer ${authToken}`
+            'Authorization': `Bearer ${authToken}`,
+            'X-CSRF-Token': csrfToken
           },
           body: JSON.stringify(payload)
         });
+        if (res.status === 403) {
+          redirectToLogin();
+          return;
+        }
         if (!res.ok) throw new Error(await res.text());
         showToast(`✅ ${successMsg}`, 'success');
         fetchMembers();
@@ -266,7 +288,11 @@
     const promoteMember = id => confirmAndPost('/api/alliance_members/promote', { user_id: id }, 'Member promoted.');
     const demoteMember = id => confirmAndPost('/api/alliance_members/demote', { user_id: id }, 'Member demoted.');
     const removeMember = id => confirmAndPost('/api/alliance_members/remove', { user_id: id }, 'Member removed.', true);
-    const transferLeadership = id => confirmAndPost('/api/alliance_members/transfer_leadership', { new_leader_id: id }, 'Leadership transferred.');
+    const transferLeadership = id => {
+      const confirmName = prompt('Type TRANSFER to confirm leadership transfer:');
+      if (confirmName !== 'TRANSFER') return;
+      confirmAndPost('/api/alliance_members/transfer_leadership', { new_leader_id: id }, 'Leadership transferred.', true);
+    };
   </script>
 </head>
 <body class="alliance-bg">
@@ -298,6 +324,7 @@
 
     <div class="members-table-container">
       <table class="members-table">
+        <caption class="sr-only">Alliance members</caption>
         <thead>
           <tr>
             <th scope="col">Crest</th>
