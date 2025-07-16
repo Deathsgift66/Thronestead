@@ -36,6 +36,8 @@ Developer: Deathsgift66
     import { applyKingdomLinks } from '/Javascript/kingdom_name_linkify.js';
     import { supabase } from '/Javascript/supabaseClient.js';
 
+    let lastWarDate = null;
+
     document.addEventListener("DOMContentLoaded", async () => {
       setupControls();
       subscribeToWarUpdates();
@@ -51,6 +53,17 @@ Developer: Deathsgift66
         declareWarBtn.addEventListener('click', openDeclareWarModal);
       }
 
+      const form = document.getElementById('declare-war-form');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await submitDeclareWar();
+        });
+      }
+
+      const cancelBtn = document.getElementById('declare-war-cancel');
+      if (cancelBtn) cancelBtn.addEventListener('click', closeDeclareWarModal);
+
       const refreshWarsBtn = document.getElementById('refreshWarsButton');
       if (refreshWarsBtn) {
         refreshWarsBtn.addEventListener('click', async () => {
@@ -58,6 +71,9 @@ Developer: Deathsgift66
           await loadWars();
         });
       }
+
+      const loadMoreBtn = document.getElementById('load-more-wars-btn');
+      if (loadMoreBtn) loadMoreBtn.addEventListener('click', () => loadWars(true));
     }
 
     // ✅ Subscribe to Supabase real-time updates
@@ -70,6 +86,13 @@ Developer: Deathsgift66
           }
           await loadWars();
         })
+        .on('error', (e) => {
+          console.error('Supabase RT error:', e);
+          showToast('Realtime war feed failed.');
+        })
+        .on('close', () => {
+          showToast('Realtime war feed closed.');
+        })
         .subscribe();
     }
 
@@ -81,26 +104,35 @@ Developer: Deathsgift66
       el.className = 'war-event';
       el.textContent = msg;
       feed.prepend(el);
+      if (feed.children.length > 50) feed.removeChild(feed.lastChild);
     }
 
     // ✅ Load Active Wars
-    async function loadWars() {
+    async function loadWars(append = false) {
       const warListEl = document.getElementById('war-list');
-      warListEl.innerHTML = "<p>Loading active wars...</p>";
+      if (!append) {
+        warListEl.innerHTML = "<p>Loading active wars...</p>";
+        lastWarDate = null;
+      }
 
       try {
-        const { data: wars, error } = await supabase
+        let query = supabase
           .from('wars')
           .select('*')
           .order('start_date', { descending: true })
           .limit(25);
+        if (append && lastWarDate) {
+          query = query.lt('start_date', lastWarDate);
+        }
+        const { data: wars, error } = await query;
 
         if (error) throw error;
 
-        warListEl.innerHTML = "";
+        if (!append) warListEl.innerHTML = "";
 
         if (wars.length === 0) {
-          warListEl.innerHTML = "<p>No active wars at this time.</p>";
+          if (!append) warListEl.innerHTML = "<p>No active wars at this time.</p>";
+          document.getElementById('load-more-wars-btn')?.classList.add('hidden');
           return;
         }
 
@@ -124,6 +156,16 @@ Developer: Deathsgift66
           warListEl.appendChild(card);
         });
 
+        lastWarDate = wars[wars.length - 1].start_date;
+        const moreBtn = document.getElementById('load-more-wars-btn');
+        if (moreBtn) {
+          if (wars.length === 25) {
+            moreBtn.classList.remove('hidden');
+          } else {
+            moreBtn.classList.add('hidden');
+          }
+        }
+
       } catch (err) {
         console.error("❌ Error loading wars:", err);
         warListEl.innerHTML = "<p>Failed to load active wars.</p>";
@@ -135,34 +177,7 @@ Developer: Deathsgift66
     // ✅ Open Declare War Modal
     function openDeclareWarModal() {
       const modal = document.getElementById('declare-war-modal');
-      if (!modal) return;
-
-      modal.classList.remove('hidden');
-
-      if (!modal.querySelector('form')) {
-        modal.innerHTML = `
-          <div class="modal-content">
-            <h3>Declare War</h3>
-            <form id="declare-war-form">
-              <label for="target-kingdom-id">Target Kingdom ID:</label>
-              <input type="number" id="target-kingdom-id" name="target-kingdom-id" required />
-              <label for="war-reason">War Reason:</label>
-              <input type="text" id="war-reason" name="war-reason" required />
-              <button type="submit" class="action-btn">Declare</button>
-              <button type="button" class="action-btn" id="declare-war-cancel">Cancel</button>
-            </form>
-          </div>
-        `;
-
-        const form = modal.querySelector('#declare-war-form');
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          await submitDeclareWar();
-        });
-
-        const cancelBtn = modal.querySelector('#declare-war-cancel');
-        cancelBtn.addEventListener('click', closeDeclareWarModal);
-      }
+      if (modal) modal.classList.remove('hidden');
     }
 
     // ✅ Close Declare War Modal
@@ -189,22 +204,34 @@ Developer: Deathsgift66
         return;
       }
 
+      if (!/^[\w\s.,'’\-]{5,100}$/.test(reason)) {
+        showToast("Invalid war reason format.");
+        return;
+      }
+
       const declareBtn = document.querySelector('#declare-war-form button[type="submit"]');
       if (declareBtn) {
         declareBtn.disabled = true;
         setTimeout(() => { declareBtn.disabled = false; }, 3000);
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || !session.user) {
-        showToast("Session expired. Please log in again.");
+      let session;
+      try {
+        const { data } = await supabase.auth.getSession();
+        session = data?.session;
+        if (!session || !session.user) throw new Error();
+      } catch {
+        showToast("Unable to verify session. Please log in.");
         return;
       }
 
       try {
         const res = await fetch("/api/wars/declare", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             target: targetId,
             war_reason: reason
@@ -227,19 +254,19 @@ Developer: Deathsgift66
 
     // ✅ Open War Detail Modal
     async function openWarDetailModal(warId) {
+      if (!warId || typeof warId !== 'number') {
+        showToast('Invalid war ID.');
+        return;
+      }
       const modal = document.getElementById('war-detail-modal');
       if (!modal) return;
 
       modal.classList.remove('hidden');
-      modal.innerHTML = `
-        <div class="modal-content">
-          <h3>War Details</h3>
-          <p>Loading war details...</p>
-          <button type="button" class="action-btn" id="war-detail-close">Close</button>
-        </div>
-      `;
+      const content = modal.querySelector('.modal-content');
+      if (!content) return;
+      content.innerHTML = `<h3>War Details</h3><p>Loading war details...</p><button type="button" class="action-btn" id="war-detail-close">Close</button>`;
 
-      const closeBtn = modal.querySelector('#war-detail-close');
+      const closeBtn = content.querySelector('#war-detail-close');
       closeBtn.addEventListener('click', closeWarDetailModal);
 
       try {
@@ -247,7 +274,6 @@ Developer: Deathsgift66
         if (!res.ok) throw new Error('Failed to load war details');
         const { war } = await res.json();
 
-        const content = modal.querySelector('.modal-content');
         content.innerHTML = `
           <h3>${escapeHTML(war.attacker_name)} ⚔️ ${escapeHTML(war.defender_name)}</h3>
           <p>Status: ${escapeHTML(war.status)}</p>
@@ -279,6 +305,8 @@ Developer: Deathsgift66
         toastEl = document.createElement("div");
         toastEl.id = "toast";
         toastEl.className = "toast-notification";
+        toastEl.setAttribute('role', 'status');
+        toastEl.setAttribute('aria-live', 'polite');
         document.body.appendChild(toastEl);
       }
 
@@ -345,6 +373,7 @@ Developer: Deathsgift66
         <div id="war-list" class="custom-scrollbar" aria-live="polite">
           <!-- JS will inject war summaries -->
         </div>
+        <button id="load-more-wars-btn" class="btn-fantasy hidden" type="button">Load More</button>
 
         <h4>Real-time War Feed</h4>
         <div id="war-feed" class="war-feed" aria-live="polite">
@@ -353,13 +382,27 @@ Developer: Deathsgift66
       </div>
 
       <!-- Declare War Modal -->
-      <div id="declare-war-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="declareWarHeader">
-        <!-- Populated dynamically -->
+      <div id="declare-war-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="declareWarHeader" aria-hidden="true">
+        <div class="modal-content">
+          <h3 id="declareWarHeader">Declare War</h3>
+          <form id="declare-war-form">
+            <label for="target-kingdom-id">Target Kingdom ID:</label>
+            <input type="number" id="target-kingdom-id" name="target-kingdom-id" required />
+            <label for="war-reason">War Reason:</label>
+            <input type="text" id="war-reason" name="war-reason" required />
+            <button type="submit" class="action-btn">Declare</button>
+            <button type="button" class="action-btn" id="declare-war-cancel">Cancel</button>
+          </form>
+        </div>
       </div>
 
       <!-- War Detail Modal -->
-      <div id="war-detail-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="warDetailHeader">
-        <!-- Populated dynamically -->
+      <div id="war-detail-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="warDetailHeader" aria-hidden="true">
+        <div class="modal-content">
+          <h3 id="warDetailHeader">War Details</h3>
+          <p>Loading war details...</p>
+          <button type="button" class="action-btn" id="war-detail-close">Close</button>
+        </div>
       </div>
 
 
