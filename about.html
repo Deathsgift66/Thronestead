@@ -15,6 +15,8 @@ Developer: Deathsgift66
   <meta name="keywords" content="Thronestead, about, strategy game, kingdom" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.thronestead.com/about.html" />
+  <link rel="alternate" hreflang="en" href="https://www.thronestead.com/about.html" />
+  <meta name="author" content="Thronestead Studios" />
   <!-- Open Graph -->
   <meta property="og:title" content="About | Thronestead" />
   <meta property="og:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
@@ -29,7 +31,17 @@ Developer: Deathsgift66
     "name": "Thronestead",
     "description": "A medieval strategy game currently in early development.",
     "url": "https://www.thronestead.com",
-    "image": "https://www.thronestead.com/Assets/banner_main.png"
+    "image": "https://www.thronestead.com/Assets/banner_main.png",
+    "genre": ["Strategy", "Multiplayer", "Medieval"],
+    "operatingSystem": "Web",
+    "author": {
+      "@type": "Organization",
+      "name": "Thronestead Studios"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Thronestead Studios"
+    }
   }
   </script>
 
@@ -43,14 +55,6 @@ Developer: Deathsgift66
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
-  <style>
-  .noscript-warning {
-    background: #300;
-    color: #fff;
-    padding: 1rem;
-    text-align: center;
-  }
-  </style>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
@@ -59,15 +63,28 @@ Developer: Deathsgift66
 </head>
 <body>
   <noscript>
-    <div class="noscript-warning">
+    <div class="noscript-warning" lang="en">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
     </div>
   </noscript>
 
-<div id="navbar-container"></div>
+<div id="navbar-container">
+  <nav class="nav-fallback" aria-label="Primary Navigation">
+    <a href="index.html">Home</a> |
+    <a href="about.html">About</a> |
+    <a href="projects.html">Roadmap</a>
+  </nav>
+</div>
   <!-- Navbar -->
 
-  <main class="main-centered-container">
+  <section class="hero-section" aria-label="About Banner">
+    <div class="hero-content">
+      <h1>Thronestead</h1>
+      <p>Forge your destiny in the ultimate medieval strategy realm.</p>
+    </div>
+  </section>
+
+  <main role="main" class="main-centered-container">
     <section>
       <h1>About Thronestead</h1>
       <p>Thronestead is a medieval strategy game currently in early development.</p>
@@ -79,12 +96,13 @@ Developer: Deathsgift66
 
   <footer class="site-footer">
     <div>© 2025 Thronestead</div>
-    <div>
-      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
-      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
-      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
-      <a href="legal.html" target="_blank">and more</a> <a href="sitemap.xml" target="_blank">Site Map</a>
-    </div>
+    <nav aria-label="Legal Links">
+      <a target="_blank" rel="noopener noreferrer" type="application/pdf" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a> |
+      <a target="_blank" rel="noopener noreferrer" type="application/pdf" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a> |
+      <a target="_blank" rel="noopener noreferrer" type="application/pdf" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a> |
+      <a href="legal.html" target="_blank">and more</a> |
+      <a href="sitemap.xml" target="_blank">Site Map</a>
+    </nav>
   </footer>
 
   </body>
