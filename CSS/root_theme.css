@@ -389,6 +389,7 @@ header.kr-top-banner {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -462,6 +463,10 @@ body[data-theme="parchment"] {
   width: 40px;
   height: 40px;
   animation: spin 0.8s linear infinite;
+}
+
+body.loading {
+  pointer-events: none;
 }
 
 @keyframes spin {
