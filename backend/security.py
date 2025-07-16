@@ -274,6 +274,12 @@ def verify_reauth_token(
 def require_csrf_token(request: Request, x_csrf_token: str | None = Header(None, alias="X-CSRF-Token")) -> str:
     """Validate that the CSRF header matches the csrf_token cookie."""
     cookie_token = request.cookies.get("csrf_token")
-    if not x_csrf_token or not cookie_token or cookie_token != x_csrf_token:
+    session_token = getattr(request, "session", {}).get("csrf_token") if hasattr(request, "session") else None
+    if (
+        not x_csrf_token
+        or not cookie_token
+        or cookie_token != x_csrf_token
+        or (session_token and session_token != x_csrf_token)
+    ):
         raise HTTPException(status_code=403, detail="CSRF token missing or invalid")
     return x_csrf_token
