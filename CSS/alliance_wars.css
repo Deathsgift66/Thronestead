@@ -153,6 +153,34 @@ body {
   background: var(--stone-panel);
 }
 
+/* Colorblind friendly textures */
+.tile-forest {
+  background-color: #228B22;
+  background-image: repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3) 0 1px,
+      transparent 1px 3px
+    );
+}
+
+.tile-river {
+  background-color: #1E90FF;
+  background-image: repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.3) 0 1px,
+      transparent 1px 3px
+    );
+}
+
+.tile-hill {
+  background-color: #8B4513;
+  background-image: repeating-radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.3) 1px,
+      transparent 1px 4px
+    );
+}
+
 .unit-icon {
   width: 20px;
   height: 20px;
