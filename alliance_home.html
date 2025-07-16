@@ -67,6 +67,7 @@ Developer: Deathsgift66
       debounce,
       setBarWidths
     } from '/Javascript/utils.js';
+    import { refreshSessionAndStore } from '/Javascript/auth.js';
 
     let activityChannel = null;
 
@@ -80,6 +81,7 @@ Developer: Deathsgift66
     let activityOffset = 0;
     const pendingEntries = [];
     let flushTimer = null;
+    let realtimeDelay = 1000;
 
     function resetOffsets() {
       membersOffset = 0;
@@ -104,7 +106,13 @@ Developer: Deathsgift66
         return;
       }
 
-      const cached = sessionStorage.getItem('lastAllianceDetails');
+      let cached = sessionStorage.getItem('lastAllianceDetails');
+      if (!cached) {
+        const ts = parseInt(localStorage.getItem('lastAllianceDetailsTs') || '0', 10);
+        if (Date.now() - ts < 60 * 60 * 1000) {
+          cached = localStorage.getItem('lastAllianceDetails');
+        }
+      }
       if (cached) {
         try {
           populateAlliance(JSON.parse(cached));
@@ -133,7 +141,10 @@ Developer: Deathsgift66
           `/api/alliance-home/details?limit=${LIMIT}&offset=${offset}`
         );
         if (offset === 0) {
-          sessionStorage.setItem('lastAllianceDetails', JSON.stringify(data));
+          const str = JSON.stringify(data);
+          sessionStorage.setItem('lastAllianceDetails', str);
+          localStorage.setItem('lastAllianceDetails', str);
+          localStorage.setItem('lastAllianceDetailsTs', Date.now().toString());
         }
         populateAlliance(data, offset === 0);
         if (offset === 0) setupRealtime(data.alliance?.alliance_id);
@@ -309,7 +320,7 @@ Developer: Deathsgift66
         const li = document.createElement('li');
         li.className = 'activity-log-entry';
         li.setAttribute('role', 'listitem');
-        li.textContent = `[${formatDate(e.created_at)}] ${e.username}: ${e.description}`;
+        li.textContent = `[${formatDate(e.created_at)}] ${escapeHTML(e.username)}: ${escapeHTML(e.description)}`;
         return li;
       });
       if (append) list.appendChild(frag);
@@ -324,7 +335,7 @@ Developer: Deathsgift66
       const frag = fragmentFrom(treaties, t => {
         const div = document.createElement('div');
         div.className = 'diplomacy-row';
-        div.textContent = `${t.treaty_type} with Alliance ${t.partner_alliance_id} (${t.status})`;
+        div.textContent = `${escapeHTML(t.treaty_type)} with Alliance ${t.partner_alliance_id} (${escapeHTML(t.status)})`;
         return div;
       });
       container.replaceChildren(frag);
@@ -340,7 +351,7 @@ Developer: Deathsgift66
       const frag = fragmentFrom(active, w => {
         const div = document.createElement('div');
         div.className = 'battle-entry';
-        div.textContent = `War ${w.alliance_war_id} — ${w.war_status}`;
+        div.textContent = `War ${w.alliance_war_id} — ${escapeHTML(w.war_status)}`;
         return div;
       });
       container.replaceChildren(frag);
@@ -375,16 +386,18 @@ Developer: Deathsgift66
           table: 'alliance_activity_log',
           filter: `alliance_id=eq.${allianceId}`
         }, payload => addActivityEntry(payload.new))
-        .on('error', () => {
-          console.warn('Realtime channel error. Reconnecting...');
-          setTimeout(() => setupRealtime(allianceId), 1000);
-        })
-        .on('close', () => {
-          console.warn('Realtime channel closed. Reconnecting...');
-          setTimeout(() => setupRealtime(allianceId), 1000);
-        })
+        .on('error', () => handleRealtimeError(allianceId))
+        .on('close', () => handleRealtimeError(allianceId))
         .subscribe()
-        .catch(err => console.error('Failed to setup realtime channel:', err));
+        .then(() => { realtimeDelay = 1000; })
+        .catch(err => handleRealtimeError(allianceId, err));
+    }
+
+    function handleRealtimeError(allianceId) {
+      console.warn('Realtime channel error. Reconnecting...');
+      const delay = realtimeDelay;
+      realtimeDelay = Math.min(realtimeDelay * 2, 30000);
+      setTimeout(() => setupRealtime(allianceId), delay);
     }
 
     function addActivityEntry(entry) {
@@ -403,8 +416,8 @@ Developer: Deathsgift66
         const li = document.createElement('li');
         li.className = 'activity-log-entry';
         li.setAttribute('role', 'listitem');
-        const actor = e.username || e.user_id;
-        li.textContent = `[${formatDate(e.created_at)}] ${actor}: ${e.description}`;
+        const actor = escapeHTML(e.username || e.user_id);
+        li.textContent = `[${formatDate(e.created_at)}] ${actor}: ${escapeHTML(e.description)}`;
         return li;
       });
       list.prepend(frag);
@@ -488,6 +501,7 @@ Developer: Deathsgift66
         }
       } catch (err) {
         console.error('Failed to cache permissions:', err);
+        await refreshSessionAndStore();
       }
     }
 
@@ -514,6 +528,7 @@ Developer: Deathsgift66
 
 <div id="navbar-container"></div>
 <div id="resource-bar-container"></div>
+<a href="#members-heading" class="skip-link">Skip to Alliance Members</a>
   <!-- Navbar -->
 
   <!-- Header -->
