@@ -37,6 +37,9 @@
     let membersChannel = null;
     let currentUser = null;
     let currentAllianceId = null;
+    let currentPage = 1;
+    const pageSize = 20;
+    let actionsBound = false;
     let authToken = '';
     let csrfToken =
       sessionStorage.getItem('csrf_token') ||
@@ -53,10 +56,13 @@
       const { data: { user } } = await supabase.auth.getUser();
       currentUser = user;
       if (!(await enforceAllianceOrAdminAccess())) return;
+      await getUserPrivileges();
       const sortBy = document.getElementById('sort-by')?.value || 'username';
       const direction = document.getElementById('sort-direction')?.value || 'asc';
       await fetchMembers(sortBy, direction);
       setupUIControls();
+      setupMembersListHandler();
+      setupLoadMoreButton();
       setupRealtime();
       setInterval(async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -103,6 +109,7 @@
     async function fetchMembers(sortBy = 'username', direction = 'asc', search = '') {
       if (fetchInProgress) return;
       fetchInProgress = true;
+      const params = { sortBy, direction, search };
       const tbody = document.getElementById('members-list');
       if (!tbody) {
         fetchInProgress = false;
@@ -141,7 +148,10 @@
         renderMembers(members);
       } catch (err) {
         console.error('❌ Member fetch error:', err);
-        tbody.innerHTML = `<tr><td colspan="11">Failed to load members.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="empty-state">Failed to load members. <button id="retry-fetch">Retry</button></td></tr>`;
+        document.getElementById('retry-fetch')?.addEventListener('click', () => {
+          fetchMembers(params.sortBy, params.direction, params.search);
+        });
       } finally {
         toggleLoading(false);
         fetchInProgress = false;
@@ -155,6 +165,7 @@
         btn.disabled = true;
         const original = btn.textContent;
         btn.innerHTML = '<div class="loading-spinner"></div>';
+        currentPage = 1;
         const keyword = document.getElementById('member-search')?.value.toLowerCase() || '';
         const sortBy = document.getElementById('sort-by')?.value || 'username';
         const direction = document.getElementById('sort-direction')?.value || 'asc';
@@ -164,6 +175,16 @@
       }, 300);
       btn.addEventListener('click', handler);
       setupSortableHeaders();
+      const searchInput = document.getElementById('member-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', debounce(async () => {
+          currentPage = 1;
+          const keyword = searchInput.value.toLowerCase() || '';
+          const sortBy = document.getElementById('sort-by')?.value || 'username';
+          const direction = document.getElementById('sort-direction')?.value || 'asc';
+          await fetchMembers(sortBy, direction, keyword);
+        }, 300));
+      }
     }
 
     function setupSortableHeaders() {
@@ -178,6 +199,7 @@
           direction = 'asc';
         }
         dirInput.value = direction;
+        currentPage = 1;
         fetchMembers(sortKey, direction, document.getElementById('member-search')?.value.toLowerCase() || '');
       };
 
@@ -191,6 +213,35 @@
             activateSort(sortKey);
           }
         });
+      });
+    }
+
+    function setupMembersListHandler() {
+      const tbody = document.getElementById('members-list');
+      if (!tbody || actionsBound) return;
+      tbody.addEventListener('click', async e => {
+        const btn = e.target.closest('button');
+        if (!btn || btn.disabled) return;
+        const userId = btn.dataset.id;
+        btn.disabled = true;
+        try {
+          if (btn.classList.contains('promote-btn')) await promoteMember(userId);
+          else if (btn.classList.contains('demote-btn')) await demoteMember(userId);
+          else if (btn.classList.contains('kick-btn')) await removeMember(userId);
+          else if (btn.classList.contains('transfer-btn')) await transferLeadership(userId);
+        } finally {
+          setTimeout(() => { btn.disabled = false; }, 3000);
+        }
+      });
+      actionsBound = true;
+    }
+
+    function setupLoadMoreButton() {
+      const btn = document.getElementById('load-more');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        currentPage++;
+        renderMembers(members);
       });
     }
 
@@ -225,16 +276,18 @@
       const { isAdmin, userRank, userId } = await getUserPrivileges();
       if (!data.length) {
         tbody.innerHTML = `<tr><td colspan="11" class="empty-state">No matching members found.</td></tr>`;
+        document.getElementById('load-more')?.classList.add('hidden');
         return;
       }
 
-      data.forEach(member => {
+      const slice = data.slice(0, currentPage * pageSize);
+      slice.forEach(member => {
         const row = document.createElement('tr');
         if (member.rank === 'Leader') row.classList.add('leader-row');
         const canManage = isAdmin || rankLevel(userRank) > rankLevel(member.rank);
         const showFull = member.same_alliance;
         row.innerHTML = `
-          <td><img src="/Assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest" onerror="this.src='/Assets/crests/default.png'"></td>
+          <td><img src="/Assets/crests/${escapeHTML(member.crest || 'default.png')}" class="crest-icon" alt="Crest" loading="lazy" decoding="async" onerror="this.src='/Assets/crests/default.png'"></td>
           <td><a href="kingdom_profile.html?kingdom_id=${member.kingdom_id}">${escapeHTML(member.username)}</a>${member.is_vip ? ' ⭐' : ''}</td>
           <td title="${escapeHTML(RANK_TOOLTIPS[member.rank] || '')}">${escapeHTML(member.rank)}</td>
           <td>${showFull ? roleBadge(member) : '—'}</td>
@@ -249,22 +302,7 @@
         tbody.appendChild(row);
       });
 
-      tbody.addEventListener('click', async e => {
-        const btn = e.target.closest('button');
-        if (!btn || btn.disabled) return;
-        const userId = btn.dataset.id;
-        btn.disabled = true;
-        try {
-          if (btn.classList.contains('promote-btn')) await promoteMember(userId);
-          else if (btn.classList.contains('demote-btn')) await demoteMember(userId);
-          else if (btn.classList.contains('kick-btn')) await removeMember(userId);
-          else if (btn.classList.contains('transfer-btn')) await transferLeadership(userId);
-        } finally {
-          setTimeout(() => {
-            btn.disabled = false;
-          }, 3000);
-        }
-      });
+      document.getElementById('load-more')?.classList.toggle('hidden', data.length <= currentPage * pageSize);
     }
 
     async function getUserPrivileges() {
@@ -294,17 +332,17 @@
       if (currentRole === 'leader') {
         if (member.rank.toLowerCase() !== 'leader') {
           if (memberLevel < rankPower.length - 1) {
-            actions.push(`<button data-id="${member.user_id}" class="promote-btn">Promote</button>`);
+            actions.push(`<button data-id="${member.user_id}" class="promote-btn" aria-label="Promote member ${escapeHTML(member.username)}">Promote</button>`);
           }
           if (memberLevel > 0) {
-            actions.push(`<button data-id="${member.user_id}" class="demote-btn">Demote</button>`);
+            actions.push(`<button data-id="${member.user_id}" class="demote-btn" aria-label="Demote member ${escapeHTML(member.username)}">Demote</button>`);
           }
-          actions.push(`<button data-id="${member.user_id}" class="kick-btn danger-btn">Kick</button>`);
-          actions.push(`<button data-id="${member.user_id}" class="transfer-btn">Transfer Leadership</button>`);
+          actions.push(`<button data-id="${member.user_id}" class="kick-btn danger-btn" aria-label="Kick member ${escapeHTML(member.username)}">Kick</button>`);
+          actions.push(`<button data-id="${member.user_id}" class="transfer-btn" aria-label="Transfer leadership to ${escapeHTML(member.username)}">Transfer Leadership</button>`);
         }
       } else if (currentRole === 'war officer' && member.rank.toLowerCase() === 'member') {
-        actions.push(`<button data-id="${member.user_id}" class="promote-btn">Promote</button>`);
-        actions.push(`<button data-id="${member.user_id}" class="kick-btn">Kick</button>`);
+        actions.push(`<button data-id="${member.user_id}" class="promote-btn" aria-label="Promote member ${escapeHTML(member.username)}">Promote</button>`);
+        actions.push(`<button data-id="${member.user_id}" class="kick-btn" aria-label="Kick member ${escapeHTML(member.username)}">Kick</button>`);
       }
       return actions.join(' ');
     }
@@ -406,6 +444,9 @@
           <tr><td colspan="11"><div class="loading-spinner"></div></td></tr>
         </tbody>
       </table>
+    </div>
+    <div class="load-more-container">
+      <button id="load-more" class="load-more-btn hidden">Load More</button>
     </div>
   </main>
 
