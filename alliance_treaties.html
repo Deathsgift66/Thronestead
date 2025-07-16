@@ -29,6 +29,7 @@ Developer: Deathsgift66
   <meta name="twitter:title" content="Alliance Treaties | Thronestead" />
   <meta name="twitter:description" content="Negotiate and manage alliance treaties in Thronestead." />
   <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="theme-color" content="#202020" />
 
   <!-- Styles -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -84,7 +85,7 @@ Developer: Deathsgift66
       window.closeModal = id => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.removeEventListener('keydown', el.__trapFocus);
+        if (el.__trapFocus) el.removeEventListener('keydown', el.__trapFocus);
         delete el.__trapFocus;
         el.classList.add('hidden');
         el.setAttribute('aria-hidden', 'true');
@@ -117,15 +118,31 @@ Developer: Deathsgift66
       document
         .getElementById('create-new-treaty')
         ?.addEventListener('click', proposeTreaty);
-      document
-        .getElementById('filter-active')
-        ?.addEventListener('change', loadTreaties);
+      const filterBox = document.getElementById('filter-active');
+      if (filterBox) {
+        const saved = sessionStorage.getItem('filterActive');
+        if (saved !== null) filterBox.checked = saved === '1';
+        filterBox.addEventListener('change', e => {
+          sessionStorage.setItem('filterActive', e.target.checked ? '1' : '0');
+          loadTreaties();
+        });
+      }
       document
         .getElementById('propose-treaty-form')
         ?.addEventListener('submit', submitProposeTreaty);
       document
         .getElementById('partner-alliance-name')
         ?.addEventListener('input', e => showAllianceSuggestions(e.target.value));
+      const typeSelect = document.getElementById('treaty-type');
+      const typeDesc = document.getElementById('treaty-type-desc');
+      if (typeSelect && typeDesc) {
+        const updateDesc = () => {
+          const opt = typeSelect.options[typeSelect.selectedIndex];
+          typeDesc.textContent = opt?.title || '';
+        };
+        typeSelect.addEventListener('change', updateDesc);
+        updateDesc();
+      }
       document
         .getElementById('cancel-propose-treaty')
         ?.addEventListener('click', closeProposeTreatyModal);
@@ -184,6 +201,10 @@ Developer: Deathsgift66
       container.innerHTML = '<p>Loading treaties...</p>';
       try {
         const res = await authFetch('/api/alliance/treaties');
+        if (res.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
         const treaties = await res.json();
         const onlyActive = document.getElementById('filter-active')?.checked;
         const filtered = onlyActive
@@ -280,9 +301,13 @@ Developer: Deathsgift66
       });
       window.supabase.auth.onAuthStateChange(() => {
         if (treatyChannel) {
-          treatyChannel.unsubscribe();
+          treatyChannel.unsubscribe().then(() => {
+            treatyChannel = null;
+            subscribeToRealtime();
+          });
+        } else {
+          subscribeToRealtime();
         }
-        subscribeToRealtime();
       });
     }
 
@@ -441,7 +466,12 @@ Developer: Deathsgift66
       const partnerName = nameInput?.value.trim();
       const list = document.getElementById('alliance-list');
       const opt = Array.from(list?.options || []).find(o => o.value === partnerName);
-      const partnerNum = opt ? parseInt(opt.dataset.id, 10) : parseInt(partnerName, 10);
+      if (!opt) {
+        errorBox.textContent = 'Invalid alliance name.';
+        submitting = false;
+        return;
+      }
+      const partnerNum = parseInt(opt.dataset.id, 10);
       const durationVal = parseInt(document.getElementById('duration-days')?.value, 10);
       const exclusive = document.getElementById('exclusive')?.checked;
       const allowedTypes = [
@@ -564,7 +594,7 @@ Developer: Deathsgift66
       <h3 id="propose-modal-title">Propose New Treaty</h3>
       <form id="propose-treaty-form" aria-describedby="form-error">
         <label for="treaty-type">Treaty Type:</label>
-        <select id="treaty-type" name="treaty-type" aria-describedby="form-error">
+        <select id="treaty-type" name="treaty-type" aria-describedby="treaty-type-desc form-error">
           <option value="non_aggression_pact" title="Promise not to attack each other">Non Aggression Pact</option>
           <option value="defensive_pact" title="Assist each other when attacked">Defensive Pact</option>
           <option value="trade_pact" title="Improve trade relations">Trade Pact</option>
@@ -572,6 +602,7 @@ Developer: Deathsgift66
           <option value="research_collaboration" title="Cooperate on research projects">Research Collaboration</option>
         </select>
         <div class="helper-text">Choose the kind of agreement.</div>
+        <div id="treaty-type-desc" class="helper-text" aria-live="polite"></div>
         <label for="partner-alliance-name">Partner Alliance:</label>
         <input type="text" id="partner-alliance-name" name="partner-alliance-name" list="alliance-list" autocomplete="off" required aria-describedby="form-error" />
         <datalist id="alliance-list"></datalist>
@@ -609,7 +640,8 @@ Developer: Deathsgift66
       <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
       <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
       <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
-      <a href="legal.html" target="_blank">More</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+      <a href="legal.html" target="_blank" rel="noopener">More</a>
+      <a href="sitemap.xml" target="_blank" rel="noopener">Site Map</a>
     </div>
   </footer>
 
