@@ -23,7 +23,7 @@ Developer: Deathsgift66
   <!-- Open Graph -->
   <meta property="og:title" content="Admin Alerts | Thronestead" />
   <meta property="og:description" content="Monitor flagged accounts, suspicious behavior, and enforce realm-wide security policies." />
-  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
   <meta property="og:url" content="https://www.thronestead.com/admin_alerts.html" />
   <meta property="og:type" content="website" />
 
@@ -31,7 +31,7 @@ Developer: Deathsgift66
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Admin Alerts | Thronestead" />
   <meta name="twitter:description" content="Monitor and enforce account security from the Thronestead Admin Center." />
-  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -68,6 +68,7 @@ Developer: Deathsgift66
       document.querySelectorAll('.alert-tabs .tab').forEach(tab =>
         tab.addEventListener('click', () => selectTab(tab))
       );
+      document.getElementById('alerts-feed')?.addEventListener('click', handleActionClick);
       initThemeToggle();
       setupReauthButtons('.action-btn');
       supabase.auth.onAuthStateChange((_evt, session) => {
@@ -75,8 +76,8 @@ Developer: Deathsgift66
       });
     });
 
-    window.addEventListener('beforeunload', () => {
-      realtimeSub?.unsubscribe();
+    window.addEventListener('beforeunload', async () => {
+      if (realtimeSub) await supabase.removeChannel(realtimeSub);
     });
 
     function subscribeToRealtime() {
@@ -111,6 +112,11 @@ Developer: Deathsgift66
               { title: 'Admin Actions', items: data.admin_actions }
             ];
 
+        if (!renderSet.some(s => (s.items || []).length)) {
+          container.innerHTML = '<p>No alerts found.</p>';
+          return;
+        }
+
         let remaining = MAX_FEED_ITEMS;
         renderSet.forEach(set => {
           if (!remaining) {
@@ -141,6 +147,7 @@ Developer: Deathsgift66
       items.forEach(item => {
         const div = document.createElement('div');
         div.className = `alert-item ${mapSeverity(item.severity || item.priority)}`;
+        div.setAttribute('role', 'article');
         div.innerHTML = `
       <strong>[${(item.event_type || item.type || 'log').toUpperCase()}]</strong>
       <p>${formatItem(item)}</p>
@@ -182,7 +189,7 @@ Developer: Deathsgift66
       container.appendChild(section);
     }
 
-    document.addEventListener('click', async e => {
+    async function handleActionClick(e) {
       if (!e.target.classList.contains('action-btn')) return;
       const btn = e.target;
       const action = btn.dataset.action;
@@ -226,7 +233,7 @@ Developer: Deathsgift66
         console.error(`❌ Action [${action}] failed:`, err);
         alert(`❌ ${action} failed: ${err.message}`);
       }
-    });
+    }
 
     async function postAdminAction(endpoint, payload) {
       const res = await authFetch(endpoint, {
@@ -267,7 +274,8 @@ Developer: Deathsgift66
     }
 
     function formatItem(item) {
-      return escapeHTML(item.message || `${item.action || ''} - ${item.details || item.note || JSON.stringify(item)}`);
+      const base = item.message || `${item.action || ''} - ${item.details || item.note || 'No details'}`;
+      return escapeHTML(base);
     }
 
     function formatTime(ts) {
@@ -417,7 +425,7 @@ Developer: Deathsgift66
       </section>
 
       <!-- Alert Feed Panel -->
-      <section class="kr-alerts-panel" aria-label="Live Alert Feed">
+      <section class="kr-alerts-panel" aria-label="Live Alert Feed" role="feed">
         <div id="alerts-feed" aria-live="polite" class="alerts-feed">
           <!-- JavaScript inserts real-time alerts here -->
         </div>
