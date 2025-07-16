@@ -422,14 +422,12 @@ body[data-theme="light"] {
   background-color: #fafafa;
   color: var(--ink);
 }
-/*
 body[data-theme="dark"] {
   --input-bg: var(--dark-panel);
   --panel-bg: var(--dark-panel);
   background-color: #1b1b1b;
   color: var(--text-on-dark);
 }
-*/
 body[data-theme="parchment"] {
   --input-bg: var(--parchment-dark);
   --panel-bg: var(--panel-bg);
