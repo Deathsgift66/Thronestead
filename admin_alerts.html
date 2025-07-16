@@ -47,7 +47,7 @@ Developer: Deathsgift66
   </script>
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { authFetch, authJsonFetch, showToast } from '/Javascript/utils.js';
+    import { authJsonFetch, showToast } from '/Javascript/utils.js';
     import { setupReauthButtons } from '/Javascript/reauth.js';
     import { validateSessionOrLogout } from '/Javascript/auth.js';
 
@@ -126,6 +126,9 @@ Developer: Deathsgift66
           set.items = (set.items || []).slice(0, remaining);
           remaining -= set.items.length;
         });
+        if (remaining <= 0) {
+          showToast('⚠ Only first 250 alerts shown. Refine filters.', 'warning');
+        }
 
         renderSet.forEach(({ title, items }) => renderCategory(container, title, items));
       } catch (err) {
@@ -196,7 +199,7 @@ Developer: Deathsgift66
       const action = btn.dataset.action;
 
       const idPattern = /^[0-9a-fA-F-]{8,}$/;
-      const ipPattern = /^\d{1,3}(\.\d{1,3}){3}$/;
+      const ipPattern = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
 
       const requiresConfirm = ['ban', 'freeze', 'suspend_user'];
       if (requiresConfirm.includes(action)) {
@@ -249,12 +252,16 @@ Developer: Deathsgift66
     }
 
     async function postAdminAction(endpoint, payload) {
-      const res = await authFetch(endpoint, {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || ''}`,
+        'X-User-ID': session?.user?.id || ''
+      };
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': getCSRFToken()
-        },
+        credentials: 'include',
+        headers,
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(await res.text());
@@ -298,9 +305,6 @@ Developer: Deathsgift66
       return ts ? new Date(ts).toLocaleString() : '';
     }
 
-    function getCSRFToken() {
-      return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1] || '';
-    }
 
     function getAlertId(item) {
       if (!item.alert_id) {
@@ -370,6 +374,10 @@ Developer: Deathsgift66
       document.body.setAttribute('data-theme', saved);
       btn.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
       btn.addEventListener('click', () => {
+        document.documentElement.classList.add('theme-transition');
+        setTimeout(() => {
+          document.documentElement.classList.remove('theme-transition');
+        }, 300);
         const current = document.body.getAttribute('data-theme') === 'dark' ? 'parchment' : 'dark';
         document.body.setAttribute('data-theme', current);
         localStorage.setItem('theme', current);

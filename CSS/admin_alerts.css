@@ -209,3 +209,7 @@ tr:nth-child(even) {
 .alert-item.expired {
   opacity: 0.4;
 }
+
+.theme-transition * {
+  transition: background-color 0.3s, color 0.3s;
+}
