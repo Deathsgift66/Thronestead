@@ -46,37 +46,75 @@ Developer: Deathsgift66
   <script src="/Javascript/progressionBanner.js" type="module"></script>
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, showToast, enforceAllianceOrAdminAccess } from '/Javascript/utils.js';
+    import {
+      escapeHTML,
+      showToast,
+      enforceAllianceOrAdminAccess,
+      authFetch,
+      toggleLoading
+    } from '/Javascript/utils.js';
 
     let modalEl;
     let filterDebounce;
+    let lastFocusedEl = null;
+    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    sessionStorage.setItem('csrf_token', csrfToken);
+    document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
     const focusableSelectors = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
+
+    let allQuests = [];
+    let currentPage = 1;
+    const pageSize = 10;
 
 
     /**
      * Fetch and render quests for the selected status tab.
      * @param {string} status active|completed|expired
      */
-    export function loadQuests(status = 'active') {
-      fetch(`/api/alliance/quests?status=${status}`)
-        .then(res => res.json())
-        .then(quests => {
-          const board = document.getElementById('quest-board');
-          const msg = document.getElementById('no-quests-message');
-          board.innerHTML = '';
-          if (!quests.length) {
-            msg.classList.remove('hidden');
-            return;
-          }
-          msg.classList.add('hidden');
-          const frag = document.createDocumentFragment();
-          quests.forEach(q => frag.appendChild(renderQuestCard(q)));
-          board.appendChild(frag);
-          initCountdowns();
-        })
-        .catch(() => {
-          document.getElementById('quest-board').textContent = 'Failed to load quests.';
-        });
+    export async function loadQuests(status = 'active') {
+      toggleLoading(true);
+      try {
+        const res = await authFetch(`/api/alliance/quests?status=${status}`);
+        if (!res.ok) throw new Error(await res.text());
+        allQuests = await res.json();
+        currentPage = 1;
+        renderQuestPage();
+      } catch (err) {
+        console.error('Quest fetch error:', err);
+        document.getElementById('quest-board').textContent = 'Failed to load quests.';
+      } finally {
+        toggleLoading(false);
+      }
+    }
+
+    function renderQuestPage() {
+      const board = document.getElementById('quest-board');
+      const msg = document.getElementById('no-quests-message');
+      const search = document.getElementById('quest-search')?.value.trim().toLowerCase() || '';
+      const filtered = allQuests.filter(q =>
+        q.name.toLowerCase().includes(search) || q.description.toLowerCase().includes(search)
+      );
+      const start = (currentPage - 1) * pageSize;
+      const pageQuests = filtered.slice(start, start + pageSize);
+      board.innerHTML = '';
+      if (!pageQuests.length) {
+        msg.classList.remove('hidden');
+      } else {
+        msg.classList.add('hidden');
+        const frag = document.createDocumentFragment();
+        pageQuests.forEach(q => frag.appendChild(renderQuestCard(q)));
+        board.appendChild(frag);
+      }
+      document.querySelectorAll('.page-info').forEach(el => {
+        el.textContent = `Page ${currentPage} of ${Math.max(1, Math.ceil(filtered.length / pageSize))}`;
+      });
+      document.querySelectorAll('.prev-page').forEach(btn => {
+        btn.disabled = currentPage === 1;
+      });
+      document.querySelectorAll('.next-page').forEach(btn => {
+        btn.disabled = start + pageSize >= filtered.length;
+      });
+      initCountdowns();
     }
 
     // Open quest modal when a card button is clicked
@@ -92,6 +130,26 @@ Developer: Deathsgift66
         });
       });
 
+      document.getElementById('quest-search')?.addEventListener('input', () => {
+        currentPage = 1;
+        renderQuestPage();
+      });
+
+      document.querySelectorAll('.prev-page').forEach(btn =>
+        btn.addEventListener('click', () => {
+          if (currentPage > 1) {
+            currentPage--;
+            renderQuestPage();
+          }
+        })
+      );
+      document.querySelectorAll('.next-page').forEach(btn =>
+        btn.addEventListener('click', () => {
+          currentPage++;
+          renderQuestPage();
+        })
+      );
+
       const boardEl = document.getElementById('quest-board');
       boardEl.addEventListener('click', e => {
         const card = e.target.closest('.view-quest-btn');
@@ -100,10 +158,10 @@ Developer: Deathsgift66
       });
 
       modalEl = document.getElementById('quest-modal');
-      modalEl.querySelector('.close-button').addEventListener('click', () => modalEl.classList.remove('visible'));
+      modalEl.querySelector('.close-button').addEventListener('click', closeQuestModal);
       modalEl.addEventListener('keydown', trapFocus);
       document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') modalEl.classList.remove('visible');
+        if (e.key === 'Escape') closeQuestModal();
       });
     }
 
@@ -125,11 +183,13 @@ Developer: Deathsgift66
     /**
      * Populate and display the quest modal.
      */
-    function openQuestModal(id) {
-      fetch(`/api/alliance/quests/${id}`)
-        .then(res => res.json())
-        .then(q => {
-          document.getElementById('modal-quest-title').textContent = q.name;
+    async function openQuestModal(id) {
+      lastFocusedEl = document.activeElement;
+      try {
+        toggleLoading(true);
+        const res = await authFetch(`/api/alliance/quests/${id}`);
+        const q = await res.json();
+        document.getElementById('modal-quest-title').textContent = q.name;
           document.querySelector('.quest-type-modal').textContent = q.type || 'Quest';
           document.getElementById('modal-quest-description').textContent = q.description;
           startModalCountdown(q.ends_at);
@@ -164,15 +224,15 @@ Developer: Deathsgift66
           acceptBtn.onclick = async () => {
             if (!confirm('Accept this quest?')) return;
             acceptBtn.disabled = true;
+            toggleLoading(true);
             try {
-              const { data: { user } } = await supabase.auth.getUser();
-              const res = await fetch(`/api/alliance/quests/${id}/accept`, {
+              const res2 = await authFetch(`/api/alliance/quests/${id}/accept`, {
                 method: 'POST',
-                headers: { 'X-User-ID': user.id, 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }
               });
-              if (res.ok) {
+              if (res2.ok) {
                 showToast('Quest accepted!', 'success');
-                modalEl.classList.remove('visible');
+                closeQuestModal();
                 loadQuests('active');
               } else {
                 showToast('Failed to accept quest', 'error');
@@ -181,21 +241,22 @@ Developer: Deathsgift66
               console.error('Accept quest error:', err);
               showToast('Failed to accept quest', 'error');
             } finally {
+              toggleLoading(false);
               acceptBtn.disabled = false;
             }
           };
           claimBtn.onclick = async () => {
             if (!confirm('Claim reward for this quest?')) return;
             claimBtn.disabled = true;
+            toggleLoading(true);
             try {
-              const { data: { user } } = await supabase.auth.getUser();
-              const res = await fetch(`/api/alliance/quests/${id}/claim`, {
+              const res2 = await authFetch(`/api/alliance/quests/${id}/claim`, {
                 method: 'POST',
-                headers: { 'X-User-ID': user.id, 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }
               });
-              if (res.ok) {
+              if (res2.ok) {
                 showToast('Reward claimed!', 'success');
-                modalEl.classList.remove('visible');
+                closeQuestModal();
                 loadQuests('completed');
               } else {
                 showToast('Failed to claim reward', 'error');
@@ -204,6 +265,7 @@ Developer: Deathsgift66
               console.error('Claim reward error:', err);
               showToast('Failed to claim reward', 'error');
             } finally {
+              toggleLoading(false);
               claimBtn.disabled = false;
             }
           };
@@ -213,10 +275,12 @@ Developer: Deathsgift66
 
           modalEl.classList.add('visible');
           modalEl.focus();
-        })
-        .catch(() => {
+        } catch (err) {
+          console.error('Quest modal load error:', err);
           showToast('Failed to load quest details.', 'error');
-        });
+        } finally {
+          toggleLoading(false);
+        }
     }
 
     /** Format ms to HH:MM:SS */
@@ -229,15 +293,19 @@ Developer: Deathsgift66
       return `${h}h ${m}m ${secs}s`;
     }
 
-    // Update countdowns every second
+    let countdownInterval;
     function initCountdowns() {
-      document.querySelectorAll('[data-end-time]').forEach(el => {
-        const update = () => {
+      clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        document.querySelectorAll('[data-end-time]').forEach(el => {
           const diff = new Date(el.dataset.endTime) - Date.now();
           el.textContent = formatDuration(diff);
-          if (diff > 0) setTimeout(update, 1000);
-        };
-        update();
+        });
+      }, 1000);
+      // initial render
+      document.querySelectorAll('[data-end-time]').forEach(el => {
+        const diff = new Date(el.dataset.endTime) - Date.now();
+        el.textContent = formatDuration(diff);
       });
     }
 
@@ -249,6 +317,11 @@ Developer: Deathsgift66
         if (diff > 0) setTimeout(update, 1000);
       };
       update();
+    }
+
+    function closeQuestModal() {
+      modalEl.classList.remove('visible');
+      if (lastFocusedEl) lastFocusedEl.focus();
     }
 
     function trapFocus(e) {
@@ -272,7 +345,7 @@ Developer: Deathsgift66
       const ul = document.getElementById('hero-list');
       ul.innerHTML = '<li>Loading heroes...</li>';
       try {
-        const res = await fetch('/api/alliance/quests/heroes');
+        const res = await authFetch('/api/alliance/quests/heroes');
         const heroes = await res.json();
         ul.innerHTML = '';
         heroes.forEach(h => {
@@ -291,26 +364,54 @@ Developer: Deathsgift66
       const saved = localStorage.getItem('theme') || document.body.getAttribute('data-theme');
       document.body.setAttribute('data-theme', saved);
       btn.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
+      btn.setAttribute('aria-pressed', saved === 'dark');
       btn.addEventListener('click', () => {
         const current = document.body.getAttribute('data-theme') === 'dark' ? 'parchment' : 'dark';
         document.body.setAttribute('data-theme', current);
         localStorage.setItem('theme', current);
         btn.textContent = current === 'dark' ? 'Light Mode' : 'Dark Mode';
+        btn.setAttribute('aria-pressed', current === 'dark');
       });
     }
 
     // Initial load and event bindings
+    let questsChannel = null;
     document.addEventListener('DOMContentLoaded', async () => {
       if (!(await enforceAllianceOrAdminAccess())) return;
       bindUI();
+      initThemeToggle();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: alliance } = await supabase
+        .from('users')
+        .select('alliance_id')
+        .eq('user_id', user.id)
+        .single();
+      if (alliance?.alliance_id) initRealtime(alliance.alliance_id);
       const lastTab = sessionStorage.getItem('lastTab') || 'active';
       document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.filter-tab[data-filter="${lastTab}"]`);
       if (btn) btn.classList.add('active');
       loadQuests(lastTab);
       loadHeroes();
-      initThemeToggle();
     });
+
+    function initRealtime(aid) {
+      questsChannel = supabase
+        .channel('public:quest_alliance_tracking')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'quest_alliance_tracking', filter: `alliance_id=eq.${aid}` },
+          () => {
+            const active = document.querySelector('.filter-tab.active')?.dataset.filter || 'active';
+            loadQuests(active);
+          }
+        )
+        .subscribe();
+      window.addEventListener('beforeunload', async () => {
+        if (questsChannel) await supabase.removeChannel(questsChannel);
+      });
+    }
   </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
@@ -354,6 +455,15 @@ Developer: Deathsgift66
         <button class="filter-tab" data-filter="expired" aria-pressed="false">Expired</button>
       </section>
 
+      <div class="quest-search-controls">
+        <input type="text" id="quest-search" placeholder="Search quests..." aria-label="Search quests" />
+        <div class="pagination">
+          <button class="royal-button prev-page" aria-label="Previous page">Prev</button>
+          <span class="page-info"></span>
+          <button class="royal-button next-page" aria-label="Next page">Next</button>
+        </div>
+      </div>
+
       <!-- Quest Feed -->
       <section id="quest-board" aria-labelledby="quest-board-heading" aria-live="polite">
         <h2 id="quest-board-heading" class="visually-hidden">Alliance Quests</h2>
@@ -366,7 +476,7 @@ Developer: Deathsgift66
         <button class="action-btn medieval-banner-btn" id="start-new-quest" title="Start a New Alliance Quest">
           <span class="plus-icon">➕</span> Start New Quest
         </button>
-        <button id="theme-toggle" class="action-btn">Dark Mode</button>
+        <button id="theme-toggle" class="action-btn" aria-pressed="false">Dark Mode</button>
       </section>
     </div>
 
@@ -415,6 +525,8 @@ Developer: Deathsgift66
       </div>
     </div>
   </div>
+
+  <div id="loading-overlay" aria-hidden="true"><div class="spinner"></div></div>
 
   <!-- Footer -->
   <footer class="site-footer">

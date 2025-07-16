@@ -81,6 +81,30 @@ h2 {
   transition: transform 0.2s ease;
 }
 
+.quest-search-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pagination {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.royal-button {
+  background: var(--accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 .quest-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 12px var(--shadow);
