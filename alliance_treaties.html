@@ -93,8 +93,12 @@ Developer: Deathsgift66
     }
 
     // -------------------- Initialization --------------------
+    let lastFocused = null;
+    let treatyChannel = null;
+
     document.addEventListener('DOMContentLoaded', () => {
       loadTreaties();
+      subscribeToRealtime();
       document
         .getElementById('create-new-treaty')
         ?.addEventListener('click', proposeTreaty);
@@ -111,9 +115,15 @@ Developer: Deathsgift66
         });
       document
         .querySelector('.modal-close')
-        ?.addEventListener('click', () => closeModal('treaty-modal'));
+        ?.addEventListener('click', closeTreatyModal);
       document.getElementById('treaty-modal')?.addEventListener('click', e => {
-        if (e.target.id === 'treaty-modal') closeModal('treaty-modal');
+        if (e.target.classList.contains('accept-btn')) {
+          respondToTreaty(e.target.dataset.id, 'accept');
+        } else if (e.target.classList.contains('reject-btn')) {
+          respondToTreaty(e.target.dataset.id, 'reject');
+        } else if (e.target.id === 'treaty-modal') {
+          closeTreatyModal();
+        }
       });
     });
 
@@ -122,7 +132,7 @@ Developer: Deathsgift66
       const container = document.getElementById('treaties-container');
       container.innerHTML = '<p>Loading treaties...</p>';
       try {
-        const res = await fetch('/api/alliance/treaties');
+        const res = await authFetch('/api/alliance/treaties');
         const treaties = await res.json();
         if (!treaties.length) {
           container.innerHTML = "<p class='empty-state'>No treaties found.</p>";
@@ -165,10 +175,28 @@ Developer: Deathsgift66
       });
     }
 
+    function closeTreatyModal() {
+      closeModal('treaty-modal');
+      lastFocused?.focus();
+    }
+
+    function subscribeToRealtime() {
+      if (!window.supabase) return;
+      treatyChannel = window.supabase
+        .channel('public:alliance_treaties')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'alliance_treaties' },
+          () => loadTreaties()
+        )
+        .subscribe();
+    }
+
     // -------------------- Modal --------------------
     async function openTreatyModal(id) {
       try {
-        const res = await fetch(`/api/alliance/treaty/${id}`);
+        lastFocused = document.activeElement;
+        const res = await authFetch(`/api/alliance/treaty/${id}`);
         const t = await res.json();
         const box = document.getElementById('treaty-details');
         const termsRows = Object.entries(t.terms || {}).length
@@ -194,12 +222,6 @@ Developer: Deathsgift66
             }
           `;
         openModal('treaty-modal');
-        document
-          .querySelector('.accept-btn')
-          ?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'accept'));
-        document
-          .querySelector('.reject-btn')
-          ?.addEventListener('click', () => respondToTreaty(t.treaty_id, 'reject'));
       } catch (err) {
         console.error('Failed to load treaty:', err);
         showToast('Failed to load treaty details.', 'error');
@@ -209,6 +231,11 @@ Developer: Deathsgift66
     // -------------------- Actions --------------------
     async function respondToTreaty(id, response) {
       if (!confirm(`Are you sure you want to ${response} this treaty?`)) return;
+      const acceptBtn = document.querySelector('.accept-btn');
+      const rejectBtn = document.querySelector('.reject-btn');
+      acceptBtn?.setAttribute('disabled', '');
+      rejectBtn?.setAttribute('disabled', '');
+      toggleLoading(true);
       try {
         const res = await authFetch('/api/alliance/treaties/respond', {
           method: 'POST',
@@ -219,27 +246,41 @@ Developer: Deathsgift66
           body: JSON.stringify({ treaty_id: parseInt(id, 10), response })
         });
         if (!res.ok) throw new Error(await res.text());
-        closeModal('treaty-modal');
+        closeTreatyModal();
+        showToast('Treaty updated.', 'success');
         loadTreaties();
       } catch (err) {
         console.error('Failed to respond:', err);
         showToast('Failed to update treaty.', 'error');
+      } finally {
+        toggleLoading(false);
+        acceptBtn?.removeAttribute('disabled');
+        rejectBtn?.removeAttribute('disabled');
       }
     }
 
     function proposeTreaty() {
       openModal('propose-treaty-modal');
+      lastFocused = document.activeElement;
     }
 
     function closeProposeTreatyModal() {
       closeModal('propose-treaty-modal');
+      lastFocused?.focus();
     }
 
     async function submitProposeTreaty(event) {
       event.preventDefault();
       const type = document.getElementById('treaty-type')?.value;
       const partnerId = document.getElementById('partner-alliance-id')?.value;
-      if (!type || !partnerId) return;
+      const partnerNum = parseInt(partnerId, 10);
+      if (!type || !partnerId || !Number.isInteger(partnerNum) || partnerNum <= 0) {
+        showToast('Invalid alliance ID.', 'error');
+        return;
+      }
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      submitBtn?.setAttribute('disabled', '');
+      toggleLoading(true);
       try {
         const res = await authFetch('/api/alliance/treaties/propose', {
           method: 'POST',
@@ -248,17 +289,21 @@ Developer: Deathsgift66
             'X-CSRF-Token': csrfToken
           },
           body: JSON.stringify({
-            partner_alliance_id: parseInt(partnerId, 10),
+            partner_alliance_id: partnerNum,
             treaty_type: type,
             terms: { duration_days: 30, exclusive: true }
           })
         });
         if (!res.ok) throw new Error(await res.text());
         closeProposeTreatyModal();
+        showToast('Treaty proposed.', 'success');
         loadTreaties();
       } catch (err) {
         console.error('Failed to propose treaty:', err);
         showToast('Failed to propose treaty.', 'error');
+      } finally {
+        toggleLoading(false);
+        submitBtn?.removeAttribute('disabled');
       }
     }
   </script>
@@ -310,6 +355,10 @@ Developer: Deathsgift66
       </div>
     </section>
   </main>
+
+  <div id="loading-overlay" aria-hidden="true">
+    <div class="spinner"></div>
+  </div>
 
   <!-- Treaty Modal -->
   <div id="treaty-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
