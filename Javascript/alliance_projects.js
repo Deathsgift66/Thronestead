@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, openModal } from './utils.js';
 
 const RESOURCE_KEYS = [
   'wood', 'stone', 'iron_ore', 'gold', 'gems', 'food', 'coal', 'livestock',
@@ -57,6 +57,17 @@ function setupTabs() {
       btn.classList.add('active');
       document.getElementById(btn.dataset.tab)?.classList.add('active');
     });
+    btn.addEventListener('keydown', e => {
+      if (['ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+        const idx = tabs.indexOf(document.activeElement);
+        const next = e.key === 'ArrowLeft'
+          ? (idx - 1 + tabs.length) % tabs.length
+          : (idx + 1) % tabs.length;
+        tabs[next].focus();
+        tabs[next].click();
+      }
+    });
   });
 }
 
@@ -99,7 +110,9 @@ async function loadAvailable() {
     const json = await res.json();
     renderAvailable(json.projects || []);
   } catch (err) {
-    console.error('loadAvailable', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('loadAvailable', err);
+    }
     container.innerHTML = '<p>Failed to load available projects.</p>';
   }
 }
@@ -148,7 +161,9 @@ async function loadInProgress() {
     const json = await res.json();
     renderInProgress(json.projects || []);
   } catch (err) {
-    console.error('loadInProgress', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('loadInProgress', err);
+    }
     container.innerHTML = '<p>Failed to load in-progress projects.</p>';
   }
 }
@@ -184,6 +199,7 @@ async function loadContributions(key, element) {
     const res = await fetch(`/api/alliance/projects/contributions?project_key=${key}`);
     const data = await res.json();
     const list = data.contributions || [];
+    const totalContributors = data.totalContributors || list.length;
 
     if (!list.length) {
       element.innerHTML = '<p class="empty-state">No contributions yet.</p>';
@@ -204,8 +220,18 @@ async function loadContributions(key, element) {
       fill.style.width = `${(r.amount / total) * 100}%`;
       element.appendChild(div);
     });
+
+    if (totalContributors > 3) {
+      const btn = document.createElement('button');
+      btn.className = 'btn view-all-btn';
+      btn.textContent = 'View All';
+      btn.addEventListener('click', () => openContribModal(key));
+      element.appendChild(btn);
+    }
   } catch (err) {
-    console.error('contributions', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('contributions', err);
+    }
     element.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
 }
@@ -224,7 +250,9 @@ async function loadCompleted() {
     const json = await res.json();
     renderCompleted(json.projects || []);
   } catch (err) {
-    console.error('loadCompleted', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('loadCompleted', err);
+    }
     container.innerHTML = '<p>Failed to load completed projects.</p>';
   }
 }
@@ -262,7 +290,9 @@ async function loadCatalogue() {
     const json = await res.json();
     renderCatalogue(json.projects || []);
   } catch (err) {
-    console.error('loadCatalogue', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('loadCatalogue', err);
+    }
     container.innerHTML = '<p>Failed to load project catalogue.</p>';
   }
 }
@@ -297,11 +327,14 @@ function renderCatalogue(list) {
 // ----------------------------
 async function startProject(projectKey) {
   try {
-    const { userId } = await getAllianceInfo();
+    const { data: { user } } = await supabase.auth.getUser();
     const res = await fetch('/api/alliance/projects/start', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_key: projectKey, user_id: userId })
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': user.id
+      },
+      body: JSON.stringify({ project_key: projectKey })
     });
 
     const json = await res.json();
@@ -311,9 +344,34 @@ async function startProject(projectKey) {
     const live = document.getElementById('project-updates');
     if (live) live.textContent = 'Project started successfully.';
   } catch (err) {
-    console.error('startProject', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('startProject', err);
+    }
     alert('❌ Failed to start project.');
   }
+}
+
+async function openContribModal(key) {
+  const modal = document.getElementById('contrib-modal');
+  if (!modal) return;
+  const title = modal.querySelector('.modal-title');
+  const listEl = modal.querySelector('.modal-list');
+  if (title) title.textContent = `Contributors for ${key}`;
+  if (listEl) listEl.innerHTML = 'Loading...';
+  try {
+    const res = await fetch(`/api/alliance/projects/contributions?project_key=${key}`);
+    const data = await res.json();
+    const list = data.contributions || [];
+    listEl.innerHTML = list
+      .map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`)
+      .join('') || '<p class="empty-state">No contributions.</p>';
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('openContribModal', err);
+    }
+    if (listEl) listEl.innerHTML = '<p class="empty-state">Failed to load.</p>';
+  }
+  openModal(modal);
 }
 
 // ----------------------------
