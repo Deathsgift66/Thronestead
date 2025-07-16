@@ -19,8 +19,19 @@ Developer: Deathsgift66
   <meta property="og:title" content="About | Thronestead" />
   <meta property="og:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
   <meta property="og:image" content="Assets/banner_main.png" />
-  <meta property="og:url" content="about.html" />
+  <meta property="og:url" content="https://www.thronestead.com/about.html" />
   <meta property="og:type" content="website" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Thronestead",
+    "description": "A medieval strategy game currently in early development.",
+    "url": "https://www.thronestead.com",
+    "image": "https://www.thronestead.com/Assets/banner_main.png"
+  }
+  </script>
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -45,7 +56,6 @@ Developer: Deathsgift66
   <script src="/Javascript/components/authGuard.js" type="module"></script>
   <script src="/Javascript/apiHelper.js" type="module"></script>
   <script src="/Javascript/navLoader.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
 </head>
 <body>
   <noscript>
@@ -55,7 +65,6 @@ Developer: Deathsgift66
   </noscript>
 
 <div id="navbar-container"></div>
-<div id="resource-bar-container"></div>
   <!-- Navbar -->
 
   <main class="main-centered-container">
@@ -67,6 +76,16 @@ Developer: Deathsgift66
       <p>Follow our progress on the <a href="projects.html">project roadmap</a> and stay tuned for an upcoming press kit.</p>
       </section>
     </main>
-  <div id="footer-container"></div>
+
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank">and more</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
+
   </body>
 </html>
