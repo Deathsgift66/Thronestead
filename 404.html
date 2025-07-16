@@ -1,3 +1,4 @@
+<!-- Thronestead | 404.html | v1.0 | Last updated: 2025-07-16 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Page Not Found</title>
   <meta name="description" content="The page you requested could not be found." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
   <link rel="canonical" href="https://www.thronestead.com/404.html" />
 
   <!-- Open Graph -->
@@ -25,25 +28,22 @@
 
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/404.css" rel="stylesheet" />
 
-  <style>
-    body {
-      text-align: center;
-      padding: 4rem 1rem;
-      font-family: var(--main-font, sans-serif);
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "404 Page",
+    "description": "Page not found on Thronestead.",
+    "mainEntity": {
+      "@type": "WebPageElement",
+      "name": "404 Message",
+      "cssSelector": "h1"
     }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-    p {
-      font-size: 1.2rem;
-    }
-    a {
-      color: var(--accent-color, #d13);
-      text-decoration: underline;
-    }
-  </style>
+  }
+  </script>
+
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
@@ -52,30 +52,56 @@
 </head>
 <body>
   <noscript>
-    <div class="noscript-warning">
+    <div lang="en" class="noscript-warning">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
     </div>
   </noscript>
 
 <div id="navbar-container"></div>
+<main role="main">
   <h1>404 - Page Not Found</h1>
+  <img src="/Assets/404.svg" alt="Page not found" class="error-img" />
   <p>The page you requested could not be found.</p>
   <p><a href="/">Return to Home</a></p>
+  <p><a href="/sitemap.html">View Site Map</a> or try <a href="/search.html">searching</a>.</p>
+</main>
   <script type="module">
-    import { supabase } from '/Javascript/supabaseClient.js';
-    const log404 = async () => {
+    let supabase = null;
+    let supabaseReady = false;
+    try {
+      const mod = await import('/Javascript/supabaseClient.js');
+      supabase = mod.supabase;
+      supabaseReady = mod.supabaseReady;
+    } catch (e) {
+      supabaseReady = false;
+    }
+
+    async function sendLog(payload) {
       try {
-        await supabase.from('client_errors').insert([{ 
-          path: window.location.pathname,
-          referrer: document.referrer,
-          user_agent: navigator.userAgent,
-          type: '404'
-        }]);
+        await fetch('/api/logs/404', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
       } catch (err) {
-        console.warn('Failed to log 404:', err);
+        if (import.meta.env.DEV) {
+          console.warn('Failed to log 404:', err);
+        }
       }
-    };
-    log404();
+    }
+
+    if (supabaseReady) {
+      sendLog({
+        path: window.location.pathname,
+        referrer: document.referrer,
+        user_agent: encodeURIComponent(navigator.userAgent.slice(0, 255)),
+        type: '404'
+      });
+
+      window.addEventListener('error', (e) => {
+        sendLog({ type: 'runtime', message: e.message });
+      });
+    }
   </script>
 </body>
 </html>
