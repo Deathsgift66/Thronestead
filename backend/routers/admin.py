@@ -19,7 +19,7 @@ from backend.models import User
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key, verify_admin
+from ..security import require_admin_user, verify_api_key
 from .admin_dashboard import dashboard_summary, get_audit_logs
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -67,10 +67,9 @@ class AlertFilters(BaseModel):
 def flag_player(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     log_action(db, admin_id, "flag_user", f"Flagged user {payload.player_id}")
     return {"message": "Flagged", "player_id": payload.player_id}
 
@@ -79,10 +78,9 @@ def flag_player(
 def freeze_player(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     log_action(db, admin_id, "freeze_user", f"Froze user {payload.player_id}")
     return {"message": "Frozen", "player_id": payload.player_id}
 
@@ -91,10 +89,9 @@ def freeze_player(
 def ban_player(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     log_action(db, admin_id, "ban_user", f"Banned user {payload.player_id}")
     db.execute(
         text(
@@ -113,10 +110,9 @@ def ban_player(
 def bulk_action(
     payload: BulkAction,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     log_action(
         db,
         admin_id,
@@ -130,10 +126,9 @@ def bulk_action(
 def player_action(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     log_action(db, admin_id, "admin_action", payload.alert_id or "manual_action")
     return {"message": "Action executed", "action": payload.alert_id}
 
@@ -142,10 +137,9 @@ def player_action(
 def flag_ip(
     payload: IPPayload,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     ip = payload.ip
     log_action(db, admin_id, "flag_ip", f"Flagged IP {ip}")
     if ip:
@@ -166,10 +160,9 @@ def flag_ip(
 def suspend_user(
     payload: SuspendPayload,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     uid = payload.user_id
     log_action(db, admin_id, "suspend_user", f"Suspended user {uid}")
     return {"message": "User suspended", "user_id": uid}
@@ -179,10 +172,9 @@ def suspend_user(
 def mark_alert_handled(
     payload: AlertID,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     aid = payload.alert_id
     log_action(db, admin_id, "mark_alert", f"Handled alert {aid}")
     return {"message": "Alert marked", "alert_id": aid}
@@ -192,11 +184,10 @@ def mark_alert_handled(
 def dismiss_alert(
     payload: AlertID,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
     """Delete an alert after verifying admin permissions."""
-    verify_admin(admin_id, db)
     aid = payload.alert_id
     if not aid:
         raise HTTPException(status_code=400, detail="alert_id required")
@@ -213,10 +204,9 @@ def dismiss_alert(
 def list_players(
     search: str | None = Query(default=None),
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     query = db.query(
         User.user_id,
         User.username,
@@ -253,10 +243,9 @@ def get_admin_alerts(
     start: str | None = Query(default=None),
     end: str | None = Query(default=None),
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     params: dict[str, str] = {}
     filters = []
 
@@ -307,10 +296,9 @@ def get_admin_alerts(
 def query_admin_alerts(
     filters: AlertFilters,
     verify: str = Depends(verify_api_key),
-    admin_id: str = Depends(require_user_id),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
-    verify_admin(admin_id, db)
     where_parts = []
     params: dict[str, str] = {}
 
@@ -345,7 +333,7 @@ def query_admin_alerts(
 @router.get("/stats")
 def get_admin_stats(
     verify: str = Depends(verify_api_key),
-    admin_user_id: str = Depends(require_user_id),
+    admin_user_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
     """Alias for dashboard summary statistics."""
@@ -356,17 +344,18 @@ def get_admin_stats(
 def search_user(
     q: str = Query("", alias="q"),
     verify: str = Depends(verify_api_key),
+    admin_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
     """Alias for player search used by older dashboards."""
-    result = list_players(search=q, db=db)
+    result = list_players(search=q, admin_id=admin_id, verify=verify, db=db)
     return result.get("players", [])
 
 
 @router.get("/logs")
 def get_logs(
     verify: str = Depends(verify_api_key),
-    admin_user_id: str = Depends(require_user_id),
+    admin_user_id: str = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ):
     """Alias for recent audit logs."""
