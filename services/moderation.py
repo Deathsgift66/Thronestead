@@ -151,3 +151,11 @@ def validate_kingdom_name(name: str) -> None:
         raise ValueError("Kingdom name contains invalid characters")
     if has_reserved_kingdom_name(name):
         raise ValueError("Kingdom name contains reserved term")
+
+def validate_village_name(name: str) -> None:
+    """Validate a village name for length and characters."""
+    validate_clean_text(name)
+    if not (3 <= len(name) <= 40):
+        raise ValueError("Village name must be 3-40 characters")
+    if not re.fullmatch(r"[A-Za-z0-9 _'-]+", name):
+        raise ValueError("Village name contains invalid characters")

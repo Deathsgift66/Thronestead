@@ -111,3 +111,7 @@ body {
     text-align: center;
   }
 }
+
+.type-economic { color: #79b473; }
+.type-military { color: #a94442; }
+.type-cultural { color: #9370db; }
