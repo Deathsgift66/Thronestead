@@ -62,7 +62,9 @@ Developer: Deathsgift66
       formatDate,
       fragmentFrom,
       jsonFetch,
-      showToast
+      showToast,
+      authFetch,
+      debounce
     } from '/Javascript/utils.js';
 
     let activityChannel = null;
@@ -72,7 +74,9 @@ Developer: Deathsgift66
     });
 
     const LIMIT = 50;
+    const ACTIVITY_LIMIT = 20;
     let membersOffset = 0;
+    let activityOffset = 0;
 
     document.addEventListener('DOMContentLoaded', async () => {
       let session;
@@ -102,9 +106,14 @@ Developer: Deathsgift66
       }
 
       await fetchAllianceDetails();
+      await cacheUserPermissions(session.user.id);
+
       document
         .getElementById('load-more-members')
-        ?.addEventListener('click', loadMoreMembers);
+        ?.addEventListener('click', debounce(loadMoreMembers, 300));
+      document
+        .getElementById('load-more-activity')
+        ?.addEventListener('click', debounce(loadMoreActivity, 300));
     });
 
     async function fetchAllianceDetails(offset = 0) {
@@ -118,7 +127,9 @@ Developer: Deathsgift66
         populateAlliance(data, offset === 0);
         if (offset === 0) setupRealtime(data.alliance?.alliance_id);
         membersOffset += data.members.length;
+        activityOffset += data.activity.length;
         toggleButton('load-more-members', data.members.length === LIMIT);
+        toggleButton('load-more-activity', data.activity.length === ACTIVITY_LIMIT);
         return data;
       } catch (err) {
         console.error('❌ Failed to fetch alliance details:', err);
@@ -171,7 +182,7 @@ Developer: Deathsgift66
       renderTopContributors(data.members);
       renderQuests(data.quests);
       renderAchievements(data.achievements);
-      renderActivity(data.activity);
+      renderActivity(data.activity, !initial);
       renderDiplomacy(data.treaties);
       renderActiveBattles(data.wars);
       renderWarScore(data.wars);
@@ -210,7 +221,7 @@ Developer: Deathsgift66
         if ((m.contribution || 0) === top && top > 0) icons += '🔥 ';
         const name = escapeHTML(m.username || 'Alliance Member');
         row.innerHTML = `
-      <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${name}" class="crest"></td>
+      <td>${icons}<img src="../assets/crests/${escapeHTML(m.crest || 'default.png')}" alt="Crest of ${name}" class="crest" loading="lazy" decoding="async"></td>
       <td>${name}</td>
       <td>${escapeHTML(m.rank)}</td>
       <td>${m.contribution ?? 0}</td>
@@ -238,7 +249,7 @@ Developer: Deathsgift66
           const avatarSrc = m.avatar || '/Assets/avatars/default_avatar_emperor.png';
           const altText = m.avatar ? `${name}'s avatar` : `Default avatar for ${name}`;
           li.innerHTML = `
-        <img class="contrib-avatar" src="${avatarSrc}" alt="${altText}">
+        <img class="contrib-avatar" src="${avatarSrc}" alt="${altText}" loading="lazy" decoding="async">
         <span> ${name} - ${m.contribution}</span>`;
           list.appendChild(li);
         });
@@ -275,18 +286,20 @@ Developer: Deathsgift66
       list.replaceChildren(frag);
     }
 
-    function renderActivity(entries = []) {
+    function renderActivity(entries = [], append = false) {
       const list = document.getElementById('activity-log');
       if (!list) return;
-      if (!entries.length) return setFallbackText(list, 'No recent activity.');
+      if (!entries.length && !append) return setFallbackText(list, 'No recent activity.');
 
       const frag = fragmentFrom(entries, e => {
         const li = document.createElement('li');
         li.className = 'activity-log-entry';
+        li.setAttribute('role', 'listitem');
         li.textContent = `[${formatDate(e.created_at)}] ${e.username}: ${e.description}`;
         return li;
       });
-      list.replaceChildren(frag);
+      if (append) list.appendChild(frag);
+      else list.replaceChildren(frag);
       pruneActivityLog(list);
     }
 
@@ -366,6 +379,7 @@ Developer: Deathsgift66
 
       const li = document.createElement('li');
       li.className = 'activity-log-entry';
+      li.setAttribute('role', 'listitem');
       const actor = entry.username || entry.user_id;
       li.textContent = `[${formatDate(entry.created_at)}] ${actor}: ${entry.description}`;
       list.prepend(li);
@@ -377,6 +391,11 @@ Developer: Deathsgift66
     }
 
     async function loadMoreMembers() {
+      const btn = document.getElementById('load-more-members');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> Loading...';
+      }
       try {
         const data = await fetchAllianceDetails(membersOffset);
         renderMembers(data.members, true);
@@ -385,6 +404,59 @@ Developer: Deathsgift66
       } catch (err) {
         console.error('❌ Failed to load more members:', err);
         showToast('Unable to load more members.', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Load More';
+        }
+      }
+    }
+
+    async function loadMoreActivity() {
+      const btn = document.getElementById('load-more-activity');
+      const list = document.getElementById('activity-log');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> Loading...';
+      }
+      if (list) list.setAttribute('aria-busy', 'true');
+      try {
+        const data = await jsonFetch(`/api/alliance-home/details?limit=${ACTIVITY_LIMIT}&offset=${activityOffset}`);
+        const entries = data.activity || [];
+        renderActivity(entries, true);
+        activityOffset += entries.length;
+        toggleButton('load-more-activity', entries.length === ACTIVITY_LIMIT);
+      } catch (err) {
+        console.error('❌ Failed to load activity:', err);
+        showToast('Unable to load more activity.', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Load More';
+        }
+        if (list) list.setAttribute('aria-busy', 'false');
+      }
+    }
+
+    async function cacheUserPermissions(userId) {
+      if (!userId) return;
+      const cached = sessionStorage.getItem('userPermissions');
+      if (cached) {
+        window.user = window.user || {};
+        window.user.permissions = JSON.parse(cached);
+        return;
+      }
+      try {
+        const res = await authFetch('/api/alliance-members/view');
+        const json = await res.json();
+        const me = (json.alliance_members || []).find(m => m.user_id === userId);
+        if (me && me.permissions) {
+          window.user = window.user || {};
+          window.user.permissions = me.permissions;
+          sessionStorage.setItem('userPermissions', JSON.stringify(me.permissions));
+        }
+      } catch (err) {
+        console.error('Failed to cache permissions:', err);
       }
     }
 
@@ -423,8 +495,8 @@ Developer: Deathsgift66
     <section class="panel alliance-details" aria-labelledby="overview-heading">
       <h2 id="overview-heading">Alliance Overview</h2>
       <div class="alliance-visuals">
-        <img id="alliance-emblem-img" src="Assets/avatars/default_avatar_emperor.png" alt="Emblem of Alliance" />
-        <img id="alliance-banner-img" src="Assets/banner.png" alt="Banner of Alliance" />
+        <img id="alliance-emblem-img" src="Assets/avatars/default_avatar_emperor.png" alt="Emblem of Alliance" loading="lazy" decoding="async" />
+        <img id="alliance-banner-img" src="Assets/banner.png" alt="Banner of Alliance" loading="lazy" decoding="async" />
       </div>
       <p><strong>Name:</strong> <span id="alliance-name">Loading...</span></p>
       <p><strong>Leader:</strong> <span id="alliance-leader">Loading...</span></p>
@@ -527,8 +599,8 @@ Developer: Deathsgift66
     <!-- Activity Log -->
     <section class="panel activity-log" aria-labelledby="activity-heading">
       <h2 id="activity-heading">Recent Activity Log</h2>
-      <ul id="activity-log"><li class="loading-skeleton">Loading...</li></ul>
-      <!-- Load more button removed pending pagination support -->
+      <ul id="activity-log" role="log" aria-live="polite" aria-atomic="false"><li class="loading-skeleton">Loading...</li></ul>
+      <button id="load-more-activity" class="royal-button" style="display:none">Load More</button>
     </section>
   </main>
 
