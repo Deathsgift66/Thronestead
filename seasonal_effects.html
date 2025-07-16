@@ -34,16 +34,20 @@ import { supabase } from '/Javascript/supabaseClient.js';
 import { escapeHTML, openModal, closeModal, toggleLoading } from '/Javascript/utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) return;
   await loadSeasonalEffects(session);
 
-  supabase
+  const seasonalChannel = supabase
     .channel('seasonal_effects')
     .on('postgres_changes', { event: '*', table: 'seasonal_effects' }, () => {
       loadSeasonalEffects(session);
     })
     .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    supabase.removeChannel(seasonalChannel);
+  });
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModal('forecast-modal');
@@ -68,10 +72,11 @@ async function loadSeasonalEffects(session) {
   try {
     const res = await fetch('/api/seasonal-effects', {
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id
+        'Authorization': `Bearer ${session.access_token}`
       }
     });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const { current, forecast } = await res.json();
 
@@ -128,6 +133,11 @@ function renderForecastWheel(forecast, currentCode) {
   const container = document.getElementById('forecast-wheel');
   container.innerHTML = '';
 
+  if (forecast.length === 0) {
+    container.innerHTML = '<p>No seasonal forecast available.</p>';
+    return;
+  }
+
   forecast.forEach(season => {
     const card = document.createElement('div');
     card.className = 'forecast-card';
@@ -176,9 +186,11 @@ function renderMarketProjections(season) {
 function startSeasonCountdown(endsAt) {
   const countdownEl = document.getElementById('season-countdown');
   if (!countdownEl) return;
+  const ends = new Date(endsAt).getTime();
 
   const update = () => {
-    const remaining = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
+    const now = Date.now();
+    const remaining = Math.max(0, Math.floor((ends - now) / 1000));
     countdownEl.textContent = formatTime(remaining);
     if (remaining > 0) requestAnimationFrame(update);
     else countdownEl.textContent = 'Season Ended!';
@@ -304,7 +316,7 @@ function showToast(msg) {
 <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
 
 <!-- Forecast Modal -->
-<div id="forecast-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="forecast-modal-label" aria-hidden="true" inert>
+<div id="forecast-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="forecast-modal-label" inert>
   <div class="modal-content">
     <h4 id="forecast-modal-label">Forecast Details</h4>
     <div id="forecast-modal-body"></div>
@@ -328,7 +340,7 @@ from ..supabase_client import get_supabase_client
 router = APIRouter(prefix="/api/seasonal-effects", tags=["seasonal_effects"])
 
 
-@router.get("")
+@router.get("/")
 def seasonal_data(user_id: str = Depends(verify_jwt_token)):
     """
     Return the current seasonal effect and a short forecast list.
