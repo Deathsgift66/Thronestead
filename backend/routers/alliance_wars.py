@@ -11,7 +11,7 @@ Version: 2025-06-21
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -339,9 +339,19 @@ def join_war(
 # ----------- Pre-Plan Editing -----------
 
 
+class Point(BaseModel):
+    x: int
+    y: int
+
+
+class PreplanData(BaseModel):
+    fallback_point: Point | None = None
+    patrol_path: list[Point] | None = None
+
+
 class PreplanPayload(BaseModel):
-    alliance_war_id: int
-    preplan_jsonb: dict
+    alliance_war_id: PositiveInt
+    preplan_jsonb: PreplanData
 
 
 @router.get("/preplan")
@@ -353,6 +363,20 @@ def get_preplan(
     from .progression_router import get_kingdom_id
 
     kid = get_kingdom_id(db, user_id)
+    if not db.execute(
+        text("SELECT 1 FROM alliance_wars WHERE alliance_war_id = :wid"),
+        {"wid": alliance_war_id},
+    ).first():
+        raise HTTPException(status_code=404, detail="War not found")
+    if not db.execute(
+        text(
+            "SELECT 1 FROM alliance_war_participants "
+            "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+        ),
+        {"wid": alliance_war_id, "kid": kid},
+    ).first():
+        raise HTTPException(status_code=403, detail="Not part of this war")
+
     row = (
         db.execute(
             text(
@@ -377,17 +401,36 @@ def submit_preplan(
     from .progression_router import get_kingdom_id
 
     kid = get_kingdom_id(db, user_id)
-    db.execute(
+    if not db.execute(
+        text("SELECT 1 FROM alliance_wars WHERE alliance_war_id = :wid"),
+        {"wid": payload.alliance_war_id},
+    ).first():
+        raise HTTPException(status_code=404, detail="War not found")
+    if not db.execute(
         text(
-            """
-            INSERT INTO alliance_war_preplans (alliance_war_id, kingdom_id, preplan_jsonb)
-            VALUES (:wid, :kid, :plan)
-            ON CONFLICT (alliance_war_id, kingdom_id)
-              DO UPDATE SET preplan_jsonb = EXCLUDED.preplan_jsonb, last_updated = now()
-            """
+            "SELECT 1 FROM alliance_war_participants "
+            "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
         ),
-        {"wid": payload.alliance_war_id, "kid": kid, "plan": payload.preplan_jsonb},
-    )
-    db.commit()
+        {"wid": payload.alliance_war_id, "kid": kid},
+    ).first():
+        raise HTTPException(status_code=403, detail="Not part of this war")
+
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO alliance_war_preplans (alliance_war_id, kingdom_id, preplan_jsonb)
+                VALUES (:wid, :kid, :plan)
+                ON CONFLICT (alliance_war_id, kingdom_id)
+                  DO UPDATE SET preplan_jsonb = EXCLUDED.preplan_jsonb, last_updated = now()
+                """
+            ),
+            {"wid": payload.alliance_war_id, "kid": kid, "plan": payload.preplan_jsonb.dict()},
+        )
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save preplan") from exc
+
     log_action(db, user_id, "Save Preplan", str(payload.alliance_war_id))
     return {"status": "saved"}
