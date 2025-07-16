@@ -126,6 +126,13 @@ h2 {
   transition: width var(--transition-medium);
 }
 
+.progress-label {
+  text-align: right;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  color: var(--parchment-light);
+}
+
 /* Action Buttons */
 .quest-actions {
   margin-top: 1.5rem;
