@@ -106,11 +106,14 @@ Developer: Deathsgift66
     let submitting = false;
     let pendingResponse = null;
     let userHasTreatyPermission = false;
+    let alliances = [];
+    const STATUS_ICONS = { proposed: '⏳', active: '✅', cancelled: '❌', expired: '⌛' };
 
     document.addEventListener('DOMContentLoaded', () => {
       loadTreaties();
       subscribeToRealtime();
       checkTreatyPermission();
+      fetchAlliances();
       document
         .getElementById('create-new-treaty')
         ?.addEventListener('click', proposeTreaty);
@@ -120,6 +123,9 @@ Developer: Deathsgift66
       document
         .getElementById('propose-treaty-form')
         ?.addEventListener('submit', submitProposeTreaty);
+      document
+        .getElementById('partner-alliance-name')
+        ?.addEventListener('input', e => showAllianceSuggestions(e.target.value));
       document
         .getElementById('cancel-propose-treaty')
         ?.addEventListener('click', closeProposeTreatyModal);
@@ -163,6 +169,11 @@ Developer: Deathsgift66
             pendingResponse = null;
             lastFocused?.focus();
           }
+        } else if (e.altKey && e.key.toLowerCase() === 'n') {
+          if (document.getElementById('propose-treaty-modal').classList.contains('hidden')) {
+            e.preventDefault();
+            proposeTreaty();
+          }
         }
       });
     });
@@ -205,11 +216,12 @@ Developer: Deathsgift66
         research_collaboration: '🕊'
       };
       const icon = icons[rawType] || '';
+      const statusIcon = STATUS_ICONS[t.status] || '';
       return `
         <div class="treaty-card ${t.status}">
           <h3>${icon} ${escapeHTML(type)}</h3>
           <p><strong>With:</strong> ${escapeHTML(t.partner_name)}</p>
-          <p><strong>Status:</strong> ${escapeHTML(t.status)}</p>
+          <p><strong>Status:</strong> <span class="status-icon">${statusIcon}</span>${escapeHTML(t.status)}</p>
           ${
             t.status === 'proposed'
               ? "<button class='respond-btn' data-id='" + t.treaty_id + "'>Respond</button>"
@@ -274,6 +286,32 @@ Developer: Deathsgift66
       });
     }
 
+    async function fetchAlliances() {
+      try {
+        const res = await fetch('/api/diplomacy/alliances');
+        const data = await res.json();
+        alliances = data.alliances || [];
+      } catch (err) {
+        console.error('Alliance list error:', err);
+      }
+    }
+
+    function showAllianceSuggestions(query) {
+      const list = document.getElementById('alliance-list');
+      if (!list) return;
+      list.innerHTML = '';
+      if (!query) return;
+      alliances
+        .filter(a => a.name.toLowerCase().startsWith(query.toLowerCase()))
+        .slice(0, 5)
+        .forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.name;
+          opt.dataset.id = a.alliance_id;
+          list.appendChild(opt);
+        });
+    }
+
     // -------------------- Modal --------------------
     async function openTreatyModal(id) {
       try {
@@ -296,7 +334,7 @@ Developer: Deathsgift66
         box.innerHTML = `
             <h3>${escapeHTML(t.name)}</h3>
             <p>Partner: ${escapeHTML(t.partner_name)}</p>
-            <p>Status: ${escapeHTML(t.status)}</p>
+            <p>Status: <span class="status-icon">${STATUS_ICONS[t.status] || ''}</span>${escapeHTML(t.status)}</p>
             <table class="terms-table"><tbody>${termsRows}</tbody></table>
             ${
               t.status === 'proposed'
@@ -399,8 +437,11 @@ Developer: Deathsgift66
       if (errorBox) errorBox.textContent = '';
       const typeRaw = document.getElementById('treaty-type')?.value;
       const type = String(typeRaw || '').trim();
-      const partnerId = document.getElementById('partner-alliance-id')?.value;
-      const partnerNum = parseInt(partnerId, 10);
+      const nameInput = document.getElementById('partner-alliance-name');
+      const partnerName = nameInput?.value.trim();
+      const list = document.getElementById('alliance-list');
+      const opt = Array.from(list?.options || []).find(o => o.value === partnerName);
+      const partnerNum = opt ? parseInt(opt.dataset.id, 10) : parseInt(partnerName, 10);
       const durationVal = parseInt(document.getElementById('duration-days')?.value, 10);
       const exclusive = document.getElementById('exclusive')?.checked;
       const allowedTypes = [
@@ -412,10 +453,10 @@ Developer: Deathsgift66
       ];
       if (
         !allowedTypes.includes(type) ||
-        !partnerId ||
+        !partnerName ||
         !Number.isInteger(partnerNum) ||
         partnerNum <= 0 ||
-        (durationVal && (!Number.isInteger(durationVal) || durationVal <= 0))
+        (durationVal && (!Number.isInteger(durationVal) || durationVal <= 0 || durationVal > 180))
       ) {
         errorBox.textContent = 'Invalid treaty details.';
         showToast('Invalid treaty details.', 'error');
@@ -531,12 +572,13 @@ Developer: Deathsgift66
           <option value="research_collaboration" title="Cooperate on research projects">Research Collaboration</option>
         </select>
         <div class="helper-text">Choose the kind of agreement.</div>
-        <label for="partner-alliance-id">Partner Alliance ID:</label>
-        <input type="number" id="partner-alliance-id" name="partner-alliance-id" min="1" required aria-describedby="form-error" />
-        <div class="helper-text">Enter the numeric ID of the partner alliance.</div>
+        <label for="partner-alliance-name">Partner Alliance:</label>
+        <input type="text" id="partner-alliance-name" name="partner-alliance-name" list="alliance-list" autocomplete="off" required aria-describedby="form-error" />
+        <datalist id="alliance-list"></datalist>
+        <div class="helper-text">Type the alliance name or ID.</div>
         <label for="duration-days">Duration (days):</label>
-        <input type="number" id="duration-days" name="duration-days" min="1" value="30" aria-describedby="form-error" />
-        <div class="helper-text">Leave blank for default 30 days.</div>
+        <input type="number" id="duration-days" name="duration-days" min="1" max="180" value="30" aria-describedby="form-error" />
+        <div class="helper-text">1–180 days; blank uses default 30.</div>
         <label><input type="checkbox" id="exclusive" name="exclusive" /> Exclusive Agreement</label>
         <div class="helper-text">Blocks similar treaties with other alliances.</div>
         <div id="form-error" class="form-error" aria-live="polite"></div>
