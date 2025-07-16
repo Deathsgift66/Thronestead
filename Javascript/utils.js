@@ -35,6 +35,7 @@ export function escapeHTML(str = '') {
  */
 export function showToast(msg, type = 'info') {
   let toast = document.getElementById('toast');
+  let announcer = document.getElementById('toast-announcer');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'toast';
@@ -45,7 +46,16 @@ export function showToast(msg, type = 'info') {
     toast.setAttribute('aria-hidden', 'true');
     document.body.appendChild(toast);
   }
+  if (!announcer) {
+    announcer = document.createElement('div');
+    announcer.id = 'toast-announcer';
+    announcer.className = 'visually-hidden';
+    announcer.setAttribute('role', 'status');
+    announcer.setAttribute('aria-live', 'assertive');
+    document.body.appendChild(announcer);
+  }
   toast.textContent = msg;
+  announcer.textContent = msg;
   toast.className = `toast-notification ${type}`;
   toast.setAttribute('aria-hidden', 'false');
   toast.classList.add('show');

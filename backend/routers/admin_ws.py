@@ -13,7 +13,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from starlette.websockets import WebSocketState
 
 from ..database import SessionLocal
-from ..security import decode_supabase_jwt, verify_admin
+from ..security import decode_supabase_jwt, verify_admin, validate_reauth_token
 
 router = APIRouter()
 
@@ -24,22 +24,16 @@ connected_admins: list[WebSocket] = []
 async def live_admin_alerts(websocket: WebSocket):
     """Stream live admin alerts once JWT verified as an admin."""
     token = websocket.query_params.get("token")
-    if not token:
-        await websocket.close(code=1008)
-        return
-
-    try:
-        claims = decode_supabase_jwt(token)
-    except JWTError:
-        await websocket.close(code=1008)
-        return
-
-    user_id = claims.get("sub")
-    if not user_id:
+    user_id = websocket.query_params.get("uid")
+    if not token or not user_id:
         await websocket.close(code=1008)
         return
 
     db = SessionLocal()
+    if not validate_reauth_token(db, user_id, token):
+        db.close()
+        await websocket.close(code=1008)
+        return
     try:
         verify_admin(user_id, db)
     except HTTPException:
