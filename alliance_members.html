@@ -41,11 +41,21 @@
     const pageSize = 20;
     let actionsBound = false;
     let authToken = '';
+
+    function generateUUID() {
+      return (
+        crypto?.randomUUID?.() ||
+        ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+          (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+        )
+      );
+    }
+
     let csrfToken =
       sessionStorage.getItem('csrf_token') ||
       (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '')
         .split('=')[1] ||
-      crypto.randomUUID();
+      generateUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
     document.cookie =
       `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;

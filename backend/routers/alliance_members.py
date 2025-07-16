@@ -16,7 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import Alliance, AllianceMember
-from services.audit_service import log_action
+from services.audit_service import log_action, log_alliance_activity
 
 from ..database import get_db
 from ..security import require_user_id, require_csrf_token
@@ -57,8 +57,21 @@ class TransferLeadershipPayload(BaseModel):
 
 MANAGEMENT_ROLES = {"Leader", "Co-Leader", "Officer"}
 
+RANK_LEVELS = {
+    "member": 0,
+    "diplomat": 1,
+    "war officer": 2,
+    "officer": 2,
+    "co-leader": 3,
+    "leader": 4,
+}
 
-def validate_management_role(db: Session, user_id: str) -> int:
+
+def rank_level(rank: str) -> int:
+    return RANK_LEVELS.get((rank or "member").lower(), -1)
+
+
+def validate_management_role(db: Session, user_id: str) -> tuple[int, str]:
     row = db.execute(
         text("SELECT alliance_id, alliance_role FROM users WHERE user_id = :uid"),
         {"uid": user_id},
@@ -68,7 +81,7 @@ def validate_management_role(db: Session, user_id: str) -> int:
     aid, role = row
     if role not in MANAGEMENT_ROLES:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
-    return aid
+    return aid, role
 
 
 # === ROUTES ===
@@ -171,7 +184,11 @@ def demote(
 
 
 def _change_rank(payload: RankPayload, db: Session, action: str, acting_user_id: str):
-    aid = validate_management_role(db, acting_user_id)
+    aid, role = validate_management_role(db, acting_user_id)
+    if role != "Leader":
+        raise HTTPException(status_code=403, detail="Only the leader may modify ranks")
+    if acting_user_id == payload.user_id:
+        raise HTTPException(status_code=403, detail="Cannot modify own rank")
     member = (
         db.query(AllianceMember)
         .filter_by(
@@ -184,9 +201,12 @@ def _change_rank(payload: RankPayload, db: Session, action: str, acting_user_id:
         raise HTTPException(status_code=404, detail="Member not found")
     if member.alliance_id != aid:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
+    if rank_level(role) <= rank_level(member.rank):
+        raise HTTPException(status_code=403, detail="Target rank too high")
     member.rank = payload.new_rank
     db.commit()
-    log_action(db, payload.user_id, f"{action.lower()}_rank", payload.new_rank)
+    log_action(db, acting_user_id, f"{action.lower()}_member", f"{member.user_id}->{payload.new_rank}")
+    log_alliance_activity(db, aid, acting_user_id, action, member.user_id)
     return {"message": action, "user_id": payload.user_id}
 
 
@@ -197,7 +217,9 @@ def remove(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
-    aid = validate_management_role(db, user_id)
+    aid, role = validate_management_role(db, user_id)
+    if rank_level(role) < rank_level("war officer"):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     member = (
         db.query(AllianceMember)
         .filter_by(
@@ -210,9 +232,14 @@ def remove(
         raise HTTPException(status_code=404, detail="Member not found")
     if member.alliance_id != aid:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
+    if rank_level(role) <= rank_level(member.rank):
+        raise HTTPException(status_code=403, detail="Target rank too high")
+    if member.user_id == user_id:
+        raise HTTPException(status_code=403, detail="Cannot remove yourself")
     db.delete(member)
     db.commit()
-    log_action(db, user_id, "remove_member", f"Removed {payload.user_id}")
+    log_action(db, user_id, "kick_member", f"Removed {payload.user_id}")
+    log_alliance_activity(db, aid, user_id, "Kick", payload.user_id)
     return {"message": "Removed", "user_id": payload.user_id}
 
 
@@ -223,7 +250,7 @@ def contribute(
     csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
-    aid = validate_management_role(db, user_id)
+    aid, _ = validate_management_role(db, user_id)
     member = db.query(AllianceMember).filter_by(user_id=payload.user_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -323,4 +350,5 @@ def transfer_leadership(
     alliance.leader = new_leader.user_id
     db.commit()
     log_action(db, user_id, "transfer_leader", f"Transferred to {new_leader.user_id}")
+    log_alliance_activity(db, alliance.alliance_id, user_id, "Transfer", new_leader.user_id)
     return {"message": "Leadership transferred", "leader": new_leader.user_id}
