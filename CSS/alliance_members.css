@@ -224,3 +224,8 @@ h2 {
   font-style: italic;
   margin: 1rem auto;
 }
+
+.highlight-current-user {
+  background-color: #ffeaa7;
+  font-weight: bold;
+}
