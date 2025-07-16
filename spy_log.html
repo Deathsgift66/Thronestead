@@ -39,6 +39,7 @@ Developer: Deathsgift66
     import { applyKingdomLinks } from '/Javascript/kingdom_name_linkify.js';
 
     let realtimeChannel = null;
+    let currentSession = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -46,7 +47,7 @@ Developer: Deathsgift66
         window.location.href = 'login.html';
         return;
       }
-
+      currentSession = session;
       await loadSpyLog();
       subscribeRealtime();
       applyKingdomLinks();
@@ -57,22 +58,27 @@ Developer: Deathsgift66
       if (!body) return;
       body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
       try {
-        const res = await fetch('/api/spy/log');
+        const res = await fetch('/api/spy/log?limit=100', {
+          headers: { Authorization: `Bearer ${currentSession.access_token}` }
+        });
         if (!res.ok) throw new Error('Failed to fetch log');
         const data = await res.json();
         body.innerHTML = '';
         const logs = data.logs || [];
+        logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         if (!logs.length) {
           body.innerHTML = `<tr><td colspan="7">No missions found.</td></tr>`;
           return;
         }
         logs.forEach(entry => {
           const row = document.createElement('tr');
+          row.classList.add(entry.outcome === 'success' ? 'success' : 'fail');
+          if (entry.detected) row.classList.add('detected');
           row.innerHTML = `
             <td>${escapeHTML(entry.mission_type || '')}</td>
-            <td>${escapeHTML(entry.target_name || entry.target_id || '')}</td>
+            <td>${escapeHTML(entry.target_name || String(entry.target_id) || '')}</td>
             <td>${entry.outcome === 'success' ? '✅' : '❌'}</td>
-            <td>${entry.accuracy != null ? entry.accuracy + '%' : '-'}</td>
+            <td>${entry.accuracy !== null && entry.accuracy !== undefined ? entry.accuracy + '%' : '-'}</td>
             <td>${entry.detected ? '⚠️' : ''}</td>
             <td>${entry.spies_lost || 0}</td>
             <td>${formatDate(entry.timestamp)}</td>
@@ -100,6 +106,9 @@ Developer: Deathsgift66
         });
 
       window.addEventListener('beforeunload', () => {
+        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      });
+      window.addEventListener('pagehide', () => {
         if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       });
     }
