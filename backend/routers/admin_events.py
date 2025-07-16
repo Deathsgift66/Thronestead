@@ -13,8 +13,12 @@ from sqlalchemy.orm import Session
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key
-from ..security import verify_admin
+from ..security import (
+    require_user_id,
+    verify_api_key,
+    verify_admin,
+    require_csrf_token,
+)
 
 router = APIRouter(prefix="/api/admin/events", tags=["admin_events"])
 
@@ -33,6 +37,7 @@ def create_event(
     payload: EventPayload,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ) -> dict:
     """Insert a new global event and audit the action."""

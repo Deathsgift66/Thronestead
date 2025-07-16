@@ -10,8 +10,10 @@ All routes are protected by Supabase JWT and require admin authorization.
 
 import logging
 
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -25,30 +27,45 @@ from .admin_dashboard import dashboard_summary, get_audit_logs
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 logger = logging.getLogger("Thronestead.Admin")
 
+# Strict validation patterns
+UUID4_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    re.I,
+)
+IP_PATTERN = re.compile(
+    r"^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$",
+)
+
 
 # -------------------------
 # 🧾 Data Models
 # -------------------------
 class PlayerAction(BaseModel):
-    player_id: str
-    alert_id: str | None = None
+    player_id: str = Field(..., regex=UUID4_PATTERN.pattern)
+    alert_id: str | None = Field(default=None, regex=UUID4_PATTERN.pattern)
 
 
 class AlertID(BaseModel):
-    alert_id: str
+    alert_id: str = Field(..., regex=UUID4_PATTERN.pattern)
 
 
 class IPPayload(BaseModel):
-    ip: str
+    ip: str = Field(..., regex=IP_PATTERN.pattern)
 
 
 class SuspendPayload(BaseModel):
-    user_id: str
+    user_id: str = Field(..., regex=UUID4_PATTERN.pattern)
 
 
 class BulkAction(BaseModel):
     action: str
     player_ids: list[str]
+
+    @validator("player_ids", each_item=True)
+    def _validate_ids(cls, v: str) -> str:
+        if not UUID4_PATTERN.match(v):
+            raise ValueError("Invalid player_id")
+        return v
 
 
 class AlertFilters(BaseModel):
@@ -68,6 +85,7 @@ def flag_player(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "flag_user", f"Flagged user {payload.player_id}")
@@ -79,6 +97,7 @@ def freeze_player(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "freeze_user", f"Froze user {payload.player_id}")
@@ -90,6 +109,7 @@ def ban_player(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "ban_user", f"Banned user {payload.player_id}")
@@ -111,6 +131,7 @@ def bulk_action(
     payload: BulkAction,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     log_action(
@@ -127,6 +148,7 @@ def player_action(
     payload: PlayerAction,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     log_action(db, admin_id, "admin_action", payload.alert_id or "manual_action")
@@ -138,6 +160,7 @@ def flag_ip(
     payload: IPPayload,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     ip = payload.ip
@@ -161,6 +184,7 @@ def suspend_user(
     payload: SuspendPayload,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     uid = payload.user_id
@@ -173,6 +197,7 @@ def mark_alert_handled(
     payload: AlertID,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     aid = payload.alert_id
@@ -185,6 +210,7 @@ def dismiss_alert(
     payload: AlertID,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     """Delete an alert after verifying admin permissions."""
@@ -297,6 +323,7 @@ def query_admin_alerts(
     filters: AlertFilters,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_admin_user),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     where_parts = []

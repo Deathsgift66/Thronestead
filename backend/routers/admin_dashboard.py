@@ -21,7 +21,7 @@ from backend.models import Kingdom
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key, verify_admin
+from ..security import require_user_id, verify_api_key, verify_admin, require_csrf_token
 
 router = APIRouter(prefix="/api/admin", tags=["admin_dashboard"])
 
@@ -137,6 +137,7 @@ def toggle_flag(
     value: bool,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_user_id, db)
@@ -173,6 +174,7 @@ def update_kingdom_field(
     value: Any,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_user_id, db)
@@ -211,7 +213,13 @@ class KingdomFieldUpdate(BaseModel):
 
 
 @router.post("/kingdom/update_field")
-def update_field(payload: KingdomFieldUpdate, verify: str = Depends(verify_api_key), admin_user_id: str = Depends(require_user_id), db: Session = Depends(get_db)):
+def update_field(
+    payload: KingdomFieldUpdate,
+    verify: str = Depends(verify_api_key),
+    admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
+    db: Session = Depends(get_db),
+):
     """Alias for ``/kingdoms/update`` using JSON payload."""
     return update_kingdom_field(
         payload.kingdom_id,
@@ -253,6 +261,7 @@ def force_end_war(
     payload: WarAction,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_user_id, db)
@@ -272,6 +281,7 @@ def rollback_combat_tick(
     payload: WarAction,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_user_id, db)
@@ -305,6 +315,7 @@ def rollback_database(
     payload: RollbackRequest,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    csrf: str = Depends(require_csrf_token),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_user_id, db)

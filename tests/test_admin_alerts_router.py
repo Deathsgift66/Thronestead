@@ -63,13 +63,13 @@ def test_flag_ip_logs():
 
 def test_suspend_user_logs():
     db = DummyDB()
-    suspend_user(SuspendPayload(user_id="u1"), admin_id="a1", db=db)
+    suspend_user(SuspendPayload(user_id="00000000-0000-4000-8000-000000000000"), admin_id="a1", db=db)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
 def test_mark_alert_logs():
     db = DummyDB()
-    mark_alert_handled(AlertID(alert_id="a5"), admin_id="a1", db=db)
+    mark_alert_handled(AlertID(alert_id="11111111-1111-4111-8111-111111111111"), admin_id="a1", db=db)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
@@ -79,7 +79,7 @@ def test_dismiss_alert_deletes_and_logs():
             self.committed = True
 
     db = DB()
-    dismiss_alert(AlertID(alert_id="7"), admin_id="a1", db=db)
+    dismiss_alert(AlertID(alert_id="22222222-2222-4222-8222-222222222222"), admin_id="a1", db=db)
     joined = " ".join(db.queries[0][0].split()).lower()
     assert "delete from admin_alerts" in joined
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
