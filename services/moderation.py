@@ -103,6 +103,7 @@ def contains_malicious_link(text: str) -> bool:
 
 
 RESERVED_USERNAMES = {"admin", "moderator", "mod", "developer", "dev"}
+RESERVED_KINGDOM_NAMES = {"admin", "moderator", "support"}
 
 
 def has_reserved_username(username: str) -> bool:
@@ -133,3 +134,20 @@ def validate_username(username: str) -> None:
     validate_clean_text(username)
     if has_reserved_username(username):
         raise ValueError("Username contains reserved term")
+
+
+def has_reserved_kingdom_name(name: str) -> bool:
+    """Return True if ``name`` impersonates staff or reserved strings."""
+    normalized = name.lower().replace("0", "o")
+    return any(r in normalized for r in RESERVED_KINGDOM_NAMES)
+
+
+def validate_kingdom_name(name: str) -> None:
+    """Validate a kingdom name for length, characters and reserved terms."""
+    validate_clean_text(name)
+    if not (3 <= len(name) <= 32):
+        raise ValueError("Kingdom name must be 3-32 characters")
+    if not re.fullmatch(r"[A-Za-z0-9 _'-]+", name):
+        raise ValueError("Kingdom name contains invalid characters")
+    if has_reserved_kingdom_name(name):
+        raise ValueError("Kingdom name contains reserved term")

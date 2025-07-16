@@ -15,7 +15,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, constr, validator
-from services.moderation import validate_clean_text, validate_username
+from services.moderation import (
+    validate_clean_text,
+    validate_username,
+    validate_kingdom_name,
+)
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -25,10 +29,11 @@ from services.resource_service import ensure_kingdom_resource_row
 from ..database import get_db
 from ..supabase_client import get_supabase_client
 from ..rate_limiter import limiter
-from fastapi import Request
+from fastapi import Request, Header
 from services.audit_service import log_action
 import httpx
 from ..env_utils import get_env_var
+from ..security import verify_jwt_token
 
 HCAPTCHA_SECRET = get_env_var("HCAPTCHA_SECRET")
 
@@ -121,10 +126,11 @@ class RegisterPayload(BaseModel):
 
     _check_display = validator(
         "display_name",
-        "kingdom_name",
-        "profile_bio",
         allow_reuse=True,
     )(lambda v: _validate_text(v))
+    _check_kingdom = validator("kingdom_name", allow_reuse=True)(
+        lambda v: _validate_kingdom_name(v)
+    )
     _check_username = validator("username", allow_reuse=True)(
         lambda v: _validate_username(v)
     )
@@ -143,6 +149,12 @@ def _validate_text(value: str | None) -> str | None:
 def _validate_username(value: str | None) -> str | None:
     if value is not None:
         validate_username(value)
+    return value
+
+
+def _validate_kingdom_name(value: str | None) -> str | None:
+    if value is not None:
+        validate_kingdom_name(value)
     return value
 
 
@@ -402,12 +414,25 @@ def finalize_signup(payload: FinalizePayload, db: Session = Depends(get_db)):
 @router.post("/register")
 @limiter.limit("5/minute")
 def register(
-    request: Request, payload: RegisterPayload, db: Session = Depends(get_db)
+    request: Request,
+    payload: RegisterPayload,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
 ):
     """
     Create a Supabase auth user and register their kingdom profile.
     """
     sb = get_supabase_client()
+
+    # --- CSRF/Token Verification ---
+    if authorization:
+        token_uid = verify_jwt_token(authorization=authorization)
+        if payload.user_id and payload.user_id != token_uid:
+            raise HTTPException(status_code=400, detail="User ID mismatch")
+        if not payload.user_id:
+            payload.user_id = token_uid
+
+    validate_kingdom_name(payload.kingdom_name)
 
     # --- Uniqueness Checks ---
     _check_username_free(db, payload.username)
@@ -470,11 +495,7 @@ def register(
             confirmed_at = getattr(user_obj, "confirmed_at", None) or user_obj.get(
                 "confirmed_at"
             )
-        if not confirmed_at:
-            raise HTTPException(
-                status_code=202,
-                detail="Please confirm your email address before logging in.",
-            )
+        # Allow account creation to proceed even if email is not yet confirmed
 
         # Extract the newly created user ID
         if user_obj:
@@ -515,47 +536,50 @@ def register(
             },
         )
 
-        row = db.execute(
-            text(
-                """
-                INSERT INTO kingdoms (user_id, kingdom_name, ruler_name, region)
-                VALUES (:uid, :kingdom, :display, :region)
-                RETURNING kingdom_id
-                """
-            ),
-            {
-                "uid": uid,
-                "kingdom": payload.kingdom_name,
-                "display": payload.display_name,
-                "region": region_name,
-            },
-        ).fetchone()
-        kid = int(row[0]) if row else None
-
-        ensure_kingdom_resource_row(db, kid)
-        db.execute(
-            text("INSERT INTO kingdom_titles (kingdom_id, title) VALUES (:kid, 'Founder')"),
-            {"kid": kid},
-        )
-
-        village = db.execute(
-            text(
-                """
-                INSERT INTO kingdom_villages (kingdom_id, village_name, village_type)
-                VALUES (:kid, :name, 'capital')
-                RETURNING village_id
-                """
-            ),
-            {"kid": kid, "name": payload.kingdom_name},
-        ).fetchone()
-        if village:
-            db.execute(
+        kid = None
+        if confirmed:
+            row = db.execute(
                 text(
-                    "INSERT INTO village_buildings (village_id, building_id, level) "
-                    "VALUES (:vid, 1, 1) ON CONFLICT DO NOTHING"
+                    """
+                    INSERT INTO kingdoms (user_id, kingdom_name, ruler_name, region)
+                    VALUES (:uid, :kingdom, :display, :region)
+                    RETURNING kingdom_id
+                    """
                 ),
-                {"vid": int(village[0])},
-            )
+                {
+                    "uid": uid,
+                    "kingdom": payload.kingdom_name,
+                    "display": payload.display_name,
+                    "region": region_name,
+                },
+            ).fetchone()
+            kid = int(row[0]) if row else None
+
+            if kid:
+                ensure_kingdom_resource_row(db, kid)
+                db.execute(
+                    text("INSERT INTO kingdom_titles (kingdom_id, title) VALUES (:kid, 'Founder')"),
+                    {"kid": kid},
+                )
+
+                village = db.execute(
+                    text(
+                        """
+                        INSERT INTO kingdom_villages (kingdom_id, village_name, village_type)
+                        VALUES (:kid, :name, 'capital')
+                        RETURNING village_id
+                        """
+                    ),
+                    {"kid": kid, "name": payload.kingdom_name},
+                ).fetchone()
+                if village:
+                    db.execute(
+                        text(
+                            "INSERT INTO village_buildings (village_id, building_id, level) "
+                            "VALUES (:vid, 1, 1) ON CONFLICT DO NOTHING"
+                        ),
+                        {"vid": int(village[0])},
+                    )
 
         db.execute(
             text(

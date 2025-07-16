@@ -104,7 +104,12 @@ Developer: Deathsgift66
           </div>
 
           <!-- Captcha -->
-          <div id="signup-captcha" class="h-captcha" data-sitekey="56862342-e134-4d60-9d6a-0b42ff4ebc24"></div>
+          <div
+            id="signup-captcha"
+            class="h-captcha"
+            data-sitekey="56862342-e134-4d60-9d6a-0b42ff4ebc24"
+            aria-label="Captcha verification"
+          ></div>
           <script src="https://hcaptcha.com/1/api.js" async defer></script>
 
           <!-- Submit Button -->
@@ -236,10 +241,11 @@ Developer: Deathsgift66
             const res = await fetch(
               `${API_BASE_URL}/api/signup/available?kingdom_name=${encodeURIComponent(name)}`
             );
+            if (!res.ok) throw new Error('Availability check failed');
             const { available } = await res.json();
             updateAvailabilityUI('username-msg', available);
           } catch (err) {
-            console.error('Username availability check failed:', err);
+            console.error('[SIGNUP]', err);
           }
         }, 400)
       );
@@ -255,10 +261,11 @@ Developer: Deathsgift66
             const res = await fetch(
               `${API_BASE_URL}/api/signup/available?email=${encodeURIComponent(emailVal)}`
             );
+            if (!res.ok) throw new Error('Availability check failed');
             const { available } = await res.json();
             updateAvailabilityUI('email-msg', available);
           } catch (err) {
-            console.error('Email availability check failed:', err);
+            console.error('[SIGNUP]', err);
           }
         }, 400)
       );
@@ -296,7 +303,10 @@ Developer: Deathsgift66
         let captchaToken = 'test';
         if (window.hcaptcha && typeof hcaptcha.getResponse === 'function') {
           captchaToken = hcaptcha.getResponse();
-          if (!captchaToken) throw new Error('Please complete the captcha challenge.');
+        }
+        const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        if (!isLocal && (!captchaToken || captchaToken === 'test')) {
+          throw new Error('Captcha must be completed.');
         }
 
         const { data, error } = await supabase.auth.signUp({
@@ -309,20 +319,29 @@ Developer: Deathsgift66
         });
 
         if (error) {
-          if (error.code === 'auth/email-already-in-use') {
-            console.warn('EMAIL BLOCKED:', email, 'supabase');
-            throw new Error('Email already exists.');
-          }
-          throw error;
+          const known = {
+            'auth/email-already-in-use': 'Email already exists.',
+            'auth/invalid-password': 'Password too weak.',
+            'auth/invalid-email': 'Invalid email address.'
+          };
+          console.warn('[SIGNUP]', error.code, error.message);
+          throw new Error(known[error.code] || error.message || 'Signup failed.');
         }
 
         const user = data.user;
         const confirmed = user?.email_confirmed_at || user?.confirmed_at;
-        if (!confirmed) return showToast('Check your email to verify your account.');
+        if (!confirmed) {
+          showToast('Check your email to verify your account.');
+        }
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = `Bearer ${token}`;
 
         const regRes = await fetch(`${API_BASE_URL}/api/signup/register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             user_id: user.id,
             email,
@@ -346,7 +365,7 @@ Developer: Deathsgift66
         showToast('Signup successful! Redirecting...');
         setTimeout(() => (window.location.href = 'play.html'), 1500);
       } catch (err) {
-        console.error('❌ Signup error:', err);
+        console.error('[SIGNUP]', err);
         showMessage(err.message || 'Signup failed.');
       } finally {
         button.disabled = false;
@@ -363,7 +382,10 @@ Developer: Deathsgift66
       if (!select) return;
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/kingdom/regions`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(`${API_BASE_URL}/api/kingdom/regions`, { signal: controller.signal });
+        clearTimeout(timeout);
         const regions = await res.json();
         select.innerHTML = '<option value="">Select Region</option>';
         regions.forEach(r => {
@@ -379,8 +401,9 @@ Developer: Deathsgift66
           });
         }
       } catch (err) {
-        console.error('Failed to load regions:', err);
+        console.error('[SIGNUP]', err);
         select.innerHTML = '<option value="">Failed to load regions</option>';
+        if (infoEl) infoEl.textContent = 'Failed to load region descriptions.';
       }
     }
 
@@ -390,7 +413,10 @@ Developer: Deathsgift66
       if (!panel || !list) return;
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/signup/stats`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(`${API_BASE_URL}/api/signup/stats`, { signal: controller.signal });
+        clearTimeout(timeout);
         if (!res.ok) return;
         const data = await res.json();
         list.innerHTML = '';
@@ -401,7 +427,7 @@ Developer: Deathsgift66
         });
         panel.classList.remove('hidden');
       } catch (err) {
-        console.error('Failed to load top kingdoms:', err);
+        console.error('[SIGNUP]', err);
       }
     }
   </script>
