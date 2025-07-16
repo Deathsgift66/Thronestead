@@ -57,6 +57,7 @@ def public_profile(kingdom_id: int, db: Session = Depends(get_db)):
         "economy_score": row[6],
         "diplomacy_score": row[7],
         "is_on_vacation": row[8],
+        "is_banned": False,
         "village_count": village_count,
     }
 

@@ -50,6 +50,16 @@ def declare_war(
         # Ensure kingdom is not in vacation mode
         check_vacation_mode(db, kid)
 
+        target_kid = get_kingdom_id(db, payload.target)
+        # Ensure target kingdom is not in vacation mode
+        check_vacation_mode(db, target_kid)
+        banned = db.execute(
+            text("SELECT is_banned FROM users WHERE user_id = :uid"),
+            {"uid": payload.target},
+        ).fetchone()
+        if banned and banned[0]:
+            raise HTTPException(status_code=403, detail="Target is banned")
+
         # Validate knight availability
         knights = db.execute(
             text("SELECT COUNT(*) FROM kingdom_knights WHERE kingdom_id = :kid"),

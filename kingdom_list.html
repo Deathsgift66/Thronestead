@@ -1,0 +1,42 @@
+<!-- Project Name: Thronestead© -->
+<!-- File Name: kingdom_list.html -->
+<!-- Version: 7/1/2025 -->
+<!-- Developer: OpenAI Codex -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Kingdoms | Thronestead</title>
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <script src="/Javascript/apiHelper.js" type="module"></script>
+  <script src="/Javascript/navLoader.js" type="module"></script>
+  <script type="module">
+    import { fetchJson } from './Javascript/fetchJson.js';
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const kingdoms = await fetchJson('/api/kingdom/lookup');
+        const list = document.getElementById('kingdom-list');
+        kingdoms.forEach(k => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = `kingdom_profile.html?id=${k.kingdom_id}`;
+          a.textContent = k.kingdom_name;
+          li.appendChild(a);
+          list.appendChild(li);
+        });
+      } catch (err) {
+        document.getElementById('kingdom-list').textContent = 'Failed to load';
+      }
+    });
+  </script>
+</head>
+<body>
+  <div id="navbar-container"></div>
+  <main class="main-centered-container">
+    <h1>All Kingdoms</h1>
+    <ul id="kingdom-list"></ul>
+  </main>
+</body>
+</html>

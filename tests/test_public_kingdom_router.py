@@ -54,6 +54,7 @@ def test_public_profile_returns_data():
     result = public_kingdom.public_profile(1, db=db)
     assert result["military_score"] == 5
     assert result["village_count"] == 3
+    assert result["is_banned"] is False
 
 
 def test_public_profile_not_found():

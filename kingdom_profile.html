@@ -63,8 +63,7 @@ Developer: Deathsgift66
         10
       );
       if (!targetKingdomId) {
-        document.getElementById('profile-container').innerHTML =
-          '<p>Invalid kingdom.</p>';
+        window.location.href = '404.html';
         return;
       }
 
@@ -136,7 +135,11 @@ Developer: Deathsgift66
         }
       } catch (err) {
         console.error('profile load failed', err);
-        kNameEl.textContent = 'Failed to load';
+        document.getElementById('profile-container').innerHTML =
+          '<p>Failed to load. <button id="retry-profile">Try Again</button></p>';
+        document
+          .getElementById('retry-profile')
+          .addEventListener('click', loadProfile);
       }
     }
 
@@ -147,7 +150,10 @@ Developer: Deathsgift66
       const attackBtn = document.getElementById('attack-modal-btn');
 
       if (btn) {
-        btn.addEventListener('click', () => openModal(modal));
+        btn.addEventListener('click', () => {
+          openModal(modal);
+          modal.setAttribute('aria-hidden', 'false');
+        });
       }
       if (closeBtn) {
         closeBtn.addEventListener('click', () => closeModal(modal));
@@ -181,6 +187,7 @@ Developer: Deathsgift66
           if (!currentSession) return alert('Login required');
           if (reportTextarea) reportTextarea.value = '';
           openModal(reportModal);
+          reportModal.setAttribute('aria-hidden', 'false');
         });
       }
       if (closeBtn) {
@@ -193,6 +200,17 @@ Developer: Deathsgift66
 
     async function launchMission(missionType) {
       if (!currentSession) return alert('Login required');
+      const allowed = [
+        'spy_troops',
+        'spy_resources',
+        'assassinate_spies',
+        'assassinate_noble',
+        'assassinate_knight'
+      ];
+      if (!allowed.includes(missionType)) {
+        alert('Invalid mission');
+        return;
+      }
       const now = Date.now();
       if (now - lastAction < COOLDOWN_MS) {
         startCooldownTimer(lastAction + COOLDOWN_MS);
@@ -370,6 +388,10 @@ Developer: Deathsgift66
         </div>
       </div>
     </div>
+
+    <p style="text-align:center;margin-top:1rem">
+      <a href="kingdom_list.html" id="all-kingdoms-link">View All Kingdoms</a>
+    </p>
   </main>
 
   <!-- Footer -->
