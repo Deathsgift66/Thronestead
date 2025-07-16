@@ -123,20 +123,27 @@ def require_user_id(
     x_user_id: str | None = Header(None),
     authorization: str | None = Header(None),
 ) -> str:
-    """Validate ``X-User-ID`` and optionally ensure the token is valid."""
-    if not x_user_id:
+    """Validate the ID header and ensure it matches the JWT subject."""
+    token_uid = None
+    if authorization:
+        token_uid = verify_jwt_token(authorization=authorization)
+
+    if x_user_id:
+        try:
+            x_user_id = str(UUID(x_user_id))
+        except ValueError:
+            logger.warning("Invalid UUID format for user ID.")
+            raise HTTPException(status_code=401, detail="Invalid user ID")
+        if token_uid and token_uid != x_user_id:
+            logger.warning("User ID header mismatch with token UID.")
+            raise HTTPException(status_code=401, detail="User ID mismatch")
+    elif token_uid:
+        x_user_id = token_uid
+    else:
         logger.warning("Missing X-User-ID header.")
         raise HTTPException(status_code=401, detail="User ID header missing")
-    try:
-        x_user_id = str(UUID(x_user_id))
-    except ValueError:
-        logger.warning("Invalid UUID format for user ID.")
-        raise HTTPException(status_code=401, detail="Invalid user ID")
 
-    if authorization:
-        verify_jwt_token(authorization=authorization)
-
-    return x_user_id
+    return token_uid or x_user_id
 
 
 def require_active_user_id(

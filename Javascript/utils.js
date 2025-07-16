@@ -14,6 +14,26 @@ export const safeUUID = () =>
   );
 
 /**
+ * Retrieve or generate the CSRF token used for API requests.
+ * The token is stored in both sessionStorage and a cookie for
+ * backend validation.
+ *
+ * @returns {string} CSRF token
+ */
+export function getCsrfToken() {
+  let token =
+    sessionStorage.getItem('csrf_token') ||
+    (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '')
+      .split('=')[1];
+  if (!token) {
+    token = safeUUID();
+    sessionStorage.setItem('csrf_token', token);
+    document.cookie = `csrf_token=${token}; path=/; secure; samesite=strict`;
+  }
+  return token;
+}
+
+/**
  * Escape HTML special characters to prevent injection.
  * @param {string} str Potentially unsafe text
  * @returns {string} Sanitized text
@@ -386,10 +406,12 @@ export function sanitizeHTML(html = '') {
  */
 export function debounce(fn, delay = 300) {
   let timer;
-  return (...args) => {
+  function wrapper(...args) {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
-  };
+  }
+  wrapper.cancel = () => clearTimeout(timer);
+  return wrapper;
 }
 
 /**

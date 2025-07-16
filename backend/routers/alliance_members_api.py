@@ -29,6 +29,8 @@ def list_members(
     sort_by: str = "username",
     direction: str = "asc",
     search: str = "",
+    offset: int = 0,
+    limit: int = 20,
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
@@ -95,7 +97,7 @@ def list_members(
     order_clause = sort_col.desc() if direction.lower() == "desc" else sort_col.asc()
     query = query.order_by(order_clause)
 
-    rows = query.all()
+    rows = query.offset(max(offset, 0)).limit(max(1, min(limit, 100))).all()
 
     return [
         {
