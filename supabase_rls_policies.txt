@@ -2540,3 +2540,7 @@ ALL
 wars_tactical_write_own
 Applied to: authenticated role
 
+
+# realtime_alliance_members
+Ensure subscription rows are restricted to the authenticated user or same alliance.
+Policy: allow realtime on alliance_members where user_id = auth.uid() OR alliance_id = (select alliance_id from users where user_id = auth.uid()).
