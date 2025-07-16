@@ -118,6 +118,14 @@ body {
   font-family: 'Cinzel', serif;
   font-size: 1.25rem;
 }
+.status-icon {
+  margin-right: 0.25rem;
+}
+
+datalist option {
+  background: var(--parchment-dark);
+  color: var(--ink);
+}
 
 .treaty-actions {
   display: flex;
