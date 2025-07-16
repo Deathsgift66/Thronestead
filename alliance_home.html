@@ -58,29 +58,37 @@ Developer: Deathsgift66
       if (activityChannel) supabase.removeChannel(activityChannel);
     });
 
+    const LIMIT = 50;
+    let membersOffset = 0;
+
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } = {} } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      if (!userId) {
+      if (!session?.user?.id) {
         window.location.href = 'login.html';
         return;
       }
-      fetchAllianceDetails(userId);
+
+      await fetchAllianceDetails();
+      document
+        .getElementById('load-more-members')
+        ?.addEventListener('click', loadMoreMembers);
     });
 
-    async function fetchAllianceDetails(userId) {
+    async function fetchAllianceDetails(offset = 0) {
       try {
-        const data = await jsonFetch('/api/alliance-home/details', {
-          headers: { 'X-User-ID': userId }
-        });
-        populateAlliance(data);
-        setupRealtime(data.alliance?.alliance_id);
+        const data = await jsonFetch(
+          `/api/alliance-home/details?limit=${LIMIT}&offset=${offset}`
+        );
+        populateAlliance(data, offset === 0);
+        if (offset === 0) setupRealtime(data.alliance?.alliance_id);
+        membersOffset += data.members.length;
+        toggleButton('load-more-members', data.members.length === LIMIT);
       } catch (err) {
         console.error('❌ Failed to fetch alliance details:', err);
       }
     }
 
-    function populateAlliance(data) {
+    function populateAlliance(data, initial = true) {
       const a = data.alliance;
       if (!a) return;
 
@@ -102,13 +110,13 @@ Developer: Deathsgift66
       const banner = document.getElementById('alliance-banner-img');
       if (banner) {
         banner.src = a.banner || '/Assets/banner.png';
-        banner.alt = a.name ? `Banner of ${a.name}` : 'Alliance Banner';
+        banner.alt = a.name ? `Banner of ${escapeHTML(a.name)}` : 'Alliance Banner';
       }
 
       const emblem = document.getElementById('alliance-emblem-img');
       if (emblem && a.emblem_url) {
         emblem.src = a.emblem_url;
-        emblem.alt = a.name ? `Emblem of ${a.name}` : 'Alliance Emblem';
+        emblem.alt = a.name ? `Emblem of ${escapeHTML(a.name)}` : 'Alliance Emblem';
       }
 
       if (data.vault) {
@@ -120,7 +128,7 @@ Developer: Deathsgift66
       }
 
       renderProjects(data.projects);
-      renderMembers(data.members);
+      renderMembers(data.members, !initial);
       renderTopContributors(data.members);
       renderQuests(data.quests);
       renderAchievements(data.achievements);
@@ -149,10 +157,10 @@ Developer: Deathsgift66
       container.replaceChildren(frag);
     }
 
-    function renderMembers(members = []) {
+    function renderMembers(members = [], append = false) {
       const body = document.getElementById('members-list');
       if (!body) return;
-      if (!members.length) return setFallbackText(body, 'No members.', 'tr');
+      if (!members.length && !append) return setFallbackText(body, 'No members.', 'tr');
 
       const top = Math.max(0, ...members.map(m => m.contribution || 0));
       const frag = fragmentFrom(members, m => {
@@ -170,7 +178,8 @@ Developer: Deathsgift66
       <td>${escapeHTML(m.status)}</td>`;
         return row;
       });
-      body.replaceChildren(frag);
+      if (append) body.appendChild(frag);
+      else body.replaceChildren(frag);
     }
 
     function renderTopContributors(members = []) {
@@ -237,6 +246,7 @@ Developer: Deathsgift66
         return li;
       });
       list.replaceChildren(frag);
+      pruneActivityLog(list);
     }
 
     function renderDiplomacy(treaties = []) {
@@ -297,6 +307,14 @@ Developer: Deathsgift66
           table: 'alliance_activity_log',
           filter: `alliance_id=eq.${allianceId}`
         }, payload => addActivityEntry(payload.new))
+        .on('error', () => {
+          console.warn('Realtime channel error. Reconnecting...');
+          setTimeout(() => setupRealtime(allianceId), 1000);
+        })
+        .on('close', () => {
+          console.warn('Realtime channel closed. Reconnecting...');
+          setTimeout(() => setupRealtime(allianceId), 1000);
+        })
         .subscribe()
         .catch(err => console.error('Failed to setup realtime channel:', err));
     }
@@ -309,8 +327,23 @@ Developer: Deathsgift66
       li.className = 'activity-log-entry';
       li.textContent = `[${formatDate(entry.created_at)}] ${entry.user_id}: ${entry.description}`;
       list.prepend(li);
+      pruneActivityLog(list);
+    }
 
-      if (list.children.length > 20) list.removeChild(list.lastChild);
+    function pruneActivityLog(list, limit = 20) {
+      while (list.children.length > limit) list.removeChild(list.lastChild);
+    }
+
+    async function loadMoreMembers() {
+      const data = await fetchAllianceDetails(membersOffset);
+      renderMembers(data.members, true);
+      membersOffset += data.members.length;
+      toggleButton('load-more-members', data.members.length === LIMIT);
+    }
+
+    function toggleButton(id, show) {
+      const btn = document.getElementById(id);
+      if (btn) btn.style.display = show ? 'block' : 'none';
     }
   </script>
 
@@ -386,7 +419,9 @@ Developer: Deathsgift66
     <!-- Projects -->
     <section class="panel alliance-projects" aria-labelledby="projects-heading">
       <h2 id="projects-heading">Active Projects</h2>
-      <div id="project-progress-bars" class="progress-container"></div>
+      <div id="project-progress-bars" class="progress-container">
+        <div class="loading-skeleton">Loading...</div>
+      </div>
     </section>
 
     <!-- Members -->
@@ -402,9 +437,11 @@ Developer: Deathsgift66
             <th scope="col">Status</th>
           </tr>
         </thead>
-        <tbody id="members-list"></tbody>
+        <tbody id="members-list">
+          <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
       </table>
-      <!-- Load more button removed pending pagination support -->
+      <button id="load-more-members" class="royal-button" style="display:none">Load More</button>
     </section>
 
     <!-- Achievements -->
@@ -418,32 +455,32 @@ Developer: Deathsgift66
     <!-- Quests -->
     <section class="panel alliance-quests" aria-labelledby="quests-heading">
       <h2 id="quests-heading">Quest Progress</h2>
-      <div id="quest-list"></div>
+      <div id="quest-list"><div class="loading-skeleton">Loading...</div></div>
     </section>
 
     <!-- Active Battles -->
     <section class="panel active-battles" aria-labelledby="active-battles-heading">
       <h2 id="active-battles-heading">Active Battles</h2>
-      <div id="active-battles-list"></div>
+      <div id="active-battles-list"><div class="loading-skeleton">Loading...</div></div>
       <!-- Load more button removed pending pagination support -->
     </section>
 
     <!-- War Score -->
     <section class="panel war-score" aria-labelledby="war-score-heading">
       <h2 id="war-score-heading">War Score</h2>
-      <div id="war-score-summary"></div>
+      <div id="war-score-summary"><div class="loading-skeleton">Loading...</div></div>
     </section>
 
     <!-- Diplomacy -->
     <section class="panel diplomacy-overview" aria-labelledby="diplomacy-heading">
       <h2 id="diplomacy-heading">Diplomacy Overview</h2>
-      <div id="diplomacy-table"></div>
+      <div id="diplomacy-table"><div class="loading-skeleton">Loading...</div></div>
     </section>
 
     <!-- Activity Log -->
     <section class="panel activity-log" aria-labelledby="activity-heading">
       <h2 id="activity-heading">Recent Activity Log</h2>
-      <ul id="activity-log"></ul>
+      <ul id="activity-log"><li class="loading-skeleton">Loading...</li></ul>
       <!-- Load more button removed pending pagination support -->
     </section>
   </main>
