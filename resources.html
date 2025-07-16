@@ -117,15 +117,35 @@ Developer: Deathsgift66
 import { supabase } from '/Javascript/supabaseClient.js';
 import { fetchJson } from './fetchJson.js';
 
-let krSub = null, vaultSub = null;
+let krSub = null,
+  vaultSub = null,
+  currentHeaders = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
+function debounce(fn, delay = 300) {
+  let id;
+  return (...args) => {
+    clearTimeout(id);
+    id = setTimeout(() => fn(...args), delay);
+  };
+}
+
+async function cleanupSubscriptions() {
+  if (krSub) {
+    try { await supabase.removeChannel(krSub); } catch {}
+    krSub = null;
+  }
+  if (vaultSub) {
+    try { await supabase.removeChannel(vaultSub); } catch {}
+    vaultSub = null;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
   await loadResourcesNexus();
 });
 
-window.addEventListener("beforeunload", () => {
-  krSub?.unsubscribe();
-  vaultSub?.unsubscribe();
+window.addEventListener('beforeunload', () => {
+  cleanupSubscriptions();
 });
 
 // ✅ Load the full Resources Nexus page content
@@ -148,6 +168,7 @@ async function loadResourcesNexus() {
 
     const token = session.access_token;
     const headers = { Authorization: `Bearer ${token}`, 'X-User-ID': uid };
+    currentHeaders = headers;
 
     // ✅ Load kingdom resources
     const { resources: resourcesData } = await fetchJson('/api/resources', { headers });
@@ -157,7 +178,9 @@ async function loadResourcesNexus() {
     try {
       const { totals } = await fetchJson('/api/vault/resources', { headers });
       vaultData = totals;
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch vault data', err);
+      showToast('Alliance vault data unavailable');
       vaultData = null;
     }
 
@@ -165,7 +188,7 @@ async function loadResourcesNexus() {
     renderResourceTable(resourcesData);
     renderVaultTable(vaultData);
     renderSimulators();
-    subscribeToResourceUpdates();
+    await subscribeToResourceUpdates(uid);
 
   } catch (err) {
     console.error("❌ Error loading Resources Nexus:", err);
@@ -240,29 +263,22 @@ function renderVaultTable(vault) {
 // ✅ Provide simulator section (stub)
 function renderSimulators() {
   const el = document.getElementById('simulators');
-  el.innerHTML = "";
+  el.innerHTML = '';
 
-  const panel = document.createElement("div");
-  panel.className = "simulator-panel";
+  const panel = document.createElement('div');
+  panel.className = 'simulator-panel';
 
   panel.innerHTML = `
     <h3>Resource Simulators</h3>
-    <p class="text-muted">Estimate production rates, trade values, and net efficiency.</p>
+    <p class="text-muted">Simulator tools are coming soon.</p>
     <ul>
-      <li><a href="#" class="sim-link" data-coming-soon="true">🔧 Production Efficiency Simulator</a></li>
-      <li><a href="#" class="sim-link" data-coming-soon="true">📈 Market Value Calculator</a></li>
-      <li><a href="#" class="sim-link" data-coming-soon="true">⚖️ Trade Ratio Evaluator</a></li>
+      <li><span class="sim-disabled">🔧 Production Efficiency Simulator</span></li>
+      <li><span class="sim-disabled">📈 Market Value Calculator</span></li>
+      <li><span class="sim-disabled">⚖️ Trade Ratio Evaluator</span></li>
     </ul>
   `;
 
   el.appendChild(panel);
-
-  panel.querySelectorAll('.sim-link').forEach(a =>
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      alert('🛠️ Simulator tools are coming soon.');
-    })
-  );
 }
 
 // ✅ Format resource keys to display-friendly names
@@ -286,51 +302,74 @@ function showToast(message) {
   setTimeout(() => toastEl.classList.remove("show"), 3000);
 }
 
-// ✅ Realtime sync with Supabase channels
-function subscribeToResourceUpdates() {
-  supabase.auth.getUser().then(({ data }) => {
-    const uid = data?.user?.id;
-    if (!uid) return;
+const refreshResources = debounce(async () => {
+  if (!currentHeaders) return;
+  const { resources } = await fetchJson('/api/resources', { headers: currentHeaders });
+  renderResourceSummary(resources);
+  renderResourceTable(resources);
+}, 300);
 
-    supabase
+const refreshVault = debounce(async () => {
+  if (!currentHeaders) return;
+  try {
+    const { totals } = await fetchJson('/api/vault/resources', { headers: currentHeaders });
+    renderVaultTable(totals);
+  } catch (err) {
+    console.error('Failed to refresh vault data', err);
+    renderVaultTable(null);
+  }
+}, 300);
+
+// ✅ Realtime sync with Supabase channels
+async function subscribeToResourceUpdates(uid) {
+  await cleanupSubscriptions();
+  if (!uid) return;
+
+  try {
+    const { data, error } = await supabase
       .from('users')
       .select('kingdom_id, alliance_id')
       .eq('user_id', uid)
-      .single()
-      .then(({ data }) => {
-        const kid = data?.kingdom_id;
-        const aid = data?.alliance_id;
+      .single();
+    if (error) throw error;
 
-        if (kid) {
-          krSub = supabase
-            .channel(`kr-resources-${kid}`)
-            .on('postgres_changes', {
-              event: '*',
-              schema: 'public',
-              table: 'kingdom_resources',
-              filter: `kingdom_id=eq.${kid}`
-            }, (payload) => {
-              renderResourceSummary(payload.new);
-              renderResourceTable(payload.new);
-            })
-            .subscribe();
-        }
+    const kid = data?.kingdom_id;
+    const aid = data?.alliance_id;
 
-        if (aid) {
-          vaultSub = supabase
-            .channel(`kr-vault-${aid}`)
-            .on('postgres_changes', {
-              event: '*',
-              schema: 'public',
-              table: 'alliance_vault',
-              filter: `alliance_id=eq.${aid}`
-            }, (payload) => {
-              renderVaultTable(payload.new);
-            })
-            .subscribe();
-        }
-      });
-  });
+    if (kid) {
+      krSub = supabase
+        .channel(`kr-resources-${kid}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'kingdom_resources',
+            filter: `kingdom_id=eq.${kid}`
+          },
+          refreshResources
+        )
+        .subscribe();
+    }
+
+    if (aid) {
+      vaultSub = supabase
+        .channel(`kr-vault-${aid}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'alliance_vault',
+            filter: `alliance_id=eq.${aid}`
+          },
+          refreshVault
+        )
+        .subscribe();
+    }
+  } catch (err) {
+    console.error('Failed to subscribe to updates', err);
+  }
 }
   </script>
 
