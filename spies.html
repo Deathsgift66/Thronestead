@@ -34,10 +34,34 @@ Developer: Deathsgift66
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
+    import { toggleLoading } from '/Javascript/utils.js';
 
     let currentUserId = null;
     let currentSession = null;
     let realtimeChannel = null;
+
+    async function fetchWithRetry(url, options = {}, attempts = 3) {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const res = await fetch(url, options);
+          if (!res.ok) throw new Error('Request failed');
+          return res.json();
+        } catch (err) {
+          if (i === attempts - 1) throw err;
+          await new Promise(r => setTimeout(r, 500 * 2 ** i));
+        }
+      }
+    }
+
+    async function getKingdomName(id) {
+      if (!id) return 'Unknown';
+      try {
+        const data = await fetchWithRetry(`/api/kingdoms/public/${id}`);
+        return data.kingdom_name || id;
+      } catch {
+        return id;
+      }
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -63,15 +87,13 @@ Developer: Deathsgift66
     async function loadSpies() {
       const infoEl = document.getElementById('spy-info');
       infoEl.textContent = 'Loading...';
+      toggleLoading(true);
       try {
-        const res = await fetch('/api/kingdom/spies', {
+        const data = await fetchWithRetry('/api/kingdom/spies', {
           headers: {
-            'X-User-ID': currentUserId,
             Authorization: `Bearer ${currentSession.access_token}`
           }
         });
-        if (!res.ok) throw new Error('Failed to fetch spies');
-        const data = await res.json();
 
         infoEl.innerHTML = `
       <div>🕵️ Spy Level: ${data.spy_level}</div>
@@ -85,6 +107,8 @@ Developer: Deathsgift66
         console.error('loadSpies error:', err);
         infoEl.textContent = 'Failed to load spy info';
         showToast('Could not load spy stats.');
+      } finally {
+        toggleLoading(false);
       }
     }
 
@@ -94,15 +118,13 @@ Developer: Deathsgift66
     async function loadMissions() {
       const listEl = document.getElementById('missions');
       listEl.textContent = 'Loading missions...';
+      toggleLoading(true);
       try {
-        const res = await fetch('/api/kingdom/spy_missions', {
+        const data = await fetchWithRetry('/api/kingdom/spy_missions', {
           headers: {
-            'X-User-ID': currentUserId,
             Authorization: `Bearer ${currentSession.access_token}`
           }
         });
-        if (!res.ok) throw new Error('Failed to fetch missions');
-        const data = await res.json();
 
         listEl.innerHTML = '';
         if (!data.missions?.length) {
@@ -110,22 +132,26 @@ Developer: Deathsgift66
           return;
         }
 
-        data.missions.forEach(m => {
+        for (const m of data.missions) {
           const div = document.createElement('div');
           const type = m.mission_type || m.mission || 'Unknown';
           const status = m.status || 'Pending';
+          const targetName = await getKingdomName(m.target_id);
 
           div.className = `mission-card status-${status.toLowerCase()}`;
+          const icon = status.toLowerCase() === 'success' ? '✅' : status.toLowerCase() === 'fail' ? '❌' : '⏳';
           div.innerHTML = `
-        <strong>${type}</strong> targeting <em>${m.target_id}</em><br/>
-        <span>Status:</span> ${status}
+        <strong>${type}</strong> targeting <em>${targetName}</em><br/>
+        <span>Status:</span> ${icon} ${status}
       `;
           listEl.appendChild(div);
-        });
+        }
       } catch (err) {
         console.error('loadMissions error:', err);
         listEl.textContent = 'Failed to load missions';
         showToast('Could not load missions.');
+      } finally {
+        toggleLoading(false);
       }
     }
 
@@ -135,17 +161,21 @@ Developer: Deathsgift66
     async function trainSpies() {
       const qtyEl = document.getElementById('train-qty');
       const qty = parseInt(qtyEl.value, 10);
-      if (!qty || qty < 1) {
+      if (!Number.isInteger(qty) || qty < 1) {
         showToast('Enter a valid number of spies to train.');
         return;
       }
+
+      const btn = document.getElementById('train-btn');
+      btn.disabled = true;
+      setTimeout(() => (btn.disabled = false), 2000);
+      toggleLoading(true);
 
       try {
         const res = await fetch('/api/kingdom/spies/train', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-User-ID': currentUserId,
             Authorization: `Bearer ${currentSession.access_token}`
           },
           body: JSON.stringify({ quantity: qty })
@@ -161,6 +191,8 @@ Developer: Deathsgift66
       } catch (err) {
         console.error('trainSpies error:', err);
         showToast('Failed to train spies.');
+      } finally {
+        toggleLoading(false);
       }
     }
 
@@ -201,12 +233,12 @@ Developer: Deathsgift66
           }
         });
 
-      // Clean up on page unload
-      window.addEventListener('beforeunload', () => {
-        if (realtimeChannel) {
-          supabase.removeChannel(realtimeChannel);
-        }
-      });
+      // Clean up on page unload or navigation
+      const cleanup = () => {
+        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      };
+      window.addEventListener('beforeunload', cleanup);
+      window.addEventListener('pagehide', cleanup);
     }
 
     /**
@@ -283,6 +315,8 @@ Developer: Deathsgift66
   </section>
 
 </main>
+
+  <div id="loading-overlay" aria-hidden="true"><div class="spinner"></div></div>
 
 <!-- Toast Notification -->
 <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
@@ -377,6 +411,8 @@ def launch_spy_mission(
     mtype = payload.mission_type or payload.mission
     if not mtype:
         raise HTTPException(status_code=400, detail="mission_type is required")
+    if not payload.target_id:
+        raise HTTPException(status_code=400, detail="target_id is required")
 
     try:
         spies_service.start_mission(db, kid, payload.target_id)
