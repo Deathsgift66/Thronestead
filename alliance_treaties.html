@@ -44,7 +44,7 @@ Developer: Deathsgift66
   <script src="/Javascript/allianceAppearance.js" type="module"></script>
   <script src="/Javascript/progressionBanner.js" type="module"></script>
   <script type="module">
-    import { escapeHTML, openModal, closeModal, authFetch, showToast, safeUUID } from '/Javascript/utils.js';
+    import { escapeHTML, openModal, closeModal, authFetch, showToast, safeUUID, toggleLoading } from '/Javascript/utils.js';
 
     let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
     sessionStorage.setItem('csrf_token', csrfToken);
@@ -91,16 +91,26 @@ Developer: Deathsgift66
         el.setAttribute('inert', '');
       };
     }
+    if (typeof toggleLoading !== 'function') {
+      window.toggleLoading = show => {
+        const overlay = document.getElementById('loading-overlay');
+        if (!overlay) return;
+        overlay.setAttribute('aria-hidden', String(!show));
+        overlay.style.display = show ? 'flex' : 'none';
+      };
+    }
 
     // -------------------- Initialization --------------------
     let lastFocused = null;
     let treatyChannel = null;
     let submitting = false;
     let pendingResponse = null;
+    let userHasTreatyPermission = false;
 
     document.addEventListener('DOMContentLoaded', () => {
       loadTreaties();
       subscribeToRealtime();
+      checkTreatyPermission();
       document
         .getElementById('create-new-treaty')
         ?.addEventListener('click', proposeTreaty);
@@ -135,6 +145,7 @@ Developer: Deathsgift66
       document.getElementById('respond-no')?.addEventListener('click', () => {
         closeModal('respond-confirm-modal');
         pendingResponse = null;
+        lastFocused?.focus();
       });
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
@@ -145,6 +156,7 @@ Developer: Deathsgift66
           } else if (!document.getElementById('respond-confirm-modal').classList.contains('hidden')) {
             closeModal('respond-confirm-modal');
             pendingResponse = null;
+            lastFocused?.focus();
           }
         }
       });
@@ -201,6 +213,23 @@ Developer: Deathsgift66
     function closeTreatyModal() {
       closeModal('treaty-modal');
       lastFocused?.focus();
+    }
+
+    async function checkTreatyPermission() {
+      try {
+        const res = await authFetch('/api/alliance-members/view');
+        const json = await res.json();
+        const me = (json.alliance_members || []).find(m => m.user_id === window.user?.id);
+        userHasTreatyPermission = !!(
+          me &&
+          (me.permissions?.can_manage_treaties || ['Leader', 'Elder'].includes(me.role))
+        );
+        if (!userHasTreatyPermission) {
+          document.getElementById('create-new-treaty')?.remove();
+        }
+      } catch (err) {
+        console.error('Permission check failed:', err);
+      }
     }
 
     function subscribeToRealtime() {
@@ -266,6 +295,7 @@ Developer: Deathsgift66
 
     // -------------------- Actions --------------------
     function respondToTreaty(id, response) {
+      lastFocused = document.activeElement;
       pendingResponse = () => executeResponse(id, response);
       document.getElementById('respond-body').textContent = `Are you sure you want to ${response} this treaty?`;
       openModal('respond-confirm-modal');
@@ -322,7 +352,14 @@ Developer: Deathsgift66
       const type = String(typeRaw || '').trim();
       const partnerId = document.getElementById('partner-alliance-id')?.value;
       const partnerNum = parseInt(partnerId, 10);
-      if (!type || !/^[a-z_]+$/.test(type) || !partnerId || !Number.isInteger(partnerNum) || partnerNum <= 0) {
+      const allowedTypes = [
+        'non_aggression_pact',
+        'defensive_pact',
+        'trade_pact',
+        'intelligence_sharing',
+        'research_collaboration'
+      ];
+      if (!allowedTypes.includes(type) || !partnerId || !Number.isInteger(partnerNum) || partnerNum <= 0) {
         errorBox.textContent = 'Invalid alliance ID or treaty type.';
         showToast('Invalid alliance ID.', 'error');
         submitting = false;
@@ -429,11 +466,11 @@ Developer: Deathsgift66
       <form id="propose-treaty-form">
         <label for="treaty-type">Treaty Type:</label>
         <select id="treaty-type" name="treaty-type">
-          <option value="non_aggression_pact">Non Aggression Pact</option>
-          <option value="defensive_pact">Defensive Pact</option>
-          <option value="trade_pact">Trade Pact</option>
-          <option value="intelligence_sharing">Intelligence Sharing</option>
-          <option value="research_collaboration">Research Collaboration</option>
+          <option value="non_aggression_pact" title="Promise not to attack each other">Non Aggression Pact</option>
+          <option value="defensive_pact" title="Assist each other when attacked">Defensive Pact</option>
+          <option value="trade_pact" title="Improve trade relations">Trade Pact</option>
+          <option value="intelligence_sharing" title="Share spy reports">Intelligence Sharing</option>
+          <option value="research_collaboration" title="Cooperate on research projects">Research Collaboration</option>
         </select>
         <label for="partner-alliance-id">Partner Alliance ID:</label>
         <input type="number" id="partner-alliance-id" name="partner-alliance-id" min="1" required />
