@@ -47,7 +47,7 @@ Developer: Deathsgift66
   </script>
   <script type="module">
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { authJsonFetch, showToast } from '/Javascript/utils.js';
+    import { authJsonFetch, showToast, debounce } from '/Javascript/utils.js';
     import { setupReauthButtons } from '/Javascript/reauth.js';
     import { validateSessionOrLogout } from '/Javascript/auth.js';
 
@@ -56,6 +56,11 @@ Developer: Deathsgift66
     const MAX_FEED_ITEMS = 250;
     let realtimeSub = null;
     let currentData = null;
+    let lastTimestamp = null;
+    let csrfToken = sessionStorage.getItem('csrf_token') || crypto.randomUUID();
+    sessionStorage.setItem('csrf_token', csrfToken);
+
+    const debouncedLoad = debounce(loadAlerts, 400);
 
     document.addEventListener('DOMContentLoaded', () => {
       loadAlerts();
@@ -69,6 +74,11 @@ Developer: Deathsgift66
         tab.addEventListener('click', () => selectTab(tab))
       );
       document.getElementById('alerts-feed')?.addEventListener('click', handleActionClick);
+      document.querySelectorAll('.filter-input').forEach(el => {
+        const ev = el.tagName === 'SELECT' ? 'change' : 'input';
+        el.addEventListener(ev, debouncedLoad);
+      });
+      document.getElementById('load-more-alerts')?.addEventListener('click', () => loadAlerts(true));
       initThemeToggle();
       setupReauthButtons('.action-btn');
       supabase.auth.onAuthStateChange((_evt, session) => {
@@ -87,20 +97,28 @@ Developer: Deathsgift66
         .subscribe();
     }
 
-    async function loadAlerts() {
+    async function loadAlerts(append = false) {
       const container = document.getElementById('alerts-feed');
       if (!container) return;
-      container.innerHTML = '<p>Loading alerts...</p>';
+      if (!append) container.innerHTML = '<p>Loading alerts...</p>';
 
       try {
+        const filters = getFilters();
+        if (append && lastTimestamp) filters.end = lastTimestamp;
         const data = await authJsonFetch('/api/admin/alerts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(getFilters())
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify(filters)
         });
-        currentData = data;
-
-        container.innerHTML = '';
+        if (append && currentData && Array.isArray(currentData.alerts)) {
+          currentData.alerts = currentData.alerts.concat(data.alerts || []);
+        } else {
+          currentData = data;
+          container.innerHTML = '';
+        }
 
         const renderSet = Array.isArray(data.alerts)
           ? [{ title: 'Alerts', items: data.alerts }]
@@ -130,10 +148,20 @@ Developer: Deathsgift66
           showToast('⚠ Only first 250 alerts shown. Refine filters.', 'warning');
         }
 
+        const moreBtn = document.getElementById('load-more-alerts');
+        lastTimestamp = data.alerts?.[data.alerts.length - 1]?.timestamp || null;
+        if (data.alerts && data.alerts.length >= 100) {
+          moreBtn?.classList.remove('hidden');
+        } else {
+          moreBtn?.classList.add('hidden');
+        }
+
         renderSet.forEach(({ title, items }) => renderCategory(container, title, items));
       } catch (err) {
         console.error('❌ Failed to load alerts:', err);
-        container.innerHTML = '<p>Error loading alerts. Please try again later.</p>';
+        const msg = escapeHTML(err.message || 'Unknown error');
+        container.innerHTML = `<p>Error loading alerts: ${msg}. Please try again later.</p>`;
+        showToast(`❌ Failed to load alerts: ${msg}`, 'error');
       }
     }
 
@@ -256,7 +284,8 @@ Developer: Deathsgift66
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session?.access_token || ''}`,
-        'X-User-ID': session?.user?.id || ''
+        'X-User-ID': session?.user?.id || '',
+        'X-CSRF-Token': csrfToken
       };
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -461,6 +490,7 @@ Developer: Deathsgift66
         <div id="alerts-feed" aria-live="polite" class="alerts-feed">
           <!-- JavaScript inserts real-time alerts here -->
         </div>
+        <button id="load-more-alerts" class="btn btn-secondary hidden" type="button">Load More</button>
       </section>
     </div>
   </main>
