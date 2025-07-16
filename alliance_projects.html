@@ -161,6 +161,9 @@ let startingProject = false;
 let availableData = [];
 let completedData = [];
 let catalogueData = [];
+let contribList = [];
+let contribPage = 0;
+const CONTRIB_PAGE_SIZE = 50;
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
@@ -177,6 +180,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (projectChannel) {
       projectChannel.unsubscribe();
       projectChannel = null;
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && ['ArrowLeft', 'ArrowRight'].includes(e.key) &&
+        !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+      const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+      const idx = tabs.findIndex(t => t.classList.contains('active'));
+      const next = e.key === 'ArrowLeft'
+        ? (idx - 1 + tabs.length) % tabs.length
+        : (idx + 1) % tabs.length;
+      tabs[next].focus();
+      tabs[next].click();
     }
   });
 });
@@ -491,7 +507,7 @@ function renderCatalogue(list) {
     card.setAttribute('role', 'region');
     card.setAttribute('aria-label', `Project: ${p.project_name}`);
     const status = p.status || 'Available';
-    const statusIcon = status === 'Completed' ? '✅' : status === 'Available' ? '🔓' : '🔒';
+    const statusIcon = status === 'Completed' ? '✅' : status === 'Locked' ? '🔒' : '';
 
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)} ${statusIcon}</h3>
@@ -500,6 +516,7 @@ function renderCatalogue(list) {
     `;
 
     if (status === 'Locked') card.classList.add('locked');
+    if (status === 'Completed') card.classList.add('completed');
     container.appendChild(card);
   });
 }
@@ -548,11 +565,12 @@ async function openContribModal(key) {
   if (listEl) listEl.innerHTML = 'Loading...';
   try {
     const data = await authJsonFetch(`/api/alliance/projects/contributions?project_key=${key}`);
-    const list = data.contributions || [];
-    if (list.length === 0) {
+    contribList = data.contributions || [];
+    contribPage = 0;
+    if (contribList.length === 0) {
       listEl.innerHTML = '<p class="empty-state">No contributions.</p>';
     } else {
-      listEl.innerHTML = list.map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`).join('');
+      renderContribPage();
     }
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
@@ -561,6 +579,33 @@ async function openContribModal(key) {
     if (listEl) listEl.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
   openModal(modal);
+}
+
+function renderContribPage() {
+  const modal = document.getElementById('contrib-modal');
+  const listEl = modal.querySelector('.modal-list');
+  const nav = modal.querySelector('.modal-pagination');
+  if (!listEl || !Array.isArray(contribList)) return;
+  const start = contribPage * CONTRIB_PAGE_SIZE;
+  const end = start + CONTRIB_PAGE_SIZE;
+  const pageItems = contribList.slice(start, end);
+  listEl.innerHTML = pageItems
+    .map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`)
+    .join('');
+  const totalPages = Math.ceil(contribList.length / CONTRIB_PAGE_SIZE) || 1;
+  if (nav) {
+    nav.innerHTML = `
+      <button class="btn prev-btn" ${contribPage === 0 ? 'disabled' : ''}>Prev</button>
+      <span>${contribPage + 1} / ${totalPages}</span>
+      <button class="btn next-btn" ${contribPage >= totalPages - 1 ? 'disabled' : ''}>Next</button>
+    `;
+    nav.querySelector('.prev-btn')?.addEventListener('click', () => {
+      if (contribPage > 0) { contribPage--; renderContribPage(); }
+    });
+    nav.querySelector('.next-btn')?.addEventListener('click', () => {
+      if (contribPage < totalPages - 1) { contribPage++; renderContribPage(); }
+    });
+  }
 }
 
 function formatTime(seconds) {
@@ -658,7 +703,7 @@ function renderSkeletons(container, count = 3) {
       <!-- Tabs Content -->
       <section id="available-tab" class="tab-content active" aria-labelledby="available-tab">
         <label for="available-sort" class="visually-hidden">Sort Available Projects</label>
-        <select id="available-sort" class="sort-select">
+        <select id="available-sort" class="sort-select" title="Sort available projects">
           <option value="name">Name</option>
           <option value="category">Category</option>
           <option value="cost">Cost</option>
@@ -676,7 +721,7 @@ function renderSkeletons(container, count = 3) {
 
       <section id="completed-tab" class="tab-content" aria-labelledby="completed-tab">
         <label for="completed-sort" class="visually-hidden">Sort Completed Projects</label>
-        <select id="completed-sort" class="sort-select">
+        <select id="completed-sort" class="sort-select" title="Sort completed projects">
           <option value="name">Name</option>
           <option value="category">Category</option>
           <option value="cost">Cost</option>
@@ -698,6 +743,7 @@ function renderSkeletons(container, count = 3) {
     <div class="modal-content" role="dialog" aria-labelledby="contrib-modal-title">
       <h3 id="contrib-modal-title" class="modal-title">Contributions</h3>
       <div class="modal-list"></div>
+      <div class="modal-pagination"></div>
       <button class="btn" onclick="closeModal('contrib-modal')">Close</button>
     </div>
   </div>
