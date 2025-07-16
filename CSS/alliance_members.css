@@ -132,6 +132,28 @@ h2 {
   color: var(--ink);
 }
 
+.load-more-container {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.load-more-btn {
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--gold);
+  padding: 0.5rem 1rem;
+  font-family: 'IM Fell English', serif;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.load-more-btn:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
 
