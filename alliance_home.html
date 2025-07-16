@@ -56,7 +56,14 @@ Developer: Deathsgift66
     // Developer: Deathsgift66
 
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, setText, formatDate, fragmentFrom, jsonFetch } from '/Javascript/utils.js';
+    import {
+      escapeHTML,
+      setText,
+      formatDate,
+      fragmentFrom,
+      jsonFetch,
+      showToast
+    } from '/Javascript/utils.js';
 
     let activityChannel = null;
 
@@ -68,10 +75,30 @@ Developer: Deathsgift66
     let membersOffset = 0;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      const { data: { session } = {} } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
+      let session;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res.data?.session;
+      } catch (err) {
+        console.error('❌ Session fetch failed:', err);
+        showToast('Authentication failed. Please log in again.', 'error');
         window.location.href = 'login.html';
         return;
+      }
+
+      if (!session?.user?.id) {
+        showToast('Please log in to continue.', 'error');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const cached = sessionStorage.getItem('lastAllianceDetails');
+      if (cached) {
+        try {
+          populateAlliance(JSON.parse(cached));
+        } catch (e) {
+          console.warn('Failed to parse cached alliance details:', e);
+        }
       }
 
       await fetchAllianceDetails();
@@ -85,12 +112,18 @@ Developer: Deathsgift66
         const data = await jsonFetch(
           `/api/alliance-home/details?limit=${LIMIT}&offset=${offset}`
         );
+        if (offset === 0) {
+          sessionStorage.setItem('lastAllianceDetails', JSON.stringify(data));
+        }
         populateAlliance(data, offset === 0);
         if (offset === 0) setupRealtime(data.alliance?.alliance_id);
         membersOffset += data.members.length;
         toggleButton('load-more-members', data.members.length === LIMIT);
+        return data;
       } catch (err) {
         console.error('❌ Failed to fetch alliance details:', err);
+        showToast('Failed to load alliance data.', 'error');
+        throw err;
       }
     }
 
@@ -344,10 +377,15 @@ Developer: Deathsgift66
     }
 
     async function loadMoreMembers() {
-      const data = await fetchAllianceDetails(membersOffset);
-      renderMembers(data.members, true);
-      membersOffset += data.members.length;
-      toggleButton('load-more-members', data.members.length === LIMIT);
+      try {
+        const data = await fetchAllianceDetails(membersOffset);
+        renderMembers(data.members, true);
+        membersOffset += data.members.length;
+        toggleButton('load-more-members', data.members.length === LIMIT);
+      } catch (err) {
+        console.error('❌ Failed to load more members:', err);
+        showToast('Unable to load more members.', 'error');
+      }
     }
 
     function toggleButton(id, show) {
