@@ -48,25 +48,49 @@
       const messageEl = document.getElementById('appeal-status');
       const captchaEl = document.getElementById('appeal-captcha');
 
-      captchaEl?.setAttribute('data-sitekey', getEnvVar('HCAPTCHA_SITEKEY'));
+      const siteKey = getEnvVar('HCAPTCHA_SITEKEY');
+      if (siteKey) {
+        captchaEl?.setAttribute('data-sitekey', siteKey);
+      } else {
+        console.warn('⚠️ Missing hCaptcha site key in env');
+      }
 
-      form?.addEventListener('submit', async e => {
+      if (!form || !emailInput || !msgInput || !messageEl) return;
+
+      form.addEventListener('submit', async e => {
         e.preventDefault();
+
+        if (form.nickname?.value) return;
+
         if (!emailInput.value || !emailInput.checkValidity()) {
           messageEl.textContent = 'Enter a valid email address.';
           messageEl.className = 'message show error-message';
           return;
         }
 
-        const token = window.hcaptcha?.getResponse();
+        if (msgInput.value.trim().length < 10) {
+          messageEl.textContent = 'Appeal message must be at least 10 characters.';
+          messageEl.className = 'message show error-message';
+          return;
+        }
+
+        if (typeof window.hcaptcha?.getResponse !== 'function') {
+          messageEl.textContent = 'CAPTCHA failed to load. Please refresh.';
+          messageEl.className = 'message show error-message';
+          return;
+        }
+
+        const token = window.hcaptcha.getResponse();
         if (!token) {
           messageEl.textContent = 'Please complete the CAPTCHA.';
           messageEl.className = 'message show error-message';
           return;
         }
 
+        form.querySelector('button').disabled = true;
+
         try {
-          await fetchJson('/api/ban/appeal', {
+          const res = await fetch('/api/ban/appeal', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -75,15 +99,22 @@
               captcha_token: token
             })
           });
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            if (errorData?.detail) throw new Error(errorData.detail);
+            throw new Error('Submission failed.');
+          }
           messageEl.textContent = 'Appeal submitted successfully.';
           messageEl.className = 'message show success-message';
           form.reset();
-          if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') {
-            window.hcaptcha.reset();
-          }
+          try { window.hcaptcha?.reset?.(); } catch {}
         } catch (err) {
           messageEl.textContent = err.message || 'Submission failed.';
           messageEl.className = 'message show error-message';
+        } finally {
+          setTimeout(() => {
+            form.querySelector('button').disabled = false;
+          }, 10000);
         }
       });
     });
@@ -110,7 +141,9 @@
         <span id="emailHelp" class="visually-hidden">Enter your email to file an appeal</span>
         <label for="appeal-message">Appeal Message</label>
         <textarea id="appeal-message" required rows="4"></textarea>
-        <div id="appeal-captcha" class="h-captcha"></div>
+        <input type="text" name="nickname" style="display:none" tabindex="-1" autocomplete="off" />
+        <div id="appeal-captcha" class="h-captcha" aria-describedby="captchaHelp"></div>
+        <span id="captchaHelp" class="visually-hidden">This CAPTCHA verifies you're human</span>
         <button type="submit" class="royal-button">Submit Appeal</button>
       </form>
       <div id="appeal-status" class="message" aria-live="polite"></div>
