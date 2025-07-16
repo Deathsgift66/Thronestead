@@ -38,6 +38,14 @@ body {
 #realtime-indicator.connected { color: var(--success); }
 #realtime-indicator.disconnected { color: var(--error); }
 
+.mission-card.status-success {
+  border-left: 4px solid var(--success);
+}
+
+.mission-card.status-fail {
+  border-left: 4px solid var(--error);
+}
+
 @media (max-width: 700px) {
   .spy-panel {
     padding: var(--padding-sm);

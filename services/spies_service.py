@@ -73,6 +73,8 @@ def train_spies(db: Session, kingdom_id: int, quantity: int) -> int:
     record = get_spy_record(db, kingdom_id)
     capacity = record.get("max_spy_capacity", 0)
     current = record.get("spy_count", 0)
+    if current + quantity > capacity:
+        raise ValueError("Spy capacity reached")
     trainable = min(quantity, capacity - current)
     if trainable <= 0:
         return current
@@ -158,6 +160,9 @@ def start_mission(
     cooldown: int = 3600,
 ) -> None:
     """Starts a spy mission, updating cooldown and daily counters."""
+
+    if target_id is None:
+        raise ValueError("target_id is required")
 
     if not can_launch_mission(db, kingdom_id):
         raise ValueError("Mission still on cooldown")
