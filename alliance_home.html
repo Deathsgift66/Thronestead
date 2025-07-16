@@ -42,6 +42,12 @@ Developer: Deathsgift66
   <link href="/CSS/alliance_home.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
 
+  <style>
+    /* Fallback styles if external CSS fails to load */
+    body { font-family: 'IM Fell English', serif; background: #111; color: #eee; margin: 0; }
+    .kr-top-banner { background: #333; color: #fff; padding: 0.5rem; text-align: center; }
+  </style>
+
   <!-- JS -->
   <script type="module">
     // Project Name: Thronestead©
@@ -55,7 +61,7 @@ Developer: Deathsgift66
     let activityChannel = null;
 
     window.addEventListener('beforeunload', () => {
-      if (activityChannel) supabase.removeChannel(activityChannel);
+      if (activityChannel) supabase.removeChannel(activityChannel).catch(console.error);
     });
 
     const LIMIT = 50;
@@ -196,8 +202,10 @@ Developer: Deathsgift66
           const li = document.createElement('li');
           li.className = 'top-contrib-entry';
           const name = escapeHTML(m.username || 'Alliance Member');
+          const avatarSrc = m.avatar || '/Assets/avatars/default_avatar_emperor.png';
+          const altText = m.avatar ? `${name}'s avatar` : `Default avatar for ${name}`;
           li.innerHTML = `
-        <img class="contrib-avatar" src="${m.avatar || '/Assets/avatars/default_avatar_emperor.png'}" alt="${name}'s avatar">
+        <img class="contrib-avatar" src="${avatarSrc}" alt="${altText}">
         <span> ${name} - ${m.contribution}</span>`;
           list.appendChild(li);
         });
@@ -297,7 +305,7 @@ Developer: Deathsgift66
 
     function setupRealtime(allianceId) {
       if (!allianceId) return;
-      if (activityChannel) supabase.removeChannel(activityChannel);
+      if (activityChannel) supabase.removeChannel(activityChannel).catch(console.error);
 
       activityChannel = supabase
         .channel(`alliance_home_${allianceId}`)
@@ -325,7 +333,8 @@ Developer: Deathsgift66
 
       const li = document.createElement('li');
       li.className = 'activity-log-entry';
-      li.textContent = `[${formatDate(entry.created_at)}] ${entry.user_id}: ${entry.description}`;
+      const actor = entry.username || entry.user_id;
+      li.textContent = `[${formatDate(entry.created_at)}] ${actor}: ${entry.description}`;
       list.prepend(li);
       pruneActivityLog(list);
     }
