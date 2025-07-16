@@ -66,10 +66,15 @@ export async function fetchJson(url, options = {}, timeoutMs = 8000) {
  * @param {number} [timeoutMs]    Optional timeout override
  * @returns {Promise<any>}        Parsed JSON data
  */
-export async function authFetchJson(url, _session, options = {}, timeoutMs = 8000) {
+export async function authFetchJson(url, session, options = {}, timeoutMs = 8000) {
   const opts = {
     ...options,
-    headers: { ...(options.headers || {}), 'Content-Type': 'application/json' }
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${session.access_token}`,
+      'X-User-ID': session.user.id,
+      'Content-Type': 'application/json'
+    }
   };
-  return fetchJsonInternal(authFetch, url, opts, timeoutMs);
+  return fetchJsonInternal(fetch, url, opts, timeoutMs);
 }
