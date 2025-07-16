@@ -4,6 +4,9 @@
 # Developer: Deathsgift66
 from backend.routers.admin import (
     AlertFilters,
+    AlertID,
+    IPPayload,
+    SuspendPayload,
     flag_ip,
     get_admin_alerts,
     mark_alert_handled,
@@ -53,20 +56,20 @@ def test_account_alert_filters():
 
 def test_flag_ip_logs():
     db = DummyDB()
-    flag_ip({"ip": "1.2.3.4"}, admin_id="a1", db=db)
+    flag_ip(IPPayload(ip="1.2.3.4"), admin_id="a1", db=db)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
     assert any("insert into bans" in q[0].lower() for q in db.queries)
 
 
 def test_suspend_user_logs():
     db = DummyDB()
-    suspend_user({"user_id": "u1"}, admin_id="a1", db=db)
+    suspend_user(SuspendPayload(user_id="u1"), admin_id="a1", db=db)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
 def test_mark_alert_logs():
     db = DummyDB()
-    mark_alert_handled({"alert_id": "a5"}, admin_id="a1", db=db)
+    mark_alert_handled(AlertID(alert_id="a5"), admin_id="a1", db=db)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
@@ -76,7 +79,7 @@ def test_dismiss_alert_deletes_and_logs():
             self.committed = True
 
     db = DB()
-    dismiss_alert({"alert_id": 7}, admin_id="a1", db=db)
+    dismiss_alert(AlertID(alert_id="7"), admin_id="a1", db=db)
     joined = " ".join(db.queries[0][0].split()).lower()
     assert "delete from admin_alerts" in joined
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)

@@ -34,6 +34,18 @@ class PlayerAction(BaseModel):
     alert_id: str | None = None
 
 
+class AlertID(BaseModel):
+    alert_id: str
+
+
+class IPPayload(BaseModel):
+    ip: str
+
+
+class SuspendPayload(BaseModel):
+    user_id: str
+
+
 class BulkAction(BaseModel):
     action: str
     player_ids: list[str]
@@ -128,13 +140,13 @@ def player_action(
 
 @router.post("/flag_ip")
 def flag_ip(
-    payload: dict,
+    payload: IPPayload,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_id, db)
-    ip = payload.get("ip", "")
+    ip = payload.ip
     log_action(db, admin_id, "flag_ip", f"Flagged IP {ip}")
     if ip:
         db.execute(
@@ -152,40 +164,40 @@ def flag_ip(
 
 @router.post("/suspend_user")
 def suspend_user(
-    payload: dict,
+    payload: SuspendPayload,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_id, db)
-    uid = payload.get("user_id", "")
+    uid = payload.user_id
     log_action(db, admin_id, "suspend_user", f"Suspended user {uid}")
     return {"message": "User suspended", "user_id": uid}
 
 
 @router.post("/mark_alert_handled")
 def mark_alert_handled(
-    payload: dict,
+    payload: AlertID,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     verify_admin(admin_id, db)
-    aid = payload.get("alert_id", "")
+    aid = payload.alert_id
     log_action(db, admin_id, "mark_alert", f"Handled alert {aid}")
     return {"message": "Alert marked", "alert_id": aid}
 
 
 @router.post("/dismiss_alert")
 def dismiss_alert(
-    payload: dict,
+    payload: AlertID,
     verify: str = Depends(verify_api_key),
     admin_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
     """Delete an alert after verifying admin permissions."""
     verify_admin(admin_id, db)
-    aid = payload.get("alert_id")
+    aid = payload.alert_id
     if not aid:
         raise HTTPException(status_code=400, detail="alert_id required")
     db.execute(text("DELETE FROM admin_alerts WHERE alert_id = :aid"), {"aid": aid})
