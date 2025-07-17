@@ -21,6 +21,9 @@ Developer: Deathsgift66
   <meta name="author" content="Thronestead Dev Team" />
   <meta name="version" content="7.1.2025.10.38" />
   <link rel="canonical" href="https://www.thronestead.com/alliance_changelog.html" />
+  <link rel="alternate" hreflang="x-default" href="https://www.thronestead.com/alliance_changelog.html" />
+  <link rel="alternate" hreflang="en" href="https://www.thronestead.com/alliance_changelog.html" />
+  <link rel="alternate" hreflang="es" href="https://www.thronestead.com/es/alliance_changelog.html" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Alliance Changelog | Thronestead" />
@@ -80,43 +83,43 @@ Developer: Deathsgift66
   <header class="kr-top-banner" aria-label="Alliance Changelog Header">
     <img class="alliance-banner" src="Assets/banner.png" alt="Alliance Banner" />
     <img class="alliance-emblem" src="Assets/avatars/default_avatar_emperor.png" alt="Alliance Emblem" />
-    Alliance Changelog
+    <span data-i18n="alliance_changelog_title">Alliance Changelog</span>
   </header>
 
   <!-- Main Content -->
   <main role="main" class="main-centered-container" aria-label="Alliance History Feed">
     <section class="changelog-container">
-      <h2>Alliance Changelog</h2>
+      <h2 data-i18n="alliance_changelog_title">Alliance Changelog</h2>
 
       <!-- Filter Bar -->
       <fieldset class="filter-bar" role="search" aria-label="Filter Historical Logs">
-        <legend>Filters</legend>
-        <label for="filter-start">From</label>
+        <legend data-i18n="filters">Filters</legend>
+        <label for="filter-start" data-i18n="from">From</label>
         <input type="date" id="filter-start" aria-label="Start Date" />
 
-        <label for="filter-end">To</label>
+        <label for="filter-end" data-i18n="to">To</label>
         <input type="date" id="filter-end" aria-label="End Date" />
 
-        <label for="filter-type">Type</label>
+        <label for="filter-type" data-i18n="type">Type</label>
         <select id="filter-type" aria-label="Log Type Filter">
-          <option value="">All Types</option>
-          <option value="war">Wars</option>
-          <option value="treaty">Treaties</option>
-          <option value="project">Projects</option>
-          <option value="quest">Quests</option>
-          <option value="member">Members</option>
-          <option value="admin">Admin</option>
+          <option value="" data-i18n="all_types">All Types</option>
+          <option value="war" data-i18n="type_war">Wars</option>
+          <option value="treaty" data-i18n="type_treaty">Treaties</option>
+          <option value="project" data-i18n="type_project">Projects</option>
+          <option value="quest" data-i18n="type_quest">Quests</option>
+          <option value="member" data-i18n="type_member">Members</option>
+          <option value="admin" data-i18n="type_admin">Admin</option>
         </select>
 
-        <button id="apply-filters-btn">Filter</button>
-        <button id="clear-filters-btn">Clear</button>
-        <button id="refresh-btn">Refresh</button>
-        <button id="export-csv-btn">Export CSV</button>
+        <button id="apply-filters-btn" type="button" data-i18n="filter">Filter</button>
+        <button id="clear-filters-btn" type="button" class="danger" title="Reset filters" data-i18n="clear">❌ Clear</button>
+        <button id="refresh-btn" type="button" data-i18n="refresh">Refresh</button>
+        <button id="export-csv-btn" type="button" data-i18n="export_csv">Export CSV</button>
       </fieldset>
 
       <div id="results-summary" class="results-summary" aria-live="polite"></div>
 
-      <div class="last-updated">Last updated: <span id="last-updated">--</span></div>
+      <div class="last-updated" aria-live="polite">Last updated: <span id="last-updated">--</span></div>
 
       <!-- Timeline Feed -->
       <ul id="changelog-list" class="timeline-feed" role="log" aria-live="polite">
@@ -130,223 +133,9 @@ Developer: Deathsgift66
     <div>© 2025 Thronestead</div>
     <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
   </footer>
+  <div id="loading-overlay" aria-hidden="true"><div class="spinner"></div></div>
+  <script src="/Javascript/alliance_changelog.js" type="module"></script>
 
-  <!-- Alliance Changelog Logic -->
-  <script type="module">
-    import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, formatDate, debounce } from '/Javascript/utils.js';
-    import { authFetchJson } from '/Javascript/fetchJson.js';
-
-    let changelogData = [];
-    let fetchTimer;
-    let backoff = 30000;
-    let isFetching = false;
-
-    const iconMap = {
-      war: '🛡',
-      treaty: '📜',
-      project: '🛠',
-      quest: '🗺',
-      member: '👤',
-      admin: '⚙'
-    };
-
-    function getIcon(type) {
-      return iconMap[type] || '📝';
-    }
-
-    function loadFilters() {
-      ['start', 'end', 'type'].forEach((key) => {
-        const val = sessionStorage.getItem('clog-' + key);
-        if (val) document.getElementById(`filter-${key}`).value = val;
-      });
-    }
-
-    function saveFilters() {
-      ['start', 'end', 'type'].forEach((key) => {
-        const el = document.getElementById(`filter-${key}`);
-        if (el && el.value) sessionStorage.setItem('clog-' + key, el.value);
-        else sessionStorage.removeItem('clog-' + key);
-      });
-    }
-
-    async function fetchChangelog(manual = false) {
-      if (isFetching) return;
-      isFetching = true;
-      setButtonsDisabled(true);
-      try {
-        const { data: { session } = {} } = await supabase.auth.getSession();
-        if (!session) {
-          document.getElementById('changelog-list').innerHTML =
-            '<li class="error-state">Not logged in. Redirecting...</li>';
-          return setTimeout(() => {
-            window.location.href = 'login.html';
-          }, 100);
-        }
-
-        const filters = ['start', 'end', 'type'].reduce((params, key) => {
-          const val = document.getElementById(`filter-${key}`)?.value;
-          if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
-            let v = val;
-            if (key === 'start') v += 'T00:00:00Z';
-            if (key === 'end') v += 'T23:59:59Z';
-            params.set(key, v);
-          } else if (val) {
-            params.set(key, val);
-          }
-          return params;
-        }, new URLSearchParams());
-
-        filters.set('ts', Date.now());
-        const data = await authFetchJson(`/api/alliance/changelog?${filters}`);
-        changelogData = Array.isArray(data.logs) ? data.logs : [];
-        saveFilters();
-
-        updateLastUpdated(data.last_updated);
-        renderChangelog(changelogData);
-        backoff = 30000;
-      } catch (err) {
-        console.error('❌ Error fetching changelog:', err);
-        document.getElementById('changelog-list').innerHTML =
-          '<li class="error-state">Failed to load changelog.</li>';
-        updateSummary([]);
-        backoff = Math.min(backoff * 2, 300000);
-      } finally {
-        isFetching = false;
-        setButtonsDisabled(false);
-        if (manual) backoff = 30000;
-        scheduleNextFetch();
-      }
-    }
-
-    function scheduleNextFetch() {
-      clearTimeout(fetchTimer);
-      fetchTimer = setTimeout(fetchChangelog, backoff);
-    }
-
-  function applyFilters() {
-    saveFilters();
-      fetchChangelog(true);
-  }
-
-   function clearFilters() {
-      ['start', 'end', 'type'].forEach((key) => {
-        const el = document.getElementById(`filter-${key}`);
-        if (el) el.value = '';
-        sessionStorage.removeItem('clog-' + key);
-      });
-      fetchChangelog(true);
-   }
-
-      function formatCsvDate(ts) {
-        const d = new Date(ts);
-        if (Number.isNaN(d.getTime())) return '';
-        const pad = n => String(n).padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-      }
-
-      function updateLastUpdated(timestamp) {
-        const el = document.getElementById('last-updated');
-        if (el && timestamp)
-          el.textContent = new Date(timestamp).toLocaleString('en-US', { timeZoneName: 'short' });
-      }
-
-    function updateSummary(logs) {
-      const start = document.getElementById('filter-start')?.value;
-      const end = document.getElementById('filter-end')?.value;
-      const type = document.getElementById('filter-type')?.value;
-      const parts = [];
-      if (type) parts.push(type.charAt(0).toUpperCase() + type.slice(1) + 's');
-      if (start) parts.push('from ' + new Date(start).toLocaleDateString());
-      if (end) parts.push('to ' + new Date(end).toLocaleDateString());
-      const desc = parts.length ? parts.join(' ') : 'all entries';
-      const count = logs.length;
-      const text = `Showing ${count} ${count === 1 ? 'result' : 'results'} — ${desc}`;
-      const el = document.getElementById('results-summary');
-      if (el) el.textContent = text;
-    }
-
-    function renderChangelog(logs) {
-      const container = document.getElementById('changelog-list');
-      if (!container) return;
-
-      if (!logs.length) {
-        container.innerHTML = '<li class="empty-state">No historical records match your filters. Adjust the date range or event type and try again.</li>';
-        updateSummary(logs);
-        return;
-      }
-
-      container.innerHTML = logs
-        .map(
-          (log) => {
-            const validTime = log.timestamp && !isNaN(new Date(log.timestamp));
-            const timeHtml = validTime
-              ? `<time datetime="${log.timestamp}">${formatDate(log.timestamp)}</time>`
-              : '<span class="no-time" aria-label="No timestamp">—</span>';
-            return `
-      <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry" aria-expanded="true">
-        <div class="timeline-bullet"></div>
-        <div class="timeline-content">
-          <span class="log-icon" role="img" aria-label="${escapeHTML(log.event_type)} event">${getIcon(log.event_type)}</span>
-          <span class="log-type">${escapeHTML(log.event_type.toUpperCase())}</span>
-          <p class="log-text">${escapeHTML(log.description)}</p>
-          ${timeHtml}
-        </div>
-      </li>
-    `;
-          }
-        )
-        .join('');
-
-      container.querySelectorAll('.timeline-entry').forEach((entry) => {
-        entry.addEventListener('click', () => {
-          entry.classList.toggle('collapsed');
-          entry.setAttribute('aria-expanded', entry.classList.contains('collapsed') ? 'false' : 'true');
-        });
-      });
-
-      updateSummary(logs);
-    }
-
-    function exportCSV() {
-      if (!changelogData.length) return;
-      const header = 'Timestamp,Type,Description\n';
-      const csv = changelogData
-        .map((l) => [formatCsvDate(l.timestamp), l.event_type, l.description]
-          .map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
-        .join('\n');
-      const blob = new Blob(["\uFEFF" + header + csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `alliance_changelog_${Date.now()}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function bindEvent(id, handler) {
-      document.getElementById(id)?.addEventListener('click', handler);
-    }
-
-    function setButtonsDisabled(disabled) {
-      ['apply-filters-btn', 'clear-filters-btn', 'refresh-btn', 'export-csv-btn'].forEach((id) => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = disabled;
-      });
-    }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        loadFilters();
-        fetchChangelog();
-        const debouncedApply = debounce(applyFilters, 400);
-        bindEvent('apply-filters-btn', debouncedApply);
-        const debouncedRefresh = debounce(() => fetchChangelog(true), 100);
-        bindEvent('refresh-btn', debouncedRefresh);
-        bindEvent('clear-filters-btn', clearFilters);
-        bindEvent('export-csv-btn', exportCSV);
-        window.addEventListener('beforeunload', () => clearTimeout(fetchTimer));
-      });
-  </script>
 </body>
 
 </html>
