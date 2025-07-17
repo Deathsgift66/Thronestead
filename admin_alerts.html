@@ -14,7 +14,7 @@ Developer: Deathsgift66
   <title>Admin Alerts | Thronestead</title>
   <meta name="referrer" content="strict-origin" />
   <meta name="author" content="Thronestead Moderation Team" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://zzqoxgytfrbptojcwrjm.supabase.co; frame-ancestors 'none'; script-src 'self'" />
 
   <!-- SEO -->
   <meta name="description" content="Admin alert center for account monitoring and moderation." />
@@ -153,7 +153,7 @@ Developer: Deathsgift66
       const tab = type ? document.querySelector(`.tab[data-type="${type}"]`) : null;
       if (tab) tab.click();
       else loadAlerts();
-      setInterval(loadAlerts, REFRESH_MS);
+      setInterval(() => { if (!document.hidden) loadAlerts(); }, REFRESH_MS);
       subscribeToRealtime();
       document.getElementById('refresh-alerts')?.addEventListener('click', loadAlerts);
       document.getElementById('clear-filters')?.addEventListener('click', clearFilters);
@@ -222,7 +222,7 @@ Developer: Deathsgift66
           console.error('Realtime subscribe failed', err);
           setRealtimeStatus('Disconnected: ❌');
           showToast('Realtime connection failed', 'error');
-          setTimeout(subscribeToRealtime, 5000);
+          if (navigator.onLine) setTimeout(subscribeToRealtime, 5000);
         });
     }
 
@@ -317,6 +317,8 @@ Developer: Deathsgift66
 
       const section = document.createElement('div');
       section.className = 'alert-category';
+      section.setAttribute("role","region");
+      section.setAttribute("aria-label", title);
 
       const header = document.createElement('h3');
       header.textContent = title;
@@ -357,6 +359,12 @@ Developer: Deathsgift66
           btn.textContent = label;
           btn.dataset.action = action;
           Object.entries(data).forEach(([k, v]) => (btn.dataset[k] = v));
+          const target = data.player_id || data.user_id || data.alert_id || data.ip || "";
+          let aria = label;
+          if (action === "dismiss" || action === "mark_alert_handled") aria += ` alert ${target}`;
+          else if (action === "flag_ip") aria += ` IP ${target}`;
+          else aria += ` user ${target}`;
+          btn.setAttribute("aria-label", aria.trim());
           actions.appendChild(btn);
         });
 
@@ -621,6 +629,7 @@ Developer: Deathsgift66
         btn.textContent = origText;
       }
       exportLock = false;
+      document.getElementById("export-status").textContent = "JSON export complete.";
     }
 
     function exportCSV() {
@@ -666,6 +675,7 @@ Developer: Deathsgift66
         btn.textContent = origText;
       }
       exportLock = false;
+      document.getElementById("export-status").textContent = "CSV export complete.";
     }
 
    function selectTab(tab) {
@@ -786,6 +796,7 @@ Developer: Deathsgift66
         <button id="clear-filters" class="btn btn-secondary" aria-controls="alerts-feed">Clear</button>
         <button id="export-csv" class="btn btn-secondary" type="button">Export CSV</button>
         <button id="export-json" class="btn btn-secondary" type="button">Export JSON</button>
+        <div id="export-status" class="visually-hidden" aria-live="polite"></div>
         <button id="theme-toggle" class="btn btn-secondary" type="button">Dark Mode</button>
       </section>
 
@@ -803,10 +814,10 @@ Developer: Deathsgift66
   <footer class="site-footer">
     <div>© 2025 Thronestead</div>
     <div>
-      <a target="_blank" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
-      <a target="_blank" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
-      <a target="_blank" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
-      <a href="legal.html" target="_blank">Legal</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank" rel="noopener noreferrer">Legal</a> <a href="sitemap.xml" target="_blank" rel="noopener noreferrer">Site Map</a>
     </div>
   </footer>
 </body>
