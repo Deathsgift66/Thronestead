@@ -43,7 +43,10 @@ export function applyTranslations(lang = 'en') {
     const key = el.getAttribute('data-i18n');
     const text = strings[key];
     if (!text) return;
-    if (el.tagName === 'A') {
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea') {
+      el.placeholder = text;
+    } else if (tag === 'a') {
       el.textContent = text;
     } else {
       el.innerHTML = text;

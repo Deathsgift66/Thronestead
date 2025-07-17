@@ -89,12 +89,28 @@ async function log404(anonId = null) {
   };
   sendLog(payload);
   try {
-    fetch('/api/log404', {
+    fetch('/api/log/404', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: window.location.href })
     });
   } catch {}
+}
+
+async function checkSearchAvailability() {
+  try {
+    const resp = await fetch('/search.html', { method: 'HEAD' });
+    if (!resp.ok) throw new Error('unavailable');
+  } catch {
+    const form = document.querySelector('form[action="/search.html"]');
+    if (form) {
+      const alert = document.createElement('div');
+      alert.setAttribute('role', 'alert');
+      alert.textContent = 'Search is currently unavailable.';
+      form.parentNode.insertBefore(alert, form);
+      form.remove();
+    }
+  }
 }
 
 async function init() {
@@ -108,10 +124,12 @@ async function init() {
     applyTranslations('en');
   }
 
+  checkSearchAvailability();
+
   const dynUrl = encodeURI(window.location.origin + window.location.pathname);
   const canonical = document.querySelector('link[rel="canonical"]');
   if (canonical) canonical.href = dynUrl;
-  const og = document.getElementById('og-url');
+  const og = document.querySelector('meta[property="og:url"]');
   if (og) og.setAttribute('content', dynUrl);
 
   const struct = {
