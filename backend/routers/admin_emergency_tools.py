@@ -13,8 +13,10 @@ from ..security import (
     verify_api_key,
     verify_admin,
     require_csrf_token,
+    verify_emergency_ip,
     _extract_request_meta,
 )
+from ..rate_limiter import limiter
 
 router = APIRouter(prefix="/api/admin/emergency", tags=["admin_emergency"])
 
@@ -24,12 +26,14 @@ class WarTick(BaseModel):
 
 
 @router.post("/reprocess_tick")
+@limiter.limit("5/minute")
 def reprocess_tick(
     request: Request,
     payload: WarTick,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     csrf: str = Depends(require_csrf_token),
+    _ip: None = Depends(verify_emergency_ip),
     db: Session = Depends(get_db),
 ):
     """Re-run a war tick for the given war."""
@@ -46,12 +50,14 @@ class KingdomPayload(BaseModel):
 
 
 @router.post("/recalculate_resources")
+@limiter.limit("5/minute")
 def recalculate_resources(
     request: Request,
     payload: KingdomPayload,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     csrf: str = Depends(require_csrf_token),
+    _ip: None = Depends(verify_emergency_ip),
     db: Session = Depends(get_db),
 ):
     """Recalculate resources for a kingdom."""
@@ -59,7 +65,9 @@ def recalculate_resources(
     db.execute(text("SELECT recalc_resources(:kid)"), {"kid": payload.kingdom_id})
     db.commit()
     ip, device = _extract_request_meta(request)
-    log_action(db, admin_user_id, "recalculate_resources", str(payload.kingdom_id), ip, device)
+    log_action(
+        db, admin_user_id, "recalculate_resources", str(payload.kingdom_id), ip, device
+    )
     return {"status": "recalculated", "kingdom_id": payload.kingdom_id}
 
 
@@ -69,12 +77,14 @@ class QuestRollback(BaseModel):
 
 
 @router.post("/rollback_quest")
+@limiter.limit("5/minute")
 def rollback_quest(
     request: Request,
     payload: QuestRollback,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
     csrf: str = Depends(require_csrf_token),
+    _ip: None = Depends(verify_emergency_ip),
     db: Session = Depends(get_db),
 ):
     """Rollback an alliance quest."""
@@ -93,14 +103,20 @@ def rollback_quest(
         ip,
         device,
     )
-    return {"status": "rolled_back", "alliance_id": payload.alliance_id, "quest_code": payload.quest_code}
+    return {
+        "status": "rolled_back",
+        "alliance_id": payload.alliance_id,
+        "quest_code": payload.quest_code,
+    }
 
 
 @router.get("/backups")
+@limiter.limit("5/minute")
 def list_backup_queues(
     request: Request,
     verify: str = Depends(verify_api_key),
     admin_user_id: str = Depends(require_user_id),
+    _ip: None = Depends(verify_emergency_ip),
     db: Session = Depends(get_db),
 ):
     """List available backup queues."""

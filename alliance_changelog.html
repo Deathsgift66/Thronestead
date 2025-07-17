@@ -24,15 +24,15 @@ Developer: Deathsgift66
   <!-- Open Graph -->
   <meta property="og:title" content="Alliance Changelog | Thronestead" />
   <meta property="og:description" content="View historical alliance changes, policy updates, wars, quests, and member logs." />
-  <meta property="og:image" content="Assets/banner_main.png" />
-  <meta property="og:url" content="alliance_changelog.html" />
+  <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+  <meta property="og:url" content="https://www.thronestead.com/alliance_changelog.html" />
   <meta property="og:type" content="website" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Alliance Changelog | Thronestead" />
   <meta name="twitter:description" content="Track alliance wars, treaties, project completions, quests, and more in the changelog." />
-  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
 
   <script type="application/ld+json">
   {
@@ -135,6 +135,7 @@ Developer: Deathsgift66
     let changelogData = [];
     let fetchTimer;
     let backoff = 30000;
+    let isFetching = false;
 
     const iconMap = {
       war: '🛡',
@@ -165,17 +166,28 @@ Developer: Deathsgift66
     }
 
     async function fetchChangelog(manual = false) {
+      if (isFetching) return;
+      isFetching = true;
+      setButtonsDisabled(true);
       try {
         const { data: { session } = {} } = await supabase.auth.getSession();
-        if (!session) return (window.location.href = 'login.html');
+        if (!session) {
+          document.getElementById('changelog-list').innerHTML =
+            '<li class="error-state">Not logged in. Redirecting...</li>';
+          return setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 100);
+        }
 
         const filters = ['start', 'end', 'type'].reduce((params, key) => {
           const val = document.getElementById(`filter-${key}`)?.value;
-          if (val) {
+          if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
             let v = val;
             if (key === 'start') v += 'T00:00:00Z';
             if (key === 'end') v += 'T23:59:59Z';
             params.set(key, v);
+          } else if (val) {
+            params.set(key, val);
           }
           return params;
         }, new URLSearchParams());
@@ -194,6 +206,8 @@ Developer: Deathsgift66
           '<li class="error-state">Failed to load changelog.</li>';
         backoff = Math.min(backoff * 2, 300000);
       } finally {
+        isFetching = false;
+        setButtonsDisabled(false);
         if (manual) backoff = 30000;
         scheduleNextFetch();
       }
@@ -227,33 +241,35 @@ Developer: Deathsgift66
       if (!container) return;
 
       if (!logs.length) {
-        container.innerHTML = '<li class="empty-state">No historical records match your filters.</li>';
+        container.innerHTML = '<li class="empty-state">No historical records match your filters. Adjust the date range or event type and try again.</li>';
         return;
       }
 
       container.innerHTML = logs
         .map(
-          (log) => `
-      <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry" aria-expanded="true">
+          (log) => {
+            const validTime = log.timestamp && !isNaN(new Date(log.timestamp));
+            const timeHtml = validTime
+              ? `<time datetime="${log.timestamp}">${formatDate(log.timestamp)}</time>`
+              : '<span class="no-time" aria-label="No timestamp">—</span>';
+            return `
+      <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry">
         <div class="timeline-bullet"></div>
         <div class="timeline-content">
           <span class="log-icon">${getIcon(log.event_type)}</span>
           <span class="log-type">${escapeHTML(log.event_type.toUpperCase())}</span>
           <p class="log-text">${escapeHTML(log.description)}</p>
-          <time datetime="${log.timestamp}">
-            ${log.timestamp && !isNaN(new Date(log.timestamp)) ? formatDate(log.timestamp) : '—'}
-          </time>
+          ${timeHtml}
         </div>
       </li>
-    `
+    `;
+          }
         )
         .join('');
 
       container.querySelectorAll('.timeline-entry').forEach((entry) => {
-        entry.setAttribute('aria-expanded', 'true');
         entry.addEventListener('click', () => {
           entry.classList.toggle('collapsed');
-          entry.setAttribute('aria-expanded', entry.classList.contains('collapsed') ? 'false' : 'true');
         });
       });
     }
@@ -278,12 +294,19 @@ Developer: Deathsgift66
       document.getElementById(id)?.addEventListener('click', handler);
     }
 
+    function setButtonsDisabled(disabled) {
+      ['apply-filters-btn', 'refresh-btn', 'export-csv-btn'].forEach((id) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = disabled;
+      });
+    }
+
       document.addEventListener('DOMContentLoaded', () => {
         loadFilters();
         fetchChangelog();
         const debouncedApply = debounce(applyFilters, 400);
         bindEvent('apply-filters-btn', debouncedApply);
-        const debouncedRefresh = debounce(() => fetchChangelog(true), 400);
+        const debouncedRefresh = debounce(() => fetchChangelog(true), 100);
         bindEvent('refresh-btn', debouncedRefresh);
         bindEvent('export-csv-btn', exportCSV);
         window.addEventListener('beforeunload', () => clearTimeout(fetchTimer));
