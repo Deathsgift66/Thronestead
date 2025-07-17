@@ -1,7 +1,6 @@
 <!--
 Project Name: Thronestead©
 File Name: about.html
-Version:  7/1/2025 10:38
 Developer: Deathsgift66
 -->
 <!DOCTYPE html>
@@ -10,15 +9,14 @@ Developer: Deathsgift66
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Version: 7.1.2025.10.38 -->
 
   <title>About | Thronestead - Medieval Strategy MMO</title>
   <meta name="description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
   <meta name="keywords" content="medieval, strategy, MMO, empire, online kingdom game" />
   <meta name="author" content="Thronestead Studios" />
   <link rel="canonical" href="https://www.thronestead.com/about.html" />
-  <meta name="robots" content="index, follow" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com 'nonce-nx123'; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; img-src 'self' https:; frame-ancestors 'none'" />
+  <meta name="robots" content="index, follow, noarchive, max-snippet:-1, max-image-preview:large" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com 'nonce-{{nonce}}'; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; img-src 'self' https:; frame-ancestors 'none'" />
   <meta name="version" content="7.1.2025.10.38" />
   <meta name="theme-color" content="#1a1a1a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,6 +33,7 @@ Developer: Deathsgift66
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Thronestead" />
 
+  <meta property="og:locale" content="en_US" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -42,6 +41,7 @@ Developer: Deathsgift66
   <meta name="twitter:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
   <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
   <meta name="twitter:site" content="@Thronestead" />
+  <meta name="twitter:creator" content="@Thronestead" />
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" />
@@ -59,14 +59,14 @@ Developer: Deathsgift66
   <script src="/Javascript/navbarFallback.js" type="module" defer></script>
   <script src="/Javascript/i18n.js" type="module" defer></script>
   <script src="/Javascript/initLang.js" type="module" defer></script>
-  <script type="application/ld+json" nonce="nx123">
+  <script type="application/ld+json" nonce="{{nonce}}">
   {"@context":"https://schema.org","@type":"VideoGame","name":"Thronestead","description":"A medieval strategy game currently in early development.","url":"https://www.thronestead.com","image":"https://www.thronestead.com/Assets/banner_main.png","genre":["Strategy","Multiplayer","Medieval"],"gamePlatform":["Web Browser"],"operatingSystem":"Web","applicationCategory":"MMO","datePublished":"2025-07-01","author":{"@type":"Organization","name":"Thronestead Studios","url":"https://www.thronestead.com"},"publisher":{"@type":"Organization","name":"Thronestead Studios"},"aggregateRating":{"@type":"AggregateRating","ratingValue":5,"ratingCount":0},"offers":{"@type":"Offer","price":0,"priceCurrency":"USD","availability":"https://schema.org/PreOrder"}}
   </script>
-  <script type="application/ld+json" nonce="nx123">
+  <script type="application/ld+json" nonce="{{nonce}}">
   {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.thronestead.com/index.html"},{"@type":"ListItem","position":2,"name":"About","item":"https://www.thronestead.com/about.html"}]}
   </script>
 </head>
-<body>
+<body lang="en" data-lang="en">
   <noscript>
     <div class="noscript-warning" lang="en">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
@@ -93,7 +93,7 @@ Developer: Deathsgift66
     </div>
   </section>
 
-  <img src="/Assets/banner_main.png" class="about-illustration" alt="Thronestead illustration" loading="lazy" fetchpriority="high" role="img" aria-label="Main banner artwork showing Thronestead game world" />
+  <img src="/Assets/banner_main.png" class="about-illustration" alt="" loading="lazy" role="presentation" width="1536" height="1024" />
 
   <main role="main" class="main-centered-container">
     <article aria-labelledby="about-heading">
@@ -106,17 +106,17 @@ Developer: Deathsgift66
     </article>
 
     <section class="cta-section" aria-label="Community Call to Action">
-      <a href="https://discord.gg/thronestead" class="cta-button" aria-label="Join the Thronestead community on Discord" data-i18n="join_community">Join our community</a>
+      <a href="https://discord.gg/thronestead" rel="nofollow" class="cta-button" aria-label="Join the Thronestead community on Discord" data-i18n="join_community">Join our community</a>
       <div class="social-links">
         <a href="https://twitter.com/thronestead" class="social-button" data-i18n="follow_twitter">Twitter</a>
-        <a href="https://discord.gg/thronestead" class="social-button" data-i18n="join_discord">Discord</a>
+        <a href="https://discord.gg/thronestead" rel="nofollow" class="social-button" data-i18n="join_discord">Discord</a>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
+  <footer role="contentinfo" class="site-footer">
     <p>© 2025 Thronestead</p>
-    <h2 class="visually-hidden">Legal Links</h2>
+    <h2 class="visually-hidden" tabindex="-1">Legal Links</h2>
     <nav aria-label="Legal Links">
       <ul id="legal-links">
         <li><a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf" data-i18n="privacy_policy">Privacy Policy</a></li>
