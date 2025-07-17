@@ -6,6 +6,7 @@
 """Admin endpoints for publishing news articles."""
 
 from fastapi import APIRouter, Depends, HTTPException
+from ..rate_limiter import limiter
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -30,6 +31,7 @@ class NewsPayload(BaseModel):
 
 
 @router.post("/post", summary="Publish a news article")
+@limiter.limit("5/minute")
 def post_news(
     payload: NewsPayload,
     verify: str = Depends(verify_api_key),

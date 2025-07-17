@@ -242,6 +242,10 @@ export function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+export function updateElementText(id, value) {
+  setText(id, value);
+}
+
 /**
  * Format a timestamp using the user's locale.
  * @param {string|number|Date} ts Date or timestamp
@@ -252,6 +256,16 @@ export function formatDate(ts) {
   return Number.isNaN(date.getTime())
     ? ''
     : date.toLocaleString('en-US', { timeZone: 'UTC' });
+}
+
+export function formatTimestamp(ts) {
+  try {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return isNaN(d) ? '' : d.toLocaleString();
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -295,6 +309,7 @@ export async function jsonFetch(url, options = {}, timeoutMs = 8000) {
     const res = await fetch(url, {
       headers: { Accept: 'application/json', ...(options.headers || {}) },
       credentials: options.credentials || 'include',
+      referrerPolicy: 'strict-origin-when-cross-origin',
       ...options,
       signal: controller.signal
     });
@@ -318,6 +333,7 @@ export async function authFetch(url, options = {}) {
   };
   let res = await fetch(url, {
     credentials: options.credentials || 'include',
+    referrerPolicy: 'strict-origin-when-cross-origin',
     ...options,
     headers
   });
@@ -328,6 +344,7 @@ export async function authFetch(url, options = {}) {
       headers = { ...(options.headers || {}), ...(await authHeaders()), ...getReauthHeaders() };
       res = await fetch(url, {
         credentials: options.credentials || 'include',
+        referrerPolicy: 'strict-origin-when-cross-origin',
         ...options,
         headers
       });

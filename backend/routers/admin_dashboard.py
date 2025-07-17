@@ -13,6 +13,7 @@ from typing import Any, Optional
 from ..env_utils import get_env_var
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from ..rate_limiter import limiter
 from pydantic import BaseModel
 from sqlalchemy import text, update
 from sqlalchemy.orm import Session
@@ -213,6 +214,7 @@ class KingdomFieldUpdate(BaseModel):
 
 
 @router.post("/kingdom/update_field")
+@limiter.limit("5/minute")
 def update_field(
     payload: KingdomFieldUpdate,
     verify: str = Depends(verify_api_key),

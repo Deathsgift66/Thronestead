@@ -6,6 +6,7 @@
 """Admin endpoints for managing global events."""
 
 from fastapi import APIRouter, Depends
+from ..rate_limiter import limiter
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -33,6 +34,7 @@ class EventPayload(BaseModel):
 
 
 @router.post("/create", summary="Create a global event")
+@limiter.limit("5/minute")
 def create_event(
     payload: EventPayload,
     verify: str = Depends(verify_api_key),
