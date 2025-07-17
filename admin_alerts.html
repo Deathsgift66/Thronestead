@@ -14,6 +14,7 @@ Developer: Deathsgift66
   <title>Admin Alerts | Thronestead</title>
   <meta name="referrer" content="strict-origin" />
   <meta name="author" content="Thronestead Moderation Team" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'" />
 
   <!-- SEO -->
   <meta name="description" content="Admin alert center for account monitoring and moderation." />
@@ -40,17 +41,10 @@ Developer: Deathsgift66
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
   <link href="/CSS/admin_alerts.css" rel="stylesheet" />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" as="style" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
 
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "Thronestead Admin Center",
-    "url": "https://www.thronestead.com/admin_alerts.html",
-    "applicationCategory": "Security"
-  }
-  </script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Thronestead Admin Center","url":"https://www.thronestead.com/admin_alerts.html","applicationCategory":"Security"}</script>
 
   <!-- Admin Scripts -->
   <script type="module">
@@ -61,6 +55,15 @@ Developer: Deathsgift66
     import { authJsonFetch, showToast, debounce, safeUUID } from '/Javascript/utils.js';
     import { setupReauthButtons } from '/Javascript/reauth.js';
     import { validateSessionOrLogout } from '/Javascript/auth.js';
+
+    window.addEventListener('error', e => {
+      console.error('Unhandled error:', e.error || e.message);
+      showToast('Unexpected error occurred', 'error');
+    });
+    window.addEventListener('unhandledrejection', e => {
+      console.error('Unhandled promise rejection:', e.reason);
+      showToast('Unexpected error occurred', 'error');
+    });
 
     const REFRESH_MS = 30000;
     const AUTO_EXPIRE_MS = 60000;
@@ -80,6 +83,11 @@ Developer: Deathsgift66
     let lastTimestamp = null;
     const buttonCooldownSet = new Set();
     let exportLock = false;
+    let userScrolling = false;
+    function setRealtimeStatus(text) {
+      const el = document.getElementById('realtime-status');
+      if (el) el.textContent = text;
+    }
     function storeToken(token) {
       const hex = Array.from(new TextEncoder().encode(token))
         .map(b => b.toString(16).padStart(2, '0'))
@@ -103,6 +111,7 @@ Developer: Deathsgift66
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
+          referrerPolicy: 'strict-origin-when-cross-origin',
           body: JSON.stringify({ token: csrfToken })
         });
       } catch (err) {
@@ -139,7 +148,8 @@ Developer: Deathsgift66
     document.addEventListener('DOMContentLoaded', () => {
       initTabs();
       const params = new URLSearchParams(window.location.search);
-      const type = params.get('type');
+      const savedType = localStorage.getItem('admin-alert-tab');
+      const type = params.get('type') || savedType;
       const tab = type ? document.querySelector(`.tab[data-type="${type}"]`) : null;
       if (tab) tab.click();
       else loadAlerts();
@@ -158,6 +168,9 @@ Developer: Deathsgift66
           handleActionClick({ target: e.target });
         }
       });
+      feed?.addEventListener('scroll', () => {
+        userScrolling = feed.scrollTop + feed.clientHeight < feed.scrollHeight - 5;
+      });
       document.querySelectorAll('.filter-input').forEach(el => {
         const ev = el.tagName === 'SELECT' ? 'change' : 'input';
         el.addEventListener(ev, () => {
@@ -169,9 +182,10 @@ Developer: Deathsgift66
       document.getElementById('load-more-alerts')?.addEventListener('click', () => loadAlerts(true));
       initThemeToggle();
       setupReauthButtons('.action-btn');
-      supabase.auth.onAuthStateChange((_evt, session) => {
+      supabase.auth.onAuthStateChange((evt, session) => {
         try {
           if (!session) validateSessionOrLogout();
+          if (evt === 'SIGNED_IN' || evt === 'SIGNED_OUT') refreshCsrf();
         } catch (err) {
           console.error('Auth state handler failed', err);
         }
@@ -183,6 +197,7 @@ Developer: Deathsgift66
         await realtimeSub.unsubscribe();
         realtimeSub = null;
       }
+      setRealtimeStatus('Disconnected: ❌');
     });
 
     async function subscribeToRealtime() {
@@ -194,13 +209,21 @@ Developer: Deathsgift66
         }
         realtimeSub = null;
       }
+      setRealtimeStatus('Connecting...');
       const { kingdom, alliance } = getFilters();
       const opts = { event: 'INSERT', schema: 'public', table: 'admin_alerts' };
       const channel = supabase.channel('admin_alerts');
       if (kingdom) channel.on('postgres_changes', { ...opts, filter: `kingdom_id=eq.${kingdom}` }, debouncedLoad);
       if (alliance) channel.on('postgres_changes', { ...opts, filter: `alliance_id=eq.${alliance}` }, debouncedLoad);
       if (!kingdom && !alliance) channel.on('postgres_changes', opts, debouncedLoad);
-      realtimeSub = channel.subscribe();
+      realtimeSub = channel.subscribe()
+        .then(() => setRealtimeStatus('Live: ✅'))
+        .catch(err => {
+          console.error('Realtime subscribe failed', err);
+          setRealtimeStatus('Disconnected: ❌');
+          showToast('Realtime connection failed', 'error');
+          setTimeout(subscribeToRealtime, 5000);
+        });
     }
 
     async function loadAlerts(append = false) {
@@ -226,6 +249,7 @@ Developer: Deathsgift66
             'Content-Type': 'application/json',
             'X-CSRF-Token': csrfToken
           },
+          referrerPolicy: 'strict-origin-when-cross-origin',
           body: JSON.stringify(filters)
         });
         if (append && currentData && Array.isArray(currentData.alerts)) {
@@ -263,7 +287,6 @@ Developer: Deathsgift66
           showToast('⚠ Only first 250 alerts shown. Refine filters.', 'warning');
         }
 
-        const moreBtn = document.getElementById('load-more-alerts');
         lastTimestamp = data.alerts?.[data.alerts.length - 1]?.timestamp || null;
         if (data.alerts && data.alerts.length >= 100) {
           moreBtn?.classList.remove('hidden');
@@ -272,6 +295,10 @@ Developer: Deathsgift66
         }
 
         renderSet.forEach(({ title, items }) => renderCategory(container, title, items));
+        const count = renderSet.reduce((n, s) => n + (s.items ? s.items.length : 0), 0);
+        const countEl = document.getElementById('alert-count');
+        if (countEl) countEl.textContent = `${count} alerts shown`;
+        if (!userScrolling) container.scrollTop = container.scrollHeight;
       } catch (err) {
         console.error('❌ Failed to load alerts:', err);
         const msg = escapeHTML(err.message || 'Unknown error');
@@ -368,7 +395,7 @@ Developer: Deathsgift66
         switch (action) {
           case 'flag':
             if (!idPattern.test(btn.dataset.player_id)) {
-              console.warn('Invalid player id:', btn.dataset.player_id);
+              console.error('Invalid player id:', btn.dataset.player_id);
               throw new Error('Invalid player id');
             }
             await postAdminAction(API_ENDPOINTS.flag, { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
@@ -376,7 +403,7 @@ Developer: Deathsgift66
             break;
           case 'freeze':
             if (!idPattern.test(btn.dataset.player_id)) {
-              console.warn('Invalid player id:', btn.dataset.player_id);
+              console.error('Invalid player id:', btn.dataset.player_id);
               throw new Error('Invalid player id');
             }
             await postAdminAction(API_ENDPOINTS.freeze, { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
@@ -384,7 +411,7 @@ Developer: Deathsgift66
             break;
           case 'ban':
             if (!idPattern.test(btn.dataset.player_id)) {
-              console.warn('Invalid player id:', btn.dataset.player_id);
+              console.error('Invalid player id:', btn.dataset.player_id);
               throw new Error('Invalid player id');
             }
             await postAdminAction(API_ENDPOINTS.ban, { player_id: btn.dataset.player_id, alert_id: btn.dataset.alert_id });
@@ -392,7 +419,7 @@ Developer: Deathsgift66
             break;
           case 'dismiss':
             if (!idPattern.test(btn.dataset.alert_id)) {
-              console.warn('Invalid alert id:', btn.dataset.alert_id);
+              console.error('Invalid alert id:', btn.dataset.alert_id);
               throw new Error('Invalid alert id');
             }
             await postAdminAction(API_ENDPOINTS.dismiss, { alert_id: btn.dataset.alert_id });
@@ -400,7 +427,7 @@ Developer: Deathsgift66
             break;
           case 'flag_ip':
             if (!ipPattern.test(btn.dataset.ip)) {
-              console.warn('Invalid IP:', btn.dataset.ip);
+              console.error('Invalid IP:', btn.dataset.ip);
               throw new Error('Invalid IP');
             }
             await postAdminAction(API_ENDPOINTS.flag_ip, { ip: btn.dataset.ip });
@@ -408,7 +435,7 @@ Developer: Deathsgift66
             break;
           case 'suspend_user':
             if (!idPattern.test(btn.dataset.user_id)) {
-              console.warn('Invalid user id:', btn.dataset.user_id);
+              console.error('Invalid user id:', btn.dataset.user_id);
               throw new Error('Invalid user id');
             }
             await postAdminAction(API_ENDPOINTS.suspend_user, { user_id: btn.dataset.user_id });
@@ -429,7 +456,8 @@ Developer: Deathsgift66
       } catch (err) {
         console.error(`❌ Action [${action}] failed:`, err);
         const msg = escapeHTML(err.message || 'Unknown error');
-        showToast(`❌ ${action} failed: ${msg}`, 'error');
+        const level = msg.toLowerCase().includes('invalid') ? 'warning' : 'error';
+        showToast(`❌ ${action} failed: ${msg}`, level);
       } finally {
         if (success) {
           buttonCooldownSet.delete(key);
@@ -454,11 +482,11 @@ Developer: Deathsgift66
         method: 'POST',
         credentials: 'include',
         headers,
-        referrerPolicy: 'strict-origin',
+        referrerPolicy: 'strict-origin-when-cross-origin',
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
-        console.warn('Admin action failed with status', res.status);
+        console.error('Admin action failed with status', res.status);
         let msg = await res.text();
         if (res.status === 401) msg = 'Unauthorized. Please reauthenticate.';
         if (res.status === 403) msg = 'Access denied.';
@@ -481,7 +509,20 @@ Developer: Deathsgift66
           return [k, v];
         })
         .filter(([, v]) => v);
-      return Object.fromEntries(entries);
+      return sanitizeFilters(Object.fromEntries(entries));
+    }
+
+    function sanitizeFilters(obj) {
+      const idPattern = /^[a-zA-Z0-9_-]{1,40}$/;
+      const types = ['moderation','war','economy','diplomacy','quests','abuse','spy','vip'];
+      const severities = ['low','medium','high'];
+      if (obj.kingdom && !idPattern.test(obj.kingdom)) delete obj.kingdom;
+      if (obj.alliance && !idPattern.test(obj.alliance)) delete obj.alliance;
+      if (obj.type && !types.includes(obj.type)) delete obj.type;
+      if (obj.severity && !severities.includes(obj.severity)) delete obj.severity;
+      if (obj.start && Number.isNaN(Date.parse(obj.start))) delete obj.start;
+      if (obj.end && Number.isNaN(Date.parse(obj.end))) delete obj.end;
+      return obj;
     }
 
     function clearFilters() {
@@ -646,6 +687,7 @@ Developer: Deathsgift66
       if (type) url.searchParams.set('type', type);
       else url.searchParams.delete('type');
       history.pushState({}, '', url);
+      localStorage.setItem('admin-alert-tab', type);
       lastTimestamp = null;
       loadAlerts();
       subscribeToRealtime();
@@ -678,6 +720,7 @@ Developer: Deathsgift66
 </head>
 
 <body>
+  <a href="#alerts-feed" class="skip-link">Skip to alerts</a>
   <noscript>
     <div class="noscript-warning">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
@@ -702,6 +745,8 @@ Developer: Deathsgift66
     <div class="admin-alerts-container">
       <h1>Admin Alert Center</h1>
       <h2>Flagged Accounts & Suspicious Events</h2>
+      <div id="realtime-status" class="realtime-status" aria-live="polite"></div>
+      <div id="alert-count" class="alert-count" aria-live="polite"></div>
       <div class="alert-tabs" aria-label="Alert Type Tabs" role="tablist">
         <button class="tab active" role="tab" aria-selected="true" tabindex="0" data-type="" aria-controls="alerts-feed">All</button>
         <button class="tab" role="tab" aria-selected="false" tabindex="-1" data-type="moderation" aria-controls="alerts-feed">Moderation</button>
@@ -737,8 +782,8 @@ Developer: Deathsgift66
         <input type="text" id="filter-kingdom" class="filter-input" placeholder="Kingdom ID" aria-label="Filter by Kingdom ID" />
         <input type="text" id="filter-alliance" class="filter-input" placeholder="Alliance ID" aria-label="Filter by Alliance ID" />
 
-        <button id="refresh-alerts" class="btn btn-primary">Refresh</button>
-        <button id="clear-filters" class="btn btn-secondary">Clear</button>
+        <button id="refresh-alerts" class="btn btn-primary" aria-controls="alerts-feed">Refresh</button>
+        <button id="clear-filters" class="btn btn-secondary" aria-controls="alerts-feed">Clear</button>
         <button id="export-csv" class="btn btn-secondary" type="button">Export CSV</button>
         <button id="export-json" class="btn btn-secondary" type="button">Export JSON</button>
         <button id="theme-toggle" class="btn btn-secondary" type="button">Dark Mode</button>
@@ -746,7 +791,7 @@ Developer: Deathsgift66
 
       <!-- Alert Feed Panel -->
       <section id="alerts-feed" class="kr-alerts-panel" aria-label="Live Alert Feed" role="tabpanel" aria-hidden="false">
-        <div aria-live="assertive" class="alerts-feed" role="log">
+        <div aria-live="polite" class="alerts-feed" role="log">
           <!-- JavaScript inserts real-time alerts here -->
         </div>
         <button id="load-more-alerts" class="btn btn-secondary hidden" type="button">Load More</button>
