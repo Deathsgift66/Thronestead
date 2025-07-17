@@ -18,6 +18,11 @@ import {
   getCsrfToken
 } from '/Javascript/security/csrf.js';
 
+window.requireAdmin = true;
+
+const sanitizeField = str => str.replace(/[^A-Za-z0-9_.-]/g, '');
+const sanitizeValue = str => str.replace(/[<>]/g, '');
+
 const REFRESH_MS = 30000;
 let csrfToken = initCsrf();
 setInterval(() => {
@@ -279,15 +284,15 @@ async function postAdminAction(endpoint, payload) {
 
 const actions = {
   'toggle-flag-btn': async btn => {
-    const key = document.getElementById('flag-key').value.trim();
+    const key = sanitizeField(document.getElementById('flag-key').value.trim());
     const value = document.getElementById('flag-value').value === 'true';
     if (!key) return showToast('Enter a flag key', 'error');
     await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value }, 'Flag updated', btn);
   },
   'update-kingdom-btn': async btn => {
     const id = Number(document.getElementById('kingdom-id').value.trim());
-    const field = document.getElementById('kingdom-field').value.trim();
-    const value = document.getElementById('kingdom-value').value.trim();
+    const field = sanitizeField(document.getElementById('kingdom-field').value.trim());
+    const value = sanitizeValue(document.getElementById('kingdom-value').value.trim());
     if (!id || !field) return showToast('Missing field/kingdom', 'error');
     await handleAdminAction(
       '/api/admin/kingdom/update_field',
@@ -310,6 +315,10 @@ const actions = {
     const dlg = document.getElementById('create-event-dialog');
     dlg.showModal();
     dlg.querySelector('input').focus();
+    const escHandler = e => {
+      if (e.key === 'Escape') dlg.close();
+    };
+    dlg.addEventListener('keydown', escHandler, { once: true });
     dlg.querySelector('.confirm').onclick = async () => {
       dlg.close();
       const name = dlg.querySelector('input').value.trim();
