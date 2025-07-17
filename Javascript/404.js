@@ -191,4 +191,24 @@ async function init() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+function navFallback() {
+  const nav = document.getElementById('navbar-container');
+  if (!nav || nav.querySelector('nav') || nav.querySelector('.navbar-failover')) return;
+  const tpl = document.getElementById('nav-fallback');
+  if (tpl && tpl.content) {
+    nav.replaceChildren(tpl.content.cloneNode(true));
+  } else {
+    nav.innerHTML = '<div class="navbar-failover">⚠️ Navigation unavailable. <a href="/">Home</a>.</div>';
+  }
+}
+
+function onReady() {
+  const navScript = document.getElementById('navLoaderScript');
+  navScript?.addEventListener('error', navFallback);
+  if (typeof window.navLoader === 'undefined') {
+    setTimeout(navFallback, 4000);
+  }
+  init();
+}
+
+document.addEventListener('DOMContentLoaded', onReady);
