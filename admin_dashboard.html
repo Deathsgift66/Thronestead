@@ -6,12 +6,12 @@ Developer: Deathsgift66
 -->
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="parchment">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://zzqoxgytfrbptojcwrjm.supabase.co wss://zzqoxgytfrbptojcwrjm.supabase.co; img-src 'self' https: data:; script-src 'self' 'strict-dynamic' 'nonce-krdash'; style-src 'self'; frame-ancestors 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://zzqoxgytfrbptojcwrjm.supabase.co wss://zzqoxgytfrbptojcwrjm.supabase.co; img-src 'self' https: data:; script-src 'self' 'nonce-krdash'; style-src 'self'; frame-ancestors 'none'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
   <title>Admin Dashboard | Thronestead</title>
@@ -31,7 +31,7 @@ Developer: Deathsgift66
   <meta property="og:url" content="https://www.thronestead.com/admin_dashboard.html" />
   <meta property="og:type" content="website" />
 
-  <script type="application/ld+json">
+  <script type="application/ld+json" nonce="krdash">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
@@ -56,16 +56,21 @@ Developer: Deathsgift66
   <!-- preload removed; module sets requireAdmin flag -->
 
   <!-- Scripts -->
-  <script type="module" src="/Javascript/admin_dashboard.js"></script>
+  <script type="module" src="/Javascript/admin_dashboard.js" defer nonce="krdash"></script>
 
 <!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
+  <script src="/Javascript/components/authGuard.js" type="module" defer nonce="krdash"></script>
+  <script src="/Javascript/apiHelper.js" type="module" defer nonce="krdash"></script>
+  <script src="/Javascript/navLoader.js" type="module" defer nonce="krdash"></script>
+  <script src="/Javascript/resourceBar.js" type="module" defer nonce="krdash"></script>
+  <script type="module" defer nonce="krdash">
+    import dialogPolyfill from '/Javascript/dialog-polyfill.js';
+    dialogPolyfill();
+  </script>
 </head>
 
-<body data-theme="parchment">
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <noscript>
     <div class="noscript-warning">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
@@ -88,7 +93,7 @@ Developer: Deathsgift66
   </div>
 
   <!-- Main Dashboard -->
-  <main class="main-container" role="main" aria-label="Admin Tools Interface">
+  <main id="main-content" class="main-container" role="main" aria-label="Admin Tools Interface">
     <div class="container" id="admin-dashboard-content">
       <h2>Command your administrative forces. Monitor, manage, and moderate in real time.</h2>
 
@@ -133,7 +138,7 @@ Developer: Deathsgift66
           <option value="username-desc">Username Z-A</option>
             </select>
           </div>
-          <button id="search-btn" data-i18n="search_btn">Search</button>
+          <button id="search-btn" data-i18n="search_btn" type="button">Search</button>
           <div id="player-list" class="scrollable-panel"></div>
         </fieldset>
       </section>
@@ -142,7 +147,7 @@ Developer: Deathsgift66
       <section class="event-management" aria-label="Global Event Tools">
         <fieldset>
           <legend>Event Tools</legend>
-          <button class="action-btn" id="create-event" data-i18n="create_event_btn">Create New Event</button>
+          <button class="action-btn" id="create-event" data-i18n="create_event_btn" type="button">Create New Event</button>
         </fieldset>
       </section>
       <dialog id="create-event-dialog" role="dialog" aria-labelledby="event-dialog-title">
@@ -150,7 +155,7 @@ Developer: Deathsgift66
           <h2 id="event-dialog-title">Create Event</h2>
           <div class="form-row">
             <label for="event-name">Event Name</label>
-            <input id="event-name" type="text" required />
+            <input id="event-name" type="text" aria-label="Event Name" required />
           </div>
           <button type="button" class="confirm" data-i18n="create_btn">Create</button>
           <button type="button" class="cancel" data-i18n="cancel_btn">Cancel</button>
@@ -174,7 +179,7 @@ Developer: Deathsgift66
             <textarea id="news-content" placeholder="Content" aria-label="News Content" required></textarea>
           </div>
           <p id="publish-news-desc" class="visually-hidden">News will be immediately visible to all players.</p>
-          <button id="publish-news-btn" aria-describedby="publish-news-desc" data-i18n="publish_btn">Publish</button>
+          <button id="publish-news-btn" aria-describedby="publish-news-desc" data-i18n="publish_btn" type="button">Publish</button>
         </fieldset>
       </section>
 
@@ -193,8 +198,16 @@ Developer: Deathsgift66
           <option value="false">False</option>
             </select>
           </div>
-          <button id="toggle-flag-btn" data-i18n="toggle_btn">Toggle</button>
-          <table id="flag-table"></table>
+          <button id="toggle-flag-btn" data-i18n="toggle_btn" type="button">Toggle</button>
+          <table id="flag-table">
+            <thead>
+              <tr>
+                <th scope="col">Key</th>
+                <th scope="col">Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </fieldset>
       </section>
 
@@ -214,7 +227,7 @@ Developer: Deathsgift66
             <label for="kingdom-value">Value</label>
             <input id="kingdom-value" type="text" placeholder="Value" aria-label="Field Value" />
           </div>
-          <button id="update-kingdom-btn" data-i18n="update_btn">Update</button>
+          <button id="update-kingdom-btn" data-i18n="update_btn" type="button">Update</button>
         </fieldset>
       </section>
 
@@ -227,8 +240,8 @@ Developer: Deathsgift66
             <label for="war-id">War ID</label>
             <input id="war-id" type="number" min="1" required placeholder="War ID" aria-label="War ID" />
           </div>
-          <button id="force-end-war-btn" data-i18n="force_end_btn">Force End War</button>
-          <button id="rollback-tick-btn" data-i18n="rollback_btn">Rollback Combat Tick</button>
+          <button id="force-end-war-btn" data-i18n="force_end_btn" type="button">Force End War</button>
+          <button id="rollback-tick-btn" data-i18n="rollback_btn" type="button">Rollback Combat Tick</button>
         </fieldset>
       </details>
 
@@ -254,10 +267,10 @@ Developer: Deathsgift66
             <label for="log-end">End Date</label>
             <input id="log-end" type="datetime-local" aria-label="End Date" />
           </div>
-          <button id="load-logs-btn" data-i18n="load_logs_btn">Load Logs</button>
+          <button id="load-logs-btn" data-i18n="load_logs_btn" type="button">Load Logs</button>
           <div class="export-actions">
-            <button id="export-csv" data-i18n="export_csv_btn">Export CSV</button>
-            <button id="export-json" data-i18n="export_json_btn">Export JSON</button>
+            <button id="export-csv" data-i18n="export_csv_btn" type="button">Export CSV</button>
+            <button id="export-json" data-i18n="export_json_btn" type="button">Export JSON</button>
             <label id="export-feedback-label" class="visually-hidden" for="export-feedback">Export Status</label>
             <span id="export-feedback" aria-live="polite" aria-describedby="export-feedback-label"></span>
           </div>
@@ -290,9 +303,9 @@ Developer: Deathsgift66
       if (!window.adminDashboardReady) {
         const c = document.getElementById('admin-dashboard-content');
         if (c) {
-          c.innerHTML = '<p class="error-msg">Dashboard failed to load. Please refresh.</p>';
+          c.textContent = 'Dashboard failed to load. Please refresh.';
         } else {
-          document.body.insertAdjacentHTML('beforeend', '<p class="error-msg">Dashboard failed to load.</p>');
+          document.body.insertAdjacentText('beforeend', 'Dashboard failed to load.');
         }
       }
     }, 3000);
