@@ -111,6 +111,15 @@ p {
   box-shadow: 0 2px 4px var(--shadow);
   color: var(--ink);
 }
+.log-card.sev-high {
+  border-left-color: var(--alert-red);
+}
+.log-card.sev-medium {
+  border-left-color: var(--alert-orange);
+}
+.log-card.sev-low {
+  border-left-color: var(--alert-yellow);
+}
 
 /* Alerts */
 .alert-item {
