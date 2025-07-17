@@ -11,6 +11,8 @@ Developer: Deathsgift66
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
 
   <title>Admin Dashboard | Thronestead</title>
   <meta name="author" content="Thronestead Moderation Team" />
@@ -56,374 +58,7 @@ Developer: Deathsgift66
   </script>
 
   <!-- Scripts -->
-  <script type="module">
-    // Project Name: Thronestead©
-    // File Name: admin_dashboard.js (inlined)
-    // Version: 7/1/2025 10:38
-    // Developer: Deathsgift66
-
-    import { escapeHTML, authJsonFetch, authFetch, showToast, debounce, safeUUID } from '/Javascript/utils.js';
-    import { getAuth } from '/Javascript/auth.js';
-
-    const REFRESH_MS = 30000;
-    let csrfToken = safeUUID();
-    let previousCsrfToken = csrfToken;
-    document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
-    const csrfPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-    const isValidCsrf = token =>
-      csrfPattern.test(token) && (token === csrfToken || token === previousCsrfToken);
-
-    function rotateCsrfToken() {
-      previousCsrfToken = csrfToken;
-      csrfToken = safeUUID();
-      document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
-      setTimeout(() => {
-        previousCsrfToken = csrfToken;
-      }, 5 * 60 * 1000);
-    }
-    setInterval(rotateCsrfToken, 15 * 60 * 1000);
-
-    async function setupAutoRefresh() {
-      await loadDashboardStats();
-      await loadFlaggedUsers();
-      setInterval(async () => {
-        await loadDashboardStats();
-        await loadFlaggedUsers();
-      }, REFRESH_MS);
-    }
-
-    let lastStats = {};
-    async function loadDashboardStats() {
-      try {
-          const data = await authJsonFetch(`/api/admin/stats?v=${Date.now()}`);
-        if (JSON.stringify(data) === JSON.stringify(lastStats)) return;
-        lastStats = data;
-          ['total-users', 'total-users-card'].forEach(id => setText(id, data.active_users));
-        ['flagged-users', 'sum-flags'].forEach(id => setText(id, data.flagged_users));
-        setText('suspicious-activity', data.suspicious_count);
-        setText('sum-wars', data.active_wars);
-      } catch (e) {
-        console.error('⚠️ Dashboard stats error:', e);
-      }
-    }
-
-    async function loadPlayerList() {
-      const q = document.getElementById('search-player')?.value.toLowerCase() || '';
-      const status = document.getElementById('status-filter')?.value || '';
-      const sort = document.getElementById('sort-order')?.value || 'username-asc';
-      const container = document.getElementById('player-list');
-      if (!container) return;
-
-      container.innerHTML = '<div class="loading-spinner" role="status">Loading...</div>';
-      try {
-        const url = new URL('/api/admin/search_user', window.location.origin);
-        if (q) url.searchParams.set('q', encodeURIComponent(q));
-        if (status) url.searchParams.set('status', encodeURIComponent(status));
-        let players = await authJsonFetch(url);
-        if (sort === 'username-desc') {
-          players = players.sort((a, b) => b.username.localeCompare(a.username));
-        } else {
-          players = players.sort((a, b) => a.username.localeCompare(b.username));
-        }
-        container.innerHTML = players.length ? '' : '<p>No players found.</p>';
-
-        players.forEach(p => {
-          const card = document.createElement('div');
-          card.className = 'player-card';
-          card.innerHTML = `
-            <p><strong>${escapeHTML(p.username)}</strong> (${escapeHTML(p.id)})</p>
-            <p>Status: ${escapeHTML(p.status)}</p>
-            <div class="player-actions" role="group" aria-label="Moderation Actions">
-              ${['flag', 'freeze', 'ban'].map(action =>
-                `<button class="admin-btn" data-action="${action}" data-id="${escapeHTML(p.id)}">${capitalize(action)}</button>`
-              ).join('')}
-            </div>`;
-          container.appendChild(card);
-        });
-      } catch (e) {
-        console.error('⚠️ Player list error:', e);
-        container.innerHTML = '<p class="error-msg">Failed to fetch players.</p>';
-      }
-    }
-
-    async function loadAuditLogs(format = 'json') {
-      const container = document.getElementById('log-list');
-      if (!container) return;
-      if (format === 'json')
-        container.innerHTML = '<div class="loading-spinner" role="status">Loading...</div>';
-
-      try {
-        const url = new URL('/api/admin/audit/logs', window.location.origin);
-        const type = document.getElementById('log-type')?.value.trim();
-        const user = document.getElementById('log-user')?.value.trim();
-        const startInput = document.getElementById('log-start')?.value;
-        const endInput = document.getElementById('log-end')?.value;
-        const startDate = startInput ? new Date(startInput) : null;
-        const endDate = endInput ? new Date(endInput) : null;
-        if (type) url.searchParams.set('search', encodeURIComponent(type));
-        if (user) url.searchParams.set('user_id', encodeURIComponent(user));
-        if (startDate instanceof Date && !isNaN(startDate))
-          url.searchParams.set('start_date', startDate.toISOString());
-        if (endDate instanceof Date && !isNaN(endDate))
-          url.searchParams.set('end_date', endDate.toISOString());
-        url.searchParams.set('format', format);
-
-        if (format === 'csv') {
-          const res = await authFetch(url);
-          const blob = await res.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = 'audit_logs.csv';
-          a.rel = 'noopener';
-          a.click();
-          URL.revokeObjectURL(blobUrl);
-          return;
-        }
-
-        const logs = await authJsonFetch(url);
-        container.innerHTML = logs.length ? '' : '<p>No audit logs found.</p>';
-
-        logs.forEach(log => {
-          const entry = document.createElement('div');
-          entry.className = 'log-card';
-          entry.innerHTML = `
-            <p><strong>${escapeHTML(log.action)}</strong> — ${escapeHTML(log.details)}</p>
-            <p class="log-time">${formatTimestamp(log.created_at)}</p>`;
-          container.appendChild(entry);
-        });
-      } catch (e) {
-        console.error('⚠️ Logs error:', e);
-        container.innerHTML = '<p class="error-msg">Failed to fetch audit logs.</p>';
-      }
-    }
-
-    async function loadFlaggedUsers() {
-      const container = document.getElementById('flagged-list');
-      if (!container) return;
-      container.innerHTML = '<div class="loading-spinner" role="status">Loading...</div>';
-
-      try {
-        const rows = await authJsonFetch('/api/admin/flagged_users');
-        container.innerHTML = rows.length ? '' : '<p>No flagged users.</p>';
-
-        rows.forEach(row => {
-          const card = document.createElement('div');
-          card.className = 'flagged-card';
-          const icon = row.type === 'ban' ? '⛔' : '⚠️';
-          card.innerHTML = `
-            <p><span class="severity-icon">${icon}</span> <strong>${escapeHTML(row.user_id)}</strong> — ${escapeHTML(row.type)}</p>
-            <p>${formatTimestamp(row.created_at)}</p>`;
-          container.appendChild(card);
-        });
-      } catch (e) {
-        console.error('❌ Flagged load error:', e);
-        container.innerHTML = '<p>Error loading flagged users.</p>';
-      }
-    }
-
-    async function loadFlags() {
-      const table = document.getElementById('flag-table');
-      if (!table) return;
-      table.innerHTML = '<tr><td><div class="loading-spinner" role="status">Loading...</div></td></tr>';
-      try {
-        const rows = await authJsonFetch('/api/admin/flags');
-        table.innerHTML = rows
-          .map(r => `<tr><td>${escapeHTML(r.flag_key)}</td><td>${escapeHTML(String(r.flag_value))}</td></tr>`)
-          .join('');
-      } catch (e) {
-        console.error('Flag table error:', e);
-        table.innerHTML = '<tr><td colspan="2">Failed to load flags</td></tr>';
-      }
-    }
-
-    let alertSocket;
-    function connectAlertSocket(retries = 0) {
-      const container = document.getElementById('alerts');
-      if (!container) return;
-      const origin = window.location.origin || location.protocol + '//' + location.host;
-      authJsonFetch('/api/admin/alerts/connect', {
-        method: 'POST',
-        headers: { 'X-CSRF-Token': csrfToken }
-      })
-        .then(connect => {
-          const { url: wsPath } = connect;
-          alertSocket = new WebSocket(new URL(wsPath, origin).href.replace(/^http/, 'ws'));
-          alertSocket.onmessage = ({ data }) => {
-            let alert;
-            try {
-              alert = JSON.parse(data);
-            } catch (err) {
-              console.error('Invalid alert payload', err);
-              return;
-            }
-            const el = document.createElement('div');
-            el.className = 'alert-item';
-            el.innerHTML = `<b>${escapeHTML(alert.type)}</b>: ${escapeHTML(alert.message)} <small>${formatTimestamp(alert.timestamp)}</small>`;
-            container.prepend(el);
-          };
-          alertSocket.onerror = alertSocket.onclose = () => {
-            console.error('❌ Alert socket error');
-            container.innerHTML = '<p class="error-msg">Alert feed offline. Retrying...</p>';
-            const delay = Math.min(30000, 1000 * Math.pow(2, retries));
-            setTimeout(() => connectAlertSocket(retries + 1), delay);
-          };
-        })
-        .catch(err => {
-          console.error('Alert connect failed', err);
-          const delay = Math.min(30000, 1000 * Math.pow(2, retries));
-          setTimeout(() => connectAlertSocket(retries + 1), delay);
-        });
-    }
-
-    function initAlertSocket() {
-      const container = document.getElementById('alerts');
-      if (!container) return;
-      container.innerHTML = '';
-      connectAlertSocket();
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && (!alertSocket || alertSocket.readyState === WebSocket.CLOSED)) {
-          connectAlertSocket();
-        }
-      });
-    }
-
-    function throttleButton(btn, ms = 3000) {
-      if (!btn) return;
-      btn.disabled = true;
-      btn.classList.add('loading-spinner');
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.classList.remove('loading-spinner');
-      }, ms);
-    }
-
-    async function handleAdminAction(endpoint, payload, msg, btn) {
-      try {
-        if (btn) throttleButton(btn);
-        await postAdminAction(endpoint, payload);
-        showToast(msg, 'success');
-        if (btn) {
-          btn.classList.add('flash-success');
-          setTimeout(() => btn.classList.remove('flash-success'), 600);
-        }
-      } catch (err) {
-        console.error('❌ Action failed:', err);
-        showToast(`Action failed: ${err.message}`, 'error');
-      }
-    }
-
-    async function postAdminAction(endpoint, payload) {
-      if (!isValidCsrf(csrfToken)) throw new Error('Invalid session');
-      const res = await authFetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error(await res.text());
-    }
-
-    const actions = {
-      'toggle-flag-btn': async btn => {
-        const key = getValue('flag-key');
-        const value = getValue('flag-value') === 'true';
-        if (!key) return showToast('Enter a flag key', 'error');
-        await handleAdminAction('/api/admin/flags/toggle', { flag_key: key, value }, 'Flag updated', btn);
-      },
-      'update-kingdom-btn': async btn => {
-        const id = Number(getValue('kingdom-id'));
-        const field = getValue('kingdom-field');
-        const value = getValue('kingdom-value');
-        if (!id || !field) return showToast('Missing field/kingdom', 'error');
-        await handleAdminAction('/api/admin/kingdom/update_field', { kingdom_id: id, field, value }, 'Kingdom updated', btn);
-      },
-      'force-end-war-btn': async btn => {
-        const id = Number(getValue('war-id'));
-        if (!id) return showToast('Enter war ID', 'error');
-        await handleAdminAction('/api/admin/war/force_end', { war_id: id }, 'War ended', btn);
-      },
-      'rollback-tick-btn': async btn => {
-        const id = Number(getValue('war-id'));
-        if (!id) return showToast('Enter war ID', 'error');
-        await handleAdminAction('/api/admin/war/rollback_tick', { war_id: id }, 'Tick rolled back', btn);
-      },
-      'create-event': async btn => {
-        const name = prompt('Event name?');
-        if (!name || !name.trim()) return showToast('Event name required', 'error');
-        await handleAdminAction('/api/admin/events/create', { name: name.trim() }, 'Event created', btn);
-      },
-      'publish-news-btn': async btn => {
-        const payload = ['title', 'summary', 'content'].reduce((acc, id) => {
-          acc[id] = getValue(`news-${id}`).trim();
-          return acc;
-        }, {});
-        if (!payload.title || !payload.summary || !payload.content) return showToast('Fill all news fields', 'error');
-        await handleAdminAction('/api/admin/news/post', payload, 'News published', btn);
-        ['title', 'summary', 'content'].forEach(id => (document.getElementById(`news-${id}`).value = ''));
-      }
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      loadDashboardStats();
-      loadPlayerList();
-      initAlertSocket();
-      loadFlaggedUsers();
-      loadFlags();
-      setupAutoRefresh();
-
-      const debouncedLoad = debounce(loadPlayerList, 400);
-
-      document.getElementById('search-btn')?.addEventListener('click', debouncedLoad);
-      document.getElementById('status-filter')?.addEventListener('change', debouncedLoad);
-      document.getElementById('load-logs-btn')?.addEventListener('click', () => loadAuditLogs('json'));
-      document.getElementById('export-csv')?.addEventListener('click', () => loadAuditLogs('csv'));
-
-      Object.entries(actions).forEach(([id, fn]) => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('click', () => fn(el));
-      });
-    });
-
-    document.addEventListener('click', async e => {
-      if (!e.target.classList.contains('admin-btn')) return;
-      const id = e.target.dataset.id;
-      const action = e.target.dataset.action;
-      const map = {
-        flag: ['/api/admin/flag', 'User flagged'],
-        freeze: ['/api/admin/freeze', 'User frozen'],
-        ban: ['/api/admin/ban', 'User banned']
-      };
-      if (map[action]) {
-        if (!confirm(`Confirm ${capitalize(action)} for ${id}?`)) return;
-        const [url, msg] = map[action];
-        await handleAdminAction(url, { player_id: id }, msg, e.target);
-      }
-    });
-
-    function setText(id, value) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = value;
-    }
-
-    function getValue(id) {
-      return document.getElementById(id)?.value || '';
-    }
-
-    function capitalize(str) {
-      if (!str) return '';
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function formatTimestamp(ts) {
-      try {
-        if (!ts) return '';
-        const d = new Date(ts);
-        return isNaN(d) ? '' : d.toLocaleString();
-      } catch {
-        return '';
-      }
-    }
-  </script>
+  <script type="module" src="/Javascript/admin_dashboard.js"></script>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
@@ -467,6 +102,7 @@ Developer: Deathsgift66
           <div class="stat-card"><h4>Flagged Users</h4><p id="flagged-users">--</p></div>
           <div class="stat-card"><h4>Suspicious Activity</h4><p id="suspicious-activity">--</p></div>
         </div>
+        <p class="updated-time">Last updated: <span id="stats-updated">--</span></p>
       </section>
 
       <!-- Flagged Players -->
@@ -477,9 +113,10 @@ Developer: Deathsgift66
 
       <!-- User Management -->
       <section class="user-management" aria-label="Player Moderation Tools">
-        <h3>User Management</h3>
-        <label for="search-player">Search Player</label>
-        <input id="search-player" type="text" placeholder="Search by username" aria-label="Search Player" />
+        <fieldset>
+          <legend>User Management</legend>
+          <label for="search-player">Search Player</label>
+          <input id="search-player" type="text" placeholder="Search by username" aria-label="Search Player" />
         <label for="status-filter">Status</label>
         <select id="status-filter" aria-label="User Status Filter">
           <option value="">All Statuses</option>
@@ -494,31 +131,45 @@ Developer: Deathsgift66
         </select>
         <button id="search-btn">Search</button>
         <div id="player-list" class="scrollable-panel"></div>
+        </fieldset>
       </section>
 
       <!-- Event Management -->
       <section class="event-management" aria-label="Global Event Tools">
-        <h3>Event Tools</h3>
-        <button class="action-btn" id="create-event">Create New Event</button>
+        <fieldset>
+          <legend>Event Tools</legend>
+          <button class="action-btn" id="create-event">Create New Event</button>
+        </fieldset>
       </section>
+      <dialog id="create-event-dialog">
+        <form method="dialog">
+          <label for="event-name">Event Name</label>
+          <input id="event-name" type="text" required />
+          <button type="button" class="confirm">Create</button>
+          <button type="button" class="cancel">Cancel</button>
+        </form>
+      </dialog>
 
       <!-- News Publishing -->
       <section class="news-management" aria-label="Publish News">
-        <h3>Publish News</h3>
-        <label for="news-title">Title</label>
-        <input id="news-title" type="text" placeholder="Title" aria-label="News Title" />
-        <label for="news-summary">Summary</label>
-        <input id="news-summary" type="text" placeholder="Summary" aria-label="News Summary" />
-        <label for="news-content">Content</label>
-        <textarea id="news-content" placeholder="Content" aria-label="News Content"></textarea>
+        <fieldset>
+          <legend>Publish News</legend>
+          <label for="news-title">Title</label>
+          <input id="news-title" type="text" placeholder="Title" aria-label="News Title" pattern=".{1,200}" required />
+          <label for="news-summary">Summary</label>
+          <input id="news-summary" type="text" placeholder="Summary" aria-label="News Summary" pattern=".{1,500}" required />
+          <label for="news-content">Content</label>
+          <textarea id="news-content" placeholder="Content" aria-label="News Content" required></textarea>
         <button id="publish-news-btn">Publish</button>
+        </fieldset>
       </section>
 
       <!-- System Flags -->
       <section class="flag-management" aria-label="System Flag Controls">
-        <h3>System Flags</h3>
-        <label for="flag-key">Flag key</label>
-        <input id="flag-key" type="text" placeholder="Flag key" aria-label="System Flag Key" />
+        <fieldset>
+          <legend>System Flags</legend>
+          <label for="flag-key">Flag key</label>
+        <input id="flag-key" type="text" placeholder="Flag key" aria-label="System Flag Key" pattern="[A-Za-z0-9_-]+" required />
         <label for="flag-value">Flag value</label>
         <select id="flag-value" aria-label="Flag Value">
           <option value="true">True</option>
@@ -526,35 +177,41 @@ Developer: Deathsgift66
         </select>
         <button id="toggle-flag-btn">Toggle</button>
         <table id="flag-table"></table>
+        </fieldset>
       </section>
 
       <!-- Kingdom Tools -->
       <section class="kingdom-management" aria-label="Kingdom Editing Tools">
-        <h3>Kingdom Update</h3>
-        <label for="kingdom-id">Kingdom ID</label>
+        <fieldset>
+          <legend>Kingdom Update</legend>
+          <label for="kingdom-id">Kingdom ID</label>
         <input id="kingdom-id" type="number" min="1" required placeholder="Kingdom ID" aria-label="Kingdom ID" />
         <label for="kingdom-field">Field</label>
         <input id="kingdom-field" type="text" placeholder="Field" aria-label="Field Name" />
         <label for="kingdom-value">Value</label>
         <input id="kingdom-value" type="text" placeholder="Value" aria-label="Field Value" />
         <button id="update-kingdom-btn">Update</button>
+        </fieldset>
       </section>
 
       <!-- War Controls -->
       <section class="war-management" aria-label="War Control Tools">
-        <h3>War Controls</h3>
-        <label for="war-id">War ID</label>
+        <fieldset>
+          <legend>War Controls</legend>
+          <label for="war-id">War ID</label>
         <input id="war-id" type="number" min="1" required placeholder="War ID" aria-label="War ID" />
         <button id="force-end-war-btn">Force End War</button>
         <button id="rollback-tick-btn">Rollback Combat Tick</button>
+        </fieldset>
       </section>
 
 
 
       <!-- Audit Logs -->
       <section class="audit-logs" aria-label="System Audit Logs">
-        <h3>Audit Logs</h3>
-        <label for="log-type">Type</label>
+        <fieldset>
+          <legend>Audit Logs</legend>
+          <label for="log-type">Type</label>
         <input id="log-type" type="text" placeholder="Type" aria-label="Log Type" />
         <label for="log-user">User ID</label>
         <input id="log-user" type="text" placeholder="User ID" aria-label="User ID" pattern="[0-9a-fA-F-]{36}" />
@@ -565,11 +222,12 @@ Developer: Deathsgift66
         <button id="load-logs-btn">Load Logs</button>
         <button id="export-csv">Export CSV</button>
         <div id="log-list" class="scrollable-panel"></div>
+        </fieldset>
       </section>
 
       <!-- Real-Time Alerts -->
       <section class="account-alerts" aria-label="Live Account Alerts">
-        <h3>Account Alerts</h3>
+        <h3>Account Alerts <span id="alert-status">❌ Disconnected</span></h3>
         <div id="alerts" class="scrollable-panel" aria-live="polite"></div>
       </section>
     </div>
