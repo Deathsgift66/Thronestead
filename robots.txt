@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /admin_alerts.html
 
 Sitemap: https://www.thronestead.com/sitemap.xml

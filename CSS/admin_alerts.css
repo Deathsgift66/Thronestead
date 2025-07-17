@@ -221,6 +221,7 @@ tr:nth-child(even) {
 }
 .alert-item.expired {
   opacity: 0.4;
+  text-decoration: line-through;
 }
 
 .theme-transition * {
