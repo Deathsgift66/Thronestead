@@ -61,13 +61,20 @@ Developer: Deathsgift66
     const t = window.t || (s => s);
 
     let modalEl;
-    let filterDebounce;
-    let searchDebounce;
+    const loadQuestsDebounced = debounce(loadQuests, 300);
+    const searchDebounced = debounce(() => {
+      currentPage = 1;
+      debouncedRender();
+    }, 250);
     let inAction = false;
     let lastFocusedEl = null;
-    let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
-    sessionStorage.setItem('csrf_token', csrfToken);
-    document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
+    const genUUID = () => (crypto.randomUUID ? crypto.randomUUID() : safeUUID());
+    let csrfToken = sessionStorage.getItem('csrf_token');
+    if (!csrfToken) {
+      csrfToken = genUUID();
+      sessionStorage.setItem('csrf_token', csrfToken);
+      document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
+    }
     const csrfPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const isValidCsrf = token => csrfPattern.test(token);
     const focusableSelectors = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
@@ -85,6 +92,8 @@ Developer: Deathsgift66
      */
     export async function loadQuests(status = 'active') {
       toggleLoading(true);
+      const board = document.getElementById('quest-board');
+      board?.setAttribute('aria-busy', 'true');
       try {
         const res = await authFetch(`/api/alliance/quests?status=${status}`);
         if (!res.ok) throw new Error(await res.text());
@@ -111,6 +120,7 @@ Developer: Deathsgift66
         showToast(t('Failed to load quests'), 'error');
       } finally {
         toggleLoading(false);
+        board?.setAttribute('aria-busy', 'false');
       }
     }
 
@@ -121,7 +131,9 @@ Developer: Deathsgift66
       const search = searchInput?.value.trim().toLowerCase() || '';
       searchValue = searchInput?.value || '';
       const filtered = allQuests.filter(q => {
-        const matchesSearch = q.name.toLowerCase().includes(search) || q.description.toLowerCase().includes(search);
+        const name = (q.name || '').toLowerCase();
+        const desc = (q.description || '').toLowerCase();
+        const matchesSearch = name.includes(search) || desc.includes(search);
         const matchesCat = !currentCategory || q.category === currentCategory;
         return matchesSearch && matchesCat;
       });
@@ -157,22 +169,21 @@ Developer: Deathsgift66
       // Bind tab clicks
       document.querySelectorAll('.filter-tab').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.filter-tab').forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
           btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
           sessionStorage.setItem('lastTab', btn.dataset.filter);
-          clearTimeout(filterDebounce);
-          filterDebounce = setTimeout(() => loadQuests(btn.dataset.filter), 300);
+          loadQuestsDebounced(btn.dataset.filter);
         });
       });
 
       document.getElementById('quest-search')?.addEventListener('input', e => {
         searchValue = e.target.value;
         sessionStorage.setItem('questSearch', searchValue);
-        clearTimeout(searchDebounce);
-        searchDebounce = setTimeout(() => {
-          currentPage = 1;
-          debouncedRender();
-        }, 250);
+        searchDebounced();
       });
 
       document.querySelectorAll('.prev-page').forEach(btn =>
@@ -209,29 +220,38 @@ Developer: Deathsgift66
       });
 
       modalEl = document.getElementById('quest-modal');
-      modalEl.querySelector('.close-button').addEventListener('click', closeQuestModal);
+      modalEl.querySelector('[data-testid="modal-close"]').addEventListener('click', closeQuestModal);
 
       document.getElementById('start-new-quest')?.addEventListener('click', openStartQuestModal);
-      document.querySelector('#quest-start-modal .close-button')?.addEventListener('click', () => closeModal('quest-start-modal'));
+      document.querySelector('#quest-start-modal [data-testid="modal-close"]')?.addEventListener('click', () => closeModal('quest-start-modal'));
       document.getElementById('confirm-start-quest')?.addEventListener('click', startSelectedQuest);
     }
 
     /**
      * Render a quest preview card.
      */
+    function getQuestCardHTML(q) {
+      const progress =
+        q.status === 'active' && typeof q.progress === 'number' && !isNaN(q.progress)
+          ? Number(q.progress)
+          : null;
+      const progressHtml = progress !== null
+        ? `<div class="quest-progress-bar"><div class="quest-progress-bar-inner" style="width: ${progress}%"></div></div><p class="progress-label">${progress}%</p>`
+        : '';
+      return `
+        <h3 class="quest-title">${escapeHTML(q.name)}</h3>
+        <p class="quest-type" data-testid="quest-type">${escapeHTML(q.type || 'Quest')}</p>
+        ${progressHtml}
+        <p>${escapeHTML(q.description)}</p>
+        <p>${t('Ends in:')} <span data-end-time="${q.ends_at || ''}">--:--:--</span></p>
+        <button class="view-quest-btn" data-id="${q.id || q.quest_code}" data-testid="view-quest">View</button>`;
+    }
+
     function renderQuestCard(q) {
       const div = document.createElement('div');
       div.className = 'quest-card';
-      const progress = q.status === 'active' ? Number(q.progress || 0) : null;
-      const progressHtml = progress !== null ? `<div class="quest-progress-bar"><div class="quest-progress-bar-inner" style="width: ${progress}%"></div></div><p class="progress-label">${progress}%</p>` : '';
-      div.innerHTML = `
-        <h3 class="quest-title">${escapeHTML(q.name)}</h3>
-        <p class="quest-type">${escapeHTML(q.type || 'Quest')}</p>
-        ${progressHtml}
-        <p>${escapeHTML(q.description)}</p>
-        <p>Ends in: <span data-end-time="${q.ends_at || ''}">--:--:--</span></p>
-        <button class="view-quest-btn" data-id="${q.id || q.quest_code}">View</button>
-      `;
+      div.setAttribute('data-testid', 'quest-card');
+      div.innerHTML = getQuestCardHTML(q);
       return div;
     }
 
@@ -256,6 +276,7 @@ Developer: Deathsgift66
             .sort(([a], [b]) => a.localeCompare(b))
             .forEach(([k, v]) => {
               const li = document.createElement('li');
+              li.setAttribute('data-testid', 'contribution-line');
               li.textContent = `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v.current} / ${v.required}`;
               contrib.appendChild(li);
             });
@@ -267,6 +288,7 @@ Developer: Deathsgift66
             .sort(([a], [b]) => a.localeCompare(b))
             .forEach(([k, v]) => {
               const li = document.createElement('li');
+              li.setAttribute('data-testid', 'reward-line');
               li.textContent = `${k}: ${v}`;
               li.title = `${k} - ${v}`;
               rewards.appendChild(li);
@@ -285,6 +307,7 @@ Developer: Deathsgift66
             if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
             inAction = true;
             acceptBtn.disabled = true;
+            acceptBtn.classList.add('loading');
             toggleLoading(true);
             try {
               const res2 = await authFetch(`/api/alliance/quests/${id}/accept`, {
@@ -304,6 +327,7 @@ Developer: Deathsgift66
             } finally {
               toggleLoading(false);
               acceptBtn.disabled = false;
+              acceptBtn.classList.remove('loading');
               inAction = false;
             }
           };
@@ -312,6 +336,7 @@ Developer: Deathsgift66
             if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
             inAction = true;
             claimBtn.disabled = true;
+            claimBtn.classList.add('loading');
             toggleLoading(true);
             try {
               const res2 = await authFetch(`/api/alliance/quests/${id}/claim`, {
@@ -331,6 +356,7 @@ Developer: Deathsgift66
             } finally {
               toggleLoading(false);
               claimBtn.disabled = false;
+              claimBtn.classList.remove('loading');
               inAction = false;
             }
           };
@@ -339,6 +365,7 @@ Developer: Deathsgift66
             if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
             inAction = true;
             contribBtn.disabled = true;
+            contribBtn.classList.add('loading');
             toggleLoading(true);
             try {
               const res2 = await authFetch('/api/alliance/quests/progress', {
@@ -359,6 +386,7 @@ Developer: Deathsgift66
             } finally {
               toggleLoading(false);
               contribBtn.disabled = false;
+              contribBtn.classList.remove('loading');
               inAction = false;
             }
           };
@@ -373,6 +401,7 @@ Developer: Deathsgift66
           modalEl.setAttribute('tabindex', '0');
           modalEl.focus();
         } catch (err) {
+          if (err && err.message === 'Unauthorized') return;
           console.error('Quest modal load error:', err);
           showToast(t('Failed to load quest details.'), 'error');
         } finally {
@@ -478,6 +507,7 @@ Developer: Deathsgift66
       if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
       const btn = document.getElementById('confirm-start-quest');
       btn.disabled = true;
+      btn.classList.add('loading');
       toggleLoading(true);
       try {
         const res = await authFetch('/api/alliance/quests/start', {
@@ -498,6 +528,7 @@ Developer: Deathsgift66
       } finally {
         toggleLoading(false);
         btn.disabled = false;
+        btn.classList.remove('loading');
       }
     }
 
@@ -509,19 +540,34 @@ Developer: Deathsgift66
         li.className = 'loading-skeleton';
         ul.appendChild(li);
       }
+      const cacheKey = 'heroesCache';
+      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+      if (cached && Date.now() - cached.ts < 300000) {
+        renderHeroes(cached.data);
+        return;
+      }
       try {
         const res = await authFetch('/api/alliance/quests/heroes');
         const heroes = res.ok ? await res.json() : [];
-        ul.innerHTML = '';
-        heroes.forEach(h => {
-          const li = document.createElement('li');
-          li.textContent = `${h.name}: ${h.quests_completed} quests`;
-          ul.appendChild(li);
-        });
+        sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: heroes }));
+        renderHeroes(heroes);
       } catch (err) {
         ul.innerHTML = `<li>${t('Failed to load heroes.')}</li>`;
         console.error(err);
         showToast(t('Failed to load heroes'), 'error');
+      }
+    }
+
+    function renderHeroes(list) {
+      const ul = document.getElementById('hero-list');
+      ul.innerHTML = '';
+      list.forEach(h => {
+        const li = document.createElement('li');
+        li.textContent = `${h.name}: ${h.quests_completed} quests`;
+        ul.appendChild(li);
+      });
+      if (!list.length) {
+        ul.innerHTML = `<li>${t('No heroes found.')}</li>`;
       }
     }
 
@@ -545,7 +591,7 @@ Developer: Deathsgift66
 
     // Initial load and event bindings
     let questsChannel = null;
-    document.addEventListener('DOMContentLoaded', async () => {
+    async function initApp() {
       if (!(await enforceAllianceOrAdminAccess())) return;
       bindUI();
       initThemeToggle();
@@ -580,29 +626,53 @@ Developer: Deathsgift66
         }
       });
       const lastTab = sessionStorage.getItem('lastTab') || 'active';
-      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.filter-tab').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
       const btn = document.querySelector(`.filter-tab[data-filter="${lastTab}"]`);
-      if (btn) btn.classList.add('active');
+      if (btn) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+      }
       loadQuests(lastTab);
       loadHeroes();
-    });
+    }
+    document.addEventListener('DOMContentLoaded', initApp);
 
     function initRealtime(aid) {
       if (questsChannel) {
         supabase.removeChannel(questsChannel);
         questsChannel = null;
       }
-      questsChannel = supabase
-        .channel('public:quest_alliance_tracking')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'quest_alliance_tracking', filter: `alliance_id=eq.${aid}` },
-          () => {
-            const active = document.querySelector('.filter-tab.active')?.dataset.filter || 'active';
-            loadQuests(active);
-          }
-        )
-        .subscribe();
+
+      let attempts = 0;
+      const connect = () => {
+        questsChannel = supabase
+          .channel('public:quest_alliance_tracking')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'quest_alliance_tracking', filter: `alliance_id=eq.${aid}` },
+            () => {
+              const active = document.querySelector('.filter-tab.active')?.dataset.filter || 'active';
+              loadQuests(active);
+            }
+          )
+          .on('close', reconnect)
+          .on('error', reconnect)
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') attempts = 0;
+          });
+      };
+
+      const reconnect = () => {
+        attempts += 1;
+        const delay = Math.min(30000, 1000 * 2 ** attempts);
+        setTimeout(connect, delay);
+      };
+
+      connect();
+
       window.addEventListener('beforeunload', async () => {
         if (questsChannel) {
           await supabase.removeChannel(questsChannel);
@@ -648,9 +718,9 @@ Developer: Deathsgift66
     <div class="quest-board-container">
       <!-- Quest Filters -->
       <section class="quest-filters" role="tablist" aria-label="Quest Filters">
-        <button class="filter-tab active" data-filter="active" aria-pressed="true">Active</button>
-        <button class="filter-tab" data-filter="completed" aria-pressed="false">Completed</button>
-        <button class="filter-tab" data-filter="expired" aria-pressed="false">Expired</button>
+        <button class="filter-tab active" data-filter="active" data-testid="filter-active" aria-pressed="true">Active</button>
+        <button class="filter-tab" data-filter="completed" data-testid="filter-completed" aria-pressed="false">Completed</button>
+        <button class="filter-tab" data-filter="expired" data-testid="filter-expired" aria-pressed="false">Expired</button>
       </section>
 
       <div class="quest-search-controls">
@@ -671,7 +741,7 @@ Developer: Deathsgift66
       </div>
 
       <!-- Quest Feed -->
-      <section id="quest-board" aria-labelledby="quest-board-heading" aria-live="polite">
+      <section id="quest-board" aria-labelledby="quest-board-heading" aria-live="polite" aria-busy="false">
         <h2 id="quest-board-heading" class="visually-hidden">Alliance Quests</h2>
         <p id="no-quests-message" class="info-message hidden" data-i18n="no-quests-category">No quests found for this category.</p>
         <!-- JS injects quest cards -->
@@ -698,7 +768,7 @@ Developer: Deathsgift66
   <!-- Start Quest Modal -->
   <div id="quest-start-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quest-start-title" tabindex="-1">
     <div class="modal-content">
-      <button class="close-button wax-seal-btn" aria-label="Close start quest">×</button>
+      <button class="close-button wax-seal-btn" data-testid="modal-close" aria-label="Close start quest">×</button>
       <h3 id="quest-start-title">Start New Quest</h3>
       <select id="quest-template-select" aria-label="Quest Template"></select>
       <button id="confirm-start-quest" class="action-btn medieval-banner-btn" data-testid="confirm-start">Start</button>
@@ -708,7 +778,7 @@ Developer: Deathsgift66
   <!-- Quest Modal -->
   <div id="quest-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-quest-title" aria-describedby="modal-quest-description" tabindex="-1">
     <div class="modal-content">
-      <button class="close-button wax-seal-btn" aria-label="Close quest details" title="Close Quest Details">×</button>
+      <button class="close-button wax-seal-btn" data-testid="modal-close" aria-label="Close quest details" title="Close Quest Details">×</button>
 
       <h3 id="modal-quest-title" class="quest-title-modal">Quest Title</h3>
       <p class="quest-type-modal">Quest Type</p>
