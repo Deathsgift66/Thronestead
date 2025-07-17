@@ -404,6 +404,17 @@ header.kr-top-banner {
   outline-offset: 2px;
 }
 
+.social-button {
+  margin: 0 0.5rem;
+  color: var(--parchment);
+  text-decoration: none;
+}
+
+.social-button:hover {
+  text-decoration: underline;
+  color: var(--gold);
+}
+
 .noscript-warning {
   background: #300;
   color: #fff;
