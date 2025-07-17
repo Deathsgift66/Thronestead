@@ -11,12 +11,11 @@ Developer: Deathsgift66
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://zzqoxgytfrbptojcwrjm.supabase.co; img-src 'self' https: data:; script-src 'self'; style-src 'self'; frame-ancestors 'none'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
   <title>Admin Dashboard | Thronestead</title>
   <meta name="author" content="Thronestead Moderation Team" />
-  <meta name="version" content="7.1.2025.10.38" />
 
   <!-- Metadata -->
   <meta name="description" content="Admin Dashboard for Thronestead — View user metrics, suspicious activity, audit logs, and system tools." />
@@ -53,6 +52,7 @@ Developer: Deathsgift66
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
   <link href="/CSS/admin_dashboard.css" rel="stylesheet" />
+  <link rel="preload" as="script" href="/Javascript/admin_dashboard.js" />
   <script type="module">
     window.requireAdmin = true;
   </script>
@@ -141,8 +141,9 @@ Developer: Deathsgift66
           <button class="action-btn" id="create-event">Create New Event</button>
         </fieldset>
       </section>
-      <dialog id="create-event-dialog">
+      <dialog id="create-event-dialog" role="dialog" aria-labelledby="event-dialog-title">
         <form method="dialog">
+          <h2 id="event-dialog-title" class="visually-hidden">Create Event</h2>
           <label for="event-name">Event Name</label>
           <input id="event-name" type="text" required />
           <button type="button" class="confirm">Create</button>
@@ -160,7 +161,8 @@ Developer: Deathsgift66
           <input id="news-summary" type="text" placeholder="Summary" aria-label="News Summary" pattern=".{1,500}" required />
           <label for="news-content">Content</label>
           <textarea id="news-content" placeholder="Content" aria-label="News Content" required></textarea>
-        <button id="publish-news-btn">Publish</button>
+          <p id="publish-news-desc" class="visually-hidden">News will be immediately visible to all players.</p>
+        <button id="publish-news-btn" aria-describedby="publish-news-desc">Publish</button>
         </fieldset>
       </section>
 
@@ -195,15 +197,15 @@ Developer: Deathsgift66
       </section>
 
       <!-- War Controls -->
-      <section class="war-management" aria-label="War Control Tools">
+      <details class="war-management" aria-label="War Control Tools">
+        <summary>War Controls</summary>
         <fieldset>
-          <legend>War Controls</legend>
           <label for="war-id">War ID</label>
         <input id="war-id" type="number" min="1" required placeholder="War ID" aria-label="War ID" />
         <button id="force-end-war-btn">Force End War</button>
         <button id="rollback-tick-btn">Rollback Combat Tick</button>
         </fieldset>
-      </section>
+      </details>
 
 
 
@@ -220,7 +222,11 @@ Developer: Deathsgift66
         <label for="log-end">End Date</label>
         <input id="log-end" type="datetime-local" aria-label="End Date" />
         <button id="load-logs-btn">Load Logs</button>
-        <button id="export-csv">Export CSV</button>
+        <div class="export-actions">
+          <button id="export-csv">Export CSV</button>
+          <button id="export-json">Export JSON</button>
+          <span id="export-feedback" aria-live="polite"></span>
+        </div>
         <div id="log-list" class="scrollable-panel"></div>
         </fieldset>
       </section>
@@ -244,6 +250,14 @@ Developer: Deathsgift66
       <a href="legal.html" target="_blank">Legal</a> <a href="sitemap.xml" target="_blank">Site Map</a>
     </div>
   </footer>
+  <script>
+    setTimeout(() => {
+      if (!window.adminDashboardReady) {
+        const c = document.getElementById('admin-dashboard-content');
+        if (c) c.innerHTML = '<p class="error-msg">Dashboard failed to load. Please refresh.</p>';
+      }
+    }, 3000);
+  </script>
 </body>
 
 </html>

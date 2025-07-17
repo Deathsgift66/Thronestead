@@ -134,6 +134,7 @@ async function renderAuditLogs() {
       logs.reduce((frag, log) => {
         const entry = document.createElement('div');
         entry.className = 'log-card';
+        if (log.severity) entry.classList.add(`sev-${escapeHTML(log.severity)}`);
         entry.innerHTML = `
           <p><strong>${escapeHTML(log.action)}</strong> — ${escapeHTML(log.details)}</p>
           <p class="log-time">${formatTimestamp(log.created_at)}</p>`;
@@ -145,6 +146,43 @@ async function renderAuditLogs() {
     console.error('⚠️ Logs error:', e);
     container.innerHTML = '<p class="error-msg">Failed to fetch audit logs.</p>';
   }
+}
+
+async function exportLogsJSON() {
+  const btn = document.getElementById('export-json');
+  if (btn) throttleButton(btn);
+  const logs = await loadAuditData();
+  if (!logs.length) return showToast('No data to export.', 'info');
+  const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'audit_logs.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  const feedback = document.getElementById('export-feedback');
+  if (feedback) feedback.textContent = 'JSON exported';
+}
+
+async function exportLogsCSV() {
+  const btn = document.getElementById('export-csv');
+  if (btn) throttleButton(btn);
+  const logs = await loadAuditData();
+  if (!logs.length) return showToast('No data to export.', 'info');
+  const headers = Object.keys(logs[0] || {});
+  const sanitize = v => `"${String(v).replace(/"/g, '""')}"`;
+  const rows = [headers.map(sanitize)];
+  logs.forEach(l => rows.push(headers.map(h => sanitize(l[h] ?? ''))));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'audit_logs.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  const feedback = document.getElementById('export-feedback');
+  if (feedback) feedback.textContent = 'CSV exported';
 }
 
 let alertSocket;
@@ -191,7 +229,7 @@ function connectAlertSocket(retries = 0) {
 
 function initAlertSocket() {
   const container = document.getElementById('alerts');
-  if (!container) return;
+  if (!container || container.offsetParent === null) return;
   container.innerHTML = '';
   connectAlertSocket();
   document.addEventListener('visibilitychange', () => {
@@ -306,11 +344,13 @@ export function init() {
   });
   document.getElementById('status-filter')?.addEventListener('change', debouncedLoad);
   document.getElementById('load-logs-btn')?.addEventListener('click', renderAuditLogs);
-  document.getElementById('export-csv')?.addEventListener('click', () => loadAuditData('csv'));
+  document.getElementById('export-csv')?.addEventListener('click', exportLogsCSV);
+  document.getElementById('export-json')?.addEventListener('click', exportLogsJSON);
   Object.entries(actions).forEach(([id, fn]) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('click', () => fn(el));
   });
+  window.adminDashboardReady = true;
 }
 
 document.addEventListener('DOMContentLoaded', init);
