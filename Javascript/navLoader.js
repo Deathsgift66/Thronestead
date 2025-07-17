@@ -2,6 +2,7 @@
 // File Name: navLoader.js
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
+window.navLoader = true;
 document.addEventListener("DOMContentLoaded", () => {
   // Fetch navbar relative to the current page so deployment under a subpath
   // still resolves correctly

@@ -31,7 +31,10 @@ export function applyTranslations(lang = 'en') {
       search_link: 'searching',
       back_link: 'Go Back',
       nav_fail: '⚠️ Navigation failed to load. <a href="/" data-i18n="home_link">Return home</a>.',
-      noscript_msg: 'JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.'
+      noscript_msg: 'JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.',
+      404_img_alt: 'Illustration of missing page',
+      search_placeholder: 'Search...',
+      go_button: 'Go'
     }
   };
   const strings = translations[lang];

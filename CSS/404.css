@@ -5,6 +5,9 @@ Version: 1.0
 Last updated: 2025-07-16
 */
 /* Thronestead 404 Styles */
+:root {
+  --accent-color: #d13;
+}
 body {
   text-align: center;
   padding: 4rem 1rem;
@@ -28,9 +31,46 @@ a {
 .error-img {
   width: 150px;
   margin: 1rem auto;
+  opacity: 0;
+  animation: fade-in 0.6s ease-out forwards;
 }
 
 .noscript-warning {
-  color: red;
+  color: #fff;
+  background: #300;
+  padding: 1rem;
+  text-align: center;
   margin-bottom: 1rem;
+}
+
+main {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-base, 8px);
+  padding: 2rem;
+  max-width: 600px;
+  margin: 2rem auto;
+  background: var(--panel-bg, #fff);
+}
+
+#page-title {
+  opacity: 0;
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inline-search {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
 }
