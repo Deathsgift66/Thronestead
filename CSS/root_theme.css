@@ -378,6 +378,12 @@ header.kr-top-banner {
   font-size: 1.3rem;
   margin-bottom: 2rem;
 }
+.about-illustration {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 2rem;
+}
 .cta-button {
   background: var(--accent);
   color: var(--btn-text);

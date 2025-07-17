@@ -10,20 +10,22 @@ Developer: Deathsgift66
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <meta name="version" content="7.1.2025.10.38" />
+  <!-- Version: 7.1.2025.10.38 -->
 
   <title>About | Thronestead - Medieval Strategy MMO</title>
   <meta name="description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
   <meta name="keywords" content="medieval, strategy, MMO, empire, online kingdom game" />
+  <meta name="author" content="Thronestead Studios" />
   <link rel="canonical" href="https://www.thronestead.com/about.html" />
   <meta name="robots" content="index, follow" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'" />
-  <link rel="preconnect" href="https://www.thronestead.com" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'strict-dynamic'; connect-src 'self'; img-src 'self' https:; frame-ancestors 'none'" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@700&family=IM+Fell+English&family=IM+Fell+English+SC&family=MedievalSharp&display=swap" />
+  <link rel="preload" as="image" href="/Assets/banner_main.png" />
   <link rel="alternate" hreflang="x-default" href="https://www.thronestead.com/about.html" />
   <link rel="alternate" hreflang="en" href="https://www.thronestead.com/about.html" />
+  <link rel="alternate" hreflang="es" href="https://www.thronestead.com/es/about.html" />
   <!-- Open Graph -->
   <meta property="og:title" content="About | Thronestead - Medieval Strategy MMO" />
   <meta property="og:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
@@ -49,10 +51,13 @@ Developer: Deathsgift66
   <script src="/Javascript/components/authGuard.js" type="module"></script>
   <script src="/Javascript/apiHelper.js" type="module"></script>
   <script src="/Javascript/navLoader.js" type="module" defer></script>
-  <script src="/Javascript/i18n.js" type="module"></script>
-  <script src="/Javascript/initLang.js" type="module"></script>
+  <script src="/Javascript/i18n.js" type="module" defer></script>
+  <script src="/Javascript/initLang.js" type="module" defer></script>
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"VideoGame","name":"Thronestead","description":"A medieval strategy game currently in early development.","url":"https://www.thronestead.com","image":"https://www.thronestead.com/Assets/banner_main.png","genre":["Strategy","Multiplayer","Medieval"],"gamePlatform":["Web Browser"],"operatingSystem":"Web","applicationCategory":"MMO","datePublished":"2025-07-01","author":{"@type":"Organization","name":"Thronestead Studios","url":"https://www.thronestead.com"},"publisher":{"@type":"Organization","name":"Thronestead Studios"},"aggregateRating":{"@type":"AggregateRating","ratingValue":5,"ratingCount":1},"offers":{"@type":"Offer","price":0,"priceCurrency":"USD","availability":"https://schema.org/PreOrder"}}
+  </script>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.thronestead.com/index.html"},{"@type":"ListItem","position":2,"name":"About","item":"https://www.thronestead.com/about.html"}]}
   </script>
 </head>
 <body>
@@ -63,7 +68,7 @@ Developer: Deathsgift66
   </noscript>
 
 <template id="nav-fallback" lang="en">
-  <nav class="nav-fallback" role="navigation">
+  <nav class="nav-fallback" role="navigation" lang="en">
     <ul>
       <li><a href="index.html">Home</a></li>
       <li><a href="about.html" aria-current="page">About</a></li>
@@ -76,12 +81,12 @@ Developer: Deathsgift66
 
   <section class="hero-section" aria-label="About Banner">
     <div class="hero-content">
-      <h2 aria-level="1">Thronestead</h2>
+      <h2>Thronestead</h2>
       <p>Forge your destiny in the ultimate medieval strategy realm.</p>
     </div>
   </section>
 
-  <img src="/Assets/banner_main.png" class="about-illustration" alt="Thronestead illustration" loading="lazy" />
+  <img src="/Assets/banner_main.png" class="about-illustration" alt="Thronestead illustration" loading="lazy" fetchpriority="high" />
 
   <main role="main" class="main-centered-container">
     <article aria-labelledby="about-heading">
@@ -94,7 +99,7 @@ Developer: Deathsgift66
     </article>
 
     <section class="cta-section" aria-label="Community Call to Action">
-      <a href="https://discord.gg/thronestead" class="cta-button">Join our community</a>
+      <a href="https://discord.gg/thronestead" class="cta-button" aria-label="Join the Thronestead community on Discord">Join our community</a>
       <div class="social-links">
         <a href="https://twitter.com/thronestead" class="social-button">Twitter</a>
         <a href="https://discord.gg/thronestead" class="social-button">Discord</a>
