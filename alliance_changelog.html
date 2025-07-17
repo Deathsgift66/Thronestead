@@ -19,6 +19,7 @@ Developer: Deathsgift66
   <meta name="keywords" content="Thronestead, alliance log, history, changes, updates, policy" />
   <meta name="robots" content="index, follow" />
   <meta name="author" content="Thronestead Dev Team" />
+  <meta name="version" content="7.1.2025.10.38" />
   <link rel="canonical" href="https://www.thronestead.com/alliance_changelog.html" />
 
   <!-- Open Graph -->
@@ -88,7 +89,8 @@ Developer: Deathsgift66
       <h2>Alliance Changelog</h2>
 
       <!-- Filter Bar -->
-      <div class="filter-bar" role="search" aria-label="Filter Historical Logs">
+      <fieldset class="filter-bar" role="search" aria-label="Filter Historical Logs">
+        <legend>Filters</legend>
         <label for="filter-start">From</label>
         <input type="date" id="filter-start" aria-label="Start Date" />
 
@@ -107,9 +109,12 @@ Developer: Deathsgift66
         </select>
 
         <button id="apply-filters-btn">Filter</button>
+        <button id="clear-filters-btn">Clear</button>
         <button id="refresh-btn">Refresh</button>
         <button id="export-csv-btn">Export CSV</button>
-      </div>
+      </fieldset>
+
+      <div id="results-summary" class="results-summary" aria-live="polite"></div>
 
       <div class="last-updated">Last updated: <span id="last-updated">--</span></div>
 
@@ -204,6 +209,7 @@ Developer: Deathsgift66
         console.error('❌ Error fetching changelog:', err);
         document.getElementById('changelog-list').innerHTML =
           '<li class="error-state">Failed to load changelog.</li>';
+        updateSummary([]);
         backoff = Math.min(backoff * 2, 300000);
       } finally {
         isFetching = false;
@@ -218,8 +224,17 @@ Developer: Deathsgift66
       fetchTimer = setTimeout(fetchChangelog, backoff);
     }
 
-   function applyFilters() {
-     saveFilters();
+  function applyFilters() {
+    saveFilters();
+      fetchChangelog(true);
+  }
+
+   function clearFilters() {
+      ['start', 'end', 'type'].forEach((key) => {
+        const el = document.getElementById(`filter-${key}`);
+        if (el) el.value = '';
+        sessionStorage.removeItem('clog-' + key);
+      });
       fetchChangelog(true);
    }
 
@@ -236,12 +251,28 @@ Developer: Deathsgift66
           el.textContent = new Date(timestamp).toLocaleString('en-US', { timeZoneName: 'short' });
       }
 
+    function updateSummary(logs) {
+      const start = document.getElementById('filter-start')?.value;
+      const end = document.getElementById('filter-end')?.value;
+      const type = document.getElementById('filter-type')?.value;
+      const parts = [];
+      if (type) parts.push(type.charAt(0).toUpperCase() + type.slice(1) + 's');
+      if (start) parts.push('from ' + new Date(start).toLocaleDateString());
+      if (end) parts.push('to ' + new Date(end).toLocaleDateString());
+      const desc = parts.length ? parts.join(' ') : 'all entries';
+      const count = logs.length;
+      const text = `Showing ${count} ${count === 1 ? 'result' : 'results'} — ${desc}`;
+      const el = document.getElementById('results-summary');
+      if (el) el.textContent = text;
+    }
+
     function renderChangelog(logs) {
       const container = document.getElementById('changelog-list');
       if (!container) return;
 
       if (!logs.length) {
         container.innerHTML = '<li class="empty-state">No historical records match your filters. Adjust the date range or event type and try again.</li>';
+        updateSummary(logs);
         return;
       }
 
@@ -253,10 +284,10 @@ Developer: Deathsgift66
               ? `<time datetime="${log.timestamp}">${formatDate(log.timestamp)}</time>`
               : '<span class="no-time" aria-label="No timestamp">—</span>';
             return `
-      <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry">
+      <li class="timeline-entry ${escapeHTML(log.event_type)}" role="article" aria-label="Changelog entry" aria-expanded="true">
         <div class="timeline-bullet"></div>
         <div class="timeline-content">
-          <span class="log-icon">${getIcon(log.event_type)}</span>
+          <span class="log-icon" role="img" aria-label="${escapeHTML(log.event_type)} event">${getIcon(log.event_type)}</span>
           <span class="log-type">${escapeHTML(log.event_type.toUpperCase())}</span>
           <p class="log-text">${escapeHTML(log.description)}</p>
           ${timeHtml}
@@ -270,8 +301,11 @@ Developer: Deathsgift66
       container.querySelectorAll('.timeline-entry').forEach((entry) => {
         entry.addEventListener('click', () => {
           entry.classList.toggle('collapsed');
+          entry.setAttribute('aria-expanded', entry.classList.contains('collapsed') ? 'false' : 'true');
         });
       });
+
+      updateSummary(logs);
     }
 
     function exportCSV() {
@@ -295,7 +329,7 @@ Developer: Deathsgift66
     }
 
     function setButtonsDisabled(disabled) {
-      ['apply-filters-btn', 'refresh-btn', 'export-csv-btn'].forEach((id) => {
+      ['apply-filters-btn', 'clear-filters-btn', 'refresh-btn', 'export-csv-btn'].forEach((id) => {
         const btn = document.getElementById(id);
         if (btn) btn.disabled = disabled;
       });
@@ -308,6 +342,7 @@ Developer: Deathsgift66
         bindEvent('apply-filters-btn', debouncedApply);
         const debouncedRefresh = debounce(() => fetchChangelog(true), 100);
         bindEvent('refresh-btn', debouncedRefresh);
+        bindEvent('clear-filters-btn', clearFilters);
         bindEvent('export-csv-btn', exportCSV);
         window.addEventListener('beforeunload', () => clearTimeout(fetchTimer));
       });
