@@ -30,7 +30,15 @@ a {
   margin: 1rem auto;
 }
 
+.error-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
 .noscript-warning {
-  color: red;
+  background: #300;
+  color: #fff;
+  padding: 1rem;
+  text-align: center;
   margin-bottom: 1rem;
 }

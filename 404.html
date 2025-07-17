@@ -8,8 +8,8 @@
   <meta name="description" content="The page you requested could not be found." />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="theme-color" content="#2e2b27" />
-  <meta name="version" content="1.0.2025.07.16" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" />
   <link rel="canonical" id="canonical-link" href="https://www.thronestead.com/404.html" />
   <link rel="alternate" hreflang="en" href="https://www.thronestead.com/404.html" />
 
@@ -17,8 +17,10 @@
     <meta property="og:title" content="Page Not Found | Thronestead" />
     <meta property="og:description" content="The page you requested could not be found." />
     <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
-    <meta property="og:url" content="" id="og-url" />
+    <meta property="og:url" content="https://www.thronestead.com/404.html" id="og-url" />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="en" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Page Not Found | Thronestead" />
     <meta name="twitter:description" content="The page you requested could not be found." />
@@ -28,65 +30,42 @@
   <link rel="icon" href="/Assets/favicon.ico" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
-  <style>
-    body {
-      text-align: center;
-      padding: 4rem 1rem;
-      font-family: var(--main-font, sans-serif);
-    }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-    p {
-      font-size: 1.2rem;
-    }
-    a {
-      color: var(--accent-color, #d13);
-      text-decoration: underline;
-    }
-    .noscript-warning {
-      color: red;
-      margin-bottom: 1rem;
-    }
-  </style>
+  <link href="/CSS/404.css" rel="stylesheet" />
+  <link rel="preload" href="/Assets/404.svg" as="image" />
 
   <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module" integrity="sha384-dW7lFNPkCfMaG9O8feDKc78E2hWisRCQFYWJnpFTi0nyfFu4EcdbZ2vd+c3z9HqZ" crossorigin="anonymous" async></script>
   <script src="/Javascript/apiHelper.js" type="module" integrity="sha384-lW22B8QUFILMUvzuE3C8K8SCLCnLHXVIUlCZg0fwDM2wQrEhtjAY8ABGoSjAYbAA" crossorigin="anonymous" async></script>
   <script src="/Javascript/navLoader.js" type="module" integrity="sha384-4X+ZGURftp4ppNZExP40bTT/QSxe6WEdotyyaxBCPSQ2+QnaZjS0BVYQ2La8rdz" crossorigin="anonymous" async onerror="const c=document.getElementById('navbar-container');if(c){c.innerHTML='<div class=\"navbar-failover\" data-i18n=\"nav_fail\">⚠️ Navigation failed to load. <a href=\"/\" data-i18n=\"home_link\">Return home</a>.</div>'}"></script>
-  <script src="/Javascript/globalError.js" type="module" async></script>
-  <script src="/Javascript/404.js" type="module" async></script>
+  <script src="/Javascript/globalError.js" type="module" integrity="sha384-WR+ixKQEjUug8c+qM3rSqRGjHchAnW7hW5Uhp+8cWi3NK50LB5mN8DqftMp3KJoU" crossorigin="anonymous" async></script>
+  <script src="/Javascript/404.js" type="module" integrity="sha384-CgRkiNXrcg+jN4TWjEXK098NWhnV3IJM4PUTl1XtVp0yXvROe4IBOcyx4x1rI4g1" crossorigin="anonymous" async></script>
 </head>
-<body>
+<body data-page="404">
   <noscript>
-    <style>
-      .noscript-warning {
-        background: #300;
-        color: #fff;
-        padding: 1rem;
-        text-align: center;
-      }
-    </style>
     <div lang="en" class="noscript-warning" data-i18n="noscript_msg">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
     </div>
   </noscript>
 
   <div id="navbar-container"><div id="nav-spinner" class="spinner" role="status" aria-live="polite" aria-label="Loading navigation..."></div></div>
-  <main role="main">
+  <div class="error-wrapper">
+  <main role="main" lang="en">
     <h1 id="page-title" data-i18n="404_title">404 - Page Not Found</h1>
-    <img src="/Assets/404.svg" alt="Illustration of missing page" class="error-img" loading="lazy" />
+    <img src="/Assets/404.svg" alt="Illustration of missing page" class="error-img" loading="lazy" role="presentation" />
     <p data-i18n="404_msg">The page you requested could not be found.</p>
-    <nav aria-label="Breadcrumb">
+    <h2 data-i18n="nav_heading">Navigation</h2>
+    <nav aria-label="Breadcrumb" id="breadcrumb">
       <ol>
         <li><a href="/" data-i18n="home_link">Home</a></li>
-        <li>404</li>
+        <li aria-current="page">404</li>
       </ol>
     </nav>
+    <h2 data-i18n="options_heading">Options</h2>
     <p><a href="#" id="back-link" class="touch-link" data-i18n="back_link">Go Back</a></p>
     <p><a href="/" class="touch-link" data-i18n="home_link">Return to Home</a></p>
     <p><a href="/sitemap.html" class="touch-link" data-i18n="sitemap_link">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="touch-link" data-i18n="search_link">searching</a>.</p>
+    <p><a href="/support.html" class="touch-link" data-i18n="support_link">Contact Support</a></p>
   </main>
+  </div>
 </body>
 </html>

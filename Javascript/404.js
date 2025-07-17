@@ -138,8 +138,12 @@ async function init() {
   const backLink = document.getElementById('back-link');
   backLink?.addEventListener('click', e => {
     e.preventDefault();
-    history.back();
+    window.history.back();
   });
+
+  setTimeout(() => {
+    window.location.href = '/';
+  }, 30000);
 
   window.addEventListener('error', handleRuntimeError);
 
