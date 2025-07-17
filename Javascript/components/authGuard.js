@@ -20,6 +20,7 @@ const publicPages = ['/about.html', '/index.html', '/projects.html'];
   if (requireAdmin) {
     document.documentElement.style.display = 'none';
   }
+  // Hard-coded bypass prevents redirect loops on the 404 page
   if (window.location.pathname === '/404.html') {
     console.info('Auth guard skipped on 404 page.');
     return;

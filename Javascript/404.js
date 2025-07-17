@@ -88,6 +88,13 @@ async function log404(anonId = null) {
     error_id: ERROR_ID
   };
   sendLog(payload);
+  try {
+    fetch('/api/log404', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: window.location.href })
+    });
+  } catch {}
 }
 
 async function init() {
@@ -102,15 +109,10 @@ async function init() {
   }
 
   const dynUrl = encodeURI(window.location.origin + window.location.pathname);
-  const canonical = document.getElementById('canonical-link');
+  const canonical = document.querySelector('link[rel="canonical"]');
   if (canonical) canonical.href = dynUrl;
   const og = document.getElementById('og-url');
   if (og) og.setAttribute('content', dynUrl);
-
-  const metaTemplate = document.getElementById('meta-template');
-  if (metaTemplate) {
-    document.head.append(...metaTemplate.content.cloneNode(true).childNodes);
-  }
 
   const struct = {
     '@context': 'https://schema.org',
@@ -138,7 +140,11 @@ async function init() {
   const backLink = document.getElementById('back-link');
   backLink?.addEventListener('click', e => {
     e.preventDefault();
-    history.back();
+    if (window.history.length > 1) {
+      history.back();
+    } else {
+      window.location.href = '/';
+    }
   });
 
   window.addEventListener('error', handleRuntimeError);
