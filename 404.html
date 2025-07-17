@@ -8,7 +8,7 @@
   <meta name="description" content="The page you requested could not be found." />
   <meta name="robots" content="noindex, nofollow, noarchive" />
   <meta name="theme-color" content="#2e2b27" />
-  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="referrer" content="strict-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; img-src 'self' https:; style-src 'self' https://fonts.googleapis.com; frame-ancestors 'none'" />
   <link rel="canonical" href="https://www.thronestead.com/404.html" />
   <link rel="alternate" hreflang="en" href="https://www.thronestead.com/404.html" />
@@ -21,6 +21,7 @@
   <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
   <meta property="og:url" content="https://www.thronestead.com/404.html" />
   <meta name="version" content="1.1.2025.07.16" />
+  <meta property="og:updated_time" content="1.1.2025.07.16" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Page Not Found | Thronestead" />
@@ -40,7 +41,7 @@
   <script src="/Javascript/globalError.js" type="module" integrity="sha384-WR+ixKQEjUug8c+qM3rSqRGjHchAnW7hW5Uhp+8cWi3NK50LB5mN8DqftMp3KJoU" crossorigin="anonymous" async></script>
   <script src="/Javascript/404.js" type="module" integrity="sha384-rsVP+8bdYZiXiAPAJd2lv8wdYqwpst9f2P43uS3uh6oBrhRf+FqGo0zSUukXkczV" crossorigin="anonymous" async></script>
 </head>
-<body lang="en">
+<body data-page-type="404">
   <noscript>
     <div lang="en" class="noscript-warning" data-i18n="noscript_msg">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
@@ -51,7 +52,7 @@
   <div id="navbar-container"><div id="nav-spinner" class="spinner" role="status" aria-live="polite" aria-label="Loading navigation..."></div></div>
   <main role="main" aria-label="404 Error Page" tabindex="-1" aria-live="polite">
     <h1 id="page-title"><span aria-hidden="true" class="error-icon" lang="en">🚫</span> <span data-i18n="404_title">404 - Page Not Found</span></h1>
-    <img src="/Assets/404.svg" alt="Illustration of missing page" class="error-img" loading="lazy" width="120" height="60" role="img" lang="en" />
+    <img src="/Assets/404.svg" alt="Illustration of missing page" class="error-img" loading="lazy" width="120" height="60" lang="en" />
     <p data-i18n="404_msg">The page you requested could not be found.</p>
     <nav aria-label="Breadcrumb">
       <ol role="list">
@@ -64,12 +65,12 @@
     <p><a href="/sitemap.html" class="action-link" data-i18n="sitemap_link" rel="nofollow">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="action-link" data-i18n="search_link" rel="nofollow noopener">searching</a>.</p>
     <form action="/search.html" role="search" class="inline-search" method="GET" aria-label="Site search">
       <label for="q" class="visually-hidden">Search</label>
-      <input type="search" id="q" name="q" placeholder="Search..." data-i18n="search_placeholder" aria-label="Search query" />
+      <input type="search" id="q" name="q" placeholder="Search..." data-i18n="search_placeholder" aria-label="Search query" autofocus />
       <button type="submit" data-i18n="go_button">Go</button>
     </form>
   </main>
   <template id="nav-fallback" lang="en">
-    <nav class="nav-fallback" role="navigation" lang="en">
+    <nav class="nav-fallback" role="navigation" lang="en" aria-label="Main Navigation">
       <ul>
         <li><a href="index.html">Home</a></li>
       </ul>
