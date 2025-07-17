@@ -25,8 +25,30 @@ section {
   margin-bottom: 1.5rem;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.5rem;
+}
+
 button {
   margin-top: 0.5rem;
+}
+
+.action-btn.danger {
+  background: var(--danger);
+}
+.action-btn.danger:hover {
+  background: #821b26;
+}
+
+fieldset.loading {
+  opacity: 0.7;
+}
+
+.placeholder {
+  font-style: italic;
+  opacity: 0.7;
 }
 
 #confirm-modal {
