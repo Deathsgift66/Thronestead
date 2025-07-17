@@ -9,7 +9,7 @@
   <meta name="description" content="The page you requested could not be found." />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="theme-color" content="#2e2b27" />
-  <link rel="canonical" id="canonical-link" href="https://www.thronestead.com/404.html" />
+  <link rel="canonical" id="canonical-link" href="" />
   <script type="module">
     const dynUrl = window.location.origin + window.location.pathname;
     const canonical = document.getElementById('canonical-link');
@@ -41,7 +41,7 @@
   <meta property="og:title" content="Page Not Found | Thronestead" />
   <meta property="og:description" content="The page you requested could not be found." />
   <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
-  <meta property="og:url" content="https://www.thronestead.com/404.html" id="og-url" />
+  <meta property="og:url" content="" id="og-url" />
   <meta property="og:type" content="website" />
 
   <!-- Twitter -->
@@ -123,21 +123,14 @@
 
 
 <!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <!-- navLoader uses dynamic import; ensure CSP allows it -->
-  <script type="module">
-    import('/Javascript/navLoader.js')
-      .catch(() => {
-        const container = document.getElementById('navbar-container');
-        if (container) {
-          container.innerHTML = '<div class="navbar-failover" data-i18n="nav_fail">⚠️ Navigation failed to load. <a href="/" data-i18n="home_link">Return home</a>.</div>';
-        }
-      });
-  </script>
+  <script src="/Javascript/components/authGuard.js" type="module" integrity="sha384-dW7lFNPkCfMaG9O8feDKc78E2hWisRCQFYWJnpFTi0nyfFu4EcdbZ2vd+c3z9HqZ" crossorigin="anonymous"></script>
+  <script src="/Javascript/apiHelper.js" type="module" integrity="sha384-lW22B8QUFILMUvzuE3C8K8SCLCnLHXVIUlCZg0fwDM2wQrEhtjAY8ABGoSjAYbAA" crossorigin="anonymous"></script>
+  <!-- navLoader with SRI and failover -->
+  <script src="/Javascript/navLoader.js" type="module" integrity="sha384-4X+ZGUaRftp4ppNZExP40bTT/QSxe6WEdotyyaxBCPSQ2+QnaZjS0BVYQ2La8rdz" crossorigin="anonymous" onerror="const c=document.getElementById('navbar-container');if(c){c.innerHTML='<div class=\"navbar-failover\" data-i18n=\"nav_fail\">⚠️ Navigation failed to load. <a href=\"/\" data-i18n=\"home_link\">Return home</a>.</div>'}"></script>
   <script type="module">
     import { applyTranslations } from '/Javascript/i18n.js';
-    applyTranslations('en');
+    const userLang = navigator.language ? navigator.language.split('-')[0] : 'en';
+    applyTranslations(userLang || 'en');
   </script>
 </head>
 <body>
@@ -196,8 +189,14 @@
       if (supabaseReady) {
         let anonId = null;
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          anonId = user?.id || null;
+          if (
+            supabase &&
+            supabase.auth &&
+            typeof supabase.auth.getUser === 'function'
+          ) {
+            const { data: { user } } = await supabase.auth.getUser();
+            anonId = user?.id || null;
+          }
         } catch {}
 
         sendLog({
