@@ -20,6 +20,8 @@ Developer: Deathsgift66
   <meta name="robots" content="noindex, nofollow" />
   <meta name="author" content="Thronestead Dev Team" />
   <meta name="version" content="7.1.2025.10.38" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'nonce-kradmin'; connect-src 'self' https://zzqoxgytfrbptojcwrjm.supabase.co wss://zzqoxgytfrbptojcwrjm.supabase.co; style-src 'self'; img-src 'self' data:; frame-ancestors 'none'" />
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/admin_emergency_tools.css" rel="stylesheet" />
@@ -32,27 +34,28 @@ Developer: Deathsgift66
     "url": "https://www.thronestead.com/admin_emergency_tools.html"
   }
   </script>
-  <script type="module" src="/Javascript/requireAdmin.js"></script>
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
+  <script type="module" src="/Javascript/requireAdmin.js" defer nonce="kradmin"></script>
+  <script src="/Javascript/components/authGuard.js" type="module" defer nonce="kradmin"></script>
+  <script src="/Javascript/apiHelper.js" type="module" defer nonce="kradmin"></script>
+  <script src="/Javascript/navLoader.js" type="module" defer nonce="kradmin"></script>
 </head>
 <body data-theme="parchment">
+  <a href="#main" class="skip-link">Skip to main content</a>
   <noscript>
     <div class="noscript-warning">
       JavaScript is required for emergency tools. Please enable JS to proceed.
     </div>
   </noscript>
-  <div id="navbar-container"></div>
+  <nav id="navbar-container" aria-label="Main Navigation"></nav>
   <header class="kr-top-banner" aria-label="Emergency Tools Banner" data-i18n="Thronestead – Emergency Tools">Thronestead – Emergency Tools</header>
-  <main role="main" class="main-container" aria-label="Emergency Tools Interface">
+  <main id="main" role="main" class="main-container" aria-label="Emergency Tools Interface">
     <div class="container">
       <section aria-label="Reprocess War Tick">
         <fieldset aria-busy="false">
           <legend data-i18n="Reprocess War Tick">Reprocess War Tick</legend>
           <div class="form-group">
             <label for="tick-war-id" data-i18n="War ID">War ID</label>
-            <input id="tick-war-id" type="number" min="1" placeholder="War ID" aria-label="War ID" aria-describedby="tick-war-desc" />
+            <input id="tick-war-id" type="number" min="1" placeholder="War ID" aria-label="War ID" aria-describedby="tick-war-desc" required />
           </div>
           <p id="tick-war-desc" class="visually-hidden">This resets the tick for a war. Use with caution.</p>
           <button id="reprocess-tick-btn" class="action-btn danger" data-i18n="Reprocess Tick">Reprocess Tick</button>
@@ -63,7 +66,7 @@ Developer: Deathsgift66
           <legend data-i18n="Recalculate Resources">Recalculate Resources</legend>
           <div class="form-group">
             <label for="recalc-kingdom-id" data-i18n="Kingdom ID">Kingdom ID</label>
-            <input id="recalc-kingdom-id" type="number" min="1" placeholder="Kingdom ID" aria-label="Kingdom ID" aria-describedby="recalc-desc" />
+            <input id="recalc-kingdom-id" type="number" min="1" placeholder="Kingdom ID" aria-label="Kingdom ID" aria-describedby="recalc-desc" required />
           </div>
           <p id="recalc-desc" class="visually-hidden">Recalculate resources for the specified kingdom.</p>
           <button id="recalc-res-btn" class="action-btn" data-i18n="Recalculate Tick">Recalculate</button>
@@ -74,12 +77,12 @@ Developer: Deathsgift66
           <legend data-i18n="Rollback Quest">Rollback Quest</legend>
           <div class="form-group">
             <label for="quest-alliance-id" data-i18n="Alliance ID">Alliance ID</label>
-            <input id="quest-alliance-id" type="number" min="1" placeholder="Alliance ID" aria-label="Alliance ID" aria-describedby="quest-alliance-desc" />
+            <input id="quest-alliance-id" type="number" min="1" placeholder="Alliance ID" aria-label="Alliance ID" aria-describedby="quest-alliance-desc" required />
           </div>
           <p id="quest-alliance-desc" class="visually-hidden">Alliance containing the quest to rollback.</p>
           <div class="form-group">
             <label for="quest-code" data-i18n="Quest Code">Quest Code</label>
-            <input id="quest-code" type="text" placeholder="Quest Code" aria-label="Quest Code" aria-describedby="quest-code-desc" />
+            <input id="quest-code" type="text" placeholder="Quest Code" aria-label="Quest Code" aria-describedby="quest-code-desc" required />
           </div>
           <p id="quest-code-desc" class="visually-hidden">Unique quest code to rollback.</p>
           <button id="rollback-quest-btn" class="action-btn danger" data-i18n="Rollback">Rollback</button>
@@ -115,7 +118,8 @@ Developer: Deathsgift66
   <div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true">
     <div class="modal-content">
       <h3 id="confirm-title">Confirm Action</h3>
-      <p id="confirm-body" aria-describedby="confirm-body">Are you sure? This action cannot be undone.</p>
+      <p id="confirm-body-desc">This action cannot be undone.</p>
+      <p id="confirm-body" aria-describedby="confirm-body-desc">Are you sure?</p>
       <div class="modal-actions">
         <button id="confirm-yes" class="btn" data-i18n="Yes">Yes</button>
         <button id="confirm-no" class="btn" data-i18n="Cancel">Cancel</button>
@@ -128,7 +132,7 @@ Developer: Deathsgift66
   <div id="loading-overlay" aria-hidden="true">
     <div class="spinner"></div>
   </div>
-  <script type="module">
+  <script type="module" nonce="kradmin" defer>
     import {
       authFetch,
       authJsonFetch,
@@ -187,7 +191,7 @@ Developer: Deathsgift66
         }
         showToast('Backups loaded', 'success');
       } catch (err) {
-        console.error('❌ Failed to load backups:', err);
+        console.error('Failed to load backups:', err);
         list.innerHTML = '<li>Error loading queues</li>';
         showToast('Failed to load backups', 'error');
       } finally {
@@ -309,7 +313,7 @@ Developer: Deathsgift66
               document.getElementById('quest-code')?.setAttribute('aria-invalid','true');
               section?.classList.remove('loading');
               section?.setAttribute('aria-busy','false');
-              return showToast('Invalid quest code', 'error');
+              return showToast('Quest code must be alphanumeric, dashes or underscores. Max 20 characters.', 'error');
             }
 
             btn.disabled = true;
@@ -320,7 +324,7 @@ Developer: Deathsgift66
               await postAction(config.endpoint, payload);
               showToast(`✅ ${config.success}`, 'success');
             } catch (err) {
-              console.error(`❌ ${config.endpoint} failed:`, err);
+              console.error(`${config.endpoint} failed:`, err);
               const msg = err && err.message ? err.message : 'Request failed';
               showToast(`❌ ${escapeHTML(msg)}`, 'error');
             } finally {
@@ -336,6 +340,8 @@ Developer: Deathsgift66
             pendingAction = execute;
             document.getElementById('confirm-title').textContent = config.confirmTitle || 'Confirm Action';
             openModal('confirm-modal');
+            document.getElementById('main')?.setAttribute('inert', '');
+            document.getElementById('navbar-container')?.setAttribute('inert', '');
           } else {
             execute();
           }
@@ -352,9 +358,13 @@ Developer: Deathsgift66
         confirmYes.disabled = false;
         confirmYes.textContent = 'Yes';
         closeModal('confirm-modal');
+        document.getElementById('main')?.removeAttribute('inert');
+        document.getElementById('navbar-container')?.removeAttribute('inert');
       });
       confirmNo?.addEventListener('click', () => {
         closeModal('confirm-modal');
+        document.getElementById('main')?.removeAttribute('inert');
+        document.getElementById('navbar-container')?.removeAttribute('inert');
         pendingAction = null;
       });
 
@@ -362,6 +372,8 @@ Developer: Deathsgift66
         const modal = document.getElementById('confirm-modal');
         if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
           closeModal('confirm-modal');
+          document.getElementById('main')?.removeAttribute('inert');
+          document.getElementById('navbar-container')?.removeAttribute('inert');
           pendingAction = null;
         }
       });
