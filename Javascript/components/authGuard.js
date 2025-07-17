@@ -17,6 +17,9 @@ const requireAdmin = window.requireAdmin === true;
 const publicPages = ['/about.html', '/index.html', '/projects.html'];
 
 (async () => {
+  if (requireAdmin) {
+    document.documentElement.style.display = 'none';
+  }
   if (window.location.pathname === '/404.html') {
     console.info('Auth guard skipped on 404 page.');
     return;
@@ -84,6 +87,9 @@ const publicPages = ['/about.html', '/index.html', '/projects.html'];
     }
 
     window.user = { id: user.id, is_admin: userData.is_admin };
+    if (requireAdmin) {
+      document.documentElement.style.display = '';
+    }
 
     loadPlayerProgressionFromStorage();
     if (!window.playerProgression) {
@@ -92,6 +98,7 @@ const publicPages = ['/about.html', '/index.html', '/projects.html'];
 
   } catch (err) {
     console.error('authGuard failure:', err);
+    document.documentElement.style.display = '';
     window.location.href = '/login.html';
   }
 })();
