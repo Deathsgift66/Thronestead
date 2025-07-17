@@ -40,19 +40,19 @@
       <section aria-label="Reprocess War Tick">
         <h2>Reprocess War Tick</h2>
         <label for="tick-war-id">War ID</label>
-        <input id="tick-war-id" type="number" placeholder="War ID" aria-label="War ID" />
+        <input id="tick-war-id" type="number" min="1" placeholder="War ID" aria-label="War ID" />
         <button id="reprocess-tick-btn">Reprocess Tick</button>
       </section>
       <section aria-label="Recalculate Resources">
         <h2>Recalculate Resources</h2>
         <label for="recalc-kingdom-id">Kingdom ID</label>
-        <input id="recalc-kingdom-id" type="number" placeholder="Kingdom ID" aria-label="Kingdom ID" />
+        <input id="recalc-kingdom-id" type="number" min="1" placeholder="Kingdom ID" aria-label="Kingdom ID" />
         <button id="recalc-res-btn">Recalculate</button>
       </section>
       <section aria-label="Rollback Alliance Quest">
         <h2>Rollback Quest</h2>
         <label for="quest-alliance-id">Alliance ID</label>
-        <input id="quest-alliance-id" type="number" placeholder="Alliance ID" aria-label="Alliance ID" />
+        <input id="quest-alliance-id" type="number" min="1" placeholder="Alliance ID" aria-label="Alliance ID" />
         <label for="quest-code">Quest Code</label>
         <input id="quest-code" type="text" placeholder="Quest Code" aria-label="Quest Code" />
         <button id="rollback-quest-btn">Rollback</button>
@@ -69,7 +69,7 @@
   </main>
 
   <!-- Confirmation Modal -->
-  <div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true" hidden>
+  <div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true">
     <div class="modal-content">
       <h3 id="confirm-title">Confirm Action</h3>
       <p id="confirm-body" aria-describedby="confirm-body">Are you sure? This action cannot be undone.</p>
@@ -98,16 +98,24 @@
 
     let pendingAction = null;
 
+    function getCsrfCookie() {
+      return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '')
+        .split('=')[1] || '';
+    }
+
     async function postAction(url, payload) {
       const res = await authFetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': sessionStorage.getItem('csrf_token') || ''
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfCookie() },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error(await res.text());
+      const type = res.headers.get('content-type') || '';
+      const data = type.includes('application/json') ? await res.json() : await res.text();
+      if (!res.ok) {
+        const detail = typeof data === 'string' ? data : data.detail || JSON.stringify(data);
+        throw new Error(detail);
+      }
+      return data;
     }
 
     function applyFilter() {
@@ -115,7 +123,8 @@
       const term = input?.value.toLowerCase() || '';
       const list = document.getElementById('backup-list');
       Array.from(list.children).forEach(li => {
-        const match = li.dataset.queue?.includes(term);
+        const q = li.dataset.queue?.toLowerCase() || '';
+        const match = q.includes(term);
         li.style.display = match ? '' : 'none';
       });
     }
@@ -204,7 +213,8 @@
               showToast(`✅ ${config.success}`, 'success');
             } catch (err) {
               console.error(`❌ ${config.endpoint} failed:`, err);
-              showToast(`❌ ${escapeHTML(err.message || '')}`, 'error');
+              const msg = err && err.message ? err.message : 'Request failed';
+              showToast(`❌ ${escapeHTML(msg)}`, 'error');
             } finally {
               btn.disabled = false;
               toggleLoading(false);
