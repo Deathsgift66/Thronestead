@@ -10,18 +10,17 @@ Developer: Deathsgift66
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>About | Thronestead</title>
+  <title>About Thronestead | Medieval Strategy MMO</title>
   <meta name="description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
-  <meta name="keywords" content="Thronestead, about, strategy game, kingdom" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.thronestead.com/about.html" />
+  <link rel="canonical" href="about.html" />
   <link rel="alternate" hreflang="en" href="https://www.thronestead.com/about.html" />
   <meta name="author" content="Thronestead Studios" />
   <!-- Open Graph -->
-  <meta property="og:title" content="About | Thronestead" />
+  <meta property="og:title" content="About Thronestead | Medieval Strategy MMO" />
   <meta property="og:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
-  <meta property="og:image" content="Assets/banner_main.png" />
-  <meta property="og:url" content="https://www.thronestead.com/about.html" />
+  <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+  <meta property="og:url" content="about.html" />
   <meta property="og:type" content="website" />
 
   <script type="application/ld+json">
@@ -34,6 +33,8 @@ Developer: Deathsgift66
     "image": "https://www.thronestead.com/Assets/banner_main.png",
     "genre": ["Strategy", "Multiplayer", "Medieval"],
     "operatingSystem": "Web",
+    "applicationCategory": "MMO",
+    "datePublished": "2025-07-01",
     "author": {
       "@type": "Organization",
       "name": "Thronestead Studios"
@@ -47,14 +48,39 @@ Developer: Deathsgift66
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="About | Thronestead" />
+  <meta name="twitter:title" content="About Thronestead | Medieval Strategy MMO" />
   <meta name="twitter:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
-  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <style>
+    #nav-fallback {
+      background: linear-gradient(to right, var(--ink), #18140f);
+      padding: 0.6rem 2rem;
+      border-bottom: 3px solid var(--leather);
+      font-family: var(--font-primary);
+    }
+    #nav-fallback a {
+      color: var(--parchment);
+      text-decoration: none;
+      margin: 0 0.5rem;
+    }
+    #nav-fallback a:hover {
+      color: var(--gold);
+    }
+    #legal-links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #legal-links li {
+      display: inline-block;
+      margin: 0 0.5rem;
+    }
+  </style>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
@@ -69,7 +95,7 @@ Developer: Deathsgift66
   </noscript>
 
 <div id="navbar-container">
-  <nav class="nav-fallback" aria-label="Primary Navigation">
+  <nav id="nav-fallback" class="nav-fallback" aria-label="Primary Navigation">
     <a href="index.html">Home</a> |
     <a href="about.html">About</a> |
     <a href="projects.html">Roadmap</a>
@@ -79,31 +105,43 @@ Developer: Deathsgift66
 
   <section class="hero-section" aria-label="About Banner">
     <div class="hero-content">
-      <h1>Thronestead</h1>
+      <h2>Thronestead</h2>
       <p>Forge your destiny in the ultimate medieval strategy realm.</p>
     </div>
   </section>
 
   <main role="main" class="main-centered-container">
     <section>
-      <h1>About Thronestead</h1>
-      <p>Thronestead is a medieval strategy game currently in early development.</p>
-      <p>Grow a humble village into a flourishing kingdom by gathering resources, researching technologies, and building a formidable army.</p>
-      <p>Team up with allies or rely on deft diplomacy to dominate rivals in tactical wars and economic competition.</p>
-      <p>Follow our progress on the <a href="projects.html">project roadmap</a> and stay tuned for an upcoming press kit.</p>
-      </section>
-    </main>
+      <h1 data-i18n="about_heading">About Thronestead</h1>
+      <p data-i18n="about_intro">Thronestead is a medieval strategy game currently in early development.</p>
+      <p data-i18n="about_growth">Grow a humble village into a flourishing kingdom by gathering resources, researching technologies, and building a formidable army.</p>
+      <p data-i18n="about_diplomacy">Team up with allies or rely on deft diplomacy to dominate rivals in tactical wars and economic competition.</p>
+      <p data-i18n="about_roadmap">Follow our progress on the <a href="projects.html">project roadmap</a> and stay tuned for an upcoming press kit.</p>
+    </section>
+  </main>
 
   <footer class="site-footer">
     <div>© 2025 Thronestead</div>
     <nav aria-label="Legal Links">
-      <a target="_blank" rel="noopener noreferrer" type="application/pdf" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a> |
-      <a target="_blank" rel="noopener noreferrer" type="application/pdf" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a> |
-      <a target="_blank" rel="noopener noreferrer" type="application/pdf" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a> |
-      <a href="legal.html" target="_blank">and more</a> |
-      <a href="sitemap.xml" target="_blank">Site Map</a>
+      <ul id="legal-links">
+        <li><a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a></li>
+        <li><a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a></li>
+        <li><a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a></li>
+        <li><a href="legal.html" target="_blank">and more</a></li>
+        <li><a href="sitemap.xml" target="_blank">Site Map</a></li>
+      </ul>
     </nav>
   </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const url = window.location.href;
+      const canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical) canonical.href = url;
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl) ogUrl.setAttribute('content', url);
+    });
+  </script>
 
   </body>
 </html>
