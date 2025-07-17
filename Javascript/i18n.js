@@ -29,6 +29,7 @@ export function applyTranslations(lang = 'en') {
       sitemap_link: 'View Site Map',
       or_try: 'or try',
       search_link: 'searching',
+      back_link: 'Go Back',
       nav_fail: '⚠️ Navigation failed to load. <a href="/" data-i18n="home_link">Return home</a>.',
       noscript_msg: 'JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.'
     }
