@@ -41,6 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const html = await fetchWithRetry(NAVBAR_PATH);
       target.innerHTML = html;
+      const fallback = document.getElementById("nav-fallback");
+      if (fallback) fallback.hidden = true;
 
       // Lazy-load all navbar-related interactive scripts in parallel
       const modules = await Promise.allSettled([
