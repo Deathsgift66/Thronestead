@@ -11,10 +11,9 @@ Developer: Deathsgift66
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Alerts | Thronestead</title>
   <meta name="referrer" content="strict-origin" />
   <meta name="author" content="Thronestead Moderation Team" />
-
-  <title>Admin Alerts | Thronestead</title>
 
   <!-- SEO -->
   <meta name="description" content="Admin alert center for account monitoring and moderation." />
@@ -80,12 +79,25 @@ Developer: Deathsgift66
     let currentData = null;
     let lastTimestamp = null;
     const buttonCooldownSet = new Set();
-    let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
-    sessionStorage.setItem('csrf_token', csrfToken);
+    let exportLock = false;
+    function storeToken(token) {
+      const hex = Array.from(new TextEncoder().encode(token))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      localStorage.setItem('csrf_token', hex);
+    }
+    function loadToken() {
+      const hex = localStorage.getItem('csrf_token');
+      if (!hex) return null;
+      const bytes = hex.match(/.{1,2}/g).map(b => parseInt(b, 16));
+      return new TextDecoder().decode(new Uint8Array(bytes));
+    }
+    let csrfToken = loadToken() || safeUUID();
+    storeToken(csrfToken);
 
     async function refreshCsrf() {
       csrfToken = safeUUID();
-      sessionStorage.setItem('csrf_token', csrfToken);
+      storeToken(csrfToken);
       try {
         await fetch('/api/admin/csrf', {
           method: 'POST',
@@ -344,7 +356,10 @@ Developer: Deathsgift66
       if (requiresConfirm.includes(action)) {
         const label = btn.textContent || action;
         const confirmed = confirm(`⚠️ Are you sure you want to ${label.toLowerCase()} this user?`);
-        if (!confirmed) return;
+        if (!confirmed) {
+          buttonCooldownSet.delete(key);
+          return;
+        }
       }
 
       btn.disabled = true;
@@ -433,7 +448,6 @@ Developer: Deathsgift66
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`,
-        'X-Admin-ID': session.user?.id || '',
         'X-CSRF-Token': csrfToken
       };
       const res = await fetch(endpoint, {
@@ -445,7 +459,11 @@ Developer: Deathsgift66
       });
       if (!res.ok) {
         console.warn('Admin action failed with status', res.status);
-        throw new Error(await res.text());
+        let msg = await res.text();
+        if (res.status === 401) msg = 'Unauthorized. Please reauthenticate.';
+        if (res.status === 403) msg = 'Access denied.';
+        if (res.status === 0) msg = 'Network error or CORS blocked.';
+        throw new Error(msg);
       }
     }
 
@@ -474,14 +492,24 @@ Developer: Deathsgift66
     }
 
     function mapSeverity(sev = '') {
+      if (typeof sev !== 'string') {
+        console.warn('Unexpected severity value', sev);
+        return 'severity-low';
+      }
       const s = sev.toLowerCase();
-      if (s.includes('high') || s.includes('critical')) return 'severity-high';
-      if (s.includes('medium')) return 'severity-medium';
+      if (['high', 'critical'].includes(s)) return 'severity-high';
+      if (s === 'medium') return 'severity-medium';
+      if (s === 'low') return 'severity-low';
+      console.warn('Unknown severity level:', sev);
       return 'severity-low';
     }
 
     function escapeHTML(str = '') {
-      return String(str || '')
+      if (typeof str !== 'string') {
+        console.error('escapeHTML expected string but received', str);
+        return '';
+      }
+      return str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -525,6 +553,7 @@ Developer: Deathsgift66
     }
 
     function exportJSON() {
+      if (exportLock) return;
       if (!currentData || (currentData.alerts || []).length === 0) {
         showToast('No data to export.', 'info');
         return;
@@ -534,6 +563,10 @@ Developer: Deathsgift66
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Loading...';
+      }
+      exportLock = true;
+      if ((currentData.alerts || []).length > MAX_FEED_ITEMS) {
+        showToast(`⚠ Exporting more than ${MAX_FEED_ITEMS} items may be slow.`, 'warning');
       }
       const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -546,9 +579,11 @@ Developer: Deathsgift66
         btn.disabled = false;
         btn.textContent = origText;
       }
+      exportLock = false;
     }
 
     function exportCSV() {
+      if (exportLock) return;
       if (!currentData || !(Array.isArray(currentData.alerts)) || currentData.alerts.length === 0) {
         showToast('No data to export.', 'info');
         return;
@@ -558,6 +593,10 @@ Developer: Deathsgift66
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Loading...';
+      }
+      exportLock = true;
+      if (currentData.alerts.length > MAX_FEED_ITEMS) {
+        showToast(`⚠ Exporting more than ${MAX_FEED_ITEMS} items may be slow.`, 'warning');
       }
       const sanitize = v => `"${String(v).replace(/"/g, '""')}"`;
       const rows = [
@@ -585,17 +624,21 @@ Developer: Deathsgift66
         btn.disabled = false;
         btn.textContent = origText;
       }
+      exportLock = false;
     }
 
-    function selectTab(tab) {
-      document.querySelectorAll('.alert-tabs .tab').forEach(t => {
-        t.classList.remove('active');
-        t.setAttribute('aria-selected', 'false');
-        t.setAttribute('tabindex', '-1');
-      });
-      tab.classList.add('active');
-      tab.setAttribute('aria-selected', 'true');
-      tab.setAttribute('tabindex', '0');
+   function selectTab(tab) {
+     document.querySelectorAll('.alert-tabs .tab').forEach(t => {
+       t.classList.remove('active');
+       t.setAttribute('aria-selected', 'false');
+       t.setAttribute('tabindex', '-1');
+     });
+     tab.classList.add('active');
+     tab.setAttribute('aria-selected', 'true');
+     tab.setAttribute('tabindex', '0');
+      document.querySelectorAll('[role="tabpanel"]').forEach(p => p.setAttribute('aria-hidden', 'true'));
+      const panel = document.getElementById('alerts-feed');
+      panel?.setAttribute('aria-hidden', 'false');
       const type = tab.dataset.type || '';
       const select = document.getElementById('filter-type');
       if (select) select.value = type;
@@ -639,6 +682,10 @@ Developer: Deathsgift66
     <div class="noscript-warning">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
     </div>
+    <nav class="noscript-nav">
+      <a href="admin_dashboard.html">Dashboard</a>
+      <a href="admin_emergency_tools.html">Emergency Tools</a>
+    </nav>
   </noscript>
 
 <div id="navbar-container"></div>
@@ -653,7 +700,7 @@ Developer: Deathsgift66
   <!-- Main Admin Panel -->
   <main class="main-container" aria-label="Admin Alerts Interface" role="main">
     <div class="admin-alerts-container">
-
+      <h1>Admin Alert Center</h1>
       <h2>Flagged Accounts & Suspicious Events</h2>
       <div class="alert-tabs" aria-label="Alert Type Tabs" role="tablist">
         <button class="tab active" role="tab" aria-selected="true" tabindex="0" data-type="" aria-controls="alerts-feed">All</button>
@@ -698,8 +745,8 @@ Developer: Deathsgift66
       </section>
 
       <!-- Alert Feed Panel -->
-      <section class="kr-alerts-panel" aria-label="Live Alert Feed" role="feed">
-        <div id="alerts-feed" aria-live="assertive" class="alerts-feed" role="log">
+      <section id="alerts-feed" class="kr-alerts-panel" aria-label="Live Alert Feed" role="tabpanel" aria-hidden="false">
+        <div aria-live="assertive" class="alerts-feed" role="log">
           <!-- JavaScript inserts real-time alerts here -->
         </div>
         <button id="load-more-alerts" class="btn btn-secondary hidden" type="button">Load More</button>
