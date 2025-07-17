@@ -3,6 +3,7 @@
 # Version:  7/1/2025 10:38
 # Developer: Deathsgift66
 from fastapi import HTTPException
+import pytest
 
 from backend.routers import alliance_changelog as ac
 
@@ -109,3 +110,35 @@ def test_filters_applied():
     )
     assert len(res["logs"]) == 1
     assert res["logs"][0]["description"] == "quest log"
+
+
+def test_invalid_start_date():
+    tables = {"users": [{"user_id": "u1"}], "alliance_members": [{"alliance_id": 1}]}
+    ac.get_supabase_client = lambda: DummyClient(tables)
+    with pytest.raises(HTTPException) as exc:
+        ac.get_alliance_changelog(start="bad", user_id="u1")
+    assert exc.value.status_code == 400
+
+
+def test_invalid_end_date():
+    tables = {"users": [{"user_id": "u1"}], "alliance_members": [{"alliance_id": 1}]}
+    ac.get_supabase_client = lambda: DummyClient(tables)
+    with pytest.raises(HTTPException) as exc:
+        ac.get_alliance_changelog(end="nope", user_id="u1")
+    assert exc.value.status_code == 400
+
+
+def test_invalid_type():
+    tables = {"users": [{"user_id": "u1"}], "alliance_members": [{"alliance_id": 1}]}
+    ac.get_supabase_client = lambda: DummyClient(tables)
+    with pytest.raises(HTTPException) as exc:
+        ac.get_alliance_changelog(event_type="bad", user_id="u1")
+    assert exc.value.status_code == 400
+
+
+def test_invalid_ts():
+    tables = {"users": [{"user_id": "u1"}], "alliance_members": [{"alliance_id": 1}]}
+    ac.get_supabase_client = lambda: DummyClient(tables)
+    with pytest.raises(HTTPException) as exc:
+        ac.get_alliance_changelog(ts="abc", user_id="u1")
+    assert exc.value.status_code == 400

@@ -20,12 +20,42 @@ from ..supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/alliance/changelog", tags=["alliance_changelog"])
 
+ALLOWED_TYPES = {"war", "treaty", "project", "quest", "member", "admin"}
+
+
+def _validate_iso(value: Optional[str], name: str) -> Optional[str]:
+    if value is None:
+        return None
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid {name} format")
+    return value
+
+
+def _validate_types(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    types = {v.strip() for v in value.split(",") if v.strip()}
+    if not types or not types.issubset(ALLOWED_TYPES):
+        raise HTTPException(status_code=400, detail="Invalid type")
+    return ",".join(types)
+
+
+def _validate_ts(value: Optional[int]) -> Optional[int]:
+    if value is None:
+        return None
+    if not isinstance(value, int):
+        raise HTTPException(status_code=400, detail="Invalid ts")
+    return value
+
 
 @router.get("/")
 def get_alliance_changelog(
     start: Optional[str] = None,
     end: Optional[str] = None,
     event_type: Optional[str] = Query(None, alias="type"),
+    ts: Optional[int] = None,
     user_id: str = Depends(require_user_id),
 ):
     """
@@ -33,6 +63,11 @@ def get_alliance_changelog(
     This includes alliance activity, treaties, wars, projects, quests, and audit log actions.
     """
     supabase = get_supabase_client()
+
+    start = _validate_iso(start, "start")
+    end = _validate_iso(end, "end")
+    event_type = _validate_types(event_type)
+    _validate_ts(ts)
 
     # ✅ Validate user existence
     user_check = (
@@ -167,7 +202,7 @@ def get_alliance_changelog(
 
     # 🗂️ Event Type Filter
     if event_type:
-        allowed = {t.strip() for t in event_type.split(",") if t.strip()}
+        allowed = set(event_type.split(","))
         all_logs = [log for log in all_logs if log["event_type"] in allowed]
 
     latest_logs = all_logs[:100]
