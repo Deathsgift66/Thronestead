@@ -292,3 +292,34 @@ Developer: Deathsgift66
     height: 24px;
   }
 }
+
+/* Fallback navigation styles used when navLoader fails */
+#nav-fallback {
+  background: linear-gradient(to right, var(--ink), #18140f);
+  padding: 0.6rem 2rem;
+  border-bottom: 3px solid var(--leather);
+  font-family: var(--font-primary);
+}
+#nav-fallback ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+#nav-fallback a {
+  color: var(--parchment);
+  text-decoration: none;
+}
+#nav-fallback a:hover {
+  color: var(--gold);
+}
+#legal-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+#legal-links li {
+  display: inline-block;
+  margin: 0 0.5rem;
+}

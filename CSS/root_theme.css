@@ -364,6 +364,10 @@ header.kr-top-banner {
   text-align: center;
   padding: 6rem 2rem;
 }
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
 .hero-content h1 {
   font-family: var(--font-header);
   font-size: 3rem;
