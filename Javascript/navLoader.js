@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const currentLink = target.querySelector(`a[href="${currentPage}"]`);
       if (currentLink) currentLink.setAttribute("aria-current", "page");
       const fallback = document.getElementById("nav-fallback");
-      if (fallback) fallback.hidden = true;
+      if (fallback && fallback.tagName !== "TEMPLATE") fallback.hidden = true;
 
       // Lazy-load all navbar-related interactive scripts in parallel
       const modules = await Promise.allSettled([
@@ -68,11 +68,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error("❌ Navbar injection failed:", err);
-      target.innerHTML = `
-        <div class="navbar-failover">
-          <p>⚠️ Navigation failed to load. <a href="index.html">Return home</a>.</p>
-        </div>
-      `;
+      const tpl = document.getElementById("nav-fallback");
+      if (tpl && tpl.content) {
+        target.appendChild(tpl.content.cloneNode(true));
+      } else {
+        target.innerHTML = `
+          <div class="navbar-failover">
+            <p>⚠️ Navigation failed to load. <a href="index.html">Return home</a>.</p>
+          </div>
+        `;
+      }
     }
   }
 
