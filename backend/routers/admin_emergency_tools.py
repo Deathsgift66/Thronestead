@@ -1,7 +1,7 @@
 """Admin endpoints for emergency developer actions."""
 
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, constr
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/admin/emergency", tags=["admin_emergency"])
 
 
 class WarTick(BaseModel):
-    war_id: int
+    war_id: int = Field(..., gt=0)
 
 
 @router.post("/reprocess_tick")
@@ -46,7 +46,7 @@ def reprocess_tick(
 
 
 class KingdomPayload(BaseModel):
-    kingdom_id: int
+    kingdom_id: int = Field(..., gt=0)
 
 
 @router.post("/recalculate_resources")
@@ -72,8 +72,8 @@ def recalculate_resources(
 
 
 class QuestRollback(BaseModel):
-    alliance_id: int
-    quest_code: str
+    alliance_id: int = Field(..., gt=0)
+    quest_code: constr(strip_whitespace=True, min_length=1, max_length=20, regex=r'^[A-Za-z0-9_\-]+$')
 
 
 @router.post("/rollback_quest")
