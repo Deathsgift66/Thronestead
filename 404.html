@@ -17,7 +17,7 @@
   <meta property="og:title" content="Page Not Found | Thronestead" />
   <meta property="og:description" content="The page you requested could not be found." />
   <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
-  <meta property="og:url" content="https://www.thronestead.com/404.html" id="og-url" />
+  <meta property="og:url" content="https://www.thronestead.com/404.html" />
   <meta name="version" content="1.1.2025.07.16" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -29,17 +29,14 @@
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
   <link href="/CSS/404.css" rel="stylesheet" />
-  <noscript>
-    <link rel="stylesheet" href="/CSS/404.css" />
-  </noscript>
 
   <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module" integrity="sha384-dW7lFNPkCfMaG9O8feDKc78E2hWisRCQFYWJnpFTi0nyfFu4EcdbZ2vd+c3z9HqZ" crossorigin="anonymous" async></script>
   <script src="/Javascript/apiHelper.js" type="module" integrity="sha384-lW22B8QUFILMUvzuE3C8K8SCLCnLHXVIUlCZg0fwDM2wQrEhtjAY8ABGoSjAYbAA" crossorigin="anonymous" async></script>
   <script src="/Javascript/navLoader.js" type="module" integrity="sha384-4X+ZGURftp4ppNZExP40bTT/QSxe6WEdotyyaxBCPSQ2+QnaZjS0BVYQ2La8rdz" crossorigin="anonymous" async onerror="const c=document.getElementById('navbar-container');if(c){c.innerHTML='<div class=\"navbar-failover\" data-i18n=\"nav_fail\">⚠️ Navigation failed to load. <a href=\"/\" data-i18n=\"home_link\">Return home</a>.</div>'}"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      if (!window.navLoader) {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.navLoader === 'undefined') {
         setTimeout(() => {
           const nav = document.getElementById('navbar-container');
           if (nav && !nav.querySelector('nav') && !nav.querySelector('.navbar-failover')) {
@@ -54,6 +51,7 @@
 </head>
 <body>
   <noscript>
+    <title>404 - Page Not Found | Thronestead</title>
     <div lang="en" class="noscript-warning" data-i18n="noscript_msg">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
     </div>
@@ -61,9 +59,9 @@
   </noscript>
 
   <div id="navbar-container"><div id="nav-spinner" class="spinner" role="status" aria-live="polite" aria-label="Loading navigation..."></div></div>
-  <main role="main" aria-label="404 Error Page" tabindex="-1">
+  <main role="main" aria-label="404 Error Page" tabindex="-1" aria-live="polite">
     <h1 id="page-title"><span aria-hidden="true" class="error-icon" lang="en">🚫</span> <span data-i18n="404_title">404 - Page Not Found</span></h1>
-    <img src="/Assets/404.svg" alt="Illustration of missing page" data-i18n="404_img_alt" class="error-img" loading="eager" role="img" lang="en" />
+    <img src="/Assets/404.svg" alt="Illustration of missing page" class="error-img" loading="eager" role="img" lang="en" />
     <p data-i18n="404_msg">The page you requested could not be found.</p>
     <nav aria-label="Breadcrumb">
       <ol role="list">
@@ -71,9 +69,9 @@
         <li role="listitem" aria-current="page">404</li>
       </ol>
     </nav>
-    <p><a href="javascript:history.back();" id="back-link" class="touch-link" data-i18n="back_link">Go Back</a></p>
-    <p><a href="/" class="touch-link" data-i18n="home_link">Return to Home</a></p>
-    <p><a href="/sitemap.html" class="touch-link" data-i18n="sitemap_link">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="touch-link" data-i18n="search_link" rel="nofollow noopener">searching</a>.</p>
+    <p><a href="javascript:history.back();" id="back-link" class="action-link" data-i18n="back_link">Go Back</a></p>
+    <p><a href="/" class="action-link" data-i18n="home_link">Return to Home</a></p>
+    <p><a href="/sitemap.html" class="action-link" data-i18n="sitemap_link">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="action-link" data-i18n="search_link" rel="nofollow noopener">searching</a>.</p>
     <form action="/search.html" role="search" class="inline-search" method="GET" aria-label="Site search">
       <label for="q" class="visually-hidden">Search</label>
       <input type="search" id="q" name="q" placeholder="Search..." data-i18n="search_placeholder" aria-label="Search query" />
