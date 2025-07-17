@@ -1,83 +1,31 @@
-<!-- Thronestead | 404.html | v1.0 | Last updated: 2025-07-16 -->
+<!-- Thronestead | 404.html | v1.1 | Last updated: 2025-07-16 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
   <title>Page Not Found</title>
   <meta name="description" content="The page you requested could not be found." />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="theme-color" content="#2e2b27" />
-  <link rel="canonical" id="canonical-link" href="" />
+  <meta name="version" content="1.0.2025.07.16" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'" />
+  <link rel="canonical" id="canonical-link" href="https://www.thronestead.com/404.html" />
   <link rel="alternate" hreflang="en" href="https://www.thronestead.com/404.html" />
-  <script type="module">
-    const dynUrl = encodeURI(window.location.origin + window.location.pathname);
-    const canonical = document.getElementById('canonical-link');
-    if (canonical) canonical.href = dynUrl;
-    const og = document.getElementById('og-url');
-    if (og) og.setAttribute('content', dynUrl);
-    const schemaEl = document.getElementById('structured-data');
-    if (schemaEl) {
-      try {
-        const data = JSON.parse(schemaEl.textContent);
-        const breadcrumb = data['@graph']?.find(n => n['@type'] === 'BreadcrumbList');
-        if (breadcrumb && breadcrumb.itemListElement?.[1]) {
-          breadcrumb.itemListElement[1].item = window.location.href;
-        }
-        schemaEl.textContent = JSON.stringify(data);
-      } catch {}
-    }
-  </script>
-  <script type="application/ld+json" id="structured-data">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Home",
-            "item": "https://www.thronestead.com/"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "404"
-          }
-        ]
-      },
-      {
-        "@type": "WebPage",
-        "name": "404 Page",
-        "description": "Page not found on Thronestead.",
-        "mainEntity": {
-          "@type": "WebPageElement",
-          "name": "404 Message",
-          "cssSelector": "h1"
-        }
-      }
-    ]
-  }
-  </script>
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="Page Not Found | Thronestead" />
-  <meta property="og:description" content="The page you requested could not be found." />
-  <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
-  <meta property="og:url" content="" id="og-url" />
-  <meta property="og:type" content="website" />
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Page Not Found | Thronestead" />
-  <meta name="twitter:description" content="The page you requested could not be found." />
-  <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+  <template id="meta-template">
+    <meta property="og:title" content="Page Not Found | Thronestead" />
+    <meta property="og:description" content="The page you requested could not be found." />
+    <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+    <meta property="og:url" content="" id="og-url" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Page Not Found | Thronestead" />
+    <meta name="twitter:description" content="The page you requested could not be found." />
+    <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+  </template>
 
   <link rel="icon" href="/Assets/favicon.ico" />
-
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
   <style>
@@ -86,39 +34,28 @@
       padding: 4rem 1rem;
       font-family: var(--main-font, sans-serif);
     }
-
     h1 {
       font-size: 2.5rem;
       margin-bottom: 1rem;
     }
-
     p {
       font-size: 1.2rem;
     }
-
     a {
       color: var(--accent-color, #d13);
       text-decoration: underline;
     }
-
     .noscript-warning {
       color: red;
       margin-bottom: 1rem;
     }
   </style>
 
-
-
-<!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module" integrity="sha384-dW7lFNPkCfMaG9O8feDKc78E2hWisRCQFYWJnpFTi0nyfFu4EcdbZ2vd+c3z9HqZ" crossorigin="anonymous"></script>
-  <script src="/Javascript/apiHelper.js" type="module" integrity="sha384-lW22B8QUFILMUvzuE3C8K8SCLCnLHXVIUlCZg0fwDM2wQrEhtjAY8ABGoSjAYbAA" crossorigin="anonymous"></script>
-  <!-- navLoader with SRI and failover -->
-  <script src="/Javascript/navLoader.js" type="module" integrity="sha384-4X+ZGUaRftp4ppNZExP40bTT/QSxe6WEdotyyaxBCPSQ2+QnaZjS0BVYQ2La8rdz" crossorigin="anonymous" onerror="const c=document.getElementById('navbar-container');if(c){c.innerHTML='<div class=\"navbar-failover\" data-i18n=\"nav_fail\">⚠️ Navigation failed to load. <a href=\"/\" data-i18n=\"home_link\">Return home</a>.</div>'}"></script>
-  <script type="module">
-    import { applyTranslations } from '/Javascript/i18n.js';
-    const userLang = navigator.language ? navigator.language.split('-')[0] : 'en';
-    applyTranslations(userLang || 'en');
-  </script>
+  <!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/authGuard.js" type="module" integrity="sha384-dW7lFNPkCfMaG9O8feDKc78E2hWisRCQFYWJnpFTi0nyfFu4EcdbZ2vd+c3z9HqZ" crossorigin="anonymous" async></script>
+  <script src="/Javascript/apiHelper.js" type="module" integrity="sha384-lW22B8QUFILMUvzuE3C8K8SCLCnLHXVIUlCZg0fwDM2wQrEhtjAY8ABGoSjAYbAA" crossorigin="anonymous" async></script>
+  <script src="/Javascript/navLoader.js" type="module" integrity="sha384-4X+ZGURftp4ppNZExP40bTT/QSxe6WEdotyyaxBCPSQ2+QnaZjS0BVYQ2La8rdz" crossorigin="anonymous" async onerror="const c=document.getElementById('navbar-container');if(c){c.innerHTML='<div class=\"navbar-failover\" data-i18n=\"nav_fail\">⚠️ Navigation failed to load. <a href=\"/\" data-i18n=\"home_link\">Return home</a>.</div>'}"></script>
+  <script src="/Javascript/404.js" type="module" async></script>
 </head>
 <body>
   <noscript>
@@ -135,73 +72,20 @@
     </div>
   </noscript>
 
-<div id="navbar-container"><div id="nav-spinner" class="spinner" role="status" aria-live="polite" aria-label="Loading navigation..."></div></div>
-<main role="main">
-  <h1 data-i18n="404_title">404 - Page Not Found</h1>
-  <img src="/Assets/404.svg" alt="404 illustration" class="error-img" />
-  <p data-i18n="404_msg">The page you requested could not be found.</p>
-  <p><a href="/" class="touch-link" data-i18n="home_link">Return to Home</a></p>
-  <p><a href="/sitemap.html" class="touch-link" data-i18n="sitemap_link">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="touch-link" data-i18n="search_link">searching</a>.</p>
-</main>
-  <script type="module">
-    (async () => {
-      let supabase = null;
-      let supabaseReady = false;
-      try {
-        const mod = await import('/Javascript/supabaseClient.js');
-        supabase = mod.supabase;
-        supabaseReady = mod.supabaseReady;
-      } catch {
-        supabaseReady = false;
-      }
-
-      async function sendLog(payload) {
-        try {
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon(
-              '/api/logs/404',
-              new Blob([JSON.stringify(payload)], { type: 'application/json' })
-            );
-          } else {
-            await fetch('/api/logs/404', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-          }
-        } catch (err) {
-          if (import.meta.env.DEV) {
-            console.warn('Failed to log 404:', err);
-          }
-        }
-      }
-
-      window.addEventListener('error', e => {
-        sendLog({ type: 'runtime', message: e.message });
-      });
-
-      if (supabaseReady) {
-        let anonId = null;
-        try {
-          if (
-            supabase &&
-            supabase.auth &&
-            typeof supabase.auth.getUser === 'function'
-          ) {
-            const { data: { user } } = await supabase.auth.getUser();
-            anonId = user?.id || null;
-          }
-        } catch {}
-
-        sendLog({
-          path: window.location.pathname.slice(0, 255),
-          referrer: document.referrer.slice(0, 255),
-          user_agent: encodeURIComponent(navigator.userAgent.slice(0, 255)),
-          type: '404',
-          anon_id: anonId
-        });
-      }
-    })();
-  </script>
+  <div id="navbar-container"><div id="nav-spinner" class="spinner" role="status" aria-live="polite" aria-label="Loading navigation..."></div></div>
+  <main role="main">
+    <h1 id="page-title" data-i18n="404_title">404 - Page Not Found</h1>
+    <img src="/Assets/404.svg" alt="Illustration of missing page" class="error-img" loading="lazy" />
+    <p data-i18n="404_msg">The page you requested could not be found.</p>
+    <nav aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/" data-i18n="home_link">Home</a></li>
+        <li>404</li>
+      </ol>
+    </nav>
+    <p><a href="#" id="back-link" class="touch-link" data-i18n="back_link">Go Back</a></p>
+    <p><a href="/" class="touch-link" data-i18n="home_link">Return to Home</a></p>
+    <p><a href="/sitemap.html" class="touch-link" data-i18n="sitemap_link">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="touch-link" data-i18n="search_link">searching</a>.</p>
+  </main>
 </body>
 </html>
