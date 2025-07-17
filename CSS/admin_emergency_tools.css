@@ -28,3 +28,7 @@ section {
 button {
   margin-top: 0.5rem;
 }
+
+#confirm-modal {
+  z-index: calc(var(--z-index-modal) + 200);
+}

@@ -43,6 +43,7 @@ __all__ = [
     "validate_reauth_token",
     "decode_supabase_jwt",
     "require_csrf_token",
+    "verify_emergency_ip",
 ]
 
 
@@ -102,7 +103,9 @@ def verify_jwt_token(authorization: str | None = Header(None)) -> str:
     """Validate the bearer token and return the user ID."""
     if not authorization or not authorization.startswith("Bearer "):
         logger.warning("Missing or malformed Authorization header.")
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+        raise HTTPException(
+            status_code=401, detail="Missing or invalid Authorization header"
+        )
 
     token = authorization[7:].strip()
 
@@ -278,15 +281,30 @@ def verify_reauth_token(
     return user_id
 
 
-def require_csrf_token(request: Request, x_csrf_token: str | None = Header(None, alias="X-CSRF-Token")) -> str:
-    """Validate that the CSRF header matches the csrf_token cookie."""
+def require_csrf_token(
+    request: Request, x_csrf_token: str | None = Header(None, alias="X-CSRF-Token")
+) -> str:
+    """Validate CSRF token using the csrf_token cookie. The header is optional."""
     cookie_token = request.cookies.get("csrf_token")
-    session_token = getattr(request, "session", {}).get("csrf_token") if hasattr(request, "session") else None
-    if (
-        not x_csrf_token
-        or not cookie_token
-        or cookie_token != x_csrf_token
-        or (session_token and session_token != x_csrf_token)
-    ):
-        raise HTTPException(status_code=403, detail="CSRF token missing or invalid")
-    return x_csrf_token
+    if not cookie_token:
+        raise HTTPException(status_code=403, detail="CSRF token missing")
+    if x_csrf_token and x_csrf_token != cookie_token:
+        raise HTTPException(status_code=403, detail="CSRF token mismatch")
+    return cookie_token
+
+
+ALLOWED_EMERGENCY_IPS = {
+    ip.strip()
+    for ip in (get_env_var("ADMIN_EMERGENCY_IPS") or "").split(",")
+    if ip.strip()
+}
+
+
+def verify_emergency_ip(request: Request) -> None:
+    """Restrict emergency tools to whitelisted IPs when configured."""
+    if not ALLOWED_EMERGENCY_IPS:
+        return
+    ip, _ = _extract_request_meta(request)
+    if ip not in ALLOWED_EMERGENCY_IPS:
+        logger.warning("Unauthorized emergency access attempt from %s", ip)
+        raise HTTPException(status_code=403, detail="IP not allowed")

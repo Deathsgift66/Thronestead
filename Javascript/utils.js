@@ -106,6 +106,7 @@ export function openModal(modal) {
   if (!el) return;
   el.__prevFocus = document.activeElement;
   el.classList.remove('hidden');
+  el.removeAttribute('hidden');
   el.setAttribute('aria-hidden', 'false');
   el.removeAttribute('inert');
 
@@ -156,6 +157,7 @@ export function closeModal(modal) {
   delete el.__trapFocus;
   delete el.__outsideClick;
   el.classList.add('hidden');
+  el.setAttribute('hidden', '');
   el.setAttribute('aria-hidden', 'true');
   el.setAttribute('inert', '');
   if (el.__prevFocus && typeof el.__prevFocus.focus === 'function') {
