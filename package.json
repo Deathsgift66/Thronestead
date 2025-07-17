@@ -12,7 +12,7 @@
     "lint": "eslint . --ext .js,.mjs",
     "clean": "rm -rf dist",
     "build": "vite build && cp _headers dist/_headers && cp -r Assets dist/",
-    "test": "echo \"No tests defined\""
+    "test": "node --test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.6"
