@@ -41,6 +41,9 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const html = await fetchWithRetry(NAVBAR_PATH);
       target.innerHTML = html;
+      const currentPage = window.location.pathname.split("/").pop() || "index.html";
+      const currentLink = target.querySelector(`a[href="${currentPage}"]`);
+      if (currentLink) currentLink.setAttribute("aria-current", "page");
       const fallback = document.getElementById("nav-fallback");
       if (fallback) fallback.hidden = true;
 

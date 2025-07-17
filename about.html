@@ -10,14 +10,15 @@ Developer: Deathsgift66
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>About Thronestead | Medieval Strategy MMO</title>
+  <title>About | Thronestead - Medieval Strategy MMO</title>
   <meta name="description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
+  <link rel="canonical" href="https://www.thronestead.com/about.html" />
   <meta name="robots" content="index, follow" />
   <link rel="preconnect" href="https://www.thronestead.com" />
-  <link rel="canonical" href="https://www.thronestead.com/about.html" />
+  <link rel="alternate" hreflang="x-default" href="https://www.thronestead.com/about.html" />
   <link rel="alternate" hreflang="en" href="https://www.thronestead.com/about.html" />
   <!-- Open Graph -->
-  <meta property="og:title" content="About Thronestead | Medieval Strategy MMO" />
+  <meta property="og:title" content="About | Thronestead - Medieval Strategy MMO" />
   <meta property="og:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
   <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
   <meta property="og:url" content="https://www.thronestead.com/about.html" />
@@ -32,6 +33,7 @@ Developer: Deathsgift66
     "url": "https://www.thronestead.com",
     "image": "https://www.thronestead.com/Assets/banner_main.png",
     "genre": ["Strategy", "Multiplayer", "Medieval"],
+    "gamePlatform": ["Web Browser"],
     "operatingSystem": "Web",
     "applicationCategory": "MMO",
     "datePublished": "2025-07-01",
@@ -48,12 +50,12 @@ Developer: Deathsgift66
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="About Thronestead | Medieval Strategy MMO" />
+  <meta name="twitter:title" content="About | Thronestead - Medieval Strategy MMO" />
   <meta name="twitter:description" content="Learn about Thronestead, the medieval strategy game where you build your kingdom and forge alliances." />
   <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
 
   <!-- Global Assets -->
-  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="/Assets/favicon.ico" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
 
@@ -62,6 +64,11 @@ Developer: Deathsgift66
   <script src="/Javascript/apiHelper.js" type="module"></script>
   <script src="/Javascript/navLoader.js" type="module"></script>
   <script src="/Javascript/i18n.js" type="module"></script>
+  <script type="module">
+    import { applyTranslations } from "/Javascript/i18n.js";
+    const userLang = navigator.language ? navigator.language.split("-")[0] : "en";
+    applyTranslations(userLang || "en");
+  </script>
 </head>
 <body>
   <noscript>
@@ -100,6 +107,7 @@ Developer: Deathsgift66
 
   <footer class="site-footer">
     <div>© 2025 Thronestead</div>
+    <h2 class="visually-hidden">Legal Links</h2>
     <nav aria-label="Legal Links">
       <ul id="legal-links">
         <li><a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a></li>
