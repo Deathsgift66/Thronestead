@@ -4,31 +4,107 @@
 <head>
   <meta charset="utf-8" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
   <title>Page Not Found</title>
   <meta name="description" content="The page you requested could not be found." />
   <meta name="robots" content="noindex, nofollow" />
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-  <link rel="canonical" href="https://www.thronestead.com/404.html" />
+  <meta name="theme-color" content="#2e2b27" />
+  <link rel="canonical" id="canonical-link" href="" />
+  <script type="module">
+    const dynUrl = window.location.origin + window.location.pathname;
+    document.getElementById('canonical-link').href = dynUrl;
+    const og = document.getElementById('og-url');
+    if (og) og.setAttribute('content', dynUrl);
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.thronestead.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "404"
+      }
+    ]
+  }
+  </script>
 
   <!-- Open Graph -->
   <meta property="og:title" content="Page Not Found | Thronestead" />
   <meta property="og:description" content="The page you requested could not be found." />
-  <meta property="og:image" content="Assets/banner_main.png" />
-  <meta property="og:url" content="https://www.thronestead.com/404.html" />
+  <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+  <meta property="og:url" content="" id="og-url" />
   <meta property="og:type" content="website" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Page Not Found | Thronestead" />
   <meta name="twitter:description" content="The page you requested could not be found." />
-  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
 
   <link rel="icon" href="/Assets/favicon.ico" />
 
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
-  <link href="/CSS/404.css" rel="stylesheet" />
+  <style>
+    body {
+      text-align: center;
+      padding: 4rem 1rem;
+      font-family: var(--main-font, sans-serif);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.2rem;
+    }
+
+    a {
+      color: var(--accent-color, #d13);
+      text-decoration: underline;
+    }
+
+    .error-img {
+      width: 150px;
+      margin: 1rem auto;
+    }
+
+    .noscript-warning {
+      color: red;
+      margin-bottom: 1rem;
+    }
+
+    .touch-link {
+      display: inline-block;
+      padding: 0.75rem 1.25rem;
+    }
+
+    .spinner {
+      border: 4px solid var(--parchment, #ddd);
+      border-top-color: var(--accent, #6a5acd);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.8s linear infinite;
+      margin: 1rem auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 
   <script type="application/ld+json">
   {
@@ -48,22 +124,39 @@
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>
   <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
+  <!-- navLoader uses dynamic import; ensure CSP allows it -->
+  <script type="module">
+    import('/Javascript/navLoader.js')
+      .catch(() => {
+        const container = document.getElementById('navbar-container');
+        if (container) {
+          container.innerHTML = '<div class="navbar-failover" data-i18n="nav_fail">⚠️ Navigation failed to load. <a href="/" data-i18n="home_link">Return home</a>.</div>';
+        }
+      });
+  </script>
 </head>
 <body>
   <noscript>
-    <div lang="en" class="noscript-warning">
+    <style>
+      .noscript-warning {
+        background: #300;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+      }
+    </style>
+    <div lang="en" class="noscript-warning" data-i18n="noscript_msg">
       JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
     </div>
   </noscript>
 
-<div id="navbar-container"></div>
+<div id="navbar-container"><div id="nav-spinner" class="spinner" aria-hidden="true"></div></div>
 <main role="main">
-  <h1>404 - Page Not Found</h1>
-  <img src="/Assets/404.svg" alt="Page not found" class="error-img" />
-  <p>The page you requested could not be found.</p>
-  <p><a href="/">Return to Home</a></p>
-  <p><a href="/sitemap.html">View Site Map</a> or try <a href="/search.html">searching</a>.</p>
+  <h1 data-i18n="404_title">404 - Page Not Found</h1>
+  <img src="/Assets/404.svg" alt="Illustration of a lost traveler - page not found" class="error-img" />
+  <p data-i18n="404_msg">The page you requested could not be found.</p>
+  <p><a href="/" class="touch-link" data-i18n="home_link">Return to Home</a></p>
+  <p><a href="/sitemap.html" class="touch-link" data-i18n="sitemap_link">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="touch-link" data-i18n="search_link">searching</a>.</p>
 </main>
   <script type="module">
     let supabase = null;
@@ -72,7 +165,7 @@
       const mod = await import('/Javascript/supabaseClient.js');
       supabase = mod.supabase;
       supabaseReady = mod.supabaseReady;
-    } catch (e) {
+    } catch {
       supabaseReady = false;
     }
 
@@ -90,16 +183,23 @@
       }
     }
 
-    if (supabaseReady) {
-      sendLog({
-        path: window.location.pathname,
-        referrer: document.referrer,
-        user_agent: encodeURIComponent(navigator.userAgent.slice(0, 255)),
-        type: '404'
-      });
+    window.addEventListener('error', (e) => {
+      sendLog({ type: 'runtime', message: e.message });
+    });
 
-      window.addEventListener('error', (e) => {
-        sendLog({ type: 'runtime', message: e.message });
+    if (supabaseReady) {
+      let anonId = null;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        anonId = user?.id || null;
+      } catch {}
+
+      sendLog({
+        path: window.location.pathname.slice(0, 255),
+        referrer: document.referrer.slice(0, 255),
+        user_agent: encodeURIComponent(navigator.userAgent.slice(0, 255)),
+        type: '404',
+        anon_id: anonId
       });
     }
   </script>
