@@ -1,4 +1,4 @@
-<!-- Thronestead | 404.html | v1.1 | Last updated: 2025-07-16 -->
+<!-- Thronestead | 404.html | v1.2 | Last updated: 2025-07-18 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,19 +9,24 @@
   <meta name="robots" content="noindex, nofollow, noarchive" />
   <meta name="theme-color" content="#2e2b27" />
   <meta name="referrer" content="strict-origin" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; img-src 'self' https:; style-src 'self' https://fonts.googleapis.com; frame-ancestors 'none'" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; img-src 'self' https: data:; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'" />
+
   <link rel="canonical" href="https://www.thronestead.com/404.html" />
   <link rel="alternate" hreflang="en" href="https://www.thronestead.com/404.html" />
   <link rel="alternate" hreflang="x-default" href="https://www.thronestead.com/404.html" />
+
+  <!-- Open Graph -->
   <meta property="og:locale" content="en_US" />
   <meta property="og:site_name" content="Thronestead" />
-
   <meta property="og:title" content="Page Not Found | Thronestead" />
   <meta property="og:description" content="The page you requested could not be found." />
   <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
   <meta property="og:url" content="https://www.thronestead.com/404.html" />
-  <meta property="og:updated_time" content="1.1.2025.07.16" />
+  <meta property="og:updated_time" content="2025-07-18T00:00:00Z" />
   <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Page Not Found | Thronestead" />
   <meta name="twitter:description" content="The page you requested could not be found." />
@@ -29,17 +34,20 @@
 
   <link rel="icon" href="/Assets/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
   <link href="/CSS/404.css" rel="stylesheet" />
 
-  <!-- ✅ Injected standard Thronestead modules -->
+  <!-- ✅ Standard Thronestead Modules -->
   <script src="/Javascript/components/authGuard.js" type="module" integrity="sha384-dW7lFNPkCfMaG9O8feDKc78E2hWisRCQFYWJnpFTi0nyfFu4EcdbZ2vd+c3z9HqZ" crossorigin="anonymous" async></script>
   <script src="/Javascript/apiHelper.js" type="module" integrity="sha384-lW22B8QUFILMUvzuE3C8K8SCLCnLHXVIUlCZg0fwDM2wQrEhtjAY8ABGoSjAYbAA" crossorigin="anonymous" async></script>
   <script src="/Javascript/navLoader.js" type="module" integrity="sha384-4X+ZGURftp4ppNZExP40bTT/QSxe6WEdotyyaxBCPSQ2+QnaZjS0BVYQ2La8rdz" crossorigin="anonymous" async id="navLoaderScript"></script>
   <script src="/Javascript/globalError.js" type="module" integrity="sha384-WR+ixKQEjUug8c+qM3rSqRGjHchAnW7hW5Uhp+8cWi3NK50LB5mN8DqftMp3KJoU" crossorigin="anonymous" async></script>
   <script src="/Javascript/404.js" type="module" integrity="sha384-rsVP+8bdYZiXiAPAJd2lv8wdYqwpst9f2P43uS3uh6oBrhRf+FqGo0zSUukXkczV" crossorigin="anonymous" async></script>
 </head>
+
 <body data-page-type="404">
   <noscript>
     <div lang="en" class="noscript-warning" data-i18n="noscript_msg">
@@ -48,28 +56,57 @@
     <p><a href="/">Home</a></p>
   </noscript>
 
-  <div id="navbar-container"><div id="nav-spinner" class="spinner" role="status" aria-live="polite" aria-label="Loading navigation..."></div></div>
+  <div id="navbar-container">
+    <div id="nav-spinner" class="spinner" role="status" aria-live="polite" aria-label="Loading navigation..."></div>
+  </div>
+
   <main role="main" aria-label="404 Error Page" tabindex="-1" aria-live="polite">
-    <h1 id="page-title"><span aria-hidden="true" class="error-icon" lang="en">🚫</span> <span data-i18n="404_title">404 - Page Not Found</span></h1>
-    <img src="/Assets/404.svg" alt="Illustration of missing page" class="error-img" loading="lazy" width="120" height="60" lang="en" />
+    <h1 id="page-title">
+      <span aria-hidden="true" class="error-icon" lang="en">🚫</span>
+      <span data-i18n="404_title">404 - Page Not Found</span>
+    </h1>
+
+    <img src="/Assets/404.svg"
+         alt="Illustration of missing page"
+         class="error-img"
+         loading="lazy"
+         width="400"
+         height="200"
+         lang="en"
+         onerror="this.onerror=null; this.src='/Assets/banner_main.png';" />
+
     <p data-i18n="404_msg">The page you requested could not be found.</p>
+
     <nav aria-label="Breadcrumb">
-      <ol role="list">
-        <li role="listitem"><a href="/">Home</a></li>
-        <li role="listitem" aria-current="page">404</li>
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">404</li>
       </ol>
     </nav>
+
     <p><a href="javascript:history.back();" id="back-link" class="action-link" data-i18n="back_link">Go Back</a></p>
     <p><a href="/" class="action-link" data-i18n="home_link">Return to Home</a></p>
-    <p><a href="/sitemap.html" class="action-link" data-i18n="sitemap_link" rel="nofollow">View Site Map</a> <span data-i18n="or_try">or try</span> <a href="/search.html" class="action-link" data-i18n="search_link" rel="nofollow noopener">searching</a>.</p>
+    <p><a href="/sitemap.html" class="action-link" data-i18n="sitemap_link" rel="nofollow">View Site Map</a> 
+       <span data-i18n="or_try">or try</span> 
+       <a href="/search.html" class="action-link" data-i18n="search_link" rel="nofollow noopener">searching</a>.
+    </p>
+
     <form action="/search.html" role="search" class="inline-search" method="GET" aria-label="Site search">
       <label for="q" class="visually-hidden">Search</label>
-      <input type="search" id="q" name="q" placeholder="Search..." data-i18n="search_placeholder" aria-label="Search query" autofocus />
+      <input type="search"
+             id="q"
+             name="q"
+             placeholder="Search..."
+             data-i18n="search_placeholder"
+             aria-label="Search query"
+             autocomplete="off"
+             autofocus />
       <button type="submit" data-i18n="go_button">Go</button>
     </form>
   </main>
+
   <template id="nav-fallback" lang="en">
-    <nav class="nav-fallback" role="navigation" lang="en" aria-label="Main Navigation">
+    <nav class="nav-fallback" role="navigation" aria-label="Main Navigation">
       <ul>
         <li><a href="index.html">Home</a></li>
       </ul>
