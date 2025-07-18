@@ -10,6 +10,7 @@ Developer: Deathsgift66
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
 
   <title>Login | Thronestead</title>
   <meta name="description" content="Enter the realm of Thronestead — login to your account and continue your legend." />
@@ -385,6 +386,9 @@ async function handleVerificationResend() {
       <input type="password" id="password" name="password" required autocomplete="current-password" onpaste="return false" aria-describedby="toggle-password" />
       <button type="button" id="toggle-password" class="password-toggle" aria-label="Show password" aria-pressed="false">👁</button>
     </div>
+    <!-- Captcha -->
+    <div id="login-captcha" class="h-captcha" data-sitekey="56862342-e134-4d60-9d6a-0b42ff4ebc24" aria-label="Captcha verification"></div>
+    <script src="https://hcaptcha.com/1/api.js" async defer></script>
     <div id="login-error" class="error-msg" aria-live="polite"></div>
     <button type="submit" class="royal-button">Enter the Realm</button>
   </form>
@@ -479,7 +483,7 @@ from ..env_utils import get_env_var, get_env_bool
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, constr
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
@@ -491,6 +495,7 @@ from ..database import get_db
 from ..security import verify_jwt_token, has_active_ban, _extract_request_meta
 from ..supabase_client import get_supabase_client, maybe_await
 from .session import store_session_cookie, TokenPayload
+from .signup import verify_hcaptcha
 
 router = APIRouter(prefix="/api/login", tags=["login"])
 
@@ -562,8 +567,9 @@ def _prune_attempts() -> None:
 
 class AuthPayload(BaseModel):
     email: EmailStr
-    password: str
+    password: constr(min_length=8)
     otp: str | None = None
+    captcha_token: str | None = None
     remember: bool = False
 
 
@@ -578,6 +584,9 @@ def authenticate(
     if get_flag(db, "maintenance_mode") or get_flag(db, "fallback_override"):
         raise HTTPException(status_code=503, detail="Login disabled")
     ip, device_hash = _extract_request_meta(request)
+
+    if not verify_hcaptcha(payload.captcha_token, request.client.host if request.client else None):
+        raise HTTPException(status_code=400, detail="Captcha verification failed")
 
     agent = request.headers.get("user-agent", "")
 
