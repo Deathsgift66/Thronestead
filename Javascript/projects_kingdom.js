@@ -1,3 +1,4 @@
+document.getElementById("js-disabled-message")?.remove();
 // Project Name: Thronestead©
 // File Name: projects_kingdom.js
 // Version:  7/1/2025 10:38
