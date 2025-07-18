@@ -1,20 +1,23 @@
 // Project Name: Thronestead©
 // File Name: 404.js
-// Version:  7/16/2025
+// Version: 7/18/2025
 // Developer: Deathsgift66
 
 import { applyTranslations } from '/Javascript/i18n.js';
 
 const MAX_LEN = 255;
-const ERROR_ID = (crypto.randomUUID && crypto.randomUUID()) || Date.now().toString();
+const ERROR_ID = crypto.randomUUID?.() || Date.now().toString();
 
-function truncate(value) {
-  if (typeof value !== 'string') return '';
-  return value.length > MAX_LEN ? value.slice(0, MAX_LEN) : value;
+function truncate(str) {
+  return typeof str === 'string' && str.length > MAX_LEN ? str.slice(0, MAX_LEN) : str || '';
+}
+
+function schedule(fn) {
+  if ('requestIdleCallback' in window) requestIdleCallback(fn);
+  else setTimeout(fn, 2000);
 }
 
 function validate(payload) {
-  if (typeof payload !== 'object') return false;
   const schema = {
     path: 'string',
     search: 'string',
@@ -25,39 +28,29 @@ function validate(payload) {
     timestamp: 'number',
     error_id: 'string'
   };
-  for (const [key, type] of Object.entries(schema)) {
-    const val = payload[key];
+  return Object.entries(schema).every(([k, type]) => {
+    const val = payload[k];
     if (val === undefined) return false;
-    if (Array.isArray(type)) {
-      if (!type.includes(typeof val)) return false;
-    } else if (typeof val !== type) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function schedule(cb) {
-  if ('requestIdleCallback' in window) window.requestIdleCallback(cb);
-  else setTimeout(cb, 2000);
+    return Array.isArray(type) ? type.includes(typeof val) : typeof val === type;
+  });
 }
 
 function sendLog(payload) {
   if (!validate(payload)) return;
   schedule(() => {
     try {
-      const data = JSON.stringify(payload);
+      const json = JSON.stringify(payload);
       if (navigator.sendBeacon) {
-        navigator.sendBeacon('/api/logs/404', new Blob([data], { type: 'application/json' }));
+        navigator.sendBeacon('/api/logs/404', new Blob([json], { type: 'application/json' }));
       } else {
         fetch('/api/logs/404', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: data
+          body: json
         });
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.warn('Failed to log 404:', err);
+      if (import.meta?.env?.DEV) console.warn('404 log failed:', err);
     }
   });
 }
@@ -88,105 +81,101 @@ async function log404(anonId = null) {
     error_id: ERROR_ID
   };
   sendLog(payload);
+
   try {
     fetch('/api/log/404', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: window.location.href })
+      body: JSON.stringify({ url: location.href })
     });
-  } catch {}
+  } catch {
+    /* Silent fallback */
+  }
 }
 
 async function checkSearchAvailability() {
   try {
-    const resp = await fetch('/search.html', { method: 'HEAD' });
-    if (!resp.ok) throw new Error('unavailable');
+    const res = await fetch('/search.html', { method: 'HEAD' });
+    if (!res.ok) throw new Error('Search not OK');
   } catch {
     const form = document.querySelector('form[action="/search.html"]');
     if (form) {
       const alert = document.createElement('div');
       alert.setAttribute('role', 'alert');
       alert.textContent = 'Search is currently unavailable.';
-      form.parentNode.insertBefore(alert, form);
+      form.before(alert);
       form.remove();
     }
   }
 }
 
-async function init() {
-  const theme = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  document.body.dataset.theme = theme;
-
-  const userLang = navigator.language ? navigator.language.split('-')[0] : 'en';
-  try {
-    applyTranslations(userLang);
-  } catch {
-    applyTranslations('en');
-  }
-
-  checkSearchAvailability();
-
-  const dynUrl = encodeURI(window.location.origin + window.location.pathname);
-  const canonical = document.querySelector('link[rel="canonical"]');
-  if (canonical) canonical.href = dynUrl;
-  const og = document.querySelector('meta[property="og:url"]');
-  if (og) og.setAttribute('content', dynUrl);
-
+function injectStructuredData() {
   const struct = {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'BreadcrumbList',
-        'itemListElement': [
+        itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.thronestead.com/' },
-          { '@type': 'ListItem', position: 2, name: '404', item: window.location.href }
+          { '@type': 'ListItem', position: 2, name: '404', item: location.href }
         ]
       },
       {
         '@type': 'WebPage',
-        'name': '404 Page',
-        'description': 'Page not found on Thronestead.',
-        'mainEntity': { '@type': 'WebPageElement', 'name': '404 Message', 'cssSelector': 'h1' }
+        name: '404 Page',
+        description: 'Page not found on Thronestead.',
+        mainEntity: { '@type': 'WebPageElement', name: '404 Message', cssSelector: 'h1' }
       }
     ]
   };
-  const sd = document.createElement('script');
-  sd.type = 'application/ld+json';
-  sd.textContent = JSON.stringify(struct);
-  document.head.appendChild(sd);
+  const script = document.createElement('script');
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(struct);
+  document.head.appendChild(script);
+}
 
+function updateMetaUrls() {
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  const fullUrl = encodeURI(location.origin + location.pathname);
+
+  if (canonical) canonical.href = fullUrl;
+  if (ogUrl) ogUrl.setAttribute('content', fullUrl);
+}
+
+function initBackLink() {
   const backLink = document.getElementById('back-link');
-  backLink?.addEventListener('click', e => {
+  if (!backLink) return;
+
+  backLink.addEventListener('click', e => {
     e.preventDefault();
-    if (window.history.length > 1) {
+    if (history.length > 1) {
       history.back();
     } else {
-      window.location.href = '/';
+      location.href = '/';
     }
   });
+}
 
-  window.addEventListener('error', handleRuntimeError);
-
-  let supabase = null;
-  let supabaseReady = false;
+async function detectUserAndLog404() {
+  let supabase, supabaseReady = false;
   try {
     const mod = await import('/Javascript/supabaseClient.js');
     supabase = mod.supabase;
     supabaseReady = mod.supabaseReady;
   } catch {
-    supabaseReady = false;
+    return log404();
   }
-  if (supabaseReady && supabase?.auth?.getUser) {
-    let anonId = null;
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 3000);
-      const { data: { user } } = await supabase.auth.getUser({ signal: ctrl.signal });
-      clearTimeout(t);
-      anonId = user?.id || null;
-    } catch {}
-    log404(anonId);
-  } else {
+
+  if (!supabaseReady || !supabase?.auth?.getUser) return log404();
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const { data: { user } } = await supabase.auth.getUser({ signal: controller.signal });
+    clearTimeout(timeout);
+    log404(user?.id || null);
+  } catch {
     log404();
   }
 }
@@ -194,8 +183,9 @@ async function init() {
 function navFallback() {
   const nav = document.getElementById('navbar-container');
   if (!nav || nav.querySelector('nav') || nav.querySelector('.navbar-failover')) return;
+
   const tpl = document.getElementById('nav-fallback');
-  if (tpl && tpl.content) {
+  if (tpl?.content) {
     nav.replaceChildren(tpl.content.cloneNode(true));
   } else {
     nav.innerHTML = '<div class="navbar-failover">⚠️ Navigation unavailable. <a href="/">Home</a>.</div>';
@@ -203,12 +193,30 @@ function navFallback() {
 }
 
 function onReady() {
+  const theme = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.body.dataset.theme = theme;
+
+  const lang = navigator.language?.split('-')[0] || 'en';
+  try {
+    applyTranslations(lang);
+  } catch {
+    applyTranslations('en');
+  }
+
+  updateMetaUrls();
+  injectStructuredData();
+  checkSearchAvailability();
+  initBackLink();
+
   const navScript = document.getElementById('navLoaderScript');
   navScript?.addEventListener('error', navFallback);
+
   if (typeof window.navLoader === 'undefined') {
     setTimeout(navFallback, 4000);
   }
-  init();
+
+  window.addEventListener('error', handleRuntimeError);
+  detectUserAndLog404();
 }
 
 document.addEventListener('DOMContentLoaded', onReady);
