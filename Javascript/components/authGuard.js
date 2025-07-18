@@ -24,7 +24,7 @@ const CONFIG = Object.freeze({
   PUBLIC_PATHS: [
     '/index.html',
     '/about.html',
-    '/profile.html',
+    '/kingdom_profile.html',
     '/login.html',
     '/signup.html',
     '/update-password.html',
