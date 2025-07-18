@@ -1,12 +1,12 @@
 // Project: Thronestead©
 // File: authGuard.js
-// Version: 1.3.2025.07.18
+// Version: 1.4.2025.07.18
 // Author: Deathsgift66 (Next-Gen Hardened Certified)
 
 // Description:
-// Absolute access gate for all secure pages. Authenticates Supabase session,
-// validates against backend, verifies profile completeness, shields admin routes,
-// prevents token spoofing, race conditions, and visual leaks.
+// Absolute access gate for secure pages. Authenticates Supabase sessions,
+// validates backend sessions, profile completeness, secures admin routes,
+// prevents token spoofing, fetch hangs, race conditions, and visual leaks.
 
 import { supabase } from '../../supabaseClient.js';
 import { getEnvVar } from '../env.js';
@@ -16,7 +16,6 @@ import {
   loadPlayerProgressionFromStorage,
 } from '../progressionGlobal.js';
 
-// Constants
 const PUBLIC_PATHS = new Set([
   '/index.html',
   '/about.html',
@@ -28,6 +27,12 @@ const PUBLIC_PATHS = new Set([
   '/404.html',
 ]);
 
+const ALLOWED_REDIRECTS = new Set([
+  '/login.html',
+  '/play.html',
+  '/overview.html',
+]);
+
 const pathname = window.location.pathname.split('?')[0].split('#')[0];
 const requireAdmin = document.querySelector('meta[name="require-admin"]')?.content === 'true';
 
@@ -36,7 +41,6 @@ if (!PUBLIC_PATHS.has(pathname)) {
   document.documentElement.style.display = 'none';
 }
 
-// Entry Point
 (async function authGuard() {
   if (PUBLIC_PATHS.has(pathname)) return;
 
@@ -44,20 +48,20 @@ if (!PUBLIC_PATHS.has(pathname)) {
     const session = await getValidSession();
     if (!session?.access_token) return redirect('/login.html');
 
-    const API_BASE_URL = getEnvVar('API_BASE_URL') || '';
+    const API_BASE_URL = getEnvVar('API_BASE_URL');
     if (!API_BASE_URL) {
       alert('[Thronestead AuthGuard Error] Server misconfiguration. Try refreshing.');
       throw new Error('[AuthGuard] Missing API_BASE_URL');
     }
 
-    const authCheck = await fetch(`${API_BASE_URL}/api/me`, {
+    const authCheck = await fetchWithTimeout(`${API_BASE_URL}/api/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-    });
+    }, 5000);
 
     if (!authCheck.ok) return redirect('/login.html');
 
@@ -78,17 +82,14 @@ if (!PUBLIC_PATHS.has(pathname)) {
     if (!userData.setup_complete) return redirect('/play.html');
     if (requireAdmin && userData.is_admin !== true) return redirect('/overview.html');
 
-    // Lock user object
     if (window.user) {
       console.warn('[AuthGuard] window.user already defined');
     } else {
       window.user = Object.freeze({ id: user.id, is_admin: userData.is_admin });
     }
 
-    // Start refresh loop
     startSessionRefresh();
 
-    // Load player progression
     try {
       loadPlayerProgressionFromStorage();
       if (!window.playerProgression) {
@@ -107,10 +108,14 @@ if (!PUBLIC_PATHS.has(pathname)) {
 })();
 
 // ===============================
-// Helpers
+// Hardened Helpers
 // ===============================
 
 function redirect(path) {
+  if (!ALLOWED_REDIRECTS.has(path)) {
+    console.error(`[AuthGuard] Invalid redirect attempted: ${path}`);
+    path = '/login.html';
+  }
   document.documentElement.style.display = 'none';
   window.location.replace(path);
   throw new Error(`[AuthGuard] Redirecting to ${path}`);
@@ -118,9 +123,11 @@ function redirect(path) {
 
 function decodeJwt(token) {
   try {
-    const [, payload] = token.split('.');
-    return JSON.parse(atob(payload));
-  } catch {
+    const payload = token.split('.')[1];
+    const paddedPayload = payload.padEnd(payload.length + (4 - payload.length % 4) % 4, '=');
+    return JSON.parse(atob(paddedPayload));
+  } catch (e) {
+    console.warn('[AuthGuard] decodeJwt failed:', e);
     return null;
   }
 }
@@ -131,20 +138,36 @@ function isExpired(token) {
 }
 
 async function getValidSession() {
-  let { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token || isExpired(session.access_token)) {
-    const { data: refreshed, error } = await supabase.auth.refreshSession();
+    const { data: refreshed } = await supabase.auth.refreshSession();
     if (refreshed?.session && !isExpired(refreshed.session.access_token)) {
       return refreshed.session;
     }
 
-    // Retry once (in case of network hiccup)
     const retry = await supabase.auth.getSession();
-    return (!retry?.data?.session?.access_token || isExpired(retry.data.session.access_token))
-      ? null
-      : retry.data.session;
+    if (!retry?.data?.session?.access_token || isExpired(retry.data.session.access_token)) {
+      await supabase.auth.signOut();
+      return null;
+    }
+
+    return retry.data.session;
   }
 
   return session;
+}
+
+async function fetchWithTimeout(resource, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(resource, { ...options, signal: controller.signal });
+  } catch (err) {
+    console.error('[AuthGuard] Fetch timeout/error:', err);
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
