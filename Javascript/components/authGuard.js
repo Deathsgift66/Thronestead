@@ -1,6 +1,6 @@
 // Project: Thronestead©
 // File: authGuard.js
-// Version: 2.7.2025.07.18
+// Version: 2.8.2025.07.18
 // Author: Deathsgift66 (Next-Gen Hardened Certified)
 // Description:
 // Hardened Thronestead auth guard with full session validation,
