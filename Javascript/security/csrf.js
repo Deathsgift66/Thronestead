@@ -1,6 +1,6 @@
-// CSRF Token Utilities (Next-Gen Hardened v8.3)
+// CSRF Token Utilities (Next-Gen Hardened v8.4)
 // Author: Thronestead Security Suite
-// Version: 8.3.2025.07.18
+// Version: 8.4.2025.07.18
 
 const CSRF_TOKEN_KEY = 'csrf_token';
 const CSRF_META_KEY = 'csrf_token_ts';
@@ -22,7 +22,6 @@ let storage = {
   remove: (key) => sessionStorage.removeItem(key),
 };
 
-// Public API
 export async function initCsrf(options = {}) {
   ensureChannel();
   if (options.expiryMs && Number.isInteger(options.expiryMs)) expiryMs = options.expiryMs;
@@ -37,7 +36,7 @@ export async function initCsrf(options = {}) {
 export async function rotateCsrfToken() {
   try {
     const token = generateToken();
-    storeToken(token);
+    storeToken(token, 'rotate');
     broadcastToken(token);
     return token;
   } catch (err) {
@@ -85,21 +84,21 @@ function getStoredToken() {
     const token = storage.get(CSRF_TOKEN_KEY);
     const ts = Number(storage.get(CSRF_META_KEY));
     if (!isValidToken(token)) throw new Error();
-    return { token, timestamp: isNaN(ts) ? 0 : ts };
+    return { token, timestamp: isNaN(ts) ? 0 : ts, source: 'sessionStorage' };
   } catch {
     try {
       const token = localStorage.getItem(CSRF_TOKEN_KEY);
       const ts = Number(localStorage.getItem(CSRF_META_KEY));
       if (isValidToken(token) && !isExpired(ts)) {
-        return { token, timestamp: ts };
+        return { token, timestamp: ts, source: 'localStorage' };
       }
     } catch {}
 
     const cookieToken = readCookie(CSRF_COOKIE_NAME);
     if (isValidToken(cookieToken)) {
-      const cookieMeta = { token: cookieToken, timestamp: now() - (expiryMs / 2), source: 'cookie' };
-      fallbackToken = cookieMeta;
-      return cookieMeta;
+      const ts = now() - (expiryMs / 2);
+      fallbackToken = { token: cookieToken, timestamp: ts, source: 'cookie' };
+      return fallbackToken;
     }
 
     if (fallbackToken && !isExpired(fallbackToken.timestamp)) {
@@ -110,31 +109,32 @@ function getStoredToken() {
   }
 }
 
-function storeToken(token) {
+function storeToken(token, source = 'store') {
   if (storeLock) return;
   storeLock = true;
 
+  const jitter = Math.floor(Math.random() * 20000) - 10000; // ±10s
   const timestamp = now();
+  const expiresAt = timestamp + expiryMs + jitter;
 
   try {
     storage.set(CSRF_TOKEN_KEY, token);
     storage.set(CSRF_META_KEY, timestamp.toString());
   } catch {
-    fallbackToken = { token, timestamp };
+    fallbackToken = { token, timestamp, source: 'fallback-session-fail' };
   }
 
   try {
-    const safeExpiry = timestamp + expiryMs;
-    setCookie(CSRF_COOKIE_NAME, token, safeExpiry);
+    setCookie(CSRF_COOKIE_NAME, token, expiresAt);
     localStorage.setItem(CSRF_TOKEN_KEY, token);
     localStorage.setItem(CSRF_META_KEY, timestamp.toString());
   } catch (err) {
     console.warn('[CSRF] Persist failure:', err);
-    fallbackToken = { token, timestamp };
+    fallbackToken = { token, timestamp, source: 'fallback-local-fail' };
   }
 
   if (import.meta?.env?.DEV) {
-    console.debug('[CSRF] Token stored. TTL (ms):', expiryMs - (now() - timestamp));
+    console.debug(`[CSRF] Token stored (${source}). TTL (ms): ${expiryMs - (now() - timestamp)} — token=${token}`);
   }
 
   setTimeout(() => { storeLock = false; }, 50);
@@ -149,7 +149,11 @@ function setCookie(name, value, expiresAt) {
     console.warn('[CSRF] Insecure origin — Secure cookies may not apply.');
   }
   const maxAge = Math.floor((expiresAt - now()) / 1000);
-  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; Secure; SameSite=Strict`;
+  try {
+    document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; Secure; SameSite=Strict`;
+  } catch (err) {
+    console.error('[CSRF] Cookie write error:', err);
+  }
 }
 
 function readCookie(name) {
@@ -174,6 +178,8 @@ function isValidToken(token) {
 function broadcastToken(token) {
   if (typeof token !== 'string') return;
   if (csrfChannel) {
+    const current = getCsrfToken();
+    if (current === token) return; // Avoid rebroadcast
     tokenLock = true;
     csrfChannel.postMessage({ type: 'rotate', token });
     setTimeout(() => { tokenLock = false; }, 250);
@@ -189,7 +195,7 @@ function ensureChannel() {
       const incoming = e.data?.token;
       if (e.data?.type === 'rotate' && isValidToken(incoming)) {
         const current = getCsrfToken();
-        if (!current || current !== incoming) storeToken(incoming);
+        if (!current || current !== incoming) storeToken(incoming, 'broadcast');
       }
     };
     broadcastWait = true;
@@ -201,7 +207,7 @@ function ensureChannel() {
     window.addEventListener('storage', (e) => {
       if (e.key === CSRF_TOKEN_KEY && isValidToken(e.newValue)) {
         const current = getCsrfToken();
-        if (!current || current !== e.newValue) storeToken(e.newValue);
+        if (!current || current !== e.newValue) storeToken(e.newValue, 'storage');
       }
     });
   }
