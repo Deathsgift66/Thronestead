@@ -3,6 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 
+/* global hcaptcha */
 import { supabase } from '../supabaseClient.js';
 import { showToast, openModal, closeModal, validateEmail } from './utils.js';
 import { getEnvVar } from './env.js';
@@ -109,11 +110,22 @@ async function handleLogin(e) {
   e.preventDefault();
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  if (password.length < 8) {
+    return showMessage('error', 'Password must be at least 8 characters.');
+  }
   if (!email || !password) {
     return showMessage('error', 'Email and password required.');
   }
   if (!validateEmail(email)) {
     return showMessage('error', 'Please enter a valid email address.');
+  }
+
+  let captchaToken = '';
+  if (window.hcaptcha && typeof hcaptcha.getResponse === 'function') {
+    captchaToken = hcaptcha.getResponse();
+    if (!captchaToken) {
+      return showMessage('error', 'Please complete the captcha challenge.');
+    }
   }
 
   loginButton.disabled = true;
@@ -124,7 +136,7 @@ async function handleLogin(e) {
     const res = await fetch(`${API_BASE_URL}/api/login/authenticate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, captcha_token: captchaToken })
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -150,6 +162,7 @@ async function handleLogin(e) {
       showMessage('error', err.message);
     }
   } finally {
+    if (window.hcaptcha?.reset) hcaptcha.reset();
     loginButton.disabled = false;
     loginButton.textContent = 'Enter the Realm';
   }
