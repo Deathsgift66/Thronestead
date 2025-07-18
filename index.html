@@ -34,8 +34,6 @@
     <!-- Global Assets -->
     <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
     <link href="/CSS/root_theme.css" rel="stylesheet" />
-    <script src="/Javascript/apiHelper.js" type="module"></script>
-    <script src="/Javascript/cookieConsent.js" type="module"></script>
 
     <!-- Page-Specific -->
     <link href="/CSS/index.css" rel="stylesheet" />
@@ -122,9 +120,35 @@
 </footer>
 
   <script type="module">
-    import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML } from './Javascript/utils.js';
-    import { getEnvVar } from './Javascript/env.js';
+    function getEnvVar(name) {
+      const vars = {
+        API_BASE_URL: 'https://your-production-api-url.com'
+      };
+      return vars[name];
+    }
+
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const SUPABASE_URL = getEnvVar('SUPABASE_URL');
+    const SUPABASE_ANON_KEY = getEnvVar('SUPABASE_ANON_KEY');
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.warn('⚠️ Missing Supabase credentials. Provide them via env.js or VITE_* variables.');
+    }
+    if (!window.__supabaseClient && SUPABASE_URL && SUPABASE_ANON_KEY) {
+      window.__supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, autoRefreshToken: false }
+      });
+    }
+    const supabase = window.__supabaseClient || null;
+
+    function escapeHTML(str = '') {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
     const API_BASE_URL = getEnvVar('API_BASE_URL');
 
@@ -277,6 +301,112 @@
       });
       container.appendChild(btn);
     }
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const applyConsent = (consent) => {
+        if (consent === 'rejected') {
+          // no auth cookies are used with localStorage strategy
+        }
+      };
+
+      const showBanner = () => {
+        const existing = document.getElementById('cookie-consent');
+        if (existing) existing.remove();
+
+        const banner = document.createElement('div');
+        banner.id = 'cookie-consent';
+        banner.style.position = 'fixed';
+        banner.style.bottom = '0';
+        banner.style.left = '0';
+        banner.style.right = '0';
+        banner.style.padding = '1rem';
+        banner.style.background = 'var(--banner-dark)';
+        banner.style.color = 'var(--gold)';
+        banner.style.textAlign = 'center';
+        banner.style.zIndex = 'var(--z-index-toast)';
+        banner.innerHTML =
+          'This site uses cookies to enhance your experience. ' +
+          '<button id="accept-cookies" class="royal-button">Accept</button> ' +
+          '<button id="reject-cookies" class="royal-button">Reject</button>';
+
+        document.body.appendChild(banner);
+
+        document.getElementById('accept-cookies').addEventListener('click', () => {
+          localStorage.setItem('cookieConsent', 'accepted');
+          applyConsent('accepted');
+          banner.remove();
+          updateToggle(true);
+        });
+
+        document.getElementById('reject-cookies').addEventListener('click', () => {
+          localStorage.setItem('cookieConsent', 'rejected');
+          applyConsent('rejected');
+          banner.remove();
+          updateToggle(false);
+        });
+      };
+
+      const createToggle = () => {
+        const label = document.createElement('label');
+        label.id = 'consent-toggle';
+        label.className = 'consent-toggle';
+        label.style.marginLeft = '0.5rem';
+        label.style.display = 'inline-flex';
+        label.style.alignItems = 'center';
+        label.style.gap = '0.25rem';
+        label.textContent = 'Allow cookies';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.setAttribute('aria-label', 'Toggle cookie consent');
+        checkbox.checked = localStorage.getItem('cookieConsent') === 'accepted';
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            localStorage.setItem('cookieConsent', 'accepted');
+            applyConsent('accepted');
+          } else {
+            localStorage.setItem('cookieConsent', 'rejected');
+            applyConsent('rejected');
+          }
+        });
+        label.prepend(checkbox);
+        return label;
+      };
+
+      const updateToggle = (checked) => {
+        document.querySelectorAll('#consent-toggle input').forEach((el) => {
+          el.checked = checked;
+        });
+      };
+
+      document.querySelectorAll('.site-footer').forEach((footer) => {
+        const container = footer.lastElementChild || footer;
+
+        if (!footer.querySelector('#cookie-settings-link')) {
+          const link = document.createElement('a');
+          link.href = '#';
+          link.id = 'cookie-settings-link';
+          link.textContent = 'Cookie Settings';
+          link.style.marginLeft = '0.5rem';
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showBanner();
+          });
+          container.append(' ', link);
+        }
+
+        if (!footer.querySelector('#consent-toggle')) {
+          container.append(' ', createToggle());
+        }
+      });
+
+      if (localStorage.getItem('cookieConsent') !== 'accepted') {
+        showBanner();
+      } else {
+        applyConsent('accepted');
+      }
+    });
   </script>
 
 </body>
