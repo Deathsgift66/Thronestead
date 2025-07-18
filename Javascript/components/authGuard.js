@@ -1,9 +1,8 @@
 // Project: Thronestead©
 // File: authGuard.js
-// Version: 1.6.2025.07.18
+// Version: 1.7.2025.07.18
 // Author: Deathsgift66 (Next-Gen Hardened Certified)
-
-// Absolute access gate. Supabase & backend auth, session checks, admin guards, hardened redirects.
+// Description: Absolute access gate with full Supabase/backend auth, session validation, admin guard, hardened redirects, timeout handling, and error management.
 
 import { supabase } from '../../supabaseClient.js';
 import { getEnvVar } from '../env.js';
@@ -35,7 +34,7 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
 
 // Initial visual shield
 if (!PUBLIC_PATHS.has(pathname)) {
-  document.documentElement.style.display = 'none';
+  document.documentElement.style.visibility = 'hidden';
 }
 
 (async function authGuard() {
@@ -52,27 +51,19 @@ if (!PUBLIC_PATHS.has(pathname)) {
     }
 
     const authCheck = await fetchWithTimeout(`${API_BASE_URL}/api/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
       credentials: 'include',
     }, 5000);
 
     if (!authCheck.ok || [401, 403].includes(authCheck.status)) {
-      console.warn(`[AuthGuard] Backend auth failed with status: ${authCheck.status}`);
+      console.warn(`[AuthGuard] Backend auth failed: ${authCheck.status}`);
       return redirect('/login.html');
     }
 
-    let user = session.user;
+    const user = session.user || (await supabase.auth.getUser()).data.user;
     if (!user) {
-      const { data: { user: fallbackUser }, error } = await supabase.auth.getUser();
-      if (error || !fallbackUser) {
-        console.warn('[AuthGuard] Supabase fallback user fetch failed:', error);
-        return redirect('/login.html');
-      }
-      user = fallbackUser;
+      console.warn('[AuthGuard] User retrieval failed');
+      return redirect('/login.html');
     }
 
     const { data: userData, error: userErr } = await supabase
@@ -82,21 +73,21 @@ if (!PUBLIC_PATHS.has(pathname)) {
       .single();
 
     if (userErr || !userData) {
-      console.warn('[AuthGuard] User data fetch failed:', userErr);
+      console.warn('[AuthGuard] Supabase user data fetch error:', userErr);
       return redirect('/login.html');
     }
 
     if (!userData.setup_complete) {
-      console.info('[AuthGuard] Profile incomplete, redirecting to /play.html');
+      console.info('[AuthGuard] Incomplete profile; redirecting to /play.html');
       return redirect('/play.html');
     }
 
-    if (requireAdmin && userData.is_admin !== true) {
-      console.warn('[AuthGuard] Unauthorized admin access attempt.');
+    if (requireAdmin && !userData.is_admin) {
+      console.warn('[AuthGuard] Unauthorized admin access attempt');
       return redirect('/overview.html');
     }
 
-    window.user = window.user || Object.freeze({ id: user.id, is_admin: userData.is_admin });
+    window.user = Object.freeze({ id: user.id, is_admin: userData.is_admin });
 
     startSessionRefresh();
 
@@ -106,37 +97,35 @@ if (!PUBLIC_PATHS.has(pathname)) {
         await fetchAndStorePlayerProgression(user.id);
       }
     } catch (e) {
-      console.warn('[AuthGuard] Player progression load failed:', e);
+      console.warn('[AuthGuard] Player progression error:', e);
     }
 
     console.info('[AuthGuard] Authentication successful:', user.id);
 
   } catch (err) {
-    console.error('[AuthGuard] Fatal error:', err);
+    console.error('[AuthGuard] Fatal authentication error:', err);
     redirect('/login.html');
   } finally {
-    document.documentElement.style.display = '';
+    document.documentElement.style.visibility = 'visible';
   }
 })();
 
 // Hardened Helpers
 function redirect(path) {
   if (!ALLOWED_REDIRECTS.has(path)) {
-    console.error(`[AuthGuard] Invalid redirect attempt: ${path}`);
+    console.error(`[AuthGuard] Invalid redirect path: ${path}`);
     path = '/login.html';
   }
-  document.documentElement.style.display = 'none';
+  document.documentElement.style.visibility = 'hidden';
   window.location.replace(path);
 }
 
 function decodeJwt(token) {
   try {
     const payload = token.split('.')[1];
-    if (!payload) throw new Error('Malformed JWT');
-    const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
-    return JSON.parse(atob(paddedPayload));
+    return JSON.parse(atob(payload.padEnd(payload.length + (4 - payload.length % 4) % 4, '=')));
   } catch (e) {
-    console.warn('[AuthGuard] decodeJwt failed:', e);
+    console.warn('[AuthGuard] JWT decode error:', e);
     return null;
   }
 }
@@ -157,10 +146,11 @@ async function getValidSession() {
 async function fetchWithTimeout(resource, options = {}, timeoutMs = 5000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     return await fetch(resource, { ...options, signal: controller.signal });
   } catch (err) {
-    console.error('[AuthGuard] Fetch timeout/error:', err);
+    console.error('[AuthGuard] Fetch error/timeout:', err);
     throw err;
   } finally {
     clearTimeout(timeout);
@@ -170,7 +160,7 @@ async function fetchWithTimeout(resource, options = {}, timeoutMs = 5000) {
 function renderFatalError(message) {
   document.body.innerHTML = `<div style="padding:50px;font-family:sans-serif;text-align:center;">
     <h1 style="color:red;">Configuration Error</h1>
-    <p>${message}. Please refresh or contact support.</p>
+    <p>${message}. Refresh or contact support.</p>
   </div>`;
   console.error(message);
 }
