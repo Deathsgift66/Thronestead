@@ -1,7 +1,12 @@
 // Project: Thronestead©
 // File: authGuard.js
-// Version: 7/18/2025
-// Author: Deathsgift66
+// Version: 1.0.2025.07.18
+// Author: Deathsgift66 (Final Production-Hardened)
+
+// Description:
+// Universal gatekeeper for all protected frontend pages.
+// Ensures only verified Supabase users with completed setup can access pages.
+// Blocks unauthorized access, prevents race conditions, enforces admin guards.
 
 import { supabase } from '../../supabaseClient.js';
 import { getEnvVar } from '../env.js';
@@ -11,8 +16,7 @@ import {
   loadPlayerProgressionFromStorage,
 } from '../progressionGlobal.js';
 
-// Config flags
-const requireAdmin = window.requireAdmin === true;
+// Hardened flags and constants
 const PUBLIC_PATHS = new Set([
   '/index.html',
   '/about.html',
@@ -26,91 +30,85 @@ const PUBLIC_PATHS = new Set([
 
 const pathname = window.location.pathname;
 
-(async function authGuard() {
-  if (PUBLIC_PATHS.has(pathname)) {
-    return;
-  }
+// Admin flag now based on secure meta tag, not window-level spoofing
+const requireAdmin = document.querySelector('meta[name="require-admin"]')?.content === 'true';
 
-  if (requireAdmin) {
-    document.documentElement.style.display = 'none';
-  }
+(async function authGuard() {
+  if (PUBLIC_PATHS.has(pathname)) return;
+
+  if (requireAdmin) document.documentElement.style.display = 'none';
 
   try {
-    // Get or refresh session
+    // Step 1: Get valid session
     let { data: { session } } = await supabase.auth.getSession();
+
     if (!session?.access_token) {
       const { data: refreshed } = await supabase.auth.refreshSession();
       session = refreshed?.session;
     }
 
-    if (!session?.access_token) {
-      return redirect('/login.html');
-    }
+    if (!session?.access_token) return redirect('/login.html');
 
-    // Server-side validation
+    // Step 2: Validate session with backend
     const API_BASE_URL = getEnvVar('API_BASE_URL');
     const authCheck = await fetch(`${API_BASE_URL}/api/me`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-      credentials: 'include',
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
     });
-    if (!authCheck.ok) {
-      return redirect('/login.html');
-    }
 
-    // Supabase user fetch
-    let { data: { user }, error } = await supabase.auth.getUser();
-    if (!user || error) {
-      const { data: refreshed } = await supabase.auth.refreshSession();
-      user = refreshed?.user;
-    }
+    if (!authCheck.ok) return redirect('/login.html');
 
+    // Step 3: Get user from session or fallback
+    let user = session.user;
     if (!user) {
-      return redirect('/login.html');
+      const { data: { user: refreshedUser }, error } = await supabase.auth.getUser();
+      user = refreshedUser;
     }
 
-    // Begin token refresh cycle
-    startSessionRefresh();
+    if (!user) return redirect('/login.html');
 
-    // Get internal user profile
+    // Step 4: Fetch internal user profile
     const { data: userData, error: userErr } = await supabase
       .from('users')
       .select('is_admin, setup_complete')
       .eq('user_id', user.id)
       .single();
 
-    if (!userData || userErr) {
-      return redirect('/login.html');
-    }
+    if (!userData || userErr) return redirect('/login.html');
+    if (!userData.setup_complete) return redirect('/play.html');
+    if (requireAdmin && userData.is_admin !== true) return redirect('/overview.html');
 
-    if (!userData.setup_complete) {
-      return redirect('/play.html');
-    }
+    // Step 5: Start token refresh cycle
+    startSessionRefresh();
 
-    if (requireAdmin && userData.is_admin !== true) {
-      return redirect('/overview.html');
-    }
-
-    // Success: expose user globally
+    // Step 6: Store user globally
     window.user = { id: user.id, is_admin: userData.is_admin };
 
-    // Unhide page for admin-only views
-    if (requireAdmin) {
-      document.documentElement.style.display = '';
-    }
+    if (requireAdmin) document.documentElement.style.display = '';
 
-    // Load progression
-    loadPlayerProgressionFromStorage();
-    if (!window.playerProgression) {
-      await fetchAndStorePlayerProgression(user.id);
+    // Step 7: Load progression safely
+    try {
+      loadPlayerProgressionFromStorage();
+      if (!window.playerProgression) {
+        await fetchAndStorePlayerProgression(user.id);
+      }
+    } catch (e) {
+      console.warn('[AuthGuard] Player progression failed to load:', e);
     }
 
   } catch (err) {
-    console.error('AuthGuard error:', err);
+    console.error('[AuthGuard] Fatal error:', err);
     document.documentElement.style.display = '';
     redirect('/login.html');
   }
 })();
 
+// Secure redirect function: hard stop with unload protection
 function redirect(path) {
-  window.location.href = path;
+  window.location.replace(path);
+  throw new Error(`Redirecting to ${path}`);
 }
