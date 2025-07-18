@@ -46,10 +46,11 @@ Developer: Deathsgift66
   <script src="/Javascript/allianceAppearance.js" type="module"></script>
   <script src="/Javascript/progressionBanner.js" type="module"></script>
   <script type="module">
-    import { escapeHTML, openModal, closeModal, authFetch, showToast, safeUUID, toggleLoading } from '/Javascript/utils.js';
+    import { escapeHTML, openModal, closeModal, authFetch, showToast, toggleLoading } from '/Javascript/utils.js';
+    import { initCsrf, getCsrfToken, rotateCsrfToken } from '/Javascript/security/csrf.js';
 
-    let csrfToken = sessionStorage.getItem('csrf_token') || safeUUID();
-    sessionStorage.setItem('csrf_token', csrfToken);
+    initCsrf();
+    setInterval(rotateCsrfToken, 15 * 60 * 1000);
 
     // Fallbacks if utils.js didn't define them
     if (typeof openModal !== 'function') {
@@ -401,7 +402,7 @@ Developer: Deathsgift66
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
+            'X-CSRF-Token': getCsrfToken()
           },
           body: JSON.stringify({ treaty_id: parseInt(id, 10), response })
         });
@@ -427,7 +428,7 @@ Developer: Deathsgift66
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
+            'X-CSRF-Token': getCsrfToken()
           },
           body: JSON.stringify({ treaty_id: parseInt(id, 10) })
         });
@@ -502,7 +503,7 @@ Developer: Deathsgift66
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
+            'X-CSRF-Token': getCsrfToken()
           },
           body: JSON.stringify({
             partner_alliance_id: partnerNum,

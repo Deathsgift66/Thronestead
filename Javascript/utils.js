@@ -6,6 +6,15 @@
 import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js';
 import { getReauthHeaders } from './reauth.js';
 import { supabase } from '../supabaseClient.js';
+import {
+  initCsrf,
+  rotateCsrfToken,
+  getCsrfToken as getCsrfTokenImpl,
+} from './security/csrf.js';
+
+// Initialize CSRF token management for all modules using utils.js
+initCsrf();
+setInterval(rotateCsrfToken, 15 * 60 * 1000);
 
 export const safeUUID = () =>
   crypto?.randomUUID?.() ||
@@ -20,18 +29,9 @@ export const safeUUID = () =>
  *
  * @returns {string} CSRF token
  */
-export function getCsrfToken() {
-  let token =
-    sessionStorage.getItem('csrf_token') ||
-    (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '')
-      .split('=')[1];
-  if (!token) {
-    token = safeUUID();
-    sessionStorage.setItem('csrf_token', token);
-    document.cookie = `csrf_token=${token}; path=/; secure; samesite=strict`;
-  }
-  return token;
-}
+export const getCsrfToken = () => getCsrfTokenImpl();
+
+export { initCsrf, rotateCsrfToken };
 
 /**
  * Escape HTML special characters to prevent injection.
