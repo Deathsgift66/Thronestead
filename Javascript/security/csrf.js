@@ -1,6 +1,6 @@
-// CSRF Token Utilities (Next-Gen Hardened v8.1)
+// CSRF Token Utilities (Next-Gen Hardened v8.2)
 // Author: Thronestead Security Suite
-// Version: 8.1.2025.07.18
+// Version: 8.2.2025.07.18
 
 const CSRF_TOKEN_KEY = 'csrf_token';
 const CSRF_META_KEY = 'csrf_token_ts';
@@ -28,7 +28,9 @@ export async function initCsrf(options = {}) {
   if (broadcastWait || tokenLock) await new Promise(res => setTimeout(res, 250));
 
   const stored = getStoredToken();
-  return stored && !isExpired(stored.timestamp) ? stored.token : rotateCsrfToken();
+  return stored && !isExpired(stored.timestamp)
+    ? stored.token
+    : await rotateCsrfToken();
 }
 
 export function rotateCsrfToken() {
@@ -93,8 +95,7 @@ function getStoredToken() {
       return cookieMeta;
     }
 
-    // If fallbackToken is valid but expired, force rotate to break stale loop
-    if (fallbackToken && !isExpired(fallbackToken.timestamp)) {
+    if (fallbackToken && isExpired(fallbackToken.timestamp)) {
       const fresh = rotateCsrfToken();
       return { token: fresh, timestamp: now(), source: 'fresh' };
     }
@@ -108,11 +109,13 @@ function storeToken(token) {
   storeLock = true;
 
   const timestamp = now();
+
   try {
     storage.set(CSRF_TOKEN_KEY, token);
     storage.set(CSRF_META_KEY, timestamp.toString());
   } catch {
     fallbackToken = { token, timestamp };
+    storeLock = false;
   }
 
   try {
@@ -122,6 +125,7 @@ function storeToken(token) {
     localStorage.setItem(CSRF_META_KEY, timestamp.toString());
   } catch (err) {
     console.warn('[CSRF] Persist failure:', err);
+    storeLock = false;
   }
 
   if (import.meta?.env?.DEV) {
@@ -139,8 +143,8 @@ function setCookie(name, value, expiresAt) {
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
     console.warn('[CSRF] Insecure origin — Secure cookies may not apply.');
   }
-  const expires = `; Expires=${new Date(expiresAt).toUTCString()}`;
-  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Path=/; Secure; SameSite=Strict${expires}`;
+  const maxAge = Math.floor((expiresAt - now()) / 1000);
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; Secure; SameSite=Strict`;
 }
 
 function readCookie(name) {
