@@ -1,17 +1,17 @@
-// Project Name: Thronestead©
-// File Name: tabControl.js
-// Version:  7/1/2025 10:38
+// Project: Thronestead©
+// File: tabControl.js
+// Version: 7/18/2025
 // Developer: Deathsgift66
 
 /**
  * Tab controller for UI navigation.
- * Automatically toggles 'active' class between tab buttons and content sections.
+ * Adds accessible tab-switching behavior between buttons and tab sections.
  *
- * @param {object} options
- * @param {string} [options.buttonSelector='.tab-button'] - Selector for tab buttons
- * @param {string} [options.sectionSelector='.tab-section'] - Selector for tab content sections
- * @param {Function} [options.onShow] - Optional callback fired after a tab is shown
- * @returns {Function} show - A function to manually switch tabs by ID
+ * @param {Object} options
+ * @param {string} [options.buttonSelector='.tab-button'] - CSS selector for tab buttons
+ * @param {string} [options.sectionSelector='.tab-section'] - CSS selector for tab content
+ * @param {Function} [options.onShow] - Optional callback after tab is shown
+ * @returns {Function} showTab - A function to programmatically switch tabs by ID
  */
 export function setupTabs({
   buttonSelector = '.tab-button',
@@ -20,38 +20,64 @@ export function setupTabs({
 } = {}) {
   const buttons = Array.from(document.querySelectorAll(buttonSelector));
   const sections = Array.from(document.querySelectorAll(sectionSelector));
-  if (buttons.length === 0 || sections.length === 0) return;
 
-  const show = id => {
-    if (!id) return;
+  if (buttons.length === 0 || sections.length === 0) {
+    console.warn('[TabControl] No tab buttons or sections found.');
+    return () => {};
+  }
+
+  const tabMap = new Map();
+  sections.forEach(sec => tabMap.set(sec.id, sec));
+
+  function showTab(id) {
+    if (!tabMap.has(id)) {
+      console.warn(`[TabControl] Tab section "${id}" not found.`);
+      return;
+    }
+
     buttons.forEach(btn => {
       const isActive = btn.dataset.tab === id;
       btn.classList.toggle('active', isActive);
-      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.setAttribute('aria-selected', String(isActive));
+      btn.setAttribute('tabindex', isActive ? '0' : '-1');
     });
 
-    sections.forEach(section => {
-      const isVisible = section.id === id;
-      section.classList.toggle('active', isVisible);
+    sections.forEach(sec => {
+      sec.classList.toggle('active', sec.id === id);
+      sec.setAttribute('aria-hidden', sec.id === id ? 'false' : 'true');
     });
 
     if (typeof onShow === 'function') {
       onShow(id);
     }
-  };
+  }
 
+  // Bind click events to buttons
   buttons.forEach(btn => {
+    const tabId = btn.dataset.tab;
+    if (!tabId) return;
+
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-controls', tabId);
+    btn.setAttribute('tabindex', '-1');
+
     btn.addEventListener('click', e => {
       e.preventDefault();
-      const tabId = btn.dataset.tab;
-      if (tabId) show(tabId);
+      showTab(tabId);
     });
   });
 
-  // Initial tab: use existing `.active` or default to first button
-  const activeBtn = buttons.find(b => b.classList.contains('active'));
-  const initialTab = activeBtn?.dataset.tab || buttons[0].dataset.tab;
-  show(initialTab);
+  // Assign ARIA roles to sections
+  sections.forEach(sec => {
+    sec.setAttribute('role', 'tabpanel');
+    sec.setAttribute('tabindex', '0');
+  });
 
-  return show;
+  // Initialize to active or first tab
+  const initialBtn = buttons.find(b => b.classList.contains('active')) || buttons[0];
+  if (initialBtn) {
+    showTab(initialBtn.dataset.tab);
+  }
+
+  return showTab;
 }
