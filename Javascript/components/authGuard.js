@@ -1,74 +1,77 @@
-// Project Name: Thronestead©
-// File Name: authGuard.js
-// Version:  7/1/2025 10:38
-// Developer: Deathsgift66
+// Project: Thronestead©
+// File: authGuard.js
+// Version: 7/18/2025
+// Author: Deathsgift66
 
 import { supabase } from '../../supabaseClient.js';
+import { getEnvVar } from '../env.js';
+import { startSessionRefresh } from '../auth.js';
 import {
   fetchAndStorePlayerProgression,
   loadPlayerProgressionFromStorage,
 } from '../progressionGlobal.js';
-import { startSessionRefresh } from '../auth.js';
-import { getEnvVar } from '../env.js';
 
-// Configurable per page
+// Config flags
 const requireAdmin = window.requireAdmin === true;
-// Pages that don't require authentication
-const publicPages = ['/about.html', '/index.html', '/projects.html'];
+const PUBLIC_PATHS = new Set([
+  '/index.html',
+  '/about.html',
+  '/projects.html',
+  '/login.html',
+  '/signup.html',
+  '/update-password.html',
+  '/legal.html',
+  '/404.html'
+]);
 
-(async () => {
+const pathname = window.location.pathname;
+
+(async function authGuard() {
+  if (PUBLIC_PATHS.has(pathname)) {
+    return;
+  }
+
   if (requireAdmin) {
     document.documentElement.style.display = 'none';
   }
-  // Hard-coded bypass prevents redirect loops on the 404 page
-  if (window.location.pathname === '/404.html') {
-    console.info('Auth guard skipped on 404 page.');
-    return;
-  }
+
   try {
-    if (window.location.pathname === '/login.html') {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        return (window.location.href = '/overview.html');
-      }
-      return;
-    }
-
-    if (publicPages.includes(window.location.pathname)) {
-      return;
-    }
-
+    // Get or refresh session
     let { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
-      const { data } = await supabase.auth.refreshSession();
-      session = data?.session;
+      const { data: refreshed } = await supabase.auth.refreshSession();
+      session = refreshed?.session;
     }
+
     if (!session?.access_token) {
-      return (window.location.href = '/login.html');
+      return redirect('/login.html');
     }
 
+    // Server-side validation
     const API_BASE_URL = getEnvVar('API_BASE_URL');
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/me`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Unauthorized');
-    } catch {
-      return (window.location.href = '/login.html');
+    const authCheck = await fetch(`${API_BASE_URL}/api/me`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      credentials: 'include',
+    });
+    if (!authCheck.ok) {
+      return redirect('/login.html');
     }
 
+    // Supabase user fetch
     let { data: { user }, error } = await supabase.auth.getUser();
     if (!user || error) {
       const { data: refreshed } = await supabase.auth.refreshSession();
-      if (!refreshed?.user) {
-        return (window.location.href = '/login.html');
-      }
-      user = refreshed.user;
+      user = refreshed?.user;
     }
 
+    if (!user) {
+      return redirect('/login.html');
+    }
+
+    // Begin token refresh cycle
     startSessionRefresh();
 
+    // Get internal user profile
     const { data: userData, error: userErr } = await supabase
       .from('users')
       .select('is_admin, setup_complete')
@@ -76,30 +79,38 @@ const publicPages = ['/about.html', '/index.html', '/projects.html'];
       .single();
 
     if (!userData || userErr) {
-      return (window.location.href = '/login.html');
+      return redirect('/login.html');
     }
 
     if (!userData.setup_complete) {
-      return (window.location.href = '/play.html');
+      return redirect('/play.html');
     }
 
     if (requireAdmin && userData.is_admin !== true) {
-      return (window.location.href = '/overview.html');
+      return redirect('/overview.html');
     }
 
+    // Success: expose user globally
     window.user = { id: user.id, is_admin: userData.is_admin };
+
+    // Unhide page for admin-only views
     if (requireAdmin) {
       document.documentElement.style.display = '';
     }
 
+    // Load progression
     loadPlayerProgressionFromStorage();
     if (!window.playerProgression) {
       await fetchAndStorePlayerProgression(user.id);
     }
 
   } catch (err) {
-    console.error('authGuard failure:', err);
+    console.error('AuthGuard error:', err);
     document.documentElement.style.display = '';
-    window.location.href = '/login.html';
+    redirect('/login.html');
   }
 })();
+
+function redirect(path) {
+  window.location.href = path;
+}
