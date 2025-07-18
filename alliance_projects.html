@@ -44,6 +44,10 @@ Developer: Deathsgift66
   <!-- JavaScript -->
   <script type="module">
 import { supabase } from '/Javascript/supabaseClient.js';
+import { initCsrf, getCsrfToken, rotateCsrfToken } from '/Javascript/security/csrf.js';
+
+initCsrf();
+setInterval(rotateCsrfToken, 15 * 60 * 1000);
 
 const DEFAULT_BANNER = '/Assets/banner.png';
 
@@ -63,12 +67,6 @@ function logError(context, err) {
   }
 }
 
-let csrfToken = sessionStorage.getItem('csrf_token');
-if (!csrfToken) {
-  csrfToken = crypto.randomUUID();
-  sessionStorage.setItem('csrf_token', csrfToken);
-}
-document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
 
 async function applyAllianceAppearance() {
   try {
@@ -607,7 +605,7 @@ async function startProject(projectKey, btn) {
     const headers = await authHeaders();
     await authJsonFetch('/api/alliance/projects/start', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken, ...headers },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken(), ...headers },
       body: JSON.stringify({ project_key: projectKey })
     });
 

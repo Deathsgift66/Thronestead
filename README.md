@@ -20,6 +20,7 @@ the records created during onboarding.
 
 ✅ Dynamic Navbar (auth-aware)  
 ✅ authGuard.js protection on restricted pages
+✅ csrf.js token management integrated via utils
 ✅ Global public page policy for index/login/signup/legal
 ✅ Public pages exclude authGuard, navbar, and resource bar (index/login/signup/legal/update-password)
 ✅ Alliance System → full suite

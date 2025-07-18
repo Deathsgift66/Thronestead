@@ -134,6 +134,9 @@ Developer: Deathsgift66
 // Developer: Deathsgift66
 import { supabase } from '/Javascript/supabaseClient.js';
 import { escapeHTML } from '/Javascript/utils.js';
+import { initCsrf, getCsrfToken } from '/Javascript/security/csrf.js';
+
+initCsrf();
 
 let currentUser = null;
 let tutorialChannel;
@@ -342,9 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  function getCsrfToken() {
-    return document.querySelector('meta[name="csrf-token"]')?.content || '';
-  }
 
   function trapFocus(e) {
     if (e.key !== 'Tab') return;

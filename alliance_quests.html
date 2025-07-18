@@ -57,6 +57,10 @@ Developer: Deathsgift66
       closeModal,
       debounce
     } from '/Javascript/utils.js';
+    import { initCsrf, getCsrfToken, rotateCsrfToken } from '/Javascript/security/csrf.js';
+
+    initCsrf();
+    setInterval(rotateCsrfToken, 15 * 60 * 1000);
 
     const t = window.t || (s => s);
 
@@ -68,13 +72,6 @@ Developer: Deathsgift66
     }, 250);
     let inAction = false;
     let lastFocusedEl = null;
-    const genUUID = () => (crypto.randomUUID ? crypto.randomUUID() : safeUUID());
-    let csrfToken = sessionStorage.getItem('csrf_token');
-    if (!csrfToken) {
-      csrfToken = genUUID();
-      sessionStorage.setItem('csrf_token', csrfToken);
-      document.cookie = `csrf_token=${csrfToken}; path=/; secure; samesite=strict`;
-    }
     const csrfPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const isValidCsrf = token => csrfPattern.test(token);
     const focusableSelectors = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
@@ -304,7 +301,7 @@ Developer: Deathsgift66
 
           acceptBtn.onclick = async () => {
             if (inAction || !confirm(t('Accept this quest?'))) return;
-            if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
+            if (!isValidCsrf(getCsrfToken())) { showToast(t('Invalid session'), 'error'); return; }
             inAction = true;
             acceptBtn.disabled = true;
             acceptBtn.classList.add('loading');
@@ -312,7 +309,7 @@ Developer: Deathsgift66
             try {
               const res2 = await authFetch(`/api/alliance/quests/${id}/accept`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() }
               });
               if (res2.ok) {
                 showToast(t('Quest accepted!'), 'success');
@@ -333,7 +330,7 @@ Developer: Deathsgift66
           };
           claimBtn.onclick = async () => {
             if (inAction || !confirm(t('Claim reward for this quest?'))) return;
-            if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
+            if (!isValidCsrf(getCsrfToken())) { showToast(t('Invalid session'), 'error'); return; }
             inAction = true;
             claimBtn.disabled = true;
             claimBtn.classList.add('loading');
@@ -341,7 +338,7 @@ Developer: Deathsgift66
             try {
               const res2 = await authFetch(`/api/alliance/quests/${id}/claim`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() }
               });
               if (res2.ok) {
                 showToast(t('Reward claimed!'), 'success');
@@ -362,7 +359,7 @@ Developer: Deathsgift66
           };
           contribBtn.onclick = async () => {
             if (inAction) return;
-            if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
+            if (!isValidCsrf(getCsrfToken())) { showToast(t('Invalid session'), 'error'); return; }
             inAction = true;
             contribBtn.disabled = true;
             contribBtn.classList.add('loading');
@@ -370,7 +367,7 @@ Developer: Deathsgift66
             try {
               const res2 = await authFetch('/api/alliance/quests/progress', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
                 body: JSON.stringify({ quest_code: id, amount: 1 })
               });
               if (res2.ok) {
@@ -504,7 +501,7 @@ Developer: Deathsgift66
       const select = document.getElementById('quest-template-select');
       const code = select?.value;
       if (!code) return;
-      if (!isValidCsrf(csrfToken)) { showToast(t('Invalid session'), 'error'); return; }
+      if (!isValidCsrf(getCsrfToken())) { showToast(t('Invalid session'), 'error'); return; }
       const btn = document.getElementById('confirm-start-quest');
       btn.disabled = true;
       btn.classList.add('loading');
@@ -512,7 +509,7 @@ Developer: Deathsgift66
       try {
         const res = await authFetch('/api/alliance/quests/start', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
           body: JSON.stringify({ quest_code: code })
         });
         if (res.ok) {
