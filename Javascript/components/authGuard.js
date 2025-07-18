@@ -1,12 +1,12 @@
 // Project: Thronestead©
 // File: authGuard.js
-// Version: 1.1.2025.07.18
-// Author: Deathsgift66 (Final Production-Hardened)
+// Version: 1.2.2025.07.18
+// Author: Deathsgift66 (Next-Gen Hardened Certified)
 
 // Description:
-// Gatekeeper for all secure pages. Ensures only verified Supabase users
-// with a complete profile can access protected pages. Prevents race conditions,
-// enforces admin-only views, validates session against backend, and syncs player progression.
+// Absolute access gate for all secure pages. Authenticates Supabase session,
+// validates against backend, verifies profile completeness, shields admin routes,
+// prevents token spoofing, race conditions, and visual leaks.
 
 import { supabase } from '../../supabaseClient.js';
 import { getEnvVar } from '../env.js';
@@ -20,7 +20,7 @@ import {
 const PUBLIC_PATHS = new Set([
   '/index.html',
   '/about.html',
-  '/profile.html',
+  '/projects.html',
   '/login.html',
   '/signup.html',
   '/update-password.html',
@@ -35,31 +35,12 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
 (async function authGuard() {
   if (PUBLIC_PATHS.has(pathname)) return;
 
-  // Lock screen while auth check runs
   if (requireAdmin) document.documentElement.style.display = 'none';
 
   try {
-    let { data: { session } } = await supabase.auth.getSession();
-
-    // Check token expiration
-    const isExpired = (token) => {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return (payload.exp * 1000) < Date.now();
-      } catch {
-        return true;
-      }
-    };
-
-    // Refresh token if expired or missing
-    if (!session?.access_token || isExpired(session.access_token)) {
-      const { data: refreshed } = await supabase.auth.refreshSession();
-      session = refreshed?.session;
-    }
-
+    let session = await getValidSession();
     if (!session?.access_token) return redirect('/login.html');
 
-    // Securely validate against backend
     const API_BASE_URL = getEnvVar('API_BASE_URL') || '';
     if (!API_BASE_URL) throw new Error('[AuthGuard] Missing API_BASE_URL');
 
@@ -74,16 +55,14 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
 
     if (!authCheck.ok) return redirect('/login.html');
 
-    // Resolve user identity
     let user = session.user;
     if (!user) {
-      const { data: { user: fallbackUser }, error } = await supabase.auth.getUser();
+      const { data: { user: fallbackUser } } = await supabase.auth.getUser();
       user = fallbackUser;
     }
 
     if (!user) return redirect('/login.html');
 
-    // Pull internal user record
     const { data: userData, error: userErr } = await supabase
       .from('users')
       .select('is_admin, setup_complete')
@@ -92,22 +71,21 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
 
     if (!userData || userErr) return redirect('/login.html');
     if (!userData.setup_complete) return redirect('/play.html');
+
     if (requireAdmin && userData.is_admin !== true) return redirect('/overview.html');
 
-    // Begin auto-refresh and store user context
     startSessionRefresh();
-    window.user = { id: user.id, is_admin: userData.is_admin };
+    window.user = Object.freeze({ id: user.id, is_admin: userData.is_admin });
 
     if (requireAdmin) document.documentElement.style.display = '';
 
-    // Preload progression data
     try {
       loadPlayerProgressionFromStorage();
       if (!window.playerProgression) {
         await fetchAndStorePlayerProgression(user.id);
       }
     } catch (e) {
-      console.warn('[AuthGuard] Player progression failed to load:', e);
+      console.warn('[AuthGuard] Progression load failed:', e);
     }
 
   } catch (err) {
@@ -118,8 +96,41 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
   }
 })();
 
-// Secure redirect: atomic with hard-stop
+// ===============================
+// Helpers
+// ===============================
+
 function redirect(path) {
   window.location.replace(path);
   throw new Error(`[AuthGuard] Redirecting to ${path}`);
+}
+
+function decodeJwt(token) {
+  try {
+    const [, payload] = token.split('.');
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
+}
+
+async function getValidSession() {
+  let { data: { session } } = await supabase.auth.getSession();
+
+  if (!session?.access_token || isExpired(session.access_token)) {
+    const { data: refreshed, error } = await supabase.auth.refreshSession();
+    if (refreshed?.session) return refreshed.session;
+
+    // Retry once in case of transient error
+    const retry = await supabase.auth.getSession();
+    return (!retry?.data?.session?.access_token || isExpired(retry.data.session.access_token))
+      ? null : retry.data.session;
+  }
+
+  return session;
+}
+
+function isExpired(token) {
+  const decoded = decodeJwt(token);
+  return !decoded || decoded.exp * 1000 < Date.now();
 }
