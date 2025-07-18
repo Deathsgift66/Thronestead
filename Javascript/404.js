@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: 404.js
-// Version: 7/18/2025 - v2.0 Fixed
+// Version: 7/18/2025 - v2.1 Final
 // Developer: Deathsgift66
 
 import { applyTranslations } from '/Javascript/i18n.js';
@@ -9,9 +9,7 @@ const MAX_LEN = 255;
 const ERROR_ID = crypto.randomUUID?.() || Date.now().toString();
 
 function truncate(str) {
-  return typeof str === 'string'
-    ? str.replace(/[\n\r]+/g, ' ').slice(0, MAX_LEN)
-    : '';
+  return typeof str === 'string' && str.length > MAX_LEN ? str.slice(0, MAX_LEN) : str || '';
 }
 
 function schedule(fn) {
@@ -154,15 +152,16 @@ function initBackLink() {
 }
 
 async function detectUserAndLog404() {
-  let supabase;
+  let supabase, supabaseReady = false;
   try {
     const mod = await import('/Javascript/supabaseClient.js');
     supabase = mod.supabase;
+    supabaseReady = mod.supabaseReady;
   } catch {
     return log404();
   }
 
-  if (!supabase?.auth?.getUser) return log404();
+  if (!supabaseReady || !supabase?.auth?.getUser) return log404();
 
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
