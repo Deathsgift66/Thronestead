@@ -1,6 +1,6 @@
-// CSRF Token Utilities (Next-Gen Hardened v6)
+// CSRF Token Utilities (Next-Gen Hardened v7)
 // Author: Thronestead Security Suite
-// Version: 6.0.2025.07.18
+// Version: 7.0.2025.07.18
 
 const CSRF_TOKEN_KEY = 'csrf_token';
 const CSRF_META_KEY = 'csrf_token_ts';
@@ -58,6 +58,20 @@ export function getCsrfMeta() {
 }
 
 /**
+ * Clears all CSRF tokens manually (e.g. on logout).
+ */
+export function clearCsrfToken() {
+  try {
+    sessionStorage.removeItem(CSRF_TOKEN_KEY);
+    sessionStorage.removeItem(CSRF_META_KEY);
+    localStorage.removeItem(CSRF_TOKEN_KEY);
+    localStorage.removeItem(CSRF_META_KEY);
+    document.cookie = `${CSRF_COOKIE_NAME}=; Path=/; Max-Age=0; Secure; SameSite=Strict`;
+  } catch {}
+  fallbackToken = null;
+}
+
+/**
  * Injects a custom time provider (for tests).
  */
 export function injectNow(fn) {
@@ -73,7 +87,14 @@ function getStoredToken() {
     if (!isValidToken(token)) throw new Error('Invalid or missing token');
     return { token, timestamp: isNaN(ts) ? 0 : ts };
   } catch {
-    return fallbackToken;
+    try {
+      const token = localStorage.getItem(CSRF_TOKEN_KEY);
+      const ts = Number(localStorage.getItem(CSRF_META_KEY));
+      if (isValidToken(token) && !isExpired(ts)) {
+        return { token, timestamp: ts };
+      }
+    } catch {}
+    return fallbackToken && !isExpired(fallbackToken.timestamp) ? fallbackToken : null;
   }
 }
 
@@ -89,7 +110,8 @@ function storeToken(token) {
   try {
     const safeExpiry = timestamp + expiryMs;
     setCookie(CSRF_COOKIE_NAME, token, safeExpiry);
-    localStorage.setItem(CSRF_TOKEN_KEY, token); // fallback sync
+    localStorage.setItem(CSRF_TOKEN_KEY, token);
+    localStorage.setItem(CSRF_META_KEY, timestamp.toString());
   } catch (err) {
     console.warn('[CSRF] Failed to persist token to cookie/localStorage:', err);
   }
@@ -146,7 +168,6 @@ function ensureChannel() {
     console.info('[CSRF] BroadcastChannel initialized');
   }
 
-  // Fallback for Safari / no BroadcastChannel
   window.addEventListener('storage', (e) => {
     if (e.key === CSRF_TOKEN_KEY && isValidToken(e.newValue)) {
       const current = getCsrfToken();
