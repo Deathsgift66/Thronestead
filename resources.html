@@ -305,9 +305,14 @@ function showToast(message) {
 
 const refreshResources = debounce(async () => {
   if (!currentHeaders) return;
-  const { resources } = await fetchJson('/api/resources', { headers: currentHeaders });
-  renderResourceSummary(resources);
-  renderResourceTable(resources);
+  try {
+    const { resources } = await fetchJson('/api/resources', { headers: currentHeaders });
+    renderResourceSummary(resources);
+    renderResourceTable(resources);
+  } catch (err) {
+    console.error('Failed to refresh resources', err);
+    showToast('Resource update failed');
+  }
 }, 300);
 
 const refreshVault = debounce(async () => {
@@ -318,6 +323,7 @@ const refreshVault = debounce(async () => {
   } catch (err) {
     console.error('Failed to refresh vault data', err);
     renderVaultTable(null);
+    showToast('Vault update failed');
   }
 }, 300);
 

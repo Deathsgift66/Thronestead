@@ -29,6 +29,12 @@ async function fetchJsonInternal(fetcher, url, options, timeoutMs) {
         window.location.href = 'you_are_banned.html';
         throw new Error('Account banned');
       }
+      if (res.status === 403) {
+        throw new Error('Access denied (403)');
+      }
+      if (res.status === 504) {
+        throw new Error('Server timeout (504)');
+      }
       throw new Error(`Request failed (${res.status}): ${message || res.statusText}`);
     }
     if (!type.includes('application/json')) {

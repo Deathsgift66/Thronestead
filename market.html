@@ -77,8 +77,10 @@ Developer: Deathsgift66
         updated.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
         page += 1;
         toggleLoadMore();
-      } catch {
+      } catch (err) {
+        console.error('Listing fetch failed', err);
         listingsContainer.textContent = 'Failed to load listings.';
+        showToast('Failed to load listings', 'error');
       }
     }
 
@@ -146,8 +148,10 @@ Developer: Deathsgift66
       `;
           myListingsContainer.appendChild(card);
         });
-      } catch {
+      } catch (err) {
+        console.error('My listings fetch failed', err);
         myListingsContainer.textContent = 'Failed to load listings.';
+        showToast('Failed to load your listings', 'error');
       }
     }
 
@@ -174,8 +178,10 @@ Developer: Deathsgift66
       `;
           historyContainer.appendChild(row);
         });
-      } catch {
+      } catch (err) {
+        console.error('History fetch failed', err);
         historyContainer.textContent = 'Failed to load history.';
+        showToast('Failed to load history', 'error');
       }
     }
 
