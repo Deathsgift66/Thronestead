@@ -1,3 +1,7 @@
+// CSRF Token Utilities (Next-Gen Hardened v8)
+// Author: Thronestead Security Suite
+// Version: 8.0.2025.07.18
+
 const CSRF_TOKEN_KEY = 'csrf_token';
 const CSRF_META_KEY = 'csrf_token_ts';
 const CSRF_COOKIE_NAME = 'csrf_token';
@@ -11,16 +15,12 @@ let fallbackToken = null;
 let tokenLock = false;
 let broadcastWait = false;
 
-// Injectable storage
 let storage = {
   get: (key) => sessionStorage.getItem(key),
   set: (key, value) => sessionStorage.setItem(key, value),
   remove: (key) => sessionStorage.removeItem(key),
 };
 
-/**
- * Initializes and returns a valid CSRF token.
- */
 export async function initCsrf(options = {}) {
   ensureChannel();
   if (options.expiryMs && Number.isInteger(options.expiryMs)) expiryMs = options.expiryMs;
@@ -30,9 +30,6 @@ export async function initCsrf(options = {}) {
   return stored && !isExpired(stored.timestamp) ? stored.token : rotateCsrfToken();
 }
 
-/**
- * Forces a new CSRF token and syncs it.
- */
 export function rotateCsrfToken() {
   const token = generateToken();
   storeToken(token);
@@ -40,17 +37,11 @@ export function rotateCsrfToken() {
   return token;
 }
 
-/**
- * Returns current CSRF token or null if expired.
- */
 export function getCsrfToken() {
   const stored = getStoredToken();
-  return stored && !isExpired(stored.timestamp) && stored.source !== 'cookie' ? stored.token : null;
+  return stored && !isExpired(stored.timestamp) ? stored.token : null;
 }
 
-/**
- * Returns token and expiry delta (for diagnostics).
- */
 export function getCsrfMeta() {
   const stored = getStoredToken();
   return stored
@@ -58,9 +49,6 @@ export function getCsrfMeta() {
     : null;
 }
 
-/**
- * Clears token data (for logout/session reset).
- */
 export function clearCsrfToken() {
   try {
     storage.remove(CSRF_TOKEN_KEY);
@@ -72,23 +60,15 @@ export function clearCsrfToken() {
   fallbackToken = null;
 }
 
-/**
- * Test hook: override internal clock.
- */
 export function injectNow(fn) {
   if (typeof fn === 'function') now = fn;
 }
 
-/**
- * Test hook: override storage.
- */
 export function injectStorage(getFn, setFn, removeFn) {
   if (typeof getFn === 'function') storage.get = getFn;
   if (typeof setFn === 'function') storage.set = setFn;
   if (typeof removeFn === 'function') storage.remove = removeFn;
 }
-
-/* ===== Internal Functions ===== */
 
 function getStoredToken() {
   try {
@@ -107,7 +87,9 @@ function getStoredToken() {
 
     const cookieToken = readCookie(CSRF_COOKIE_NAME);
     if (isValidToken(cookieToken)) {
-      return { token: cookieToken, timestamp: now(), source: 'cookie' };
+      const cookieMeta = { token: cookieToken, timestamp: now(), source: 'cookie' };
+      fallbackToken = cookieMeta;
+      return cookieMeta;
     }
 
     return fallbackToken && !isExpired(fallbackToken.timestamp) ? fallbackToken : null;
@@ -116,7 +98,6 @@ function getStoredToken() {
 
 function storeToken(token) {
   const timestamp = now();
-
   try {
     storage.set(CSRF_TOKEN_KEY, token);
     storage.set(CSRF_META_KEY, timestamp.toString());
@@ -131,6 +112,10 @@ function storeToken(token) {
     localStorage.setItem(CSRF_META_KEY, timestamp.toString());
   } catch (err) {
     console.warn('[CSRF] Persist failure:', err);
+  }
+
+  if (import.meta?.env?.DEV) {
+    console.debug('[CSRF] Token stored. TTL (ms):', expiryMs - (now() - timestamp));
   }
 }
 
@@ -160,7 +145,7 @@ function generateToken() {
     crypto.getRandomValues(arr);
     return [...arr].map(b => b.toString(16).padStart(2, '0')).join('');
   }
-  return `tkn-${now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  return `tkn-${now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`.padEnd(32, 'x');
 }
 
 function isValidToken(token) {
@@ -183,9 +168,7 @@ function ensureChannel() {
       const incoming = e.data?.token;
       if (e.data?.type === 'rotate' && isValidToken(incoming)) {
         const current = getCsrfToken();
-        if ((!current || current !== incoming) && !isExpired(now())) {
-          storeToken(incoming);
-        }
+        if (!current || current !== incoming) storeToken(incoming);
       }
     };
     broadcastWait = true;
