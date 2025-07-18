@@ -196,7 +196,7 @@ async function ensureProfileRecord(user) {
 
   const meta = user.user_metadata || {};
   try {
-    await fetch(`${API_BASE_URL}/api/signup/finalize`, {
+    const res = await fetch(`${API_BASE_URL}/api/signup/finalize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -207,8 +207,13 @@ async function ensureProfileRecord(user) {
         email: user.email
       })
     });
+    if (!res.ok) {
+      console.error('Finalize signup failed', res.status);
+      showToast('Failed to finalize signup', 'error');
+    }
   } catch (err) {
     console.error('Finalize signup error:', err);
+    showToast('Signup request failed', 'error');
   }
   const { data: refreshed } = await supabase
     .from('users')
