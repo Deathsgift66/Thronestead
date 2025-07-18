@@ -1,28 +1,32 @@
-// CSRF Token Utilities (Next-Gen Hardened v4)
+// CSRF Token Utilities (Next-Gen Hardened v5)
 // Author: Thronestead Security Suite
-// Version: 4.0.2025.07.18
+// Version: 5.0.2025.07.18
 
 const CSRF_TOKEN_KEY = 'csrf_token';
 const CSRF_META_KEY = 'csrf_token_ts';
 const CSRF_COOKIE_NAME = 'csrf_token';
-const CSRF_EXPIRY_MS = 6 * 60 * 60 * 1000; // 6 hours
 const CSRF_CHANNEL = 'csrf-sync';
+const DEFAULT_EXPIRY_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 let csrfChannel = null;
 let now = () => Date.now(); // injectable for testing
+let expiryMs = DEFAULT_EXPIRY_MS;
 
 /**
- * Initializes and returns a CSRF token, generating if needed.
+ * Initializes and returns a valid CSRF token.
  */
-export function initCsrf() {
+export function initCsrf(options = {}) {
   ensureChannel();
+  if (options.expiryMs && Number.isInteger(options.expiryMs)) expiryMs = options.expiryMs;
+
   const stored = getStoredToken();
   if (stored && !isExpired(stored.timestamp)) return stored.token;
+
   return rotateCsrfToken();
 }
 
 /**
- * Rotates CSRF token forcefully, syncing across tabs.
+ * Forces a new CSRF token and syncs it.
  */
 export function rotateCsrfToken() {
   const token = generateToken();
@@ -32,7 +36,7 @@ export function rotateCsrfToken() {
 }
 
 /**
- * Retrieves current valid CSRF token or null.
+ * Returns current CSRF token or null if invalid.
  */
 export function getCsrfToken() {
   const stored = getStoredToken();
@@ -40,17 +44,14 @@ export function getCsrfToken() {
 }
 
 /**
- * Injects a custom time function (for testing).
+ * Injects a custom time provider for test environments.
  */
 export function injectNow(fn) {
   if (typeof fn === 'function') now = fn;
 }
 
-/* ===== INTERNAL UTILITIES ===== */
+/* ===== Internal Utilities ===== */
 
-/**
- * Retrieves token and timestamp from sessionStorage.
- */
 function getStoredToken() {
   try {
     const token = sessionStorage.getItem(CSRF_TOKEN_KEY);
@@ -58,14 +59,11 @@ function getStoredToken() {
     if (!isValidToken(token)) return null;
     return { token, timestamp: isNaN(ts) ? 0 : ts };
   } catch (err) {
-    console.warn('[CSRF] Failed to read sessionStorage:', err);
+    console.warn('[CSRF] Failed to read from sessionStorage:', err);
     return null;
   }
 }
 
-/**
- * Stores token into sessionStorage and secure cookie.
- */
 function storeToken(token) {
   const timestamp = now();
   try {
@@ -74,19 +72,18 @@ function storeToken(token) {
   } catch (err) {
     console.warn('[CSRF] Failed to write to sessionStorage:', err);
   }
-  setCookie(CSRF_COOKIE_NAME, token, timestamp + CSRF_EXPIRY_MS);
+
+  try {
+    setCookie(CSRF_COOKIE_NAME, token, timestamp + expiryMs);
+  } catch (err) {
+    console.warn('[CSRF] Failed to write cookie:', err);
+  }
 }
 
-/**
- * Checks if a token is expired.
- */
 function isExpired(ts) {
-  return now() - ts > CSRF_EXPIRY_MS;
+  return now() - ts > expiryMs;
 }
 
-/**
- * Sets a secure cookie with optional expiration.
- */
 function setCookie(name, value, expiresAt) {
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
     console.warn('[CSRF] Insecure context — Secure cookies may be ignored.');
@@ -95,9 +92,6 @@ function setCookie(name, value, expiresAt) {
   document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Path=/; Secure; SameSite=Strict${expires}`;
 }
 
-/**
- * Generates a secure UUID token or fallback.
- */
 function generateToken() {
   if (crypto?.randomUUID) return crypto.randomUUID();
   if (crypto?.getRandomValues) {
@@ -108,25 +102,17 @@ function generateToken() {
   return `tkn-${now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
-/**
- * Checks if token is valid format.
- */
 function isValidToken(token) {
   return typeof token === 'string' && /^[\w-]{16,}$/.test(token);
 }
 
-/**
- * Broadcasts new token across tabs.
- */
 function broadcastToken(token) {
+  if (typeof token !== 'string') return;
   if (csrfChannel) {
     csrfChannel.postMessage({ type: 'rotate', token });
   }
 }
 
-/**
- * Initializes BroadcastChannel if supported.
- */
 function ensureChannel() {
   if (!csrfChannel && 'BroadcastChannel' in window) {
     csrfChannel = new BroadcastChannel(CSRF_CHANNEL);
@@ -138,5 +124,6 @@ function ensureChannel() {
         }
       }
     };
+    console.info('[CSRF] BroadcastChannel initialized');
   }
 }
