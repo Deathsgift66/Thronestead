@@ -1,6 +1,6 @@
 // Project: Thronestead©
 // File: authGuard.js
-// Version: 1.2.2025.07.18
+// Version: 1.3.2025.07.18
 // Author: Deathsgift66 (Next-Gen Hardened Certified)
 
 // Description:
@@ -31,18 +31,24 @@ const PUBLIC_PATHS = new Set([
 const pathname = window.location.pathname.split('?')[0].split('#')[0];
 const requireAdmin = document.querySelector('meta[name="require-admin"]')?.content === 'true';
 
-// Entry
+// Initial visual shield
+if (!PUBLIC_PATHS.has(pathname)) {
+  document.documentElement.style.display = 'none';
+}
+
+// Entry Point
 (async function authGuard() {
   if (PUBLIC_PATHS.has(pathname)) return;
 
-  if (requireAdmin) document.documentElement.style.display = 'none';
-
   try {
-    let session = await getValidSession();
+    const session = await getValidSession();
     if (!session?.access_token) return redirect('/login.html');
 
     const API_BASE_URL = getEnvVar('API_BASE_URL') || '';
-    if (!API_BASE_URL) throw new Error('[AuthGuard] Missing API_BASE_URL');
+    if (!API_BASE_URL) {
+      alert('[Thronestead AuthGuard Error] Server misconfiguration. Try refreshing.');
+      throw new Error('[AuthGuard] Missing API_BASE_URL');
+    }
 
     const authCheck = await fetch(`${API_BASE_URL}/api/me`, {
       method: 'GET',
@@ -57,11 +63,10 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
 
     let user = session.user;
     if (!user) {
-      const { data: { user: fallbackUser } } = await supabase.auth.getUser();
+      const { data: { user: fallbackUser }, error: fallbackErr } = await supabase.auth.getUser();
+      if (fallbackErr || !fallbackUser) return redirect('/login.html');
       user = fallbackUser;
     }
-
-    if (!user) return redirect('/login.html');
 
     const { data: userData, error: userErr } = await supabase
       .from('users')
@@ -71,14 +76,19 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
 
     if (!userData || userErr) return redirect('/login.html');
     if (!userData.setup_complete) return redirect('/play.html');
-
     if (requireAdmin && userData.is_admin !== true) return redirect('/overview.html');
 
+    // Lock user object
+    if (window.user) {
+      console.warn('[AuthGuard] window.user already defined');
+    } else {
+      window.user = Object.freeze({ id: user.id, is_admin: userData.is_admin });
+    }
+
+    // Start refresh loop
     startSessionRefresh();
-    window.user = Object.freeze({ id: user.id, is_admin: userData.is_admin });
 
-    if (requireAdmin) document.documentElement.style.display = '';
-
+    // Load player progression
     try {
       loadPlayerProgressionFromStorage();
       if (!window.playerProgression) {
@@ -101,6 +111,7 @@ const requireAdmin = document.querySelector('meta[name="require-admin"]')?.conte
 // ===============================
 
 function redirect(path) {
+  document.documentElement.style.display = 'none';
   window.location.replace(path);
   throw new Error(`[AuthGuard] Redirecting to ${path}`);
 }
@@ -114,23 +125,26 @@ function decodeJwt(token) {
   }
 }
 
+function isExpired(token) {
+  const decoded = decodeJwt(token);
+  return !decoded || decoded.exp * 1000 < Date.now();
+}
+
 async function getValidSession() {
   let { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token || isExpired(session.access_token)) {
     const { data: refreshed, error } = await supabase.auth.refreshSession();
-    if (refreshed?.session) return refreshed.session;
+    if (refreshed?.session && !isExpired(refreshed.session.access_token)) {
+      return refreshed.session;
+    }
 
-    // Retry once in case of transient error
+    // Retry once (in case of network hiccup)
     const retry = await supabase.auth.getSession();
     return (!retry?.data?.session?.access_token || isExpired(retry.data.session.access_token))
-      ? null : retry.data.session;
+      ? null
+      : retry.data.session;
   }
 
   return session;
-}
-
-function isExpired(token) {
-  const decoded = decodeJwt(token);
-  return !decoded || decoded.exp * 1000 < Date.now();
 }
