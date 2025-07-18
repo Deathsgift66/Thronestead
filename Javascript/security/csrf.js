@@ -1,6 +1,6 @@
-// CSRF Token Utilities (Next-Gen Hardened v8)
+// CSRF Token Utilities (Next-Gen Hardened v8.1)
 // Author: Thronestead Security Suite
-// Version: 8.0.2025.07.18
+// Version: 8.1.2025.07.18
 
 const CSRF_TOKEN_KEY = 'csrf_token';
 const CSRF_META_KEY = 'csrf_token_ts';
@@ -14,6 +14,7 @@ let expiryMs = DEFAULT_EXPIRY_MS;
 let fallbackToken = null;
 let tokenLock = false;
 let broadcastWait = false;
+let storeLock = false;
 
 let storage = {
   get: (key) => sessionStorage.getItem(key),
@@ -92,11 +93,20 @@ function getStoredToken() {
       return cookieMeta;
     }
 
-    return fallbackToken && !isExpired(fallbackToken.timestamp) ? fallbackToken : null;
+    // If fallbackToken is valid but expired, force rotate to break stale loop
+    if (fallbackToken && !isExpired(fallbackToken.timestamp)) {
+      const fresh = rotateCsrfToken();
+      return { token: fresh, timestamp: now(), source: 'fresh' };
+    }
+
+    return null;
   }
 }
 
 function storeToken(token) {
+  if (storeLock) return;
+  storeLock = true;
+
   const timestamp = now();
   try {
     storage.set(CSRF_TOKEN_KEY, token);
@@ -117,6 +127,8 @@ function storeToken(token) {
   if (import.meta?.env?.DEV) {
     console.debug('[CSRF] Token stored. TTL (ms):', expiryMs - (now() - timestamp));
   }
+
+  setTimeout(() => { storeLock = false; }, 50);
 }
 
 function isExpired(ts) {
@@ -132,10 +144,8 @@ function setCookie(name, value, expiresAt) {
 }
 
 function readCookie(name) {
-  return document.cookie.split('; ').reduce((acc, kv) => {
-    const [k, v] = kv.split('=');
-    return k === name ? decodeURIComponent(v) : acc;
-  }, null);
+  const match = document.cookie.match('(^|;)\\s*' + encodeURIComponent(name) + '=([^;]+)');
+  return match ? decodeURIComponent(match[2]) : null;
 }
 
 function generateToken() {
@@ -145,7 +155,7 @@ function generateToken() {
     crypto.getRandomValues(arr);
     return [...arr].map(b => b.toString(16).padStart(2, '0')).join('');
   }
-  return `tkn-${now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`.padEnd(32, 'x');
+  return `tkn-${now().toString(36)}-${Math.random().toString(36).slice(2, 18)}`.padEnd(32, 'x');
 }
 
 function isValidToken(token) {
@@ -176,10 +186,12 @@ function ensureChannel() {
     console.debug('[CSRF] BroadcastChannel ready');
   }
 
-  window.addEventListener('storage', (e) => {
-    if (e.key === CSRF_TOKEN_KEY && isValidToken(e.newValue)) {
-      const current = getCsrfToken();
-      if (!current || current !== e.newValue) storeToken(e.newValue);
-    }
-  });
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('storage', (e) => {
+      if (e.key === CSRF_TOKEN_KEY && isValidToken(e.newValue)) {
+        const current = getCsrfToken();
+        if (!current || current !== e.newValue) storeToken(e.newValue);
+      }
+    });
+  }
 }
