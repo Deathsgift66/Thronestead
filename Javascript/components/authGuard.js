@@ -1,6 +1,6 @@
 // Project: Thronestead©
 // File: authGuard.js
-// Version: 1.5.2025.07.18
+// Version: 1.6.2025.07.18
 // Author: Deathsgift66 (Next-Gen Hardened Certified)
 
 // Absolute access gate. Supabase & backend auth, session checks, admin guards, hardened redirects.
@@ -47,11 +47,8 @@ if (!PUBLIC_PATHS.has(pathname)) {
 
     const API_BASE_URL = getEnvVar('API_BASE_URL');
     if (!API_BASE_URL) {
-      document.body.innerHTML = `<div style="padding:50px;font-family:sans-serif;text-align:center;">
-        <h1 style="color:red;">Configuration Error</h1>
-        <p>Please refresh or contact support.</p>
-      </div>`;
-      throw new Error('[AuthGuard] Missing API_BASE_URL');
+      renderFatalError('[AuthGuard] Missing API_BASE_URL');
+      return;
     }
 
     const authCheck = await fetchWithTimeout(`${API_BASE_URL}/api/me`, {
@@ -63,12 +60,18 @@ if (!PUBLIC_PATHS.has(pathname)) {
       credentials: 'include',
     }, 5000);
 
-    if (!authCheck.ok) return redirect('/login.html');
+    if (!authCheck.ok || [401, 403].includes(authCheck.status)) {
+      console.warn(`[AuthGuard] Backend auth failed with status: ${authCheck.status}`);
+      return redirect('/login.html');
+    }
 
     let user = session.user;
     if (!user) {
       const { data: { user: fallbackUser }, error } = await supabase.auth.getUser();
-      if (error || !fallbackUser) return redirect('/login.html');
+      if (error || !fallbackUser) {
+        console.warn('[AuthGuard] Supabase fallback user fetch failed:', error);
+        return redirect('/login.html');
+      }
       user = fallbackUser;
     }
 
@@ -78,16 +81,18 @@ if (!PUBLIC_PATHS.has(pathname)) {
       .eq('user_id', user.id)
       .single();
 
-    if (!userData || userErr) {
+    if (userErr || !userData) {
       console.warn('[AuthGuard] User data fetch failed:', userErr);
       return redirect('/login.html');
     }
+
     if (!userData.setup_complete) {
-      console.info('[AuthGuard] Profile incomplete, redirecting...');
+      console.info('[AuthGuard] Profile incomplete, redirecting to /play.html');
       return redirect('/play.html');
     }
+
     if (requireAdmin && userData.is_admin !== true) {
-      console.warn('[AuthGuard] Non-admin user attempted admin access.');
+      console.warn('[AuthGuard] Unauthorized admin access attempt.');
       return redirect('/overview.html');
     }
 
@@ -101,7 +106,7 @@ if (!PUBLIC_PATHS.has(pathname)) {
         await fetchAndStorePlayerProgression(user.id);
       }
     } catch (e) {
-      console.warn('[AuthGuard] Progression load failed:', e);
+      console.warn('[AuthGuard] Player progression load failed:', e);
     }
 
     console.info('[AuthGuard] Authentication successful:', user.id);
@@ -117,7 +122,7 @@ if (!PUBLIC_PATHS.has(pathname)) {
 // Hardened Helpers
 function redirect(path) {
   if (!ALLOWED_REDIRECTS.has(path)) {
-    console.error(`[AuthGuard] Invalid redirect attempted: ${path}`);
+    console.error(`[AuthGuard] Invalid redirect attempt: ${path}`);
     path = '/login.html';
   }
   document.documentElement.style.display = 'none';
@@ -160,4 +165,12 @@ async function fetchWithTimeout(resource, options = {}, timeoutMs = 5000) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function renderFatalError(message) {
+  document.body.innerHTML = `<div style="padding:50px;font-family:sans-serif;text-align:center;">
+    <h1 style="color:red;">Configuration Error</h1>
+    <p>${message}. Please refresh or contact support.</p>
+  </div>`;
+  console.error(message);
 }
