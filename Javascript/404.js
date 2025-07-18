@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: 404.js
-// Version: 7/18/2025
+// Version: 7/18/2025 - v2.0 Fixed
 // Developer: Deathsgift66
 
 import { applyTranslations } from '/Javascript/i18n.js';
@@ -9,7 +9,9 @@ const MAX_LEN = 255;
 const ERROR_ID = crypto.randomUUID?.() || Date.now().toString();
 
 function truncate(str) {
-  return typeof str === 'string' && str.length > MAX_LEN ? str.slice(0, MAX_LEN) : str || '';
+  return typeof str === 'string'
+    ? str.replace(/[\n\r]+/g, ' ').slice(0, MAX_LEN)
+    : '';
 }
 
 function schedule(fn) {
@@ -26,7 +28,8 @@ function validate(payload) {
     type: 'string',
     anon_id: ['string', 'object'],
     timestamp: 'number',
-    error_id: 'string'
+    error_id: 'string',
+    message: 'string'
   };
   return Object.entries(schema).every(([k, type]) => {
     const val = payload[k];
@@ -69,28 +72,19 @@ function handleRuntimeError(e) {
   });
 }
 
-async function log404(anonId = null) {
+function log404(anonId = null) {
   const payload = {
     path: truncate(location.pathname),
     search: truncate(location.search),
     referrer: truncate(document.referrer),
     user_agent: truncate(navigator.userAgent),
     type: '404',
+    message: '404 Page Not Found',
     anon_id: anonId,
     timestamp: Date.now(),
     error_id: ERROR_ID
   };
   sendLog(payload);
-
-  try {
-    fetch('/api/log/404', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: location.href })
-    });
-  } catch {
-    /* Silent fallback */
-  }
 }
 
 async function checkSearchAvailability() {
@@ -115,6 +109,7 @@ function injectStructuredData() {
     '@graph': [
       {
         '@type': 'BreadcrumbList',
+        '@id': location.origin + '/#breadcrumb',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.thronestead.com/' },
           { '@type': 'ListItem', position: 2, name: '404', item: location.href }
@@ -122,6 +117,7 @@ function injectStructuredData() {
       },
       {
         '@type': 'WebPage',
+        '@id': location.href,
         name: '404 Page',
         description: 'Page not found on Thronestead.',
         mainEntity: { '@type': 'WebPageElement', name: '404 Message', cssSelector: 'h1' }
@@ -158,22 +154,19 @@ function initBackLink() {
 }
 
 async function detectUserAndLog404() {
-  let supabase, supabaseReady = false;
+  let supabase;
   try {
     const mod = await import('/Javascript/supabaseClient.js');
     supabase = mod.supabase;
-    supabaseReady = mod.supabaseReady;
   } catch {
     return log404();
   }
 
-  if (!supabaseReady || !supabase?.auth?.getUser) return log404();
+  if (!supabase?.auth?.getUser) return log404();
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    const { data: { user } } = await supabase.auth.getUser({ signal: controller.signal });
-    clearTimeout(timeout);
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
     log404(user?.id || null);
   } catch {
     log404();
