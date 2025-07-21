@@ -19,6 +19,15 @@ import {
 } from '/Javascript/security/csrf.js';
 
 window.requireAdmin = true;
+const adminMeta = document.querySelector('meta[name="require-admin"]');
+if (!adminMeta) {
+  const meta = document.createElement('meta');
+  meta.name = 'require-admin';
+  meta.content = 'true';
+  document.head.appendChild(meta);
+} else {
+  adminMeta.content = 'true';
+}
 
 const REFRESH_MS = 30000;
 let csrfToken = initCsrf();
