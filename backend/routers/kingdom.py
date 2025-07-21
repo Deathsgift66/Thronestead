@@ -145,8 +145,15 @@ def create_kingdom(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
-    # Skip duplicate kingdom name check
     try:
+        row = db.execute(
+            text(
+                "SELECT 1 FROM kingdoms WHERE lower(kingdom_name) = lower(:name)"
+            ),
+            {"name": payload.kingdom_name},
+        ).fetchone()
+        if row:
+            raise HTTPException(status_code=400, detail="Kingdom name already in use")
         kid = create_kingdom_transaction(
             db=db,
             user_id=user_id,
@@ -425,8 +432,14 @@ def update_kingdom_profile(
     current_name = row[1]
 
     if payload.kingdom_name and payload.kingdom_name != current_name:
-        # Skip duplicate kingdom name check
-        pass
+        exists = db.execute(
+            text(
+                "SELECT 1 FROM kingdoms WHERE lower(kingdom_name) = lower(:name)"
+            ),
+            {"name": payload.kingdom_name},
+        ).fetchone()
+        if exists:
+            raise HTTPException(status_code=400, detail="Kingdom name already in use")
 
     updates = []
     params = {"kid": kid}
