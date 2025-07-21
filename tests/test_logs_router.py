@@ -40,3 +40,20 @@ def test_log_404_records(monkeypatch):
     assert store['table'] == 'client_errors'
     assert store['executed'] is True
     assert store['payload']['user_agent'] == 'evil&lt;script&gt;'
+
+
+def test_log_error_records(monkeypatch):
+    store = {}
+    monkeypatch.setattr(logs, 'get_supabase_client', lambda: DummyClient(store))
+    resp = client.post('/api/logs/error', json={
+        'message': 'boom',
+        'stack': 'trace',
+        'context': 'init',
+        'url': 'https://example.com',
+        'user_agent': 'ua<script>',
+        'timestamp': 123,
+    })
+    assert resp.status_code == 200
+    assert store['table'] == 'client_errors'
+    assert store['executed'] is True
+    assert store['payload']['user_agent'] == 'ua&lt;script&gt;'
