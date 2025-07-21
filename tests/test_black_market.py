@@ -39,7 +39,7 @@ def test_black_market_flow():
     )
     listing_id = res["listing_id"]
 
-    market = get_market(db)
+    market = get_market(db=db)
     assert market["listings"][0]["listing_id"] == listing_id
 
     buy_item(BuyPayload(listing_id=listing_id, quantity=3), user_id=seller_id, db=db)
