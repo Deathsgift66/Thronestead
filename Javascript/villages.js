@@ -92,7 +92,7 @@ async function setupRealtime() {
         console.error('Failed to parse SSE data', e);
       }
     };
-    eventSource.onerror = e => {
+    eventSource.onerror = () => {
       console.warn('🔁 SSE connection error. Will attempt reconnect...');
       showToast('Real-time updates lost. Reload to reconnect.');
       eventSource.close();
