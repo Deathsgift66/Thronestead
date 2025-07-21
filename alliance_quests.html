@@ -76,11 +76,17 @@ Developer: Deathsgift66
     const isValidCsrf = token => csrfPattern.test(token);
     const focusableSelectors = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
+    const safeStorage = (key, validator, fallback = "") => {
+      const val = sessionStorage.getItem(key);
+      if (validator(val)) return val;
+      sessionStorage.removeItem(key);
+      return fallback;
+    };
     let allQuests = [];
     let currentPage = 1;
     let pageSize = 10;
-    let searchValue = sessionStorage.getItem('questSearch') || '';
-    let currentCategory = sessionStorage.getItem('questCategory') || '';
+    let searchValue = safeStorage("questSearch", v => typeof v === "string" && v.length <= 100, "");
+    let currentCategory = safeStorage("questCategory", v => typeof v === "string" && v.length <= 50, "");
 
 
     /**
@@ -212,7 +218,7 @@ Developer: Deathsgift66
       const boardEl = document.getElementById('quest-board');
       boardEl.addEventListener('click', e => {
         const card = e.target.closest('.view-quest-btn');
-        if (!card) return;
+        if (!card || !card.dataset.id) return;
         openQuestModal(card.dataset.id);
       });
 
@@ -622,7 +628,7 @@ Developer: Deathsgift66
           questsChannel = null;
         }
       });
-      const lastTab = sessionStorage.getItem('lastTab') || 'active';
+      const lastTab = safeStorage('lastTab', v => ['active','completed','expired'].includes(v), 'active');
       document.querySelectorAll('.filter-tab').forEach(b => {
         b.classList.remove('active');
         b.setAttribute('aria-pressed', 'false');
