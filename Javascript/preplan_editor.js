@@ -3,20 +3,30 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
+import { showToast } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('save-plan');
   const warInput = document.getElementById('war-id');
   const planArea = document.getElementById('preplan-json');
+  const jsonWarning = document.getElementById('json-warning');
   const grid = document.getElementById('preplan-grid');
   const fallbackBtn = document.getElementById('fallback-mode');
   const pathBtn = document.getElementById('path-mode');
   const clearPathBtn = document.getElementById('clear-path');
+  const clearFallbackBtn = document.getElementById('clear-fallback');
+  const undoBtn = document.getElementById('undo-plan');
   const scoreDiv = document.getElementById('scoreboard-display');
 
   let editMode = null;
   let channel = null;
   let plan = {};
+  let lastSavedPlan = {};
+
+  function updateModeButtons() {
+    fallbackBtn.classList.toggle('active', editMode === 'fallback');
+    pathBtn.classList.toggle('active', editMode === 'path');
+  }
 
   // ✅ Render the battlefield grid
   function renderGrid() {
@@ -59,6 +69,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     planArea.value = JSON.stringify(plan, null, 2);
   }
 
+  function validatePlan(p) {
+    if (p.fallback_point) {
+      const f = p.fallback_point;
+      if (typeof f.x !== 'number' || typeof f.y !== 'number') return false;
+    }
+    if (p.patrol_path) {
+      if (!Array.isArray(p.patrol_path)) return false;
+      for (const node of p.patrol_path) {
+        if (typeof node.x !== 'number' || typeof node.y !== 'number') return false;
+      }
+    }
+    return true;
+  }
+
   // ✅ Load the pre-existing plan for this war
   async function loadPlan() {
     const warId = warInput.value;
@@ -67,6 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch(`/api/alliance-wars/preplan?alliance_war_id=${warId}`);
       const data = await res.json();
       plan = data.plan || {};
+      lastSavedPlan = JSON.parse(JSON.stringify(plan));
       updatePlanArea();
       renderGrid();
     } catch (err) {
@@ -90,10 +115,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         .from('alliance_war_scores')
         .select('attacker_score, defender_score')
         .eq('alliance_war_id', warId)
-        .single();
+        .maybeSingle();
       if (!error) updateScoreDisplay(data);
 
-      if (channel) await channel.unsubscribe();
+      if (channel?.unsubscribe) await channel.unsubscribe();
 
       channel = supabase
         .channel('war_scores_' + warId)
@@ -114,10 +139,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ✅ Button bindings
-  fallbackBtn.addEventListener('click', () => { editMode = 'fallback'; });
-  pathBtn.addEventListener('click', () => { editMode = 'path'; });
+  fallbackBtn.addEventListener('click', () => {
+    editMode = 'fallback';
+    updateModeButtons();
+  });
+  pathBtn.addEventListener('click', () => {
+    editMode = 'path';
+    updateModeButtons();
+  });
   clearPathBtn.addEventListener('click', () => {
     plan.patrol_path = [];
+    renderGrid();
+    updatePlanArea();
+  });
+  clearFallbackBtn.addEventListener('click', () => {
+    delete plan.fallback_point;
+    renderGrid();
+    updatePlanArea();
+  });
+  undoBtn.addEventListener('click', () => {
+    plan = JSON.parse(JSON.stringify(lastSavedPlan));
     renderGrid();
     updatePlanArea();
   });
@@ -125,17 +166,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ✅ Listen for manual JSON edits
   planArea.addEventListener('input', () => {
     try {
-      plan = JSON.parse(planArea.value || '{}');
+      const parsed = JSON.parse(planArea.value || '{}');
+      if (!validatePlan(parsed)) throw new Error('invalid');
+      plan = parsed;
+      jsonWarning.style.display = 'none';
       renderGrid();
     } catch {
-      // Invalid JSON in textarea - ignore and wait for valid parse
+      jsonWarning.textContent = 'Invalid JSON';
+      jsonWarning.style.display = 'block';
     }
   });
 
-  // ✅ Save the preplan to backend
+  // ✅ Save the preplan to backend with simple debounce
+  let saveCooldown = false;
   saveBtn.addEventListener('click', async () => {
+    if (saveCooldown) return;
+    saveCooldown = true;
+    saveBtn.disabled = true;
+    setTimeout(() => (saveCooldown = false), 1000);
     const warId = parseInt(warInput.value, 10);
-    if (!warId) return alert('Enter valid War ID');
+    if (!warId) {
+      showToast('Enter valid War ID', 'error');
+      saveBtn.disabled = false;
+      return;
+    }
+    if (!validatePlan(plan)) {
+      showToast('Plan JSON invalid', 'error');
+      saveBtn.disabled = false;
+      return;
+    }
 
     try {
       const res = await fetch('/api/alliance-wars/preplan/submit', {
@@ -148,10 +207,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (!res.ok) throw new Error('Save failed');
-      alert('✅ Plan saved!');
+      lastSavedPlan = JSON.parse(JSON.stringify(plan));
+      showToast('Plan saved!', 'success');
     } catch (err) {
       console.error('❌ Error saving plan:', err);
-      alert('❌ Save failed.');
+      showToast('Save failed', 'error');
+    } finally {
+      saveBtn.disabled = false;
     }
   });
 
@@ -164,4 +226,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ✅ Initial run
   await loadPlan();
   await loadScore();
+  updateModeButtons();
 });
