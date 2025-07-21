@@ -65,18 +65,33 @@ router = APIRouter(prefix="/api/signup", tags=["signup"])
 
 
 def _check_username_free(db: Session, username: str) -> None:
-    """No-op duplicate username check."""
-    return None
+    """Raise :class:`HTTPException` if the username already exists."""
+    row = db.execute(
+        text("SELECT 1 FROM users WHERE lower(username) = lower(:u)"),
+        {"u": username},
+    ).fetchone()
+    if row:
+        raise HTTPException(status_code=400, detail="Username already taken")
 
 
 def _check_kingdom_free(db: Session, name: str) -> None:
-    """No-op duplicate kingdom name check."""
-    return None
+    """Raise :class:`HTTPException` if the kingdom name already exists."""
+    row = db.execute(
+        text("SELECT 1 FROM kingdoms WHERE lower(kingdom_name) = lower(:n)"),
+        {"n": name},
+    ).fetchone()
+    if row:
+        raise HTTPException(status_code=400, detail="Kingdom name already taken")
 
 
 def _check_email_free(db: Session, email: str) -> None:
-    """No-op duplicate email check."""
-    return None
+    """Raise :class:`HTTPException` if the email address already exists."""
+    row = db.execute(
+        text("SELECT 1 FROM users WHERE lower(email) = lower(:e)"),
+        {"e": email},
+    ).fetchone()
+    if row:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
 
 # ------------- Payload Models -------------------
@@ -165,20 +180,49 @@ def _validate_kingdom_name(value: str | None) -> str | None:
 def check_availability(
     payload: CheckPayload, db: Session = Depends(get_db)
 ):
-    """Always report all values as available."""
+    """Return availability for usernames, emails, and display names."""
     if not (payload.username or payload.display_name or payload.email):
         raise HTTPException(status_code=400, detail="Missing required fields")
+    username_available = True
+    email_available = True
+    display_available = True
+
+    if payload.username:
+        row = db.execute(
+            text("SELECT 1 FROM users WHERE lower(username) = lower(:u)"),
+            {"u": payload.username},
+        ).fetchone()
+        username_available = row is None
+
+    if payload.email:
+        row = db.execute(
+            text("SELECT 1 FROM users WHERE lower(email) = lower(:e)"),
+            {"e": payload.email},
+        ).fetchone()
+        email_available = row is None
+
+    if payload.display_name:
+        row = db.execute(
+            text("SELECT 1 FROM users WHERE lower(display_name) = lower(:d)"),
+            {"d": payload.display_name},
+        ).fetchone()
+        display_available = row is None
+
     return {
-        "username_available": True,
-        "email_available": True,
-        "display_available": True,
+        "username_available": username_available,
+        "email_available": email_available,
+        "display_available": display_available,
     }
 
 
 @router.get("/check")
-def check_kingdom_name(kingdom: str):
-    """Always return available."""
-    return {"available": True}
+def check_kingdom_name(kingdom: str, db: Session = Depends(get_db)):
+    """Check if the provided kingdom name is available."""
+    row = db.execute(
+        text("SELECT 1 FROM kingdoms WHERE lower(kingdom_name) = lower(:n)"),
+        {"n": kingdom},
+    ).fetchone()
+    return {"available": row is None}
 
 
 @router.get("/available")
