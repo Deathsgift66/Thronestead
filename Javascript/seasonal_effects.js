@@ -3,13 +3,40 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import {
+  escapeHTML,
+  openModal,
+  closeModal,
+  toggleLoading,
+  showToast
+} from './utils.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
+let seasonalChannel;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) return;
   await loadSeasonalEffects(session);
+
+  seasonalChannel = supabase
+    .channel('seasonal_effects')
+    .on('postgres_changes', { event: '*', table: 'seasonal_effects' }, () => {
+      loadSeasonalEffects(session);
+    })
+    .subscribe();
+
+  window.addEventListener('beforeunload', cleanupChannel);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal('forecast-modal');
+  });
 });
+
+function cleanupChannel() {
+  if (seasonalChannel) {
+    supabase.removeChannel(seasonalChannel);
+    seasonalChannel = null;
+  }
+}
 
 // ✅ Load Seasonal Effects Nexus
 async function loadSeasonalEffects(session) {
@@ -26,14 +53,16 @@ async function loadSeasonalEffects(session) {
   Object.entries(ui).forEach(([, el]) => {
     el.innerHTML = `<p>Loading...</p>`;
   });
+  toggleLoading(true);
 
   try {
     const res = await fetch('/api/seasonal-effects', {
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'X-User-ID': session.user.id
       }
     });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const { current, forecast } = await res.json();
 
@@ -46,8 +75,10 @@ async function loadSeasonalEffects(session) {
     startSeasonCountdown(current.ends_at);
 
   } catch (err) {
-    console.error("❌ Error loading Seasonal Effects Nexus:", err);
-    showToast("Failed to load Seasonal Effects Nexus.");
+    console.error('❌ Error loading Seasonal Effects Nexus:', err);
+    showToast('Failed to load Seasonal Effects Nexus.');
+  } finally {
+    toggleLoading(false);
   }
 }
 
@@ -164,9 +195,9 @@ function openForecastModal(season) {
     <p>${escapeHTML(season.lore_text || 'No details')}</p>
   `;
 
-  overlay.classList.remove('hidden');
+  openModal(overlay);
   document.getElementById('close-forecast-modal').onclick = () => {
-    overlay.classList.add('hidden');
+    closeModal(overlay);
   };
 }
 
@@ -182,14 +213,3 @@ function formatTime(seconds) {
 function fmtSigned(val) {
   return (val >= 0 ? '+' : '') + val;
 }
-
-// ✅ Toast Display
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-// ✅ Escape HTML to prevent injection
