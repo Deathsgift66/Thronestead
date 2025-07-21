@@ -4,6 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
+import { clearStoredProgression } from './progressionGlobal.js';
 
 /**
  * Retrieve stored auth token and user from local/session storage.
@@ -83,6 +84,7 @@ export function clearStoredAuth() {
     sessionStorage.removeItem('currentUser');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('authToken');
+    clearStoredProgression();
     localStorage.setItem('thronesteadLogout', Date.now().toString()); // broadcast logout
   } catch (err) {
     console.warn('⚠️ Failed to clear auth:', err);
@@ -163,6 +165,7 @@ window.addEventListener('storage', e => {
     sessionStorage.removeItem('currentUser');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('authToken');
+    clearStoredProgression();
 
     if (!location.pathname.endsWith('login.html')) {
       window.location.href = 'login.html';

@@ -5,14 +5,12 @@
 // ✅ Fetch progression summary from backend API and store globally + in sessionStorage
 import { getEnvVar } from './env.js';
 const API_BASE_URL = getEnvVar('API_BASE_URL');
-import { authHeaders } from './auth.js';
+import { authFetch } from './utils.js';
 
 export async function fetchAndStorePlayerProgression(userId) {
   try {
-    const headers = await authHeaders();
-    headers['X-User-ID'] = userId;
-    const res = await fetch(`${API_BASE_URL}/api/progression/summary`, {
-      headers
+    const res = await authFetch(`${API_BASE_URL}/api/progression/summary`, {
+      headers: { 'X-User-ID': userId }
     });
 
     if (res.status === 404) {
@@ -66,7 +64,15 @@ export function loadPlayerProgressionFromStorage() {
     }
   } catch (err) {
     console.error('❌ Failed to parse stored progression:', err);
-    window.playerProgression = null;
+    clearStoredProgression();
+  }
+}
+
+export function clearStoredProgression() {
+  window.playerProgression = null;
+  try {
     sessionStorage.removeItem('playerProgression');
+  } catch (e) {
+    console.warn('⚠️ Failed to clear progression:', e);
   }
 }
