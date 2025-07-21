@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: offlineFallback.js
-// Version:  7/1/2025 10:38
+// Version:  7/21/2025
 // Developer: Deathsgift66
 // Utilities for caching kingdom data and enabling fallback mode
 
@@ -53,4 +53,27 @@ export function deactivateFallbackMode() {
   document.querySelectorAll('button, input[type="submit"]').forEach(el => {
     el.disabled = false;
   });
+}
+
+/**
+ * Remove any cached kingdom overview data from storage.
+ */
+export function clearKingdomCache() {
+  try {
+    localStorage.removeItem('cachedKingdomOverview');
+  } catch (err) {
+    console.error('Failed to clear kingdom cache:', err);
+  }
+}
+
+let handlersInit = false;
+
+/**
+ * Install global online/offline handlers to toggle fallback mode.
+ */
+export function setupOfflineHandlers() {
+  if (handlersInit) return;
+  handlersInit = true;
+  window.addEventListener('offline', activateFallbackMode);
+  window.addEventListener('online', deactivateFallbackMode);
 }

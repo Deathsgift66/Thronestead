@@ -301,43 +301,12 @@ Developer: Deathsgift66
 
     import { supabase } from '/Javascript/supabaseClient.js';
     import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from '/Javascript/progressionGlobal.js';
-
-    function saveKingdomCache(data) {
-      try {
-        localStorage.setItem('cachedKingdomOverview', JSON.stringify(data));
-      } catch (err) {
-        console.error('Failed to cache kingdom data:', err);
-      }
-    }
-
-    function loadKingdomCache() {
-      try {
-        const raw = localStorage.getItem('cachedKingdomOverview');
-        return raw ? JSON.parse(raw) : null;
-      } catch (err) {
-        console.error('Failed to parse kingdom cache:', err);
-        return null;
-      }
-    }
-
-    function activateFallbackMode() {
-      const banner = document.getElementById('fallback-banner');
-      if (banner) banner.hidden = false;
-      document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', e => e.preventDefault());
-      });
-      document.querySelectorAll('button, input[type="submit"]').forEach(el => {
-        el.disabled = true;
-      });
-    }
-
-    function deactivateFallbackMode() {
-      const banner = document.getElementById('fallback-banner');
-      if (banner) banner.hidden = true;
-      document.querySelectorAll('button, input[type="submit"]').forEach(el => {
-        el.disabled = false;
-      });
-    }
+    import {
+      saveKingdomCache,
+      loadKingdomCache,
+      activateFallbackMode,
+      setupOfflineHandlers,
+    } from '/Javascript/offlineFallback.js';
 
     let currentUser = null;
     let currentSession = null;
@@ -347,6 +316,8 @@ Developer: Deathsgift66
       if (!session) return window.location.href = "login.html";
       currentUser = session.user;
       currentSession = session;
+
+      setupOfflineHandlers();
 
       loadPlayerProgressionFromStorage();
       if (!window.playerProgression) await fetchAndStorePlayerProgression(currentUser.id);
