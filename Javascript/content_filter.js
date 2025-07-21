@@ -4,7 +4,7 @@
 import bannedWords from '../banned_words.json';
 
 // Normalize and flatten banned word list for quick lookup
-const bannedSet = new Set(bannedWords.map(word => word.toLowerCase()));
+const bannedSet = new Set(bannedWords.map(word => normalizeInput(word)));
 
 // Utility: Normalize user input (remove punctuation, lowercased, etc.)
 function normalizeInput(str) {
