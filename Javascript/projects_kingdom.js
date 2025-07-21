@@ -281,4 +281,3 @@ function formatTime(seconds) {
   return `${h}h ${m}m ${s}s`;
 }
 
-// ✅ Basic HTML escape
