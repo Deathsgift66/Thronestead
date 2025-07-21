@@ -25,12 +25,14 @@ def _optional_user(
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
 ) -> str | None:
-    """Return user ID if valid headers are provided."""
+    """Return the user ID if the headers contain valid credentials."""
     if authorization:
         try:
             return verify_jwt_token(authorization=authorization)
         except HTTPException:
             return None
+    if x_user_id:
+        return x_user_id
     return None
 
 
@@ -149,7 +151,7 @@ def get_leaderboard(
         result = (
             supabase.table(table)
             .select("*")
-            .order("rank", asc=True)
+            .order("rank")
             .limit(limit)
             .execute()
         )
