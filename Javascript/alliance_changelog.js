@@ -221,3 +221,5 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('beforeunload', () => clearTimeout(fetchTimer));
 });
 
+export { applyFilters, fetchChangelog };
+
