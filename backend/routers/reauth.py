@@ -44,12 +44,15 @@ def reauthenticate(
         raise HTTPException(status_code=403, detail="Account banned")
 
     row = db.execute(
-        text("SELECT email FROM users WHERE user_id = :uid"),
+        text("SELECT email, status FROM users WHERE user_id = :uid"),
         {"uid": user_id},
     ).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
-    email = row[0]
+    email, status = row
+
+    if status and status.lower() == "suspicious" and not payload.otp:
+        raise HTTPException(status_code=401, detail="2FA required")
 
     try:
         sb = get_supabase_client()
