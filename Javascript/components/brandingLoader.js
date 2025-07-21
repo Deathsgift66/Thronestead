@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const targets = document.querySelectorAll('.alliance-branding');
   if (!targets.length) return;
 
-  const BRANDING_PATH = new URL('../public/alliance_branding.html', import.meta.url).pathname;
+  // Resolve to /public/alliance_branding.html regardless of nesting
+  const BRANDING_PATH = new URL('../../public/alliance_branding.html', import.meta.url).pathname;
 
   fetch(BRANDING_PATH)
     .then(res => res.text())
