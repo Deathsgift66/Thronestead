@@ -9,10 +9,9 @@ from __future__ import annotations
 import logging
 
 from services.sqlalchemy_support import Session, text
+from services.constants import XP_PER_LEVEL
 
 logger = logging.getLogger(__name__)
-
-XP_PER_LEVEL = 100
 
 
 def award_unit_xp(
