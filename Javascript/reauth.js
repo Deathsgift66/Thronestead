@@ -91,7 +91,7 @@ async function showReauthModal() {
           headers,
           body: JSON.stringify({
             password: pwdInput.value,
-            code: codeInput.value
+            otp: codeInput.value
           })
         });
         if (!data?.token || !data?.expires_in) throw new Error('Invalid server response');
