@@ -43,7 +43,7 @@ def test_get_regions_success():
     client = DummyClient({"region_catalogue": DummyTable(data=rows)})
     region.get_supabase_client = lambda: client
     result = region.get_regions()
-    assert result["regions"][0]["region_code"] == "north"
+    assert result[0]["region_code"] == "north"
 
 
 def test_get_regions_error():
