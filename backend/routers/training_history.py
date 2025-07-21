@@ -19,6 +19,8 @@ from sqlalchemy.orm import Session
 from services.training_history_service import fetch_history, record_training
 
 from ..database import get_db
+from ..security import require_user_id
+from .progression_router import get_kingdom_id
 
 # Define router prefix and grouping tag
 router = APIRouter(prefix="/api/training-history", tags=["training_history"])
@@ -51,13 +53,15 @@ class TrainingPayload(BaseModel):
     response_description="List of recent training records",
 )
 def get_history(
-    kingdom_id: int = Query(..., description="Kingdom ID to fetch history for"),
+    user_id: str = Depends(require_user_id),
     limit: int = Query(50, ge=1, le=500, description="Max number of entries to return"),
     db: Session = Depends(get_db),
 ):
     """
-    Retrieve the most recent troop training history records for a given kingdom.
+    Retrieve the most recent troop training history records for the authenticated
+    user's kingdom.
     """
+    kingdom_id = get_kingdom_id(db, user_id)
     try:
         records = fetch_history(db, kingdom_id, limit)
     except Exception as e:
@@ -73,10 +77,16 @@ def get_history(
     summary="Record training history",
     response_description="ID of created history record",
 )
-def create_history(payload: TrainingPayload, db: Session = Depends(get_db)):
-    """
-    Record a new troop training history event for a given kingdom.
-    """
+def create_history(
+    payload: TrainingPayload,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Record a new troop training history event for the authenticated kingdom."""
+    kingdom_id = get_kingdom_id(db, user_id)
+    if payload.kingdom_id != kingdom_id:
+        raise HTTPException(status_code=403, detail="Kingdom ID mismatch")
+
     try:
         history_id = record_training(
             db,
