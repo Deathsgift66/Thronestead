@@ -197,6 +197,55 @@ def alt_propose_treaty(
     return propose_treaty(payload, user_id, db)
 
 
+@alt_router.get("")
+def alt_get_treaties(
+    user_id: str = Depends(require_user_id), db: Session = Depends(get_db)
+):
+    """Alias for :func:`get_my_treaties` using REST-style path."""
+    return get_my_treaties(user_id, db)
+
+
+@alt_router.post("/respond")
+def alt_respond_to_treaty(
+    payload: RespondPayload,
+    user_id: str = Depends(require_active_user_id),
+    db: Session = Depends(get_db),
+):
+    """Alias for :func:`respond_to_treaty` using REST-style path."""
+    return respond_to_treaty(payload, user_id, db)
+
+
+@alt_router.post("/cancel")
+def alt_cancel_treaty(
+    treaty_id: int,
+    user_id: str = Depends(require_active_user_id),
+    db: Session = Depends(get_db),
+):
+    """Cancel a treaty via REST-style path."""
+    payload = RespondPayload(treaty_id=treaty_id, action="cancel")
+    return respond_to_treaty(payload, user_id, db)
+
+
+@alt_router.post("/renew")
+def alt_renew_treaty(
+    treaty_id: int,
+    user_id: str = Depends(require_active_user_id),
+    db: Session = Depends(get_db),
+):
+    """Alias for :func:`renew_treaty` using REST-style path."""
+    return renew_treaty(treaty_id, user_id, db)
+
+
+@alt_router.get("/{treaty_id}")
+def alt_view_treaty(
+    treaty_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    """Alias for :func:`view_treaty` using REST-style path."""
+    return view_treaty(treaty_id, user_id, db)
+
+
 @router.post("/respond")
 def respond_to_treaty(
     payload: RespondPayload,
