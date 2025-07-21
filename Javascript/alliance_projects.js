@@ -4,46 +4,203 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
+import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/csrf.js';
+
+initCsrf();
+setInterval(rotateCsrfToken, 15 * 60 * 1000);
+
+const DEFAULT_BANNER = '/Assets/banner.png';
+
+function logError(context, err) {
+  if (process.env.NODE_ENV === 'development') {
+    console.error(`❌ ${context}`, err);
+  } else {
+    try {
+      supabase.from('client_errors').insert({
+        context,
+        message: err?.message || String(err),
+        stack: err?.stack || null
+      });
+    } catch (e) {
+      console.error('error reporting failed', e);
+    }
+  }
+}
+
+
+async function applyAllianceAppearance() {
+  try {
+    const { data: { session } = {} } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const { alliance } = await authJsonFetch('/api/alliance-home/details', {
+      headers: await authHeaders()
+    });
+    if (!alliance) return;
+
+    const banner = alliance.banner || DEFAULT_BANNER;
+    const emblem = alliance.emblem_url;
+
+    const og = document.querySelector('meta[property="og:image"]');
+    if (og) og.setAttribute('content', banner);
+
+    document.querySelectorAll('.alliance-banner').forEach(img => {
+      img.src = banner;
+    });
+
+    if (emblem) {
+      document.querySelectorAll('.alliance-emblem').forEach(img => {
+        img.src = emblem;
+      });
+    }
+
+    document.querySelectorAll('.alliance-bg').forEach(el => {
+      el.style.backgroundImage = `url(${banner})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundAttachment = 'fixed';
+      el.style.backgroundRepeat = 'no-repeat';
+      el.style.backgroundPosition = 'center';
+    });
+
+  } catch (err) {
+    logError('Failed to apply alliance appearance', err);
+    document.querySelectorAll('.alliance-banner').forEach(img => {
+      img.src = DEFAULT_BANNER;
+    });
+  }
+}
+
+let userContext = JSON.parse(sessionStorage.getItem('userContext') || 'null');
+async function loadUserContext() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const ctx = await authJsonFetch(`/api/player/context?user_id=${user.id}`);
+      userContext = { ...(userContext || {}), ...ctx };
+      sessionStorage.setItem('userContext', JSON.stringify(userContext));
+    }
+  } catch (err) {
+    logError('Failed to load user context', err);
+  }
+}
+
+import { loadPlayerProgressionFromStorage } from './progressionGlobal.js';
+
+export function renderProgressionBanner(target = 'body') {
+  loadPlayerProgressionFromStorage();
+  const prog = window.playerProgression;
+  if (!prog) return;
+
+  let bar = document.getElementById('progression-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'progression-bar';
+    bar.className = 'progression-bar';
+    const container = document.querySelector(target);
+    if (container) container.prepend(bar);
+  }
+
+  bar.innerHTML = `
+    <span><strong>🏰 Castle:</strong> Lv ${prog.castleLevel}</span>
+    <span><strong>🏘️ Villages:</strong> ${prog.maxVillages}</span>
+    <span><strong>👑 Nobles:</strong> ${prog.availableNobles}/${prog.totalNobles}</span>
+    <span><strong>🛡️ Knights:</strong> ${prog.availableKnights}/${prog.totalKnights}</span>
+    <span><strong>⚔️ Troops:</strong> ${prog.troopSlots.used}/${prog.troopSlots.used + prog.troopSlots.available}</span>
+    ${prog.allianceLevel ? `<span><strong>🤝 Alliance:</strong> Lv ${prog.allianceLevel}</span>` : ''}
+    ${prog.projectMilestones ? `<span><strong>🏗️ Milestones:</strong> ${prog.projectMilestones}</span>` : ''}
+    ${prog.unlockRequirements ? `<span><strong>🔓 Unlocks:</strong> ${prog.unlockRequirements}</span>` : ''}
+  `;
+}
+
+
+
 import {
   escapeHTML,
   openModal,
-  showToast,
+  closeModal,
   authHeaders,
   authJsonFetch,
-  debounce
+  debounce,
+  
 } from './utils.js';
 import { RESOURCE_KEYS } from './resourceKeys.js';
 
 let projectChannel = null;
 const loadedTabs = { completed: false, catalogue: false };
 let cachedAlliance = null;
+let startingProject = false;
+let availableData = [];
+let completedData = [];
+let catalogueData = [];
+let contribList = [];
+let contribPage = 0;
+const CONTRIB_PAGE_SIZE = 50;
+let realtimeRetries = 0;
+const MAX_REALTIME_RETRIES = 5;
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function main() {
+  renderProgressionBanner();
+  await applyAllianceAppearance();
+  await loadUserContext();
   setupTabs();
   await Promise.all([loadAvailable(), loadInProgress()]);
   await setupRealtimeProjects();
-  setInterval(loadAllLists, 30000); // Auto-refresh
-  window.addEventListener('beforeunload', () => {
-    if (projectChannel) supabase.removeChannel(projectChannel);
+  setInterval(loadAllLists, 30000);
+  window.addEventListener('beforeunload', async () => {
+    if (projectChannel) await projectChannel.unsubscribe();
+    projectChannel = null;
+    sessionStorage.removeItem('completedProjects');
+    sessionStorage.removeItem('catalogueProjects');
   });
 
-  supabase.auth.onAuthStateChange(() => {
+  supabase.auth.onAuthStateChange(async () => {
     cachedAlliance = null;
+    sessionStorage.removeItem('completedProjects');
+    sessionStorage.removeItem('catalogueProjects');
     if (projectChannel) {
-      supabase.removeChannel(projectChannel);
+      await projectChannel.unsubscribe();
       projectChannel = null;
     }
+    await setupRealtimeProjects();
   });
-});
 
-// ----------------------------
-// 🔁 Realtime Sync
-// ----------------------------
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && ['ArrowLeft', 'ArrowRight'].includes(e.key) &&
+        !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+      const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+      const idx = tabs.findIndex(t => t.classList.contains('active'));
+      const next = e.key === 'ArrowLeft'
+        ? (idx - 1 + tabs.length) % tabs.length
+        : (idx + 1) % tabs.length;
+      tabs[next].focus();
+      tabs[next].click();
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeContribModal();
+  });
+
+  const modal = document.getElementById('contrib-modal');
+  modal?.addEventListener('click', e => {
+    if (e.target === modal) closeContribModal();
+  });
+  document.getElementById('contrib-modal-close')?.addEventListener('click', closeContribModal);
+}
+
+document.addEventListener('DOMContentLoaded', main);
+
 async function setupRealtimeProjects() {
   const { allianceId } = await getAllianceInfo();
   if (!allianceId) return;
 
-  if (projectChannel) supabase.removeChannel(projectChannel);
+  if (projectChannel) await projectChannel.unsubscribe();
+  projectChannel = null;
+  realtimeRetries = 0;
 
   projectChannel = supabase
     .channel(`realtime:alliance_projects_${allianceId}`)
@@ -53,12 +210,21 @@ async function setupRealtimeProjects() {
       table: 'alliance_projects',
       filter: `alliance_id=eq.${allianceId}`
     }, () => loadAllLists())
+    .on('error', err => {
+      logError('realtime error', err);
+      retryRealtime();
+    })
+    .on('close', retryRealtime)
     .subscribe();
 }
 
-// ----------------------------
-// 🧭 Tab UI
-// ----------------------------
+function retryRealtime() {
+  if (realtimeRetries >= MAX_REALTIME_RETRIES) return;
+  const delay = Math.min(1000 * 2 ** realtimeRetries, 30000);
+  realtimeRetries++;
+  setTimeout(setupRealtimeProjects, delay);
+}
+
 const debouncedLoadCompleted = debounce(async () => {
   await loadCompleted();
   loadedTabs.completed = true;
@@ -71,9 +237,13 @@ const debouncedLoadCatalogue = debounce(async () => {
 function setupTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('tabindex', '-1');
+      });
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
+      btn.setAttribute('tabindex', '0');
       document.getElementById(btn.dataset.tab)?.classList.add('active');
 
       if (btn.dataset.tab === 'completed-tab' && !loadedTabs.completed) {
@@ -94,26 +264,33 @@ function setupTabs() {
       }
     });
   });
+  document.getElementById('available-sort')?.addEventListener('change', debounce(() => renderAvailable(availableData), 250));
+  document.getElementById('completed-sort')?.addEventListener('change', debounce(() => renderCompleted(completedData), 250));
 }
 
-// ----------------------------
-// 📥 Load All Tabs
-// ----------------------------
+function setLiveMessage(msg) {
+  const live = document.getElementById('project-updates');
+  if (!live) return;
+  live.textContent = msg;
+  setTimeout(() => {
+    if (live.textContent === msg) live.textContent = '';
+  }, 3000);
+}
+
 async function loadAllLists() {
   const tasks = [loadAvailable(), loadInProgress()];
   if (loadedTabs.completed) tasks.push(loadCompleted());
   if (loadedTabs.catalogue) tasks.push(loadCatalogue());
   await Promise.all(tasks);
-  const live = document.getElementById('project-updates');
-  if (live) live.textContent = 'Project data updated.';
+  setLiveMessage('Project data updated!');
 }
 
 async function getAllianceInfo(force = false) {
   if (cachedAlliance && !force) return cachedAlliance;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  if (!user?.id || typeof user.id !== 'string') {
     window.location.href = 'login.html';
-    throw new Error('Unauthorized');
+    throw new Error('User session lost or invalid.');
   }
   const { data, error } = await supabase
     .from('users')
@@ -125,47 +302,57 @@ async function getAllianceInfo(force = false) {
   return cachedAlliance;
 }
 
-// ----------------------------
-// ✅ Available Projects
-// ----------------------------
 async function loadAvailable() {
   const container = document.getElementById('available-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  renderSkeletons(container);
 
   try {
     const { allianceId } = await getAllianceInfo();
     const json = await authJsonFetch(`/api/alliance/projects/available?alliance_id=${allianceId}`);
-    renderAvailable(json.projects || []);
-  } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadAvailable', err);
+    if (!json.projects) {
+      container.innerHTML = '<p class="empty-state">No projects returned.</p>';
+      availableData = [];
+    } else {
+      availableData = json.projects;
     }
+    renderAvailable(availableData);
+  } catch (err) {
+    logError('loadAvailable', err);
     container.innerHTML = '<p>Failed to load available projects.</p>';
   }
 }
 
 function renderAvailable(list) {
   const container = document.getElementById('available-projects-list');
-  container.innerHTML = list.length
+  const sort = document.getElementById('available-sort')?.value || 'name';
+  const sorted = sortProjects(list, sort);
+  container.innerHTML = sorted.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
 
-  if (!window.user) {
+  availableData = list;
+
+  if (!userContext) {
     console.warn('⚠️ No user context found. Permissions may be unavailable.');
   }
-  const canStart = window.user?.permissions?.includes('can_manage_projects');
-  list.forEach(p => {
+  const canStart = userContext?.permissions?.includes('can_manage_projects');
+  sorted.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card';
     card.setAttribute('role', 'region');
     card.setAttribute('aria-label', `Project: ${p.project_name}`);
+    const cost = formatCostFromColumns(p);
+    const costId = `cost-${p.project_key}`;
+    const timeId = `time-${p.project_key}`;
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)}</h3>
       <p>${escapeHTML(p.description || '')}</p>
-      <p>Costs: ${formatCostFromColumns(p)}</p>
-      <p>Build Time: ${formatTime(p.build_time_seconds || 0)}</p>
-      ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}">Start Project</button>` : ''}
+      <dl>
+        <div><dt>Costs</dt><dd id="${costId}" class="project-cost" title="${cost}">${cost}</dd></div>
+        <div><dt>Build Time</dt><dd id="${timeId}">${formatTime(p.build_time_seconds || 0)}</dd></div>
+      </dl>
+      ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}" aria-describedby="${costId} ${timeId}">Start Project</button>` : ''}
     `;
     container.appendChild(card);
   });
@@ -175,22 +362,17 @@ function renderAvailable(list) {
   });
 }
 
-// ----------------------------
-// 🛠 In Progress Projects
-// ----------------------------
 async function loadInProgress() {
   const container = document.getElementById('in-progress-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  renderSkeletons(container);
 
   try {
     const { allianceId } = await getAllianceInfo();
     const json = await authJsonFetch(`/api/alliance/projects/in_progress?alliance_id=${allianceId}`);
     renderInProgress(json.projects || []);
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadInProgress', err);
-    }
+    logError('loadInProgress', err);
     container.innerHTML = '<p>Failed to load in-progress projects.</p>';
   }
 }
@@ -212,12 +394,14 @@ function renderInProgress(list) {
 
     card.innerHTML = `
       <h3>${escapeHTML(title)}</h3>
-      <progress value="${percent}" max="100"></progress>
+      <div class="progress-bar"><div class="progress-bar-fill" style="width:0%"></div></div>
       <span>${percent}% - ETA ${eta}</span>
       <div class="contrib-summary">Loading...</div>
     `;
 
     container.appendChild(card);
+    const fill = card.querySelector('.progress-bar-fill');
+    requestAnimationFrame(() => { fill.style.width = `${percent}%`; });
     loadContributions(p.project_key, card.querySelector('.contrib-summary'));
   });
 }
@@ -256,40 +440,50 @@ async function loadContributions(key, element) {
       element.appendChild(btn);
     }
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('contributions', err);
-    }
+    logError('contributions', err);
     element.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
 }
 
-// ----------------------------
-// 🏁 Completed Projects
-// ----------------------------
 async function loadCompleted() {
   const container = document.getElementById('completed-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  const cached = sessionStorage.getItem('completedProjects');
+  if (cached) {
+    completedData = JSON.parse(cached);
+    renderCompleted(completedData);
+  } else {
+    renderSkeletons(container);
+  }
 
   try {
     const { allianceId } = await getAllianceInfo();
     const json = await authJsonFetch(`/api/alliance/projects/completed?alliance_id=${allianceId}`);
-    renderCompleted(json.projects || []);
-  } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadCompleted', err);
+    if (!json.projects) {
+      container.innerHTML = '<p class="empty-state">No projects returned.</p>';
+      completedData = [];
+    } else {
+      completedData = json.projects;
     }
+    sessionStorage.setItem('completedProjects', JSON.stringify(completedData));
+    renderCompleted(completedData);
+  } catch (err) {
+    logError('loadCompleted', err);
     container.innerHTML = '<p>Failed to load completed projects.</p>';
   }
 }
 
 function renderCompleted(list) {
   const container = document.getElementById('completed-projects-list');
-  container.innerHTML = list.length
+  const sort = document.getElementById('completed-sort')?.value || 'name';
+  const sorted = sortProjects(list, sort);
+  container.innerHTML = sorted.length
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
 
-  list.forEach(p => {
+  completedData = list;
+
+  sorted.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card completed-project';
     card.setAttribute('role', 'region');
@@ -303,21 +497,29 @@ function renderCompleted(list) {
   });
 }
 
-// ----------------------------
-// 📖 Project Catalogue
-// ----------------------------
 async function loadCatalogue() {
   const container = document.getElementById('catalogue-projects-list');
   if (!container) return;
-  container.innerHTML = '<p>Loading...</p>';
+  const cached = sessionStorage.getItem('catalogueProjects');
+  if (cached) {
+    catalogueData = JSON.parse(cached);
+    renderCatalogue(catalogueData);
+  } else {
+    renderSkeletons(container);
+  }
 
   try {
     const json = await authJsonFetch('/api/alliance/projects/catalogue');
-    renderCatalogue(json.projects || []);
-  } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('loadCatalogue', err);
+    if (!json.projects) {
+      container.innerHTML = '<p class="empty-state">No projects returned.</p>';
+      catalogueData = [];
+    } else {
+      catalogueData = json.projects;
     }
+    sessionStorage.setItem('catalogueProjects', JSON.stringify(catalogueData));
+    renderCatalogue(catalogueData);
+  } catch (err) {
+    logError('loadCatalogue', err);
     container.innerHTML = '<p>Failed to load project catalogue.</p>';
   }
 }
@@ -328,13 +530,15 @@ function renderCatalogue(list) {
     ? ''
     : '<p class="empty-state">No projects found in this category.</p>';
 
+  catalogueData = list;
+
   list.forEach(p => {
     const card = document.createElement('article');
     card.className = 'project-card';
     card.setAttribute('role', 'region');
     card.setAttribute('aria-label', `Project: ${p.project_name}`);
     const status = p.status || 'Available';
-    const statusIcon = status === 'Completed' ? '✅' : status === 'Available' ? '🔓' : '🔒';
+    const statusIcon = status === 'Completed' ? '✅' : status === 'Locked' ? '🔒' : '';
 
     card.innerHTML = `
       <h3>${escapeHTML(p.project_name)} ${statusIcon}</h3>
@@ -343,38 +547,37 @@ function renderCatalogue(list) {
     `;
 
     if (status === 'Locked') card.classList.add('locked');
+    if (status === 'Completed') card.classList.add('completed');
     container.appendChild(card);
   });
 }
 
-// ----------------------------
-// ➕ Start a Project
-// ----------------------------
 async function startProject(projectKey, btn) {
+  if (startingProject) return;
+  startingProject = true;
+  const buttons = document.querySelectorAll('.build-btn');
+  buttons.forEach(b => (b.disabled = true));
   try {
     if (btn) {
-      btn.disabled = true;
       btn.dataset.orig = btn.textContent;
       btn.textContent = 'Starting...';
     }
     const headers = await authHeaders();
-    const json = await authJsonFetch('/api/alliance/projects/start', {
+    await authJsonFetch('/api/alliance/projects/start', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken(), ...headers },
       body: JSON.stringify({ project_key: projectKey })
     });
 
     await loadAllLists();
-    const live = document.getElementById('project-updates');
-    if (live) live.textContent = 'Project started successfully.';
+    setLiveMessage('Project started successfully.');
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('startProject', err);
-    }
-    showToast('❌ Failed to start project.', 'error');
+    logError('startProject', err);
+    alert('❌ Failed to start project.');
   } finally {
+    startingProject = false;
+    buttons.forEach(b => (b.disabled = false));
     if (btn) {
-      btn.disabled = false;
       btn.textContent = btn.dataset.orig || 'Start Project';
       delete btn.dataset.orig;
     }
@@ -390,28 +593,58 @@ async function openContribModal(key) {
   if (listEl) listEl.innerHTML = 'Loading...';
   try {
     const data = await authJsonFetch(`/api/alliance/projects/contributions?project_key=${key}`);
-    const list = data.contributions || [];
-    listEl.innerHTML = list
-      .map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`)
-      .join('') || '<p class="empty-state">No contributions.</p>';
-  } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('openContribModal', err);
+    contribList = data.contributions || [];
+    contribPage = 0;
+    if (contribList.length === 0) {
+      listEl.innerHTML = '<p class="empty-state">No contributions.</p>';
+    } else {
+      renderContribPage();
     }
+  } catch (err) {
+    logError('openContribModal', err);
     if (listEl) listEl.innerHTML = '<p class="empty-state">Failed to load.</p>';
   }
   openModal(modal);
 }
 
-// ----------------------------
-// 🧮 Utility
-// ----------------------------
+function closeContribModal() {
+  contribList = [];
+  closeModal('contrib-modal');
+}
+
+function renderContribPage() {
+  const modal = document.getElementById('contrib-modal');
+  const listEl = modal.querySelector('.modal-list');
+  const nav = modal.querySelector('.modal-pagination');
+  if (!listEl || !Array.isArray(contribList)) return;
+  const start = contribPage * CONTRIB_PAGE_SIZE;
+  const end = start + CONTRIB_PAGE_SIZE;
+  const pageItems = contribList.slice(start, end);
+  listEl.innerHTML = pageItems
+    .map(r => `<div>${escapeHTML(r.player_name)} - ${r.amount}</div>`)
+    .join('');
+  const totalPages = Math.ceil(contribList.length / CONTRIB_PAGE_SIZE) || 1;
+  if (nav) {
+    nav.innerHTML = `
+      <button class="btn prev-btn" ${contribPage === 0 ? 'disabled' : ''}>Prev</button>
+      <span>${contribPage + 1} / ${totalPages}</span>
+      <button class="btn next-btn" ${contribPage >= totalPages - 1 ? 'disabled' : ''}>Next</button>
+    `;
+    nav.querySelector('.prev-btn')?.addEventListener('click', () => {
+      if (contribPage > 0) { contribPage--; renderContribPage(); }
+    });
+    nav.querySelector('.next-btn')?.addEventListener('click', () => {
+      if (contribPage < totalPages - 1) { contribPage++; renderContribPage(); }
+    });
+  }
+}
+
 function formatTime(seconds) {
   if (seconds === 0) return 'Instant';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-  return `${h ? `${h}h` : ''} ${m ? `${m}m` : ''} ${s ? `${s}s` : ''}`.trim();
+  return `${h ? h + 'h ' : ''}${m ? m + 'm ' : ''}${s ? s + 's' : ''}`.trim();
 }
 
 function formatCostFromColumns(obj) {
@@ -419,4 +652,32 @@ function formatCostFromColumns(obj) {
     .filter(key => typeof obj[key] === 'number' && obj[key] > 0)
     .map(key => `${obj[key]} ${escapeHTML(key.replace(/_cost$/, ''))}`)
     .join(', ') || 'N/A';
+}
+
+function totalCost(obj) {
+  return RESOURCE_KEYS
+    .filter(key => typeof obj[key] === 'number' && obj[key] > 0)
+    .reduce((sum, key) => sum + obj[key], 0);
+}
+
+function sortProjects(list, sortBy) {
+  const key = sortBy || 'name';
+  const sorted = [...list];
+  if (key === 'category') {
+    sorted.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+  } else if (key === 'cost') {
+    sorted.sort((a, b) => totalCost(a) - totalCost(b));
+  } else {
+    sorted.sort((a, b) => (a.project_name || a.name || '').localeCompare(b.project_name || b.name || ''));
+  }
+  return sorted;
+}
+
+function renderSkeletons(container, count = 3) {
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const skel = document.createElement('article');
+    skel.className = 'project-card skeleton';
+    container.appendChild(skel);
+  }
 }
