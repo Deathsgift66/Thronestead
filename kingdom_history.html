@@ -248,9 +248,7 @@ function addTimelineEntry(entry) {
 function addAchievementBadge(rec) {
   const badge = document.createElement('div');
   badge.classList.add('achievement-badge');
-  // rec.name may be undefined; use achievement_code instead
-  badge.textContent = escapeHTML(rec.achievement_code);
-  // TODO: Fetch name from `kingdom_achievement_catalogue` for proper badge name.
+  badge.textContent = escapeHTML(rec.name || rec.achievement_code);
   document.getElementById('achievement-grid').prepend(badge);
 }
 
