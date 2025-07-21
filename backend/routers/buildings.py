@@ -26,6 +26,8 @@ router = APIRouter(prefix="/api/buildings", tags=["buildings"])
 
 # Payload model for construction-related actions
 class BuildingActionPayload(BaseModel):
+    """Payload for building actions."""
+
     village_id: int
     building_id: int
 
@@ -35,6 +37,7 @@ class BuildingActionPayload(BaseModel):
 # -------------------------------
 @router.get("/catalogue")
 def get_catalogue(db: Session = Depends(get_db)):
+    """Return the complete building catalogue."""
     rows = (
         db.execute(text("SELECT * FROM building_catalogue ORDER BY building_id"))
         .mappings()
@@ -52,6 +55,7 @@ def get_village_buildings(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    """List buildings for the village owned by the requester."""
     kingdom_id = get_kingdom_id(db, user_id)
 
     # Verify ownership
@@ -91,6 +95,7 @@ def get_building_info(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    """Fetch catalogue details for a specific building."""
     row = (
         db.execute(
             text("SELECT * FROM building_catalogue WHERE building_id = :bid"),
@@ -110,6 +115,7 @@ def upgrade_build(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    """Begin upgrading a building to the next level."""
     kid = get_kingdom_id(db, user_id)
     owner = db.execute(
         text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
@@ -141,6 +147,7 @@ def reset_build(
     user_id: str = Depends(require_user_id),
     db: Session = Depends(get_db),
 ):
+    """Set a village building's level back to zero."""
     kid = get_kingdom_id(db, user_id)
     owner = db.execute(
         text("SELECT kingdom_id FROM kingdom_villages WHERE village_id = :vid"),
