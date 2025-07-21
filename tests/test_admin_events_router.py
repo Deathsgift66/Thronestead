@@ -8,6 +8,9 @@ class DummyResult:
     def fetchone(self):
         return self._row
 
+    def fetchall(self):
+        return [self._row]
+
 
 class DummyDB:
     def __init__(self):
@@ -21,6 +24,8 @@ class DummyDB:
             return DummyResult((True,))
         if "insert into global_events" in lower:
             return DummyResult((1,))
+        if "from global_events" in lower:
+            return DummyResult((1, "Test", "", None, None, False, None, None))
         return DummyResult()
 
     def commit(self):
@@ -34,3 +39,10 @@ def test_create_event_inserts_and_logs():
     assert res["status"] == "created"
     assert any("insert into global_events" in q[0].lower() for q in db.queries)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
+
+
+def test_list_events_returns_events():
+    db = DummyDB()
+    res = admin_events.list_events(admin_user_id="a1", db=db)
+    assert res["events"][0]["event_id"] == 1
+    assert any("from global_events" in q[0].lower() for q in db.queries)
