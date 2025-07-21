@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: signup.js
-// Version: 7.5.2025.21.00
+// Version: 7.5.2025.22.00
 // Developer: Deathsgift66
 
 /* global hcaptcha */
@@ -76,13 +76,57 @@ function setFormDisabled(disabled) {
   });
 }
 
+let signupForm;
+let usernameEl;
+let emailEl;
+
+async function checkUsernameAvailability() {
+  const name = usernameEl.value.trim();
+  if (!name) {
+    updateAvailabilityUI('username-msg', 'invalid');
+    return;
+  }
+  if (!validateUsername(name) || containsBannedWord(name)) {
+    updateAvailabilityUI('username-msg', 'invalid');
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/signup/available?kingdom_name=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    updateAvailabilityUI('username-msg', data.available);
+  } catch (err) {
+    console.error('Failed to check username:', err);
+    updateAvailabilityUI('username-msg', false);
+  }
+}
+
+async function checkEmailAvailability() {
+  const email = emailEl.value.trim();
+  if (!email) {
+    updateAvailabilityUI('email-msg', 'invalid');
+    return;
+  }
+  if (!validateEmail(email)) {
+    updateAvailabilityUI('email-msg', 'invalid');
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/signup/available?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    updateAvailabilityUI('email-msg', data.available);
+  } catch (err) {
+    console.error('Failed to check email:', err);
+    updateAvailabilityUI('email-msg', false);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  const signupForm = document.getElementById('signup-form');
-  const usernameEl = document.getElementById('kingdom_name');
-  const emailEl = document.getElementById('email');
+  signupForm = document.getElementById('signup-form');
+  usernameEl = document.getElementById('kingdom_name');
+  emailEl = document.getElementById('email');
   const signupButton = signupForm.querySelector('button[type="submit"]');
-  usernameEl.addEventListener('input', () => {});
-  emailEl.addEventListener('blur', () => {});
+  usernameEl.addEventListener('input', checkUsernameAvailability);
+  emailEl.addEventListener('blur', checkEmailAvailability);
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleSignup(signupButton);
@@ -114,8 +158,7 @@ async function handleSignup(button) {
   toggleLoading(true);
 
   try {
-    // Skip availability checks
-
+    // Captcha
     let captchaToken = 'test';
     if (window.hcaptcha && typeof hcaptcha.getResponse === 'function') {
       captchaToken = hcaptcha.getResponse();
