@@ -18,6 +18,7 @@ async function fetchJsonInternal(fetcher, url, options, timeoutMs) {
   try {
     const res = await fetcher(url, {
       credentials: options.credentials || 'include',
+      referrerPolicy: options.referrerPolicy || 'strict-origin-when-cross-origin',
       ...options,
       signal: controller.signal
     });
