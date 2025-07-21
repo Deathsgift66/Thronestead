@@ -142,3 +142,11 @@ def test_invalid_ts():
     with pytest.raises(HTTPException) as exc:
         ac.get_alliance_changelog(ts="abc", user_id="u1")
     assert exc.value.status_code == 400
+
+
+def test_zulu_time_formats():
+    tables = {"users": [{"user_id": "u1"}], "alliance_members": [{"alliance_id": 1}]}
+    ac.get_supabase_client = lambda: DummyClient(tables)
+    # Should not raise for ISO timestamps with trailing 'Z'
+    res = ac.get_alliance_changelog(start="2025-01-01T00:00:00Z", end="2025-01-02T23:59:59Z", user_id="u1")
+    assert "logs" in res
