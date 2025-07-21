@@ -47,61 +47,13 @@ Developer: Deathsgift66
   <script src="/Javascript/progressionBanner.js" type="module"></script>
   <script type="module">
     import { escapeHTML, openModal, closeModal, authFetch, showToast, toggleLoading } from '/Javascript/utils.js';
+    import '/Javascript/modalFallback.js';
     import { initCsrf, getCsrfToken, rotateCsrfToken } from '/Javascript/security/csrf.js';
 
     initCsrf();
     setInterval(rotateCsrfToken, 15 * 60 * 1000);
 
-    // Fallbacks if utils.js didn't define them
-    if (typeof openModal !== 'function') {
-      window.openModal = id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.remove('hidden');
-        el.setAttribute('aria-hidden', 'false');
-        el.removeAttribute('inert');
-        const focusable = el.querySelectorAll(
-          'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
-        );
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        const trap = e => {
-          if (e.key === 'Escape') {
-            window.closeModal(id);
-          } else if (e.key === 'Tab' && focusable.length) {
-            if (e.shiftKey && document.activeElement === first) {
-              e.preventDefault();
-              last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-              e.preventDefault();
-              first.focus();
-            }
-          }
-        };
-        el.__trapFocus = trap;
-        el.addEventListener('keydown', trap);
-        if (first) first.focus();
-      };
-    }
-    if (typeof closeModal !== 'function') {
-      window.closeModal = id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (el.__trapFocus) el.removeEventListener('keydown', el.__trapFocus);
-        delete el.__trapFocus;
-        el.classList.add('hidden');
-        el.setAttribute('aria-hidden', 'true');
-        el.setAttribute('inert', '');
-      };
-    }
-    if (typeof toggleLoading !== 'function') {
-      window.toggleLoading = show => {
-        const overlay = document.getElementById('loading-overlay');
-        if (!overlay) return;
-        overlay.setAttribute('aria-hidden', String(!show));
-        overlay.style.display = show ? 'flex' : 'none';
-      };
-    }
+
 
     // -------------------- Initialization --------------------
     let lastFocused = null;

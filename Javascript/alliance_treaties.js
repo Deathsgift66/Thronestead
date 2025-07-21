@@ -3,20 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { escapeHTML, openModal, closeModal } from './utils.js';
-
-// Fallbacks if utils.js didn't define them
-if (typeof openModal !== 'function') {
-  window.openModal = id => {
-    const el = document.getElementById(id);
-    el?.classList.remove('hidden');
-    el?.focus();
-  };
-}
-if (typeof closeModal !== 'function') {
-  window.closeModal = id => {
-    document.getElementById(id)?.classList.add('hidden');
-  };
-}
+import './modalFallback.js';
 
 // -------------------- Initialization --------------------
 
