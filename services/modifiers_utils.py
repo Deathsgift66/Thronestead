@@ -44,3 +44,27 @@ def _merge_modifiers(target: dict, mods: dict) -> None:
 def invalidate_cache(kingdom_id: int) -> None:
     """Clear cached modifiers for the given kingdom."""
     _modifier_cache.pop(kingdom_id, None)
+
+
+def merge_modifiers_with_rules(target: dict, mods: dict, rules: dict) -> None:
+    """Merge modifiers applying simple stacking rules."""
+    if not isinstance(mods, dict):
+        return
+
+    for cat, inner in mods.items():
+        if not isinstance(inner, dict):
+            continue
+
+        bucket = target.setdefault(cat, {})
+        rule_cat = rules.get(cat) if isinstance(rules, dict) else None
+
+        for key, val in inner.items():
+            try:
+                num = float(val)
+            except (TypeError, ValueError):
+                continue
+
+            if rule_cat and rule_cat.get(key) == "max":
+                bucket[key] = max(bucket.get(key, 0), num)
+            else:
+                bucket[key] = bucket.get(key, 0) + num

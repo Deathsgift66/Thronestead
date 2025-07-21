@@ -6,7 +6,10 @@
 
 import logging
 import time
-from services.modifiers_utils import parse_json_field
+from services.modifiers_utils import (
+    parse_json_field,
+    merge_modifiers_with_rules,
+)
 
 from fastapi import HTTPException
 
@@ -31,7 +34,11 @@ except ImportError:
     castle_progression_state = {}
 
 from .faith_service import _get_faith_modifiers
-from services.modifiers_utils import _merge_modifiers, invalidate_cache, _modifier_cache
+from services.modifiers_utils import (
+    _merge_modifiers,
+    invalidate_cache,
+    _modifier_cache,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -173,29 +180,6 @@ def check_progression_requirements(
 # Modifier Aggregation
 # --------------------------------------------------------
 
-
-def _merge_modifiers_with_rules(target: dict, mods: dict, rules: dict) -> None:
-    """Merge modifiers applying simple stacking rules with validation."""
-    if not isinstance(mods, dict):
-        return
-
-    for cat, inner in mods.items():
-        if not isinstance(inner, dict):
-            continue
-
-        bucket = target.setdefault(cat, {})
-        rule_cat = rules.get(cat) if isinstance(rules, dict) else None
-
-        for key, val in inner.items():
-            try:
-                num = float(val)
-            except (TypeError, ValueError):
-                continue
-
-            if rule_cat and rule_cat.get(key) == "max":
-                bucket[key] = max(bucket.get(key, 0), num)
-            else:
-                bucket[key] = bucket.get(key, 0) + num
 
 
 def _region_modifiers(db: Session, kingdom_id: int) -> dict:
@@ -365,7 +349,7 @@ def _village_modifier_rows(db: Session, kingdom_id: int) -> dict:
         if tradeb:
             row_mod.setdefault("economic_bonus", {})["trade_bonus"] = float(tradeb)
         r_rules = parse_json_field(rules) or {}
-        _merge_modifiers_with_rules(mods, row_mod, r_rules)
+        merge_modifiers_with_rules(mods, row_mod, r_rules)
     return mods
 
 
