@@ -12,6 +12,9 @@ window.addEventListener('DOMContentLoaded', () => {
   if (navScript) {
     navScript.addEventListener('error', injectFallback, { once: true });
   }
-  // Fallback in case navLoader fails silently
-  setTimeout(injectFallback, 4000);
+
+  if (typeof window.navLoader === 'undefined') {
+    // Fallback in case navLoader fails silently
+    setTimeout(injectFallback, 4000);
+  }
 });
