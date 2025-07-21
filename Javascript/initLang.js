@@ -1,18 +1,20 @@
 export async function initLang() {
   const lang = document.documentElement.lang || 'en';
-  if (!window.translations) {
+  const sets = window.translations || {};
+  if (!sets[lang]) {
     try {
       const res = await fetch(`/translations/${lang}.json`);
       if (res.ok) {
         const data = await res.json();
-        window.translations = { [lang]: data };
+        sets[lang] = data;
+        window.translations = sets;
       }
     } catch (err) {
       console.warn('Failed to load translations', err);
     }
   }
-  const { applyTranslations } = await import('/Javascript/i18n.js');
-  applyTranslations(lang);
+  const { applyI18n } = await import('/Javascript/i18n.js');
+  applyI18n();
 }
 
 document.addEventListener('DOMContentLoaded', initLang);

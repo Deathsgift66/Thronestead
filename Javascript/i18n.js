@@ -21,7 +21,7 @@ export function applyI18n() {
 document.addEventListener('DOMContentLoaded', applyI18n);
 
 export function applyTranslations(lang = 'en') {
-  const translations = {
+  const builtin = {
     en: {
       404_title: '404 - Page Not Found',
       404_msg: 'The page you requested could not be found.',
@@ -37,7 +37,8 @@ export function applyTranslations(lang = 'en') {
       go_button: 'Go'
     }
   };
-  const strings = translations[lang];
+  const sets = window.translations || {};
+  const strings = sets[lang] || builtin[lang];
   if (!strings) return;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
