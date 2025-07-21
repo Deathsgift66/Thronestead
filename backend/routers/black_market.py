@@ -50,11 +50,11 @@ class CancelPayload(BaseModel):
 # ---------------------
 @router.get("")
 def get_market(
+    db: Session = Depends(get_db),
     item_type: str | None = Query(None),
     max_price: float | None = Query(None, ge=0),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db),
 ):
     """Return paginated black market listings."""
     query = db.query(BlackMarketListing)
