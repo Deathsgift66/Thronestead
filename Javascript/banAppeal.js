@@ -4,6 +4,8 @@
 // Developer: Deathsgift66
 
 import { fetchJson } from './fetchJson.js';
+import { validateEmail } from './utils.js';
+import { getEnvVar } from './env.js';
 // import { initThemeToggle } from './themeToggle.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,10 +14,48 @@ document.addEventListener('DOMContentLoaded', () => {
   const emailInput = document.getElementById('appeal-email');
   const msgInput = document.getElementById('appeal-message');
   const messageEl = document.getElementById('appeal-status');
+  const captchaEl = document.getElementById('appeal-captcha');
 
-  form?.addEventListener('submit', async e => {
+  if (!form || !emailInput || !msgInput || !messageEl || !captchaEl) return;
+
+  const siteKey = getEnvVar('HCAPTCHA_SITEKEY');
+  if (siteKey) {
+    captchaEl.setAttribute('data-sitekey', siteKey);
+  } else {
+    console.warn('Missing hCaptcha site key');
+  }
+
+  form.addEventListener('submit', async e => {
     e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      setTimeout(() => {
+        submitBtn.disabled = false;
+      }, 10000);
+    }
+
+    if (form.nickname?.value) return;
+
+    if (!emailInput.value || !validateEmail(emailInput.value)) {
+      messageEl.textContent = 'Enter a valid email address.';
+      messageEl.className = 'message show error-message';
+      return;
+    }
+
+    if (msgInput.value.trim().length < 10) {
+      messageEl.textContent = 'Appeal message must be at least 10 characters.';
+      messageEl.className = 'message show error-message';
+      return;
+    }
+
     const token = window.hcaptcha?.getResponse();
+    if (!token) {
+      messageEl.textContent = 'Please complete the CAPTCHA.';
+      messageEl.className = 'message show error-message';
+      return;
+    }
+
     try {
       await fetchJson('/api/ban/appeal', {
         method: 'POST',
@@ -29,9 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
       messageEl.textContent = 'Appeal submitted successfully.';
       messageEl.className = 'message show success-message';
       form.reset();
-      if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') {
-        window.hcaptcha.reset();
-      }
+      try {
+        window.hcaptcha?.reset?.();
+      } catch {}
     } catch (err) {
       messageEl.textContent = err.message || 'Submission failed.';
       messageEl.className = 'message show error-message';
