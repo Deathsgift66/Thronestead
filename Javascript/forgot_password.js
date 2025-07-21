@@ -8,26 +8,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    message.textContent = '';
+    message.classList.remove('success');
+
     const email = emailInput.value.trim();
     if (!email) {
       message.textContent = 'Please enter a valid email.';
+      message.setAttribute('role', 'alert');
       return;
     }
+
     button.disabled = true;
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: 'https://www.thronestead.com/update-password.html'
       });
+
       if (error) {
         message.textContent = `Error: ${error.message}`;
+        message.setAttribute('role', 'alert');
       } else {
         message.textContent = 'Reset link sent! Check your email.';
         emailInput.value = '';
         message.classList.add('success');
-        setTimeout(() => { message.textContent = ''; }, 7000);
+        message.setAttribute('role', 'status');
+        setTimeout(() => {
+          message.textContent = '';
+          message.classList.remove('success');
+        }, 7000);
       }
     } catch (err) {
       message.textContent = `Unexpected error: ${err.message}`;
+      message.setAttribute('role', 'alert');
     } finally {
       button.disabled = false;
     }
