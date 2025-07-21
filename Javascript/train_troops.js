@@ -39,9 +39,14 @@ async function loadGrandMusterHall() {
   const queueEl = document.getElementById('training-queue');
   const historyEl = document.getElementById('training-history');
 
-  catalogueEl.innerHTML = "<p>Loading troop catalogue...</p>";
-  queueEl.innerHTML = "<p>Loading training queue...</p>";
-  historyEl.innerHTML = "<p>Loading training history...</p>";
+  if (!catalogueEl || !queueEl || !historyEl) {
+    console.error('Missing required training DOM elements');
+    return;
+  }
+
+  catalogueEl.innerHTML = '<p>Loading troop catalogue...</p>';
+  queueEl.innerHTML = '<p>Loading training queue...</p>';
+  historyEl.innerHTML = '<p>Loading training history...</p>';
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
