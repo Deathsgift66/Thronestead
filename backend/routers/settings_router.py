@@ -99,5 +99,9 @@ def update_setting(
             "key": payload.key,
             "new_value": payload.value,
         }
-    except Exception as e:
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:  # pragma: no cover - unexpected error
+        db.rollback()
         raise HTTPException(status_code=500, detail="Failed to update setting") from e
