@@ -27,7 +27,10 @@ router = APIRouter(prefix="/api/account", tags=["account"])
 
 
 @router.get("/export")
-def export_account(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+def export_account(
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+) -> Response:
     """Return a zip file containing all data related to the current user."""
     user_row = (
         db.execute(text("SELECT * FROM users WHERE user_id = :uid"), {"uid": user_id})
@@ -90,5 +93,6 @@ def export_account(user_id: str = Depends(verify_jwt_token), db: Session = Depen
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("data.json", json_bytes)
     buffer.seek(0)
-    return Response(buffer.getvalue(), media_type="application/zip")
+    headers = {"Content-Disposition": "attachment; filename=account_export.zip"}
+    return Response(buffer.getvalue(), media_type="application/zip", headers=headers)
 
