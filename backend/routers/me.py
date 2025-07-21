@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Header, HTTPException
 from jose import JWTError
 
-from ..security import decode_supabase_jwt
+from ..security import decode_supabase_jwt, verify_jwt_token
 
 router = APIRouter(prefix="/api", tags=["auth"])
 
@@ -11,9 +11,7 @@ router = APIRouter(prefix="/api", tags=["auth"])
 @router.get("/me")
 def get_me(Authorization: str = Header(...)):
     """Return the decoded Supabase JWT claims for the session user."""
-    if not Authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid auth header")
-
+    user_id = verify_jwt_token(authorization=Authorization)
     token = Authorization.split(" ", 1)[1]
     try:
         payload = decode_supabase_jwt(token)
@@ -21,7 +19,7 @@ def get_me(Authorization: str = Header(...)):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     return {
-        "user_id": payload["sub"],
-        "email": payload["email"],
+        "user_id": user_id,
+        "email": payload.get("email"),
     }
 
