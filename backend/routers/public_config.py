@@ -1,4 +1,4 @@
-from ..env_utils import get_env_var
+from ..env_utils import get_env_var, get_env_bool
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -12,9 +12,7 @@ router = APIRouter(prefix="/api/public-config", tags=["config"])
 @router.get("/")
 def public_config(db: Session = Depends(get_db)):
     """Expose public Supabase configuration for the frontend."""
-    maintenance_default = (
-        get_env_var("MAINTENANCE_MODE", default="false").lower() == "true"
-    )
+    maintenance_default = get_env_bool("MAINTENANCE_MODE")
     return {
         "SUPABASE_URL": get_env_var("SUPABASE_URL"),
         "SUPABASE_ANON_KEY": get_env_var("SUPABASE_ANON_KEY"),
