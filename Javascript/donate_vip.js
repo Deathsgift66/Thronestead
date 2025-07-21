@@ -324,3 +324,9 @@ function renderLeaderboard(leaders) {
 // ------------------------------
 // authHeaders imported from auth.js
 
+// Expose functions for inline handlers
+window.selectPackage = selectPackage;
+window.redeemPerk = redeemPerk;
+window.purchaseTokens = purchaseTokens;
+
+
