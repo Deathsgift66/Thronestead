@@ -16,7 +16,12 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from services.kingdom_title_service import award_title, list_titles, set_active_title
+from services.kingdom_title_service import (
+    award_title,
+    list_titles,
+    set_active_title,
+    get_active_title,
+)
 
 from ..data import prestige_scores
 from ..database import get_db
@@ -97,6 +102,17 @@ def set_active_title_endpoint(
         raise HTTPException(
             status_code=500, detail="Failed to update active title"
         ) from e
+
+
+@router.get("/active_title", summary="Get Active Kingdom Title")
+def get_active_title_endpoint(
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Return the current active title for the player's kingdom."""
+    kingdom_id = get_kingdom_id(db, user_id)
+    title = get_active_title(db, kingdom_id)
+    return {"active_title": title}
 
 
 @router.get("/prestige", summary="Get Prestige Score")
