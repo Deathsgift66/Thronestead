@@ -7,17 +7,34 @@ Version: 2025-06-22
 """
 
 import asyncio
-from jose import JWTError
+import json
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from starlette.websockets import WebSocketState
 
 from ..database import SessionLocal
-from ..security import decode_supabase_jwt, verify_admin, validate_reauth_token
+from ..security import verify_admin, validate_reauth_token
 
 router = APIRouter()
 
 connected_admins: list[WebSocket] = []
+
+
+async def broadcast_admin_event(event: dict) -> None:
+    """Send ``event`` to all connected admin websocket clients."""
+    message = json.dumps(event)
+    to_remove: list[WebSocket] = []
+    for ws in connected_admins:
+        try:
+            if ws.client_state == WebSocketState.CONNECTED:
+                await ws.send_text(message)
+            else:
+                to_remove.append(ws)
+        except Exception:
+            to_remove.append(ws)
+    for ws in to_remove:
+        if ws in connected_admins:
+            connected_admins.remove(ws)
 
 
 @router.websocket("/api/admin/alerts/live")
