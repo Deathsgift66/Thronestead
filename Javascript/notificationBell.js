@@ -88,4 +88,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     .subscribe();
 });
 
-// Escape HTML utility
