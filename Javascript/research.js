@@ -3,10 +3,14 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, showToast, formatDate } from './utils.js';
 
 let currentSession = null;
 let researchChannel = null;
+let channelActive = false;
+let loading = false;
+let loadQueued = false;
+const techMap = new Map();
 
 // Utility to escape HTML from strings to prevent XSS
 
@@ -18,14 +22,7 @@ function formatTime(seconds) {
   return `${h}h ${m}m ${s}s`;
 }
 
-// Toast notification handler
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
+// Toast notifications come from utils
 
 // Countdown updater for active research
 function startCountdownTimers() {
@@ -35,10 +32,13 @@ function startCountdownTimers() {
     const update = () => {
       const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
       el.textContent = formatTime(remaining);
-      if (remaining > 0) requestAnimationFrame(update);
-      else el.textContent = 'Completed!';
+      if (remaining <= 0) {
+        el.textContent = 'Completed!';
+        clearInterval(timer);
+      }
     };
     update();
+    const timer = setInterval(update, 1000);
   });
 }
 
@@ -50,12 +50,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadResearchData();
 });
 
-window.addEventListener('beforeunload', () => {
-  if (researchChannel) supabase.removeChannel(researchChannel);
+window.addEventListener('beforeunload', async () => {
+  if (researchChannel) {
+    await supabase.removeChannel(researchChannel);
+    channelActive = false;
+    researchChannel = null;
+  }
 });
 
 // Load all research-related UI
 async function loadResearchData() {
+  if (loading) {
+    loadQueued = true;
+    return;
+  }
+  loading = true;
+
   const tree = document.getElementById('tech-tree');
   const filters = document.getElementById('tech-filters');
   const details = document.getElementById('tech-details');
@@ -73,20 +83,19 @@ async function loadResearchData() {
       .from('users').select('kingdom_id').eq('user_id', user.id).single();
     const kingdomId = userRow.kingdom_id;
 
-    // Subscribe to live research updates
-    if (!researchChannel) {
+    if (!channelActive) {
       researchChannel = supabase
         .channel(`research-${kingdomId}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'kingdom_research_tracking',
-          filter: `kingdom_id=eq.${kingdomId}`
-        }, loadResearchData)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'kingdom_research_tracking', filter: `kingdom_id=eq.${kingdomId}` },
+          () => loadResearchData()
+        )
         .subscribe();
+      channelActive = true;
     }
 
-    const [{ data: techs }, trackingRes] = await Promise.all([
+    const [{ data: techs, error: techErr }, trackingRes] = await Promise.all([
       supabase.from('tech_catalogue')
         .select('*')
         .eq('is_active', true)
@@ -100,17 +109,28 @@ async function loadResearchData() {
       })
     ]);
 
+    if (techErr) throw techErr;
+    if (!trackingRes.ok) {
+      const msg = await trackingRes.text();
+      throw new Error(msg || 'Research list failed');
+    }
+
+    techMap.clear();
+    techs.forEach(t => techMap.set(t.tech_code, t));
+
     const overview = await trackingRes.json();
+    const completed = Array.isArray(overview.completed) ? overview.completed : [];
+    const activeList = Array.isArray(overview.in_progress) ? overview.in_progress : [];
     const progress = [
-      ...overview.completed.map(t => ({ tech_code: t.tech_code, status: 'completed', ends_at: t.ends_at })),
-      ...overview.in_progress.map(t => ({ tech_code: t.tech_code, status: 'active', ends_at: t.ends_at }))
+      ...completed.map(t => ({ tech_code: t.tech_code, status: 'completed', ends_at: t.ends_at })),
+      ...activeList.map(t => ({ tech_code: t.tech_code, status: 'active', ends_at: t.ends_at }))
     ];
-    const completed = overview.completed;
-    const active = overview.in_progress[0];
+    const active = activeList[0];
+    const completedSet = new Set(completed.map(t => t.tech_code));
 
     renderFilters(techs);
-    renderTree(techs, progress);
-    renderDetails(); // default blank
+    renderTree(techs, progress, completedSet);
+    renderDetails(null, false, false, false, completedSet);
     renderActive(active, techs);
     renderCompleted(completed, techs);
     renderEncyclopedia(completed, techs);
@@ -119,6 +139,12 @@ async function loadResearchData() {
   } catch (err) {
     console.error("❌ Failed to load research:", err);
     showToast("Failed to load research tree.");
+  } finally {
+    loading = false;
+    if (loadQueued) {
+      loadQueued = false;
+      loadResearchData();
+    }
   }
 }
 
@@ -133,13 +159,18 @@ function renderFilters(techs) {
     const btn = document.createElement('button');
     btn.className = 'action-btn';
     btn.textContent = cat;
-    btn.onclick = () => filterByCategory(cat);
+    btn.onclick = () => {
+      filterByCategory(cat);
+      document.querySelectorAll('#tech-filters .action-btn')
+        .forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
     filters.appendChild(btn);
   });
 }
 
 // Render the tech nodes into the tree
-function renderTree(techs, tracking) {
+function renderTree(techs, tracking, completedSet) {
   const tree = document.getElementById('tech-tree');
   if (!tree) return;
 
@@ -166,7 +197,16 @@ function renderTree(techs, tracking) {
       <p>Tier ${tech.tier}</p>
       <p>${escapeHTML(tech.category)}</p>
     `;
-    node.onclick = () => renderDetails(tech, isCompleted, isActive, unlocked);
+    node.onclick = () => renderDetails(tech, isCompleted, isActive, unlocked, completedSet);
+    node.tabIndex = 0;
+    node.setAttribute('role', 'button');
+    node.setAttribute('aria-label', tech.name);
+    node.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        node.click();
+      }
+    });
     tree.appendChild(node);
   });
 }
@@ -180,7 +220,7 @@ function filterByCategory(category) {
 }
 
 // Show tech details and allow research activation
-function renderDetails(tech = null, isCompleted = false, isActive = false, unlocked = false) {
+function renderDetails(tech = null, isCompleted = false, isActive = false, unlocked = false, completedSet = new Set()) {
   const details = document.getElementById('tech-details');
   if (!details) return;
 
@@ -189,8 +229,14 @@ function renderDetails(tech = null, isCompleted = false, isActive = false, unloc
     return;
   }
 
-  const prereqs = tech.prerequisites || [];
-  const prereqList = prereqs.map(p => `<span class="prereq">${escapeHTML(p)}</span>`).join(', ') || 'None';
+  const prereqs = Array.isArray(tech.prerequisites) ? tech.prerequisites : [];
+  const prereqList = prereqs
+    .map(p => {
+      const name = techMap.get(p)?.name || p;
+      const cls = completedSet.has(p) ? 'prereq done' : 'prereq';
+      return `<span class="${cls}">${escapeHTML(name)}</span>`;
+    })
+    .join(', ') || 'None';
 
   details.innerHTML = `
     <h3>${escapeHTML(tech.name)}</h3>
@@ -207,6 +253,9 @@ function renderDetails(tech = null, isCompleted = false, isActive = false, unloc
 
   if (unlocked && !isCompleted && !isActive) {
     document.getElementById('start-research').onclick = async () => {
+      const btn = document.getElementById('start-research');
+      btn.disabled = true;
+      btn.textContent = 'Starting...';
       try {
         const res = await fetch('/api/kingdom/start_research', {
           method: 'POST',
@@ -224,6 +273,8 @@ function renderDetails(tech = null, isCompleted = false, isActive = false, unloc
       } catch (err) {
         console.error(err);
         showToast('Could not start research.');
+        btn.disabled = false;
+        btn.textContent = 'Start Research';
       }
     };
   }
@@ -269,7 +320,7 @@ function renderCompleted(completed, techs) {
       <div class="tech-card">
         <h3>${escapeHTML(def?.name || entry.tech_code)}</h3>
         <p>${escapeHTML(def?.description || '')}</p>
-        <p>Completed: ${new Date(entry.ends_at).toLocaleString()}</p>
+        <p>Completed: ${formatDate(entry.ends_at)}</p>
       </div>
     `;
   });
