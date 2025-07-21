@@ -66,6 +66,8 @@ def process_unit_vision(
 
         mid_x = (position_x + other["position_x"]) // 2
         mid_y = (position_y + other["position_y"]) // 2
+        mid_x = max(0, min(mid_x, len(terrain[0]) - 1))
+        mid_y = max(0, min(mid_y, len(terrain) - 1))
         terrain_type = terrain[mid_y][mid_x]
 
         penalty = _VISION_PENALTIES.get(terrain_type, 1.0)
