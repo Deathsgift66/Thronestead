@@ -8,7 +8,7 @@ import logging
 
 from sqlalchemy import text
 
-from backend.database import init_engine, SessionLocal
+from .db_utils import get_session
 
 
 logger = logging.getLogger(__name__)
@@ -16,11 +16,7 @@ logger = logging.getLogger(__name__)
 
 def archive_logs() -> None:
     """Move audit_log entries older than 30 days to the archive."""
-    init_engine()
-    if SessionLocal is None:
-        raise RuntimeError("Database not configured")
-    db = SessionLocal()
-    try:
+    with get_session() as db:
         cutoff = datetime.utcnow() - timedelta(days=30)
         db.execute(
             text(
@@ -42,8 +38,6 @@ def archive_logs() -> None:
         )
         db.commit()
         logger.info("Archived audit logs older than %s", cutoff)
-    finally:
-        db.close()
 
 
 if __name__ == "__main__":

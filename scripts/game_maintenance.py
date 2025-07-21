@@ -1,4 +1,4 @@
-from backend.database import SessionLocal
+from .db_utils import get_session
 from services.maintenance_service import (
     verify_kingdom_resources,
     cleanup_zombie_training_queue,
@@ -7,9 +7,7 @@ from services.maintenance_service import (
 
 
 def main() -> None:
-    if SessionLocal is None:
-        raise RuntimeError("DATABASE_URL not configured")
-    with SessionLocal() as db:
+    with get_session() as db:
         count = verify_kingdom_resources(db)
         print(f"Verified resources for {count} kingdoms")
 

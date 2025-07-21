@@ -8,18 +8,14 @@ import logging
 
 from sqlalchemy import text
 
-from backend.database import init_engine, SessionLocal
+from .db_utils import get_session
 
 logger = logging.getLogger(__name__)
 
 
 def send_heartbeat() -> None:
     """Insert heartbeat and log if previous ping missing."""
-    init_engine()
-    if SessionLocal is None:
-        raise RuntimeError("Database not configured")
-    db = SessionLocal()
-    try:
+    with get_session() as db:
         last = db.execute(
             text(
                 "SELECT created_at FROM admin_alerts WHERE type = 'system_heartbeat'"
@@ -41,8 +37,6 @@ def send_heartbeat() -> None:
         )
         db.commit()
         logger.info("Heartbeat recorded")
-    finally:
-        db.close()
 
 
 if __name__ == "__main__":
