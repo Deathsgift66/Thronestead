@@ -36,3 +36,11 @@ def test_award_title_admin(monkeypatch):
     assert called["kid"] == 5
     assert called["title"] == "Champion"
 
+
+def test_get_active_title(monkeypatch):
+    monkeypatch.setattr(tr, "get_kingdom_id", lambda db, uid: 7)
+    monkeypatch.setattr(tr, "get_active_title", lambda db, kid: "Legend")
+
+    result = tr.get_active_title_endpoint(user_id="u1", db=DummyDB())
+    assert result["active_title"] == "Legend"
+
