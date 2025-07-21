@@ -14,7 +14,12 @@ from sqlalchemy.orm import Session
 from services.audit_service import log_action
 
 from ..database import get_db
-from ..security import require_user_id, verify_api_key, require_csrf_token
+from ..security import (
+    require_user_id,
+    verify_api_key,
+    require_csrf_token,
+    verify_admin,
+)
 
 router = APIRouter(prefix="/api/admin/system", tags=["admin_system"])
 
@@ -38,6 +43,7 @@ def rollback_system(
     db: Session = Depends(get_db),
 ) -> dict:
     """Trigger a database rollback if the master password matches."""
+    verify_admin(admin_user_id, db)
     now = time.time()
     attempts = [t for t in ROLLBACK_ATTEMPTS[admin_user_id] if now - t < ROLLBACK_WINDOW]
     ROLLBACK_ATTEMPTS[admin_user_id] = attempts
