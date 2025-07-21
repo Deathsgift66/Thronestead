@@ -144,6 +144,10 @@ def deposit_resource(
     return {"message": "Deposited"}
 
 
+# Backwards compatibility for older imports
+deposit = deposit_resource
+
+
 @router.post("/withdraw")
 def withdraw_resource(
     payload: VaultTransaction,
@@ -180,6 +184,10 @@ def withdraw_resource(
         db, user_id, "withdraw_vault", f"Withdrew {payload.amount} {payload.resource}"
     )
     return {"message": "Withdrawn"}
+
+
+# Backwards compatibility for older imports
+withdraw = withdraw_resource
 
 
 @router.get("/history")
