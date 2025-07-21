@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: battle_resolution.js
-// Version:  7/1/2025 10:38
+// Version:  7/21/2025 12:30
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 
@@ -21,15 +21,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   userId = session.user.id;
 
   const warId = getWarIdFromURL();
+  if (warId === null) {
+    return;
+  }
   await fetchBattleResolution(warId);
 
   document.getElementById('refresh-btn').addEventListener('click', () => {
-    fetchBattleResolution(getWarIdFromURL());
+    const id = getWarIdFromURL();
+    if (id !== null) {
+      fetchBattleResolution(id);
+    }
   });
   document.getElementById('view-replay-btn').addEventListener('click', () => {
-    window.location.href = `/battle_replay.html?war_id=${getWarIdFromURL()}`;
+    const id = getWarIdFromURL();
+    if (id !== null) {
+      window.location.href = `/battle_replay.html?war_id=${id}`;
+    }
   });
-  setInterval(() => fetchBattleResolution(getWarIdFromURL()), 30000);
+  setInterval(() => {
+    const id = getWarIdFromURL();
+    if (id !== null) {
+      fetchBattleResolution(id);
+    }
+  }, 30000);
 
   // log to audit_log (best effort)
   try {
@@ -47,12 +61,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 // LOAD RESOLUTION DATA
 // ===============================
 async function fetchBattleResolution(warId) {
+  document.getElementById('resolution-summary').innerHTML = '<p>Loading results...</p>';
   const res = await fetch(`/api/battle/resolution?war_id=${warId}`, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'X-User-ID': userId
     }
   });
+  if (!res.ok) {
+    document.getElementById('resolution-summary').textContent = '❌ Failed to load battle results.';
+    return;
+  }
   const data = await res.json();
   renderResolutionData(data);
   document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
@@ -146,6 +165,11 @@ function renderLoot(loot) {
 
 function getWarIdFromURL() {
   const params = new URLSearchParams(window.location.search);
-  return parseInt(params.get('war_id'), 10);
+  const warId = parseInt(params.get('war_id'), 10);
+  if (isNaN(warId)) {
+    alert('⚠ Invalid war ID');
+    return null;
+  }
+  return warId;
 }
 
