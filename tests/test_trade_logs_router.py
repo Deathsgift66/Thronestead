@@ -5,6 +5,8 @@
 import os
 import sys
 from datetime import datetime
+import pytest
+from fastapi import HTTPException
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from backend.routers import trade_logs
@@ -59,3 +61,17 @@ def test_get_trade_logs_returns_rows():
     db = DummySession([row])
     result = trade_logs.get_trade_logs(db=db, user_id="u1")
     assert result["logs"][0]["resource"] == "Wood"
+
+
+def test_invalid_start_date():
+    db = DummySession([])
+    with pytest.raises(HTTPException) as exc:
+        trade_logs.get_trade_logs(start_date="bad", db=db, user_id="u1")
+    assert exc.value.status_code == 400
+
+
+def test_invalid_end_date():
+    db = DummySession([])
+    with pytest.raises(HTTPException) as exc:
+        trade_logs.get_trade_logs(end_date="nope", db=db, user_id="u1")
+    assert exc.value.status_code == 400

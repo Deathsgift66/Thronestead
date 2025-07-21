@@ -11,6 +11,7 @@ Version: 2025-06-21
 """
 
 from typing import Optional
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
@@ -31,6 +32,14 @@ def get_trade_logs(
     trade_type: Optional[str] = Query(
         None, description="Type of trade (e.g. market, direct, system)"
     ),
+    start_date: Optional[str] = Query(
+        None,
+        description="ISO timestamp to filter trades occurring on or after this time",
+    ),
+    end_date: Optional[str] = Query(
+        None,
+        description="ISO timestamp to filter trades occurring on or before this time",
+    ),
     limit: int = Query(
         50, ge=1, le=500, description="Maximum number of logs to return"
     ),
@@ -41,6 +50,16 @@ def get_trade_logs(
     Return recent trade logs, optionally filtered by player, alliance, or trade type.
     """
     query = db.query(TradeLog)
+
+    def _parse_iso(value: Optional[str], name: str) -> Optional[datetime]:
+        if value is None:
+            return None
+        try:
+            if value.endswith("Z"):
+                return datetime.fromisoformat(value[:-1] + "+00:00")
+            return datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid {name} format") from exc
 
     if player_id:
         query = query.filter(
@@ -55,6 +74,12 @@ def get_trade_logs(
         )
     if trade_type:
         query = query.filter(TradeLog.trade_type == trade_type)
+    start_dt = _parse_iso(start_date, "start_date")
+    if start_dt:
+        query = query.filter(TradeLog.timestamp >= start_dt)
+    end_dt = _parse_iso(end_date, "end_date")
+    if end_dt:
+        query = query.filter(TradeLog.timestamp <= end_dt)
 
     try:
         rows = query.order_by(TradeLog.timestamp.desc()).limit(limit).all()
