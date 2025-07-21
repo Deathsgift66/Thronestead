@@ -46,6 +46,7 @@ Developer: Deathsgift66
 import { supabase } from '/Javascript/supabaseClient.js';
 import { escapeHTML, showToast, fragmentFrom, jsonFetch, openModal, closeModal } from '/Javascript/utils.js';
 import { containsBannedContent } from './content_filter.js';
+import { setupPreview } from '/Javascript/account_previews.js';
 
 let currentUser = null;
 let authToken = '';
@@ -175,18 +176,19 @@ function bindUIEvents() {
   const customAvatar = document.getElementById('custom-avatar-url');
   const avatarPreview = document.getElementById('avatar-preview');
   if (customAvatar && avatarPreview) {
+    setupPreview('custom-avatar-url', 'avatar-preview', '/Assets/avatars/default_avatar_emperor.png');
     customAvatar.addEventListener('input', () => {
       selectedAvatar = customAvatar.value.trim() || avatarList[0];
-      avatarPreview.src = selectedAvatar;
     });
   }
 
+  const defaults = {
+    banner_url: 'Assets/profile_background.png',
+    emblem_url: 'Assets/icon-scroll.svg'
+  };
+
   ['banner_url', 'emblem_url'].forEach(id => {
-    const input = document.getElementById(id);
-    const preview = document.getElementById(`${id.replace('_url', '')}-preview`);
-    if (input && preview) {
-      input.addEventListener('input', () => preview.src = input.value.trim());
-    }
+    setupPreview(id, `${id.replace('_url', '')}-preview`, defaults[id]);
   });
 }
 
