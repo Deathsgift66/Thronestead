@@ -3,9 +3,16 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { formatDate, openModal, closeModal } from './utils.js';
+import {
+  openModal,
+  closeModal,
+  sanitizeHTML,
+  relativeTime
+} from './utils.js';
 
 let newsChannel = null;
+let offset = 0;
+const pageSize = 20;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -19,47 +26,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const search = document.getElementById('search-input');
   if (search) search.addEventListener('input', filterArticles);
+  document.getElementById('load-more-btn')?.addEventListener('click', () => loadNews(true));
 
   // Close button for modal
   document.getElementById('close-article-btn')?.addEventListener('click', hideArticleModal);
 });
 
 // ✅ Load News Articles
-async function loadNews() {
+async function loadNews(append = false) {
   const articleGrid = document.getElementById('articles');
   const loadingIndicator = document.getElementById('loading-news');
   const noResultsMsg = document.getElementById('no-results-message');
+  const loadMoreBtn = document.getElementById('load-more-btn');
 
   if (!articleGrid || !loadingIndicator || !noResultsMsg) return;
 
   loadingIndicator.style.display = 'block';
-  noResultsMsg.classList.add('hidden');
-  articleGrid.innerHTML = '';
+  if (!append) {
+    noResultsMsg.classList.add('hidden');
+    articleGrid.innerHTML = '';
+    offset = 0;
+  }
 
   const { data: articles, error } = await supabase
     .from('announcements')
     .select('*')
     .eq('visible', true)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .range(offset, offset + pageSize - 1);
 
   loadingIndicator.style.display = 'none';
 
   if (error || !articles || articles.length === 0) {
-    noResultsMsg.classList.remove('hidden');
+    if (!append) noResultsMsg.classList.remove('hidden');
+    loadMoreBtn?.classList.add('hidden');
     return;
   }
 
-  renderArticles(articles);
+  offset += articles.length;
+  renderArticles(articles, append);
+  if (articles.length < pageSize) loadMoreBtn?.classList.add('hidden');
+  else loadMoreBtn?.classList.remove('hidden');
 }
 
 // ✅ Render News Cards
-function renderArticles(articles) {
+function renderArticles(articles, append = true) {
   const container = document.getElementById('articles');
   const template = document.getElementById('article-template');
   if (!container || !template) return;
 
-  container.innerHTML = '';
+  if (!append) container.innerHTML = '';
 
   articles.forEach(article => {
     const clone = template.content.firstElementChild.cloneNode(true);
@@ -67,8 +83,9 @@ function renderArticles(articles) {
     clone.dataset.title = (article.title || '').toLowerCase();
     clone.dataset.summary = (article.content || '').toLowerCase();
     clone.querySelector('.article-title').textContent = article.title;
-    clone.querySelector('.article-summary').textContent = `${article.content.slice(0, 140)}...`;
-    clone.querySelector('.article-meta').textContent = formatDate(article.created_at);
+    const snippet = article.content.replace(/<[^>]*>/g, '').slice(0, 140);
+    clone.querySelector('.article-summary').textContent = `${snippet}...`;
+    clone.querySelector('.article-meta').textContent = relativeTime(article.created_at);
     clone.addEventListener('click', () => showArticleModal(article));
     container.appendChild(clone);
   });
@@ -102,8 +119,12 @@ function showArticleModal(article) {
   const modal = document.getElementById('article-modal');
   if (!modal) return;
   modal.querySelector('#article-title').textContent = article.title || 'Untitled';
-  modal.querySelector('#article-meta').textContent = formatDate(article.created_at);
-  modal.querySelector('#article-body').innerHTML = article.content;
+  modal.querySelector('#article-meta').textContent = relativeTime(article.created_at);
+  let html = article.content;
+  if (window.marked) {
+    html = window.marked.parse(article.content);
+  }
+  modal.querySelector('#article-body').innerHTML = sanitizeHTML(html);
   openModal('article-modal');
 }
 
