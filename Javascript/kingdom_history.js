@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, formatDate } from './utils.js';
 
 let kingdomId = null;
 
@@ -130,8 +130,5 @@ function addAchievementBadge(rec) {
   document.getElementById('achievement-grid').prepend(badge);
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return 'Unknown';
-  return new Date(dateStr).toLocaleDateString();
-}
+
 

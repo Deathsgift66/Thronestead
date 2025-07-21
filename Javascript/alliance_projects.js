@@ -99,7 +99,7 @@ import {
   authHeaders,
   authJsonFetch,
   debounce,
-  
+  formatDuration,
 } from './utils.js';
 import { RESOURCE_KEYS } from './resourceKeys.js';
 
@@ -324,7 +324,7 @@ function renderAvailable(list) {
       <p>${escapeHTML(p.description || '')}</p>
       <dl>
         <div><dt>Costs</dt><dd id="${costId}" class="project-cost" title="${cost}">${cost}</dd></div>
-        <div><dt>Build Time</dt><dd id="${timeId}">${formatTime(p.build_time_seconds || 0)}</dd></div>
+        <div><dt>Build Time</dt><dd id="${timeId}">${formatDuration(p.build_time_seconds || 0, { compact: true, instant: 'Instant' })}</dd></div>
       </dl>
       ${canStart ? `<button class="btn build-btn" data-project="${p.project_key}" aria-describedby="${costId} ${timeId}">Start Project</button>` : ''}
     `;
@@ -364,7 +364,7 @@ function renderInProgress(list) {
     card.setAttribute('role', 'region');
     const title = p.project_name || p.project_key;
     card.setAttribute('aria-label', `Project: ${title}`);
-    const eta = formatTime(Math.max(0, Math.floor((new Date(p.expected_end) - Date.now()) / 1000)));
+    const eta = formatDuration(Math.max(0, Math.floor((new Date(p.expected_end) - Date.now()) / 1000)), { compact: true });
 
     card.innerHTML = `
       <h3>${escapeHTML(title)}</h3>
@@ -613,13 +613,7 @@ function renderContribPage() {
   }
 }
 
-function formatTime(seconds) {
-  if (seconds === 0) return 'Instant';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  return `${h ? h + 'h ' : ''}${m ? m + 'm ' : ''}${s ? s + 's' : ''}`.trim();
-}
+
 
 function formatCostFromColumns(obj) {
   return RESOURCE_KEYS

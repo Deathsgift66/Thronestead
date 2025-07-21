@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { authFetch, authJsonFetch, showToast } from './utils.js';
+import { authFetch, authJsonFetch, showToast, formatTimestamp } from './utils.js';
 import { setupReauthButtons } from './reauth.js';
 
 const REFRESH_INTERVAL_MS = 30000;
@@ -81,7 +81,7 @@ function renderCategory(container, title, items = []) {
     div.innerHTML = `
       <strong>[${(item.event_type || item.type || 'log').toUpperCase()}]</strong>
       <p>${formatItem(item)}</p>
-      <small>Kingdom: ${item.kingdom_id || '—'} | Alliance: ${item.alliance_id || '—'} | ${formatTime(item.timestamp)}</small>
+      <small>Kingdom: ${item.kingdom_id || '—'} | Alliance: ${item.alliance_id || '—'} | ${formatTimestamp(item.timestamp)}</small>
     `;
 
     const actions = document.createElement('div');
@@ -196,6 +196,4 @@ function formatItem(item = {}) {
   return item.message || `${item.action || ''} - ${item.details || item.note || JSON.stringify(item)}`;
 }
 
-function formatTime(ts) {
-  return ts ? new Date(ts).toLocaleString() : '';
-}
+
