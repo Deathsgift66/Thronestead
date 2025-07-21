@@ -133,33 +133,34 @@ def launch_spy_mission(
             ),
             {"kid": target.kingdom_id},
         )
+
     if payload.mission_type == "assassination" and success:
         db.execute(
             text(
                 "UPDATE village_modifiers SET defense_bonus = defense_bonus - 5 "
-                "WHERE village_id IN (SELECT village_id FROM kingdom_villages "
-                "WHERE kingdom_id = :kid)"
+                "WHERE village_id IN (SELECT village_id FROM kingdom_villages WHERE kingdom_id = :kid)"
             ),
             {"kid": target.kingdom_id},
         )
-        db.commit()
 
-        spies_service.finalize_mission(
-            db,
-            mission_id,
-            accuracy=accuracy_pct,
-            detected=detected,
-            spies_killed=spies_lost,
-        )
+    db.commit()
 
-        return {
-            "mission_id": mission_id,
-            "outcome": "success" if success else "fail",
-            "success_pct": success_pct,
-            "detected": detected,
-            "accuracy_pct": accuracy_pct,
-            "spies_lost": spies_lost,
-        }
+    spies_service.finalize_mission(
+        db,
+        mission_id,
+        accuracy=accuracy_pct,
+        detected=detected,
+        spies_killed=spies_lost,
+    )
+
+    return {
+        "mission_id": mission_id,
+        "outcome": "success" if success else "fail",
+        "success_pct": success_pct,
+        "detected": detected,
+        "accuracy_pct": accuracy_pct,
+        "spies_lost": spies_lost,
+    }
     except HTTPException as exc:
         log_action(db, user_id, "spy_fail", exc.detail, kingdom_id=kingdom_id)
         raise
