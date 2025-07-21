@@ -20,20 +20,14 @@ router = APIRouter(prefix="/api/health", tags=["health"])
 
 
 @router.get("/", summary="Health Check", description="Basic API health check.")
-def health_check():
-    """
-    ✅ Basic heartbeat endpoint.
-    Useful for Render/Heroku/uptime robots and CI/CD monitors.
-    """
+def health_check() -> dict[str, str]:
+    """Return basic heartbeat status for uptime monitors."""
     return {"status": "ok"}
 
 
 @router.get("/db", summary="Database Health", description="Checks DB connection.")
-def database_health(db: Session = Depends(get_db)):
-    """
-    ✅ Database ping check.
-    Verifies database connection is alive.
-    """
+def database_health(db: Session = Depends(get_db)) -> dict[str, bool | str]:
+    """Return database connectivity status."""
     try:
         db.execute(text("SELECT 1"))
         return {"status": "ok", "db": True}
