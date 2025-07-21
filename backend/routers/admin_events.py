@@ -5,6 +5,8 @@
 
 """Admin endpoints for managing global events."""
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
 from ..rate_limiter import limiter
 from pydantic import BaseModel
@@ -24,11 +26,46 @@ from ..security import (
 router = APIRouter(prefix="/api/admin/events", tags=["admin_events"])
 
 
+@router.get("/list", summary="List global events")
+@limiter.limit("10/minute")
+def list_events(
+    verify: str = Depends(verify_api_key),
+    admin_user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Return all global events ordered by start time."""
+    verify_admin(admin_user_id, db)
+    rows = db.execute(
+        text(
+            """
+            SELECT event_id, name, description, start_time, end_time,
+                   is_active, impact_type, magnitude
+              FROM global_events
+             ORDER BY start_time DESC
+            """
+        )
+    ).fetchall()
+    events = [
+        {
+            "event_id": r[0],
+            "name": r[1],
+            "description": r[2],
+            "start_time": r[3],
+            "end_time": r[4],
+            "is_active": r[5],
+            "impact_type": r[6],
+            "magnitude": float(r[7]) if r[7] is not None else None,
+        }
+        for r in rows
+    ]
+    return {"events": events}
+
+
 class EventPayload(BaseModel):
     name: str
     description: str | None = None
-    start_time: str | None = None
-    end_time: str | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
     impact_type: str | None = None
     magnitude: float | None = None
 
