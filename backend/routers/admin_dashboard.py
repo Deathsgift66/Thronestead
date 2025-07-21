@@ -54,9 +54,10 @@ def dashboard_summary(
     ).fetchall()
 
     return {
-        "total_users": total_users,
+        "active_users": total_users,
         "flagged_users": flagged,
-        "open_wars": open_wars,
+        "suspicious_count": flagged,
+        "active_wars": open_wars,
         "recent_logs": [dict(r._mapping) for r in logs],
     }
 
@@ -189,17 +190,28 @@ def update_kingdom_field(
         "alliance_id",
         "description",
         "national_theme",
+        "gold",
     }
     if field not in allowed_fields:
         raise HTTPException(
             status_code=400, detail="Field not allowed for direct update."
         )
 
-    column = getattr(Kingdom, field)
-    stmt = (
-        update(Kingdom).where(Kingdom.kingdom_id == kingdom_id).values({column: value})
-    )
-    db.execute(stmt)
+    try:
+        column = getattr(Kingdom, field)
+        stmt = (
+            update(Kingdom)
+            .where(Kingdom.kingdom_id == kingdom_id)
+            .values({column: value})
+        )
+        db.execute(stmt)
+    except AttributeError:
+        db.execute(
+            text(
+                f"UPDATE kingdoms SET {field} = :val WHERE kingdom_id = :kid"
+            ),
+            {"val": value, "kid": kingdom_id},
+        )
     db.commit()
     log_action(
         db, admin_user_id, "Update Kingdom", f"{field} → {value} for {kingdom_id}"
