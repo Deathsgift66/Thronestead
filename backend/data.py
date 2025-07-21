@@ -143,6 +143,9 @@ spy_missions: Dict[int, List[Dict]] = {}
 # ⚙️ Global Settings Cache
 global_game_settings: Dict[str, Any] = {}
 
+# 🔄 Cached system changelog entries
+system_changelog_entries: List[Dict[str, Any]] = []
+
 # ---------------------------------------------------
 # 🔄 Live Game Setting Loader (from DB)
 # ---------------------------------------------------

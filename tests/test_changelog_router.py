@@ -39,6 +39,8 @@ def test_returns_sorted_entries():
         row["title"] = "t"
     client = DummyClient({"game_changelog": entries})
     system_changelog.get_supabase_client = lambda: client
+    system_changelog.system_changelog_entries.clear()
+    system_changelog._last_loaded = None
     result = system_changelog.get_system_changelog()
     assert result[0]["version"] == "1.1.0"
     assert result[0]["title"] == "t"
