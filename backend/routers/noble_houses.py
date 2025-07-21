@@ -80,7 +80,7 @@ def create_house(payload: HousePayload, db: Session = Depends(get_db)):
     db.add(house)
     db.commit()
     db.refresh(house)
-    return {"house_id": house.house_id, "message": "House created successfully"}
+    return {"house_id": house.house_id, "status": "created"}
 
 
 @router.put("/{house_id}")
@@ -98,7 +98,7 @@ def update_house(house_id: int, payload: HousePayload, db: Session = Depends(get
     house.description = payload.description
 
     db.commit()
-    return {"message": "House updated successfully"}
+    return {"status": "updated"}
 
 
 @router.delete("/{house_id}")
@@ -110,4 +110,4 @@ def delete_house(house_id: int, db: Session = Depends(get_db)):
 
     db.delete(house)
     db.commit()
-    return {"message": "House deleted successfully"}
+    return {"status": "deleted"}
