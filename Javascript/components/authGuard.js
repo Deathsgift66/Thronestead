@@ -49,12 +49,18 @@ let hasRunAuthGuard = false;
 /** Private symbol and data store for user info */
 const userSymbol = Symbol('authGuardUser');
 let _userData = null;
+Object.defineProperty(window, userSymbol, {
+  configurable: false,
+  enumerable: false,
+  writable: true,
+  value: null,
+});
 
 /**
  * Get immutable user info.
  * @returns {{id: string, is_admin: boolean}|null}
  */
-const getUserData = () => _userData;
+const getUserData = () => window[userSymbol];
 
 /** Expose a safe getter on window */
 Object.defineProperty(window, 'getUser', {
@@ -94,6 +100,9 @@ function normalizePath(path) {
     return clean;
   }
 }
+
+// Normalized current page path
+const pathname = normalizePath(window.location.pathname);
 
 /** Adds hidden class to <html> to prevent UI flash */
 const addAuthHidden = () => {
@@ -392,6 +401,7 @@ async function mainAuthGuard() {
   }
 
   _userData = Object.freeze({ id: user.id, is_admin: userData.is_admin });
+  window[userSymbol] = _userData;
 
   startSessionRefresh();
 
