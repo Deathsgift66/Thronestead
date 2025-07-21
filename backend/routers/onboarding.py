@@ -4,7 +4,6 @@
 # Developer: Deathsgift66
 """Onboarding helpers to create kingdom records step by step."""
 
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, validator
