@@ -13,9 +13,10 @@ Version: 2025-06-21
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from services.resource_service import get_kingdom_resources
+from sqlalchemy import text
 
-from ..data import military_state
+from services.progression_service import calculate_troop_slots
+from services.resource_service import get_kingdom_resources
 from ..database import get_db
 from ..security import require_user_id
 from .progression_router import get_kingdom_id
@@ -38,17 +39,15 @@ def get_overview(
     except HTTPException as e:
         raise e
 
-    # Fetch military state or use defaults if kingdom not initialized yet
-    state = military_state.get(
-        kingdom_id,
-        {
-            "base_slots": 20,
-            "used_slots": 0,
-            "morale": 100,
-            "queue": [],
-            "history": [],
-        },
-    )
+    # Calculate total troop slots from progression bonuses
+    total_slots = calculate_troop_slots(db, kingdom_id)
+
+    # Retrieve current used slots
+    row = db.execute(
+        text("SELECT used_slots FROM kingdom_troop_slots WHERE kingdom_id = :kid"),
+        {"kid": kingdom_id},
+    ).fetchone()
+    used_slots = int(row[0]) if row else 0
 
     # Fetch current resources from the database
     resources_row = get_kingdom_resources(db, kingdom_id)
@@ -58,17 +57,14 @@ def get_overview(
         if k not in {"kingdom_id", "created_at", "last_updated"}
     }
 
-    base_slots = state.get("base_slots", 20)
-    used_slots = state.get("used_slots", 0)
-
     return {
         "resources": resources,
         "troops": {
             "total": used_slots,
             "slots": {
-                "base": base_slots,
+                "base": total_slots,
                 "used": used_slots,
-                "available": max(0, base_slots - used_slots),
+                "available": max(0, total_slots - used_slots),
             },
         },
     }
