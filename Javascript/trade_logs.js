@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, debounce } from './utils.js';
 import { applyKingdomLinks } from './kingdom_name_linkify.js';
 import { RESOURCE_TYPES } from './resourceTypes.js';
 import { setupTabs } from './components/tabControl.js';
@@ -11,6 +11,7 @@ import { setupTabs } from './components/tabControl.js';
 let realtimeChannel = null;
 let sortAsc = false;
 let currentTrades = [];
+const debouncedReload = debounce(loadTradeLogs, 2000);
 
 document.addEventListener("DOMContentLoaded", async () => {
   setupTabs({ onShow: loadTradeLogs });
@@ -18,8 +19,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   populateResourceOptions();
   await loadTradeLogs();
   startAutoRefresh();
-  subscribeRealtime();
-  applyKingdomLinks('#ledger-table-body td');
 });
 
 // ✅ Initialize tab switching logic
@@ -62,11 +61,23 @@ async function loadTradeLogs() {
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      showToast('User not found. Please relog.');
+      body.innerHTML = "<tr><td colspan='6'>No user found.</td></tr>";
+      return;
+    }
+
     const { data: userData } = await supabase
       .from('users')
       .select('kingdom_id, alliance_id')
       .eq('user_id', user.id)
       .single();
+
+    if (!userData || !userData.kingdom_id) {
+      showToast('User data not found. Please relog.');
+      body.innerHTML = "<tr><td colspan='6'>User data not found.</td></tr>";
+      return;
+    }
 
     const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
     const filters = {
@@ -77,17 +88,22 @@ async function loadTradeLogs() {
       resourceType: document.getElementById('resourceType').value
     };
 
+    subscribeRealtime(filters);
+
     const trades = await queryTrades(activeTab, filters);
     currentTrades = trades;
     renderTradeTable(trades);
     updateSummary(trades);
     updateLastUpdated();
+    if (trades.length >= 100) {
+      showToast('Only latest 100 trades shown.');
+    }
     applyKingdomLinks('#ledger-table-body td');
 
   } catch (err) {
-    console.error("❌ Trade Load Error:", err);
+    console.error('❌ Trade Load Error:', err);
     body.innerHTML = "<tr><td colspan='6'>Failed to load trade logs.</td></tr>";
-    showToast("Failed to load trade logs.");
+    showToast('Failed to load trade logs.');
   }
 }
 
@@ -159,8 +175,9 @@ function updateSummary(trades) {
   const countEl = document.getElementById('total-trades');
   const avgEl = document.getElementById('avg-price');
 
-  const totalVolume = trades.reduce((sum, t) => sum + t.quantity, 0);
-  const totalValue = trades.reduce((sum, t) => sum + (t.quantity * t.unit_price), 0);
+  const valid = trades.filter(t => t.quantity && t.unit_price);
+  const totalVolume = valid.reduce((sum, t) => sum + Number(t.quantity), 0);
+  const totalValue = valid.reduce((sum, t) => sum + Number(t.quantity) * Number(t.unit_price), 0);
   const average = totalVolume > 0 ? (totalValue / totalVolume).toFixed(2) : "-";
 
   volumeEl.textContent = totalVolume.toLocaleString();
@@ -182,8 +199,14 @@ function exportCSV() {
       const qty = parseInt(t.quantity, 10) || 0;
       const price = parseFloat(t.unit_price) || 0;
       const total = qty * price;
-      return [t.timestamp, t.seller_name, t.buyer_name, t.resource, qty, price.toFixed(2), total.toFixed(2)]
-        .map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+      const fields = [t.timestamp, t.seller_name, t.buyer_name, t.resource, qty, price.toFixed(2), total.toFixed(2)];
+      return fields
+        .map(field => {
+          let value = escapeHTML(String(field));
+          if (/^[=+\-@]/.test(value)) value = "'" + value;
+          return `"${value.replace(/"/g, '""')}"`;
+        })
+        .join(',');
     })
     .join('\n');
   const blob = new Blob([header + csv], { type: 'text/csv' });
@@ -191,7 +214,11 @@ function exportCSV() {
   const a = document.createElement('a');
   a.href = url;
   a.download = 'trade_logs.csv';
-  a.click();
+  try {
+    a.click();
+  } catch (err) {
+    showToast('CSV download failed.');
+  }
   URL.revokeObjectURL(url);
 }
 
@@ -217,14 +244,21 @@ function startAutoRefresh() {
 }
 
 // ✅ Subscribe to realtime changes
-function subscribeRealtime() {
+function subscribeRealtime(filters) {
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  if (!filters?.kingdom_id) return;
+
   realtimeChannel = supabase
-    .channel('public:trade_logs')
+    .channel('trade_logs_updates')
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
-      table: 'trade_logs'
-    }, loadTradeLogs)
+      table: 'trade_logs',
+      filter: `buyer_id=eq.${filters.kingdom_id},seller_id=eq.${filters.kingdom_id}`
+    }, debouncedReload)
     .subscribe(status => {
       const indicator = document.getElementById('realtime-indicator');
       if (indicator) {
