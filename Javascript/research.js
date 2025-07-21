@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, showToast, formatDate } from './utils.js';
+import { escapeHTML, showToast, formatDate, formatDuration } from './utils.js';
 
 let currentSession = null;
 let researchChannel = null;
@@ -14,13 +14,7 @@ const techMap = new Map();
 
 // Utility to escape HTML from strings to prevent XSS
 
-// Format seconds into human-readable string
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${h}h ${m}m ${s}s`;
-}
+
 
 // Toast notifications come from utils
 
@@ -31,7 +25,7 @@ function startCountdownTimers() {
     const endTime = new Date(el.dataset.endsAt).getTime();
     const update = () => {
       const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-      el.textContent = formatTime(remaining);
+      el.textContent = formatDuration(remaining);
       if (remaining <= 0) {
         el.textContent = 'Completed!';
         clearInterval(timer);
@@ -298,7 +292,7 @@ function renderActive(active, techs) {
     <div class="tech-card">
       <h3>${escapeHTML(def?.name || active.tech_code)}</h3>
       <p>${escapeHTML(def?.description || '')}</p>
-      <p>Time Remaining: <span class="countdown" data-ends-at="${active.ends_at}">${formatTime(remaining)}</span></p>
+      <p>Time Remaining: <span class="countdown" data-ends-at="${active.ends_at}">${formatDuration(remaining)}</span></p>
     </div>
   `;
 }

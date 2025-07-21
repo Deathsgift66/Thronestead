@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, showToast } from './utils.js';
+import { escapeHTML, showToast, formatDuration } from './utils.js';
 import { RESOURCE_KEYS } from './resourceKeys.js';
 
 let currentSession = null;
@@ -135,8 +135,8 @@ async function loadProjects() {
         <p class="category">${escapeHTML(project.category || "")}</p>
         <p>${escapeHTML(project.effect_summary || "")}</p>
         <p>Cost: ${formatCostFromColumns(project)}</p>
-        <p>Build Time: ${formatTime(project.build_time_seconds || 0)}</p>
-        ${project.project_duration_seconds ? `<p>Duration: ${formatTime(project.project_duration_seconds)}</p>` : ''}
+        <p>Build Time: ${formatDuration(project.build_time_seconds || 0)}</p>
+        ${project.project_duration_seconds ? `<p>Duration: ${formatDuration(project.project_duration_seconds)}</p>` : ''}
         <p>Power Score: ${project.power_score}</p>
         <button class="action-btn start-project-btn" data-code="${project.project_code}" ${isActive || !canAfford ? "disabled" : ""}
           aria-label="Start project"
@@ -202,7 +202,7 @@ async function loadProjects() {
         <h3>${escapeHTML(projectDef?.name || activeProject.project_code)}</h3>
         <p>${escapeHTML(projectDef?.description || "")}</p>
         <p>Power Score: ${activeProject.power_score}</p>
-        <p>Time Remaining: <span class="countdown" data-ends-at="${activeProject.ends_at}">${formatTime(remainingTime)}</span></p>
+        <p>Time Remaining: <span class="countdown" data-ends-at="${activeProject.ends_at}">${formatDuration(remainingTime)}</span></p>
         <div class="progress-bar"><div class="progress-bar-fill" data-width="${progressPercent}"></div></div>
       `;
 
@@ -259,7 +259,7 @@ function startCountdowns() {
 
     const update = () => {
       const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-      el.textContent = formatTime(remaining);
+      el.textContent = formatDuration(remaining);
 
       if (remaining <= 0) {
         clearInterval(timerId);
@@ -273,11 +273,5 @@ function startCountdowns() {
 }
 
 // ✅ Format time
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
 
-  return `${h}h ${m}m ${s}s`;
-}
 

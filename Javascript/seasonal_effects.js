@@ -8,7 +8,8 @@ import {
   openModal,
   closeModal,
   toggleLoading,
-  showToast
+  showToast,
+  formatDuration
 } from './utils.js';
 
 let seasonalChannel;
@@ -113,7 +114,7 @@ function renderSeasonTimer(endsAt) {
 
   el.innerHTML = `
     <h3>Time Remaining</h3>
-    <p><span id="season-countdown">${formatTime(secondsLeft)}</span></p>
+    <p><span id="season-countdown">${formatDuration(secondsLeft)}</span></p>
   `;
 }
 
@@ -177,7 +178,7 @@ function startSeasonCountdown(endsAt) {
 
   const update = () => {
     const remaining = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
-    countdownEl.textContent = formatTime(remaining);
+    countdownEl.textContent = formatDuration(remaining);
     if (remaining > 0) requestAnimationFrame(update);
     else countdownEl.textContent = "Season Ended!";
   };
@@ -202,12 +203,7 @@ function openForecastModal(season) {
 }
 
 // ✅ Time Formatting (h m s)
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${h}h ${m}m ${s}s`;
-}
+
 
 // ✅ Sign Formatter
 function fmtSigned(val) {

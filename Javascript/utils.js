@@ -202,6 +202,39 @@ export function isValidURL(str) {
 }
 
 /**
+ * Format a duration in seconds as "Hh Mm Ss".
+ * Optionally hide zero units and return a custom label when zero.
+ *
+ * @param {number} seconds        Duration in seconds
+ * @param {{compact?:boolean, instant?:string}} [options]
+ * @returns {string}
+ */
+export function formatDuration(seconds, { compact = false, instant } = {}) {
+  const total = Math.max(0, Math.floor(seconds));
+  if (instant && total === 0) return instant;
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (compact) {
+    const parts = [];
+    if (h) parts.push(`${h}h`);
+    if (m) parts.push(`${m}m`);
+    if (s || parts.length === 0) parts.push(`${s}s`);
+    return parts.join(' ');
+  }
+  return `${h}h ${m}m ${s}s`;
+}
+
+/**
+ * Capitalize the first letter of a string.
+ * @param {string} str
+ * @returns {string}
+ */
+export function capitalize(str = '') {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
  * Set an element's value by id.
  * @param {string} id Element id
  * @param {string} value New value

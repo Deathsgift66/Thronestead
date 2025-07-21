@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { showToast, escapeHTML } from './utils.js';
+import { showToast, escapeHTML, formatDuration, capitalize } from './utils.js';
 
 let accessToken = null;
 let userId = null;
@@ -131,7 +131,7 @@ function renderTrainingQueue(queue) {
     card.dataset.end = endMs;
     card.innerHTML = `
       <h4>${escapeHTML(entry.unit_name)}${roleTag} x ${entry.quantity}</h4>
-      <p>Ends In: <span class="countdown">${formatTime(endsIn)}</span></p>
+      <p>Ends In: <span class="countdown">${formatDuration(endsIn)}</span></p>
       <button class="action-btn cancel-btn" data-qid="${entry.queue_id}">Cancel</button>
     `;
     queueEl.appendChild(card);
@@ -178,7 +178,7 @@ function startQueueTimers() {
 
     const update = () => {
       const secs = Math.max(0, Math.floor((end - Date.now()) / 1000));
-      span.textContent = formatTime(secs);
+      span.textContent = formatDuration(secs);
     };
     update();
     timerHandles.push(setInterval(update, 1000));
@@ -252,16 +252,7 @@ function formatResourceCosts(troop) {
 }
 
 // ✅ Utilities
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${h}h ${m}m ${s}s`;
-}
 
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
 // Expose for inline handlers
 window.trainTroop = trainTroop;

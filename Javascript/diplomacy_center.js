@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, openModal, closeModal } from './utils.js';
+import { escapeHTML, openModal, closeModal, formatDate, capitalize } from './utils.js';
 
 let treatyChannel = null;
 let userId = null;
@@ -243,10 +243,4 @@ async function respondTreaty(treatyId, action) {
 
 // ✅ Helpers
 
-function formatDate(val) {
-  return val ? new Date(val).toLocaleDateString() : '';
-}
 
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}

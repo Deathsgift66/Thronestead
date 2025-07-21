@@ -3,6 +3,8 @@
 // Version: 7/21/2025
 // Developer: Deathsgift66
 
+import { isValidURL } from './utils.js';
+
 /**
  * Dynamically updates a preview image based on an input URL field.
  * @param {string} inputId - The ID of the input element
@@ -38,12 +40,5 @@ export function setupPreview(inputId, previewId, fallback = '') {
  * @param {string} str
  * @returns {boolean}
  */
-export function isValidURL(str) {
-  try {
-    const url = new URL(str);
-    return ['http:', 'https:'].includes(url.protocol);
-  } catch {
-    return false;
-  }
-}
+
 
