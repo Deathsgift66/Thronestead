@@ -9,6 +9,19 @@ let userId = null;
 let kingdomId = null;
 let realtimeChannel = null;
 
+function setupToggleButtons() {
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    const target = document.getElementById(btn.dataset.target);
+    if (!target) return;
+    btn.addEventListener('click', () => {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+      btn.textContent = `${btn.dataset.label} ${expanded ? '▲' : '▼'}`;
+      target.classList.toggle('hidden', expanded);
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
@@ -26,6 +39,7 @@ async function init() {
     .single();
   kingdomId = data?.kingdom_id;
 
+  setupToggleButtons();
   await loadUnits();
   subscribeRealtime();
 }
@@ -38,8 +52,12 @@ async function loadUnits() {
     if (!res.ok) throw new Error('Failed to load units');
     const { unlockedUnits, unitStats } = await res.json();
     renderUnits(unlockedUnits, unitStats);
+    const loading = document.getElementById('units-loading');
+    if (loading) loading.remove();
   } catch (err) {
     console.error('loadUnits error:', err);
+    const loading = document.getElementById('units-loading');
+    if (loading) loading.textContent = 'Failed to load units.';
   }
 }
 
@@ -65,10 +83,13 @@ function renderUnits(unlocked, stats) {
     if (!listEl) continue;
     listEl.innerHTML = '';
     const frag = document.createDocumentFragment();
-    categories[cls]
-      .sort((a, b) => a.tier - b.tier)
-      .forEach(u => frag.appendChild(createCard(u)));
-    listEl.appendChild(frag);
+    const items = categories[cls].sort((a, b) => a.tier - b.tier);
+    if (!items.length) {
+      listEl.innerHTML = '<p>No units unlocked.</p>';
+    } else {
+      items.forEach(u => frag.appendChild(createCard(u)));
+      listEl.appendChild(frag);
+    }
   }
 }
 
