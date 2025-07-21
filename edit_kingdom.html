@@ -147,6 +147,7 @@ Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
     import { showToast } from '/Javascript/utils.js';
     import { authHeaders } from '/Javascript/auth.js';
+    import { setupPreview } from '/Javascript/account_previews.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('kingdom-form');
@@ -167,12 +168,8 @@ Developer: Deathsgift66
       const kingdom = await res.json();
       populateForm(kingdom);
 
-      document.getElementById('banner_url').addEventListener('input', e => {
-        bannerPreview.src = e.target.value || 'Assets/profile_background.png';
-      });
-      document.getElementById('emblem_url').addEventListener('input', e => {
-        emblemPreview.src = e.target.value || 'Assets/icon-scroll.svg';
-      });
+      setupPreview('banner_url', 'banner-preview', 'Assets/profile_background.png');
+      setupPreview('emblem_url', 'emblem-preview', 'Assets/icon-scroll.svg');
 
       form.addEventListener('submit', async e => {
         e.preventDefault();

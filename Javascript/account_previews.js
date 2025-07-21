@@ -1,6 +1,6 @@
 // Project Name: Thronestead©
 // File Name: account_previews.js
-// Version: 7/18/2025
+// Version: 7/21/2025
 // Developer: Deathsgift66
 
 /**
@@ -9,7 +9,7 @@
  * @param {string} previewId - The ID of the preview element (e.g. <img>)
  * @param {string} fallback - Default fallback image URL
  */
-function setupPreview(inputId, previewId, fallback = '') {
+export function setupPreview(inputId, previewId, fallback = '') {
   const input = document.getElementById(inputId);
   const preview = document.getElementById(previewId);
 
@@ -38,7 +38,7 @@ function setupPreview(inputId, previewId, fallback = '') {
  * @param {string} str
  * @returns {boolean}
  */
-function isValidURL(str) {
+export function isValidURL(str) {
   try {
     const url = new URL(str);
     return ['http:', 'https:'].includes(url.protocol);
@@ -47,6 +47,3 @@ function isValidURL(str) {
   }
 }
 
-// Avatar and banner previews
-setupPreview('avatar_url', 'avatar-preview', '/images/default-avatar.png');
-setupPreview('profile_banner', 'banner-preview', '/images/default-banner.jpg');
