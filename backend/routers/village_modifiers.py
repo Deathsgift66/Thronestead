@@ -44,8 +44,8 @@ class ModifierPayload(BaseModel):
 @router.get("/{village_id}", summary="List Active Modifiers")
 def list_modifiers(
     village_id: int,
-    _uid: str = Depends(require_user_id),
     db: Session = Depends(get_db),
+    _uid: str = Depends(require_user_id),
 ):
     """
     Return all active modifiers for the given village.
@@ -85,8 +85,8 @@ def list_modifiers(
 @router.post("/apply", summary="Apply Village Modifier")
 def apply_modifier(
     payload: ModifierPayload,
-    _uid: str = Depends(require_user_id),
     db: Session = Depends(get_db),
+    _uid: str = Depends(require_user_id),
 ):
     """Apply or update a modifier via an upsert."""
 
@@ -136,8 +136,8 @@ def apply_modifier(
 # === POST: Cleanup expired modifiers ===
 @router.post("/cleanup_expired", summary="Purge Expired Modifiers")
 def cleanup_expired(
-    _uid: str = Depends(require_user_id),
     db: Session = Depends(get_db),
+    _uid: str = Depends(require_user_id),
 ):
     """
     Remove all expired modifiers from the database.
