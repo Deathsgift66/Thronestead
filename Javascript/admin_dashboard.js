@@ -30,10 +30,8 @@ if (!adminMeta) {
 }
 
 const REFRESH_MS = 30000;
-let csrfToken = initCsrf();
-setInterval(() => {
-  csrfToken = rotateCsrfToken();
-}, 15 * 60 * 1000);
+initCsrf();
+setInterval(rotateCsrfToken, 15 * 60 * 1000);
 
 const sanitizeField = str => str.replace(/[^A-Za-z0-9_.-]/g, '');
 const sanitizeValue = str => str.replace(/[<>]/g, '');
