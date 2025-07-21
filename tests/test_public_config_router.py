@@ -36,3 +36,15 @@ def test_public_config_returns_env_values():
         "MAINTENANCE_MODE": True,
         "FALLBACK_OVERRIDE": False,
     }
+
+
+class DummyDBNoFlag:
+    def execute(self, query, params=None):
+        return DummyResult(None)
+
+
+def test_public_config_uses_env_maintenance_mode_when_flag_missing():
+    os.environ["MAINTENANCE_MODE"] = "true"
+    db = DummyDBNoFlag()
+    result = public_config.public_config(db=db)
+    assert result["MAINTENANCE_MODE"] is True
