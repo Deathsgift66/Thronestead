@@ -200,7 +200,9 @@ function ensureChannel() {
     };
     broadcastWait = true;
     setTimeout(() => { broadcastWait = false; }, 250);
-    console.debug('[CSRF] BroadcastChannel ready');
+    if (import.meta?.env?.DEV) {
+      console.debug('[CSRF] BroadcastChannel ready');
+    }
   }
 
   if (window?.addEventListener) {
