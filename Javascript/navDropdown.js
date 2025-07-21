@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-controls", `dropdown-menu-${index}`);
 
-    const menu = dropdown.querySelector(".dropdown-menu");
+    const menu = dropdown.querySelector(".dropdown-content") ||
+                 dropdown.querySelector(".dropdown-menu");
     if (menu) {
       menu.setAttribute("role", "menu");
       menu.id = `dropdown-menu-${index}`;
@@ -63,7 +64,8 @@ document.addEventListener("DOMContentLoaded", () => {
         dropdown.classList.add("show");
         toggle.setAttribute("aria-expanded", "true");
         const firstItem = dropdown
-          .querySelector('.dropdown-menu [role="menuitem"]');
+          .querySelector('.dropdown-content [role="menuitem"]') ||
+          dropdown.querySelector('.dropdown-menu [role="menuitem"]');
         if (firstItem) firstItem.focus();
       }
     });

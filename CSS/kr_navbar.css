@@ -54,9 +54,10 @@ Developer: Deathsgift66
 }
 
 
-/* Show dropdown on hover or when dropdown-content is hovered */
+/* Show dropdown on hover or when activated via JS */
 .kr-navbar .dropdown:hover .dropdown-content,
-.kr-navbar .dropdown-content:hover {
+.kr-navbar .dropdown-content:hover,
+.kr-navbar .dropdown.show > .dropdown-content {
   display: block;
 }
 
