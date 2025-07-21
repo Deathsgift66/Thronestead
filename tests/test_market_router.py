@@ -9,6 +9,7 @@ from backend.routers.market import (
     buy_item,
     cancel_listing,
     get_listings,
+    get_my_listings,
     list_item,
 )
 
@@ -46,5 +47,7 @@ def test_market_flow():
         user_id=seller,
         db=db,
     )
+    mine = get_my_listings(user_id=seller, db=db)["listings"]
+    assert {l["listing_id"] for l in mine} == {res2["listing_id"]}
     cancel_listing(res2["listing_id"], user_id=seller, db=db)
     assert db.query(MarketListing).get(res2["listing_id"]) is None

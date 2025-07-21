@@ -257,6 +257,34 @@ def buy_item(
     return {"message": "Purchase complete", "listing_id": payload.listing_id}
 
 
+@router.get("/my-listings")
+def get_my_listings(
+    user_id: str = Depends(require_active_user_id),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(MarketListing)
+        .filter(MarketListing.seller_id == user_id)
+        .order_by(MarketListing.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    listings = [
+        {
+            "listing_id": r.listing_id,
+            "item": r.item,
+            "item_type": r.item_type,
+            "price": float(r.price),
+            "quantity": r.quantity,
+        }
+        for r in rows
+    ]
+    return {"listings": listings}
+
+
 @router.get("/history/{player_id}")
 def get_trade_history(player_id: str, db: Session = Depends(get_db)):
     rows = (
