@@ -27,7 +27,12 @@ def _validate_iso(value: Optional[str], name: str) -> Optional[str]:
     if value is None:
         return None
     try:
-        datetime.fromisoformat(value)
+        # Python's fromisoformat does not accept trailing "Z" so normalize to
+        # an explicit UTC offset when present.
+        if value.endswith("Z"):
+            datetime.fromisoformat(value[:-1] + "+00:00")
+        else:
+            datetime.fromisoformat(value)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid {name} format")
     return value
