@@ -46,7 +46,7 @@ export async function postAction(url, payload) {
   if (type.includes('application/json')) {
     try {
       data = await res.json();
-    } catch (err) {
+    } catch {
       throw new Error('Invalid JSON response');
     }
   } else {
