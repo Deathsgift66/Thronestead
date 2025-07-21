@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const pw = document.getElementById('new-password').value;
+    if (pw.length < 12) {
+      showToast('Password must be at least 12 characters', 'error');
+      return;
+    }
     const { error } = await supabase.auth.updateUser(
       { password: pw },
       { accessToken }
