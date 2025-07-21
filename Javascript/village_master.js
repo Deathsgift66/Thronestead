@@ -9,6 +9,7 @@ import { SovereignUtils } from './sovereign_utils.js';
 
 let realtimeChannel;
 let currentKingdomId;
+let upgradeCooldown = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
   await validateVIPAccess();
@@ -33,7 +34,7 @@ async function validateVIPAccess() {
 
     if (error) throw error;
 
-    if (!profile.vip_tier || profile.vip_tier < 2) {
+    if (typeof profile.vip_tier !== 'number' || profile.vip_tier < 2) {
       alert("Access Denied: VIP Tier 2 Required.");
       window.location.href = "play.html";
     }
@@ -66,10 +67,19 @@ async function loadVillages() {
     if (villagesError) throw villagesError;
 
     const gridEl = document.getElementById('village-grid');
+    if (!gridEl) {
+      console.error("Missing grid container");
+      return;
+    }
     gridEl.innerHTML = "";
 
     if (villages.length === 0) {
       gridEl.innerHTML = "<p>You do not have any villages.</p>";
+      return;
+    }
+
+    if (!window.SovereignUtils?.createVillageCard) {
+      showToast("UI failed to load. Please refresh.");
       return;
     }
 
@@ -117,9 +127,8 @@ function setupAmbientToggle() {
   const ambientToggle = document.getElementById('ambient-toggle');
   if (!ambientToggle) return;
 
-  ambientToggle.addEventListener('click', () => {
-    const isActive = ambientToggle.classList.toggle('active');
-    if (isActive) {
+  ambientToggle.addEventListener('change', () => {
+    if (ambientToggle.checked) {
       SovereignUtils.playAmbientAudio();
       showToast("Ambient sounds enabled.");
     } else {
@@ -131,46 +140,73 @@ function setupAmbientToggle() {
 
 // ✅ Mass Action: Bulk Upgrade All buildings
 async function bulkUpgradeAll() {
+  if (upgradeCooldown) return;
+  upgradeCooldown = true;
   showToast("Initiating bulk upgrade of all buildings...");
   try {
+    const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch('/api/village-master/bulk_upgrade', {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      }
     });
     if (!res.ok) throw new Error('Failed');
     showToast("Bulk upgrade complete!");
   } catch (err) {
     console.error('❌ Bulk upgrade failed:', err);
     showToast('Bulk upgrade failed');
+  } finally {
+    setTimeout(() => (upgradeCooldown = false), 3000);
   }
 }
 
 // ✅ Mass Action: Queue Troops in all villages
 async function bulkQueueTraining() {
+  if (upgradeCooldown) return;
+  upgradeCooldown = true;
   showToast("Queuing troops in all villages...");
   try {
+    const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch('/api/village-master/bulk_queue_training', {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      }
     });
     if (!res.ok) throw new Error('Failed');
     showToast("Troop training queues started!");
   } catch (err) {
     console.error('❌ Bulk queue failed:', err);
     showToast('Bulk queue failed');
+  } finally {
+    setTimeout(() => (upgradeCooldown = false), 3000);
   }
 }
 
 // ✅ Mass Action: Harvest all village resources
 async function bulkHarvest() {
+  if (upgradeCooldown) return;
+  upgradeCooldown = true;
   showToast("Harvesting resources from all villages...");
   try {
+    const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch('/api/village-master/bulk_harvest', {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      }
     });
     if (!res.ok) throw new Error('Failed');
     showToast("Resources harvested!");
   } catch (err) {
     console.error('❌ Bulk harvest failed:', err);
     showToast('Bulk harvest failed');
+  } finally {
+    setTimeout(() => (upgradeCooldown = false), 3000);
   }
 }
 
@@ -197,10 +233,27 @@ async function loadVillageOverview() {
     const res = await fetch('/api/village-master/overview', {
       headers: { 'X-User-ID': user.id }
     });
-    if (!res.ok) return;
-    const data = await res.json();
+    if (!res.ok) {
+      showToast("Overview failed to load.");
+      return;
+    }
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      showToast("Failed to parse overview.");
+      return;
+    }
+    if (!data || !Array.isArray(data.overview)) {
+      showToast("Invalid overview data");
+      return;
+    }
 
     const statsEl = document.getElementById('village-stats');
+    if (!statsEl) {
+      console.error("Missing stats container");
+      return;
+    }
     statsEl.innerHTML = '';
 
     data.overview.forEach(v => {
@@ -226,6 +279,10 @@ function subscribeVillageRealtime(kingdomId) {
         await loadVillageOverview();
       }
     )
+    .on('error', (e) => {
+      console.error("Realtime error:", e);
+      showToast("Realtime sync error.");
+    })
     .subscribe(status => {
       const ind = document.getElementById('realtime-indicator');
       if (ind) {
@@ -239,8 +296,8 @@ function subscribeVillageRealtime(kingdomId) {
       }
     });
 
-  window.addEventListener('beforeunload', () => {
-    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  window.addEventListener('beforeunload', async () => {
+    if (realtimeChannel) await supabase.removeChannel(realtimeChannel);
   });
 }
 
@@ -251,6 +308,9 @@ function showToast(msg) {
     toastEl = document.createElement("div");
     toastEl.id = "toast";
     toastEl.className = "toast-notification";
+    toastEl.setAttribute('role', 'status');
+    toastEl.setAttribute('aria-live', 'polite');
+    toastEl.setAttribute('aria-atomic', 'true');
     document.body.appendChild(toastEl);
   }
 
