@@ -6,7 +6,7 @@ import { supabase } from '../supabaseClient.js';
 import { fetchJson } from './fetchJson.js'; // Custom wrapper for JSON fetch
 
 // Dynamically load Bootstrap 5.3 if not already loaded
-function injectBootstrap() {
+function injectBootstrap(onReady) {
   if (!document.querySelector('link[data-bootstrap]')) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -15,12 +15,20 @@ function injectBootstrap() {
     document.head.appendChild(link);
   }
 
-  if (!document.querySelector('script[data-bootstrap]')) {
+  const existing = document.querySelector('script[data-bootstrap]');
+  if (!existing) {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js';
     script.defer = true;
     script.setAttribute('data-bootstrap', 'true');
+    if (onReady) script.addEventListener('load', onReady, { once: true });
     document.head.appendChild(script);
+  } else if (onReady) {
+    if (window.bootstrap) {
+      onReady();
+    } else {
+      existing.addEventListener('load', onReady, { once: true });
+    }
   }
 }
 
@@ -68,10 +76,15 @@ function createBar() {
   }
 
   // Initialize tooltips after Bootstrap loads
-  if (window.bootstrap) {
-    const tooltips = bar.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltips.forEach(el => new window.bootstrap.Tooltip(el));
-  }
+  initTooltips();
+}
+
+function initTooltips() {
+  if (!window.bootstrap) return;
+  const bar = document.getElementById('resource-bar');
+  if (!bar) return;
+  const tooltips = bar.querySelectorAll('[data-bs-toggle="tooltip"]');
+  tooltips.forEach(el => new window.bootstrap.Tooltip(el));
 }
 
 // Fetch and update live resource values from server
@@ -103,8 +116,8 @@ function updateUI(data) {
 
 // Initialize everything once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  injectBootstrap();
   createBar();
+  injectBootstrap(initTooltips);
   loadResources();
   setInterval(loadResources, 60000); // Auto-refresh every 60s
 });
