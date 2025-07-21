@@ -6,18 +6,14 @@
 import logging
 from sqlalchemy import text
 
-from backend.database import init_engine, SessionLocal
+from .db_utils import get_session
 from services.webhook_service import send_webhook
 
 logger = logging.getLogger(__name__)
 
 
 def process_failures() -> None:
-    init_engine()
-    if SessionLocal is None:
-        raise RuntimeError("Database not configured")
-    db = SessionLocal()
-    try:
+    with get_session() as db:
         rows = db.execute(
             text(
                 """
@@ -51,8 +47,6 @@ def process_failures() -> None:
         db.commit()
         if rows:
             logger.info("Processed %s webhook failures", len(rows))
-    finally:
-        db.close()
 
 
 if __name__ == "__main__":
