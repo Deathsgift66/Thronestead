@@ -8,6 +8,7 @@
   <meta name="description" content="Your account has been banned from Thronestead." />
   <link href="/CSS/login.css" rel="stylesheet" />
   <script src="/Javascript/banAppeal.js" type="module"></script>
+  <script src="/Javascript/themeToggle.js" type="module"></script>
   <script src="https://hcaptcha.com/1/api.js" async defer></script>
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
 </head>
@@ -36,7 +37,7 @@
         <button type="submit" class="royal-button">Submit Appeal</button>
       </form>
       <div id="appeal-status" class="message" aria-live="polite"></div>
-      <!-- <button id="theme-toggle" class="royal-button" type="button">Dark Mode</button> -->
+      <button id="theme-toggle" class="royal-button" type="button" aria-pressed="false" aria-label="Toggle theme">Dark Mode</button>
     </div>
   </main>
   <footer class="site-footer">
