@@ -523,12 +523,13 @@ function renderHeroes(list) {
   const ul = document.getElementById('hero-list');
   ul.innerHTML = '';
   list.forEach(h => {
-  const li = document.createElement('li');
-  li.textContent = `${h.name}: ${h.quests_completed} quests`;
-  ul.appendChild(li);
+    const li = document.createElement('li');
+    const amount = h.contributions ?? h.quests_completed ?? 0;
+    li.textContent = `${h.name}: ${amount} points`;
+    ul.appendChild(li);
   });
   if (!list.length) {
-  ul.innerHTML = `<li>${t('No heroes found.')}</li>`;
+    ul.innerHTML = `<li>${t('No heroes found.')}</li>`;
   }
 }
 
