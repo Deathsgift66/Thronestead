@@ -85,12 +85,17 @@ function renderListings() {
   const sort = document.getElementById('sortSelect')?.value || '';
   let filtered = listings.filter(l => l.item_name.toLowerCase().includes(query));
 
-  if (sort === 'price') filtered.sort((a, b) => a.price_per_unit - b.price_per_unit);
+  if (sort === 'price') filtered.sort((a, b) => (a.price_per_unit || 0) - (b.price_per_unit || 0));
   if (sort === 'quantity') filtered.sort((a, b) => b.stock_remaining - a.stock_remaining);
   if (sort === 'expiry') filtered.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
 
   const grid = document.getElementById('listingsGrid');
   grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<p>No listings found.</p>';
+    return;
+  }
 
   filtered.forEach(listing => {
     const card = document.createElement('div');
@@ -99,7 +104,7 @@ function renderListings() {
     card.innerHTML = `
       <h4>${escapeHTML(listing.item_name)}</h4>
       <p>${escapeHTML(listing.description)}</p>
-      <p><strong>Price:</strong> ${listing.price_per_unit} ${listing.currency_type}</p>
+      <p><strong>Price:</strong> ${listing.price_per_unit} ${listing.currency_type || 'Unknown Currency'}</p>
       <p><strong>Qty:</strong> ${listing.stock_remaining}</p>
       <p><small>${expiresIn}</small></p>
       <button class="btn">Buy</button>
@@ -117,7 +122,7 @@ function openPurchaseModal(listing) {
   currentListing = listing;
   document.getElementById('modalTitle').textContent = listing.item_name;
   document.getElementById('modalDesc').textContent = listing.description;
-  document.getElementById('modalPrice').textContent = `${listing.price_per_unit} ${listing.currency_type} each`;
+  document.getElementById('modalPrice').textContent = `${listing.price_per_unit} ${listing.currency_type || 'Unknown Currency'} each`;
 
   const qtyInput = document.getElementById('purchaseQty');
   qtyInput.value = 1;
@@ -133,6 +138,10 @@ function closePurchaseModal() {
 async function confirmPurchase() {
   const qty = parseInt(document.getElementById('purchaseQty').value, 10);
   if (!currentListing || !qty || qty < 1 || qty > currentListing.stock_remaining) return;
+  if (currentListing.price_per_unit <= 0) {
+    showToast('Invalid price for this listing.');
+    return;
+  }
 
   try {
     await fetch('/api/black_market/purchase', {
@@ -168,7 +177,7 @@ async function loadHistory() {
     (data.trades || []).forEach(t => {
       const div = document.createElement('div');
       div.className = 'history-item';
-      div.textContent = `${t.item_name} x${t.quantity} @ ${t.price_per_unit} ${t.currency_type}`;
+      div.textContent = `${t.item_name} x${t.quantity} @ ${t.price_per_unit} ${t.currency_type || 'Unknown Currency'}`;
       container.appendChild(div);
     });
   } catch (e) {
@@ -192,6 +201,4 @@ function formatExpiry(expiry) {
   const hrs = Math.floor(mins / 60);
   return `${hrs}h ${mins % 60}m left`;
 }
-
-
 
