@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 // Battle Replay module with timeline playback
 
-import { supabase } from '../supabaseClient.js';
+import { supabase } from '/Javascript/supabaseClient.js';
 import { authHeaders } from './auth.js';
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -33,7 +33,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  const timeline = document.getElementById('replay-timeline');
+  if (timeline) timeline.disabled = true;
+
   await loadReplay();
+  if (timeline) timeline.disabled = false;
+
   renderTick(0);
   displayOutcome();
   togglePlayButtons(false);
@@ -82,7 +87,7 @@ export async function loadReplay() {
     const headers = await authHeaders();
     const res = await fetch(`/api/battle/replay/${warId}`, { headers });
     replayData = await res.json();
-    tickInterval = replayData.tick_interval_seconds * 1000;
+    tickInterval = (replayData.tick_interval_seconds ?? 1) * 1000;
     document.getElementById('replay-timeline').max = replayData.total_ticks;
   } catch (err) {
     console.error('Failed to load replay data', err);
@@ -121,7 +126,7 @@ export function renderTick(tick) {
   });
 
   const fog = document.getElementById('fog-overlay');
-  if (replayData.fog_of_war) {
+  if (replayData?.fog_of_war === true) {
     fog.style.display = 'block';
   } else {
     fog.style.display = 'none';
@@ -184,6 +189,6 @@ export function reset() {
   currentTick = 0;
   renderTick(0);
   const fog = document.getElementById('fog-overlay');
-  if (fog) fog.style.display = replayData?.fog_of_war ? 'block' : 'none';
+  if (fog) fog.style.display = replayData?.fog_of_war === true ? 'block' : 'none';
   togglePlayButtons(false);
 }
