@@ -49,7 +49,7 @@ Developer: Deathsgift66
 // Battle Replay module with timeline playback
 
 import { supabase } from '/Javascript/supabaseClient.js';
-import { authHeaders } from './auth.js';
+import { authHeaders } from '/Javascript/auth.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const warId = parseInt(urlParams.get('war_id'), 10) || 0;
