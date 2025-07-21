@@ -25,6 +25,10 @@ def seed_data(db):
 def test_export_contains_user_data(db_session):
     seed_data(db_session)
     response = account_export.export_account(user_id="u1", db=db_session)
+    assert (
+        response.headers.get("Content-Disposition")
+        == "attachment; filename=account_export.zip"
+    )
     assert response.media_type == "application/zip"
     z = zipfile.ZipFile(io.BytesIO(response.body))
     data = json.loads(z.read("data.json").decode())
