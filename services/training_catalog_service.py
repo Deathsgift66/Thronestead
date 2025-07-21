@@ -4,6 +4,8 @@
 # Developer: Deathsgift66
 # Description: Helpers for reading the training_catalog table.
 
+"""Utility functions for accessing the ``training_catalog`` table."""
+
 from __future__ import annotations
 
 import logging
