@@ -5,34 +5,49 @@
 // Unified War Command Center — Page Controller
 import { escapeHTML } from './utils.js';
 import { applyKingdomLinks } from './kingdom_name_linkify.js';
-
 import { supabase } from '../supabaseClient.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
+let lastWarDate = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
   setupControls();
   subscribeToWarUpdates();
   await loadWars();
-  showToast("Unified War Command Center loaded!");
+  showToast('Unified War Command Center loaded!');
   applyKingdomLinks();
 });
 
-// ✅ Setup Page Controls
+// Setup Page Controls
 function setupControls() {
   const declareWarBtn = document.getElementById('declareWarButton');
   if (declareWarBtn) {
     declareWarBtn.addEventListener('click', openDeclareWarModal);
   }
 
+  const form = document.getElementById('declare-war-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await submitDeclareWar();
+    });
+  }
+
+  const cancelBtn = document.getElementById('declare-war-cancel');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeDeclareWarModal);
+
   const refreshWarsBtn = document.getElementById('refreshWarsButton');
   if (refreshWarsBtn) {
     refreshWarsBtn.addEventListener('click', async () => {
-      showToast("Refreshing active wars...");
+      showToast('Refreshing active wars...');
       await loadWars();
     });
   }
+
+  const loadMoreBtn = document.getElementById('load-more-wars-btn');
+  if (loadMoreBtn) loadMoreBtn.addEventListener('click', () => loadWars(true));
 }
 
-// ✅ Subscribe to Supabase real-time updates
+// Subscribe to Supabase real-time updates
 function subscribeToWarUpdates() {
   supabase
     .channel('public:wars')
@@ -41,6 +56,13 @@ function subscribeToWarUpdates() {
         appendWarEvent(`${escapeHTML(payload.new.attacker_name)} vs ${escapeHTML(payload.new.defender_name)} — ${escapeHTML(payload.new.status)}`);
       }
       await loadWars();
+    })
+    .on('error', (e) => {
+      console.error('Supabase RT error:', e);
+      showToast('Realtime war feed failed.');
+    })
+    .on('close', () => {
+      showToast('Realtime war feed closed.');
     })
     .subscribe();
 }
@@ -53,26 +75,35 @@ function appendWarEvent(msg) {
   el.className = 'war-event';
   el.textContent = msg;
   feed.prepend(el);
+  if (feed.children.length > 50) feed.removeChild(feed.lastChild);
 }
 
-// ✅ Load Active Wars
-async function loadWars() {
+// Load Active Wars
+async function loadWars(append = false) {
   const warListEl = document.getElementById('war-list');
-  warListEl.innerHTML = "<p>Loading active wars...</p>";
+  if (!append) {
+    warListEl.innerHTML = '<p>Loading active wars...</p>';
+    lastWarDate = null;
+  }
 
   try {
-    const { data: wars, error } = await supabase
+    let query = supabase
       .from('wars')
       .select('*')
       .order('start_date', { descending: true })
       .limit(25);
+    if (append && lastWarDate) {
+      query = query.lt('start_date', lastWarDate);
+    }
+    const { data: wars, error } = await query;
 
     if (error) throw error;
 
-    warListEl.innerHTML = "";
+    if (!append) warListEl.innerHTML = '';
 
     if (wars.length === 0) {
-      warListEl.innerHTML = "<p>No active wars at this time.</p>";
+      if (!append) warListEl.innerHTML = '<p>No active wars at this time.</p>';
+      document.getElementById('load-more-wars-btn')?.classList.add('hidden');
       return;
     }
 
@@ -96,104 +127,117 @@ async function loadWars() {
       warListEl.appendChild(card);
     });
 
+    lastWarDate = wars[wars.length - 1].start_date;
+    const moreBtn = document.getElementById('load-more-wars-btn');
+    if (moreBtn) {
+      if (wars.length === 25) {
+        moreBtn.classList.remove('hidden');
+      } else {
+        moreBtn.classList.add('hidden');
+      }
+    }
+
   } catch (err) {
-    console.error("❌ Error loading wars:", err);
-    warListEl.innerHTML = "<p>Failed to load active wars.</p>";
-    showToast("Failed to load wars.");
+    console.error('❌ Error loading wars:', err);
+    warListEl.innerHTML = '<p>Failed to load active wars.</p>';
+    showToast('Failed to load wars.');
   }
   applyKingdomLinks();
 }
 
-// ✅ Open Declare War Modal
+// Open Declare War Modal
 function openDeclareWarModal() {
   const modal = document.getElementById('declare-war-modal');
-  if (!modal) return;
-
-  modal.classList.remove('hidden');
-
-  if (!modal.querySelector('form')) {
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3>Declare War</h3>
-        <form id="declare-war-form">
-          <label for="target-kingdom-id">Target Kingdom ID:</label>
-          <input type="number" id="target-kingdom-id" name="target-kingdom-id" required />
-          <label for="war-reason">War Reason:</label>
-          <input type="text" id="war-reason" name="war-reason" required />
-          <button type="submit" class="action-btn">Declare</button>
-          <button type="button" class="action-btn" id="declare-war-cancel">Cancel</button>
-        </form>
-      </div>
-    `;
-
-    const form = modal.querySelector('#declare-war-form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await submitDeclareWar();
-    });
-
-    const cancelBtn = modal.querySelector('#declare-war-cancel');
-    cancelBtn.addEventListener('click', closeDeclareWarModal);
-  }
+  if (modal) modal.classList.remove('hidden');
 }
 
-// ✅ Close Declare War Modal
+// Close Declare War Modal
 function closeDeclareWarModal() {
   const modal = document.getElementById('declare-war-modal');
   if (modal) modal.classList.add('hidden');
 }
 
-// ✅ Submit Declare War
+// Submit Declare War
 async function submitDeclareWar() {
   const targetInput = document.getElementById('target-kingdom-id');
   const reasonInput = document.getElementById('war-reason');
-  const targetId = targetInput?.value.trim();
+  const rawTargetId = targetInput?.value.trim();
+  const targetId = parseInt(rawTargetId, 10);
   const reason = reasonInput?.value.trim();
 
-  if (!targetId || !reason) {
-    showToast("Please fill in all fields.");
+  if (!rawTargetId || !reason) {
+    showToast('Please fill in all fields.');
+    return;
+  }
+
+  if (isNaN(targetId) || targetId <= 0) {
+    showToast('Invalid target kingdom ID.');
+    return;
+  }
+
+  if (!/^[\\w\\s.,'’\\-]{5,100}$/.test(reason)) {
+    showToast('Invalid war reason format.');
+    return;
+  }
+
+  const declareBtn = document.querySelector('#declare-war-form button[type="submit"]');
+  if (declareBtn) {
+    declareBtn.disabled = true;
+    setTimeout(() => { declareBtn.disabled = false; }, 3000);
+  }
+
+  let session;
+  try {
+    const { data } = await supabase.auth.getSession();
+    session = data?.session;
+    if (!session || !session.user) throw new Error();
+  } catch {
+    showToast('Unable to verify session. Please log in.');
     return;
   }
 
   try {
-    const res = await fetch("/api/wars/declare", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/wars/declare', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        target: parseInt(targetId, 10),
+        target: targetId,
         war_reason: reason
       })
     });
 
     const result = await res.json();
 
-    if (!res.ok) throw new Error(result.error || "Failed to declare war.");
+    if (!res.ok) throw new Error(result.error || 'Failed to declare war.');
 
-    showToast("War declared successfully!");
+    showToast('War declared successfully!');
     closeDeclareWarModal();
     await loadWars();
 
   } catch (err) {
-    console.error("❌ Error declaring war:", err);
-    showToast("Failed to declare war.");
+    console.error('❌ Error declaring war:', err);
+    showToast('Failed to declare war.');
   }
 }
 
-// ✅ Open War Detail Modal
+// Open War Detail Modal
 async function openWarDetailModal(warId) {
+  if (!warId || typeof warId !== 'number') {
+    showToast('Invalid war ID.');
+    return;
+  }
   const modal = document.getElementById('war-detail-modal');
   if (!modal) return;
 
   modal.classList.remove('hidden');
-  modal.innerHTML = `
-    <div class="modal-content">
-      <h3>War Details</h3>
-      <p>Loading war details...</p>
-      <button type="button" class="action-btn" id="war-detail-close">Close</button>
-    </div>
-  `;
+  const content = modal.querySelector('.modal-content');
+  if (!content) return;
+  content.innerHTML = `<h3>War Details</h3><p>Loading war details...</p><button type="button" class="action-btn" id="war-detail-close">Close</button>`;
 
-  const closeBtn = modal.querySelector('#war-detail-close');
+  const closeBtn = content.querySelector('#war-detail-close');
   closeBtn.addEventListener('click', closeWarDetailModal);
 
   try {
@@ -201,13 +245,12 @@ async function openWarDetailModal(warId) {
     if (!res.ok) throw new Error('Failed to load war details');
     const { war } = await res.json();
 
-    const content = modal.querySelector('.modal-content');
     content.innerHTML = `
       <h3>${escapeHTML(war.attacker_name)} ⚔️ ${escapeHTML(war.defender_name)}</h3>
       <p>Status: ${escapeHTML(war.status)}</p>
       <p>Start Date: ${new Date(war.start_date).toLocaleString()}</p>
       <p>Score: ${war.attacker_score} - ${war.defender_score}</p>
-      <p>Reason: ${escapeHTML(war.war_reason || "Unknown")}</p>
+      <p>Reason: ${escapeHTML(war.war_reason || 'Unknown')}</p>
       <button type="button" class="action-btn" id="war-detail-close-btn">Close</button>
     `;
 
@@ -215,33 +258,33 @@ async function openWarDetailModal(warId) {
     applyKingdomLinks();
 
   } catch (err) {
-    console.error("❌ Error loading war details:", err);
-    showToast("Failed to load war details.");
+    console.error('❌ Error loading war details:', err);
+    showToast('Failed to load war details.');
   }
 }
 
-// ✅ Close War Detail Modal
+// Close War Detail Modal
 function closeWarDetailModal() {
   const modal = document.getElementById('war-detail-modal');
   if (modal) modal.classList.add('hidden');
 }
 
-// ✅ Toast Helper
+// Toast Helper
 function showToast(msg) {
   let toastEl = document.getElementById('toast');
   if (!toastEl) {
-    toastEl = document.createElement("div");
-    toastEl.id = "toast";
-    toastEl.className = "toast-notification";
+    toastEl = document.createElement('div');
+    toastEl.id = 'toast';
+    toastEl.className = 'toast-notification';
+    toastEl.setAttribute('role', 'status');
+    toastEl.setAttribute('aria-live', 'polite');
     document.body.appendChild(toastEl);
   }
 
   toastEl.textContent = msg;
-  toastEl.classList.add("show");
+  toastEl.classList.add('show');
 
   setTimeout(() => {
-    toastEl.classList.remove("show");
+    toastEl.classList.remove('show');
   }, 3000);
 }
-
-// ✅ Basic HTML Escape
