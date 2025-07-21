@@ -2,6 +2,8 @@
 // File Name: legal.js
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
+"use strict";
+
 document.addEventListener('DOMContentLoaded', () => {
   const legalDocs = [
     {
@@ -38,6 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const docGrid = document.getElementById('legal-docs');
   const searchInput = document.getElementById('doc-search');
+
+  if (!docGrid || !searchInput) {
+    console.error('Legal document elements not found');
+    return;
+  }
 
   function renderDocs(filter = '') {
     docGrid.innerHTML = '';
