@@ -3,11 +3,12 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, openModal, closeModal } from './utils.js';
 
 let treatyChannel = null;
 let userId = null;
 let allianceId = null;
+let pendingCancelId = null;
 
 window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -27,6 +28,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await loadSummary();
   await loadTreaties();
+
+  document.getElementById('confirm-cancel-btn')?.addEventListener('click', () => {
+    if (pendingCancelId) respondTreaty(pendingCancelId, 'cancel');
+    closeModal('cancel-confirm-modal');
+    pendingCancelId = null;
+  });
+  document.getElementById('dismiss-cancel-btn')?.addEventListener('click', () => {
+    closeModal('cancel-confirm-modal');
+    pendingCancelId = null;
+  });
 
   // Filter select binding
   document.getElementById('treaty-filter')?.addEventListener('change', loadTreaties);
@@ -90,6 +101,9 @@ function renderTreatyTable(treaties) {
     const row = document.createElement('tr');
     const actionButtons = [];
 
+    if (t.notes) {
+      actionButtons.push(createNotesBtn(t.treaty_id));
+    }
     if (t.status === 'proposed') {
       actionButtons.push(createActionBtn(t.treaty_id, 'accept'));
       actionButtons.push(createActionBtn(t.treaty_id, 'reject'));
@@ -97,6 +111,11 @@ function renderTreatyTable(treaties) {
       actionButtons.push(createActionBtn(t.treaty_id, 'cancel'));
     } else if (t.status === 'expired') {
       actionButtons.push(createActionBtn(t.treaty_id, 'renew'));
+    }
+
+    if (t.end_date && t.status === 'active') {
+      const diff = new Date(t.end_date) - new Date();
+      if (diff > 0 && diff < 604800000) row.classList.add('expiring');
     }
 
     row.innerHTML = `
@@ -107,12 +126,23 @@ function renderTreatyTable(treaties) {
       <td>${formatDate(t.end_date)}</td>
       <td>${actionButtons.map(btn => btn.outerHTML).join(' ')}</td>
     `;
+
+    const notesRow = document.createElement('tr');
+    notesRow.className = 'notes-row';
+    notesRow.dataset.notesFor = t.treaty_id;
+    notesRow.innerHTML = `<td colspan="6" class="notes-cell">${escapeHTML(t.notes || 'No notes')}</td>`;
+
     tbody.appendChild(row);
+    tbody.appendChild(notesRow);
   });
 
   // Rebind click handlers
   tbody.querySelectorAll('button[data-id]').forEach(btn => {
-    btn.addEventListener('click', () => respondTreaty(btn.dataset.id, btn.dataset.action));
+    if (btn.dataset.action === 'notes') {
+      btn.addEventListener('click', () => toggleNotes(btn.dataset.id));
+    } else {
+      btn.addEventListener('click', () => handleAction(btn.dataset.id, btn.dataset.action));
+    }
   });
 }
 
@@ -123,6 +153,15 @@ function createActionBtn(tid, action) {
   btn.textContent = capitalize(action);
   btn.dataset.id = tid;
   btn.dataset.action = action;
+  return btn;
+}
+
+function createNotesBtn(tid) {
+  const btn = document.createElement('button');
+  btn.className = 'btn';
+  btn.textContent = 'Notes';
+  btn.dataset.id = tid;
+  btn.dataset.action = 'notes';
   return btn;
 }
 
@@ -157,6 +196,20 @@ export async function proposeTreaty() {
 }
 
 window.proposeTreaty = proposeTreaty;
+
+function handleAction(treatyId, action) {
+  if (action === 'cancel') {
+    pendingCancelId = treatyId;
+    openModal('cancel-confirm-modal');
+  } else {
+    respondTreaty(treatyId, action);
+  }
+}
+
+function toggleNotes(tid) {
+  const row = document.querySelector(`tr[data-notes-for="${tid}"]`);
+  row?.classList.toggle('visible');
+}
 
 // ✅ Treaty Response Handler
 async function respondTreaty(treatyId, action) {
