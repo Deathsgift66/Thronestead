@@ -101,6 +101,14 @@ _transactions: List[Transaction] = []
 
 _resources: dict[str, dict[str, int]] = {"demo-kingdom": {"gold": 100, "gems": 20}}
 
+
+def _purge_expired_listings() -> None:
+    """Remove listings that have passed their expiration time."""
+    now = datetime.utcnow()
+    for listing in list(_listings):
+        if listing.expires_at <= now:
+            _listings.remove(listing)
+
 # ---------------------------------------------
 # Routes
 # ---------------------------------------------
@@ -109,20 +117,25 @@ _resources: dict[str, dict[str, int]] = {"demo-kingdom": {"gold": 100, "gems": 2
 @router.get("/listings")
 def get_listings():
     """Return available black market offers."""
+    _purge_expired_listings()
     return {"listings": [listing.model_dump() for listing in _listings]}
 
 
 @router.post("/purchase")
 def purchase(payload: PurchasePayload, user_id: str = Depends(verify_jwt_token)):
     """Purchase an item from the in-memory market."""
+    _purge_expired_listings()
     for listing in list(_listings):
         if listing.id == payload.listing_id:
             if payload.quantity > listing.stock_remaining:
                 raise HTTPException(status_code=400, detail="Not enough stock")
 
-            listing.stock_remaining -= payload.quantity
             _resources.setdefault(payload.kingdom_id, {"gold": 0, "gems": 0})
             cost = payload.quantity * listing.price_per_unit
+            if _resources[payload.kingdom_id][listing.currency_type] < cost:
+                raise HTTPException(status_code=400, detail="Insufficient funds")
+
+            listing.stock_remaining -= payload.quantity
             _resources[payload.kingdom_id][listing.currency_type] -= cost
 
             _transactions.append(
