@@ -118,6 +118,7 @@ def mask_email(email: str) -> str:
 def request_password_reset(
     payload: EmailPayload, request: Request, db: Session = Depends(get_db)
 ):
+    """Send a one-time reset code to the provided email."""
     _prune_expired()
     ip = request.client.host if request.client else ""
     history = RATE_LIMIT.setdefault(ip, [])
@@ -147,6 +148,7 @@ def request_password_reset(
 # ---------------------------------------------
 @router.post("/verify-reset-code")
 def verify_reset_code(payload: CodePayload, request: Request = None):
+    """Validate a user supplied reset code."""
     _prune_expired()
     token_hash = _hash_token(payload.code)
     record = RESET_STORE.get(token_hash)
@@ -171,12 +173,14 @@ def verify_reset_code(payload: CodePayload, request: Request = None):
 # ---------------------------------------------
 # Route: Set New Password
 # ---------------------------------------------
+
 @router.post("/set-new-password")
 def set_new_password(
     payload: PasswordPayload,
     db: Session = Depends(get_db),
-    request: Request = None,
+    request: Request | None = None,
 ):
+    """Finalize a password reset after code verification."""
     _prune_expired()
 
     ip = request.client.host if request and request.client else ""
@@ -191,6 +195,10 @@ def set_new_password(
     uid = record[0]
     if len(USER_RATE_LIMIT.get(uid, [])) >= RATE_LIMIT_MAX:
         raise HTTPException(status_code=429, detail="Too many requests")
+
+    # track the attempt for both IP and user based rate limits
+    RATE_LIMIT.setdefault(ip, []).append(time.time())
+    USER_RATE_LIMIT.setdefault(uid, []).append(time.time())
     session = VERIFIED_SESSIONS.get(uid)
     if not session or session[0] != token_hash or session[1] < time.time():
         raise HTTPException(status_code=400, detail="Reset session expired")
