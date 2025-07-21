@@ -44,7 +44,7 @@
     let fetchController = null;
     let authToken = '';
 
-    const csrfToken = getCsrfToken();
+    let csrfToken = getCsrfToken();
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -64,6 +64,7 @@
       setInterval(async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token) authToken = session.access_token;
+        csrfToken = getCsrfToken();
       }, 45 * 60 * 1000);
     });
 
@@ -133,6 +134,9 @@
         url.searchParams.set('limit', pageSize);
         if (sanitizedSearch) url.searchParams.set('search', sanitizedSearch);
         fetchController = new AbortController();
+        const timeoutId = setTimeout(() => {
+          if (fetchController) fetchController.abort();
+        }, 15000);
         const res = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${authToken}`,
@@ -140,6 +144,7 @@
           },
           signal: fetchController.signal
         });
+        clearTimeout(timeoutId);
         if (res.status === 403) {
           redirectToLogin();
           return;
@@ -152,9 +157,11 @@
       } catch (err) {
         console.error('❌ Member fetch error:', err);
         tbody.innerHTML = `<tr><td colspan="11" class="empty-state">Failed to load members. <button id="retry-fetch">Retry</button></td></tr>`;
-        document.getElementById('retry-fetch')?.addEventListener('click', () => {
-          fetchMembers(params.sortBy, params.direction, params.search, params.page);
-        });
+        const retryBtn = document.getElementById('retry-fetch');
+        if (retryBtn) {
+          const { sortBy: s = 'username', direction: d = 'asc', search: q = '', page: p = 1 } = params || {};
+          retryBtn.addEventListener('click', () => fetchMembers(s, d, q, p), { once: true });
+        }
       } finally {
         toggleLoading(false);
         fetchInProgress = false;
