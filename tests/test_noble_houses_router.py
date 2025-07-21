@@ -28,6 +28,7 @@ def test_full_crud_flow():
     db = Session()
 
     res = create_house(HousePayload(name="Stark"), db=db)
+    assert res["status"] == "created"
     hid = res["house_id"]
 
     house = get_house(hid, db=db)
@@ -38,5 +39,5 @@ def test_full_crud_flow():
     assert updated["motto"] == "Winter is Coming"
 
     result = delete_house(hid, db=db)
-    assert result["message"] == "deleted"
+    assert result["status"] == "deleted"
     assert list_houses(db=db)["houses"] == []
