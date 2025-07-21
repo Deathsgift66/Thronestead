@@ -1,3 +1,5 @@
+"""Simplified signup endpoints used during open beta testing."""
+
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, EmailStr, validator
 from sqlalchemy.orm import Session
@@ -40,7 +42,7 @@ async def validate_signup(
     payload: SignupCheckPayload,
     request: Request,
     db: Session = Depends(get_db),
-):
+) -> dict:
     """Validate signup inputs before account creation."""
     sb = get_supabase_client()
 
@@ -70,7 +72,6 @@ async def validate_signup(
     ).fetchone()
     if not region_row:
         raise HTTPException(status_code=400, detail="Selected region is invalid")
-    region_name = region_row[0]
 
     return {
         "status": "ok",
@@ -82,7 +83,8 @@ async def validate_signup(
 @router.post("/create")
 async def create_user(
     payload: SignupPayload, request: Request, db: Session = Depends(get_db)
-):
+) -> dict:
+    """Create a basic user account and corresponding DB record."""
     sb = get_supabase_client()
     client_ip = request.client.host if request.client else None
 
