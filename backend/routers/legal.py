@@ -1,3 +1,14 @@
+# Project Name: Thronestead©
+# File Name: legal.py
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
+"""
+Project: Thronestead ©
+File: legal.py
+Role: API routes for retrieving legal documents.
+Version: 2025-06-21
+"""
+
 from fastapi import APIRouter, HTTPException
 
 from ..supabase_client import get_supabase_client
