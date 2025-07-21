@@ -4,7 +4,8 @@
 // Developer: Deathsgift66
 document.addEventListener('DOMContentLoaded', () => {
   const toggleBtn = document.getElementById('mobile-menu-btn');
-  const dropdown = document.querySelector('.dropdown-toggle');
+  // Support both legacy `.dropdown-content` and newer `.dropdown-menu` markup
+  const dropdown = document.querySelector('.dropdown-content, .dropdown-menu');
   const overlay = document.createElement('div');
   overlay.id = 'mobile-menu-overlay';
   overlay.style.position = 'fixed';
@@ -19,16 +20,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!toggleBtn || !dropdown) return;
 
+  dropdown.style.display = 'none';
+
   // Set accessibility attributes
   dropdown.setAttribute('role', 'menu');
   dropdown.setAttribute('aria-expanded', 'false');
-  toggleBtn.setAttribute('aria-controls', 'mobile-menu');
+  if (!dropdown.id) dropdown.id = 'mobile-menu';
+  toggleBtn.setAttribute('aria-controls', dropdown.id);
   toggleBtn.setAttribute('aria-expanded', 'false');
   toggleBtn.setAttribute('aria-label', 'Toggle Mobile Menu');
 
   // Animate dropdown in/out
   function openDropdown() {
     dropdown.classList.add('open');
+    dropdown.style.display = 'block';
     dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
     dropdown.setAttribute('aria-expanded', 'true');
     toggleBtn.setAttribute('aria-expanded', 'true');
@@ -39,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeDropdown() {
     dropdown.classList.remove('open');
     dropdown.style.maxHeight = '0px';
+    dropdown.style.display = 'none';
     dropdown.setAttribute('aria-expanded', 'false');
     toggleBtn.setAttribute('aria-expanded', 'false');
     overlay.style.display = 'none';
