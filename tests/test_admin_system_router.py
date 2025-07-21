@@ -38,6 +38,7 @@ def test_rollback_system_checks_password(monkeypatch):
         db=db,
     )
     assert res["status"] == "rollback_triggered"
+    assert any("select is_admin" in q[0].lower() for q in db.queries)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
