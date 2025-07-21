@@ -88,33 +88,7 @@ async function loadUserContext() {
   }
 }
 
-import { loadPlayerProgressionFromStorage } from './progressionGlobal.js';
-
-export function renderProgressionBanner(target = 'body') {
-  loadPlayerProgressionFromStorage();
-  const prog = window.playerProgression;
-  if (!prog) return;
-
-  let bar = document.getElementById('progression-bar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'progression-bar';
-    bar.className = 'progression-bar';
-    const container = document.querySelector(target);
-    if (container) container.prepend(bar);
-  }
-
-  bar.innerHTML = `
-    <span><strong>🏰 Castle:</strong> Lv ${prog.castleLevel}</span>
-    <span><strong>🏘️ Villages:</strong> ${prog.maxVillages}</span>
-    <span><strong>👑 Nobles:</strong> ${prog.availableNobles}/${prog.totalNobles}</span>
-    <span><strong>🛡️ Knights:</strong> ${prog.availableKnights}/${prog.totalKnights}</span>
-    <span><strong>⚔️ Troops:</strong> ${prog.troopSlots.used}/${prog.troopSlots.used + prog.troopSlots.available}</span>
-    ${prog.allianceLevel ? `<span><strong>🤝 Alliance:</strong> Lv ${prog.allianceLevel}</span>` : ''}
-    ${prog.projectMilestones ? `<span><strong>🏗️ Milestones:</strong> ${prog.projectMilestones}</span>` : ''}
-    ${prog.unlockRequirements ? `<span><strong>🔓 Unlocks:</strong> ${prog.unlockRequirements}</span>` : ''}
-  `;
-}
+import { renderProgressionBanner } from './progressionBanner.js';
 
 
 
