@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, debounce } from './utils.js';
+import { escapeHTML, debounce } from './core_utils.js';
 import { applyKingdomLinks } from './kingdom_name_linkify.js';
 import { RESOURCE_TYPES } from './resources.js';
 import { setupTabs } from './components/tabControl.js';

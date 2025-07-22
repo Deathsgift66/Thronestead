@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { authFetch, authJsonFetch, showToast, formatTimestamp } from './utils.js';
+import { authFetch, authJsonFetch, showToast, formatTimestamp } from './core_utils.js';
 import { setupReauthButtons } from './reauth.js';
 
 const REFRESH_INTERVAL_MS = 30000;

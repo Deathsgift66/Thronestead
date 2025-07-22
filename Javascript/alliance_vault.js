@@ -5,7 +5,7 @@
 import { supabase } from '../supabaseClient.js';
 import { RESOURCE_TYPES } from './resources.js';
 import { loadCustomBoard } from './customBoard.js';
-import { escapeHTML, authFetch } from './utils.js';
+import { escapeHTML, authFetch } from './core_utils.js';
 import { setupTabs } from './components/tabControl.js';
 
 let currentUser = null;

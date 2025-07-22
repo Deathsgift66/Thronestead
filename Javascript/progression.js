@@ -4,7 +4,7 @@
 // Combines progressionGlobal.js and progressionBanner.js functionality
 
 import { getEnvVar } from './env.js';
-import { authFetch } from './utils.js';
+import { authFetch } from './core_utils.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');
 

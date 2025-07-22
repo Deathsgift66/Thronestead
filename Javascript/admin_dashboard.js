@@ -11,7 +11,7 @@ import {
   debounce,
   updateElementText,
   formatTimestamp
-} from '/Javascript/utils.js';
+} from '/Javascript/core_utils.js';
 import {
   initCsrf,
   rotateCsrfToken,

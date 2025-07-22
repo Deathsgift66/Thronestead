@@ -2,7 +2,7 @@
 // File Name: alliance_treaties.js
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
-import { escapeHTML, openModal, closeModal, authFetch, showToast, toggleLoading } from './utils.js';
+import { escapeHTML, openModal, closeModal, authFetch, showToast, toggleLoading } from './core_utils.js';
 import './modalFallback.js';
 import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/csrf.js';
 

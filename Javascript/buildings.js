@@ -1,7 +1,7 @@
 // JS file: buildings.js
 // Handles village and building management interactions on the buildings page.
 
-import { escapeHTML } from './utils.js';
+import { escapeHTML } from './core_utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadVillages();

@@ -5,7 +5,7 @@
 // Sovereign’s Grand Overseer — Shared Utility Module
 // Central module to manage village cards, sorting, and ambience audio.
 
-import { escapeHTML } from './utils.js';
+import { escapeHTML } from './core_utils.js';
 
 /**
  * @namespace SovereignUtils

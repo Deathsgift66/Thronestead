@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { loadCustomBoard } from './customBoard.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML } from './core_utils.js';
 import { setupTabs } from './components/tabControl.js';
 
 let currentWarId = null;

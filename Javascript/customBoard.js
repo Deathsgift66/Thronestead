@@ -1,4 +1,4 @@
-import { escapeHTML } from './utils.js';
+import { escapeHTML } from './core_utils.js';
 
 /**
  * Fetch and display the alliance custom board image and text.

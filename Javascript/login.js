@@ -5,7 +5,7 @@
 
 /* global hcaptcha */
 import { supabase } from '../supabaseClient.js';
-import { showToast, openModal, closeModal, validateEmail } from './utils.js';
+import { showToast, openModal, closeModal, validateEmail } from './core_utils.js';
 import { getEnvVar } from './env.js';
 
 const API_BASE_URL = getEnvVar('API_BASE_URL');

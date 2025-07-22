@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { showToast } from './utils.js';
+import { showToast } from './core_utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('save-plan');

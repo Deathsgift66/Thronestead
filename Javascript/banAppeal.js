@@ -3,8 +3,8 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 
-import { fetchJson } from './utils.js';
-import { validateEmail } from './utils.js';
+import { fetchJson } from './core_utils.js';
+import { validateEmail } from './core_utils.js';
 import { getEnvVar } from './env.js';
 import { initThemeToggle } from './themeToggle.js';
 

@@ -8,7 +8,7 @@ import {
   closeModal,
   sanitizeHTML,
   relativeTime
-} from './utils.js';
+} from './core_utils.js';
 
 let newsChannel = null;
 let offset = 0;
