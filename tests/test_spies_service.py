@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import Kingdom, KingdomResources, KingdomSpies
 from backend.routers.spy import LaunchPayload, launch_spy_mission
 from services.spies_service import get_spy_defense, reset_daily_attack_counts

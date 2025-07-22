@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi import HTTPException
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import Kingdom, User, WarsTactical, UnitMovement
 from backend.routers.battle import OrdersPayload, issue_orders
 

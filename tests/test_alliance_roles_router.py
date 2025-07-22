@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import Alliance, AllianceRole, User
 from backend.routers.alliance_roles import (
     RoleDeletePayload,

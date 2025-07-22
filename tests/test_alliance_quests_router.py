@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 import pytest
 from fastapi import HTTPException
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import (
     Alliance,
     QuestAllianceCatalogue,

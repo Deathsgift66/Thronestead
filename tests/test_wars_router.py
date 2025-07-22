@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import Kingdom, User, War
 from backend.routers.wars import DeclarePayload, declare_war
 from models.progression import KingdomKnight

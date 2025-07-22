@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import Kingdom, KingdomVipStatus, User
 from sqlalchemy import text
 from backend.routers import signup, signup_router

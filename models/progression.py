@@ -6,7 +6,7 @@
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.sql import func
 
-from backend.db_base import Base
+from backend.database import Base
 
 
 class KingdomCastleProgression(Base):

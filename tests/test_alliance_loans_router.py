@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import Alliance, AllianceLoan, AllianceLoanRepayment, User
 from backend.routers.alliance_loans import (
     LoanCreatePayload,
