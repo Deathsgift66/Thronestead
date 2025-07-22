@@ -1,4 +1,4 @@
-from backend.routers import admin_emergency_tools as aet
+from backend.routers import admin as admin_router
 
 
 class DummyResult:
@@ -33,21 +33,21 @@ class DummyDB:
 
 def test_reprocess_tick_logs():
     db = DummyDB()
-    aet.reprocess_tick(aet.WarTick(war_id=1), admin_user_id="a", db=db)
+    admin_router.reprocess_tick(admin_router.WarTick(war_id=1), admin_user_id="a", db=db)
     assert any("reprocess_war_tick" in q[0].lower() for q in db.queries)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
 def test_recalculate_resources_logs():
     db = DummyDB()
-    aet.recalculate_resources(aet.KingdomPayload(kingdom_id=2), admin_user_id="a", db=db)
+    admin_router.recalculate_resources(admin_router.KingdomPayload(kingdom_id=2), admin_user_id="a", db=db)
     assert any("recalc_resources" in q[0].lower() for q in db.queries)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
 def test_rollback_quest_logs():
     db = DummyDB()
-    aet.rollback_quest(aet.QuestRollback(alliance_id=3, quest_code="Q"), admin_user_id="a", db=db)
+    admin_router.rollback_quest(admin_router.QuestRollback(alliance_id=3, quest_code="Q"), admin_user_id="a", db=db)
     assert any("rollback_alliance_quest" in q[0].lower() for q in db.queries)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
@@ -55,5 +55,5 @@ def test_rollback_quest_logs():
 def test_list_backup_queues():
     db = DummyDB()
     db.rows = [("nightly",), ("hourly",)]
-    res = aet.list_backup_queues(admin_user_id="a", db=db)
+    res = admin_router.list_backup_queues(admin_user_id="a", db=db)
     assert res["queues"] == ["nightly", "hourly"]

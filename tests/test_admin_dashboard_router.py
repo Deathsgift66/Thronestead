@@ -5,7 +5,7 @@
 import pytest
 from fastapi import HTTPException
 
-from backend.routers import admin_dashboard
+from backend.routers import admin as admin_router
 
 
 class DummyResult:
@@ -43,13 +43,13 @@ class DummyDB:
 def test_list_flags_returns_rows():
     db = DummyDB()
     db.rows = [("test", True)]
-    flags = admin_dashboard.list_flags(admin_user_id="a1", db=db)
+    flags = admin_router.list_flags(admin_user_id="a1", db=db)
     assert flags[0]["flag_key"] == "test"
 
 
 def test_get_audit_logs_with_dates():
     db = DummyDB()
-    admin_dashboard.get_audit_logs(
+    admin_router.get_audit_logs(
         start_date="2025-01-01",
         end_date="2025-01-31",
         admin_user_id="a1",
@@ -62,14 +62,14 @@ def test_get_audit_logs_with_dates():
 def test_get_audit_logs_returns_rows():
     db = DummyDB()
     db.rows = [(1, "u1", "login", "ok", "2025-01-01")]
-    logs = admin_dashboard.get_audit_logs(db=db, admin_user_id="a1")
+    logs = admin_router.get_audit_logs(db=db, admin_user_id="a1")
     assert len(logs) == 1
     assert logs[0]["action"] == "login"
 
 
 def test_toggle_flag_updates_and_logs():
     db = DummyDB()
-    admin_dashboard.toggle_flag("war_enabled", True, admin_user_id="a1", db=db)
+    admin_router.toggle_flag("war_enabled", True, admin_user_id="a1", db=db)
     executed = " ".join(db.queries[1][0].split())
     assert "update system_flags" in executed.lower()
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
@@ -77,32 +77,32 @@ def test_toggle_flag_updates_and_logs():
 
 def test_update_kingdom_field_runs_update():
     db = DummyDB()
-    admin_dashboard.update_kingdom_field(1, "gold", 5, admin_user_id="a1", db=db)
+    admin_router.update_kingdom_field(1, "gold", 5, admin_user_id="a1", db=db)
     assert any("update kingdoms" in q[0].lower() for q in db.queries)
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)
 
 
 def test_update_field_payload_alias():
     db = DummyDB()
-    payload = admin_dashboard.KingdomFieldUpdate(
+    payload = admin_router.KingdomFieldUpdate(
         kingdom_id=2, field="motto", value="Hello"
     )
-    admin_dashboard.update_field(payload, admin_user_id="a1", db=db)
+    admin_router.update_field(payload, admin_user_id="a1", db=db)
     assert any("update kingdoms" in q[0].lower() for q in db.queries)
 
 
 def test_get_flagged_users():
     db = DummyDB()
     db.rows = [("u1", "Exploit", "2025-01-02")]
-    results = admin_dashboard.get_flagged_users(db=db, admin_user_id="a1")
+    results = admin_router.get_flagged_users(db=db, admin_user_id="a1")
     assert results[0]["alert_type"] == "Exploit"
 
 
 def test_rollback_database_checks_password(monkeypatch):
     db = DummyDB()
     monkeypatch.setenv("MASTER_ROLLBACK_PASSWORD", "secret")
-    admin_dashboard.rollback_database(
-        admin_dashboard.RollbackRequest(password="secret"),
+    admin_router.rollback_database(
+        admin_router.RollbackRequest(password="secret"),
         admin_user_id="a1",
         db=db,
     )
@@ -113,8 +113,8 @@ def test_rollback_database_bad_password(monkeypatch):
     db = DummyDB()
     monkeypatch.setenv("MASTER_ROLLBACK_PASSWORD", "secret")
     with pytest.raises(HTTPException):
-        admin_dashboard.rollback_database(
-            admin_dashboard.RollbackRequest(password="wrong"),
+        admin_router.rollback_database(
+            admin_router.RollbackRequest(password="wrong"),
             admin_user_id="a1",
             db=db,
         )
