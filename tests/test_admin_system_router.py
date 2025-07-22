@@ -1,5 +1,5 @@
 import pytest
-from backend.routers import admin_system
+from backend.routers import admin as admin_router
 from fastapi import HTTPException
 
 
@@ -32,8 +32,8 @@ class DummyDB:
 def test_rollback_system_checks_password(monkeypatch):
     db = DummyDB()
     monkeypatch.setenv("MASTER_ROLLBACK_PASSWORD", "secret")
-    res = admin_system.rollback_system(
-        admin_system.RollbackPayload(password="secret"),
+    res = admin_router.rollback_system(
+        admin_router.RollbackPayload(password="secret"),
         admin_user_id="a1",
         db=db,
     )
@@ -46,8 +46,8 @@ def test_rollback_system_bad_password(monkeypatch):
     db = DummyDB()
     monkeypatch.setenv("MASTER_ROLLBACK_PASSWORD", "secret")
     with pytest.raises(HTTPException):
-        admin_system.rollback_system(
-            admin_system.RollbackPayload(password="wrong"),
+        admin_router.rollback_system(
+            admin_router.RollbackPayload(password="wrong"),
             admin_user_id="a1",
             db=db,
         )

@@ -1,4 +1,4 @@
-from backend.routers import admin_news
+from backend.routers import admin as admin_router
 
 
 class DummyResult:
@@ -70,10 +70,10 @@ class DummyDB:
 
 def test_post_news_inserts_and_logs(monkeypatch):
     client = DummyClient()
-    monkeypatch.setattr(admin_news, "get_supabase_client", lambda: client)
+    monkeypatch.setattr(admin_router, "get_supabase_client", lambda: client)
     db = DummyDB()
-    payload = admin_news.NewsPayload(title="T", summary="S", content="C")
-    res = admin_news.post_news(payload, admin_user_id="a1", db=db)
+    payload = admin_router.NewsPayload(title="T", summary="S", content="C")
+    res = admin_router.post_news(payload, admin_user_id="a1", db=db)
     assert res["status"] == "posted"
     assert client.tables["news_articles"].inserted["title"] == "T"
     assert any("insert into audit_log" in q[0].lower() for q in db.queries)

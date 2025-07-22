@@ -1,4 +1,4 @@
-from backend.routers import admin, admin_audit_log
+from backend.routers import admin as admin_router
 
 class DummyResult:
     def __init__(self, row=(True,)):
@@ -25,14 +25,14 @@ class DummyDB:
 
 def test_check_admin_verifies():
     db = DummyDB()
-    res = admin.check_admin(admin_user_id="a1", db=db)
+    res = admin_router.check_admin(admin_user_id="a1", db=db)
     assert res["is_admin"] is True
     assert any("select is_admin" in q[0] for q in db.queries)
 
 
 def test_log_view_event_inserts():
     db = DummyDB()
-    res = admin_audit_log.log_view_event(admin_user_id="a1", db=db)
+    res = admin_router.log_view_event(admin_user_id="a1", db=db)
     assert res["status"] == "logged"
     assert any("insert into audit_log" in q[0] for q in db.queries)
 

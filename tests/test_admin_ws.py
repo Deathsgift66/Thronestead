@@ -2,7 +2,7 @@ import asyncio
 import json
 from starlette.websockets import WebSocketState
 
-from backend.routers import admin_ws
+from backend.routers import admin as admin_router
 
 class DummyWS:
     def __init__(self):
@@ -15,6 +15,6 @@ class DummyWS:
 
 def test_broadcast_admin_event():
     ws = DummyWS()
-    admin_ws.connected_admins = [ws]
-    asyncio.run(admin_ws.broadcast_admin_event({"msg": "hi"}))
+    admin_router.connected_admins = [ws]
+    asyncio.run(admin_router.broadcast_admin_event({"msg": "hi"}))
     assert ws.sent == [json.dumps({"msg": "hi"})]
