@@ -11,7 +11,7 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from backend.progression_service import (
+from services.progression_service import (
     add_knight,
     add_noble,
     castle_state,
