@@ -96,6 +96,7 @@ def get_db(request: Request) -> Generator:
 
 __all__ = [
     "Base",
+    "DATABASE_URL",
     "engine",
     "SessionLocal",
     "init_engine",
