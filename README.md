@@ -121,7 +121,7 @@ API server in a separate terminal:
 
 ```bash
 pip install -r backend/requirements.txt
-python main.py
+python -m backend.main
 ```
 
 When the backend is not running the static server used by `npm run serve` will
