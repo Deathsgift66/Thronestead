@@ -16,7 +16,7 @@ import {
   initCsrf,
   rotateCsrfToken,
   getCsrfToken
-} from '/Javascript/security/csrf.js';
+} from '/Javascript/security/security.js';
 
 window.requireAdmin = true;
 const adminMeta = document.querySelector('meta[name="require-admin"]');

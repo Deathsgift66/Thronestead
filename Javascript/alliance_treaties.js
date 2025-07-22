@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 import { escapeHTML, openModal, closeModal, authFetch, showToast, toggleLoading } from './utils.js';
 import './modalFallback.js';
-import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/csrf.js';
+import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/security.js';
 
 initCsrf();
 setInterval(rotateCsrfToken, 15 * 60 * 1000);

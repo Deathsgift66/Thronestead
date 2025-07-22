@@ -16,7 +16,7 @@ import {
   debounce,
   formatDuration
 } from './utils.js';
-import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/csrf.js';
+import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/security.js';
 
 initCsrf();
 setInterval(rotateCsrfToken, 15 * 60 * 1000);

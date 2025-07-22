@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 
-import { enforceAllianceOrAdminAccess } from './utils.js';
+import { enforceAllianceOrAdminAccess } from '../utils.js';
 
 window.requireAlliance = true;
 

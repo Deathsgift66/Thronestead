@@ -11,7 +11,7 @@ import {
   initCsrf,
   rotateCsrfToken,
   getCsrfToken as getCsrfTokenImpl,
-} from './security/csrf.js';
+} from './security/security.js';
 
 // Initialize CSRF token management for all modules using utils.js
 initCsrf();
