@@ -9,7 +9,7 @@ let allAchievements = [];
 let filteredAchievements = [];
 let currentUser = null;
 
-document.addEventListener('DOMContentLoaded', async () => {
+export async function initAchievementsPage() {
   const grid = document.getElementById('achievement-grid');
   grid?.classList.add('loading');
   const { data: { user } } = await supabase.auth.getUser();
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateProgressSummary(filteredAchievements);
   if (kingdomId) subscribeToUpdates(kingdomId);
   grid?.classList.remove('loading');
-});
+}
 
 // ✅ Load both unlocked and catalogued achievements
 async function loadKingdomAchievements(userId) {

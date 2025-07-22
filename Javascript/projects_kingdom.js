@@ -8,7 +8,7 @@ import { RESOURCE_KEYS } from './resources.js';
 
 let currentSession = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
+export async function initProjectsPage() {
   const {
     data: { session }
   } = await supabase.auth.getSession();
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       activateTab(prev);
     }
   });
-});
+}
 
 // ✅ Load Projects
 async function loadProjects() {
