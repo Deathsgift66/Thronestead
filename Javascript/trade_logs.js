@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, debounce } from './utils.js';
-import { applyKingdomLinks } from './kingdom_name_linkify.js';
+import { applyKingdomLinks } from './kingdom.js';
 import { RESOURCE_TYPES } from './resources.js';
 import { setupTabs } from './components/tabControl.js';
 

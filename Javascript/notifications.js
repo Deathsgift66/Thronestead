@@ -5,7 +5,7 @@
 
 import { supabase } from '../supabaseClient.js';
 import { showToast } from './utils.js';
-import { applyKingdomLinks } from './kingdom_name_linkify.js';
+import { applyKingdomLinks } from './kingdom.js';
 
 const feed = document.getElementById('notification-feed');
 const filterInput = document.getElementById('notification-filter');

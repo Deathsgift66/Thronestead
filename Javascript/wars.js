@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 // Unified War Command Center — Page Controller
 import { escapeHTML } from './utils.js';
-import { applyKingdomLinks } from './kingdom_name_linkify.js';
+import { applyKingdomLinks } from './kingdom.js';
 import { supabase } from '../supabaseClient.js';
 
 let lastWarDate = null;
