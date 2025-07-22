@@ -1,5 +1,4 @@
-// Consolidated navbar scripts
-// This bundle combines all interactive navbar modules to reduce requests.
+// Consolidated navigation and UI modules
 import './navDropdown.js';
 import './navbar.js';
 import './mobileLinkBar.js';

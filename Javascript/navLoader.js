@@ -50,9 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Lazy-load consolidated navbar functionality
       try {
-        await import("./navbarBundle.js");
+        await import("./navigationUI.js");
       } catch (err) {
-        console.warn("Navbar bundle failed:", err);
+        console.warn("Navigation UI bundle failed:", err);
       }
 
       console.info("✅ Navbar successfully injected and initialized.");
