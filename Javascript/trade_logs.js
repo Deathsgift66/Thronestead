@@ -5,7 +5,7 @@
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, debounce } from './utils.js';
 import { applyKingdomLinks } from './kingdom_name_linkify.js';
-import { RESOURCE_TYPES } from './resourceTypes.js';
+import { RESOURCE_TYPES } from './resources.js';
 import { setupTabs } from './components/tabControl.js';
 
 let realtimeChannel = null;

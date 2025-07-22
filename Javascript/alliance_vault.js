@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { RESOURCE_TYPES } from './resourceTypes.js';
+import { RESOURCE_TYPES } from './resources.js';
 import { loadCustomBoard } from './customBoard.js';
 import { escapeHTML, authFetch } from './utils.js';
 import { setupTabs } from './components/tabControl.js';

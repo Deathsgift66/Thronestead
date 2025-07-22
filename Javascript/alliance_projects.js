@@ -102,7 +102,7 @@ import {
   formatDuration,
   formatCostFromColumns,
 } from './utils.js';
-import { RESOURCE_KEYS } from './resourceKeys.js';
+import { RESOURCE_KEYS } from './resources.js';
 
 let projectChannel = null;
 const loadedTabs = { completed: false, catalogue: false };

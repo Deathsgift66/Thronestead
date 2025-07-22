@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
 import { escapeHTML, showToast, formatDuration, formatCostFromColumns } from './utils.js';
-import { RESOURCE_KEYS } from './resourceKeys.js';
+import { RESOURCE_KEYS } from './resources.js';
 
 let currentSession = null;
 
