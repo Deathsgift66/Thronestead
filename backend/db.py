@@ -12,14 +12,9 @@ from typing import Any, Sequence
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from .env_utils import get_env_var
+from .database import DATABASE_URL
 
 logger = logging.getLogger("Thronestead.LegacyDB")
-
-DATABASE_URL = get_env_var(
-    "DATABASE_URL",
-    default="postgresql://postgres:postgres@localhost/postgres",
-)
 
 
 def _connect():
