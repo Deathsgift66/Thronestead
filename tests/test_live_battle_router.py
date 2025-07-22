@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import CombatLog, TerrainMap, UnitMovement, WarScore, WarsTactical
 from backend.routers.battle import get_live_battle, get_battle_status
 

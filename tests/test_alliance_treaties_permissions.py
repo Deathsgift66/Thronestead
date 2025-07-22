@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import Alliance, AllianceMember, AllianceRole, User
 from backend.routers.alliance_treaties_router import ProposePayload, propose_treaty
 

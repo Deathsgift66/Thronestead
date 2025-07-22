@@ -7,7 +7,7 @@ import uuid
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 from backend.models import PlayerMessage, User
 from backend.routers import messages
 from backend.routers.messages import (

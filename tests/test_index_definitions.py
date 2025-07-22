@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
-from backend.db_base import Base
+from backend.database import Base
 
 
 def test_index_definitions_present():

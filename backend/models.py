@@ -31,7 +31,7 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.sql import func
 from backend.enums import QuestStatusKingdom
 
-from backend.db_base import Base
+from backend.database import Base
 
 
 class Kingdom(Base):

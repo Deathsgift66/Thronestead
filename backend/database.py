@@ -18,12 +18,15 @@ from fastapi import Request
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from .pg_settings import inject_claims_as_pg_settings
 from .env_utils import get_env_var
 
 logger = logging.getLogger("Thronestead.Database")
+
+# Declarative base used for all ORM models
+Base = declarative_base()
 
 # Default to local Postgres when DATABASE_URL isn't provided
 DATABASE_URL = get_env_var(
@@ -89,3 +92,12 @@ def get_db(request: Request) -> Generator:
         yield db
     finally:
         db.close()
+
+
+__all__ = [
+    "Base",
+    "engine",
+    "SessionLocal",
+    "init_engine",
+    "get_db",
+]
