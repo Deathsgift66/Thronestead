@@ -3,7 +3,7 @@
 // Version: 7/21/2025
 // Developer: Deathsgift66
 
-import { isValidURL } from './utils.js';
+import { isValidURL } from './core_utils.js';
 
 /**
  * Dynamically updates a preview image based on an input URL field.

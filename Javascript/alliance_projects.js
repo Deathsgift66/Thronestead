@@ -101,7 +101,7 @@ import {
   debounce,
   formatDuration,
   formatCostFromColumns,
-} from './utils.js';
+} from './core_utils.js';
 import { RESOURCE_KEYS } from './resources.js';
 
 let projectChannel = null;

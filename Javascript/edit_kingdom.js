@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
-import { showToast } from './utils.js';
+import { showToast } from './core_utils.js';
 import { authHeaders } from './auth.js';
 import { setupPreview } from './account_previews.js';
 

@@ -10,7 +10,7 @@ import {
   toggleLoading,
   showToast,
   formatDuration
-} from './utils.js';
+} from './core_utils.js';
 
 let seasonalChannel;
 

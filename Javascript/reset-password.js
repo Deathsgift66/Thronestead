@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient.js';
-import { showToast } from './utils.js';
+import { showToast } from './core_utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.hash.substring(1));

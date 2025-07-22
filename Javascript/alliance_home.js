@@ -15,7 +15,7 @@ import {
   authFetch,
   debounce,
   setBarWidths
-} from './utils.js';
+} from './core_utils.js';
 import { refreshSessionAndStore } from './auth.js';
 
 let activityChannel = null;

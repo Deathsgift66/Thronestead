@@ -9,7 +9,7 @@ import {
   postAction,
   applyFilter,
   getNumberInputValue
-} from '/Javascript/utils_admin.js';
+} from '/Javascript/core_utils.js';
 
 let pendingAction = null;
 let backupList;

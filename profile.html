@@ -48,7 +48,7 @@ Developer: Deathsgift66
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, showToast, debounce } from './Javascript/utils.js';
+    import { escapeHTML, showToast, debounce } from './Javascript/core_utils.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();

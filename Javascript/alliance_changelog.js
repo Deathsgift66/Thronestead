@@ -4,8 +4,8 @@
 // Developer: Deathsgift66
 
 import { supabase } from '/Javascript/supabaseClient.js';
-import { escapeHTML, formatDate, debounce, showToast, toggleLoading } from '/Javascript/utils.js';
-import { authFetchJson } from '/Javascript/utils.js';
+import { escapeHTML, formatDate, debounce, showToast, toggleLoading } from '/Javascript/core_utils.js';
+import { authFetchJson } from '/Javascript/core_utils.js';
 
 let changelogData = [];
 let fetchTimer;

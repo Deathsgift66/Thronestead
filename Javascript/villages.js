@@ -5,7 +5,7 @@
 // Village Management with Server-Sent Events & Real-Time Updates
 
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, showToast, fragmentFrom } from './utils.js';
+import { escapeHTML, showToast, fragmentFrom } from './core_utils.js';
 import { getEnvVar } from './env.js';
 const API_BASE_URL = getEnvVar('API_BASE_URL');
 

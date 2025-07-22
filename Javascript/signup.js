@@ -9,7 +9,7 @@ import {
   validateEmail,
   validatePasswordComplexity,
   toggleLoading
-} from './utils.js';
+} from './core_utils.js';
 import { supabase } from '../supabaseClient.js';
 import { fetchAndStorePlayerProgression } from './progression.js';
 import { containsBannedContent } from './content_filter.js';

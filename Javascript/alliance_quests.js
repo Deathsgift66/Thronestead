@@ -15,7 +15,7 @@ import {
   closeModal,
   debounce,
   formatDuration
-} from './utils.js';
+} from './core_utils.js';
 import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/csrf.js';
 
 initCsrf();

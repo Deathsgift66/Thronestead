@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from './supabaseClient.js';
-import { escapeHTML, showToast, toggleLoading, debounce, getCsrfToken } from './utils.js';
+import { escapeHTML, showToast, toggleLoading, debounce, getCsrfToken } from './core_utils.js';
 import { rankLevel, RANK_POWER } from './constants.js';
 
 const RANK_TOOLTIPS = {

@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 // Unified War Command Center — Page Controller
-import { escapeHTML } from './utils.js';
+import { escapeHTML } from './core_utils.js';
 import { applyKingdomLinks } from './kingdom_name_linkify.js';
 import { supabase } from '../supabaseClient.js';
 

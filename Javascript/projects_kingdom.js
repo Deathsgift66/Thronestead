@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, showToast, formatDuration, formatCostFromColumns } from './utils.js';
+import { escapeHTML, showToast, formatDuration, formatCostFromColumns } from './core_utils.js';
 import { RESOURCE_KEYS } from './resources.js';
 
 let currentSession = null;

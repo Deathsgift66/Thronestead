@@ -36,7 +36,7 @@ Developer: Deathsgift66
   <script type="module">
     // Project Name: Thronestead©
     // File Name: progression.js (inlined)
-    import { toggleLoading, escapeHTML } from '/Javascript/utils.js';
+    import { toggleLoading, escapeHTML } from '/Javascript/core_utils.js';
     async function apiGET(url) {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`GET failed: ${url}`);
@@ -296,8 +296,8 @@ Developer: Deathsgift66
   <script type="module">
     // Project Name: Thronestead©
     // File Name: overview.js (inlined)
-    import { escapeHTML } from '/Javascript/utils.js';
-    import { fetchJson, authFetchJson } from '/Javascript/utils.js';
+    import { escapeHTML } from '/Javascript/core_utils.js';
+    import { fetchJson, authFetchJson } from '/Javascript/core_utils.js';
 
     import { supabase } from '/Javascript/supabaseClient.js';
     import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from '/Javascript/progression.js';
