@@ -6,7 +6,7 @@
 import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js';
 import { getReauthHeaders } from './reauth.js';
 import { supabase } from '../supabaseClient.js';
-import { RESOURCE_KEYS } from './resourceKeys.js';
+import { RESOURCE_KEYS } from './resources.js';
 import {
   initCsrf,
   rotateCsrfToken,
