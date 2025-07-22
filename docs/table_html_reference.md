@@ -65,6 +65,16 @@ This document maps key PostgreSQL tables and their important columns to the HTML
 **Used In**:
 - `projects.html`: display available projects and requirements
 
+### Table: `tech_catalogue`
+**Relevant Columns**: `tech_code`, `name`, `description`, `category`, `tier`, `duration_hours`, `prerequisites`, `modifiers`, `required_kingdom_level`, `is_active`
+**Used In**:
+- `research.html`: display technology tree and details
+
+### Table: `kingdom_research_tracking`
+**Relevant Columns**: `kingdom_id`, `tech_code`, `status`, `progress`, `started_at`, `ends_at`
+**Used In**:
+- `research.html`: show active and completed research
+
 ---
 
 ### Table: `alliance_members`

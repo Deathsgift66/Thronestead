@@ -8,7 +8,8 @@ This document summarizes the progression restrictions enforced across key pages 
 | ----------------- | ---------------------- | ----------------- | ----------------- | -------------------- | ---------------------------- |
 | **overview.html** | Display only | Display only | Display only | Display only | Show full progression state |
 | **villages.html** | ✅ Enforce max villages | ✅ 1 Noble to create | ❌ | ❌ | Creating new Village requires Noble and Castle Level |
-| **projects_kingdom.html** | ✅ Per project | ✅ Per project | ✅ Per project | ❌ | Each Project defines required levels |
+| **research.html** | ✅ Per tech | ❌ | ❌ | ❌ | Technology catalogue defines prerequisites |
+| **projects.html** | ✅ Per project | ✅ Per project | ✅ Per project | ❌ | Each Project defines required levels |
 | **alliance_projects.html** | ✅ Per project | ✅ Per project | ✅ Per project | ❌ | Alliance Projects also gated by progression |
 | **quests.html** | ✅ Per quest | ✅ Per quest | ✅ Per quest | ❌ | Quest catalogue defines required progression |
 | **alliance_quests.html** | ✅ Per quest | ✅ Per quest | ✅ Per quest | ❌ | Same as kingdom quests |
