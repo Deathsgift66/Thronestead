@@ -100,6 +100,7 @@ import {
   authJsonFetch,
   debounce,
   formatDuration,
+  formatCostFromColumns,
 } from './utils.js';
 import { RESOURCE_KEYS } from './resourceKeys.js';
 
@@ -611,15 +612,6 @@ function renderContribPage() {
       if (contribPage < totalPages - 1) { contribPage++; renderContribPage(); }
     });
   }
-}
-
-
-
-function formatCostFromColumns(obj) {
-  return RESOURCE_KEYS
-    .filter(key => typeof obj[key] === 'number' && obj[key] > 0)
-    .map(key => `${obj[key]} ${escapeHTML(key.replace(/_cost$/, ''))}`)
-    .join(', ') || 'N/A';
 }
 
 function totalCost(obj) {

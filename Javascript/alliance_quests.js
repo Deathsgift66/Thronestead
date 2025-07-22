@@ -13,7 +13,8 @@ import {
   safeUUID,
   openModal,
   closeModal,
-  debounce
+  debounce,
+  formatDuration
 } from './utils.js';
 import { initCsrf, getCsrfToken, rotateCsrfToken } from './security/csrf.js';
 
@@ -370,19 +371,6 @@ async function openQuestModal(id) {
   }
 }
 
-/** Format ms to human readable duration */
-function formatDuration(ms) {
-  if (!ms || ms < 0) return '0s';
-  const s = Math.floor(ms / 1000);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const secs = s % 60;
-  const parts = [];
-  if (h) parts.push(`${h}h`);
-  if (m) parts.push(`${m}m`);
-  if (secs || parts.length === 0) parts.push(`${secs}s`);
-  return parts.join(' ');
-}
 
 let countdownInterval;
 let modalCountdownId;
@@ -391,13 +379,13 @@ function initCountdowns() {
   countdownInterval = setInterval(() => {
   document.querySelectorAll('[data-end-time]').forEach(el => {
   const diff = new Date(el.dataset.endTime) - Date.now();
-  el.textContent = formatDuration(diff);
+  el.textContent = formatDuration(Math.max(0, Math.floor(diff / 1000)));
   });
   }, 1000);
   // initial render
   document.querySelectorAll('[data-end-time]').forEach(el => {
   const diff = new Date(el.dataset.endTime) - Date.now();
-  el.textContent = formatDuration(diff);
+  el.textContent = formatDuration(Math.max(0, Math.floor(diff / 1000)));
   });
 }
 
@@ -406,7 +394,7 @@ function startModalCountdown(endTime) {
   const el = document.getElementById('modal-time-left');
   const update = () => {
   const diff = new Date(endTime) - Date.now();
-  el.textContent = formatDuration(diff);
+  el.textContent = formatDuration(Math.max(0, Math.floor(diff / 1000)));
   if (diff > 0) modalCountdownId = setTimeout(update, 1000);
   };
   update();
