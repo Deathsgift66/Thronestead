@@ -48,22 +48,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const fallback = document.getElementById("nav-fallback");
       if (fallback && fallback.tagName !== "TEMPLATE") fallback.hidden = true;
 
-      // Lazy-load all navbar-related interactive scripts in parallel
-      const modules = await Promise.allSettled([
-        import("./navDropdown.js"),
-        import("./navbar.js"),
-        import("./mobileLinkBar.js"),
-        import("./notificationBell.js"),
-        import("./logout.js"),
-        // Future expansion hook
-        // import("./navPlugins.js")
-      ]);
-
-      modules.forEach((m, i) => {
-        if (m.status === "rejected") {
-          console.warn(`Module ${i} failed:`, m.reason);
-        }
-      });
+      // Lazy-load consolidated navbar functionality
+      try {
+        await import("./navbarBundle.js");
+      } catch (err) {
+        console.warn("Navbar bundle failed:", err);
+      }
 
       console.info("✅ Navbar successfully injected and initialized.");
 
