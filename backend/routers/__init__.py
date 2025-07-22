@@ -9,8 +9,13 @@ from __future__ import annotations
 import importlib
 import pkgutil
 
+_modules = [name for _, name, _ in pkgutil.iter_modules(__path__) if not name.startswith("_")]
+# Exclude individual alliance router modules in favor of the consolidated one
+ALLIANCE_MODULE_PREFIX = "alliance_"
 __all__ = [
-    name for _, name, _ in pkgutil.iter_modules(__path__) if not name.startswith("_")
+    name
+    for name in _modules
+    if not (name.startswith(ALLIANCE_MODULE_PREFIX) and name != "alliance_router")
 ]
 
 
