@@ -150,7 +150,7 @@ const actions = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+export function init() {
   backupList = document.getElementById('backup-list');
   backupFilter = document.getElementById('backup-filter');
   Object.entries(actions).forEach(([btnId, config]) => {
@@ -246,4 +246,4 @@ document.addEventListener('DOMContentLoaded', () => {
       pendingAction = null;
     }
   });
-});
+}
