@@ -1,6 +1,6 @@
 <!--
 Project Name: Thronestead©
-File Name: player_management.html
+File Name: user_management.html
 Version:  7/1/2025 10:38
 Developer: Deathsgift66
 -->
@@ -12,20 +12,20 @@ Developer: Deathsgift66
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
 
-  <title>Player Management | Thronestead</title>
+  <title>User Management | Thronestead</title>
   <meta name="description" content="Admin: Manage player accounts in Thronestead." />
-  <meta property="og:title" content="Player Management | Thronestead" />
+  <meta property="og:title" content="User Management | Thronestead" />
   <meta property="og:description" content="Admin: Manage player accounts in Thronestead." />
   <meta property="og:image" content="Assets/banner_main.png" />
-  <meta property="og:url" content="player_management.html" />
+  <meta property="og:url" content="user_management.html" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Player Management | Thronestead" />
+  <meta name="twitter:title" content="User Management | Thronestead" />
   <meta name="twitter:description" content="Admin: Manage player accounts in Thronestead." />
   <meta name="twitter:image" content="Assets/banner_main.png" />
-  <meta name="keywords" content="Thronestead, admin, player management, accounts, admin tools" />
+  <meta name="keywords" content="Thronestead, admin, user management, accounts, admin tools" />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="canonical" href="https://www.thronestead.com/player_management.html" />
+  <link rel="canonical" href="https://www.thronestead.com/user_management.html" />
 
   <!-- Favicon -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -36,7 +36,7 @@ Developer: Deathsgift66
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
 
   <!-- Page-Specific Styles -->
-  <link href="/CSS/player_management.css" rel="stylesheet" />
+  <link href="/CSS/user_management.css" rel="stylesheet" />
   <meta name="require-admin" content="true" />
 
   <!-- JS Modules -->
@@ -65,15 +65,15 @@ Developer: Deathsgift66
   <!-- Navbar -->
 
   <!-- Page Header -->
-  <header class="kr-top-banner" aria-label="Player Management Banner">
-    Thronestead — Player Management
+  <header class="kr-top-banner" aria-label="User Management Banner">
+    Thronestead — User Management
   </header>
 
   <!-- Main Interface -->
-  <main role="main" class="main-centered-container" aria-label="Player Management Interface">
+  <main role="main" class="main-centered-container" aria-label="User Management Interface">
 
     <section class="alliance-members-container" role="region" aria-labelledby="admin-panel-title">
-      <h2 id="admin-panel-title">Player Management</h2>
+      <h2 id="admin-panel-title">User Management</h2>
       <p>Manage player accounts, apply admin actions, and monitor player activity.</p>
 
       <!-- Filter/Search Controls -->
@@ -137,14 +137,14 @@ Developer: Deathsgift66
   <!-- Backend route definitions for reference -->
   <script type="text/python">
 # Project Name: Thronestead©
-# File Name: player_management.py
+# File Name: user_management.py
 # Version:  7/1/2025 10:38
 # Developer: Deathsgift66
 
 """
 Project: Thronestead ©
-File: player_management.py
-Role: API routes for player management.
+File: user_management.py
+Role: API routes for user management.
 Version: 2025-06-21
 """
 
@@ -158,7 +158,7 @@ from ..database import get_db
 from ..security import verify_api_key, verify_jwt_token
 from ..supabase_client import get_supabase_client
 
-router = APIRouter(prefix="/api/admin", tags=["player_management"])
+router = APIRouter(prefix="/api/admin", tags=["user_management"])
 
 
 # -----------------------------
