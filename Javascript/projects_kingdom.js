@@ -3,7 +3,7 @@
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
 import { supabase } from '../supabaseClient.js';
-import { escapeHTML, showToast, formatDuration } from './utils.js';
+import { escapeHTML, showToast, formatDuration, formatCostFromColumns } from './utils.js';
 import { RESOURCE_KEYS } from './resourceKeys.js';
 
 let currentSession = null;
@@ -231,19 +231,6 @@ function hasSufficientResources(resources, project) {
     }
   });
   return Object.entries(costs).every(([res, amt]) => (resources[res] || 0) >= amt);
-}
-
-// ✅ Format cost object
-function formatCostFromColumns(project) {
-  const parts = [];
-  RESOURCE_KEYS.forEach(k => {
-    const val = project[k];
-    if (typeof val === 'number' && val > 0) {
-      const key = k.replace(/_cost$/, '');
-      parts.push(`${val} ${escapeHTML(key)}`);
-    }
-  });
-  return parts.join(', ') || 'None';
 }
 
 // ✅ Start countdown timers

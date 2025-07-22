@@ -6,6 +6,7 @@
 import { authHeaders, refreshSessionAndStore, clearStoredAuth } from './auth.js';
 import { getReauthHeaders } from './reauth.js';
 import { supabase } from '../supabaseClient.js';
+import { RESOURCE_KEYS } from './resourceKeys.js';
 import {
   initCsrf,
   rotateCsrfToken,
@@ -232,6 +233,18 @@ export function formatDuration(seconds, { compact = false, instant } = {}) {
  */
 export function capitalize(str = '') {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Convert *_cost columns to a human-readable string.
+ * @param {object} obj Object with *_cost fields
+ * @returns {string} Comma separated costs or 'N/A'
+ */
+export function formatCostFromColumns(obj) {
+  return RESOURCE_KEYS
+    .filter(k => typeof obj[k] === 'number' && obj[k] > 0)
+    .map(k => `${obj[k]} ${escapeHTML(k.replace(/_cost$/, ''))}`)
+    .join(', ') || 'N/A';
 }
 
 /**
