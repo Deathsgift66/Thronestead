@@ -88,7 +88,7 @@ async function loadUserContext() {
   }
 }
 
-import { renderProgressionBanner } from './progressionBanner.js';
+import { renderProgressionBanner } from './progression.js';
 
 
 

@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 // Component providing a modal prompt for reauthentication.
 
-import { fetchJson } from './fetchJson.js';
+import { fetchJson } from './utils.js';
 import { authHeaders } from './auth.js';
 import { getEnvVar } from './env.js';
 

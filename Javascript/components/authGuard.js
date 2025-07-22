@@ -15,7 +15,7 @@ import { startSessionRefresh } from '../auth.js';
 import {
   fetchAndStorePlayerProgression,
   loadPlayerProgressionFromStorage,
-} from '../progressionGlobal.js';
+} from '../progression.js';
 
 /** @typedef {import('node-fetch').Response} Response */
 

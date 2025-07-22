@@ -4,7 +4,7 @@
 // Developer: Deathsgift66
 
 import { supabase } from '../supabaseClient.js';
-import { clearStoredProgression } from './progressionGlobal.js';
+import { clearStoredProgression } from './progression.js';
 
 /**
  * Retrieve stored auth token and user from local/session storage.
