@@ -403,7 +403,6 @@ export function init() {
   window.adminDashboardReady = true;
 }
 
-document.addEventListener('DOMContentLoaded', init);
 
 window.onerror = (msg, src, line, col, err) => {
   console.error('Window error', msg, err);

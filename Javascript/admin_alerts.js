@@ -10,7 +10,7 @@ import { setupReauthButtons } from './reauth.js';
 const REFRESH_INTERVAL_MS = 30000;
 let realtimeSub = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+export function init() {
   setupReauthButtons('.action-btn');
   document.getElementById('refresh-alerts')?.addEventListener('click', loadAlerts);
   document.getElementById('clear-filters')?.addEventListener('click', clearFilters);
@@ -18,11 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAlerts();
   subscribeToRealtime();
   setInterval(loadAlerts, REFRESH_INTERVAL_MS);
-});
 
-window.addEventListener('beforeunload', () => {
-  if (realtimeSub?.unsubscribe) realtimeSub.unsubscribe();
-});
+  window.addEventListener('beforeunload', () => {
+    if (realtimeSub?.unsubscribe) realtimeSub.unsubscribe();
+  });
+}
 
 function subscribeToRealtime() {
   realtimeSub = supabase

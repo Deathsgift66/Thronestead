@@ -55,7 +55,10 @@ Developer: Deathsgift66
   <!-- preload removed; module sets requireAdmin flag -->
 
   <!-- Scripts -->
-  <script type="module" src="/Javascript/admin_dashboard.js" defer nonce="krdash"></script>
+  <script type="module" nonce="krdash">
+    import { initAdminDashboard } from '/Javascript/admin_modules.js';
+    initAdminDashboard();
+  </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module" defer nonce="krdash"></script>

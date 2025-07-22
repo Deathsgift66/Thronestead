@@ -39,7 +39,10 @@ Developer: Deathsgift66
   <script src="/Javascript/apiHelper.js" type="module" defer nonce="kradmin"></script>
   <script src="/Javascript/navLoader.js" type="module" defer nonce="kradmin"></script>
   <script src="/Javascript/modalFallback.js" type="module" defer nonce="kradmin"></script>
-  <script type="module" src="/Javascript/admin_emergency_tools.js" defer nonce="kradmin"></script>
+  <script type="module" nonce="kradmin">
+    import { initAdminEmergencyTools } from '/Javascript/admin_modules.js';
+    initAdminEmergencyTools();
+  </script>
 </head>
 <body data-theme="parchment">
   <a href="#main" class="skip-link">Skip to main content</a>
