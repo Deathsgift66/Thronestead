@@ -1,11 +1,12 @@
 // Project Name: Thronestead©
-// File Name: progressionGlobal.js
-// Version:  7/1/2025 10:38
-// Developer: Deathsgift66
-// ✅ Fetch progression summary from backend API and store globally + in sessionStorage
+// File Name: progression.js
+// Consolidated progression utilities and banner renderer
+// Combines progressionGlobal.js and progressionBanner.js functionality
+
 import { getEnvVar } from './env.js';
-const API_BASE_URL = getEnvVar('API_BASE_URL');
 import { authFetch } from './utils.js';
+
+const API_BASE_URL = getEnvVar('API_BASE_URL');
 
 export async function fetchAndStorePlayerProgression(userId) {
   try {
@@ -50,7 +51,6 @@ export async function fetchAndStorePlayerProgression(userId) {
   }
 }
 
-// ✅ Load from sessionStorage into global state
 export function loadPlayerProgressionFromStorage() {
   const stored = sessionStorage.getItem('playerProgression');
   if (!stored) return;
@@ -76,3 +76,32 @@ export function clearStoredProgression() {
     console.warn('⚠️ Failed to clear progression:', e);
   }
 }
+
+export function renderProgressionBanner(target = 'body') {
+  loadPlayerProgressionFromStorage();
+  const prog = window.playerProgression;
+  if (!prog) return;
+
+  let bar = document.getElementById('progression-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'progression-bar';
+    bar.className = 'progression-bar';
+
+    const container = document.querySelector(target);
+    if (container) container.prepend(bar);
+  }
+
+  bar.innerHTML = `
+    <span><strong>🏰 Castle:</strong> Lv ${prog.castleLevel}</span>
+    <span><strong>🏘️ Villages:</strong> ${prog.maxVillages}</span>
+    <span><strong>👑 Nobles:</strong> ${prog.availableNobles}/${prog.totalNobles}</span>
+    <span><strong>🛡️ Knights:</strong> ${prog.availableKnights}/${prog.totalKnights}</span>
+    <span><strong>⚔️ Troops:</strong> ${prog.troopSlots.used}/${prog.troopSlots.used + prog.troopSlots.available}</span>
+    ${prog.allianceLevel ? `<span><strong>🤝 Alliance:</strong> Lv ${prog.allianceLevel}</span>` : ''}
+    ${prog.projectMilestones ? `<span><strong>🏗️ Milestones:</strong> ${prog.projectMilestones}</span>` : ''}
+    ${prog.unlockRequirements ? `<span><strong>🔓 Unlocks:</strong> ${prog.unlockRequirements}</span>` : ''}
+  `;
+}
+
+document.addEventListener('DOMContentLoaded', () => renderProgressionBanner());

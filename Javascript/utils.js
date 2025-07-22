@@ -428,6 +428,10 @@ export async function authJsonFetch(url, options = {}) {
   return parseJsonResponse(res);
 }
 
+// Legacy export names maintained for backward compatibility
+export const fetchJson = jsonFetch;
+export const authFetchJson = authJsonFetch;
+
 /**
  * Replace an element's contents with a simple message.
  * Useful for empty state placeholders.

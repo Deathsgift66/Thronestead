@@ -297,10 +297,10 @@ Developer: Deathsgift66
     // Project Name: Thronestead©
     // File Name: overview.js (inlined)
     import { escapeHTML } from '/Javascript/utils.js';
-    import { fetchJson, authFetchJson } from '/Javascript/fetchJson.js';
+    import { fetchJson, authFetchJson } from '/Javascript/utils.js';
 
     import { supabase } from '/Javascript/supabaseClient.js';
-    import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from '/Javascript/progressionGlobal.js';
+    import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from '/Javascript/progression.js';
     import {
       saveKingdomCache,
       loadKingdomCache,
@@ -548,7 +548,7 @@ Developer: Deathsgift66
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
   <link href="/CSS/progressionBanner.css" rel="stylesheet" />
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
-  <script src="/Javascript/progressionBanner.js" type="module"></script>
+  <script src="/Javascript/progression.js" type="module"></script>
 
 <!-- ✅ Injected standard Thronestead modules -->
   <script src="/Javascript/components/authGuard.js" type="module"></script>

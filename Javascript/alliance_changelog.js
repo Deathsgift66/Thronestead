@@ -5,7 +5,7 @@
 
 import { supabase } from '/Javascript/supabaseClient.js';
 import { escapeHTML, formatDate, debounce, showToast, toggleLoading } from '/Javascript/utils.js';
-import { authFetchJson } from '/Javascript/fetchJson.js';
+import { authFetchJson } from '/Javascript/utils.js';
 
 let changelogData = [];
 let fetchTimer;

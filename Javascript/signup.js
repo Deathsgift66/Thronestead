@@ -11,7 +11,7 @@ import {
   toggleLoading
 } from './utils.js';
 import { supabase } from '../supabaseClient.js';
-import { fetchAndStorePlayerProgression } from './progressionGlobal.js';
+import { fetchAndStorePlayerProgression } from './progression.js';
 import { containsBannedContent } from './content_filter.js';
 import { getEnvVar } from './env.js';
 
