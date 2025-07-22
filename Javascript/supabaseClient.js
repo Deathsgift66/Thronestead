@@ -1,1 +1,1 @@
-export { supabase, supabaseReady } from '../supabaseClient.js';
+export { supabase, supabaseReady } from './utils_core.js';
