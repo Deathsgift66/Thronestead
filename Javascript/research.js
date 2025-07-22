@@ -36,21 +36,21 @@ function startCountdownTimers() {
   });
 }
 
-// Initialize page once DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
+// Page initializer
+export async function initResearchPage() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return location.href = 'login.html';
   currentSession = session;
   await loadResearchData();
-});
 
-window.addEventListener('beforeunload', async () => {
-  if (researchChannel) {
-    await supabase.removeChannel(researchChannel);
-    channelActive = false;
-    researchChannel = null;
-  }
-});
+  window.addEventListener('beforeunload', async () => {
+    if (researchChannel) {
+      await supabase.removeChannel(researchChannel);
+      channelActive = false;
+      researchChannel = null;
+    }
+  });
+}
 
 // Load all research-related UI
 async function loadResearchData() {
