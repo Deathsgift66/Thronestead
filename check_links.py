@@ -5,6 +5,8 @@ base = os.getcwd()
 missing = []
 
 for root, _, files in os.walk("."):
+    if "node_modules" in root.split(os.sep):
+        continue
     for f in files:
         if not f.endswith(".html"):
             continue
@@ -27,12 +29,13 @@ for root, _, files in os.walk("."):
                     "https://",
                     "mailto:",
                     "tel:",
+                    "//",
                 )
             ) or url.startswith("#"):
                 continue
 
             # Ignore templating placeholders such as {{ .ConfirmationURL }}
-            if "{{" in url or "{%" in url:
+            if "{{" in url or "{%" in url or "${" in url:
                 continue
 
             # Strip query parameters for filesystem check

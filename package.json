@@ -9,7 +9,7 @@
   "scripts": {
     "serve": "http-server ./ -a localhost -p 3000 -c-1 --cors",
     "validate-links": "node scripts/validate-links.js",
-    "lint": "eslint . --ext .js,.mjs",
+    "lint": "eslint .",
     "clean": "rm -rf dist",
     "build": "vite build && cp _headers dist/_headers && cp -r Assets dist/",
     "test": "node --test"
