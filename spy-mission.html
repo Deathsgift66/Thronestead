@@ -62,6 +62,7 @@ Developer: Deathsgift66
     <section class="mission-panel" aria-labelledby="mission-heading">
       <h2 id="mission-heading">Launch Spy Mission</h2>
       <form id="launch-form">
+        <input type='hidden' name='csrf_token' value=''>
         <label for="target-kingdom">Target Kingdom</label>
         <input id="target-kingdom" list="kingdom-list" autocomplete="off" maxlength="64" required />
         <datalist id="kingdom-list"></datalist>

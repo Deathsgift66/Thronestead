@@ -79,6 +79,7 @@ Developer: Deathsgift66
     <!-- Message Tab -->
     <section id="tab-message" class="tab-content active" role="tabpanel">
       <form id="message-form">
+        <input type='hidden' name='csrf_token' value=''>
         <div class="form-group">
           <label for="msg-recipient">Recipient</label>
           <input id="msg-recipient" list="recipient-list" autocomplete="off" required pattern="[a-f0-9-]+" />
@@ -111,6 +112,7 @@ Developer: Deathsgift66
     <!-- Notice Tab -->
     <section id="tab-notice" class="tab-content" role="tabpanel">
       <form id="notice-form">
+        <input type='hidden' name='csrf_token' value=''>
         <div class="form-group"><label for="notice-title">Title</label><input id="notice-title" required /></div>
         <div class="form-group"><label for="notice-message">Message</label><textarea id="notice-message" rows="6" required></textarea></div>
         <div class="form-group"><label for="notice-category">Category</label><input id="notice-category" /></div>
@@ -125,6 +127,7 @@ Developer: Deathsgift66
     <!-- Treaty Tab -->
     <section id="tab-treaty" class="tab-content" role="tabpanel">
       <form id="treaty-form">
+        <input type='hidden' name='csrf_token' value=''>
         <div class="form-group"><label for="treaty-partner">Partner Alliance ID</label><input id="treaty-partner" required pattern="[a-f0-9-]+" /></div>
         <div class="form-group"><label for="treaty-type">Treaty Type</label>
           <select id="treaty-type" required>
@@ -141,6 +144,7 @@ Developer: Deathsgift66
     <!-- War Tab -->
     <section id="tab-war" class="tab-content" role="tabpanel">
       <form id="war-form">
+        <input type='hidden' name='csrf_token' value=''>
         <div class="form-group"><label for="war-defender">Defender Alliance ID</label><input id="war-defender" required pattern="[a-f0-9-]+" /></div>
         <div class="form-group"><label for="war-reason">Reason for War</label><textarea id="war-reason" rows="6" required></textarea></div>
         <div class="action-buttons"><button type="submit" class="btn-fantasy">⚔️ Declare War</button></div>
