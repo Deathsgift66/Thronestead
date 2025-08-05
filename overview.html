@@ -623,6 +623,7 @@ Developer: Deathsgift66
         <h3 id="nobles-panel-title">Nobles</h3>
         <ul id="noble-list" aria-live="polite"></ul>
         <form id="noble-form" aria-label="Name New Noble">
+          <input type='hidden' name='csrf_token' value=''>
           <label for="new-noble-name">Noble Name</label>
           <input type="text" id="new-noble-name" required />
           <button type="submit" class="action-btn">Name Noble</button>
@@ -634,6 +635,7 @@ Developer: Deathsgift66
         <h3 id="knights-panel-title">Knights</h3>
         <ul id="knight-list" aria-live="polite"></ul>
         <form id="knight-form" aria-label="Name New Knight">
+          <input type='hidden' name='csrf_token' value=''>
           <label for="new-knight-name">Knight Name</label>
           <input type="text" id="new-knight-name" required />
           <button type="submit" class="action-btn">Name Knight</button>

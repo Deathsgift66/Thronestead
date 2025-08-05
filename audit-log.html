@@ -79,6 +79,7 @@ Developer: Deathsgift66
 
       <!-- 🔎 Filter Bar -->
       <form id="audit-filter-form" class="audit-filter-form" role="search" aria-label="Filter Audit Logs">
+        <input type='hidden' name='csrf_token' value=''>
         <label for="filter-user">User ID</label>
         <input id="filter-user" name="user_id" type="text" placeholder="UUID..." />
         <label for="filter-action">Action</label>

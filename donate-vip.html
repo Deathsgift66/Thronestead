@@ -89,12 +89,14 @@ Developer: Deathsgift66
 
       <!-- Donation Form -->
       <form id="donation-form" class="vip-donation-form" hidden aria-label="Donation Form">
+        <input type='hidden' name='csrf_token' value=''>
         <input type="hidden" id="selected-tier-id" />
         <button type="submit" class="vip-button">💎 Donate</button>
       </form>
 
       <!-- PayPal Donation Button -->
       <form action="https://www.paypal.com/ncp/payment/YB4LW7XRELJBS" method="post" target="_blank">
+        <input type='hidden' name='csrf_token' value=''>
         <input class="pp-YB4LW7XRELJBS" type="submit" value="Buy Now" />
         <img src="https://www.paypalobjects.com/images/Debit_Credit_APM.svg" alt="cards" />
         <section>
