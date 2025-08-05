@@ -13,20 +13,12 @@ if __name__ == "__main__" and __package__ is None:  # dev-only import fix
     __package__ = "backend"
 
 import logging
-import traceback
-from pathlib import Path
+import os
+import re
 
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-
-from . import routers as router_pkg
-from .rate_limiter import setup_rate_limiter
-from . import database
-from .models import Base
-from .env_utils import get_env_var
-from backend.routers import auth
 
 # Optional environment configuration using python-dotenv
 try:
@@ -36,14 +28,8 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     print("python-dotenv not installed. Skipping .env loading.")
 
-# Ensure the database uses values from the loaded .env file
-database.init_engine()
 
-
-# -----------------------
-# ⚙️ FastAPI Initialization
-# -----------------------
-log_level = get_env_var("LOG_LEVEL")
+log_level = os.getenv("LOG_LEVEL")
 logging.basicConfig(level=log_level if log_level else logging.INFO)
 logger = logging.getLogger("Thronestead.BackendMain")
 
@@ -52,8 +38,6 @@ app = FastAPI(
     version="6.13.2025.19.49",
     description="Backend for the Thronestead strategy MMO.",
 )
-
-setup_rate_limiter(app)
 
 
 # -----------------------
@@ -90,7 +74,7 @@ TRUSTED_ORIGINS = [
 
 
 def _build_cors_origins() -> list[str]:
-    extra = get_env_var("ALLOWED_ORIGINS")
+    extra = os.getenv("ALLOWED_ORIGINS")
     origins = set(TRUSTED_ORIGINS) | {"http://localhost", "http://127.0.0.1"}
     if extra:
         origins.update(o.strip() for o in extra.split(",") if o.strip())
@@ -99,8 +83,8 @@ def _build_cors_origins() -> list[str]:
 
 origins = _build_cors_origins()
 
-origin_regex = get_env_var(
-    "ALLOWED_ORIGIN_REGEX", default=r"https:\/\/.*(thronestead\.com|netlify\.app)"
+origin_regex = os.getenv(
+    "ALLOWED_ORIGIN_REGEX", r"https:\/\/.*(thronestead\.com|netlify\.app)"
 )
 
 # Apply the CORS middleware before other custom middleware so that CORS
@@ -116,8 +100,6 @@ app.add_middleware(
 
 
 # Utility to apply CORS headers to custom responses (e.g., error handler)
-import re
-
 _origin_pattern = re.compile(origin_regex) if origin_regex else None
 
 
@@ -139,87 +121,3 @@ def _maybe_add_cors_headers(request: Request, response: Response) -> Response:
 @app.on_event("startup")
 async def _cors_startup_log() -> None:
     logger.info("\u2705 CORS configured for: %s", ", ".join(origins))
-
-
-# -----------------------
-# 🗃️ Ensure Database Tables Exist
-# -----------------------
-if database.engine:
-    Base.metadata.create_all(bind=database.engine)
-
-# -----------------------
-# ⚙️ Load Global Game Settings
-# -----------------------
-try:
-    from . import data
-
-    data.load_game_settings()
-    logger.info("✅ Loaded game settings.")
-except Exception as e:
-    logger.exception("❌ Crash during startup loading game settings: %s", e)
-    traceback.print_exc()
-    # Continue with partially initialized settings
-
-# -----------------------
-# 📦 Auto-load Routers Safely
-# -----------------------
-FAILED_ROUTERS: list[str] = []
-
-ROUTER_ATTRS = ("router", "alt_router", "custom_router")
-
-
-def _include_routers() -> None:
-    for name in router_pkg.__all__:
-        if name == "auth":
-            continue
-        try:
-            module = getattr(router_pkg, name)
-            router = next(
-                (
-                    getattr(module, attr)
-                    for attr in ROUTER_ATTRS
-                    if getattr(module, attr, None)
-                ),
-                None,
-            )
-            if router:
-                app.include_router(router)
-        except Exception as exc:
-            logger.exception(
-                "❌ Failed to import or include router '%s': %s", name, exc
-            )
-            FAILED_ROUTERS.append(name)
-
-
-_include_routers()
-# Auth router already defines its own prefix
-app.include_router(auth.router)
-
-# -----------------------
-# 🖼️ Static File Serving (Frontend SPA)
-# -----------------------
-_frontend = get_env_var("FRONTEND_DIR")
-BASE_DIR = Path(_frontend) if _frontend else Path(__file__).resolve().parent.parent
-app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
-
-
-# -----------------------
-# ✅ Health Check Endpoint
-# -----------------------
-@app.get("/health-check")
-def health_check():
-    return {
-        "status": "online",
-        "service": "Thronestead API",
-        "failedRouters": FAILED_ROUTERS,
-    }
-
-
-# -----------------------
-# 🧪 Run App Locally (Dev Only)
-# -----------------------
-if __name__ == "__main__":
-    import uvicorn
-
-    port = int(get_env_var("PORT", default="8000"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
