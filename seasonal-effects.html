@@ -30,7 +30,6 @@ Developer: Deathsgift66
 
   <!-- Page-Specific Assets -->
   <link href="/CSS/seasonal_effects.css" rel="stylesheet" />
-  <script src="/Javascript/seasonal-effects.js" type="module"></script>
 
   <!-- Global Assets -->
   <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
@@ -188,7 +187,8 @@ def seasonal_data(user_id: str = Depends(verify_jwt_token)):
         ) from e
 
     return {"current": current, "forecast": forecast}
-</script>
+  </script>
 
+  <script src="/Javascript/seasonal-effects.js" type="module"></script>
 </body>
 </html>

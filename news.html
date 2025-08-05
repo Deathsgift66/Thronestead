@@ -120,7 +120,6 @@ Developer: Deathsgift66
   </div>
 </footer>
 
-  <script src="/Javascript/news.js" type="module"></script>
 
   <!-- Backend route definitions for reference -->
   <script type="text/python">
@@ -174,6 +173,8 @@ async def articles(user_id: str = Depends(require_user_id)):
     ]
     return {"articles": articles}
   </script>
+
+  <script src="/Javascript/news.js" type="module"></script>
 
 </body>
 </html>
