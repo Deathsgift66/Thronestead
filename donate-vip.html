@@ -1,0 +1,156 @@
+<!--
+Project Name: Thronestead©
+File Name: donate-vip.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+
+  <title>Donate & VIP | Thronestead</title>
+  <meta name="description" content="Support Thronestead and unlock exclusive VIP rewards and cosmetic bonuses." />
+  <meta name="keywords" content="Thronestead, donate, VIP, rewards, cosmetics, support" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/donate-vip.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Donate & VIP | Thronestead" />
+  <meta property="og:description" content="Support Thronestead and unlock exclusive VIP rewards and cosmetic bonuses." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="donate-vip.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Donate & VIP | Thronestead" />
+  <meta name="twitter:description" content="Support the game and unlock exclusive cosmetic VIP rewards in Thronestead." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- CSS -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+  <link href="/CSS/donate_vip.css" rel="stylesheet" />
+
+  <!-- JS Modules (inline script located at bottom of page) -->
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+</head>
+
+<body class="donate-vip-bg">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+  <!-- Navbar -->
+
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Donate & VIP Banner">
+    🎁 Thronestead — Donate & VIP
+  </header>
+
+  <!-- Main Interface -->
+  <main role="main" class="donate-vip-container" aria-label="Donate & VIP Interface">
+
+    <!-- Donation Info Panel -->
+    <section class="alliance-members-container">
+
+      <h2>Donate &amp; Get Tokens</h2>
+      <p>
+        Support the development of <strong>Thronestead</strong> and receive <strong>Black Market Tokens</strong> to purchase VIP or other perks.<br />
+        <em>Tokens grant cosmetic benefits only.</em>
+      </p>
+
+      <div id="current-status-banner" class="vip-expiry-banner" aria-live="polite"></div>
+      <div id="vip-timer" class="vip-expiry-banner"></div>
+      <div id="token-balance-banner" class="vip-expiry-banner"></div>
+      <div id="founder-preview" class="founder-badge" hidden></div>
+
+      <!-- Token Packages (JS Injected) -->
+      <div id="token-package-cards" class="vip-tier-cards" aria-label="Token Packages"></div>
+
+      <!-- Redeemable Perks -->
+      <h3>Redeem Tokens</h3>
+      <div id="redeem-cards" class="vip-tier-cards" aria-label="Redeem Options"></div>
+
+      <!-- Donation Form -->
+      <form id="donation-form" class="vip-donation-form" hidden aria-label="Donation Form">
+        <input type="hidden" id="selected-tier-id" />
+        <button type="submit" class="vip-button">💎 Donate</button>
+      </form>
+
+      <!-- PayPal Donation Button -->
+      <form action="https://www.paypal.com/ncp/payment/YB4LW7XRELJBS" method="post" target="_blank">
+        <input class="pp-YB4LW7XRELJBS" type="submit" value="Buy Now" />
+        <img src="https://www.paypalobjects.com/images/Debit_Credit_APM.svg" alt="cards" />
+        <section>
+          Powered by
+          <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal" />
+        </section>
+      </form>
+
+      <!-- VIP Leaderboard -->
+      <section class="vip-leaderboard" aria-label="VIP Leaderboard">
+        <h3>🏆 Top Donors</h3>
+        <div class="leaderboard-container">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th scope="col">Rank</th>
+                <th scope="col">Player</th>
+                <th scope="col">Gold Donated</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body" aria-live="polite">
+              <tr>
+                <td colspan="3">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <!-- VIP Terms & Perks -->
+      <section class="vip-terms" aria-label="VIP Terms & Perks">
+        <h3>VIP Terms &amp; Perks</h3>
+        <p>
+          VIP tiers grant <strong>cosmetic</strong> rewards only. They provide no gameplay advantages or pay-to-win boosts.
+        </p>
+        <p>
+          Tokens and VIP status unlock visual flair like badges and styling effects without impacting combat or resources.
+        </p>
+      </section>
+
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank">More Legal</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
+
+  <!-- VIP Page Logic -->
+  <script src="/Javascript/donate-vip.js" type="module"></script>
+
+</body>
+</html>

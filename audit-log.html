@@ -1,0 +1,134 @@
+<!--
+Project Name: Thronestead©
+File Name: audit-log.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+
+  <title>Audit Log | Thronestead</title>
+  <meta name="description" content="Track all significant administrative actions and changes in Thronestead." />
+  <meta name="keywords" content="Thronestead, audit log, admin actions, admin management" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/audit-log.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Audit Log | Thronestead" />
+  <meta property="og:description" content="Track all significant administrative actions and changes in Thronestead." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="audit-log.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Audit Log | Thronestead" />
+  <meta name="twitter:description" content="Track all significant administrative actions and changes in the game." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- Page-Specific Assets -->
+  <link href="/CSS/audit_log.css" rel="stylesheet" />
+  <meta name="require-admin" content="true" />
+  <script type="module">
+    import { initAuditLogPage } from "/Javascript/admin_core.js";
+    initAuditLogPage();
+  </script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+</head>
+
+<body class="audit-log-body">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+  <!-- ✅ Navbar Inject -->
+
+  <!-- ✅ Page Banner -->
+  <header class="kr-top-banner" aria-label="Audit Log Banner">
+    🛡️ Thronestead — Audit Log
+  </header>
+
+  <!-- ✅ Main Audit Panel -->
+  <main role="main" class="main-centered-container" aria-label="Administrative Audit Log Panel" aria-labelledby="audit-log-heading">
+    <section class="alliance-members-container">
+
+      <h2 id="audit-log-heading">Administrative Action Tracker</h2>
+      <p>Track all significant administrative actions and system-level changes in Thronestead.</p>
+      <div id="sse-status" class="sse-status" aria-live="polite"></div>
+
+      <!-- 🔎 Filter Bar -->
+      <form id="audit-filter-form" class="audit-filter-form" role="search" aria-label="Filter Audit Logs">
+        <label for="filter-user">User ID</label>
+        <input id="filter-user" name="user_id" type="text" placeholder="UUID..." />
+        <label for="filter-action">Action</label>
+        <input id="filter-action" name="action" type="text" placeholder="e.g., 'ban_kingdom'" />
+        <label for="filter-from">From</label>
+        <input id="filter-from" name="from_date" type="date" />
+        <label for="filter-to">To</label>
+        <input id="filter-to" name="to_date" type="date" />
+        <label for="filter-limit">Limit</label>
+        <input id="filter-limit" name="limit" type="number" value="100" min="1" />
+        <button type="submit" class="action-btn">Apply Filters</button>
+      </form>
+      <div class="export-buttons">
+        <button id="export-csv" type="button" class="action-btn">Export CSV</button>
+        <button id="export-json" type="button" class="action-btn">Export JSON</button>
+      </div>
+
+      <!-- 🧾 Audit Log Entries -->
+      <section class="log-entry-list" aria-label="Audit Log Entries Table">
+        <div class="scroll-wrapper">
+          <table class="audit-log-table" aria-describedby="audit-log-description">
+            <caption id="audit-log-description" class="sr-only">Chronological listing of administrative actions</caption>
+            <thead>
+              <tr>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Action</th>
+                <th scope="col">Admin</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+          <tbody id="audit-log-body" aria-live="polite">
+            <tr><td colspan="4">Loading audit logs...</td></tr>
+          </tbody>
+        </table>
+        <button id="load-more-btn" type="button" class="action-btn" style="display:none">Load More</button>
+      </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- ✅ Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank">Legal Info</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
+
+</body>
+</html>

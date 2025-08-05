@@ -36,7 +36,7 @@ Developer: Deathsgift66
   <script type="module">
     // Project Name: Thronestead©
     // File Name: progression.js (inlined)
-    import { toggleLoading, escapeHTML } from '/Javascript/core_utils.js';
+    import { toggleLoading, escapeHTML } from '/Javascript/core-utils.js';
     async function apiGET(url) {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`GET failed: ${url}`);
@@ -296,10 +296,10 @@ Developer: Deathsgift66
   <script type="module">
     // Project Name: Thronestead©
     // File Name: overview.js (inlined)
-    import { escapeHTML } from '/Javascript/core_utils.js';
-    import { fetchJson, authFetchJson } from '/Javascript/core_utils.js';
+    import { escapeHTML } from '/Javascript/core-utils.js';
+    import { fetchJson, authFetchJson } from '/Javascript/core-utils.js';
 
-    import { supabase } from '/Javascript/supabaseClient.js';
+    import { supabase } from '/Javascript/supabase-client.js';
     import { loadPlayerProgressionFromStorage, fetchAndStorePlayerProgression } from '/Javascript/progression.js';
     import {
       saveKingdomCache,
@@ -546,15 +546,15 @@ Developer: Deathsgift66
   <link rel="icon" href="/Assets/favicon.ico" />
   <link href="/CSS/root_theme.css" rel="stylesheet" />
   <link href="/CSS/kr_navbar.css" rel="stylesheet" />
-  <link href="/CSS/progressionBanner.css" rel="stylesheet" />
+  <link href="/CSS/progression-banner.css" rel="stylesheet" />
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
   <script src="/Javascript/progression.js" type="module"></script>
 
 <!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
 </head>
 
 <body>

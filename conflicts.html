@@ -40,10 +40,10 @@ Developer: Deathsgift66
   <link href="/CSS/resource_bar.css" rel="stylesheet" />
 
 <!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
 </head>
 
 <body class="conflict-bg">
@@ -130,8 +130,8 @@ Developer: Deathsgift66
 // File Name: conflicts.js (inlined)
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
-import { supabase } from '/Javascript/supabaseClient.js';
-import { escapeHTML, debounce, jsonFetch, setBarWidths } from '/Javascript/core_utils.js';
+import { supabase } from '/Javascript/supabase-client.js';
+import { escapeHTML, debounce, jsonFetch, setBarWidths } from '/Javascript/core-utils.js';
 
 let headers = {};
 const REFRESH_MS = 30000;
@@ -260,9 +260,9 @@ function renderRows(rows) {
       </div>
     `;
     const phaseClass = `status-${r.phase || 'alert'}`;
-    const linkLive = `<a href="battle_live.html?war_id=${r.war_id}">View Battle</a>`;
+    const linkLive = `<a href="battle-live.html?war_id=${r.war_id}">View Battle</a>`;
     const linkRes = r.victor || r.winner_side
-      ? ` | <a href="battle_resolution.html?war_id=${r.war_id}">View Resolution</a>` : '';
+      ? ` | <a href="battle-resolution.html?war_id=${r.war_id}">View Resolution</a>` : '';
 
     const flagA = r.attacker_alliance_id ? `<img src="/Assets/flags/${r.attacker_alliance_id}.png" alt="" class="flag-icon" />` : '';
     const flagB = r.defender_alliance_id ? `<img src="/Assets/flags/${r.defender_alliance_id}.png" alt="" class="flag-icon" />` : '';

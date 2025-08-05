@@ -1,0 +1,118 @@
+<!--
+Project Name: Thronestead©
+File Name: world-map.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+
+  <title>World Map | Thronestead</title>
+  <meta name="description" content="Explore and interact with the dynamic World Map of Thronestead — claim territory, manage kingdoms, and engage in war." />
+  <meta name="keywords" content="Thronestead, world map, territory, strategy, kingdoms, war, diplomacy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/world-map.html" />
+
+  <!-- Social Sharing Metadata -->
+  <meta property="og:title" content="World Map | Thronestead" />
+  <meta property="og:description" content="Explore and interact with the dynamic World Map of Thronestead — claim territory, manage kingdoms, and engage in war." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="world-map.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="World Map | Thronestead" />
+  <meta name="twitter:description" content="Explore and interact with the dynamic World Map of Thronestead — claim territory, manage kingdoms, and engage in war." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="theme-color" content="#1a1a1a" />
+
+  <!-- Page-Specific Assets -->
+  <link href="/CSS/world_map.css" rel="stylesheet" />
+
+  <!-- Global Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/modal-fallback.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+  <script src="/Javascript/world-map.js" type="module"></script>
+</head>
+
+<body>
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+<!-- Navbar -->
+
+<!-- Banner -->
+<header class="kr-top-banner" aria-label="World Map Banner">
+  Thronestead — World Map
+</header>
+
+<!-- Main Layout -->
+<main id="main-content" class="main-centered-container" aria-label="World Map Interface" role="main" aria-labelledby="world-map-heading">
+  <h1 id="world-map-heading" class="visually-hidden">World Map</h1>
+
+  <section class="alliance-members-container">
+
+    <!-- World Map Canvas Stage -->
+    <div id="map-stage" class="map-stage" role="region" aria-label="Interactive World Map">
+      <canvas id="world-canvas" width="1200" height="800" aria-label="Strategic Map Canvas"></canvas>
+    </div>
+
+    <!-- Controls + UI -->
+    <div class="map-ui">
+
+      <!-- Map Controls -->
+      <div class="map-controls" role="group" aria-label="Map Zoom and View Controls">
+        <button id="zoom-in" class="btn" aria-label="Zoom In">+</button>
+        <button id="zoom-out" class="btn" aria-label="Zoom Out">−</button>
+        <button id="center-map" class="btn" aria-label="Center Map">Center</button>
+      </div>
+
+      <!-- Legend -->
+      <div class="map-legend" id="map-legend" aria-label="Map Legend">
+        <!-- JS will populate legend items -->
+      </div>
+
+    </div>
+
+    <!-- Tile Modal -->
+    <div id="tile-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tile-modal-title">
+      <div class="modal-content">
+        <h3 id="tile-modal-title">Tile Information</h3>
+        <div id="tile-details">
+          <!-- JS will inject tile-specific data -->
+        </div>
+        <button class="btn" id="close-tile-modal">Close</button>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer" role="contentinfo">
+  <div>© 2025 Thronestead</div>
+  <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
+</footer>
+
+</body>
+</html>

@@ -3,7 +3,7 @@ export default [
     ignores: ['dist/**', 'node_modules/**']
   },
   {
-    files: ['Javascript/**/*.js', 'supabaseClient.js'],
+    files: ['Javascript/**/*.js', 'supabase-client.js'],
     languageOptions: {
       sourceType: 'module',
       ecmaVersion: 2022,

@@ -47,8 +47,8 @@ Developer: Deathsgift66
     // File Name: profile.js (inlined)
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
-    import { supabase } from '/Javascript/supabaseClient.js';
-    import { escapeHTML, showToast, debounce } from './Javascript/core_utils.js';
+    import { supabase } from '/Javascript/supabase-client.js';
+    import { escapeHTML, showToast, debounce } from './Javascript/core-utils.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -264,10 +264,10 @@ Developer: Deathsgift66
   </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
 </head>
 
 <body>

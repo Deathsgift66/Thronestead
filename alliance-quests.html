@@ -1,0 +1,193 @@
+<!--
+Project Name: Thronestead©
+File Name: alliance-quests.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+  <title>Alliance Quests | Thronestead</title>
+
+  <!-- Metadata -->
+  <meta name="description" content="Command your alliance through epic quests, lore-driven missions, and elite cooperative challenges." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/alliance-quests.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Alliance Quests | Thronestead" />
+  <meta property="og:description" content="Track, contribute, and lead your alliance through medieval quests worthy of legends." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="https://www.thronestead.com/alliance-quests.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Alliance Quests | Thronestead" />
+  <meta name="twitter:description" content="Track, contribute, and lead your alliance through medieval quests worthy of legends." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- CSS Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+  <link href="/CSS/alliance_common.css" rel="stylesheet" />
+  <link href="/CSS/progression-banner.css" rel="stylesheet" />
+  <link href="/CSS/alliance_quests.css" rel="stylesheet" />
+
+  <!-- JS Modules -->
+    <script src="/Javascript/progression.js" type="module"></script>
+  <script src="/Javascript/alliance-modules.js" type="module"></script>
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/modal-fallback.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+  <script src="/Javascript/components/branding-loader.js" type="module"></script>
+</head>
+
+<body class="quest-board-body alliance-bg">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+  <!-- Navbar -->
+
+  <!-- Header -->
+  <header class="kr-top-banner" aria-label="Alliance Quests Banner">
+    ⚔ Alliance Quests Board ⚔
+  </header>
+
+  <!-- Main -->
+  <main class="main-centered-container" aria-label="Alliance Quest Interface" role="main" aria-labelledby="alliance-quests-heading">
+    <h1 id="alliance-quests-heading" class="visually-hidden">Alliance Quests</h1>
+    <!-- Visual Identity -->
+      <div class="alliance-branding"></div>
+
+    <!-- Quest Controls -->
+    <div class="quest-board-container">
+      <!-- Quest Filters -->
+      <section class="quest-filters" role="tablist" aria-label="Quest Filters">
+        <button class="filter-tab active" data-filter="active" data-testid="filter-active" aria-pressed="true">Active</button>
+        <button class="filter-tab" data-filter="completed" data-testid="filter-completed" aria-pressed="false">Completed</button>
+        <button class="filter-tab" data-filter="expired" data-testid="filter-expired" aria-pressed="false">Expired</button>
+      </section>
+
+      <div class="quest-search-controls">
+        <input type="text" id="quest-search" placeholder="Search quests..." aria-label="Search quests" />
+        <select id="quest-category-filter" aria-label="Quest Category">
+          <option value="">All Types</option>
+        </select>
+        <div class="pagination">
+          <button class="royal-button prev-page" aria-label="Previous page">Prev</button>
+          <span class="page-info"></span>
+          <button class="royal-button next-page" aria-label="Next page">Next</button>
+          <select id="page-size" aria-label="Quests per page">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quest Feed -->
+      <section id="quest-board" aria-labelledby="quest-board-heading" aria-live="polite" aria-busy="false">
+        <h2 id="quest-board-heading" class="visually-hidden">Alliance Quests</h2>
+        <p id="no-quests-message" class="info-message hidden" data-i18n="no-quests-category">No quests found for this category.</p>
+        <!-- JS injects quest cards -->
+      </section>
+
+      <!-- Quest Action Button -->
+      <section class="quest-actions" aria-label="Quest Actions">
+        <button class="action-btn medieval-banner-btn" id="start-new-quest" data-testid="open-start" title="Start a New Alliance Quest" disabled>
+          <span class="plus-icon">➕</span> Start New Quest
+        </button>
+        <button id="theme-toggle" class="action-btn" aria-pressed="false" aria-label="Toggle theme">Dark Mode</button>
+      </section>
+    </div>
+
+    <!-- Hall of Heroes -->
+    <div class="hall-of-heroes" aria-labelledby="hall-of-heroes-heading">
+      <h2 id="hall-of-heroes-heading">🏅 Hall of Heroes</h2>
+      <ul id="hero-list" aria-live="polite">
+        <li data-i18n="loading-heroes">Loading heroes...</li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- Start Quest Modal -->
+  <div id="quest-start-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quest-start-title" tabindex="-1">
+    <div class="modal-content">
+      <button class="close-button wax-seal-btn" data-testid="modal-close" aria-label="Close start quest">×</button>
+      <h3 id="quest-start-title">Start New Quest</h3>
+      <select id="quest-template-select" aria-label="Quest Template"></select>
+      <button id="confirm-start-quest" class="action-btn medieval-banner-btn" data-testid="confirm-start">Start</button>
+    </div>
+  </div>
+
+  <!-- Quest Modal -->
+  <div id="quest-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-quest-title" aria-describedby="modal-quest-description" tabindex="-1">
+    <div class="modal-content">
+      <button class="close-button wax-seal-btn" data-testid="modal-close" aria-label="Close quest details" title="Close Quest Details">×</button>
+
+      <h3 id="modal-quest-title" class="quest-title-modal">Quest Title</h3>
+      <p class="quest-type-modal">Quest Type</p>
+
+      <div class="modal-parchment-content">
+        <p id="modal-quest-description" class="quest-description">Quest description here...</p>
+
+        <div class="quest-details-section">
+          <h4>Required Contributions:</h4>
+          <ul id="modal-quest-contributions" class="reward-list">
+            <li>No contributions listed.</li>
+          </ul>
+        </div>
+
+        <div class="quest-details-section">
+          <h4>Rewards:</h4>
+          <ul id="modal-quest-rewards" class="reward-list">
+            <li>No rewards listed.</li>
+          </ul>
+        </div>
+
+        <p class="time-limit-display">Time Left (local): <span id="modal-time-left">--:--:--</span></p>
+        <p id="modal-quest-leader-note" class="quest-leader-note-modal">&nbsp;</p>
+
+        <div class="modal-action-area">
+          <p id="role-check-message" class="role-check-message">&nbsp;</p>
+          <button class="action-btn medieval-banner-btn accept-quest-btn hidden" id="accept-quest-button" data-testid="accept-quest" title="Accept This Quest">Accept Quest</button>
+          <button class="action-btn medieval-banner-btn contribute-btn hidden" id="contribute-progress-button" data-testid="contribute-quest" title="Contribute to Quest">Contribute</button>
+          <button class="action-btn medieval-banner-btn claim-reward-btn hidden" id="claim-reward-button" data-testid="claim-reward" title="Claim Quest Reward">Claim Reward</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading-overlay" aria-hidden="true"><div class="spinner"></div></div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank">More</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
+</body>
+
+</html>

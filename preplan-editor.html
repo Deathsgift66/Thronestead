@@ -1,0 +1,235 @@
+<!--
+Project Name: Thronestead©
+File Name: preplan-editor.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+
+  <title>Pre-Plan Editor | Thronestead</title>
+  <meta name="description" content="Set up unit orders before battle in Thronestead." />
+  <meta name="keywords" content="Thronestead, preplan, unit orders, battlefield, war strategy, tactical commands" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/preplan-editor.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Pre-Plan Editor | Thronestead" />
+  <meta property="og:description" content="Set up unit orders before battle in Thronestead." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="preplan-editor.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Pre-Plan Editor | Thronestead" />
+  <meta name="twitter:description" content="Set up unit orders before battle in Thronestead." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- Page-Specific Styles -->
+  <link href="/CSS/battle_replay.css" rel="stylesheet" />
+  <link href="/CSS/preplan_editor.css" rel="stylesheet" />
+
+  <!-- Global Styles -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+
+  <!-- Scripts -->
+  <script type="module">
+    import { initPreplanEditor } from "/Javascript/battle_core.js";
+    initPreplanEditor();
+  </script>
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+</head>
+
+<body>
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+  <!-- Navbar -->
+
+  <!-- Header -->
+  <header class="kr-top-banner" aria-label="Pre-Plan Editor Banner">
+    Thronestead — Battle Pre-Planning
+  </header>
+
+  <!-- Main Layout -->
+  <main role="main" class="main-centered-container" aria-label="Preplan Interface">
+
+    <!-- Pre-Planning Panel -->
+    <section class="preplan-wrapper panel" aria-labelledby="preplan-heading">
+      <h2 id="preplan-heading">Battle Pre‑Planning</h2>
+      <p>Draft your troop orders and assign strategic positions before the battle begins.</p>
+
+      <div class="form-row">
+        <label for="war-id">War ID</label>
+        <input id="war-id" type="number" min="1" max="999999" aria-required="true" />
+      </div>
+
+      <label for="preplan-json">JSON Preplan (optional raw override)</label>
+      <textarea id="preplan-json" rows="8" aria-label="Preplan JSON Editor"></textarea>
+      <div id="json-warning" style="color:red;display:none" aria-live="polite"></div>
+
+      <!-- Controls -->
+      <div class="editor-controls" role="toolbar" aria-label="Editor Tools">
+        <button id="fallback-mode" class="btn" type="button">Set Fallback Point</button>
+        <button id="path-mode" class="btn" type="button">Draw Patrol Path</button>
+        <button id="clear-path" class="btn" type="button">Clear Path</button>
+        <button id="clear-fallback" class="btn" type="button">Clear Fallback</button>
+        <button id="undo-plan" class="btn" type="button">Reset to Saved</button>
+      </div>
+
+      <!-- Interactive Grid -->
+      <div id="preplan-grid" class="preplan-grid" aria-label="Battlefield Grid" tabindex="0">
+        <!-- JS will populate canvas/grid -->
+      </div>
+
+      <!-- Save Button -->
+      <button id="save-plan" class="btn primary-action" type="button">Save Plan</button>
+    </section>
+
+    <!-- Scoreboard Panel -->
+    <section class="scoreboard panel" aria-labelledby="score-heading">
+      <h2 id="score-heading">Current Score</h2>
+      <div id="scoreboard-display" class="score-display">0 - 0</div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Thronestead</div>
+    <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
+  </footer>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from pydantic import BaseModel, PositiveInt
+
+from ..database import get_db
+from ..security import require_user_id, require_active_user_id
+from services.audit_service import log_action
+
+router = APIRouter(prefix="/api/alliance-wars", tags=["alliance_wars"])
+
+# ----------- Pre-Plan Editing -----------
+
+class Point(BaseModel):
+    x: int
+    y: int
+
+
+class PreplanData(BaseModel):
+    fallback_point: Point | None = None
+    patrol_path: list[Point] | None = None
+
+
+class PreplanPayload(BaseModel):
+    alliance_war_id: PositiveInt
+    preplan_jsonb: PreplanData
+
+
+@router.get("/preplan")
+def get_preplan(
+    alliance_war_id: int,
+    user_id: str = Depends(require_user_id),
+    db: Session = Depends(get_db),
+):
+    from .progression_router import get_kingdom_id
+
+    kid = get_kingdom_id(db, user_id)
+    if not db.execute(
+        text("SELECT 1 FROM alliance_wars WHERE alliance_war_id = :wid"),
+        {"wid": alliance_war_id},
+    ).first():
+        raise HTTPException(404, "War not found")
+    if not db.execute(
+        text(
+            "SELECT 1 FROM alliance_war_participants WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+        ),
+        {"wid": alliance_war_id, "kid": kid},
+    ).first():
+        raise HTTPException(403, "Not part of this war")
+
+    row = (
+        db.execute(
+            text(
+                "SELECT preplan_jsonb FROM alliance_war_preplans "
+                "WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+            ),
+            {"wid": alliance_war_id, "kid": kid},
+        )
+        .mappings()
+        .first()
+    )
+
+    return {"plan": row["preplan_jsonb"] if row else {}}
+
+
+@router.post("/preplan/submit")
+def submit_preplan(
+    payload: PreplanPayload,
+    user_id: str = Depends(require_active_user_id),
+    db: Session = Depends(get_db),
+):
+    from .progression_router import get_kingdom_id
+
+    kid = get_kingdom_id(db, user_id)
+    if not db.execute(
+        text("SELECT 1 FROM alliance_wars WHERE alliance_war_id = :wid"),
+        {"wid": payload.alliance_war_id},
+    ).first():
+        raise HTTPException(404, "War not found")
+    if not db.execute(
+        text(
+            "SELECT 1 FROM alliance_war_participants WHERE alliance_war_id = :wid AND kingdom_id = :kid"
+        ),
+        {"wid": payload.alliance_war_id, "kid": kid},
+    ).first():
+        raise HTTPException(403, "Not part of this war")
+
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO alliance_war_preplans (alliance_war_id, kingdom_id, preplan_jsonb)
+                VALUES (:wid, :kid, :plan)
+                ON CONFLICT (alliance_war_id, kingdom_id)
+                  DO UPDATE SET preplan_jsonb = EXCLUDED.preplan_jsonb, last_updated = now()
+                """,
+            ),
+            {"wid": payload.alliance_war_id, "kid": kid, "plan": payload.preplan_jsonb.dict()},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(500, "Failed to save preplan")
+
+    log_action(db, user_id, "Save Preplan", str(payload.alliance_war_id))
+    return {"status": "saved"}
+  </script>
+
+</body>
+
+</html>

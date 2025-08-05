@@ -1,0 +1,266 @@
+<!--
+Project Name: Thronestead©
+File Name: spy-mission.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+
+  <title>Spy Mission | Thronestead</title>
+  <meta name="description" content="Plan and launch covert missions against rival kingdoms in Thronestead." />
+  <meta name="keywords" content="Thronestead, spy mission, espionage, covert operations" />
+  <meta property="og:title" content="Spy Mission | Thronestead" />
+  <meta property="og:description" content="Plan and launch covert missions against rival kingdoms in Thronestead." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="spy-mission.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Spy Mission | Thronestead" />
+  <meta name="twitter:description" content="Plan and launch covert missions against rival kingdoms in Thronestead." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <link rel="canonical" href="https://www.thronestead.com/spy-mission.html" />
+  <meta name="theme-color" content="#2e2b27" />
+
+  <!-- Page-Specific Assets -->
+  <link href="/CSS/spy_mission.css" rel="stylesheet" />
+
+  <!-- Global Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+  <!-- Navbar -->
+
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Spy Mission Banner">
+    Thronestead — Spy Mission
+  </header>
+
+  <!-- Main Content -->
+  <main role="main" class="main-centered-container" aria-label="Spy Mission Interface" aria-labelledby="mission-heading">
+    <section class="mission-panel" aria-labelledby="mission-heading">
+      <h2 id="mission-heading">Launch Spy Mission</h2>
+      <form id="launch-form">
+        <label for="target-kingdom">Target Kingdom</label>
+        <input id="target-kingdom" list="kingdom-list" autocomplete="off" maxlength="64" required />
+        <datalist id="kingdom-list"></datalist>
+
+        <label for="mission-type">Mission Type</label>
+        <select id="mission-type">
+          <option value="spy_troops" title="Reveal enemy troop numbers">Spy Troops</option>
+          <option value="spy_resources" title="Gather info on enemy resources">Spy Resources</option>
+          <option value="assassinate_spies" title="Kill enemy spies">Assassinate Spies</option>
+          <option value="assassinate_noble" title="Kill an enemy noble">Assassinate Noble</option>
+          <option value="assassinate_knight" title="Eliminate an enemy knight">Assassinate Knight</option>
+        </select>
+
+        <label for="spy-count">Number of Spies</label>
+        <input type="number" id="spy-count" min="1" required />
+
+        <div id="success-rate" aria-live="polite"></div>
+
+        <button type="submit" class="btn-fantasy">Confirm Mission</button>
+      </form>
+      <div id="mission-results" class="mission-results" aria-live="polite"></div>
+    </section>
+    <section class="recent-log-panel" aria-labelledby="recent-log-heading">
+      <h3 id="recent-log-heading">Recent Missions</h3>
+      <ul id="recent-log" class="recent-log"></ul>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div>© 2025 Thronestead</div>
+    <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
+  </footer>
+  <script type="module">
+    import { supabase } from '/Javascript/supabase-client.js';
+    import { escapeHTML } from './Javascript/core-utils.js';
+
+    let currentUserId = null;
+    let currentSession = null;
+    let spyInfo = { spy_count: 0, spy_level: 1 };
+    let selectedKingdomId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+      currentUserId = session.user.id;
+      currentSession = session;
+
+      await loadSpyInfo();
+      await loadRecentLog();
+
+      const targetInput = document.getElementById('target-kingdom');
+      targetInput.addEventListener('input', e => {
+        const val = e.target.value;
+        loadKingdomSuggestions(val);
+        const opt = document.querySelector(`#kingdom-list option[value="${val}"]`);
+        selectedKingdomId = opt ? parseInt(opt.dataset.id, 10) : null;
+      });
+
+      document.getElementById('mission-type').addEventListener('change', updateSuccessRate);
+      const qtyInput = document.getElementById('spy-count');
+      qtyInput.addEventListener('input', updateSuccessRate);
+
+      document.getElementById('launch-form').addEventListener('submit', launchMission);
+    });
+
+    async function loadSpyInfo() {
+      try {
+        const res = await fetch('/api/kingdom/spies', {
+          headers: {
+            'Authorization': `Bearer ${currentSession.access_token}`
+          }
+        });
+        const data = await res.json();
+        spyInfo = data;
+        const qtyEl = document.getElementById('spy-count');
+        qtyEl.max = data.spy_count || 1;
+        qtyEl.value = 1;
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.disabled = data.spy_count === 0;
+        updateSuccessRate();
+      } catch (err) {
+        console.error('Failed to load spy info', err);
+      }
+    }
+
+    async function loadKingdomSuggestions(query) {
+      const list = document.getElementById('kingdom-list');
+      if (!query) return (list.innerHTML = '');
+      const { data, error } = await supabase
+        .from('kingdoms')
+        .select('kingdom_id, kingdom_name')
+        .ilike('kingdom_name', `${query}%`)
+        .limit(5);
+      if (error) {
+        console.error('Suggestion error:', error);
+        return;
+      }
+      list.innerHTML = '';
+      (data || []).forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k.kingdom_name;
+        opt.dataset.id = k.kingdom_id;
+        list.appendChild(opt);
+      });
+    }
+
+    function updateSuccessRate() {
+      const qty = parseInt(document.getElementById('spy-count').value, 10) || 0;
+      const level = spyInfo.spy_level || 0;
+      const base = 30 + level * 5 + qty * 10;
+      const rate = Math.min(95, Math.max(5, base));
+      const rateEl = document.getElementById('success-rate');
+      rateEl.textContent = `Estimated Success Rate: ${rate}%`;
+    }
+
+    async function loadRecentLog() {
+      const list = document.getElementById('recent-log');
+      if (!list) return;
+      list.innerHTML = '<li>Loading...</li>';
+      try {
+        const res = await fetch('/api/spy/log?limit=5', {
+          headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+        const data = await res.json();
+        list.innerHTML = '';
+        (data.logs || [])
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+          .forEach(entry => {
+          const li = document.createElement('li');
+          const icon = entry.outcome === 'success' ? '✅' : '❌';
+          li.innerHTML = `<span class="result-icon">${icon}</span> ${escapeHTML(entry.mission_type)} → ${escapeHTML(entry.target_name || entry.target_id || '')}`;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        console.error('recent log error', err);
+        list.innerHTML = '<li>Failed to load log.</li>';
+      }
+    }
+
+    async function launchMission(e) {
+      e.preventDefault();
+      const typedName = document.getElementById('target-kingdom').value.trim();
+      const mission_type = document.getElementById('mission-type').value;
+      const count = parseInt(document.getElementById('spy-count').value, 10);
+      const submitBtn = document.querySelector('button[type="submit"]');
+      if (isNaN(count) || count < 1) {
+        showResult('Please enter a valid number of spies.');
+        return;
+      }
+      if (!selectedKingdomId) {
+        showResult('Please select a valid target kingdom.');
+        return;
+      }
+      submitBtn.disabled = true;
+      setTimeout(() => (submitBtn.disabled = false), 3000);
+      showResult('Sending mission...');
+      try {
+        const res = await fetch('/api/spy/launch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`
+          },
+          body: JSON.stringify({
+            target_kingdom_id: selectedKingdomId,
+            target_kingdom_name: typedName,
+            mission_type,
+            num_spies: count
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Launch failed');
+        showResult(data);
+        await loadRecentLog();
+      } catch (err) {
+        showResult({ error: err.message });
+      }
+    }
+
+    function showResult(result) {
+      const el = document.getElementById('mission-results');
+      if (typeof result === 'string') {
+        el.textContent = result;
+        return;
+      }
+      if (result.error) {
+        el.textContent = 'Error: ' + result.error;
+        return;
+      }
+      const icons = [result.outcome === 'success' || result.success ? '✅' : '❌'];
+      if (result.detected || result.caught) icons.push('🔥');
+      if (result.spies_lost) icons.push('💀');
+      const msg = `Accuracy: ${result.accuracy ?? result.accuracy_pct ?? '?'}%`;
+      el.innerHTML = icons.map(i => `<span class="result-icon">${i}</span>`).join(' ') + ' ' + msg;
+    }
+  </script>
+</body>
+</html>
