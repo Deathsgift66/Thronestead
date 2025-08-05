@@ -1,0 +1,617 @@
+{
+  "js": {
+    "entry_points": [
+      "Javascript/404.js",
+      "Javascript/allianceModules.js",
+      "Javascript/banAppeal.js",
+      "Javascript/black_market.js",
+      "Javascript/buildings.js",
+      "Javascript/communications_core.js",
+      "Javascript/components/authGuard.js",
+      "Javascript/components/brandingLoader.js",
+      "Javascript/cookieConsent.js",
+      "Javascript/donate_vip.js",
+      "Javascript/forgot_password.js",
+      "Javascript/globalError.js",
+      "Javascript/gtm.js",
+      "Javascript/i18n.js",
+      "Javascript/initLang.js",
+      "Javascript/kingdom_core.js",
+      "Javascript/legal.js",
+      "Javascript/login.js",
+      "Javascript/modalFallback.js",
+      "Javascript/navLoader.js",
+      "Javascript/navbarFallback.js",
+      "Javascript/news.js",
+      "Javascript/progression.js",
+      "Javascript/requireAdmin.js",
+      "Javascript/resourceBar.js",
+      "Javascript/seasonal_effects.js",
+      "Javascript/signup.js",
+      "Javascript/themeToggle.js",
+      "Javascript/trade_logs.js",
+      "Javascript/train_troops.js",
+      "Javascript/wars.js",
+      "Javascript/world_map.js"
+    ],
+    "tree": {
+      "Javascript/404.js": {
+        "file": "Javascript/404.js",
+        "deps": [
+          {
+            "file": "Javascript/i18n.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/supabaseClient.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/allianceModules.js": {
+        "file": "Javascript/allianceModules.js",
+        "deps": []
+      },
+      "Javascript/banAppeal.js": {
+        "file": "Javascript/banAppeal.js",
+        "deps": [
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/env.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/themeToggle.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/black_market.js": {
+        "file": "Javascript/black_market.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/auth.js",
+            "deps": [
+              {
+                "file": "supabaseClient.js",
+                "deps": []
+              },
+              {
+                "file": "Javascript/progression.js",
+                "deps": [
+                  {
+                    "file": "Javascript/env.js",
+                    "deps": []
+                  },
+                  {
+                    "file": "Javascript/core_utils.js",
+                    "deps": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Javascript/buildings.js": {
+        "file": "Javascript/buildings.js",
+        "deps": [
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/communications_core.js": {
+        "file": "Javascript/communications_core.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/kingdom_name_linkify.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/components/authGuard.js": {
+        "file": "Javascript/components/authGuard.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/env.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/auth.js",
+            "deps": [
+              {
+                "file": "supabaseClient.js",
+                "deps": []
+              },
+              {
+                "file": "Javascript/progression.js",
+                "deps": [
+                  {
+                    "file": "Javascript/env.js",
+                    "deps": []
+                  },
+                  {
+                    "file": "Javascript/core_utils.js",
+                    "deps": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Javascript/components/brandingLoader.js": {
+        "file": "Javascript/components/brandingLoader.js",
+        "deps": []
+      },
+      "Javascript/cookieConsent.js": {
+        "file": "Javascript/cookieConsent.js",
+        "deps": []
+      },
+      "Javascript/donate_vip.js": {
+        "file": "Javascript/donate_vip.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/auth.js",
+            "deps": [
+              {
+                "file": "supabaseClient.js",
+                "deps": []
+              },
+              {
+                "file": "Javascript/progression.js",
+                "deps": [
+                  {
+                    "file": "Javascript/env.js",
+                    "deps": []
+                  },
+                  {
+                    "file": "Javascript/core_utils.js",
+                    "deps": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Javascript/forgot_password.js": {
+        "file": "Javascript/forgot_password.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/globalError.js": {
+        "file": "Javascript/globalError.js",
+        "deps": []
+      },
+      "Javascript/gtm.js": {
+        "file": "Javascript/gtm.js",
+        "deps": [
+          {
+            "file": "Javascript/env.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/i18n.js": {
+        "file": "Javascript/i18n.js",
+        "deps": []
+      },
+      "Javascript/initLang.js": {
+        "file": "Javascript/initLang.js",
+        "deps": [
+          {
+            "file": "Javascript/i18n.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/kingdom_core.js": {
+        "file": "Javascript/kingdom_core.js",
+        "deps": []
+      },
+      "Javascript/legal.js": {
+        "file": "Javascript/legal.js",
+        "deps": []
+      },
+      "Javascript/login.js": {
+        "file": "Javascript/login.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/env.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/modalFallback.js": {
+        "file": "Javascript/modalFallback.js",
+        "deps": []
+      },
+      "Javascript/navLoader.js": {
+        "file": "Javascript/navLoader.js",
+        "deps": [
+          {
+            "file": "Javascript/navigationUI.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/navbarFallback.js": {
+        "file": "Javascript/navbarFallback.js",
+        "deps": []
+      },
+      "Javascript/news.js": {
+        "file": "Javascript/news.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/progression.js": {
+        "file": "Javascript/progression.js",
+        "deps": [
+          {
+            "file": "Javascript/env.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/requireAdmin.js": {
+        "file": "Javascript/requireAdmin.js",
+        "deps": []
+      },
+      "Javascript/resourceBar.js": {
+        "file": "Javascript/resourceBar.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/seasonal_effects.js": {
+        "file": "Javascript/seasonal_effects.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/signup.js": {
+        "file": "Javascript/signup.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/progression.js",
+            "deps": [
+              {
+                "file": "Javascript/env.js",
+                "deps": []
+              },
+              {
+                "file": "Javascript/core_utils.js",
+                "deps": []
+              }
+            ]
+          },
+          {
+            "file": "Javascript/content_filter.js",
+            "deps": [
+              {
+                "file": "banned_words.json",
+                "deps": []
+              }
+            ]
+          },
+          {
+            "file": "Javascript/env.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/themeToggle.js": {
+        "file": "Javascript/themeToggle.js",
+        "deps": []
+      },
+      "Javascript/trade_logs.js": {
+        "file": "Javascript/trade_logs.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/kingdom_name_linkify.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/resources.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/components/tabControl.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/train_troops.js": {
+        "file": "Javascript/train_troops.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/wars.js": {
+        "file": "Javascript/wars.js",
+        "deps": [
+          {
+            "file": "Javascript/core_utils.js",
+            "deps": []
+          },
+          {
+            "file": "Javascript/kingdom_name_linkify.js",
+            "deps": []
+          },
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          }
+        ]
+      },
+      "Javascript/world_map.js": {
+        "file": "Javascript/world_map.js",
+        "deps": [
+          {
+            "file": "supabaseClient.js",
+            "deps": []
+          }
+        ]
+      }
+    },
+    "unused_files": [
+      "Javascript/account_previews.js",
+      "Javascript/admin_alerts.js",
+      "Javascript/admin_core.js",
+      "Javascript/admin_dashboard.js",
+      "Javascript/admin_emergency_tools.js",
+      "Javascript/admin_modules.js",
+      "Javascript/allianceAppearance.js",
+      "Javascript/alliance_changelog.js",
+      "Javascript/alliance_core.js",
+      "Javascript/alliance_home.js",
+      "Javascript/alliance_members.js",
+      "Javascript/alliance_projects.js",
+      "Javascript/alliance_quests.js",
+      "Javascript/alliance_treaties.js",
+      "Javascript/alliance_vault.js",
+      "Javascript/alliance_wars.js",
+      "Javascript/auth_core.js",
+      "Javascript/battle_core.js",
+      "Javascript/constants.js",
+      "Javascript/core/apiHelper.js",
+      "Javascript/customBoard.js",
+      "Javascript/dialog-polyfill.js",
+      "Javascript/diplomacy_center.js",
+      "Javascript/economy_core.js",
+      "Javascript/edit_kingdom.js",
+      "Javascript/gameplay_progression.js",
+      "Javascript/kingdom_achievements.js",
+      "Javascript/kingdom_history.js",
+      "Javascript/logout.js",
+      "Javascript/mobileLinkBar.js",
+      "Javascript/navDropdown.js",
+      "Javascript/navbar.js",
+      "Javascript/navigationCheck.js",
+      "Javascript/notificationBell.js",
+      "Javascript/offlineFallback.js",
+      "Javascript/projects_kingdom.js",
+      "Javascript/quests.js",
+      "Javascript/reauth.js",
+      "Javascript/requireAlliance.js",
+      "Javascript/research.js",
+      "Javascript/security/csrf.js",
+      "Javascript/sovereign_utils.js",
+      "Javascript/unlocked_troops.js",
+      "Javascript/utils_core.js",
+      "Javascript/village_master.js",
+      "Javascript/villages.js"
+    ]
+  },
+  "python": {
+    "entry_points": [
+      "backend/main.py"
+    ],
+    "tree": {
+      "file": "backend/main.py",
+      "deps": [
+        {
+          "file": "models/__init__.py",
+          "deps": []
+        },
+        {
+          "file": "backend/routers/__init__.py",
+          "deps": []
+        }
+      ]
+    },
+    "unused_files": [
+      "backend/__init__.py",
+      "backend/all_models.py",
+      "backend/battle_engine/__init__.py",
+      "backend/battle_engine/engine.py",
+      "backend/battle_engine/manager.py",
+      "backend/battle_engine/movement.py",
+      "backend/battle_engine/resolver_full.py",
+      "backend/battle_engine/targeting.py",
+      "backend/battle_engine/vision.py",
+      "backend/data.py",
+      "backend/database.py",
+      "backend/db.py",
+      "backend/enums.py",
+      "backend/env_utils.py",
+      "backend/models.py",
+      "backend/navigation_ui_consolidated.py",
+      "backend/pg_settings.py",
+      "backend/rate_limiter.py",
+      "backend/router_utils.py",
+      "backend/routers/_admin_audit_log.py",
+      "backend/routers/_admin_dashboard.py",
+      "backend/routers/_admin_emergency_tools.py",
+      "backend/routers/_admin_events.py",
+      "backend/routers/_admin_main.py",
+      "backend/routers/_admin_news.py",
+      "backend/routers/_admin_system.py",
+      "backend/routers/_admin_ws.py",
+      "backend/routers/account.py",
+      "backend/routers/account_delete.py",
+      "backend/routers/account_export.py",
+      "backend/routers/admin.py",
+      "backend/routers/alliance_achievements.py",
+      "backend/routers/alliance_bank.py",
+      "backend/routers/alliance_changelog.py",
+      "backend/routers/alliance_home.py",
+      "backend/routers/alliance_loans.py",
+      "backend/routers/alliance_management.py",
+      "backend/routers/alliance_members.py",
+      "backend/routers/alliance_members_api.py",
+      "backend/routers/alliance_members_view.py",
+      "backend/routers/alliance_policies.py",
+      "backend/routers/alliance_projects.py",
+      "backend/routers/alliance_quests.py",
+      "backend/routers/alliance_roles.py",
+      "backend/routers/alliance_router.py",
+      "backend/routers/alliance_treaties_router.py",
+      "backend/routers/alliance_vault.py",
+      "backend/routers/alliance_votes.py",
+      "backend/routers/alliance_wars.py",
+      "backend/routers/audit_log.py",
+      "backend/routers/auth.py",
+      "backend/routers/ban_appeal.py",
+      "backend/routers/battle.py",
+      "backend/routers/black_market.py",
+      "backend/routers/black_market_routes.py",
+      "backend/routers/buildings.py",
+      "backend/routers/diplomacy.py",
+      "backend/routers/diplomacy_center.py",
+      "backend/routers/donate_vip.py",
+      "backend/routers/faith.py",
+      "backend/routers/forgot_password.py",
+      "backend/routers/health.py",
+      "backend/routers/homepage.py",
+      "backend/routers/kingdom.py",
+      "backend/routers/kingdom_troops.py",
+      "backend/routers/leaderboard.py",
+      "backend/routers/legal.py",
+      "backend/routers/logs.py",
+      "backend/routers/market.py",
+      "backend/routers/me.py",
+      "backend/routers/navbar.py",
+      "backend/routers/noble_houses.py",
+      "backend/routers/notifications.py",
+      "backend/routers/onboarding.py",
+      "backend/routers/overview.py",
+      "backend/routers/player_stats.py",
+      "backend/routers/policies_laws.py",
+      "backend/routers/profile_view.py",
+      "backend/routers/progression_router.py",
+      "backend/routers/projects_router.py",
+      "backend/routers/public_config.py",
+      "backend/routers/public_kingdom.py",
+      "backend/routers/quests_router.py",
+      "backend/routers/reauth.py",
+      "backend/routers/region.py",
+      "backend/routers/reports.py",
+      "backend/routers/session.py",
+      "backend/routers/settings_router.py",
+      "backend/routers/signup.py",
+      "backend/routers/signup_check.py",
+      "backend/routers/signup_router.py",
+      "backend/routers/spy.py",
+      "backend/routers/system_changelog.py",
+      "backend/routers/titles_router.py",
+      "backend/routers/tokens.py",
+      "backend/routers/trade_logs.py",
+      "backend/routers/training_catalog.py",
+      "backend/routers/training_history.py",
+      "backend/routers/training_queue.py",
+      "backend/routers/treaties_router.py",
+      "backend/routers/vacation_mode.py",
+      "backend/routers/village_modifiers.py",
+      "backend/routers/villages_router.py",
+      "backend/routers/vip_status_router.py",
+      "backend/routers/wars.py",
+      "backend/routers/world_map.py",
+      "backend/security.py",
+      "backend/supabase_client.py"
+    ]
+  }
+}
