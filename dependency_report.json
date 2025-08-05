@@ -2,37 +2,37 @@
   "js": {
     "entry_points": [
       "Javascript/404.js",
-      "Javascript/allianceModules.js",
-      "Javascript/banAppeal.js",
-      "Javascript/black_market.js",
+      "Javascript/alliance-modules.js",
+      "Javascript/ban-appeal.js",
+      "Javascript/black-market.js",
       "Javascript/buildings.js",
-      "Javascript/communications_core.js",
-      "Javascript/components/authGuard.js",
-      "Javascript/components/brandingLoader.js",
-      "Javascript/cookieConsent.js",
-      "Javascript/donate_vip.js",
-      "Javascript/forgot_password.js",
-      "Javascript/globalError.js",
+      "Javascript/communications-core.js",
+      "Javascript/components/auth-guard.js",
+      "Javascript/components/branding-loader.js",
+      "Javascript/cookie-consent.js",
+      "Javascript/donate-vip.js",
+      "Javascript/forgot-password.js",
+      "Javascript/global-error.js",
       "Javascript/gtm.js",
       "Javascript/i18n.js",
-      "Javascript/initLang.js",
-      "Javascript/kingdom_core.js",
+      "Javascript/init-lang.js",
+      "Javascript/kingdom-core.js",
       "Javascript/legal.js",
       "Javascript/login.js",
-      "Javascript/modalFallback.js",
-      "Javascript/navLoader.js",
-      "Javascript/navbarFallback.js",
+      "Javascript/modal-fallback.js",
+      "Javascript/nav-loader.js",
+      "Javascript/navbar-fallback.js",
       "Javascript/news.js",
       "Javascript/progression.js",
-      "Javascript/requireAdmin.js",
-      "Javascript/resourceBar.js",
-      "Javascript/seasonal_effects.js",
+      "Javascript/require-admin.js",
+      "Javascript/resource-bar.js",
+      "Javascript/seasonal-effects.js",
       "Javascript/signup.js",
-      "Javascript/themeToggle.js",
-      "Javascript/trade_logs.js",
-      "Javascript/train_troops.js",
+      "Javascript/theme-toggle.js",
+      "Javascript/trade-logs.js",
+      "Javascript/train-troops.js",
       "Javascript/wars.js",
-      "Javascript/world_map.js"
+      "Javascript/world-map.js"
     ],
     "tree": {
       "Javascript/404.js": {
@@ -43,24 +43,24 @@
             "deps": []
           },
           {
-            "file": "Javascript/supabaseClient.js",
+            "file": "Javascript/supabase-client.js",
             "deps": []
           }
         ]
       },
-      "Javascript/allianceModules.js": {
-        "file": "Javascript/allianceModules.js",
+      "Javascript/alliance-modules.js": {
+        "file": "Javascript/alliance-modules.js",
         "deps": []
       },
-      "Javascript/banAppeal.js": {
-        "file": "Javascript/banAppeal.js",
+      "Javascript/ban-appeal.js": {
+        "file": "Javascript/ban-appeal.js",
         "deps": [
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           },
           {
@@ -68,27 +68,27 @@
             "deps": []
           },
           {
-            "file": "Javascript/themeToggle.js",
+            "file": "Javascript/theme-toggle.js",
             "deps": []
           }
         ]
       },
-      "Javascript/black_market.js": {
-        "file": "Javascript/black_market.js",
+      "Javascript/black-market.js": {
+        "file": "Javascript/black-market.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           },
           {
             "file": "Javascript/auth.js",
             "deps": [
               {
-                "file": "supabaseClient.js",
+                "file": "supabase-client.js",
                 "deps": []
               },
               {
@@ -99,7 +99,7 @@
                     "deps": []
                   },
                   {
-                    "file": "Javascript/core_utils.js",
+                    "file": "Javascript/core-utils.js",
                     "deps": []
                   }
                 ]
@@ -112,29 +112,29 @@
         "file": "Javascript/buildings.js",
         "deps": [
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           }
         ]
       },
-      "Javascript/communications_core.js": {
-        "file": "Javascript/communications_core.js",
+      "Javascript/communications-core.js": {
+        "file": "Javascript/communications-core.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
-            "file": "Javascript/kingdom_name_linkify.js",
+            "file": "Javascript/kingdom-name-linkify.js",
             "deps": []
           }
         ]
       },
-      "Javascript/components/authGuard.js": {
-        "file": "Javascript/components/authGuard.js",
+      "Javascript/components/auth-guard.js": {
+        "file": "Javascript/components/auth-guard.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
@@ -145,7 +145,7 @@
             "file": "Javascript/auth.js",
             "deps": [
               {
-                "file": "supabaseClient.js",
+                "file": "supabase-client.js",
                 "deps": []
               },
               {
@@ -156,7 +156,7 @@
                     "deps": []
                   },
                   {
-                    "file": "Javascript/core_utils.js",
+                    "file": "Javascript/core-utils.js",
                     "deps": []
                   }
                 ]
@@ -165,30 +165,30 @@
           }
         ]
       },
-      "Javascript/components/brandingLoader.js": {
-        "file": "Javascript/components/brandingLoader.js",
+      "Javascript/components/branding-loader.js": {
+        "file": "Javascript/components/branding-loader.js",
         "deps": []
       },
-      "Javascript/cookieConsent.js": {
-        "file": "Javascript/cookieConsent.js",
+      "Javascript/cookie-consent.js": {
+        "file": "Javascript/cookie-consent.js",
         "deps": []
       },
-      "Javascript/donate_vip.js": {
-        "file": "Javascript/donate_vip.js",
+      "Javascript/donate-vip.js": {
+        "file": "Javascript/donate-vip.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           },
           {
             "file": "Javascript/auth.js",
             "deps": [
               {
-                "file": "supabaseClient.js",
+                "file": "supabase-client.js",
                 "deps": []
               },
               {
@@ -199,7 +199,7 @@
                     "deps": []
                   },
                   {
-                    "file": "Javascript/core_utils.js",
+                    "file": "Javascript/core-utils.js",
                     "deps": []
                   }
                 ]
@@ -208,17 +208,17 @@
           }
         ]
       },
-      "Javascript/forgot_password.js": {
-        "file": "Javascript/forgot_password.js",
+      "Javascript/forgot-password.js": {
+        "file": "Javascript/forgot-password.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           }
         ]
       },
-      "Javascript/globalError.js": {
-        "file": "Javascript/globalError.js",
+      "Javascript/global-error.js": {
+        "file": "Javascript/global-error.js",
         "deps": []
       },
       "Javascript/gtm.js": {
@@ -234,8 +234,8 @@
         "file": "Javascript/i18n.js",
         "deps": []
       },
-      "Javascript/initLang.js": {
-        "file": "Javascript/initLang.js",
+      "Javascript/init-lang.js": {
+        "file": "Javascript/init-lang.js",
         "deps": [
           {
             "file": "Javascript/i18n.js",
@@ -243,8 +243,8 @@
           }
         ]
       },
-      "Javascript/kingdom_core.js": {
-        "file": "Javascript/kingdom_core.js",
+      "Javascript/kingdom-core.js": {
+        "file": "Javascript/kingdom-core.js",
         "deps": []
       },
       "Javascript/legal.js": {
@@ -255,11 +255,11 @@
         "file": "Javascript/login.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           },
           {
@@ -268,28 +268,28 @@
           }
         ]
       },
-      "Javascript/modalFallback.js": {
-        "file": "Javascript/modalFallback.js",
+      "Javascript/modal-fallback.js": {
+        "file": "Javascript/modal-fallback.js",
         "deps": []
       },
-      "Javascript/navLoader.js": {
-        "file": "Javascript/navLoader.js",
+      "Javascript/nav-loader.js": {
+        "file": "Javascript/nav-loader.js",
         "deps": [
           {
-            "file": "Javascript/navigationUI.js",
+            "file": "Javascript/navigation-ui.js",
             "deps": []
           }
         ]
       },
-      "Javascript/navbarFallback.js": {
-        "file": "Javascript/navbarFallback.js",
+      "Javascript/navbar-fallback.js": {
+        "file": "Javascript/navbar-fallback.js",
         "deps": []
       },
       "Javascript/news.js": {
         "file": "Javascript/news.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           }
         ]
@@ -302,33 +302,33 @@
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           }
         ]
       },
-      "Javascript/requireAdmin.js": {
-        "file": "Javascript/requireAdmin.js",
+      "Javascript/require-admin.js": {
+        "file": "Javascript/require-admin.js",
         "deps": []
       },
-      "Javascript/resourceBar.js": {
-        "file": "Javascript/resourceBar.js",
+      "Javascript/resource-bar.js": {
+        "file": "Javascript/resource-bar.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           }
         ]
       },
-      "Javascript/seasonal_effects.js": {
-        "file": "Javascript/seasonal_effects.js",
+      "Javascript/seasonal-effects.js": {
+        "file": "Javascript/seasonal-effects.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           }
         ]
@@ -337,7 +337,7 @@
         "file": "Javascript/signup.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
@@ -348,13 +348,13 @@
                 "deps": []
               },
               {
-                "file": "Javascript/core_utils.js",
+                "file": "Javascript/core-utils.js",
                 "deps": []
               }
             ]
           },
           {
-            "file": "Javascript/content_filter.js",
+            "file": "Javascript/content-filter.js",
             "deps": [
               {
                 "file": "banned_words.json",
@@ -368,23 +368,23 @@
           }
         ]
       },
-      "Javascript/themeToggle.js": {
-        "file": "Javascript/themeToggle.js",
+      "Javascript/theme-toggle.js": {
+        "file": "Javascript/theme-toggle.js",
         "deps": []
       },
-      "Javascript/trade_logs.js": {
-        "file": "Javascript/trade_logs.js",
+      "Javascript/trade-logs.js": {
+        "file": "Javascript/trade-logs.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           },
           {
-            "file": "Javascript/kingdom_name_linkify.js",
+            "file": "Javascript/kingdom-name-linkify.js",
             "deps": []
           },
           {
@@ -392,20 +392,20 @@
             "deps": []
           },
           {
-            "file": "Javascript/components/tabControl.js",
+            "file": "Javascript/components/tab-control.js",
             "deps": []
           }
         ]
       },
-      "Javascript/train_troops.js": {
-        "file": "Javascript/train_troops.js",
+      "Javascript/train-troops.js": {
+        "file": "Javascript/train-troops.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           },
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           }
         ]
@@ -414,24 +414,24 @@
         "file": "Javascript/wars.js",
         "deps": [
           {
-            "file": "Javascript/core_utils.js",
+            "file": "Javascript/core-utils.js",
             "deps": []
           },
           {
-            "file": "Javascript/kingdom_name_linkify.js",
+            "file": "Javascript/kingdom-name-linkify.js",
             "deps": []
           },
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           }
         ]
       },
-      "Javascript/world_map.js": {
-        "file": "Javascript/world_map.js",
+      "Javascript/world-map.js": {
+        "file": "Javascript/world-map.js",
         "deps": [
           {
-            "file": "supabaseClient.js",
+            "file": "supabase-client.js",
             "deps": []
           }
         ]

@@ -44,10 +44,10 @@ Developer: Deathsgift66
     // File Name: market.js
     // Version:  7/1/2025 10:38
     // Developer: Deathsgift66
-    import { supabase } from '/Javascript/supabaseClient.js';
+    import { supabase } from '/Javascript/supabase-client.js';
     import { authHeaders } from '/Javascript/auth.js';
-    import { showToast, escapeHTML } from '/Javascript/core_utils.js';
-    import { setupTabs } from './components/tabControl.js';
+    import { showToast, escapeHTML } from '/Javascript/core-utils.js';
+    import { setupTabs } from './components/tab-control.js';
 
     const listingsContainer = document.getElementById('market-listings');
     const myListingsContainer = document.getElementById('my-listings');
@@ -230,10 +230,10 @@ Developer: Deathsgift66
   </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
 </head>
 
 <body>

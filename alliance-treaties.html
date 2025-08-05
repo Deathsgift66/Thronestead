@@ -1,0 +1,171 @@
+<!--
+Project Name: Thronestead©
+File Name: alliance-treaties.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+  <title>Alliance Treaties | Thronestead</title>
+
+  <!-- Metadata -->
+  <meta name="description" content="Manage and negotiate treaties between alliances in Thronestead." />
+  <meta name="keywords" content="Thronestead, alliance treaties, diplomacy, negotiations" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/alliance-treaties.html" />
+
+  <!-- Open Graph & Twitter -->
+  <meta property="og:title" content="Alliance Treaties | Thronestead" />
+  <meta property="og:description" content="Diplomacy center for proposing and managing alliance treaties in Thronestead." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <link rel="preload" as="image" href="/Assets/banner_main.png" />
+  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+  <meta property="og:url" content="alliance-treaties.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Alliance Treaties | Thronestead" />
+  <meta name="twitter:description" content="Negotiate and manage alliance treaties in Thronestead." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <meta name="theme-color" content="#202020" />
+
+  <!-- Styles -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+  <link href="/CSS/alliance_common.css" rel="stylesheet" />
+  <link href="/CSS/progression-banner.css" rel="stylesheet" />
+  <link href="/CSS/alliance_treaties.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
+
+  <!-- JS Modules -->
+    <script src="/Javascript/progression.js" type="module"></script>
+  <script src="/Javascript/alliance-modules.js" type="module"></script>
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+  <script src="/Javascript/components/branding-loader.js" type="module"></script>
+</head>
+
+<body class="alliance-bg">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+  <!-- Navbar -->
+
+  <!-- Banner -->
+  <header class="kr-top-banner" aria-label="Alliance Treaties Page Header">
+    Alliance Treaties
+  </header>
+
+  <!-- Main Diplomacy Panel -->
+  <main role="main" class="main-centered-container" aria-label="Alliance Treaty Management">
+    <section class="alliance-members-container">
+      <!-- Visual ID -->
+        <div class="alliance-branding"></div>
+
+      <h2>Diplomatic Relations</h2>
+      <p>Track active treaties, propose new agreements, and manage diplomatic relations with other alliances.</p>
+
+      <!-- Create Treaty -->
+      <button id="create-new-treaty" class="action-btn" aria-label="Propose New Treaty" aria-haspopup="dialog" aria-pressed="false">
+        New Proposal
+      </button>
+      <label class="filter-toggle"><input type="checkbox" id="filter-active" /> View My Active Treaties</label>
+
+      <!-- Treaty Feed -->
+      <div id="treaties-container" aria-live="polite" aria-label="Treaty Status Feed">
+        <!-- JS injects treaty cards here -->
+      </div>
+    </section>
+  </main>
+
+  <div id="loading-overlay" aria-hidden="true">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Treaty Modal -->
+  <div id="treaty-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Close treaty details">&times;</button>
+      <div id="treaty-details" aria-live="polite">
+        <!-- JS injects treaty detail view -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Propose Treaty Modal -->
+  <div id="propose-treaty-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="propose-modal-title" tabindex="-1">
+    <div class="modal-content">
+      <h3 id="propose-modal-title">Propose New Treaty</h3>
+      <form id="propose-treaty-form" aria-describedby="form-error">
+        <label for="treaty-type">Treaty Type:</label>
+        <select id="treaty-type" name="treaty-type" aria-describedby="treaty-type-desc form-error">
+          <option value="non_aggression_pact" title="Promise not to attack each other">Non Aggression Pact</option>
+          <option value="defensive_pact" title="Assist each other when attacked">Defensive Pact</option>
+          <option value="trade_pact" title="Improve trade relations">Trade Pact</option>
+          <option value="intelligence_sharing" title="Share spy reports">Intelligence Sharing</option>
+          <option value="research_collaboration" title="Cooperate on research projects">Research Collaboration</option>
+        </select>
+        <div class="helper-text">Choose the kind of agreement.</div>
+        <div id="treaty-type-desc" class="helper-text" aria-live="polite"></div>
+        <label for="partner-alliance-name">Partner Alliance:</label>
+        <input type="text" id="partner-alliance-name" name="partner-alliance-name" list="alliance-list" autocomplete="off" required aria-describedby="form-error" />
+        <datalist id="alliance-list"></datalist>
+        <div class="helper-text">Type the alliance name or ID.</div>
+        <label for="duration-days">Duration (days):</label>
+        <input type="number" id="duration-days" name="duration-days" min="1" max="180" value="30" aria-describedby="form-error" />
+        <div class="helper-text">1–180 days; blank uses default 30.</div>
+        <label><input type="checkbox" id="exclusive" name="exclusive" /> Exclusive Agreement</label>
+        <div class="helper-text">Blocks similar treaties with other alliances.</div>
+        <div id="form-error" class="form-error" aria-live="polite"></div>
+        <div class="modal-actions">
+          <button type="submit" class="action-btn">Submit</button>
+          <button type="button" id="cancel-propose-treaty" class="action-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Response Confirmation Modal -->
+  <div id="respond-confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="respond-title" inert>
+    <div class="modal-content">
+      <h3 id="respond-title">Confirm Action</h3>
+      <p id="respond-body">Are you sure?</p>
+      <div class="modal-actions">
+        <button id="respond-yes" class="action-btn">Yes</button>
+        <button id="respond-no" class="action-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank" rel="noopener">More</a>
+      <a href="sitemap.xml" target="_blank" rel="noopener">Site Map</a>
+    </div>
+  </footer>
+
+</body>
+
+</html>

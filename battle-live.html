@@ -1,0 +1,143 @@
+<!--
+Project Name: Thronestead©
+File Name: battle-live.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+
+  <title>Live Battle | Thronestead</title>
+  <meta name="description" content="Watch battles unfold in real time on the tactical grid." />
+  <meta name="keywords" content="Thronestead, live battle, combat, realtime" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/battle-live.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Live Battle | Thronestead" />
+  <meta property="og:description" content="Watch battles unfold live on the tactical grid." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="battle-live.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Live Battle | Thronestead" />
+  <meta name="twitter:description" content="Follow the action in real time." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- Page-Specific Assets -->
+  <link href="/CSS/battle_live.css" rel="stylesheet" />
+
+  <!-- Global Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+</head>
+
+<body class="battle-live-bg">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+  <!-- ✅ Navbar -->
+
+  <!-- ✅ Page Banner -->
+  <header class="kr-top-banner" aria-label="Live Battle Banner">
+    ⚔️ Thronestead — Live Battle Phase
+  </header>
+
+  <!-- ✅ Main Battle UI -->
+  <main class="main-centered-container" aria-label="Live Tactical Battle Interface" role="main" aria-labelledby="battle-live-heading">
+    <h1 id="battle-live-heading" class="visually-hidden">Live Tactical Battle</h1>
+
+    <section class="battle-area" role="region" aria-label="Battle Map and Status HUD">
+
+      <!-- 🔎 HUD -->
+      <div class="hud" aria-label="Battle HUD">
+        <div>⛅ Weather: <span id="weather">--</span></div>
+        <div>📆 Phase: <span id="phase">--</span></div>
+        <div>🏰 Castle HP: <span id="castle-hp">--</span></div>
+        <div>🏹 Score A: <span id="score-a">0</span> vs B: <span id="score-b">0</span></div>
+        <div>⏳ Next Tick in: <span id="tick-timer">--</span></div>
+        <progress id="tick-progress" value="0" max="100" aria-label="Tick progress"></progress>
+      </div>
+
+      <!-- 🗺️ Battle Grid & Fog -->
+      <div class="battle-container">
+        <div id="battle-map" class="battle-map" aria-label="Tactical Battle Grid">
+          <div id="fog-overlay" class="fog-overlay" aria-hidden="true"></div>
+          <!-- JS injects terrain, units, and movement -->
+        </div>
+
+        <!-- 🧾 Sidebar: Logs + Score -->
+        <aside class="sidebar" aria-label="Combat Sidebar">
+          <section id="combat-log" class="combat-log" aria-label="Combat Log" aria-live="polite">
+            <strong>Combat Log:</strong>
+            <label style="display:block"><input type="checkbox" id="autoscroll" checked> Auto-scroll</label>
+            <hr>
+          </section>
+
+          <section id="scoreboard" class="scoreboard" aria-label="Battle Scoreboard" aria-live="polite">
+            <strong>Scoreboard</strong>
+            <hr>
+            <div>⚔️ Attacker: <span id="score-attacker">--</span></div>
+            <div>🛡️ Defender: <span id="score-defender">--</span></div>
+            <div>🏆 Victor: <span id="score-victor">--</span></div>
+          </section>
+
+          <!-- 🔄 Actions -->
+          <div class="button-panel">
+            <button class="btn-fantasy" onclick="triggerNextTick()">Trigger Next Tick</button>
+            <button class="btn-fantasy" onclick="refreshBattle()">Refresh Battle Data</button>
+          </div>
+        </aside>
+      </div>
+
+      <!-- 🧭 Order Panel (hidden by default) -->
+      <div id="order-panel" class="order-panel hidden" aria-label="Issue Unit Orders">
+        <h3>🎯 Unit Orders</h3>
+        <p>Selected Unit: <span id="order-unit">--</span></p>
+        <label>Move to X: <input type="number" id="order-x" min="0" max="59" /></label>
+        <label>Y: <input type="number" id="order-y" min="0" max="19" /></label>
+        <button id="submit-order-btn" class="btn-fantasy" onclick="submitOrders()">Submit Order</button>
+        <button class="btn-fantasy" onclick="closeOrderPanel()">Close</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ✅ Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank">Legal Info</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
+  <script type="module">
+    import { initBattleLive } from "/Javascript/battle_core.js";
+    initBattleLive();
+  </script>
+
+
+</body>
+</html>

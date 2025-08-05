@@ -1,0 +1,176 @@
+<!--
+Project Name: Thronestead©
+File Name: alliance-vault.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+  <title>Alliance Vault | Thronestead</title>
+
+  <!-- Metadata -->
+  <meta name="description" content="Manage your Alliance Vault in Thronestead — deposit, withdraw, and review vault history." />
+  <meta name="keywords" content="Thronestead, alliance vault, treasury, resources, economy" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/alliance-vault.html" />
+
+  <!-- Open Graph & Twitter -->
+  <meta property="og:title" content="Alliance Vault | Thronestead" />
+  <meta property="og:description" content="Manage your Alliance Vault in Thronestead — deposit, withdraw, and review vault history." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="alliance-vault.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Alliance Vault | Thronestead" />
+  <meta name="twitter:description" content="Manage your Alliance Vault — deposit, withdraw, and audit resources." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- Stylesheets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+  <link href="/CSS/alliance_common.css" rel="stylesheet" />
+  <link href="/CSS/alliance_vault.css" rel="stylesheet" />
+
+  <!-- Scripts -->
+      <script src="/Javascript/alliance-modules.js" type="module"></script>
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+  <script src="/Javascript/components/branding-loader.js" type="module"></script>
+</head>
+
+<body class="alliance-bg">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+  <!-- Navbar -->
+
+  <!-- Page Banner -->
+  <header class="kr-top-banner" aria-label="Vault Management Page Header">
+    Thronestead — Alliance Vault
+  </header>
+
+  <!-- Main Vault Container -->
+  <main role="main" class="main-centered-container" aria-label="Alliance Vault Interface">
+    <!-- Visual Branding -->
+    <div class="alliance-branding"></div>
+
+    <!-- Custom Section -->
+    <section class="alliance-customization-area" aria-label="Vault Board Appearance">
+      <h2>Customize Vault Board</h2>
+      <div id="custom-image-slot" aria-label="Vault Custom Image"></div>
+      <div id="custom-text-slot" aria-label="Vault Custom Text"></div>
+    </section>
+
+    <!-- Vault Management Tabs -->
+    <section class="alliance-members-container" aria-label="Vault Controls">
+      <h2>Alliance Vault</h2>
+
+      <nav class="tab-control-bar" role="tablist" aria-label="Vault Sections">
+        <button class="tab-button active" data-tab="tab-manage" role="tab" aria-selected="true">Manage Vault</button>
+        <button class="tab-button" data-tab="tab-transactions" role="tab" aria-selected="false">Transactions</button>
+      </nav>
+
+      <!-- Manage Tab -->
+      <div id="tab-manage" class="tab-section active" role="tabpanel" data-testid="tab-manage">
+        <p>Securely manage alliance resources — deposit, withdraw, and track treasury activity.</p>
+
+        <!-- Vault Totals -->
+        <div class="vault-summary panel" aria-label="Vault Resource Totals">
+          <!-- JS Injected Resource Display -->
+        </div>
+
+        <!-- Deposit Form -->
+        <div class="panel">
+          <h3 class="panel-title">Deposit Resources</h3>
+          <div id="deposit-section" aria-label="Deposit Interface" data-testid="deposit-section">
+            <!-- JS Injected Deposit UI -->
+          </div>
+          <p>Manage tax policies to automate deposits.</p>
+        </div>
+
+        <!-- Withdraw Form -->
+        <div class="panel">
+          <h3 class="panel-title">Withdraw Resources</h3>
+          <div id="withdraw-section" aria-label="Withdraw Interface" data-testid="withdraw-section">
+            <!-- JS Injected Withdraw UI -->
+          </div>
+        </div>
+        <div id="vault-message" class="feedback" aria-live="polite" data-testid="vault-message"></div>
+      </div>
+
+      <!-- Transaction Log Tab -->
+      <div id="tab-transactions" class="tab-section" role="tabpanel" hidden data-testid="tab-transactions">
+        <div class="panel">
+          <h3 class="panel-title">Vault Transactions</h3>
+
+          <!-- Filters -->
+          <div class="filter-toolbar" aria-label="Transaction Filters">
+            <label for="filter-action">Filter:</label>
+            <select id="filter-action" data-testid="filter-action">
+              <option value="">All</option>
+              <option value="deposit">Deposits</option>
+              <option value="withdraw">Withdrawals</option>
+              <option value="transfer">Transfers</option>
+              <option value="trade">Trades</option>
+            </select>
+
+            <label for="filter-days">Time:</label>
+            <select id="filter-days" data-testid="filter-days">
+              <option value="">All</option>
+              <option value="1">Last Day</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+
+            <button id="apply-trans-filter" class="action-btn" data-testid="apply-trans-filter">Apply</button>
+          </div>
+
+          <!-- Table -->
+          <div class="transaction-table custom-scrollbar">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date/Time</th>
+                  <th>Player</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Amount</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="vault-history" aria-live="polite" data-testid="vault-history">
+                <!-- JS Injected Transaction Logs -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
+  </footer>
+
+</body>
+</html>

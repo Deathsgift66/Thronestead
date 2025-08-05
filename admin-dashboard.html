@@ -1,0 +1,318 @@
+<!--
+Project Name: Thronestead©
+File Name: admin-dashboard.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+
+<!DOCTYPE html>
+<html lang="en" data-theme="parchment">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://zzqoxgytfrbptojcwrjm.supabase.co wss://zzqoxgytfrbptojcwrjm.supabase.co; img-src 'self' https: data:; script-src 'self' 'nonce-krdash'; style-src 'self'; frame-ancestors 'none'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="require-admin" content="true" />
+
+  <title>Admin Dashboard | Thronestead</title>
+  <meta name="author" content="Deathsgift66" />
+
+  <!-- Metadata -->
+  <meta name="description" content="Admin Dashboard for Thronestead — View user metrics, suspicious activity, audit logs, and system tools." />
+  <meta name="keywords" content="Admin Panel, Thronestead, Audit Logs, Flagged Users, Account Moderation, Admin Tools" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://www.thronestead.com/admin-dashboard.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Admin Dashboard | Thronestead" />
+  <meta property="og:description" content="Command your administrative forces with full access to users, reports, flags, and control tools." />
+  <meta property="og:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+  <meta property="og:url" content="https://www.thronestead.com/admin-dashboard.html" />
+  <meta property="og:type" content="website" />
+
+  <script type="application/ld+json" nonce="krdash">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Thronestead Admin Dashboard",
+    "applicationCategory": "Moderation",
+    "url": "https://www.thronestead.com/admin-dashboard.html"
+  }
+  </script>
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Admin Dashboard | Thronestead" />
+  <meta name="twitter:description" content="Full-featured admin panel for account alerts, logs, moderation, and real-time tools in Thronestead." />
+  <meta name="twitter:image" content="https://www.thronestead.com/Assets/banner_main.png" />
+
+  <!-- Global Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+  <link href="/CSS/admin_dashboard.css" rel="stylesheet" />
+  <!-- preload removed; module sets requireAdmin flag -->
+
+  <!-- Scripts -->
+  <script type="module" nonce="krdash">
+    import { initAdminDashboard } from '/Javascript/admin_modules.js';
+    initAdminDashboard();
+  </script>
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module" defer nonce="krdash"></script>
+  <script src="/Javascript/api-helper.js" type="module" defer nonce="krdash"></script>
+  <script src="/Javascript/nav-loader.js" type="module" defer nonce="krdash"></script>
+  <script src="/Javascript/resource-bar.js" type="module" defer nonce="krdash"></script>
+  <script type="module" defer nonce="krdash">
+    import dialogPolyfill from '/Javascript/dialog-polyfill.js';
+    dialogPolyfill();
+  </script>
+</head>
+
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+  <!-- Navigation -->
+
+  <!-- Page Header -->
+  <header class="kr-top-banner" aria-label="Admin Dashboard Banner">
+    <h1>Thronestead – Admin Dashboard</h1>
+  </header>
+
+  <div class="admin-summary-bar">
+    <span>👥 Users: <strong id="total-users">--</strong></span>
+    <span>🧷 Flags: <strong id="sum-flags">--</strong></span>
+    <span>💥 Active Wars: <strong id="sum-wars">--</strong></span>
+  </div>
+
+  <!-- Main Dashboard -->
+  <main id="main-content" class="main-container" role="main" aria-label="Admin Tools Interface" aria-labelledby="admin-dashboard-heading">
+    <div class="container" id="admin-dashboard-content">
+      <h2 id="admin-dashboard-heading">Command your administrative forces. Monitor, manage, and moderate in real time.</h2>
+
+      <!-- Live Statistics -->
+      <section class="dashboard-stats" aria-label="Game Metrics Overview">
+        <h3>Game Statistics</h3>
+        <div class="stats">
+          <div class="stat-card"><h4>Active Users</h4><p id="total-users-card">--</p></div>
+          <div class="stat-card"><h4>Flagged Users</h4><p id="flagged-users">--</p></div>
+          <div class="stat-card"><h4>Suspicious Activity</h4><p id="suspicious-activity">--</p></div>
+        </div>
+        <p class="updated-time">Last updated: <label id="stats-updated-label" class="visually-hidden">Statistics Updated</label><span id="stats-updated" aria-describedby="stats-updated-label" aria-live="polite">--</span></p>
+      </section>
+
+      <!-- Flagged Players -->
+      <section class="flagged-users" aria-label="Flagged Players">
+        <h3>Flagged Players</h3>
+        <div id="flagged-list" class="scrollable-panel"></div>
+      </section>
+
+      <!-- User Management -->
+      <section class="user-management" aria-label="Player Moderation Tools">
+        <fieldset>
+          <legend>User Management</legend>
+          <div class="form-row">
+            <label for="search-player">Search Player</label>
+            <input id="search-player" type="text" placeholder="Search by username" aria-label="Search Player" />
+          </div>
+          <div class="form-row">
+            <label for="status-filter">Status</label>
+            <select id="status-filter" aria-label="User Status Filter">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="banned">Banned</option>
+          <option value="frozen">Frozen</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="sort-order">Sort</label>
+            <select id="sort-order" aria-label="Sort Players">
+          <option value="username-asc">Username A-Z</option>
+          <option value="username-desc">Username Z-A</option>
+            </select>
+          </div>
+          <button id="search-btn" data-i18n="search_btn" type="button">Search</button>
+          <div id="player-list" class="scrollable-panel"></div>
+        </fieldset>
+      </section>
+
+      <!-- Event Management -->
+      <section class="event-management" aria-label="Global Event Tools">
+        <fieldset>
+          <legend>Event Tools</legend>
+          <button class="action-btn" id="create-event" data-i18n="create_event_btn" type="button">Create New Event</button>
+        </fieldset>
+      </section>
+      <dialog id="create-event-dialog" role="dialog" aria-labelledby="event-dialog-title">
+        <form method="dialog">
+          <h2 id="event-dialog-title">Create Event</h2>
+          <div class="form-row">
+            <label for="event-name">Event Name</label>
+            <input id="event-name" type="text" aria-label="Event Name" required />
+          </div>
+          <button type="button" class="confirm" data-i18n="create_btn">Create</button>
+          <button type="button" class="cancel" data-i18n="cancel_btn">Cancel</button>
+        </form>
+      </dialog>
+
+      <!-- News Publishing -->
+      <section class="news-management" aria-label="Publish News">
+        <fieldset>
+          <legend>Publish News</legend>
+          <div class="form-row">
+            <label for="news-title">Title</label>
+            <input id="news-title" type="text" placeholder="Title" aria-label="News Title" pattern=".{1,200}" required />
+          </div>
+          <div class="form-row">
+            <label for="news-summary">Summary</label>
+            <input id="news-summary" type="text" placeholder="Summary" aria-label="News Summary" pattern=".{1,500}" required />
+          </div>
+          <div class="form-row">
+            <label for="news-content">Content</label>
+            <textarea id="news-content" placeholder="Content" aria-label="News Content" required></textarea>
+          </div>
+          <p id="publish-news-desc" class="visually-hidden">News will be immediately visible to all players.</p>
+          <button id="publish-news-btn" aria-describedby="publish-news-desc" data-i18n="publish_btn" type="button">Publish</button>
+        </fieldset>
+      </section>
+
+      <!-- System Flags -->
+      <section class="flag-management" aria-label="System Flag Controls">
+        <fieldset>
+          <legend>System Flags</legend>
+          <div class="form-row">
+            <label for="flag-key">Flag key</label>
+            <input id="flag-key" type="text" placeholder="Flag key" aria-label="System Flag Key" pattern="[A-Za-z0-9_-]+" required />
+          </div>
+          <div class="form-row">
+            <label for="flag-value">Flag value</label>
+            <select id="flag-value" aria-label="Flag Value">
+          <option value="true">True</option>
+          <option value="false">False</option>
+            </select>
+          </div>
+          <button id="toggle-flag-btn" data-i18n="toggle_btn" type="button">Toggle</button>
+          <table id="flag-table">
+            <thead>
+              <tr>
+                <th scope="col">Key</th>
+                <th scope="col">Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </fieldset>
+      </section>
+
+      <!-- Kingdom Tools -->
+      <section class="kingdom-management" aria-label="Kingdom Editing Tools">
+        <fieldset>
+          <legend>Kingdom Update</legend>
+          <div class="form-row">
+            <label for="kingdom-id">Kingdom ID</label>
+            <input id="kingdom-id" type="number" min="1" required placeholder="Kingdom ID" aria-label="Kingdom ID" />
+          </div>
+          <div class="form-row">
+            <label for="kingdom-field">Field</label>
+            <input id="kingdom-field" type="text" placeholder="Field" aria-label="Field Name" />
+          </div>
+          <div class="form-row">
+            <label for="kingdom-value">Value</label>
+            <input id="kingdom-value" type="text" placeholder="Value" aria-label="Field Value" />
+          </div>
+          <button id="update-kingdom-btn" data-i18n="update_btn" type="button">Update</button>
+        </fieldset>
+      </section>
+
+      <!-- War Controls -->
+      <details class="war-management" aria-label="War Control Tools">
+        <summary>War Controls</summary>
+        <fieldset>
+          <legend>War Controls</legend>
+          <div class="form-row">
+            <label for="war-id">War ID</label>
+            <input id="war-id" type="number" min="1" required placeholder="War ID" aria-label="War ID" />
+          </div>
+          <button id="force-end-war-btn" data-i18n="force_end_btn" type="button">Force End War</button>
+          <button id="rollback-tick-btn" data-i18n="rollback_btn" type="button">Rollback Combat Tick</button>
+        </fieldset>
+      </details>
+
+
+
+      <!-- Audit Logs -->
+      <section class="audit-logs" aria-label="System Audit Logs">
+        <fieldset>
+          <legend>Audit Logs</legend>
+          <div class="form-row">
+            <label for="log-type">Type</label>
+            <input id="log-type" type="text" placeholder="Type" aria-label="Log Type" />
+          </div>
+          <div class="form-row">
+            <label for="log-user">User ID</label>
+            <input id="log-user" type="text" placeholder="User ID" aria-label="User ID" pattern="[0-9a-fA-F-]{36}" />
+          </div>
+          <div class="form-row">
+            <label for="log-start">Start Date</label>
+            <input id="log-start" type="datetime-local" aria-label="Start Date" />
+          </div>
+          <div class="form-row">
+            <label for="log-end">End Date</label>
+            <input id="log-end" type="datetime-local" aria-label="End Date" />
+          </div>
+          <button id="load-logs-btn" data-i18n="load_logs_btn" type="button">Load Logs</button>
+          <div class="export-actions">
+            <button id="export-csv" data-i18n="export_csv_btn" type="button">Export CSV</button>
+            <button id="export-json" data-i18n="export_json_btn" type="button">Export JSON</button>
+            <label id="export-feedback-label" class="visually-hidden" for="export-feedback">Export Status</label>
+            <span id="export-feedback" aria-live="polite" aria-describedby="export-feedback-label"></span>
+          </div>
+          <div id="log-list" class="scrollable-panel"></div>
+        </fieldset>
+      </section>
+
+      <!-- Real-Time Alerts -->
+      <section class="account-alerts" aria-label="Live Account Alerts">
+        <h3>Account Alerts <label id="alert-status-label" class="visually-hidden">Connection Status</label><span id="alert-status" aria-describedby="alert-status-label" aria-live="polite">❌ Disconnected</span></h3>
+        <div id="alerts" class="scrollable-panel" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div class="build-info">Version 7.1.2025.10.38</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank">Legal</a>
+      <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
+  <script nonce="krdash">
+    setTimeout(() => {
+      if (!window.adminDashboardReady) {
+        const c = document.getElementById('admin-dashboard-content');
+        if (c) {
+          c.textContent = 'Dashboard failed to load. Please refresh.';
+        } else {
+          document.body.insertAdjacentText('beforeend', 'Dashboard failed to load.');
+        }
+      }
+    }, 3000);
+  </script>
+</body>
+
+</html>

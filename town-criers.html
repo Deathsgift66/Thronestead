@@ -1,0 +1,506 @@
+<!--
+Project Name: Thronestead©
+File Name: town-criers.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+
+  <title>Town Criers | Thronestead</title>
+  <meta name="description" content="Publish and view player-run newspapers and announcements in the Town Criers board of Thronestead." />
+  <meta name="keywords" content="Thronestead, town criers, newspapers, player announcements, roleplay, flavor" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="Town Criers | Thronestead" />
+  <meta property="og:description" content="Publish and view player-run newspapers and announcements in the Town Criers board of Thronestead." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <meta property="og:url" content="town-criers.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Town Criers | Thronestead" />
+  <meta name="twitter:description" content="Publish and view player-run newspapers and announcements in the Town Criers board of Thronestead." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+  <link rel="canonical" href="https://www.thronestead.com/town-criers.html" />
+  <meta name="theme-color" content="#2e2b27" />
+
+  <!-- Page-Specific Assets -->
+  <link href="/CSS/town_criers.css" rel="stylesheet" />
+  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="module">
+    // Project Name: Thronestead©
+    // File Name: town_criers.js (inlined)
+    // Version:  7/1/2025 10:38
+    // Developer: Deathsgift66
+    import { supabase } from '/Javascript/supabase-client.js';
+    import { escapeHTML, showToast, sanitizeHTML } from '/Javascript/core-utils.js';
+    import { setupTabs } from './components/tab-control.js';
+
+    let scrollChannel = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      setupTabs();
+      await Promise.all([
+        loadBoard(),
+        loadYourScrolls()
+      ]);
+      subscribeToScrolls();
+
+      const composeForm = document.getElementById('compose-form');
+      composeForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = composeForm.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+        try {
+          await submitScroll();
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      });
+
+      document.getElementById('board-prev').addEventListener('click', () => {
+        currentPage--; renderBoard(supabase.auth.getUser().data.user.id);
+      });
+      document.getElementById('board-next').addEventListener('click', () => {
+        currentPage++; renderBoard(supabase.auth.getUser().data.user.id);
+      });
+
+      document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+          await deleteScroll(e.target.dataset.id);
+        } else if (e.target.classList.contains('edit-btn')) {
+          await editScroll(e.target.dataset.id);
+        }
+      });
+    });
+
+    // ✅ UI Tabs Handler
+
+    // ✅ Load Global Bulletin
+    const pageSize = 10;
+    let boardScrolls = [];
+    let currentPage = 1;
+
+    async function loadBoard() {
+      const boardEl = document.getElementById('board-feed');
+      boardEl.innerHTML = "<p>Loading board feed...</p>";
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error } = await supabase
+          .from('town_crier_scrolls')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+
+        boardScrolls = data || [];
+        currentPage = 1;
+        renderBoard(session.user.id);
+
+      } catch (err) {
+        console.error("❌ Board Feed Error:", err);
+        showToast("Failed to load board feed.");
+      }
+    }
+
+    function renderBoard(uid) {
+      const boardEl = document.getElementById('board-feed');
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const slice = boardScrolls.slice(start, end);
+      boardEl.innerHTML = slice.length
+        ? slice.map(s => renderScrollCard(s, uid)).join('')
+        : "<p>No scrolls posted yet.</p>";
+      document.getElementById('board-page-info').textContent =
+        `Page ${currentPage} of ${Math.max(1, Math.ceil(boardScrolls.length / pageSize))}`;
+      document.getElementById('board-prev').disabled = currentPage === 1;
+      document.getElementById('board-next').disabled = end >= boardScrolls.length;
+    }
+
+    // ✅ Load Personal Scrolls
+    async function loadYourScrolls() {
+      const yourEl = document.getElementById('your-scrolls');
+      yourEl.innerHTML = "<p>Loading your scrolls...</p>";
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data = [], error } = await supabase
+          .from('town_crier_scrolls')
+          .select('*')
+          .eq('author_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        yourEl.innerHTML = data.length
+          ? data.map(s => renderScrollCard(s, user.id)).join('')
+          : "<p>You have not posted any scrolls yet.</p>";
+
+      } catch (err) {
+        console.error("❌ Your Scrolls Error:", err);
+        showToast("Failed to load your scrolls.");
+      }
+    }
+
+    // ✅ Scroll Card Renderer
+    function renderScrollCard(scroll, uid) {
+      const author = escapeHTML(scroll.author_display_name || 'Unknown');
+      const title = escapeHTML(scroll.title);
+      let body = scroll.body || scroll.content || '';
+      if (window.marked) body = sanitizeHTML(window.marked.parse(body));
+      else body = escapeHTML(body);
+      const category = escapeHTML(scroll.category || 'general');
+      const date = scroll.created_at
+        ? new Date(scroll.created_at).toLocaleString()
+        : scroll.posted_at
+          ? new Date(scroll.posted_at).toLocaleString()
+          : 'Unknown date';
+      const owner = uid && scroll.author_id === uid;
+
+      return `
+        <div class="scroll-card" data-id="${scroll.scroll_id || scroll.id}">
+          <h4>${title}</h4>
+          <div class="scroll-body">${body}</div>
+          <small>Posted by: ${author} • ${date} • ${category}</small>
+          ${owner ? `<div class="scroll-actions"><button class="edit-btn" data-id="${scroll.scroll_id || scroll.id}">Edit</button> <button class="delete-btn" data-id="${scroll.scroll_id || scroll.id}">Delete</button></div>` : ''}
+        </div>
+      `;
+    }
+
+    // ✅ Real-Time Subscription
+    let realtimeTimer;
+    function subscribeToScrolls() {
+      scrollChannel = supabase
+        .channel('public:town_crier_scrolls')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'town_crier_scrolls'
+        }, payload => {
+          clearTimeout(realtimeTimer);
+          realtimeTimer = setTimeout(loadBoard, 300);
+        })
+        .subscribe();
+
+      window.addEventListener('beforeunload', () => {
+        if (scrollChannel) supabase.removeChannel(scrollChannel);
+      });
+    }
+
+    // ✅ Submit New Scroll
+    async function submitScroll() {
+      const titleEl = document.getElementById('scroll-title');
+      const bodyEl = document.getElementById('scroll-body');
+      const title = titleEl.value.trim();
+      const body = bodyEl.value.trim();
+      const category = document.getElementById('scroll-category').value;
+
+      if (title.length < 1) return showToast("Title is required.");
+      if (body.length < 1) return showToast("Body is required.");
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/town-criers/post', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ title, body, category })
+        });
+
+        if (!res.ok) {
+          const { detail } = await res.json();
+          throw new Error(detail || "Failed");
+        }
+
+        showToast("Scroll posted successfully!");
+        titleEl.value = "";
+        bodyEl.value = "";
+
+        await Promise.all([
+          loadBoard(),
+          loadYourScrolls()
+        ]);
+
+      } catch (err) {
+        console.error("❌ Submit Scroll Error:", err);
+        showToast("Failed to submit scroll.");
+      }
+    }
+
+    async function deleteScroll(id) {
+      if (!confirm('Delete this scroll?')) return;
+      const { error } = await supabase
+        .from('town_crier_scrolls')
+        .delete()
+        .eq('id', id);
+      if (error) {
+        console.error('Delete failed', error);
+        showToast('Failed to delete');
+        return;
+      }
+      boardScrolls = boardScrolls.filter(s => (s.id || s.scroll_id) != id);
+      await loadYourScrolls();
+      renderBoard((await supabase.auth.getUser()).data.user.id);
+    }
+
+    async function editScroll(id) {
+      const scroll = boardScrolls.find(s => (s.id || s.scroll_id) == id);
+      if (!scroll) return;
+      const newTitleRaw = prompt('Edit title', scroll.title);
+      if (newTitleRaw === null) return;
+      const newTitle = newTitleRaw.trim();
+      if (newTitle.length < 1) return showToast('Title is required.');
+      const newBodyRaw = prompt('Edit body', scroll.body || scroll.content || '');
+      if (newBodyRaw === null) return;
+      const newBody = newBodyRaw.trim();
+      if (newBody.length < 1) return showToast('Body is required.');
+      const { error } = await supabase
+        .from('town_crier_scrolls')
+        .update({ title: newTitle, body: newBody })
+        .eq('id', id);
+      if (error) {
+        console.error('Edit failed', error);
+        showToast('Failed to edit');
+        return;
+      }
+      scroll.title = newTitle;
+      scroll.body = newBody;
+      await loadYourScrolls();
+      renderBoard((await supabase.auth.getUser()).data.user.id);
+    }
+  </script>
+
+  <!-- Global Assets -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+</head>
+
+<body>
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+
+<!-- Navbar -->
+
+<!-- Page Banner -->
+<header class="kr-top-banner" aria-label="Town Criers Banner">
+  Thronestead — Town Criers
+</header>
+
+<!-- Main Content -->
+<main role="main" id="main-content" class="main-centered-container" aria-label="Town Criers Interface" aria-labelledby="town-criers-title">
+
+  <!-- Town Criers Panel -->
+  <section class="alliance-members-container" aria-labelledby="town-criers-title">
+    <h2 id="town-criers-title">Town Criers Board</h2>
+
+    <!-- Tabs Navigation -->
+    <nav class="tabs" aria-label="Town Criers Tabs">
+      <button class="tab-button active" data-tab="tab-board" aria-controls="tab-board" aria-selected="true">Board Feed</button>
+      <button class="tab-button" data-tab="tab-your-scrolls" aria-controls="tab-your-scrolls" aria-selected="false">Your Scrolls</button>
+      <button class="tab-button" data-tab="tab-compose" aria-controls="tab-compose" aria-selected="false">Compose Scroll</button>
+    </nav>
+
+    <!-- Board Feed -->
+    <section id="tab-board" class="tab-section active" role="tabpanel" aria-labelledby="tab-board-button">
+      <h3>Town Crier Board</h3>
+      <div id="board-feed" class="scroll-list custom-scrollbar" aria-live="polite">
+        <!-- JS will populate -->
+      </div>
+      <div class="pagination">
+        <button id="board-prev" class="btn-fantasy prev-page">Prev</button>
+        <span id="board-page-info"></span>
+        <button id="board-next" class="btn-fantasy next-page">Next</button>
+      </div>
+    </section>
+
+    <!-- Your Scrolls -->
+    <section id="tab-your-scrolls" class="tab-section" role="tabpanel" aria-labelledby="tab-your-scrolls-button" hidden>
+      <h3>Your Scrolls</h3>
+      <div id="your-scrolls" class="scroll-list custom-scrollbar" aria-live="polite">
+        <!-- JS will populate -->
+      </div>
+    </section>
+
+    <!-- Compose Scroll -->
+    <section id="tab-compose" class="tab-section" role="tabpanel" aria-labelledby="tab-compose-button" hidden>
+      <h3>Compose New Scroll</h3>
+      <form id="compose-form" aria-label="Compose New Scroll Form">
+        <div class="form-group">
+          <label for="scroll-title">Title</label>
+          <input type="text" id="scroll-title" name="scroll-title" required />
+        </div>
+        <div class="form-group">
+          <label for="scroll-category">Category</label>
+          <select id="scroll-category">
+            <option value="general">General</option>
+            <option value="trade">Trade</option>
+            <option value="roleplay">Roleplay</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="scroll-body">Body</label>
+          <textarea id="scroll-body" name="scroll-body" rows="6" required></textarea>
+        </div>
+        <button type="submit" class="btn-fantasy">Publish Scroll</button>
+      </form>
+    </section>
+
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer" role="contentinfo">
+  <div>© 2025 Thronestead</div>
+  <div><a href="legal.html" target="_blank">View Legal Documents</a> <a href="sitemap.xml" target="_blank">Site Map</a></div>
+</footer>
+
+  <!-- Backend route definitions for reference -->
+  <script type="text/python">
+# Project Name: Thronestead©
+# File Name: town_criers.py
+# Version:  7/1/2025 10:38
+# Developer: Deathsgift66
+
+"""
+Project: Thronestead ©
+File: town_criers.py
+Role: API routes for town criers.
+Version: 2025-06-21
+"""
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field, validator
+from services.moderation import validate_clean_text
+
+from ..security import verify_jwt_token
+from ..supabase_client import get_supabase_client
+
+router = APIRouter(prefix="/api/town-criers", tags=["town criers"])
+
+
+def _validate_text(value: str | None) -> str | None:
+    if value is not None:
+        validate_clean_text(value)
+    return value
+
+
+# ---------------------------
+# Request Payload Models
+# ---------------------------
+class ScrollPayload(BaseModel):
+    title: str = Field(..., min_length=1, max_length=100)
+    body: str = Field(..., min_length=1, max_length=5000)
+    category: str | None = None
+
+    _check_fields = validator("title", "body", "category", allow_reuse=True)(lambda v: _validate_text(v))
+
+
+# ---------------------------
+# Routes
+# ---------------------------
+
+
+@router.get("/latest", summary="Fetch latest scrolls")
+def latest_scrolls(user_id: str = Depends(verify_jwt_token)) -> dict:
+    """
+    Return recent town crier scrolls (latest 25) for authenticated users.
+    """
+    supabase = get_supabase_client()
+
+    check = (
+        supabase.table("users")
+        .select("user_id")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    if getattr(check, "error", None) or not getattr(check, "data", None):
+        raise HTTPException(status_code=401, detail="Invalid user")
+
+    try:
+        res = (
+            supabase.table("town_crier_scrolls")
+            .select("id,title,body,author_display_name,created_at")
+            .order("created_at", desc=True)
+            .limit(25)
+            .execute()
+        )
+        rows = getattr(res, "data", res) or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch scrolls") from e
+
+    scrolls = [
+        {
+            "scroll_id": r.get("id"),
+            "title": r.get("title"),
+            "body": r.get("body"),
+            "author_display_name": r.get("author_display_name"),
+            "created_at": r.get("created_at"),
+        }
+        for r in rows
+    ]
+    return {"scrolls": scrolls}
+
+
+@router.post("/post", summary="Post a new scroll")
+def post_scroll(
+    payload: ScrollPayload, user_id: str = Depends(verify_jwt_token)
+) -> dict:
+    """
+    Post a new town crier scroll authored by the current user.
+    """
+    supabase = get_supabase_client()
+    prof = (
+        supabase.table("users")
+        .select("display_name")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    prof_row = getattr(prof, "data", prof)
+    if getattr(prof, "error", None) or not prof_row:
+        raise HTTPException(status_code=401, detail="Invalid user")
+
+    record = {
+        "author_id": user_id,
+        "author_display_name": prof_row.get("display_name"),
+        "title": payload.title,
+        "body": payload.body,
+        "category": payload.category,
+    }
+
+    try:
+        res = supabase.table("town_crier_scrolls").insert(record).execute()
+        if getattr(res, "status_code", 200) >= 400:
+            raise HTTPException(status_code=500, detail="Failed to post scroll")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error posting scroll") from e
+
+    return {"status": "posted"}
+  </script>
+
+</body>
+</html>

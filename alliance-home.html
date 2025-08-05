@@ -1,0 +1,208 @@
+<!--
+Project Name: Thronestead©
+File Name: alliance-home.html
+Version:  7/1/2025 10:38
+Developer: Deathsgift66
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-ancestors 'none';" />
+  <meta name="theme-color" content="#2e2b27" />
+
+  <title>Alliance Home | Thronestead</title>
+
+  <!-- Metadata -->
+  <meta name="description" content="Alliance command center: view members, progress, projects, and stats." />
+  <meta name="keywords" content="Thronestead, Alliance Hub, projects, members, command center, medieval MMO" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.thronestead.com/alliance-home.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Alliance Home | Thronestead" />
+  <meta property="og:description" content="Manage your alliance's members, projects, and defenses." />
+  <meta property="og:image" content="Assets/banner_main.png" />
+  <link rel="preload" as="image" href="/Assets/banner_main.png" />
+  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+  <meta property="og:url" content="alliance-home.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Alliance Home | Thronestead" />
+  <meta name="twitter:description" content="Manage your alliance's members, projects, and defenses." />
+  <meta name="twitter:image" content="Assets/banner_main.png" />
+
+  <!-- CSS -->
+  <link rel="icon" href="/Assets/favicon.ico" type="image/x-icon" />
+  <link href="/CSS/root_theme.css" rel="stylesheet" />
+  <link href="/CSS/kr_navbar.css" rel="stylesheet" />
+  <link href="/CSS/resource_bar.css" rel="stylesheet" />
+  <link href="/CSS/alliance_common.css" rel="stylesheet" />
+  <link href="/CSS/alliance_home.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Fallback styles if external CSS fails to load */
+    body { font-family: 'IM Fell English', serif; background: #111; color: #eee; margin: 0; }
+    .kr-top-banner { background: #333; color: #fff; padding: 0.5rem; text-align: center; }
+  </style>
+
+  <!-- JS -->
+  <script src="/Javascript/alliance-modules.js" type="module"></script>
+
+<!-- ✅ Injected standard Thronestead modules -->
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
+  <script src="/Javascript/components/branding-loader.js" type="module"></script>
+</head>
+
+<body class="alliance-bg">
+  <noscript>
+    <div class="noscript-warning">
+      JavaScript is disabled in your browser. Some features of Thronestead may not function correctly.
+    </div>
+  </noscript>
+
+<div id="navbar-container"></div>
+<div id="resource-bar-container"></div>
+<a href="#members-heading" class="skip-link">Skip to Alliance Members</a>
+  <!-- Navbar -->
+
+  <!-- Header -->
+  <header class="kr-top-banner" aria-label="Alliance Homepage Banner">
+    <h1>Alliance Home</h1>
+    <div class="banner-text">Thronestead – Alliance Command Center</div>
+  </header>
+
+  <!-- Main Content -->
+  <main role="main" class="alliance-home-container" aria-label="Alliance Dashboard">
+    <!-- Overview -->
+    <section class="panel alliance-details" aria-labelledby="overview-heading">
+      <h2 id="overview-heading">Alliance Overview</h2>
+      <div class="alliance-branding"></div>
+      <p><strong>Name:</strong> <span id="alliance-name">Loading...</span></p>
+      <p><strong>Leader:</strong> <span id="alliance-leader">Loading...</span></p>
+      <p><strong>Region:</strong> <span id="alliance-region">Loading...</span></p>
+      <p><strong>Founded:</strong> <span id="alliance-founded">Loading...</span></p>
+      <p><strong>Level:</strong> <span id="alliance-level">Loading...</span></p>
+      <p><strong>Members:</strong> <span id="alliance-members">Loading...</span></p>
+      <p><strong>Status:</strong> <span id="alliance-status">Loading...</span></p>
+      <p><strong>Wars:</strong> <span id="alliance-wars-count">0</span></p>
+      <p><strong>Treaties:</strong> <span id="alliance-treaties-count">0</span></p>
+    </section>
+
+    <!-- Stats -->
+    <section class="panel alliance-stats" aria-labelledby="stats-heading">
+      <h2 id="stats-heading">Alliance Stats</h2>
+      <p><strong>Military Score:</strong> <span id="alliance-military">0</span></p>
+      <p><strong>Economy Score:</strong> <span id="alliance-economy">0</span></p>
+      <p><strong>Diplomacy Score:</strong> <span id="alliance-diplomacy">0</span></p>
+      <p><strong>Fortification Level:</strong> <span id="alliance-fortification">0</span></p>
+      <p><strong>Total Donated Army:</strong> <span id="alliance-army">0</span></p>
+    </section>
+
+    <!-- Vault -->
+    <section class="panel vault-snapshot" aria-labelledby="vault-heading">
+      <h2 id="vault-heading">Vault Snapshot</h2>
+      <p><strong>Gold:</strong> <span id="vault-gold">0</span></p>
+      <p><strong>Food:</strong> <span id="vault-food">0</span></p>
+      <p><strong>Ore:</strong> <span id="vault-ore">0</span></p>
+    </section>
+
+    <!-- Contributors -->
+    <section class="panel top-contributors" aria-labelledby="top-contrib-heading">
+      <h2 id="top-contrib-heading">Top Contributors</h2>
+      <ul id="top-contrib-list" role="list" aria-label="Top Contributors">
+        <li class="loading-skeleton">Loading...</li>
+      </ul>
+    </section>
+
+    <!-- Projects -->
+    <section class="panel alliance-projects" aria-labelledby="projects-heading">
+      <h2 id="projects-heading">Active Projects</h2>
+      <div id="project-progress-bars" class="progress-container" role="list" aria-label="Project Progress Bars">
+        <div class="loading-skeleton">Loading...</div>
+      </div>
+    </section>
+
+    <!-- Members -->
+    <section class="panel alliance-members" aria-labelledby="members-heading">
+      <h2 id="members-heading">Alliance Members</h2>
+      <table class="members-table">
+        <thead>
+          <tr>
+            <th scope="col">Crest</th>
+            <th scope="col">Name</th>
+            <th scope="col">Rank</th>
+            <th scope="col">Contribution</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody id="members-list">
+          <tr><td colspan="5" class="loading-skeleton">Loading...</td></tr>
+        </tbody>
+      </table>
+      <button id="load-more-members" class="royal-button hidden" aria-controls="members-list">Load More</button>
+    </section>
+
+    <!-- Achievements -->
+    <section class="panel alliance-achievements" aria-labelledby="achievements-heading">
+      <h2 id="achievements-heading">Alliance Achievements</h2>
+      <ul id="achievements-list">
+        <li>Loading achievements...</li>
+      </ul>
+    </section>
+
+    <!-- Quests -->
+    <section class="panel alliance-quests" aria-labelledby="quests-heading">
+      <h2 id="quests-heading">Quest Progress</h2>
+      <div id="quest-list"><div class="loading-skeleton">Loading...</div></div>
+    </section>
+
+    <!-- Active Battles -->
+    <section class="panel active-battles" aria-labelledby="active-battles-heading">
+      <h2 id="active-battles-heading">Active Battles</h2>
+      <div id="active-battles-list"><div class="loading-skeleton">Loading...</div></div>
+      <!-- Load more button removed pending pagination support -->
+    </section>
+
+    <!-- War Score -->
+    <section class="panel war-score" aria-labelledby="war-score-heading">
+      <h2 id="war-score-heading">War Score</h2>
+      <div id="war-score-summary"><div class="loading-skeleton">Loading...</div></div>
+    </section>
+
+    <!-- Diplomacy -->
+    <section class="panel diplomacy-overview" aria-labelledby="diplomacy-heading">
+      <h2 id="diplomacy-heading">Diplomacy Overview</h2>
+      <div id="diplomacy-table"><div class="loading-skeleton">Loading...</div></div>
+    </section>
+
+    <!-- Activity Log -->
+    <section class="panel activity-log" aria-labelledby="activity-heading">
+      <h2 id="activity-heading">Recent Activity Log</h2>
+      <ul id="activity-log" role="log" aria-live="polite" aria-atomic="false"><li class="loading-skeleton">Loading...</li></ul>
+      <button id="load-more-activity" class="royal-button hidden" aria-controls="activity-log">Load More</button>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© 2025 Thronestead</div>
+    <div>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_PrivacyPolicy.pdf">Privacy Policy</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_TermsofService.pdf">Terms of Service</a>
+      <a target="_blank" rel="noopener noreferrer" href="Assets/legal/THRONESTEAD_EULA.pdf">EULA</a>
+      <a href="legal.html" target="_blank">Legal</a> <a href="sitemap.xml" target="_blank">Site Map</a>
+    </div>
+  </footer>
+</body>
+
+</html>

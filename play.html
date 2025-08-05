@@ -43,9 +43,9 @@ Developer: Deathsgift66
 // File Name: play.js (inlined)
 // Version:  7/1/2025 10:38
 // Developer: Deathsgift66
-import { supabase } from '/Javascript/supabaseClient.js';
-import { escapeHTML, showToast, fragmentFrom, jsonFetch, openModal, closeModal } from '/Javascript/core_utils.js';
-import { containsBannedContent } from '/Javascript/content_filter.js';
+import { supabase } from '/Javascript/supabase-client.js';
+import { escapeHTML, showToast, fragmentFrom, jsonFetch, openModal, closeModal } from '/Javascript/core-utils.js';
+import { containsBannedContent } from '/Javascript/content-filter.js';
 import { setupPreview } from '/Javascript/account_previews.js';
 
 let currentUser = null;
@@ -320,11 +320,11 @@ function renderAvatarOptions() {
   </script>
 
 <!-- ✅ Injected standard Thronestead modules -->
-  <script src="/Javascript/components/authGuard.js" type="module"></script>
-  <script src="/Javascript/apiHelper.js" type="module"></script>
-  <script src="/Javascript/navLoader.js" type="module"></script>
-  <script src="/Javascript/modalFallback.js" type="module"></script>
-  <script src="/Javascript/resourceBar.js" type="module"></script>
+  <script src="/Javascript/components/auth-guard.js" type="module"></script>
+  <script src="/Javascript/api-helper.js" type="module"></script>
+  <script src="/Javascript/nav-loader.js" type="module"></script>
+  <script src="/Javascript/modal-fallback.js" type="module"></script>
+  <script src="/Javascript/resource-bar.js" type="module"></script>
 </head>
 
 <body>
