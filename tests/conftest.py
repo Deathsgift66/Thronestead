@@ -2,6 +2,14 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+import sys
+from pathlib import Path
+
+# Ensure the repository root is on sys.path so that the ``backend`` package
+# created for these exercises can be imported when tests are executed from the
+# ``tests`` directory.
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from backend.database import Base
 
 
